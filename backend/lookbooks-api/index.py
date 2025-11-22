@@ -33,14 +33,28 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     
     try:
+        headers = event.get('headers', {})
+        user_id = headers.get('x-user-id') or headers.get('X-User-Id')
+        
+        if not user_id:
+            return {
+                'statusCode': 401,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps({'error': 'Unauthorized - User ID required'})
+            }
+        
         if method == 'GET':
             query_params = event.get('queryStringParameters') or {}
             lookbook_id = query_params.get('id')
             
             if lookbook_id:
                 cursor.execute(
-                    "SELECT * FROM lookbooks WHERE id = %s",
-                    (lookbook_id,)
+                    "SELECT * FROM lookbooks WHERE id = %s AND user_id = %s",
+                    (lookbook_id, user_id)
                 )
                 lookbook = cursor.fetchone()
                 
@@ -74,7 +88,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             else:
                 cursor.execute(
-                    "SELECT * FROM lookbooks ORDER BY created_at DESC"
+                    "SELECT * FROM lookbooks WHERE user_id = %s ORDER BY created_at DESC",
+                    (user_id,)
                 )
                 lookbooks = cursor.fetchall()
                 
@@ -118,11 +133,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             cursor.execute(
                 """
-                INSERT INTO lookbooks (name, person_name, photos, color_palette)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO lookbooks (name, person_name, photos, color_palette, user_id)
+                VALUES (%s, %s, %s, %s, %s)
                 RETURNING id, name, person_name, photos, color_palette, created_at, updated_at
                 """,
-                (name, person_name, photos, color_palette)
+                (name, person_name, photos, color_palette, user_id)
             )
             
             lookbook = cursor.fetchone()
@@ -175,10 +190,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     photos = COALESCE(%s, photos),
                     color_palette = COALESCE(%s, color_palette),
                     updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s
+                WHERE id = %s AND user_id = %s
                 RETURNING id, name, person_name, photos, color_palette, created_at, updated_at
                 """,
-                (name, person_name, photos, color_palette, lookbook_id)
+                (name, person_name, photos, color_palette, lookbook_id, user_id)
             )
             
             lookbook = cursor.fetchone()
@@ -231,8 +246,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             cursor.execute(
-                "DELETE FROM lookbooks WHERE id = %s RETURNING id",
-                (lookbook_id,)
+                "DELETE FROM lookbooks WHERE id = %s AND user_id = %s RETURNING id",
+                (lookbook_id, user_id)
             )
             
             deleted = cursor.fetchone()

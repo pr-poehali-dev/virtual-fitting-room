@@ -13,6 +13,9 @@
       "name": "Test GET all lookbooks",
       "method": "GET",
       "path": "/",
+      "headers": {
+        "X-User-Id": "00000000-0000-0000-0000-000000000001"
+      },
       "expectedStatus": 200,
       "expectedBody": [],
       "bodyMatcher": "type"
@@ -21,6 +24,9 @@
       "name": "Test POST create lookbook",
       "method": "POST",
       "path": "/",
+      "headers": {
+        "X-User-Id": "90100501-2633-4f5b-9a76-fa265794e581"
+      },
       "body": {
         "name": "Test Lookbook",
         "person_name": "John Doe",

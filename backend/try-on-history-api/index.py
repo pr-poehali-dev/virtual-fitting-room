@@ -33,9 +33,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     
     try:
+        headers = event.get('headers', {})
+        user_id = headers.get('x-user-id') or headers.get('X-User-Id')
+        
+        if not user_id:
+            return {
+                'statusCode': 401,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps({'error': 'Unauthorized - User ID required'})
+            }
+        
         if method == 'GET':
             cursor.execute(
-                "SELECT * FROM try_on_history ORDER BY created_at DESC LIMIT 50"
+                "SELECT * FROM try_on_history WHERE user_id = %s ORDER BY created_at DESC LIMIT 50",
+                (user_id,)
             )
             history = cursor.fetchall()
             
@@ -76,11 +91,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             cursor.execute(
                 """
-                INSERT INTO try_on_history (person_image, garment_image, result_image)
-                VALUES (%s, %s, %s)
+                INSERT INTO try_on_history (person_image, garment_image, result_image, user_id)
+                VALUES (%s, %s, %s, %s)
                 RETURNING id, person_image, garment_image, result_image, created_at
                 """,
-                (person_image, garment_image, result_image)
+                (person_image, garment_image, result_image, user_id)
             )
             
             history_item = cursor.fetchone()
@@ -118,8 +133,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             cursor.execute(
-                "DELETE FROM try_on_history WHERE id = %s RETURNING id",
-                (history_id,)
+                "DELETE FROM try_on_history WHERE id = %s AND user_id = %s RETURNING id",
+                (history_id, user_id)
             )
             
             deleted = cursor.fetchone()

@@ -72,7 +72,11 @@ export default function Profile() {
 
   const fetchLookbooks = async () => {
     try {
-      const response = await fetch(LOOKBOOKS_API);
+      const response = await fetch(LOOKBOOKS_API, {
+        headers: {
+          'X-User-Id': user?.id || ''
+        }
+      });
       const data = await response.json();
       setLookbooks(data);
     } catch (error) {
@@ -84,7 +88,11 @@ export default function Profile() {
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch(HISTORY_API);
+      const response = await fetch(HISTORY_API, {
+        headers: {
+          'X-User-Id': user?.id || ''
+        }
+      });
       const data = await response.json();
       setTryOnHistory(data);
     } catch (error) {
@@ -114,7 +122,10 @@ export default function Profile() {
     try {
       const response = await fetch(LOOKBOOKS_API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.id
+        },
         body: JSON.stringify({
           name: newLookbookName,
           person_name: newPersonName,
@@ -152,7 +163,10 @@ export default function Profile() {
     try {
       const response = await fetch(LOOKBOOKS_API, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.id
+        },
         body: JSON.stringify({
           id: editingLookbookId,
           name: newLookbookName,
@@ -182,7 +196,10 @@ export default function Profile() {
 
     try {
       const response = await fetch(`${LOOKBOOKS_API}?id=${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'X-User-Id': user.id
+        }
       });
 
       if (!response.ok) throw new Error('Failed to delete lookbook');

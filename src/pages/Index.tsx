@@ -7,6 +7,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
+import { useAuth } from '@/context/AuthContext';
 
 const clothingOptions = [
   { 
@@ -22,6 +23,7 @@ const clothingOptions = [
 ];
 
 export default function Index() {
+  const { user } = useAuth();
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedClothing, setSelectedClothing] = useState<string>('');
   const [customClothingImage, setCustomClothingImage] = useState<string | null>(null);
@@ -88,15 +90,20 @@ export default function Index() {
       setGeneratedImage(data.image_url);
       toast.success('Изображение успешно сгенерировано!');
       
-      await fetch('https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          person_image: uploadedImage,
-          garment_image: garmentImage,
-          result_image: data.image_url
-        })
-      });
+      if (user) {
+        await fetch('https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Id': user.id
+          },
+          body: JSON.stringify({
+            person_image: uploadedImage,
+            garment_image: garmentImage,
+            result_image: data.image_url
+          })
+        });
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Ошибка генерации');
     } finally {
