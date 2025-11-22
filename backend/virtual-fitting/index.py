@@ -74,17 +74,27 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             status = status_result.get('status')
             
             if status == 'COMPLETED':
-                print(f"Fal.ai response: {json.dumps(status_result)}")
+                response_url = status_result.get('response_url')
                 
-                output = status_result.get('output')
-                if isinstance(output, dict):
-                    result_url = output.get('url')
-                elif isinstance(output, str):
-                    result_url = output
+                if response_url:
+                    result_response = requests.get(response_url, headers=headers, timeout=10)
+                    if result_response.status_code == 200:
+                        result_data = result_response.json()
+                        print(f"Fal.ai result data: {json.dumps(result_data)}")
+                        
+                        output = result_data.get('data') or result_data.get('output')
+                        if isinstance(output, dict):
+                            result_url = output.get('url')
+                        elif isinstance(output, str):
+                            result_url = output
+                        else:
+                            result_url = result_data.get('image', {}).get('url') if isinstance(result_data.get('image'), dict) else result_data.get('image')
+                        
+                        print(f"Extracted image URL: {result_url}")
+                    else:
+                        result_url = None
                 else:
-                    result_url = status_result.get('image', {}).get('url') if isinstance(status_result.get('image'), dict) else status_result.get('image')
-                
-                print(f"Extracted image URL: {result_url}")
+                    result_url = None
                 
                 return {
                     'statusCode': 200,
