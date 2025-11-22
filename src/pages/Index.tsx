@@ -91,7 +91,7 @@ export default function Index() {
     }, 1000);
     
     try {
-      const response = await fetch('https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885', {
+      const submitResponse = await fetch('https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885', {
         signal: controller.signal,
         method: 'POST',
         headers: {
@@ -103,37 +103,71 @@ export default function Index() {
         })
       });
 
-      const data = await response.json();
+      const submitData = await submitResponse.json();
       
-      clearInterval(progressInterval);
+      if (!submitResponse.ok) {
+        clearInterval(progressInterval);
+        throw new Error(submitData.error || 'Failed to submit generation');
+      }
       
-      if (!response.ok) {
-        if (response.status === 503) {
-          toast.loading('Модель загружается, пожалуйста подождите...', { duration: 3000 });
-          setLoadingProgress(50);
+      const statusUrl = submitData.status_url;
+      
+      if (!statusUrl) {
+        clearInterval(progressInterval);
+        throw new Error('No status URL returned');
+      }
+      
+      let checkCount = 0;
+      const maxChecks = 120;
+      
+      const checkStatus = async (): Promise<void> => {
+        if (checkCount >= maxChecks) {
+          clearInterval(progressInterval);
+          throw new Error('Generation timeout');
         }
-        throw new Error(data.error || 'Failed to generate image');
-      }
+        
+        checkCount++;
+        
+        const statusResponse = await fetch(
+          `https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885?status_url=${encodeURIComponent(statusUrl)}`,
+          { signal: controller.signal }
+        );
+        
+        const statusData = await statusResponse.json();
+        
+        if (statusData.status === 'COMPLETED') {
+          clearInterval(progressInterval);
+          setLoadingProgress(100);
+          setGeneratedImage(statusData.image_url);
+          toast.success('Изображение успешно сгенерировано!');
+          
+          if (user) {
+            await fetch('https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-User-Id': user.id
+              },
+              body: JSON.stringify({
+                person_image: uploadedImage,
+                garment_image: garmentImage,
+                result_image: statusData.image_url
+              })
+            });
+          }
+          
+          return;
+        }
+        
+        if (statusData.status === 'FAILED') {
+          clearInterval(progressInterval);
+          throw new Error(statusData.error || 'Generation failed');
+        }
+        
+        setTimeout(() => checkStatus(), 2000);
+      };
       
-      setLoadingProgress(100);
-      
-      setGeneratedImage(data.image_url);
-      toast.success('Изображение успешно сгенерировано!');
-      
-      if (user) {
-        await fetch('https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-User-Id': user.id
-          },
-          body: JSON.stringify({
-            person_image: uploadedImage,
-            garment_image: garmentImage,
-            result_image: data.image_url
-          })
-        });
-      }
+      await checkStatus();
     } catch (error) {
       clearInterval(progressInterval);
       if (error instanceof Error && error.name === 'AbortError') {
