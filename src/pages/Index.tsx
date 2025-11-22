@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
+import Layout from '@/components/Layout';
 
 const clothingOptions = [
   { 
@@ -94,18 +95,7 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-6">
-          <nav className="flex items-center justify-between">
-            <h1 className="text-3xl font-semibold tracking-tight">Virtual Fitting</h1>
-            <div className="flex gap-6">
-              <a href="#faq" className="text-sm hover:text-primary transition-colors">FAQ</a>
-              <a href="#guide" className="text-sm hover:text-primary transition-colors">Как пользоваться</a>
-            </div>
-          </nav>
-        </div>
-      </header>
+    <Layout>
 
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-7xl">
@@ -350,6 +340,6 @@ export default function Index() {
           </p>
         </div>
       </footer>
-    </div>
+    </Layout>
   );
 }
