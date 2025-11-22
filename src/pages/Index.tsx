@@ -87,6 +87,16 @@ export default function Index() {
       
       setGeneratedImage(data.image_url);
       toast.success('Изображение успешно сгенерировано!');
+      
+      await fetch('https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          person_image: uploadedImage,
+          garment_image: garmentImage,
+          result_image: data.image_url
+        })
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Ошибка генерации');
     } finally {

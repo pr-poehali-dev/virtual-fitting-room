@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,28 +11,62 @@ import Layout from '@/components/Layout';
 interface Lookbook {
   id: string;
   name: string;
-  personName: string;
+  person_name: string;
   photos: string[];
-  colorPalette: string[];
-  createdAt: Date;
+  color_palette: string[];
+  created_at: string;
+  updated_at: string;
 }
 
 interface TryOnHistory {
   id: string;
-  personImage: string;
-  garmentImage: string;
-  resultImage: string;
-  timestamp: Date;
+  person_image: string;
+  garment_image: string;
+  result_image: string;
+  created_at: string;
 }
+
+const LOOKBOOKS_API = 'https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b';
+const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
 
 export default function Profile() {
   const [lookbooks, setLookbooks] = useState<Lookbook[]>([]);
   const [tryOnHistory, setTryOnHistory] = useState<TryOnHistory[]>([]);
   const [isCreatingLookbook, setIsCreatingLookbook] = useState(false);
+  const [isEditingLookbook, setIsEditingLookbook] = useState(false);
+  const [editingLookbookId, setEditingLookbookId] = useState<string | null>(null);
   const [newLookbookName, setNewLookbookName] = useState('');
   const [newPersonName, setNewPersonName] = useState('');
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [colorPalette, setColorPalette] = useState<string[]>(['#FF6B6B', '#4ECDC4', '#45B7D1']);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchLookbooks();
+    fetchHistory();
+  }, []);
+
+  const fetchLookbooks = async () => {
+    try {
+      const response = await fetch(LOOKBOOKS_API);
+      const data = await response.json();
+      setLookbooks(data);
+    } catch (error) {
+      toast.error('Ошибка загрузки лукбуков');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchHistory = async () => {
+    try {
+      const response = await fetch(HISTORY_API);
+      const data = await response.json();
+      setTryOnHistory(data);
+    } catch (error) {
+      toast.error('Ошибка загрузки истории');
+    }
+  };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -47,32 +81,93 @@ export default function Profile() {
     }
   };
 
-  const handleCreateLookbook = () => {
+  const handleCreateLookbook = async () => {
     if (!newLookbookName || !newPersonName) {
       toast.error('Заполните название и имя');
       return;
     }
 
-    const newLookbook: Lookbook = {
-      id: Date.now().toString(),
-      name: newLookbookName,
-      personName: newPersonName,
-      photos: selectedPhotos,
-      colorPalette: colorPalette,
-      createdAt: new Date()
-    };
+    try {
+      const response = await fetch(LOOKBOOKS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newLookbookName,
+          person_name: newPersonName,
+          photos: selectedPhotos,
+          color_palette: colorPalette
+        })
+      });
 
-    setLookbooks(prev => [...prev, newLookbook]);
-    setNewLookbookName('');
-    setNewPersonName('');
-    setSelectedPhotos([]);
-    setIsCreatingLookbook(false);
-    toast.success('Лукбук создан!');
+      if (!response.ok) throw new Error('Failed to create lookbook');
+      
+      await fetchLookbooks();
+      setNewLookbookName('');
+      setNewPersonName('');
+      setSelectedPhotos([]);
+      setColorPalette(['#FF6B6B', '#4ECDC4', '#45B7D1']);
+      setIsCreatingLookbook(false);
+      toast.success('Лукбук создан!');
+    } catch (error) {
+      toast.error('Ошибка создания лукбука');
+    }
   };
 
-  const handleDeleteLookbook = (id: string) => {
-    setLookbooks(prev => prev.filter(lb => lb.id !== id));
-    toast.success('Лукбук удалён');
+  const handleEditLookbook = (lookbook: Lookbook) => {
+    setEditingLookbookId(lookbook.id);
+    setNewLookbookName(lookbook.name);
+    setNewPersonName(lookbook.person_name);
+    setSelectedPhotos(lookbook.photos);
+    setColorPalette(lookbook.color_palette);
+    setIsEditingLookbook(true);
+  };
+
+  const handleUpdateLookbook = async () => {
+    if (!editingLookbookId) return;
+
+    try {
+      const response = await fetch(LOOKBOOKS_API, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingLookbookId,
+          name: newLookbookName,
+          person_name: newPersonName,
+          photos: selectedPhotos,
+          color_palette: colorPalette
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to update lookbook');
+      
+      await fetchLookbooks();
+      setNewLookbookName('');
+      setNewPersonName('');
+      setSelectedPhotos([]);
+      setColorPalette(['#FF6B6B', '#4ECDC4', '#45B7D1']);
+      setEditingLookbookId(null);
+      setIsEditingLookbook(false);
+      toast.success('Лукбук обновлён!');
+    } catch (error) {
+      toast.error('Ошибка обновления лукбука');
+    }
+  };
+
+  const handleDeleteLookbook = async (id: string) => {
+    if (!confirm('Удалить лукбук?')) return;
+
+    try {
+      const response = await fetch(`${LOOKBOOKS_API}?id=${id}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) throw new Error('Failed to delete lookbook');
+      
+      await fetchLookbooks();
+      toast.success('Лукбук удалён');
+    } catch (error) {
+      toast.error('Ошибка удаления лукбука');
+    }
   };
 
   const handleAddColor = () => {
@@ -103,7 +198,17 @@ export default function Profile() {
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <h3 className="text-2xl font-light">Мои лукбуки</h3>
-                  <Dialog open={isCreatingLookbook} onOpenChange={setIsCreatingLookbook}>
+                  <Dialog open={isCreatingLookbook || isEditingLookbook} onOpenChange={(open) => {
+                    if (!open) {
+                      setIsCreatingLookbook(false);
+                      setIsEditingLookbook(false);
+                      setEditingLookbookId(null);
+                      setNewLookbookName('');
+                      setNewPersonName('');
+                      setSelectedPhotos([]);
+                      setColorPalette(['#FF6B6B', '#4ECDC4', '#45B7D1']);
+                    }
+                  }}>
                     <DialogTrigger asChild>
                       <Button>
                         <Icon name="Plus" className="mr-2" size={18} />
@@ -112,7 +217,7 @@ export default function Profile() {
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
-                        <DialogTitle>Новый лукбук</DialogTitle>
+                        <DialogTitle>{isEditingLookbook ? 'Редактировать лукбук' : 'Новый лукбук'}</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-6 py-4">
                         <div>
@@ -184,8 +289,8 @@ export default function Profile() {
                           </div>
                         </div>
 
-                        <Button onClick={handleCreateLookbook} className="w-full">
-                          Создать лукбук
+                        <Button onClick={isEditingLookbook ? handleUpdateLookbook : handleCreateLookbook} className="w-full">
+                          {isEditingLookbook ? 'Обновить лукбук' : 'Создать лукбук'}
                         </Button>
                       </div>
                     </DialogContent>
@@ -208,15 +313,24 @@ export default function Profile() {
                           <div className="flex justify-between items-start">
                             <div>
                               <CardTitle className="text-xl">{lookbook.name}</CardTitle>
-                              <p className="text-sm text-muted-foreground mt-1">Для: {lookbook.personName}</p>
+                              <p className="text-sm text-muted-foreground mt-1">Для: {lookbook.person_name}</p>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteLookbook(lookbook.id)}
-                            >
-                              <Icon name="Trash2" size={16} />
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditLookbook(lookbook)}
+                              >
+                                <Icon name="Edit" size={16} />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteLookbook(lookbook.id)}
+                              >
+                                <Icon name="Trash2" size={16} />
+                              </Button>
+                            </div>
                           </div>
                         </CardHeader>
                         <CardContent>
@@ -228,7 +342,7 @@ export default function Profile() {
                             </div>
                           )}
                           <div className="flex gap-2">
-                            {lookbook.colorPalette.slice(0, 5).map((color, index) => (
+                            {lookbook.color_palette.slice(0, 5).map((color, index) => (
                               <div
                                 key={index}
                                 className="w-8 h-8 rounded-full shadow-sm"
@@ -261,13 +375,13 @@ export default function Profile() {
                     {tryOnHistory.map((item) => (
                       <Card key={item.id} className="overflow-hidden">
                         <CardContent className="p-4">
-                          <img src={item.resultImage} alt="" className="w-full h-64 object-cover rounded-lg mb-3" />
+                          <img src={item.result_image} alt="" className="w-full h-64 object-cover rounded-lg mb-3" />
                           <div className="flex gap-2">
-                            <img src={item.personImage} alt="" className="w-16 h-16 object-cover rounded" />
-                            <img src={item.garmentImage} alt="" className="w-16 h-16 object-cover rounded" />
+                            <img src={item.person_image} alt="" className="w-16 h-16 object-cover rounded" />
+                            <img src={item.garment_image} alt="" className="w-16 h-16 object-cover rounded" />
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">
-                            {item.timestamp.toLocaleDateString()}
+                            {new Date(item.created_at).toLocaleDateString()}
                           </p>
                         </CardContent>
                       </Card>

@@ -1,0 +1,38 @@
+{
+  "tests": [
+    {
+      "name": "Test OPTIONS for CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedHeaders": {
+        "Access-Control-Allow-Origin": "*"
+      }
+    },
+    {
+      "name": "Test GET all lookbooks",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": [],
+      "bodyMatcher": "type"
+    },
+    {
+      "name": "Test POST create lookbook",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "name": "Test Lookbook",
+        "person_name": "John Doe",
+        "photos": [],
+        "color_palette": ["#FF0000"]
+      },
+      "expectedStatus": 201,
+      "expectedBody": {
+        "id": "string",
+        "name": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
