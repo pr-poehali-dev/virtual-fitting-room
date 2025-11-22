@@ -178,6 +178,26 @@ export default function Index() {
     }
   };
 
+  const handleDownloadImage = async () => {
+    if (!generatedImage) return;
+
+    try {
+      const response = await fetch(generatedImage);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `virtual-fitting-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Изображение скачано!');
+    } catch (error) {
+      toast.error('Ошибка скачивания');
+    }
+  };
+
   const continuePolling = async (statusUrl: string, personImage: string, garmentImg: string) => {
     let checkCount = 0;
     const maxChecks = 120;
@@ -498,14 +518,23 @@ export default function Index() {
                         alt="Generated result" 
                         className="max-w-full max-h-[500px] object-contain rounded-lg animate-fade-in" 
                       />
-                      {user && (
-                        <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-                          <DialogTrigger asChild>
-                            <Button className="w-full" variant="outline">
-                              <Icon name="BookmarkPlus" className="mr-2" size={20} />
-                              Сохранить в лукбук
-                            </Button>
-                          </DialogTrigger>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button 
+                          variant="outline" 
+                          onClick={handleDownloadImage}
+                          className="w-full"
+                        >
+                          <Icon name="Download" className="mr-2" size={20} />
+                          Скачать
+                        </Button>
+                        {user && (
+                          <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+                            <DialogTrigger asChild>
+                              <Button className="w-full" variant="outline">
+                                <Icon name="BookmarkPlus" className="mr-2" size={20} />
+                                В лукбук
+                              </Button>
+                            </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
                               <DialogTitle>Сохранить в лукбук</DialogTitle>
@@ -580,7 +609,8 @@ export default function Index() {
                             </div>
                           </DialogContent>
                         </Dialog>
-                      )}
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center space-y-3">
