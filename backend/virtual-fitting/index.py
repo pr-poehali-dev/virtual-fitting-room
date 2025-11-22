@@ -58,10 +58,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             status_response = requests.get(status_url, headers=headers, timeout=10)
-            print(f"Fal.ai status code: {status_response.status_code}")
-            print(f"Fal.ai response: {status_response.text[:500]}")
             
-            if status_response.status_code != 200:
+            if status_response.status_code not in [200, 202]:
                 return {
                     'statusCode': status_response.status_code,
                     'headers': {
