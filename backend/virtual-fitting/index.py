@@ -70,9 +70,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
         
         payload = {
-            "human_img_url": person_image,
-            "garment_img_url": garment_image,
-            "category": "auto"
+            "human_image_url": person_image,
+            "garment_image_url": garment_image,
+            "description": "clothing item"
         }
         
         response = requests.post(api_url, headers=headers, json=payload, timeout=120)
