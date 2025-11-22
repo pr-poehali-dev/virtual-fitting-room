@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,8 +23,10 @@ const clothingOptions = [
 export default function Index() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedClothing, setSelectedClothing] = useState<string>('');
+  const [customClothingImage, setCustomClothingImage] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [clothingMode, setClothingMode] = useState<'preset' | 'custom'>('preset');
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,19 +39,58 @@ export default function Index() {
     }
   };
 
+  const handleCustomClothingUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCustomClothingImage(reader.result as string);
+        setClothingMode('custom');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleGenerate = async () => {
-    if (!uploadedImage || !selectedClothing) {
-      toast.error('Загрузите фото и выберите одежду');
+    if (!uploadedImage) {
+      toast.error('Загрузите фотографию человека');
+      return;
+    }
+
+    const garmentImage = clothingMode === 'custom' ? customClothingImage : clothingOptions.find(item => item.id === selectedClothing)?.image;
+    
+    if (!garmentImage) {
+      toast.error('Выберите или загрузите одежду');
       return;
     }
 
     setIsGenerating(true);
     
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setGeneratedImage('https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/459920eb-67ca-4063-83a7-b7922a6e9a1c.jpg');
-    setIsGenerating(false);
-    toast.success('Изображение успешно сгенерировано!');
+    try {
+      const response = await fetch('https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          person_image: uploadedImage,
+          garment_image: garmentImage
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate image');
+      }
+      
+      setGeneratedImage(data.image_url);
+      toast.success('Изображение успешно сгенерировано!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Ошибка генерации');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -111,21 +153,52 @@ export default function Index() {
                     <label className="block text-sm font-medium mb-3">
                       Выберите одежду
                     </label>
-                    <Select value={selectedClothing} onValueChange={setSelectedClothing}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Выберите вариант" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {clothingOptions.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            <div className="flex items-center gap-3">
-                              <img src={item.image} alt={item.name} className="w-8 h-8 object-cover rounded" />
-                              {item.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Tabs value={clothingMode} onValueChange={(v) => setClothingMode(v as 'preset' | 'custom')} className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="preset">Из каталога</TabsTrigger>
+                        <TabsTrigger value="custom">Своё фото</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="preset" className="mt-4">
+                        <Select value={selectedClothing} onValueChange={setSelectedClothing}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Выберите вариант" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {clothingOptions.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                <div className="flex items-center gap-3">
+                                  <img src={item.image} alt={item.name} className="w-8 h-8 object-cover rounded" />
+                                  {item.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TabsContent>
+                      <TabsContent value="custom" className="mt-4">
+                        <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleCustomClothingUpload}
+                            className="hidden"
+                            id="clothing-upload"
+                          />
+                          <label htmlFor="clothing-upload" className="cursor-pointer">
+                            {customClothingImage ? (
+                              <img src={customClothingImage} alt="Custom clothing" className="max-h-32 mx-auto rounded-lg" />
+                            ) : (
+                              <div className="space-y-2">
+                                <Icon name="Shirt" className="mx-auto text-muted-foreground" size={32} />
+                                <p className="text-muted-foreground text-sm">
+                                  Загрузите фото одежды
+                                </p>
+                              </div>
+                            )}
+                          </label>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
                   </div>
 
                   <Button 
@@ -195,7 +268,7 @@ export default function Index() {
               </div>
               <h3 className="text-xl font-medium">2. Выберите одежду</h3>
               <p className="text-muted-foreground text-sm">
-                Из предложенных вариантов выберите интересующий предмет гардероба
+                Выберите из каталога или загрузите своё фото одежды
               </p>
             </div>
             <div className="text-center space-y-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
@@ -252,8 +325,8 @@ export default function Index() {
                 Можно ли использовать свою одежду?
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                В текущей версии доступны только предустановленные варианты одежды. 
-                Функция загрузки собственных изображений одежды появится в будущих обновлениях.
+                Да! Переключитесь на вкладку "Своё фото" и загрузите изображение любого предмета одежды. 
+                Для лучшего результата используйте фото на белом фоне.
               </AccordionContent>
             </AccordionItem>
             
