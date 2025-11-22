@@ -132,8 +132,7 @@ export default function Index() {
         
         try {
           const statusResponse = await fetch(
-            `https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885?status_url=${encodeURIComponent(statusUrl)}`,
-            { signal: controller.signal }
+            `https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885?status_url=${encodeURIComponent(statusUrl)}`
           );
           
           if (!statusResponse.ok) {
