@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from typing import Dict, Any
 import requests
 
@@ -75,23 +76,23 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             "description": "clothing item"
         }
         
-        response = requests.post(api_url, headers=headers, json=payload, timeout=120)
+        submit_response = requests.post(api_url, headers=headers, json=payload, timeout=30)
         
-        if response.status_code != 200:
+        if submit_response.status_code != 200:
             return {
-                'statusCode': response.status_code,
+                'statusCode': submit_response.status_code,
                 'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*'
                 },
                 'isBase64Encoded': False,
-                'body': json.dumps({'error': f'Fal.ai API error: {response.text}'})
+                'body': json.dumps({'error': f'Fal.ai API error: {submit_response.text}'})
             }
         
-        result = response.json()
-        result_url = result.get('image', {}).get('url') if isinstance(result.get('image'), dict) else result.get('image')
+        submit_result = submit_response.json()
+        request_id = submit_result.get('request_id')
         
-        if not result_url:
+        if not request_id:
             return {
                 'statusCode': 500,
                 'headers': {
@@ -99,21 +100,72 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'Access-Control-Allow-Origin': '*'
                 },
                 'isBase64Encoded': False,
-                'body': json.dumps({'error': 'Failed to generate image'})
+                'body': json.dumps({'error': 'No request_id returned'})
             }
         
+        status_url = f"https://fal.run/fal-ai/idm-vton/requests/{request_id}"
+        
+        max_attempts = 60
+        for attempt in range(max_attempts):
+            time.sleep(2)
+            
+            status_response = requests.get(status_url, headers=headers, timeout=30)
+            
+            if status_response.status_code != 200:
+                continue
+            
+            status_result = status_response.json()
+            status = status_result.get('status')
+            
+            if status == 'COMPLETED':
+                result_url = status_result.get('image', {}).get('url') if isinstance(status_result.get('image'), dict) else status_result.get('image')
+                
+                if not result_url:
+                    return {
+                        'statusCode': 500,
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': '*'
+                        },
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'error': 'No image URL in result'})
+                    }
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({
+                        'image_url': result_url,
+                        'request_id': context.request_id
+                    })
+                }
+            
+            elif status == 'FAILED':
+                return {
+                    'statusCode': 500,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': f'Generation failed: {status_result.get("error", "Unknown error")}'})
+                }
+        
         return {
-            'statusCode': 200,
+            'statusCode': 408,
             'headers': {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
             'isBase64Encoded': False,
-            'body': json.dumps({
-                'image_url': result_url,
-                'request_id': context.request_id
-            })
+            'body': json.dumps({'error': 'Generation timeout'})
         }
+        
+
         
     except Exception as e:
         return {
