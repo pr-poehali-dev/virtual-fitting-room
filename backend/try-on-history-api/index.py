@@ -6,6 +6,10 @@ from psycopg2.extras import RealDictCursor
 
 def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')
+    if '?' in dsn:
+        dsn += '&options=-c%20search_path%3Dt_p29007832_virtual_fitting_room'
+    else:
+        dsn += '?options=-c%20search_path%3Dt_p29007832_virtual_fitting_room'
     return psycopg2.connect(dsn)
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
