@@ -1,7 +1,7 @@
 import json
 import os
 from typing import Dict, Any
-import replicate
+import requests
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -51,8 +51,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Missing person_image or garment_image'})
             }
         
-        api_token = os.environ.get('REPLICATE_API_TOKEN')
-        if not api_token:
+        api_key = os.environ.get('FAL_API_KEY')
+        if not api_key:
             return {
                 'statusCode': 500,
                 'headers': {
@@ -60,19 +60,36 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'Access-Control-Allow-Origin': '*'
                 },
                 'isBase64Encoded': False,
-                'body': json.dumps({'error': 'REPLICATE_API_TOKEN not configured'})
+                'body': json.dumps({'error': 'FAL_API_KEY not configured'})
             }
         
-        output = replicate.run(
-            "cuuupid/idm-vton:c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
-            input={
-                "garm_img": garment_image,
-                "human_img": person_image,
-                "garment_des": "clothing item"
-            }
-        )
+        api_url = "https://fal.run/fal-ai/idm-vton"
+        headers = {
+            "Authorization": f"Key {api_key}",
+            "Content-Type": "application/json"
+        }
         
-        result_url = output if isinstance(output, str) else (output[0] if isinstance(output, list) and output else None)
+        payload = {
+            "human_img_url": person_image,
+            "garment_img_url": garment_image,
+            "category": "auto"
+        }
+        
+        response = requests.post(api_url, headers=headers, json=payload, timeout=120)
+        
+        if response.status_code != 200:
+            return {
+                'statusCode': response.status_code,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps({'error': f'Fal.ai API error: {response.text}'})
+            }
+        
+        result = response.json()
+        result_url = result.get('image', {}).get('url') if isinstance(result.get('image'), dict) else result.get('image')
         
         if not result_url:
             return {
