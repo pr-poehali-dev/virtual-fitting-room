@@ -119,6 +119,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'person_name': lookbook['person_name'],
                         'photos': lookbook['photos'] or [],
                         'color_palette': lookbook['color_palette'] or [],
+                        'is_public': lookbook.get('is_public', False),
+                        'share_token': lookbook.get('share_token'),
                         'created_at': lookbook['created_at'].isoformat(),
                         'updated_at': lookbook['updated_at'].isoformat()
                     })
@@ -143,6 +145,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'person_name': lb['person_name'],
                         'photos': lb['photos'] or [],
                         'color_palette': lb['color_palette'] or [],
+                        'is_public': lb.get('is_public', False),
+                        'share_token': lb.get('share_token'),
                         'created_at': lb['created_at'].isoformat(),
                         'updated_at': lb['updated_at'].isoformat()
                     } for lb in lookbooks])

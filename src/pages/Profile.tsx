@@ -16,6 +16,8 @@ interface Lookbook {
   person_name: string;
   photos: string[];
   color_palette: string[];
+  is_public?: boolean;
+  share_token?: string;
   created_at: string;
   updated_at: string;
 }
@@ -212,6 +214,15 @@ export default function Profile() {
   };
 
   const handleShareLookbook = async (lookbookId: string) => {
+    const lookbook = lookbooks.find(lb => lb.id === lookbookId);
+    
+    if (lookbook?.is_public && lookbook?.share_token) {
+      const shareUrl = `${window.location.origin}/lookbook/${lookbook.share_token}`;
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success('Ссылка скопирована в буфер обмена!');
+      return;
+    }
+    
     try {
       const shareToken = crypto.randomUUID();
       
@@ -236,6 +247,30 @@ export default function Profile() {
       await fetchLookbooks();
     } catch (error) {
       toast.error('Ошибка создания ссылки');
+    }
+  };
+
+  const handleUnshareLookbook = async (lookbookId: string) => {
+    try {
+      const response = await fetch(LOOKBOOKS_API, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.id
+        },
+        body: JSON.stringify({
+          id: lookbookId,
+          is_public: false,
+          share_token: null
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to unshare lookbook');
+      
+      toast.success('Публичный доступ отключён');
+      await fetchLookbooks();
+    } catch (error) {
+      toast.error('Ошибка отключения доступа');
     }
   };
 
@@ -385,14 +420,26 @@ export default function Profile() {
                               <p className="text-sm text-muted-foreground mt-1">Для: {lookbook.person_name}</p>
                             </div>
                             <div className="flex gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleShareLookbook(lookbook.id)}
-                                title="Поделиться"
-                              >
-                                <Icon name="Share2" size={16} />
-                              </Button>
+                              {lookbook.is_public ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleUnshareLookbook(lookbook.id)}
+                                  title="Отключить публичный доступ"
+                                  className="text-green-600 hover:text-green-700"
+                                >
+                                  <Icon name="Globe" size={16} />
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleShareLookbook(lookbook.id)}
+                                  title="Поделиться"
+                                >
+                                  <Icon name="Share2" size={16} />
+                                </Button>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="sm"
