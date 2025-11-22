@@ -57,7 +57,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing status_url parameter'})
                 }
             
-            status_response = requests.get(status_url, headers=headers, timeout=30)
+            status_response = requests.get(status_url, headers=headers, timeout=10)
             
             if status_response.status_code != 200:
                 return {

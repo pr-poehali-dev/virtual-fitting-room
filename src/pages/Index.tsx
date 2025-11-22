@@ -128,43 +128,62 @@ export default function Index() {
         
         checkCount++;
         
-        const statusResponse = await fetch(
-          `https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885?status_url=${encodeURIComponent(statusUrl)}`,
-          { signal: controller.signal }
-        );
-        
-        const statusData = await statusResponse.json();
-        
-        if (statusData.status === 'COMPLETED') {
-          clearInterval(progressInterval);
-          setLoadingProgress(100);
-          setGeneratedImage(statusData.image_url);
-          toast.success('Изображение успешно сгенерировано!');
+        try {
+          const statusResponse = await fetch(
+            `https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885?status_url=${encodeURIComponent(statusUrl)}`,
+            { signal: controller.signal }
+          );
           
-          if (user) {
-            await fetch('https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-User-Id': user.id
-              },
-              body: JSON.stringify({
-                person_image: uploadedImage,
-                garment_image: garmentImage,
-                result_image: statusData.image_url
-              })
-            });
+          if (!statusResponse.ok) {
+            console.warn('Status check failed, retrying...', statusResponse.status);
+            setTimeout(() => checkStatus(), 2000);
+            return;
           }
           
-          return;
+          const statusData = await statusResponse.json();
+          
+          if (statusData.status === 'COMPLETED') {
+            clearInterval(progressInterval);
+            setLoadingProgress(100);
+            setGeneratedImage(statusData.image_url);
+            toast.success('Изображение успешно сгенерировано!');
+            
+            if (user) {
+              try {
+                await fetch('https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-Id': user.id
+                  },
+                  body: JSON.stringify({
+                    person_image: uploadedImage,
+                    garment_image: garmentImage,
+                    result_image: statusData.image_url
+                  })
+                });
+              } catch (historyError) {
+                console.warn('Failed to save to history:', historyError);
+              }
+            }
+            
+            return;
+          }
+          
+          if (statusData.status === 'FAILED') {
+            clearInterval(progressInterval);
+            throw new Error(statusData.error || 'Generation failed');
+          }
+          
+          setTimeout(() => checkStatus(), 2000);
+        } catch (fetchError) {
+          if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+            throw fetchError;
+          }
+          
+          console.warn('Fetch error during status check, retrying...', fetchError);
+          setTimeout(() => checkStatus(), 2000);
         }
-        
-        if (statusData.status === 'FAILED') {
-          clearInterval(progressInterval);
-          throw new Error(statusData.error || 'Generation failed');
-        }
-        
-        setTimeout(() => checkStatus(), 2000);
       };
       
       await checkStatus();
