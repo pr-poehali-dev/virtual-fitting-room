@@ -80,9 +80,10 @@ export default function Profile() {
         }
       });
       const data = await response.json();
-      setLookbooks(data);
+      setLookbooks(Array.isArray(data) ? data : []);
     } catch (error) {
       toast.error('Ошибка загрузки лукбуков');
+      setLookbooks([]);
     } finally {
       setIsLoading(false);
     }
@@ -96,9 +97,10 @@ export default function Profile() {
         }
       });
       const data = await response.json();
-      setTryOnHistory(data);
+      setTryOnHistory(Array.isArray(data) ? data : []);
     } catch (error) {
       toast.error('Ошибка загрузки истории');
+      setTryOnHistory([]);
     }
   };
 
