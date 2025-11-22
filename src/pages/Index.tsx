@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
@@ -32,6 +35,12 @@ export default function Index() {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [clothingMode, setClothingMode] = useState<'preset' | 'custom'>('preset');
+  const [lookbooks, setLookbooks] = useState<any[]>([]);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [newLookbookName, setNewLookbookName] = useState('');
+  const [newLookbookPersonName, setNewLookbookPersonName] = useState('');
+  const [selectedLookbookId, setSelectedLookbookId] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const pendingGeneration = localStorage.getItem('pendingGeneration');
@@ -41,7 +50,30 @@ export default function Index() {
       setIsGenerating(true);
       continuePolling(data.statusUrl, data.uploadedImage, data.garmentImage);
     }
-  }, []);
+
+    if (user) {
+      fetchLookbooks();
+    }
+  }, [user]);
+
+  const fetchLookbooks = async () => {
+    if (!user) return;
+    
+    try {
+      const response = await fetch('https://functions.poehali.dev/1fbf3e3d-c41f-491e-88ff-8a087c8c4c62', {
+        headers: {
+          'X-User-Id': user.id
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setLookbooks(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch lookbooks:', error);
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -73,6 +105,76 @@ export default function Index() {
       setLoadingProgress(0);
       setAbortController(null);
       localStorage.removeItem('pendingGeneration');
+    }
+  };
+
+  const handleSaveToExistingLookbook = async () => {
+    if (!selectedLookbookId || !generatedImage || !user) return;
+
+    setIsSaving(true);
+    try {
+      const lookbook = lookbooks.find(lb => lb.id === selectedLookbookId);
+      const updatedPhotos = [...(lookbook?.photos || []), generatedImage];
+
+      const response = await fetch('https://functions.poehali.dev/1fbf3e3d-c41f-491e-88ff-8a087c8c4c62', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.id
+        },
+        body: JSON.stringify({
+          id: selectedLookbookId,
+          photos: updatedPhotos
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Фото добавлено в лукбук!');
+        setShowSaveDialog(false);
+        setSelectedLookbookId('');
+        await fetchLookbooks();
+      } else {
+        throw new Error('Failed to save');
+      }
+    } catch (error) {
+      toast.error('Ошибка сохранения');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveToNewLookbook = async () => {
+    if (!newLookbookName || !newLookbookPersonName || !generatedImage || !user) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch('https://functions.poehali.dev/1fbf3e3d-c41f-491e-88ff-8a087c8c4c62', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.id
+        },
+        body: JSON.stringify({
+          name: newLookbookName,
+          person_name: newLookbookPersonName,
+          photos: [generatedImage],
+          color_palette: []
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Лукбук создан!');
+        setShowSaveDialog(false);
+        setNewLookbookName('');
+        setNewLookbookPersonName('');
+        await fetchLookbooks();
+      } else {
+        throw new Error('Failed to create lookbook');
+      }
+    } catch (error) {
+      toast.error('Ошибка создания лукбука');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -390,11 +492,96 @@ export default function Index() {
                       </div>
                     </div>
                   ) : generatedImage ? (
-                    <img 
-                      src={generatedImage} 
-                      alt="Generated result" 
-                      className="max-w-full max-h-[500px] object-contain rounded-lg animate-fade-in" 
-                    />
+                    <div className="space-y-4">
+                      <img 
+                        src={generatedImage} 
+                        alt="Generated result" 
+                        className="max-w-full max-h-[500px] object-contain rounded-lg animate-fade-in" 
+                      />
+                      {user && (
+                        <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+                          <DialogTrigger asChild>
+                            <Button className="w-full" variant="outline">
+                              <Icon name="BookmarkPlus" className="mr-2" size={20} />
+                              Сохранить в лукбук
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Сохранить в лукбук</DialogTitle>
+                              <DialogDescription>
+                                Выберите существующий лукбук или создайте новый
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              {lookbooks.length > 0 && (
+                                <div className="space-y-2">
+                                  <Label>Существующий лукбук</Label>
+                                  <Select value={selectedLookbookId} onValueChange={setSelectedLookbookId}>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Выберите лукбук" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {lookbooks.map((lb) => (
+                                        <SelectItem key={lb.id} value={lb.id}>
+                                          {lb.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <Button 
+                                    className="w-full" 
+                                    onClick={handleSaveToExistingLookbook}
+                                    disabled={!selectedLookbookId || isSaving}
+                                  >
+                                    {isSaving ? 'Сохранение...' : 'Добавить в выбранный'}
+                                  </Button>
+                                </div>
+                              )}
+                              
+                              <div className="relative">
+                                <div className="absolute inset-0 flex items-center">
+                                  <span className="w-full border-t" />
+                                </div>
+                                <div className="relative flex justify-center text-xs uppercase">
+                                  <span className="bg-background px-2 text-muted-foreground">
+                                    Или создать новый
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label htmlFor="lookbook-name">Название лукбука</Label>
+                                <Input
+                                  id="lookbook-name"
+                                  placeholder="Весна 2025"
+                                  value={newLookbookName}
+                                  onChange={(e) => setNewLookbookName(e.target.value)}
+                                />
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label htmlFor="person-name">Имя человека</Label>
+                                <Input
+                                  id="person-name"
+                                  placeholder="Анна"
+                                  value={newLookbookPersonName}
+                                  onChange={(e) => setNewLookbookPersonName(e.target.value)}
+                                />
+                              </div>
+
+                              <Button 
+                                className="w-full" 
+                                onClick={handleSaveToNewLookbook}
+                                disabled={!newLookbookName || !newLookbookPersonName || isSaving}
+                              >
+                                {isSaving ? 'Создание...' : 'Создать и добавить'}
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+                    </div>
                   ) : (
                     <div className="text-center space-y-3">
                       <Icon name="Image" className="mx-auto text-muted-foreground" size={48} />
