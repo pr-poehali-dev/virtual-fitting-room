@@ -211,10 +211,32 @@ export default function Profile() {
     }
   };
 
-  const handleShareLookbook = (lookbookId: string) => {
-    const shareUrl = `${window.location.origin}/lookbook/${lookbookId}`;
-    navigator.clipboard.writeText(shareUrl);
-    toast.success('Ссылка скопирована в буфер обмена!');
+  const handleShareLookbook = async (lookbookId: string) => {
+    try {
+      const shareToken = crypto.randomUUID();
+      
+      const response = await fetch(LOOKBOOKS_API, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.id
+        },
+        body: JSON.stringify({
+          id: lookbookId,
+          is_public: true,
+          share_token: shareToken
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to share lookbook');
+      
+      const shareUrl = `${window.location.origin}/lookbook/${shareToken}`;
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success('Ссылка скопирована в буфер обмена!');
+      await fetchLookbooks();
+    } catch (error) {
+      toast.error('Ошибка создания ссылки');
+    }
   };
 
   const handleAddColor = () => {

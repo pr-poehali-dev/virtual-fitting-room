@@ -36,20 +36,57 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         headers = event.get('headers', {})
         user_id = headers.get('x-user-id') or headers.get('X-User-Id')
         
-        if not user_id:
-            return {
-                'statusCode': 401,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                'isBase64Encoded': False,
-                'body': json.dumps({'error': 'Unauthorized - User ID required'})
-            }
-        
         if method == 'GET':
             query_params = event.get('queryStringParameters') or {}
             lookbook_id = query_params.get('id')
+            share_token = query_params.get('share_token')
+            
+            if share_token:
+                cursor.execute(
+                    "SELECT * FROM lookbooks WHERE share_token = %s AND is_public = true",
+                    (share_token,)
+                )
+                lookbook = cursor.fetchone()
+                
+                if not lookbook:
+                    return {
+                        'statusCode': 404,
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': '*'
+                        },
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'error': 'Lookbook not found or not public'})
+                    }
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({
+                        'id': str(lookbook['id']),
+                        'name': lookbook['name'],
+                        'person_name': lookbook['person_name'],
+                        'photos': lookbook['photos'] or [],
+                        'color_palette': lookbook['color_palette'] or [],
+                        'created_at': lookbook['created_at'].isoformat(),
+                        'updated_at': lookbook['updated_at'].isoformat()
+                    })
+                }
+            
+            if not user_id:
+                return {
+                    'statusCode': 401,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Unauthorized - User ID required'})
+                }
             
             if lookbook_id:
                 cursor.execute(
@@ -112,6 +149,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
         
         elif method == 'POST':
+            if not user_id:
+                return {
+                    'statusCode': 401,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Unauthorized - User ID required'})
+                }
+            
             body_str = event.get('body', '{}')
             body_data = json.loads(body_str)
             
@@ -162,6 +210,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         elif method == 'PUT':
+            if not user_id:
+                return {
+                    'statusCode': 401,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Unauthorized - User ID required'})
+                }
+            
             body_str = event.get('body', '{}')
             body_data = json.loads(body_str)
             
@@ -170,6 +229,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             person_name = body_data.get('person_name')
             photos = body_data.get('photos')
             color_palette = body_data.get('color_palette')
+            is_public = body_data.get('is_public')
+            share_token = body_data.get('share_token')
             
             if not lookbook_id:
                 return {
@@ -189,11 +250,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     person_name = COALESCE(%s, person_name),
                     photos = COALESCE(%s, photos),
                     color_palette = COALESCE(%s, color_palette),
+                    is_public = COALESCE(%s, is_public),
+                    share_token = COALESCE(%s, share_token),
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s AND user_id = %s
                 RETURNING id, name, person_name, photos, color_palette, created_at, updated_at
                 """,
-                (name, person_name, photos, color_palette, lookbook_id, user_id)
+                (name, person_name, photos, color_palette, is_public, share_token, lookbook_id, user_id)
             )
             
             lookbook = cursor.fetchone()
@@ -231,6 +294,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         elif method == 'DELETE':
+            if not user_id:
+                return {
+                    'statusCode': 401,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Unauthorized - User ID required'})
+                }
+            
             query_params = event.get('queryStringParameters') or {}
             lookbook_id = query_params.get('id')
             
