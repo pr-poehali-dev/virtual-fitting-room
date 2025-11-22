@@ -65,12 +65,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'HUGGINGFACE_API_TOKEN not configured'})
             }
         
-        api_url = "https://api.endpoints.huggingface.cloud/v2/models/yisol/IDM-VTON"
-        headers = {"Authorization": f"Bearer {api_token}"}
+        api_url = "https://api-inference.huggingface.co/models/yisol/IDM-VTON"
+        headers = {
+            "Authorization": f"Bearer {api_token}",
+            "Content-Type": "application/json"
+        }
         
         payload = {
-            "inputs": {
-                "person_image": person_image,
+            "inputs": person_image,
+            "parameters": {
                 "garment_image": garment_image
             }
         }
