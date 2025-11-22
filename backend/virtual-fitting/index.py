@@ -64,7 +64,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'FAL_API_KEY not configured'})
             }
         
-        api_url = "https://fal.run/fal-ai/idm-vton"
+        queue_url = "https://queue.fal.run/fal-ai/idm-vton"
         headers = {
             "Authorization": f"Key {api_key}",
             "Content-Type": "application/json"
@@ -76,7 +76,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             "description": "clothing item"
         }
         
-        submit_response = requests.post(api_url, headers=headers, json=payload, timeout=30)
+        submit_response = requests.post(queue_url, headers=headers, json=payload, timeout=30)
         
         if submit_response.status_code != 200:
             return {
@@ -90,9 +90,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         submit_result = submit_response.json()
-        request_id = submit_result.get('request_id')
+        status_url = submit_result.get('status_url') or submit_result.get('response_url')
         
-        if not request_id:
+        if not status_url:
             return {
                 'statusCode': 500,
                 'headers': {
@@ -100,14 +100,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'Access-Control-Allow-Origin': '*'
                 },
                 'isBase64Encoded': False,
-                'body': json.dumps({'error': 'No request_id returned'})
+                'body': json.dumps({'error': 'No status_url returned'})
             }
         
-        status_url = f"https://fal.run/fal-ai/idm-vton/requests/{request_id}"
-        
-        max_attempts = 60
+        max_attempts = 90
         for attempt in range(max_attempts):
-            time.sleep(2)
+            time.sleep(1)
             
             status_response = requests.get(status_url, headers=headers, timeout=30)
             
