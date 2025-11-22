@@ -33,6 +33,16 @@ export default function Index() {
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [clothingMode, setClothingMode] = useState<'preset' | 'custom'>('preset');
 
+  useEffect(() => {
+    const pendingGeneration = localStorage.getItem('pendingGeneration');
+    if (pendingGeneration) {
+      const data = JSON.parse(pendingGeneration);
+      setUploadedImage(data.uploadedImage);
+      setIsGenerating(true);
+      continuePolling(data.statusUrl, data.uploadedImage, data.garmentImage);
+    }
+  }, []);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -62,7 +72,92 @@ export default function Index() {
       setIsGenerating(false);
       setLoadingProgress(0);
       setAbortController(null);
+      localStorage.removeItem('pendingGeneration');
     }
+  };
+
+  const continuePolling = async (statusUrl: string, personImage: string, garmentImg: string) => {
+    let checkCount = 0;
+    const maxChecks = 120;
+    
+    const progressInterval = setInterval(() => {
+      setLoadingProgress(prev => {
+        if (prev >= 90) return prev;
+        return prev + Math.random() * 10;
+      });
+    }, 1000);
+
+    const checkStatus = async (): Promise<void> => {
+      if (checkCount >= maxChecks) {
+        clearInterval(progressInterval);
+        localStorage.removeItem('pendingGeneration');
+        toast.error('Превышено время ожидания');
+        setIsGenerating(false);
+        return;
+      }
+      
+      checkCount++;
+      
+      try {
+        const statusResponse = await fetch(
+          `https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885?status_url=${encodeURIComponent(statusUrl)}`
+        );
+        
+        if (!statusResponse.ok) {
+          console.warn('Status check failed, retrying...', statusResponse.status);
+          setTimeout(() => checkStatus(), 2000);
+          return;
+        }
+        
+        const statusData = await statusResponse.json();
+        console.log('Status check #' + checkCount + ':', statusData);
+        
+        if (statusData.status === 'COMPLETED') {
+          clearInterval(progressInterval);
+          setLoadingProgress(100);
+          setGeneratedImage(statusData.image_url);
+          localStorage.removeItem('pendingGeneration');
+          toast.success('Изображение успешно сгенерировано!');
+          setIsGenerating(false);
+          
+          if (user) {
+            try {
+              await fetch('https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-User-Id': user.id
+                },
+                body: JSON.stringify({
+                  person_image: personImage,
+                  garment_image: garmentImg,
+                  result_image: statusData.image_url
+                })
+              });
+            } catch (historyError) {
+              console.warn('Failed to save to history:', historyError);
+            }
+          }
+          
+          return;
+        }
+        
+        if (statusData.status === 'FAILED') {
+          clearInterval(progressInterval);
+          localStorage.removeItem('pendingGeneration');
+          toast.error(statusData.error || 'Ошибка генерации');
+          setIsGenerating(false);
+          return;
+        }
+        
+        setTimeout(() => checkStatus(), 2000);
+      } catch (fetchError) {
+        console.warn('Fetch error during status check, retrying...', fetchError);
+        setTimeout(() => checkStatus(), 2000);
+      }
+    };
+    
+    await checkStatus();
   };
 
   const handleGenerate = async () => {
@@ -118,85 +213,21 @@ export default function Index() {
         clearInterval(progressInterval);
         throw new Error('No status URL returned');
       }
+
+      localStorage.setItem('pendingGeneration', JSON.stringify({
+        statusUrl,
+        uploadedImage,
+        garmentImage
+      }));
       
-      let checkCount = 0;
-      const maxChecks = 120;
-      
-      const checkStatus = async (): Promise<void> => {
-        if (checkCount >= maxChecks) {
-          clearInterval(progressInterval);
-          throw new Error('Generation timeout');
-        }
-        
-        checkCount++;
-        
-        try {
-          const statusResponse = await fetch(
-            `https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885?status_url=${encodeURIComponent(statusUrl)}`
-          );
-          
-          if (!statusResponse.ok) {
-            console.warn('Status check failed, retrying...', statusResponse.status);
-            setTimeout(() => checkStatus(), 2000);
-            return;
-          }
-          
-          const statusData = await statusResponse.json();
-          console.log('Status check #' + checkCount + ':', statusData);
-          
-          if (statusData.status === 'COMPLETED') {
-            clearInterval(progressInterval);
-            setLoadingProgress(100);
-            setGeneratedImage(statusData.image_url);
-            toast.success('Изображение успешно сгенерировано!');
-            
-            if (user) {
-              try {
-                await fetch('https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'X-User-Id': user.id
-                  },
-                  body: JSON.stringify({
-                    person_image: uploadedImage,
-                    garment_image: garmentImage,
-                    result_image: statusData.image_url
-                  })
-                });
-              } catch (historyError) {
-                console.warn('Failed to save to history:', historyError);
-              }
-            }
-            
-            return;
-          }
-          
-          if (statusData.status === 'FAILED') {
-            clearInterval(progressInterval);
-            throw new Error(statusData.error || 'Generation failed');
-          }
-          
-          setTimeout(() => checkStatus(), 2000);
-        } catch (fetchError) {
-          if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-            throw fetchError;
-          }
-          
-          console.warn('Fetch error during status check, retrying...', fetchError);
-          setTimeout(() => checkStatus(), 2000);
-        }
-      };
-      
-      await checkStatus();
+      await continuePolling(statusUrl, uploadedImage, garmentImage);
     } catch (error) {
-      clearInterval(progressInterval);
       if (error instanceof Error && error.name === 'AbortError') {
         toast.info('Генерация отменена');
       } else {
         toast.error(error instanceof Error ? error.message : 'Ошибка генерации');
       }
-    } finally {
+      localStorage.removeItem('pendingGeneration');
       setIsGenerating(false);
       setLoadingProgress(0);
       setAbortController(null);
