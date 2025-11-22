@@ -60,7 +60,7 @@ export default function Index() {
     if (!user) return;
     
     try {
-      const response = await fetch('https://functions.poehali.dev/1fbf3e3d-c41f-491e-88ff-8a087c8c4c62', {
+      const response = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
         headers: {
           'X-User-Id': user.id
         }
@@ -116,7 +116,7 @@ export default function Index() {
       const lookbook = lookbooks.find(lb => lb.id === selectedLookbookId);
       const updatedPhotos = [...(lookbook?.photos || []), generatedImage];
 
-      const response = await fetch('https://functions.poehali.dev/1fbf3e3d-c41f-491e-88ff-8a087c8c4c62', {
+      const response = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -148,7 +148,7 @@ export default function Index() {
 
     setIsSaving(true);
     try {
-      const response = await fetch('https://functions.poehali.dev/1fbf3e3d-c41f-491e-88ff-8a087c8c4c62', {
+      const response = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -196,6 +196,15 @@ export default function Index() {
     } catch (error) {
       toast.error('Ошибка скачивания');
     }
+  };
+
+  const handleReset = () => {
+    setUploadedImage(null);
+    setSelectedClothing('');
+    setCustomClothingImage(null);
+    setGeneratedImage(null);
+    setClothingMode('preset');
+    localStorage.removeItem('pendingGeneration');
   };
 
   const continuePolling = async (statusUrl: string, personImage: string, garmentImg: string) => {
@@ -518,23 +527,24 @@ export default function Index() {
                         alt="Generated result" 
                         className="max-w-full max-h-[500px] object-contain rounded-lg animate-fade-in" 
                       />
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button 
-                          variant="outline" 
-                          onClick={handleDownloadImage}
-                          className="w-full"
-                        >
-                          <Icon name="Download" className="mr-2" size={20} />
-                          Скачать
-                        </Button>
-                        {user && (
-                          <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-                            <DialogTrigger asChild>
-                              <Button className="w-full" variant="outline">
-                                <Icon name="BookmarkPlus" className="mr-2" size={20} />
-                                В лукбук
-                              </Button>
-                            </DialogTrigger>
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <Button 
+                            variant="outline" 
+                            onClick={handleDownloadImage}
+                            className="w-full"
+                          >
+                            <Icon name="Download" className="mr-2" size={20} />
+                            Скачать
+                          </Button>
+                          {user && (
+                            <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+                              <DialogTrigger asChild>
+                                <Button className="w-full" variant="outline">
+                                  <Icon name="BookmarkPlus" className="mr-2" size={20} />
+                                  В лукбук
+                                </Button>
+                              </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
                               <DialogTitle>Сохранить в лукбук</DialogTitle>
@@ -609,7 +619,16 @@ export default function Index() {
                             </div>
                           </DialogContent>
                         </Dialog>
-                        )}
+                          )}
+                        </div>
+                        <Button 
+                          variant="secondary" 
+                          onClick={handleReset}
+                          className="w-full"
+                        >
+                          <Icon name="RotateCcw" className="mr-2" size={20} />
+                          Начать заново
+                        </Button>
                       </div>
                     </div>
                   ) : (
