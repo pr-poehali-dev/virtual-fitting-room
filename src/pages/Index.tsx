@@ -217,7 +217,7 @@ export default function Index() {
                     {isGenerating ? (
                       <>
                         <Icon name="Loader2" className="mr-2 animate-spin" size={20} />
-                        Генерация...
+                        Обрабатываем (20-30 сек)...
                       </>
                     ) : (
                       <>
