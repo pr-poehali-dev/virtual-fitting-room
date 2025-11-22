@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -29,6 +29,7 @@ export default function Index() {
   const [customClothingImage, setCustomClothingImage] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [clothingMode, setClothingMode] = useState<'preset' | 'custom'>('preset');
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,6 +69,14 @@ export default function Index() {
     }
 
     setIsGenerating(true);
+    setLoadingProgress(0);
+    
+    const progressInterval = setInterval(() => {
+      setLoadingProgress(prev => {
+        if (prev >= 90) return prev;
+        return prev + Math.random() * 10;
+      });
+    }, 1000);
     
     try {
       const response = await fetch('https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885', {
@@ -83,9 +92,17 @@ export default function Index() {
 
       const data = await response.json();
       
+      clearInterval(progressInterval);
+      
       if (!response.ok) {
+        if (response.status === 503) {
+          toast.loading('Модель загружается, пожалуйста подождите...', { duration: 3000 });
+          setLoadingProgress(50);
+        }
         throw new Error(data.error || 'Failed to generate image');
       }
+      
+      setLoadingProgress(100);
       
       setGeneratedImage(data.image_url);
       toast.success('Изображение успешно сгенерировано!');
@@ -105,9 +122,11 @@ export default function Index() {
         });
       }
     } catch (error) {
+      clearInterval(progressInterval);
       toast.error(error instanceof Error ? error.message : 'Ошибка генерации');
     } finally {
       setIsGenerating(false);
+      setLoadingProgress(0);
     }
   };
 
@@ -226,6 +245,20 @@ export default function Index() {
                       </>
                     )}
                   </Button>
+                  
+                  {isGenerating && (
+                    <div className="space-y-2">
+                      <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                        <div 
+                          className="bg-primary h-full transition-all duration-500 ease-out"
+                          style={{ width: `${loadingProgress}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground text-center">
+                        {loadingProgress < 50 ? 'Отправляем запрос...' : loadingProgress < 90 ? 'AI обрабатывает изображение...' : 'Почти готово...'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -233,7 +266,17 @@ export default function Index() {
             <Card className="animate-scale-in" style={{ animationDelay: '0.1s' }}>
               <CardContent className="p-8">
                 <div className="min-h-[500px] flex items-center justify-center bg-muted rounded-lg">
-                  {generatedImage ? (
+                  {isGenerating && !generatedImage ? (
+                    <div className="text-center space-y-4">
+                      <Icon name="Loader2" className="mx-auto text-primary animate-spin" size={64} />
+                      <div className="space-y-2">
+                        <p className="text-lg font-medium">Генерируем примерку...</p>
+                        <p className="text-sm text-muted-foreground">
+                          {loadingProgress < 50 ? 'Модель загружается (первый запуск может занять до минуты)' : 'Обрабатываем изображение...'}
+                        </p>
+                      </div>
+                    </div>
+                  ) : generatedImage ? (
                     <img 
                       src={generatedImage} 
                       alt="Generated result" 
