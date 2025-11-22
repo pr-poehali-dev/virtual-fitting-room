@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
+import { useAuth } from '@/context/AuthContext';
 
 interface Lookbook {
   id: string;
@@ -30,6 +32,8 @@ const LOOKBOOKS_API = 'https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3
 const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
 
 export default function Profile() {
+  const { user, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [lookbooks, setLookbooks] = useState<Lookbook[]>([]);
   const [tryOnHistory, setTryOnHistory] = useState<TryOnHistory[]>([]);
   const [isCreatingLookbook, setIsCreatingLookbook] = useState(false);
@@ -42,9 +46,29 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchLookbooks();
-    fetchHistory();
-  }, []);
+    if (!authLoading && !user) {
+      navigate('/login');
+      return;
+    }
+    if (user) {
+      fetchLookbooks();
+      fetchHistory();
+    }
+  }, [user, authLoading, navigate]);
+
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+          <Icon name="Loader2" className="animate-spin" size={48} />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   const fetchLookbooks = async () => {
     try {
@@ -168,6 +192,12 @@ export default function Profile() {
     } catch (error) {
       toast.error('Ошибка удаления лукбука');
     }
+  };
+
+  const handleShareLookbook = (lookbookId: string) => {
+    const shareUrl = `${window.location.origin}/lookbook/${lookbookId}`;
+    navigator.clipboard.writeText(shareUrl);
+    toast.success('Ссылка скопирована в буфер обмена!');
   };
 
   const handleAddColor = () => {
@@ -319,7 +349,16 @@ export default function Profile() {
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                onClick={() => handleShareLookbook(lookbook.id)}
+                                title="Поделиться"
+                              >
+                                <Icon name="Share2" size={16} />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => handleEditLookbook(lookbook)}
+                                title="Редактировать"
                               >
                                 <Icon name="Edit" size={16} />
                               </Button>
@@ -327,6 +366,7 @@ export default function Profile() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleDeleteLookbook(lookbook.id)}
+                                title="Удалить"
                               >
                                 <Icon name="Trash2" size={16} />
                               </Button>

@@ -1,4 +1,5 @@
 {
+  "auth-api": "https://functions.poehali.dev/589c58eb-91b4-4f2a-923c-6a91ed722a82",
   "try-on-history-api": "https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd",
   "lookbooks-api": "https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b",
   "color-type-analysis": "https://functions.poehali.dev/dc1d4a27-c7b0-448b-8b71-3dc704a7c27b",
