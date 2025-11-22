@@ -104,6 +104,7 @@ export default function Index() {
       });
 
       const submitData = await submitResponse.json();
+      console.log('Submit response:', submitData);
       
       if (!submitResponse.ok) {
         clearInterval(progressInterval);
@@ -111,6 +112,7 @@ export default function Index() {
       }
       
       const statusUrl = submitData.status_url;
+      console.log('Status URL:', statusUrl);
       
       if (!statusUrl) {
         clearInterval(progressInterval);
@@ -141,6 +143,7 @@ export default function Index() {
           }
           
           const statusData = await statusResponse.json();
+          console.log('Status check #' + checkCount + ':', statusData);
           
           if (statusData.status === 'COMPLETED') {
             clearInterval(progressInterval);
