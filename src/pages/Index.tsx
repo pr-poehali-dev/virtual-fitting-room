@@ -545,7 +545,7 @@ export default function Index() {
                                   В лукбук
                                 </Button>
                               </DialogTrigger>
-                          <DialogContent>
+                          <DialogContent onInteractOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
                             <DialogHeader>
                               <DialogTitle>Сохранить в лукбук</DialogTitle>
                               <DialogDescription>
@@ -615,6 +615,14 @@ export default function Index() {
                                 disabled={!newLookbookName || !newLookbookPersonName || isSaving}
                               >
                                 {isSaving ? 'Создание...' : 'Создать и добавить'}
+                              </Button>
+
+                              <Button 
+                                variant="ghost" 
+                                className="w-full" 
+                                onClick={() => setShowSaveDialog(false)}
+                              >
+                                Отмена
                               </Button>
                             </div>
                           </DialogContent>
