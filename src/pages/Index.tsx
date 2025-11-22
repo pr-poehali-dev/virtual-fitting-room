@@ -30,6 +30,7 @@ export default function Index() {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [clothingMode, setClothingMode] = useState<'preset' | 'custom'>('preset');
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,6 +56,15 @@ export default function Index() {
     }
   };
 
+  const handleCancelGeneration = () => {
+    if (abortController) {
+      abortController.abort();
+      setIsGenerating(false);
+      setLoadingProgress(0);
+      setAbortController(null);
+    }
+  };
+
   const handleGenerate = async () => {
     if (!uploadedImage) {
       toast.error('Загрузите фотографию человека');
@@ -68,6 +78,8 @@ export default function Index() {
       return;
     }
 
+    const controller = new AbortController();
+    setAbortController(controller);
     setIsGenerating(true);
     setLoadingProgress(0);
     
@@ -80,6 +92,7 @@ export default function Index() {
     
     try {
       const response = await fetch('https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885', {
+        signal: controller.signal,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -123,10 +136,15 @@ export default function Index() {
       }
     } catch (error) {
       clearInterval(progressInterval);
-      toast.error(error instanceof Error ? error.message : 'Ошибка генерации');
+      if (error instanceof Error && error.name === 'AbortError') {
+        toast.info('Генерация отменена');
+      } else {
+        toast.error(error instanceof Error ? error.message : 'Ошибка генерации');
+      }
     } finally {
       setIsGenerating(false);
       setLoadingProgress(0);
+      setAbortController(null);
     }
   };
 
@@ -247,7 +265,7 @@ export default function Index() {
                   </Button>
                   
                   {isGenerating && (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                         <div 
                           className="bg-primary h-full transition-all duration-500 ease-out"
@@ -257,6 +275,15 @@ export default function Index() {
                       <p className="text-xs text-muted-foreground text-center">
                         {loadingProgress < 50 ? 'Отправляем запрос...' : loadingProgress < 90 ? 'AI обрабатывает изображение...' : 'Почти готово...'}
                       </p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleCancelGeneration}
+                        className="w-full"
+                      >
+                        <Icon name="X" className="mr-2" size={16} />
+                        Отменить
+                      </Button>
                     </div>
                   )}
                 </div>
