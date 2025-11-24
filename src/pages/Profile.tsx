@@ -23,16 +23,9 @@ interface Lookbook {
   updated_at: string;
 }
 
-interface TryOnHistory {
-  id: string;
-  person_image: string;
-  garment_image: string;
-  result_image: string;
-  created_at: string;
-}
+
 
 const LOOKBOOKS_API = 'https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b';
-const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
 const CHANGE_PASSWORD_API = 'https://functions.poehali.dev/98400760-4d03-4ca8-88ab-753fde19ef83';
 const UPDATE_PROFILE_API = 'https://functions.poehali.dev/efb92b0f-c34a-4b12-ad41-744260d1173a';
 const DELETE_ACCOUNT_API = 'https://functions.poehali.dev/d8626da4-6372-40c1-abba-d4ffdc89c7c4';
@@ -41,7 +34,6 @@ export default function Profile() {
   const { user, isLoading: authLoading, updateUser, logout } = useAuth();
   const navigate = useNavigate();
   const [lookbooks, setLookbooks] = useState<Lookbook[]>([]);
-  const [tryOnHistory, setTryOnHistory] = useState<TryOnHistory[]>([]);
   const [isCreatingLookbook, setIsCreatingLookbook] = useState(false);
   const [isEditingLookbook, setIsEditingLookbook] = useState(false);
   const [editingLookbookId, setEditingLookbookId] = useState<string | null>(null);
@@ -76,7 +68,6 @@ export default function Profile() {
       }
       
       fetchLookbooks();
-      fetchHistory();
     }
   }, [user, authLoading, navigate]);
 
@@ -111,20 +102,7 @@ export default function Profile() {
     }
   };
 
-  const fetchHistory = async () => {
-    try {
-      const response = await fetch(HISTORY_API, {
-        headers: {
-          'X-User-Id': user?.id || ''
-        }
-      });
-      const data = await response.json();
-      setTryOnHistory(Array.isArray(data) ? data : []);
-    } catch (error) {
-      toast.error('Ошибка загрузки истории');
-      setTryOnHistory([]);
-    }
-  };
+
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -425,13 +403,12 @@ export default function Profile() {
         <div className="container mx-auto max-w-7xl">
           <div className="mb-8">
             <h2 className="text-4xl font-light mb-2">Личный кабинет</h2>
-            <p className="text-muted-foreground">Управляйте лукбуками и историей примерок</p>
+            <p className="text-muted-foreground">Управляйте лукбуками</p>
           </div>
 
           <Tabs defaultValue="lookbooks" className="w-full">
-            <TabsList className="grid w-full md:w-auto grid-cols-3 mb-8">
+            <TabsList className="grid w-full md:w-auto grid-cols-2 mb-8">
               <TabsTrigger value="lookbooks">Лукбуки</TabsTrigger>
-              <TabsTrigger value="history">История примерок</TabsTrigger>
               <TabsTrigger value="settings">Настройки</TabsTrigger>
             </TabsList>
 
@@ -630,38 +607,7 @@ export default function Profile() {
               </div>
             </TabsContent>
 
-            <TabsContent value="history">
-              <div className="space-y-6">
-                <h3 className="text-2xl font-light">История примерок</h3>
-                
-                {tryOnHistory.length === 0 ? (
-                  <Card>
-                    <CardContent className="p-12 text-center">
-                      <Icon name="History" className="mx-auto mb-4 text-muted-foreground" size={48} />
-                      <p className="text-muted-foreground">История примерок пуста</p>
-                      <p className="text-sm text-muted-foreground mt-2">Используйте виртуальную примерочную, чтобы начать</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {tryOnHistory.map((item) => (
-                      <Card key={item.id} className="overflow-hidden">
-                        <CardContent className="p-4">
-                          <img src={item.result_image} alt="" className="w-full h-64 object-cover rounded-lg mb-3" />
-                          <div className="flex gap-2">
-                            <img src={item.person_image} alt="" className="w-16 h-16 object-cover rounded" />
-                            <img src={item.garment_image} alt="" className="w-16 h-16 object-cover rounded" />
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-2">
-                            {new Date(item.created_at).toLocaleDateString()}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </TabsContent>
+
 
             <TabsContent value="settings">
               <div className="space-y-6">

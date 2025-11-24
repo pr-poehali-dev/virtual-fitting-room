@@ -68,6 +68,14 @@ export default function VirtualFittingResult({
                 alt="Generated result" 
                 className="max-w-full max-h-[500px] object-contain rounded-lg animate-fade-in" 
               />
+              <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <div className="flex gap-2">
+                  <Icon name="Info" className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" size={16} />
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    Если результат некорректный, попробуйте примерить одежду на другое фото
+                  </p>
+                </div>
+              </div>
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <Button 
