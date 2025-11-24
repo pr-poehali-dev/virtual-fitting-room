@@ -346,16 +346,6 @@ export default function Admin() {
     }
   };
 
-  const handleCropImage = () => {
-    if (!newClothing.image_url) {
-      toast.error('Сначала загрузите изображение');
-      return;
-    }
-    setImageToCrop(newClothing.image_url);
-    setCropMode('new');
-    setShowCropper(true);
-  };
-
   const handleCropComplete = (croppedImage: string) => {
     if (cropMode === 'new') {
       setNewClothing({ ...newClothing, image_url: croppedImage });
@@ -502,32 +492,6 @@ export default function Admin() {
       setEditingClothing({ ...editingClothing, image_url: base64Image });
     };
     reader.readAsDataURL(file);
-  };
-
-  const handleRemoveBackground = async () => {
-    if (!newClothing.image_url) {
-      toast.error('Сначала загрузите изображение');
-      return;
-    }
-
-    setIsProcessingImage(true);
-    try {
-      const response = await fetch(IMAGE_PREPROCESSING_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_url: newClothing.image_url })
-      });
-
-      if (!response.ok) throw new Error('Failed to remove background');
-      
-      const data = await response.json();
-      setNewClothing(prev => ({ ...prev, image_url: data.processed_image }));
-      toast.success('Фон удалён');
-    } catch (error) {
-      toast.error('Ошибка удаления фона');
-    } finally {
-      setIsProcessingImage(false);
-    }
   };
 
   const handleDeleteClothing = async (clothingId: string) => {
