@@ -90,6 +90,7 @@ export default function Admin() {
   });
   const [showCropper, setShowCropper] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string>('');
+  const [cropMode, setCropMode] = useState<'new' | 'edit'>('new');
 
   useEffect(() => {
     const adminAuth = sessionStorage.getItem('admin_auth');
@@ -268,11 +269,26 @@ export default function Admin() {
       return;
     }
     setImageToCrop(newClothing.image_url);
+    setCropMode('new');
+    setShowCropper(true);
+  };
+
+  const handleCropEditingImage = () => {
+    if (!editingClothing?.image_url) {
+      toast.error('Изображение отсутствует');
+      return;
+    }
+    setImageToCrop(editingClothing.image_url);
+    setCropMode('edit');
     setShowCropper(true);
   };
 
   const handleCropComplete = (croppedImage: string) => {
-    setNewClothing({ ...newClothing, image_url: croppedImage });
+    if (cropMode === 'new') {
+      setNewClothing({ ...newClothing, image_url: croppedImage });
+    } else if (cropMode === 'edit' && editingClothing) {
+      setEditingClothing({ ...editingClothing, image_url: croppedImage });
+    }
     setShowCropper(false);
     toast.success('Изображение обрезано');
   };
@@ -915,24 +931,34 @@ export default function Admin() {
             <div className="space-y-4">
               <div>
                 <img src={editingClothing.image_url} alt="Preview" className="w-full h-64 object-cover rounded mb-2" />
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleRemoveBackground}
-                  disabled={isProcessingImage}
-                >
-                  {isProcessingImage ? (
-                    <>
-                      <Icon name="Loader2" className="mr-2 animate-spin" size={16} />
-                      Удаление фона...
-                    </>
-                  ) : (
-                    <>
-                      <Icon name="Scissors" className="mr-2" size={16} />
-                      Удалить фон заново
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={handleCropEditingImage}
+                  >
+                    <Icon name="Crop" className="mr-2" size={16} />
+                    Кадрировать
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={handleRemoveBackground}
+                    disabled={isProcessingImage}
+                  >
+                    {isProcessingImage ? (
+                      <>
+                        <Icon name="Loader2" className="mr-2 animate-spin" size={16} />
+                        Удаление фона...
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="Scissors" className="mr-2" size={16} />
+                        Удалить фон заново
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
 
               <div>
