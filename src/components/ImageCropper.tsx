@@ -25,11 +25,21 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
   const imgRef = useRef<HTMLImageElement>(null);
 
   const createCroppedImage = async () => {
-    if (!imgRef.current) return;
+    console.log('createCroppedImage called');
+    console.log('imgRef.current:', imgRef.current);
+    console.log('completedCrop:', completedCrop);
+    console.log('crop:', crop);
+    
+    if (!imgRef.current) {
+      console.log('No imgRef.current, returning');
+      return;
+    }
 
     const cropToUse = completedCrop || crop;
+    console.log('cropToUse:', cropToUse);
     
     if (!cropToUse || cropToUse.width === 0 || cropToUse.height === 0) {
+      console.log('Invalid crop, using original image');
       onCropComplete(image);
       onClose();
       return;
@@ -69,10 +79,16 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
     );
 
     canvas.toBlob((blob) => {
-      if (!blob) return;
+      console.log('canvas.toBlob callback, blob:', blob);
+      if (!blob) {
+        console.log('No blob created');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
+        console.log('FileReader finished, calling onCropComplete');
         onCropComplete(reader.result as string);
+        console.log('Calling onClose');
         onClose();
       };
       reader.readAsDataURL(blob);
