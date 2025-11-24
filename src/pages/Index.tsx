@@ -11,6 +11,7 @@ import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
+import ImageCropper from '@/components/ImageCropper';
 
 interface ClothingItem {
   id: string;
@@ -66,6 +67,8 @@ export default function Index() {
   const [selectedLookbookId, setSelectedLookbookId] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const [processingImages, setProcessingImages] = useState<Set<string>>(new Set());
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<{ id: string; image: string } | null>(null);
 
   useEffect(() => {
     const pendingGeneration = localStorage.getItem('pendingGeneration');
@@ -188,6 +191,20 @@ export default function Index() {
   
   const removeCustomClothing = (id: string) => {
     setCustomClothingItems(customClothingItems.filter(item => item.id !== id));
+  };
+  
+  const handleCropImage = (id: string, image: string) => {
+    setImageToCrop({ id, image });
+    setCropDialogOpen(true);
+  };
+  
+  const handleCropComplete = (croppedImage: string) => {
+    if (imageToCrop) {
+      setCustomClothingItems(customClothingItems.map(item =>
+        item.id === imageToCrop.id ? { ...item, image: croppedImage } : item
+      ));
+    }
+    setImageToCrop(null);
   };
   
   const processImageBackground = async (imageUrl: string, itemId: string): Promise<string> => {
@@ -1036,11 +1053,11 @@ export default function Index() {
                           <div className="flex gap-2">
                             <Icon name="Sparkles" className="text-green-600 dark:text-green-500 flex-shrink-0 mt-0.5" size={16} />
                             <div className="text-xs text-green-800 dark:text-green-300">
-                              <p className="font-medium mb-1">✨ Удобная загрузка с автоочисткой:</p>
+                              <p className="font-medium mb-1">✨ Удобная загрузка с обработкой:</p>
                               <ul className="list-disc pl-4 space-y-0.5">
+                                <li><strong>Кадрируйте</strong> - выделите нужную часть одежды для точности</li>
                                 <li><strong>Фон удалится автоматически</strong> при генерации</li>
                                 <li>Можете загружать фото с любым фоном</li>
-                                <li>Или используйте кнопку "Удалить фон" для предпросмотра</li>
                                 <li>Главное: предмет виден полностью (не обрезан)</li>
                                 <li>Выберите правильную категорию для точного результата</li>
                               </ul>
@@ -1107,30 +1124,41 @@ export default function Index() {
                                       onChange={(e) => updateCustomClothingComment(item.id, e.target.value)}
                                       className="text-sm"
                                     />
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={async () => {
-                                        const processed = await processImageBackground(item.image, item.id);
-                                        setCustomClothingItems(customClothingItems.map(i =>
-                                          i.id === item.id ? { ...i, image: processed } : i
-                                        ));
-                                      }}
-                                      disabled={processingImages.has(item.id)}
-                                      className="w-full text-xs"
-                                    >
-                                      {processingImages.has(item.id) ? (
-                                        <>
-                                          <Icon name="Loader2" className="mr-1 animate-spin" size={14} />
-                                          Обработка...
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Icon name="Scissors" className="mr-1" size={14} />
-                                          Удалить фон
-                                        </>
-                                      )}
-                                    </Button>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleCropImage(item.id, item.image)}
+                                        className="text-xs"
+                                      >
+                                        <Icon name="Crop" className="mr-1" size={14} />
+                                        Кадрировать
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={async () => {
+                                          const processed = await processImageBackground(item.image, item.id);
+                                          setCustomClothingItems(customClothingItems.map(i =>
+                                            i.id === item.id ? { ...i, image: processed } : i
+                                          ));
+                                        }}
+                                        disabled={processingImages.has(item.id)}
+                                        className="text-xs"
+                                      >
+                                        {processingImages.has(item.id) ? (
+                                          <>
+                                            <Icon name="Loader2" className="mr-1 animate-spin" size={14} />
+                                            Обработка...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Icon name="Scissors" className="mr-1" size={14} />
+                                            Удалить фон
+                                          </>
+                                        )}
+                                      </Button>
+                                    </div>
                                   </div>
                                   <Button
                                     size="sm"
@@ -1437,6 +1465,7 @@ export default function Index() {
                   <li>Фото манекена в одежде (AI выделит нужный элемент)</li>
                   <li>Профессиональные фото товаров</li>
                 </ul>
+                <p className="mt-2"><strong>Новая функция:</strong> используйте кнопку <strong>"Кадрировать"</strong> чтобы выделить нужную часть одежды - это повышает точность!</p>
                 <p className="mt-2"><strong>Важно:</strong> предмет должен быть виден полностью, выберите правильную категорию.</p>
               </AccordionContent>
             </AccordionItem>
@@ -1453,6 +1482,7 @@ export default function Index() {
                   <li><strong>Неправильная категория:</strong> убедитесь что выбрана правильная категория одежды</li>
                   <li><strong>Низкое качество:</strong> размытые или тёмные фото снижают точность</li>
                 </ul>
+                <p className="mt-2 text-sm"><strong>Совет:</strong> используйте <strong>кадрирование</strong> для загруженных фото - выделите только нужную часть одежды для лучшего результата!</p>
                 <p className="mt-2 text-sm"><strong>Помните:</strong> фон удаляется автоматически, не переживайте если он не идеальный!</p>
               </AccordionContent>
             </AccordionItem>
@@ -1467,6 +1497,19 @@ export default function Index() {
           </p>
         </div>
       </footer>
+
+      {imageToCrop && (
+        <ImageCropper
+          image={imageToCrop.image}
+          open={cropDialogOpen}
+          onClose={() => {
+            setCropDialogOpen(false);
+            setImageToCrop(null);
+          }}
+          onCropComplete={handleCropComplete}
+          aspectRatio={3/4}
+        />
+      )}
     </Layout>
   );
 }
