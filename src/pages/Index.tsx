@@ -58,7 +58,6 @@ export default function Index() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
-  const [clothingMode, setClothingMode] = useState<'preset' | 'custom'>('preset');
   const [lookbooks, setLookbooks] = useState<any[]>([]);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [newLookbookName, setNewLookbookName] = useState('');
@@ -166,7 +165,6 @@ export default function Index() {
           categories: []
         };
         setCustomClothingItems(prev => [...prev, newItem]);
-        setClothingMode('custom');
       };
       reader.readAsDataURL(file);
     });
@@ -296,7 +294,6 @@ export default function Index() {
     setCustomClothingImage(null);
     setCustomClothingItems([]);
     setGeneratedImage(null);
-    setClothingMode('preset');
     localStorage.removeItem('pendingGeneration');
   };
   
@@ -446,104 +443,68 @@ export default function Index() {
       return;
     }
 
+    // Объединяем элементы из каталога и кастомные загруженные
+    const customItemsWithCategory = customClothingItems.filter(item => item.categories && item.categories.length > 0);
+    const allClothingItems = [...selectedClothingItems, ...customItemsWithCategory];
+    
+    if (allClothingItems.length === 0) {
+      toast.error('Выберите или загрузите одежду');
+      return;
+    }
+    
+    // Проверяем, что у всех кастомных элементов указана категория
+    const customItemsWithoutCategory = customClothingItems.filter(item => !item.categories || item.categories.length === 0);
+    if (customItemsWithoutCategory.length > 0) {
+      toast.error('Укажите категорию для всех загруженных элементов одежды');
+      return;
+    }
+    
     let garmentImage: string | null = null;
     let description = '';
     
-    if (clothingMode === 'custom') {
-      if (customClothingItems.length === 0) {
-        toast.error('Загрузите фото одежды');
-        return;
-      }
-      
-      const itemsWithoutCategory = customClothingItems.filter(item => !item.categories || item.categories.length === 0);
-      if (itemsWithoutCategory.length > 0) {
-        toast.error('Укажите категорию для каждого элемента одежды');
-        return;
-      }
-      
-      if (customClothingItems.length === 1) {
-        garmentImage = customClothingItems[0].image;
-        const item = customClothingItems[0];
-        const categoryHint = getCategoryPlacementHint(item.categories);
-        const userComment = item.comment ? ` ${item.comment}.` : '';
-        description = `${categoryHint}${userComment} High-quality clothing, preserve colors and textures, photorealistic fit.`;
-      } else {
-        toast.info('Объединяем несколько элементов одежды...');
-        
-        try {
-          const composeResponse = await fetch(IMAGE_COMPOSER_API, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              clothing_images: customClothingItems.map(item => item.image)
-            })
-          });
-          
-          if (!composeResponse.ok) {
-            throw new Error('Failed to compose images');
-          }
-          
-          const composeData = await composeResponse.json();
-          garmentImage = composeData.composed_image;
-          
-          const itemDescriptions = customClothingItems.map(item => {
-            const categoryHint = getCategoryPlacementHint(item.categories);
-            const userComment = item.comment ? ` ${item.comment}` : '';
-            return `${categoryHint}${userComment}`;
-          });
-          
-          description = `${itemDescriptions.join(', ')}. High-quality clothing, preserve colors and textures, photorealistic fit for all items.`;
-        } catch (error) {
-          toast.error('Ошибка объединения изображений');
-          return;
-        }
-      }
+    if (allClothingItems.length === 1) {
+      garmentImage = allClothingItems[0].image;
+      const item = allClothingItems[0];
+      const categoryHint = getCategoryPlacementHint(item.categories);
+      const userComment = item.comment ? ` ${item.comment}.` : '';
+      description = `${categoryHint}${userComment} High-quality clothing, preserve colors and textures, photorealistic fit.`;
     } else {
-      if (selectedClothingItems.length === 0) {
-        toast.error('Выберите одежду из каталога');
-        return;
-      }
+      const fromCatalog = selectedClothingItems.length;
+      const fromCustom = customItemsWithCategory.length;
+      const sources = [];
+      if (fromCatalog > 0) sources.push(`${fromCatalog} из каталога`);
+      if (fromCustom > 0) sources.push(`${fromCustom} загруженных`);
       
-      if (selectedClothingItems.length === 1) {
-        garmentImage = selectedClothingItems[0].image;
-        const item = selectedClothingItems[0];
-        const categoryHint = getCategoryPlacementHint(item.categories);
-        const userComment = item.comment ? ` ${item.comment}.` : '';
-        description = `${categoryHint}${userComment} High-quality clothing, preserve colors and textures, photorealistic fit.`;
-      } else {
-        toast.info('Объединяем несколько элементов одежды...');
+      toast.info(`Объединяем ${sources.join(' и ')}...`);
+      
+      try {
+        const composeResponse = await fetch(IMAGE_COMPOSER_API, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            clothing_images: allClothingItems.map(item => item.image)
+          })
+        });
         
-        try {
-          const composeResponse = await fetch(IMAGE_COMPOSER_API, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              clothing_images: selectedClothingItems.map(item => item.image)
-            })
-          });
-          
-          if (!composeResponse.ok) {
-            throw new Error('Failed to compose images');
-          }
-          
-          const composeData = await composeResponse.json();
-          garmentImage = composeData.composed_image;
-          
-          const itemDescriptions = selectedClothingItems.map(item => {
-            const categoryHint = getCategoryPlacementHint(item.categories);
-            const userComment = item.comment ? ` ${item.comment}` : '';
-            return `${categoryHint}${userComment}`;
-          });
-          
-          description = `${itemDescriptions.join(', ')}. High-quality clothing, preserve colors and textures, photorealistic fit for all items.`;
-        } catch (error) {
-          toast.error('Ошибка объединения изображений');
-          return;
+        if (!composeResponse.ok) {
+          throw new Error('Failed to compose images');
         }
+        
+        const composeData = await composeResponse.json();
+        garmentImage = composeData.composed_image;
+        
+        const itemDescriptions = allClothingItems.map(item => {
+          const categoryHint = getCategoryPlacementHint(item.categories);
+          const userComment = item.comment ? ` ${item.comment}` : '';
+          return `${categoryHint}${userComment}`;
+        });
+        
+        description = `${itemDescriptions.join(', ')}. High-quality clothing, preserve colors and textures, photorealistic fit for all items.`;
+      } catch (error) {
+        toast.error('Ошибка объединения изображений');
+        return;
       }
     }
     
@@ -664,18 +625,28 @@ export default function Index() {
                       <label className="text-sm font-medium">
                         Выберите одежду
                       </label>
-                      {clothingMode === 'preset' && (
-                        <p className="text-xs text-muted-foreground">
-                          Можно выбрать несколько
-                        </p>
+                      {(selectedClothingItems.length > 0 || customClothingItems.length > 0) && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            Выбрано: {selectedClothingItems.length + customClothingItems.filter(item => item.categories?.length > 0).length}
+                          </span>
+                        </div>
                       )}
                     </div>
-                    <Tabs value={clothingMode} onValueChange={(v) => setClothingMode(v as 'preset' | 'custom')} className="w-full">
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="preset">Из каталога</TabsTrigger>
-                        <TabsTrigger value="custom">Своё фото</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="preset" className="mt-4 space-y-4">
+                    <Accordion type="multiple" className="w-full" defaultValue={["catalog"]}>
+                      <AccordionItem value="catalog">
+                        <AccordionTrigger className="text-sm font-medium">
+                          <div className="flex items-center gap-2">
+                            <Icon name="ShoppingBag" size={18} />
+                            Из каталога
+                            {selectedClothingItems.length > 0 && (
+                              <span className="ml-2 px-2 py-0.5 bg-primary text-primary-foreground rounded-full text-xs">
+                                {selectedClothingItems.length}
+                              </span>
+                            )}
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="space-y-4 pt-2">
                         <Accordion type="single" collapsible>
                           <AccordionItem value="filters">
                             <AccordionTrigger className="text-sm">
@@ -819,8 +790,22 @@ export default function Index() {
                             ))}
                           </div>
                         )}
-                      </TabsContent>
-                      <TabsContent value="custom" className="mt-4 space-y-4">
+                        </AccordionContent>
+                      </AccordionItem>
+                      
+                      <AccordionItem value="custom">
+                        <AccordionTrigger className="text-sm font-medium">
+                          <div className="flex items-center gap-2">
+                            <Icon name="Upload" size={18} />
+                            Загрузить своё фото
+                            {customClothingItems.length > 0 && (
+                              <span className="ml-2 px-2 py-0.5 bg-primary text-primary-foreground rounded-full text-xs">
+                                {customClothingItems.length}
+                              </span>
+                            )}
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="space-y-4 pt-2">
                         <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
                           <input
                             type="file"
@@ -892,8 +877,9 @@ export default function Index() {
                             ))}
                           </div>
                         )}
-                      </TabsContent>
-                    </Tabs>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
                   </div>
 
                   <Button 
@@ -911,14 +897,9 @@ export default function Index() {
                       <>
                         <Icon name="Sparkles" className="mr-2" size={20} />
                         Генерировать изображение
-                        {clothingMode === 'preset' && selectedClothingItems.length > 0 && (
+                        {(selectedClothingItems.length > 0 || customClothingItems.length > 0) && (
                           <span className="ml-2 px-2 py-0.5 bg-primary-foreground text-primary rounded-full text-xs font-medium">
-                            {selectedClothingItems.length}
-                          </span>
-                        )}
-                        {clothingMode === 'custom' && customClothingItems.length > 0 && (
-                          <span className="ml-2 px-2 py-0.5 bg-primary-foreground text-primary rounded-full text-xs font-medium">
-                            {customClothingItems.length}
+                            {selectedClothingItems.length + customClothingItems.filter(item => item.categories?.length > 0).length}
                           </span>
                         )}
                       </>
