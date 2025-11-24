@@ -25,21 +25,11 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
   const imgRef = useRef<HTMLImageElement>(null);
 
   const createCroppedImage = async () => {
-    console.log('createCroppedImage called');
-    console.log('imgRef.current:', imgRef.current);
-    console.log('completedCrop:', completedCrop);
-    console.log('crop:', crop);
-    
-    if (!imgRef.current) {
-      console.log('No imgRef.current, returning');
-      return;
-    }
+    if (!imgRef.current) return;
 
     const cropToUse = completedCrop || crop;
-    console.log('cropToUse:', cropToUse);
     
     if (!cropToUse || cropToUse.width === 0 || cropToUse.height === 0) {
-      console.log('Invalid crop, using original image');
       onCropComplete(image);
       onClose();
       return;
@@ -79,16 +69,10 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
     );
 
     canvas.toBlob((blob) => {
-      console.log('canvas.toBlob callback, blob:', blob);
-      if (!blob) {
-        console.log('No blob created');
-        return;
-      }
+      if (!blob) return;
       const reader = new FileReader();
       reader.onloadend = () => {
-        console.log('FileReader finished, calling onCropComplete');
         onCropComplete(reader.result as string);
-        console.log('Calling onClose');
         onClose();
       };
       reader.readAsDataURL(blob);
@@ -127,7 +111,6 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
               src={image}
               alt="Crop"
               crossOrigin="anonymous"
-              onLoad={() => console.log('Image loaded in cropper')}
               style={{ display: 'block', maxWidth: '100%', height: 'auto' }}
             />
           </ReactCrop>
@@ -184,12 +167,7 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
           <Button variant="outline" onClick={onClose}>
             Отмена
           </Button>
-          <Button 
-            onClick={() => {
-              console.log('Apply button clicked!');
-              createCroppedImage();
-            }}
-          >
+          <Button onClick={createCroppedImage}>
             Применить
           </Button>
         </DialogFooter>
