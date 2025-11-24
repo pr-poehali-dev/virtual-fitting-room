@@ -80,20 +80,22 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
           <DialogTitle>Кадрировать изображение</DialogTitle>
         </DialogHeader>
         
-        <div className="max-h-[500px] overflow-auto bg-muted rounded-lg p-4 flex items-center justify-center">
-          <ReactCrop
-            crop={crop}
-            onChange={(c) => setCrop(c)}
-            onComplete={(c) => setCompletedCrop(c)}
-            aspect={customAspect}
-          >
-            <img
-              ref={imgRef}
-              src={image}
-              alt="Crop"
-              className="max-w-full h-auto"
-            />
-          </ReactCrop>
+        <div className="w-full bg-muted rounded-lg p-4 flex items-center justify-center overflow-hidden">
+          <div className="max-h-[60vh] max-w-full">
+            <ReactCrop
+              crop={crop}
+              onChange={(c) => setCrop(c)}
+              onComplete={(c) => setCompletedCrop(c)}
+              aspect={customAspect}
+            >
+              <img
+                ref={imgRef}
+                src={image}
+                alt="Crop"
+                style={{ maxHeight: '60vh', maxWidth: '100%', width: 'auto', height: 'auto' }}
+              />
+            </ReactCrop>
+          </div>
         </div>
 
         <div className="space-y-4">
