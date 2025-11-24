@@ -1106,37 +1106,6 @@ export default function Admin() {
               {filters && (
                 <>
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Категории</label>
-                    <div className="flex flex-wrap gap-2">
-                      {filters.categories.map((cat) => {
-                        const isSelected = editingClothing.categories.includes(cat.name);
-                        return (
-                          <Button
-                            key={cat.id}
-                            size="sm"
-                            variant={isSelected ? 'default' : 'outline'}
-                            onClick={() => {
-                              if (isSelected) {
-                                setEditingClothing({
-                                  ...editingClothing,
-                                  categories: editingClothing.categories.filter(c => c !== cat.name)
-                                });
-                              } else {
-                                setEditingClothing({
-                                  ...editingClothing,
-                                  categories: [...editingClothing.categories, cat.name]
-                                });
-                              }
-                            }}
-                          >
-                            {cat.name}
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div>
                     <label className="text-sm font-medium mb-2 block">Цвета</label>
                     <div className="flex flex-wrap gap-2">
                       {filters.colors.map((color) => {
