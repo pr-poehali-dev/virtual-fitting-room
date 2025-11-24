@@ -456,27 +456,73 @@ export default function Admin() {
     }
   };
 
-  const handleRemoveBackground = async () => {
-    if (!editingClothing) return;
+  const handleRemoveBackgroundEdit = async () => {
+    if (!editingClothing?.image_url) {
+      toast.error('Нет изображения');
+      return;
+    }
 
     setIsProcessingImage(true);
-    const adminPassword = sessionStorage.getItem('admin_auth');
-
     try {
-      const response = await fetch(`${CATALOG_API}?action=remove_bg`, {
+      const response = await fetch(IMAGE_PREPROCESSING_API, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Password': adminPassword || ''
-        },
-        body: JSON.stringify({
-          id: editingClothing.id,
-          image_url: editingClothing.image_url
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_url: editingClothing.image_url })
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (!response.ok) throw new Error('Failed to remove background');
+      
+      const data = await response.json();
+      setEditingClothing({ ...editingClothing, image_url: data.processed_image });
+      toast.success('Фон удалён');
+    } catch (error) {
+      toast.error('Ошибка удаления фона');
+    } finally {
+      setIsProcessingImage(false);
+    }
+  };
+
+  const handleCropImageEdit = () => {
+    if (!editingClothing?.image_url) {
+      toast.error('Нет изображения');
+      return;
+    }
+    setImageToCrop(editingClothing.image_url);
+    setCropMode('edit');
+    setShowCropper(true);
+  };
+
+  const handleFileUploadEdit = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingClothing) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64Image = reader.result as string;
+      setEditingClothing({ ...editingClothing, image_url: base64Image });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveBackground = async () => {
+    if (!newClothing.image_url) {
+      toast.error('Сначала загрузите изображение');
+      return;
+    }
+
+    setIsProcessingImage(true);
+    try {
+      const response = await fetch(IMAGE_PREPROCESSING_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_url: newClothing.image_url })
+      });
+
+      if (!response.ok) throw new Error('Failed to remove background');
+      
+      const data = await response.json();
+      setNewClothing(prev => ({ ...prev, image_url: data.processed_image }));
+      toast.success('Фон удалён');
         setEditingClothing({
           ...editingClothing,
           image_url: data.processed_image_url
@@ -1040,43 +1086,60 @@ export default function Admin() {
 
             <div className="space-y-4">
               <div>
-                <img src={editingClothing.image_url} alt="Preview" className="w-full h-64 object-cover rounded mb-2" />
-                <div className="flex gap-2">
+                <label className="text-sm font-medium mb-2 block">Изображение</label>
+                <img src={editingClothing.image_url} alt="Preview" className="w-full h-64 object-contain rounded mb-3 bg-muted border" />
+                <div className="flex gap-2 mb-3">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUploadEdit}
+                    className="hidden"
+                    id="file-upload-edit"
+                  />
+                  <label htmlFor="file-upload-edit" className="flex-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      asChild
+                    >
+                      <span>
+                        <Icon name="Upload" className="mr-2" size={16} />
+                        Загрузить новое
+                      </span>
+                    </Button>
+                  </label>
                   <Button
+                    type="button"
                     variant="outline"
                     className="flex-1"
-                    onClick={handleCropEditingImage}
+                    onClick={handleCropImageEdit}
                   >
                     <Icon name="Crop" className="mr-2" size={16} />
-                    Кадрировать
+                    Обрезать
                   </Button>
                   <Button
+                    type="button"
                     variant="outline"
                     className="flex-1"
-                    onClick={handleRemoveBackground}
+                    onClick={handleRemoveBackgroundEdit}
                     disabled={isProcessingImage}
                   >
                     {isProcessingImage ? (
-                      <>
-                        <Icon name="Loader2" className="mr-2 animate-spin" size={16} />
-                        Удаление фона...
-                      </>
+                      <Icon name="Loader2" className="animate-spin" size={16} />
                     ) : (
                       <>
-                        <Icon name="Scissors" className="mr-2" size={16} />
-                        Удалить фон заново
+                        <Icon name="Eraser" className="mr-2" size={16} />
+                        Удалить фон
                       </>
                     )}
                   </Button>
                 </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-1 block">Ссылка на изображение</label>
                 <Input
                   value={editingClothing.image_url}
                   onChange={(e) => setEditingClothing({ ...editingClothing, image_url: e.target.value })}
                   placeholder="https://..."
+                  className="text-xs"
                 />
               </div>
 
