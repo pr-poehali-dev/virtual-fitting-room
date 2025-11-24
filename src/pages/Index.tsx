@@ -192,6 +192,7 @@ export default function Index() {
   
   const processImageBackground = async (imageUrl: string, itemId: string): Promise<string> => {
     setProcessingImages(prev => new Set(prev).add(itemId));
+    console.log(`[BG Removal] Starting for item ${itemId}, image type: ${imageUrl.startsWith('data:') ? 'base64' : 'URL'}`);
     toast.info('Удаляем фон с изображения...', { duration: 2000 });
     
     try {
@@ -206,25 +207,40 @@ export default function Index() {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to process image');
+        const errorText = await response.text();
+        console.error(`[BG Removal] Failed for ${itemId}:`, response.status, errorText);
+        throw new Error(`Failed to process image: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log(`[BG Removal] Success for ${itemId}:`, {
+        original: imageUrl.substring(0, 100),
+        processed: data.processed_image?.substring(0, 100),
+        hasProcessed: !!data.processed_image
+      });
+      
       setProcessingImages(prev => {
         const newSet = new Set(prev);
         newSet.delete(itemId);
         return newSet;
       });
+      
+      if (!data.processed_image) {
+        console.warn(`[BG Removal] No processed_image in response for ${itemId}, using original`);
+        toast.warning('Фон не удалось обработать, используем оригинал');
+        return imageUrl;
+      }
       
       toast.success('Фон удалён!', { duration: 2000 });
       return data.processed_image;
     } catch (error) {
+      console.error(`[BG Removal] Error for ${itemId}:`, error);
       setProcessingImages(prev => {
         const newSet = new Set(prev);
         newSet.delete(itemId);
         return newSet;
       });
-      toast.error('Не удалось обработать изображение');
+      toast.error('Не удалось обработать изображение, используем оригинал');
       return imageUrl; // Return original if processing fails
     }
   };
@@ -369,28 +385,41 @@ export default function Index() {
     
     const categoryLower = categories.map(c => c.toLowerCase());
     
+    // Полные образы - первыми
     if (categoryLower.some(c => c.includes('весь образ') || c.includes('full outfit') || c.includes('complete look'))) {
       return 'complete outfit';
     }
+    
+    // Платья - вторыми
     if (categoryLower.some(c => c.includes('платье') || c.includes('dress'))) {
       return 'dress';
     }
+    
+    // Топы/блузки - третьими
     if (categoryLower.some(c => c.includes('топ') || c.includes('блузка') || c.includes('блуза') || c.includes('футболка') || c.includes('рубашка') || c.includes('top') || c.includes('blouse') || c.includes('shirt') || c.includes('t-shirt'))) {
       return 'top';
     }
+    
+    // Низ (брюки/юбки) - четвёртыми
     if (categoryLower.some(c => c.includes('брюки') || c.includes('джинсы') || c.includes('штаны') || c.includes('pants') || c.includes('trousers') || c.includes('jeans'))) {
       return 'pants';
     }
     if (categoryLower.some(c => c.includes('юбка') || c.includes('skirt'))) {
       return 'skirt';
     }
-    if (categoryLower.some(c => c.includes('обувь') || c.includes('туфли') || c.includes('ботинки') || c.includes('shoes') || c.includes('boots') || c.includes('sneakers'))) {
-      return 'shoes';
-    }
+    
+    // Верхняя одежда - пятыми
     if (categoryLower.some(c => c.includes('куртка') || c.includes('пальто') || c.includes('jacket') || c.includes('coat'))) {
       return 'jacket';
     }
-    if (categoryLower.some(c => c.includes('аксессуар') || c.includes('accessory') || c.includes('шарф') || c.includes('scarf') || c.includes('сумка') || c.includes('bag'))) {
+    
+    // Обувь - шестыми
+    if (categoryLower.some(c => c.includes('обувь') || c.includes('туфли') || c.includes('ботинки') || c.includes('сапоги') || c.includes('кроссовки') || c.includes('shoes') || c.includes('boots') || c.includes('sneakers') || c.includes('heels'))) {
+      return 'shoes';
+    }
+    
+    // Аксессуары - последними
+    if (categoryLower.some(c => c.includes('аксессуар') || c.includes('accessory') || c.includes('шарф') || c.includes('scarf') || c.includes('сумка') || c.includes('bag') || c.includes('украшение') || c.includes('jewelry'))) {
       return 'accessory';
     }
     
@@ -506,10 +535,12 @@ export default function Index() {
     // Последовательная генерация для нескольких элементов
     console.log('=== GENERATION START ===');
     console.log('Total items:', allClothingItems.length);
-    console.log('Items:', allClothingItems.map((item, idx) => ({
+    console.log('Items BEFORE sorting:', allClothingItems.map((item, idx) => ({
       index: idx,
       id: item.id,
       categories: item.categories,
+      categoriesRaw: JSON.stringify(item.categories),
+      detectedType: getCategoryPlacementHint(item.categories),
       comment: item.comment,
       imagePreview: item.image.substring(0, 100)
     })));
@@ -525,6 +556,7 @@ export default function Index() {
     const sortedItems = [...allClothingItems].sort((a, b) => {
       const getOrder = (categories: string[]) => {
         const hint = getCategoryPlacementHint(categories);
+        console.log(`Determining order for categories ${JSON.stringify(categories)}: hint="${hint}"`);
         if (hint.includes('complete outfit')) return 1;
         if (hint.includes('dress')) return 2;
         if (hint.includes('top') || hint.includes('blouse') || hint.includes('shirt')) return 3;
@@ -532,14 +564,19 @@ export default function Index() {
         if (hint.includes('jacket') || hint.includes('coat')) return 5;
         if (hint.includes('shoes')) return 6;
         if (hint.includes('accessory')) return 7;
+        console.log(`No match found for hint "${hint}", defaulting to order 8`);
         return 8;
       };
-      return getOrder(a.categories) - getOrder(b.categories);
+      const orderA = getOrder(a.categories);
+      const orderB = getOrder(b.categories);
+      console.log(`Compare: ${JSON.stringify(a.categories)} (order ${orderA}) vs ${JSON.stringify(b.categories)} (order ${orderB})`);
+      return orderA - orderB;
     });
     
-    console.log('Sorted order:', sortedItems.map((item, idx) => ({
+    console.log('Sorted order AFTER:', sortedItems.map((item, idx) => ({
       index: idx,
-      category: getCategoryPlacementHint(item.categories),
+      categories: item.categories,
+      detectedType: getCategoryPlacementHint(item.categories),
       id: item.id
     })));
 
@@ -590,12 +627,21 @@ export default function Index() {
         });
         
         console.log(`\n=== STEP ${itemNumber}/${totalItems} ===`);
-        console.log('Category:', categoryHint);
-        console.log('Categories array:', item.categories);
-        console.log('Person image (base64 prefix):', currentPersonImage.substring(0, 80));
-        console.log('Garment image (base64 prefix):', item.image.substring(0, 80));
-        console.log('Description sent to API:', description);
         console.log('Item ID:', item.id);
+        console.log('Categories array (RAW):', JSON.stringify(item.categories));
+        console.log('Detected category type:', categoryHint);
+        console.log('User comment:', item.comment || 'none');
+        console.log('Description sent to API:', description);
+        console.log('Person image length:', currentPersonImage.length);
+        console.log('Person image type:', currentPersonImage.startsWith('data:') ? 'base64' : 'URL');
+        console.log('Garment image length:', item.image.length);
+        console.log('Garment image type:', item.image.startsWith('data:') ? 'base64' : 'URL');
+        console.log('Full item data:', JSON.stringify({
+          id: item.id,
+          categories: item.categories,
+          categoryHint: categoryHint,
+          hasComment: !!item.comment
+        }));
         
         // Отправляем запрос на генерацию
         const submitResponse = await fetch('https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885', {
