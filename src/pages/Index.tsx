@@ -588,28 +588,35 @@ export default function Index() {
     try {
       let currentPersonImage = uploadedImage;
       
-      // Предобрабатываем ВСЕ изображения одежды - удаляем фон
-      toast.info('Подготовка изображений одежды (удаление фона)...', { duration: 3000 });
-      console.log('=== PREPROCESSING ALL IMAGES ===');
+      // Предобрабатываем ТОЛЬКО загруженные пользователем изображения
+      // Изображения из каталога уже обработаны при добавлении
+      toast.info('Подготовка изображений...', { duration: 2000 });
+      console.log('=== PREPROCESSING USER IMAGES ===');
       
       const processedItems = await Promise.all(
         sortedItems.map(async (item, idx) => {
-          console.log(`Preprocessing item ${idx + 1}/${sortedItems.length}: ${item.id}`);
+          // Проверяем, это элемент из каталога или загруженный пользователем
+          const isCustomItem = item.id.startsWith('custom-');
           
-          // Обрабатываем изображение - удаляем фон
-          try {
-            const processedImage = await processImageBackground(item.image, `preprocessing-${item.id}`);
-            console.log(`Item ${idx + 1} processed successfully`);
-            return { ...item, image: processedImage };
-          } catch (error) {
-            console.warn(`Failed to preprocess item ${idx + 1}, using original:`, error);
-            return item; // Если обработка не удалась, используем оригинал
+          if (isCustomItem) {
+            console.log(`Preprocessing custom item ${idx + 1}/${sortedItems.length}: ${item.id}`);
+            try {
+              const processedImage = await processImageBackground(item.image, `preprocessing-${item.id}`);
+              console.log(`Custom item ${idx + 1} processed successfully`);
+              return { ...item, image: processedImage };
+            } catch (error) {
+              console.warn(`Failed to preprocess custom item ${idx + 1}, using original:`, error);
+              return item;
+            }
+          } else {
+            console.log(`Item ${idx + 1} from catalog (already processed): ${item.id}`);
+            return item; // Элементы каталога уже обработаны
           }
         })
       );
       
-      console.log('All images preprocessed');
-      toast.success('Изображения подготовлены! Начинаем примерку...', { duration: 2000 });
+      console.log('All images ready');
+      toast.success('Начинаем примерку...', { duration: 2000 });
       
       // Генерируем каждый элемент по очереди в правильном порядке
       for (let i = 0; i < processedItems.length; i++) {
@@ -617,25 +624,9 @@ export default function Index() {
         const categoryHint = getCategoryPlacementHint(item.categories);
         const userComment = item.comment ? ` ${item.comment}` : '';
         
-        // Формируем описание с явным указанием типа одежды для модели
-        let categoryInstruction = '';
-        if (categoryHint.includes('top') || categoryHint.includes('blouse') || categoryHint.includes('shirt')) {
-          categoryInstruction = 'upper body garment, top, shirt';
-        } else if (categoryHint.includes('pants')) {
-          categoryInstruction = 'lower body garment, pants, trousers';
-        } else if (categoryHint.includes('skirt')) {
-          categoryInstruction = 'lower body garment, skirt';
-        } else if (categoryHint.includes('dress')) {
-          categoryInstruction = 'full body garment, dress';
-        } else if (categoryHint.includes('jacket') || categoryHint.includes('coat')) {
-          categoryInstruction = 'outerwear, jacket, coat';
-        } else if (categoryHint.includes('shoes')) {
-          categoryInstruction = 'footwear, shoes, boots for feet';
-        } else if (categoryHint.includes('accessory')) {
-          categoryInstruction = 'accessory, hat, scarf, jewelry';
-        }
-        
-        const description = `${categoryInstruction}. ${userComment || 'high quality clothing, photorealistic, preserve original colors'}`;
+        // IDM-VTON игнорирует description и определяет тип одежды визуально по картинке
+        // Используем description только для пользовательских комментариев
+        const description = userComment || 'high quality clothing, photorealistic, preserve original colors';
         
         const itemNumber = i + 1;
         const totalItems = processedItems.length;
@@ -754,7 +745,7 @@ export default function Index() {
       // Сохраняем в историю
       if (user) {
         try {
-          await fetch('https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd', {
+          const response = await fetch('https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -762,12 +753,15 @@ export default function Index() {
             },
             body: JSON.stringify({
               person_image: uploadedImage,
-              garment_image: allClothingItems[0].image,
+              garment_image: processedItems[0].image,
               result_image: currentPersonImage
             })
           });
+          if (!response.ok) {
+            console.error('Failed to save history:', response.status, await response.text());
+          }
         } catch (historyError) {
-          console.warn('Failed to save to history:', historyError);
+          console.error('Failed to save to history:', historyError);
         }
       }
       
