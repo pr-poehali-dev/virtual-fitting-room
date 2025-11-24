@@ -29,8 +29,9 @@ def send_verification_email(email: str, token: str, user_name: str):
     smtp_port = int(os.environ.get('SMTP_PORT', '587'))
     smtp_user = os.environ.get('SMTP_USER')
     smtp_password = os.environ.get('SMTP_PASSWORD')
+    site_url = os.environ.get('SITE_URL', 'https://p29007832.poehali.dev')
     
-    verify_url = f"https://p29007832.poehali.dev/verify-email?token={token}"
+    verify_url = f"{site_url}/verify-email?token={token}"
     
     message = MIMEMultipart('alternative')
     message['Subject'] = 'Подтвердите email - Виртуальная примерочная'
