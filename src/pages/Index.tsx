@@ -42,6 +42,7 @@ interface SelectedClothing {
 
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
 const IMAGE_COMPOSER_API = 'https://functions.poehali.dev/021a040a-aa04-40b9-86e3-77547b31401b';
+const IMAGE_PREPROCESSING_API = 'https://functions.poehali.dev/3fe8c892-ab5f-4d26-a2c5-ae4166276334';
 
 export default function Index() {
   const { user } = useAuth();
@@ -64,6 +65,7 @@ export default function Index() {
   const [newLookbookPersonName, setNewLookbookPersonName] = useState('');
   const [selectedLookbookId, setSelectedLookbookId] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [processingImages, setProcessingImages] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const pendingGeneration = localStorage.getItem('pendingGeneration');
@@ -186,6 +188,45 @@ export default function Index() {
   
   const removeCustomClothing = (id: string) => {
     setCustomClothingItems(customClothingItems.filter(item => item.id !== id));
+  };
+  
+  const processImageBackground = async (imageUrl: string, itemId: string): Promise<string> => {
+    setProcessingImages(prev => new Set(prev).add(itemId));
+    toast.info('Удаляем фон с изображения...', { duration: 2000 });
+    
+    try {
+      const response = await fetch(IMAGE_PREPROCESSING_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image_url: imageUrl
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to process image');
+      }
+      
+      const data = await response.json();
+      setProcessingImages(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(itemId);
+        return newSet;
+      });
+      
+      toast.success('Фон удалён!', { duration: 2000 });
+      return data.processed_image;
+    } catch (error) {
+      setProcessingImages(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(itemId);
+        return newSet;
+      });
+      toast.error('Не удалось обработать изображение');
+      return imageUrl; // Return original if processing fails
+    }
   };
 
   const handleCancelGeneration = () => {
@@ -922,8 +963,9 @@ export default function Index() {
                                 <li>Четкое фото без размытия</li>
                                 <li>AI автоматически определяет что это (брюки/топ/обувь) по изображению</li>
                               </ul>
-                              <p className="mt-2 text-amber-900 dark:text-amber-200 font-medium">
-                                ❌ Плохо: манекен в полном образе, несколько вещей на одном фото
+                              <p className="mt-2 text-green-700 dark:text-green-300 font-medium flex items-center gap-1">
+                                <Icon name="Sparkles" size={14} />
+                                ✨ Есть лишний фон? Используйте кнопку "Удалить фон" после загрузки!
                               </p>
                             </div>
                           </div>
@@ -988,6 +1030,30 @@ export default function Index() {
                                       onChange={(e) => updateCustomClothingComment(item.id, e.target.value)}
                                       className="text-sm"
                                     />
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={async () => {
+                                        const processed = await processImageBackground(item.image, item.id);
+                                        setCustomClothingItems(customClothingItems.map(i =>
+                                          i.id === item.id ? { ...i, image: processed } : i
+                                        ));
+                                      }}
+                                      disabled={processingImages.has(item.id)}
+                                      className="w-full text-xs"
+                                    >
+                                      {processingImages.has(item.id) ? (
+                                        <>
+                                          <Icon name="Loader2" className="mr-1 animate-spin" size={14} />
+                                          Обработка...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Icon name="Scissors" className="mr-1" size={14} />
+                                          Удалить фон
+                                        </>
+                                      )}
+                                    </Button>
                                   </div>
                                   <Button
                                     size="sm"

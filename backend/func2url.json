@@ -1,4 +1,5 @@
 {
+  "image-preprocessing": "https://functions.poehali.dev/3fe8c892-ab5f-4d26-a2c5-ae4166276334",
   "image-composer": "https://functions.poehali.dev/021a040a-aa04-40b9-86e3-77547b31401b",
   "catalog-api": "https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc",
   "resend-verification": "https://functions.poehali.dev/cf48d1a6-141c-4ecb-befe-6203d8292d89",
