@@ -222,6 +222,40 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         elif action == 'login':
+            request_context = event.get('requestContext', {})
+            identity = request_context.get('identity', {})
+            ip_address = identity.get('sourceIp', 'unknown')
+            
+            cursor.execute(
+                """
+                DELETE FROM login_attempts 
+                WHERE attempt_time < NOW() - INTERVAL '15 minutes'
+                """
+            )
+            
+            cursor.execute(
+                """
+                SELECT COUNT(*) as attempt_count 
+                FROM login_attempts 
+                WHERE ip_address = %s 
+                AND attempt_time > NOW() - INTERVAL '15 minutes'
+                AND success = false
+                """,
+                (ip_address,)
+            )
+            
+            attempts = cursor.fetchone()
+            if attempts['attempt_count'] >= 5:
+                return {
+                    'statusCode': 429,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Too many login attempts. Please try again in 15 minutes.'})
+                }
+            
             password_hash = hash_password(password)
             
             cursor.execute(
@@ -232,6 +266,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             user = cursor.fetchone()
             
             if not user:
+                cursor.execute(
+                    "INSERT INTO login_attempts (ip_address, email, success) VALUES (%s, %s, false)",
+                    (ip_address, email)
+                )
+                conn.commit()
+                
                 return {
                     'statusCode': 401,
                     'headers': {
@@ -252,6 +292,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Email not verified. Please check your email.'})
                 }
+            
+            cursor.execute(
+                "INSERT INTO login_attempts (ip_address, email, success) VALUES (%s, %s, true)",
+                (ip_address, email)
+            )
+            conn.commit()
             
             session_token = generate_session_token()
             
