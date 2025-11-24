@@ -13,11 +13,15 @@ export default function ImageViewer({ src, alt = '', className = '' }: ImageView
 
   return (
     <>
-      <div className="relative group cursor-pointer" onClick={() => setIsOpen(true)}>
+      <div className="relative group">
         <img src={src} alt={alt} className={className} />
-        <div className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={() => setIsOpen(true)}
+          className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70 cursor-pointer"
+          title="Увеличить изображение"
+        >
           <Icon name="ZoomIn" size={16} />
-        </div>
+        </button>
       </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
