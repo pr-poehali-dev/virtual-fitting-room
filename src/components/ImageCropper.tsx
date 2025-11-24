@@ -127,6 +127,7 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
                 ref={imgRef}
                 src={image}
                 alt="Crop"
+                crossOrigin="anonymous"
                 onLoad={() => console.log('Image loaded in cropper')}
                 style={{ maxHeight: '60vh', maxWidth: '100%', width: 'auto', height: 'auto' }}
               />
