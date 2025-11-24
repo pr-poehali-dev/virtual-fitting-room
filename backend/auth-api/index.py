@@ -313,7 +313,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'id': str(user['id']),
                         'email': user['email'],
                         'name': user['name'],
-                        'created_at': user['created_at'].isoformat()
+                        'created_at': user['created_at'].isoformat(),
+                        'email_verified': user['email_verified']
                     },
                     'session_token': session_token
                 })

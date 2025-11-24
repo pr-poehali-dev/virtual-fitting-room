@@ -61,7 +61,19 @@ export default function Profile() {
       navigate('/login');
       return;
     }
+    
     if (user) {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        if (!userData.email_verified) {
+          toast.error('Email не подтвержден. Проверьте почту.');
+          logout();
+          navigate('/login');
+          return;
+        }
+      }
+      
       fetchLookbooks();
       fetchHistory();
     }
