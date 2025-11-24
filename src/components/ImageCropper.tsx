@@ -1,8 +1,8 @@
-import { useState, useCallback } from 'react';
-import Cropper from 'react-easy-crop';
+import { useState, useRef } from 'react';
+import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
 
 interface ImageCropperProps {
   image: string;
@@ -12,139 +12,134 @@ interface ImageCropperProps {
   aspectRatio?: number | undefined;
 }
 
-interface CropArea {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 export default function ImageCropper({ image, open, onClose, onCropComplete, aspectRatio }: ImageCropperProps) {
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<CropArea | null>(null);
+  const [crop, setCrop] = useState<Crop>({
+    unit: '%',
+    x: 25,
+    y: 25,
+    width: 50,
+    height: 50
+  });
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const [customAspect, setCustomAspect] = useState<number | undefined>(aspectRatio);
-
-  const onCropCompleteInternal = useCallback(
-    (croppedArea: any, croppedAreaPixels: CropArea) => {
-      setCroppedAreaPixels(croppedAreaPixels);
-    },
-    []
-  );
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const createCroppedImage = async () => {
-    if (!croppedAreaPixels) return;
+    if (!completedCrop || !imgRef.current) return;
 
-    try {
-      const imageElement = new Image();
-      imageElement.src = image;
-      
-      await new Promise((resolve) => {
-        imageElement.onload = resolve;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
+    const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
+
+    canvas.width = completedCrop.width * scaleX;
+    canvas.height = completedCrop.height * scaleY;
+
+    ctx.drawImage(
+      imgRef.current,
+      completedCrop.x * scaleX,
+      completedCrop.y * scaleY,
+      completedCrop.width * scaleX,
+      completedCrop.height * scaleY,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        onCropComplete(reader.result as string);
+        onClose();
+      };
+      reader.readAsDataURL(blob);
+    }, 'image/jpeg', 0.95);
+  };
+
+  const handleAspectChange = (aspect: number | undefined) => {
+    setCustomAspect(aspect);
+    if (aspect) {
+      setCrop({
+        unit: '%',
+        x: 25,
+        y: 25,
+        width: 50,
+        height: 50 / aspect
       });
-
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) return;
-
-      canvas.width = croppedAreaPixels.width;
-      canvas.height = croppedAreaPixels.height;
-
-      ctx.drawImage(
-        imageElement,
-        croppedAreaPixels.x,
-        croppedAreaPixels.y,
-        croppedAreaPixels.width,
-        croppedAreaPixels.height,
-        0,
-        0,
-        croppedAreaPixels.width,
-        croppedAreaPixels.height
-      );
-
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          onCropComplete(reader.result as string);
-          onClose();
-        };
-        reader.readAsDataURL(blob);
-      }, 'image/jpeg', 0.95);
-    } catch (error) {
-      console.error('Error cropping image:', error);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>Кадрировать изображение</DialogTitle>
         </DialogHeader>
         
-        <div className="relative h-[400px] w-full bg-muted rounded-lg overflow-hidden">
-          <Cropper
-            image={image}
+        <div className="max-h-[500px] overflow-auto bg-muted rounded-lg p-4 flex items-center justify-center">
+          <ReactCrop
             crop={crop}
-            zoom={zoom}
+            onChange={(c) => setCrop(c)}
+            onComplete={(c) => setCompletedCrop(c)}
             aspect={customAspect}
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
-            onCropComplete={onCropCompleteInternal}
-          />
+          >
+            <img
+              ref={imgRef}
+              src={image}
+              alt="Crop"
+              className="max-w-full h-auto"
+            />
+          </ReactCrop>
         </div>
 
         <div className="space-y-4">
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              size="sm"
-              variant={customAspect === undefined ? 'default' : 'outline'}
-              onClick={() => setCustomAspect(undefined)}
-            >
-              Свободно
-            </Button>
-            <Button
-              size="sm"
-              variant={customAspect === 1 ? 'default' : 'outline'}
-              onClick={() => setCustomAspect(1)}
-            >
-              Квадрат
-            </Button>
-            <Button
-              size="sm"
-              variant={customAspect === 3/4 ? 'default' : 'outline'}
-              onClick={() => setCustomAspect(3/4)}
-            >
-              3:4
-            </Button>
-            <Button
-              size="sm"
-              variant={customAspect === 4/3 ? 'default' : 'outline'}
-              onClick={() => setCustomAspect(4/3)}
-            >
-              4:3
-            </Button>
-            <Button
-              size="sm"
-              variant={customAspect === 16/9 ? 'default' : 'outline'}
-              onClick={() => setCustomAspect(16/9)}
-            >
-              16:9
-            </Button>
-          </div>
-          
           <div className="space-y-2">
-            <label className="text-sm font-medium">Масштаб</label>
-            <Slider
-              value={[zoom]}
-              onValueChange={(value) => setZoom(value[0])}
-              min={1}
-              max={3}
-              step={0.1}
-              className="w-full"
-            />
+            <p className="text-sm text-muted-foreground">
+              {customAspect === undefined 
+                ? 'Потяните за углы или края, чтобы изменить размер области обрезки' 
+                : 'Выбраны фиксированные пропорции. Измените размер области обрезки'}
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                size="sm"
+                variant={customAspect === undefined ? 'default' : 'outline'}
+                onClick={() => handleAspectChange(undefined)}
+              >
+                Свободно
+              </Button>
+              <Button
+                size="sm"
+                variant={customAspect === 1 ? 'default' : 'outline'}
+                onClick={() => handleAspectChange(1)}
+              >
+                Квадрат
+              </Button>
+              <Button
+                size="sm"
+                variant={customAspect === 3/4 ? 'default' : 'outline'}
+                onClick={() => handleAspectChange(3/4)}
+              >
+                3:4
+              </Button>
+              <Button
+                size="sm"
+                variant={customAspect === 4/3 ? 'default' : 'outline'}
+                onClick={() => handleAspectChange(4/3)}
+              >
+                4:3
+              </Button>
+              <Button
+                size="sm"
+                variant={customAspect === 16/9 ? 'default' : 'outline'}
+                onClick={() => handleAspectChange(16/9)}
+              >
+                16:9
+              </Button>
+            </div>
           </div>
         </div>
 
