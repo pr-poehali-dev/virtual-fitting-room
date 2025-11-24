@@ -284,10 +284,6 @@ export default function Admin() {
     }
   };
 
-  const handleImageUrlInput = (url: string) => {
-    setNewClothing({ ...newClothing, image_url: url });
-  };
-
   const handleCropImage = () => {
     if (!newClothing.image_url) {
       toast.error('Сначала добавьте ссылку на изображение');
@@ -295,16 +291,6 @@ export default function Admin() {
     }
     setImageToCrop(newClothing.image_url);
     setCropMode('new');
-    setShowCropper(true);
-  };
-
-  const handleCropEditingImage = () => {
-    if (!editingClothing?.image_url) {
-      toast.error('Изображение отсутствует');
-      return;
-    }
-    setImageToCrop(editingClothing.image_url);
-    setCropMode('edit');
     setShowCropper(true);
   };
 
