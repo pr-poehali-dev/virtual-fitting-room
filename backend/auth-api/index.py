@@ -30,11 +30,8 @@ def send_verification_email(email: str, token: str, user_name: str):
     smtp_port = int(os.environ.get('SMTP_PORT', '587'))
     smtp_user = os.environ.get('SMTP_USER')
     smtp_password = os.environ.get('SMTP_PASSWORD')
-    site_url = os.environ.get('SITE_URL', 'https://virtual-fitting-room--preview.poehali.dev')
     
-    print(f"DEBUG: SITE_URL from env: {os.environ.get('SITE_URL')}")
-    print(f"DEBUG: Using site_url: {site_url}")
-    
+    site_url = 'https://virtual-fitting-room--preview.poehali.dev'
     verify_url = f"{site_url}/verify-email?token={token}"
     
     message = MIMEMultipart('alternative')
