@@ -48,6 +48,7 @@ export default function Index() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedClothingItems, setSelectedClothingItems] = useState<SelectedClothing[]>([]);
   const [customClothingImage, setCustomClothingImage] = useState<string | null>(null);
+  const [customClothingItems, setCustomClothingItems] = useState<SelectedClothing[]>([]);
   const [clothingCatalog, setClothingCatalog] = useState<ClothingItem[]>([]);
   const [filters, setFilters] = useState<Filters | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
@@ -152,15 +153,41 @@ export default function Index() {
   };
 
   const handleCustomClothingUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    Array.from(files).forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setCustomClothingImage(reader.result as string);
+        const newItem: SelectedClothing = {
+          id: `custom-${Date.now()}-${Math.random()}`,
+          image: reader.result as string,
+          comment: '',
+          categories: []
+        };
+        setCustomClothingItems(prev => [...prev, newItem]);
         setClothingMode('custom');
       };
       reader.readAsDataURL(file);
-    }
+    });
+    
+    e.target.value = '';
+  };
+  
+  const updateCustomClothingCategory = (id: string, category: string) => {
+    setCustomClothingItems(customClothingItems.map(item =>
+      item.id === id ? { ...item, categories: [category] } : item
+    ));
+  };
+  
+  const updateCustomClothingComment = (id: string, comment: string) => {
+    setCustomClothingItems(customClothingItems.map(item =>
+      item.id === id ? { ...item, comment } : item
+    ));
+  };
+  
+  const removeCustomClothing = (id: string) => {
+    setCustomClothingItems(customClothingItems.filter(item => item.id !== id));
   };
 
   const handleCancelGeneration = () => {
@@ -267,6 +294,7 @@ export default function Index() {
     setUploadedImage(null);
     setSelectedClothingItems([]);
     setCustomClothingImage(null);
+    setCustomClothingItems([]);
     setGeneratedImage(null);
     setClothingMode('preset');
     localStorage.removeItem('pendingGeneration');
@@ -422,7 +450,56 @@ export default function Index() {
     let description = '';
     
     if (clothingMode === 'custom') {
-      garmentImage = customClothingImage;
+      if (customClothingItems.length === 0) {
+        toast.error('Загрузите фото одежды');
+        return;
+      }
+      
+      const itemsWithoutCategory = customClothingItems.filter(item => !item.categories || item.categories.length === 0);
+      if (itemsWithoutCategory.length > 0) {
+        toast.error('Укажите категорию для каждого элемента одежды');
+        return;
+      }
+      
+      if (customClothingItems.length === 1) {
+        garmentImage = customClothingItems[0].image;
+        const item = customClothingItems[0];
+        const categoryHint = getCategoryPlacementHint(item.categories);
+        const userComment = item.comment ? ` ${item.comment}.` : '';
+        description = `${categoryHint}${userComment} High-quality clothing, preserve colors and textures, photorealistic fit.`;
+      } else {
+        toast.info('Объединяем несколько элементов одежды...');
+        
+        try {
+          const composeResponse = await fetch(IMAGE_COMPOSER_API, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              clothing_images: customClothingItems.map(item => item.image)
+            })
+          });
+          
+          if (!composeResponse.ok) {
+            throw new Error('Failed to compose images');
+          }
+          
+          const composeData = await composeResponse.json();
+          garmentImage = composeData.composed_image;
+          
+          const itemDescriptions = customClothingItems.map(item => {
+            const categoryHint = getCategoryPlacementHint(item.categories);
+            const userComment = item.comment ? ` ${item.comment}` : '';
+            return `${categoryHint}${userComment}`;
+          });
+          
+          description = `${itemDescriptions.join(', ')}. High-quality clothing, preserve colors and textures, photorealistic fit for all items.`;
+        } catch (error) {
+          toast.error('Ошибка объединения изображений');
+          return;
+        }
+      }
     } else {
       if (selectedClothingItems.length === 0) {
         toast.error('Выберите одежду из каталога');
@@ -710,27 +787,40 @@ export default function Index() {
                               )}
                             </div>
                             {selectedClothingItems.map((item, idx) => (
-                              <div key={item.id} className="flex items-center gap-2 p-2 border rounded-lg">
-                                <img src={item.image} alt="" className="w-10 h-10 object-cover rounded" />
+                              <div key={item.id} className="space-y-2 p-3 border rounded-lg bg-muted/30">
+                                <div className="flex items-center gap-2">
+                                  <img src={item.image} alt="" className="w-12 h-12 object-cover rounded" />
+                                  <div className="flex-1">
+                                    {item.categories && item.categories.length > 0 && (
+                                      <div className="flex flex-wrap gap-1 mb-1">
+                                        {item.categories.map((cat, idx) => (
+                                          <span key={idx} className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded">
+                                            {cat}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setSelectedClothingItems(selectedClothingItems.filter(c => c.id !== item.id))}
+                                  >
+                                    <Icon name="X" size={16} />
+                                  </Button>
+                                </div>
                                 <Input
                                   placeholder="Комментарий (необязательно)"
                                   value={item.comment}
                                   onChange={(e) => updateClothingComment(item.id, e.target.value)}
                                   className="text-sm"
                                 />
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => setSelectedClothingItems(selectedClothingItems.filter(c => c.id !== item.id))}
-                                >
-                                  <Icon name="X" size={16} />
-                                </Button>
                               </div>
                             ))}
                           </div>
                         )}
                       </TabsContent>
-                      <TabsContent value="custom" className="mt-4">
+                      <TabsContent value="custom" className="mt-4 space-y-4">
                         <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
                           <input
                             type="file"
@@ -738,20 +828,70 @@ export default function Index() {
                             onChange={handleCustomClothingUpload}
                             className="hidden"
                             id="clothing-upload"
+                            multiple
                           />
                           <label htmlFor="clothing-upload" className="cursor-pointer">
-                            {customClothingImage ? (
-                              <img src={customClothingImage} alt="Custom clothing" className="max-h-32 mx-auto rounded-lg" />
-                            ) : (
-                              <div className="space-y-2">
-                                <Icon name="Shirt" className="mx-auto text-muted-foreground" size={32} />
-                                <p className="text-muted-foreground text-sm">
-                                  Загрузите фото одежды
-                                </p>
-                              </div>
-                            )}
+                            <div className="space-y-2">
+                              <Icon name="Upload" className="mx-auto text-muted-foreground" size={32} />
+                              <p className="text-muted-foreground text-sm">
+                                Загрузите фото одежды
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Можно выбрать несколько файлов
+                              </p>
+                            </div>
                           </label>
                         </div>
+                        
+                        {customClothingItems.length > 0 && (
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium">Загружено: {customClothingItems.length}</p>
+                              {customClothingItems.length > 1 && (
+                                <p className="text-xs text-muted-foreground">Будут объединены</p>
+                              )}
+                            </div>
+                            {customClothingItems.map((item) => (
+                              <div key={item.id} className="space-y-2 p-3 border rounded-lg bg-muted/30">
+                                <div className="flex items-start gap-2">
+                                  <img src={item.image} alt="" className="w-16 h-16 object-cover rounded" />
+                                  <div className="flex-1 space-y-2">
+                                    <Select 
+                                      value={item.categories[0] || ''} 
+                                      onValueChange={(val) => updateCustomClothingCategory(item.id, val)}
+                                    >
+                                      <SelectTrigger className="text-sm">
+                                        <SelectValue placeholder="Выберите категорию" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Платье">Платье</SelectItem>
+                                        <SelectItem value="Топ">Топ / Блузка</SelectItem>
+                                        <SelectItem value="Брюки">Брюки</SelectItem>
+                                        <SelectItem value="Юбка">Юбка</SelectItem>
+                                        <SelectItem value="Куртка">Куртка / Пальто</SelectItem>
+                                        <SelectItem value="Обувь">Обувь</SelectItem>
+                                        <SelectItem value="Аксессуар">Аксессуар</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <Input
+                                      placeholder="Комментарий (необязательно)"
+                                      value={item.comment}
+                                      onChange={(e) => updateCustomClothingComment(item.id, e.target.value)}
+                                      className="text-sm"
+                                    />
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => removeCustomClothing(item.id)}
+                                  >
+                                    <Icon name="X" size={16} />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </TabsContent>
                     </Tabs>
                   </div>
@@ -774,6 +914,11 @@ export default function Index() {
                         {clothingMode === 'preset' && selectedClothingItems.length > 0 && (
                           <span className="ml-2 px-2 py-0.5 bg-primary-foreground text-primary rounded-full text-xs font-medium">
                             {selectedClothingItems.length}
+                          </span>
+                        )}
+                        {clothingMode === 'custom' && customClothingItems.length > 0 && (
+                          <span className="ml-2 px-2 py-0.5 bg-primary-foreground text-primary rounded-full text-xs font-medium">
+                            {customClothingItems.length}
                           </span>
                         )}
                       </>
