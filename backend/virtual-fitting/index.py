@@ -155,81 +155,43 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing person_image or garment_image'})
                 }
             
-            # Use IDM-VTON model with smart category-based descriptions
+            # Use IDM-VTON model
             queue_url = "https://queue.fal.run/fal-ai/idm-vton"
             
-            # Build realistic description with strong category hints
-            base_description = description if description else ""
+            # Build concise but effective description
+            desc_parts = []
             
-            # Add STRONG category-specific placement instructions
-            category_instructions = []
+            # User comment first
+            if description:
+                desc_parts.append(description)
+            
+            # Category-specific instruction
             if category_hint:
                 hint_lower = category_hint.lower()
-                
-                # Upper body garments
-                if 'top' in hint_lower or 'shirt' in hint_lower or 'blouse' in hint_lower or 't-shirt' in hint_lower:
-                    category_instructions.append("UPPER BODY GARMENT ONLY: fit on torso, shoulders, and chest area")
-                    category_instructions.append("do not extend below waist")
-                    category_instructions.append("naturally fitting shirt/top with realistic shoulder and chest fit")
-                
-                # Lower body garments
+                if 'top' in hint_lower or 'shirt' in hint_lower or 'blouse' in hint_lower:
+                    desc_parts.append("upper body garment on torso")
                 elif 'pants' in hint_lower or 'trousers' in hint_lower or 'jeans' in hint_lower:
-                    category_instructions.append("LOWER BODY GARMENT ONLY: fit on legs and waist area")
-                    category_instructions.append("do not cover upper body")
-                    category_instructions.append("naturally fitting pants with proper waist and leg draping")
-                
-                # Dresses
+                    desc_parts.append("lower body garment on legs")
                 elif 'dress' in hint_lower or 'платье' in hint_lower:
-                    category_instructions.append("FULL LENGTH DRESS: covers torso and extends to legs")
-                    category_instructions.append("naturally flowing dress with realistic body contours")
-                
-                # Skirts
+                    desc_parts.append("full dress on body")
                 elif 'skirt' in hint_lower or 'юбка' in hint_lower:
-                    category_instructions.append("SKIRT ONLY: fit on waist and hips area")
-                    category_instructions.append("do not cover upper body")
-                    category_instructions.append("naturally fitting skirt starting at waist")
-                
-                # Jackets/Coats
-                elif 'jacket' in hint_lower or 'coat' in hint_lower or 'куртка' in hint_lower or 'пальто' in hint_lower:
-                    category_instructions.append("OUTER GARMENT: jacket or coat worn over existing clothing")
-                    category_instructions.append("naturally fitting outerwear with proper shoulder fit")
-                
-                # Shoes
-                elif 'shoes' in hint_lower or 'boots' in hint_lower or 'обувь' in hint_lower or 'туфли' in hint_lower or 'ботинки' in hint_lower or 'сапоги' in hint_lower:
-                    category_instructions.append("FOOTWEAR ONLY: fit on feet and lower legs area")
-                    category_instructions.append("do not affect upper body or torso")
-                    category_instructions.append("realistic shoes or boots on feet")
-                
-                # Accessories
-                elif 'accessory' in hint_lower or 'hat' in hint_lower or 'шляпа' in hint_lower or 'шарф' in hint_lower or 'scarf' in hint_lower:
-                    category_instructions.append("ACCESSORY ONLY: small item worn on appropriate body part")
-                    category_instructions.append("do not replace main clothing")
-                
-                # Default fallback
-                else:
-                    category_instructions.append(f"garment type: {category_hint}")
+                    desc_parts.append("skirt on lower body")
+                elif 'jacket' in hint_lower or 'coat' in hint_lower:
+                    desc_parts.append("outerwear jacket")
+                elif 'shoes' in hint_lower or 'boots' in hint_lower or 'обувь' in hint_lower:
+                    desc_parts.append("footwear on feet")
+                elif 'accessory' in hint_lower or 'hat' in hint_lower or 'шляпа' in hint_lower:
+                    desc_parts.append("accessory item")
             
-            # Realism prompts
-            realism_prompts = [
-                "photorealistic high quality",
-                "natural lighting and shadows",
-                "preserve exact original garment colors and patterns",
-                "realistic fabric texture and draping",
-                "natural wrinkles and folds",
-                "maintain all garment details",
-                "professional photography quality",
-                "natural body fit and proportions",
-                "correct garment placement on body"
-            ]
+            # Quality keywords
+            desc_parts.extend([
+                "photorealistic",
+                "natural fit",
+                "preserve colors",
+                "realistic draping"
+            ])
             
-            # Combine all parts
-            all_parts = []
-            if base_description:
-                all_parts.append(base_description)
-            all_parts.extend(category_instructions)
-            all_parts.extend(realism_prompts)
-            
-            detailed_description = ' '.join(all_parts)
+            detailed_description = ', '.join(desc_parts)
             
             payload = {
                 "human_image_url": person_image,
@@ -239,8 +201,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 "guidance_scale": 2.0
             }
             
-            print(f"Using IDM-VTON model, category hint: {category_hint}")
-            print(f"Full description: {detailed_description}")
+            print(f"Using IDM-VTON, category: {category_hint}, description: {detailed_description}")
             
             submit_response = requests.post(queue_url, headers=headers, json=payload, timeout=30)
             
