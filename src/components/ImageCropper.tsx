@@ -22,7 +22,6 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
   });
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const [customAspect, setCustomAspect] = useState<number | undefined>(aspectRatio);
-  const [imageLoaded, setImageLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
   const createCroppedImage = async () => {
@@ -128,10 +127,7 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
                 ref={imgRef}
                 src={image}
                 alt="Crop"
-                onLoad={() => {
-                  console.log('Image loaded in cropper');
-                  setImageLoaded(true);
-                }}
+                onLoad={() => console.log('Image loaded in cropper')}
                 style={{ maxHeight: '60vh', maxWidth: '100%', width: 'auto', height: 'auto' }}
               />
             </ReactCrop>
@@ -191,10 +187,9 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
           </Button>
           <Button 
             onClick={() => {
-              console.log('Apply button clicked, imageLoaded:', imageLoaded);
+              console.log('Apply button clicked!');
               createCroppedImage();
             }}
-            disabled={!imageLoaded}
           >
             Применить
           </Button>
