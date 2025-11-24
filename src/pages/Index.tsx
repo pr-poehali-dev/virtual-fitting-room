@@ -386,6 +386,74 @@ export default function Index() {
     }
   };
 
+  const createMaskFromZone = async (personImage: string, zone: ClothingZone): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const originalWidth = img.width;
+        const originalHeight = img.height;
+        
+        const maxCanvasWidth = 500;
+        const maxCanvasHeight = 400;
+        
+        let canvasWidth = originalWidth;
+        let canvasHeight = originalHeight;
+        
+        if (canvasWidth > maxCanvasWidth) {
+          canvasHeight = (canvasHeight * maxCanvasWidth) / canvasWidth;
+          canvasWidth = maxCanvasWidth;
+        }
+        if (canvasHeight > maxCanvasHeight) {
+          canvasWidth = (canvasWidth * maxCanvasHeight) / canvasHeight;
+          canvasHeight = maxCanvasHeight;
+        }
+        
+        const scaleX = originalWidth / canvasWidth;
+        const scaleY = originalHeight / canvasHeight;
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = originalWidth;
+        canvas.height = originalHeight;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          console.error('Failed to get canvas context');
+          resolve('');
+          return;
+        }
+        
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        const maskX = Math.round(zone.x * scaleX);
+        const maskY = Math.round(zone.y * scaleY);
+        const maskWidth = Math.round(zone.width * scaleX);
+        const maskHeight = Math.round(zone.height * scaleY);
+        
+        ctx.fillStyle = 'white';
+        ctx.fillRect(maskX, maskY, maskWidth, maskHeight);
+        
+        const maskDataUrl = canvas.toDataURL('image/png');
+        console.log('Created mask:', {
+          originalImageSize: { width: originalWidth, height: originalHeight },
+          canvasSize: { width: canvasWidth, height: canvasHeight },
+          scale: { x: scaleX, y: scaleY },
+          zoneOnCanvas: zone,
+          maskOnOriginal: { x: maskX, y: maskY, width: maskWidth, height: maskHeight },
+          maskLength: maskDataUrl.length
+        });
+        
+        resolve(maskDataUrl);
+      };
+      img.onerror = () => {
+        console.error('Failed to load person image for mask creation');
+        resolve('');
+      };
+      img.src = personImage;
+    });
+  };
+
   const handleDownloadImage = async () => {
     if (!generatedImage) return;
 
@@ -691,8 +759,10 @@ export default function Index() {
         };
         
         if (item.zone) {
-          requestBody.target_zone = item.zone;
-          console.log('Sending target zone:', item.zone);
+          console.log('Creating mask from zone:', item.zone);
+          const maskImage = await createMaskFromZone(currentPersonImage, item.zone);
+          requestBody.mask_image = maskImage;
+          console.log('Sending mask image:', maskImage.substring(0, 100));
         }
         
         const submitResponse = await fetch('https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885', {

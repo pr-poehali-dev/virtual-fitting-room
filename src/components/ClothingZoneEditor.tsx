@@ -248,6 +248,9 @@ export default function ClothingZoneEditor({
                   <p className="text-sm text-muted-foreground">
                     Область: {Math.round(zone.width)} × {Math.round(zone.height)} px
                   </p>
+                  <p className="text-xs text-muted-foreground">
+                    Координаты: x={Math.round(zone.x)}, y={Math.round(zone.y)}
+                  </p>
                   <Button
                     variant="outline"
                     size="sm"
