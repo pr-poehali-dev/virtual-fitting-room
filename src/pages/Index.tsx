@@ -725,7 +725,7 @@ export default function Index() {
         const categoryHint = getCategoryPlacementHint(item.categories);
         const userComment = item.comment ? ` ${item.comment}` : '';
         
-        const description = userComment || 'high quality clothing, photorealistic, preserve original colors';
+        const description = userComment || 'photorealistic high quality garment, natural lighting and shadows, preserve exact original colors and patterns, realistic fabric texture and draping, maintain all garment details, professional photography quality, natural body fit';
         
         const itemNumber = i + 1;
         const totalItems = processedItems.length;

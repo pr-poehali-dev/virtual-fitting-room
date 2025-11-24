@@ -173,17 +173,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 payload = {
                     "model_image_url": person_image,
                     "garment_image_url": garment_image,
-                    "category": ootd_category
+                    "category": ootd_category,
+                    "num_inference_steps": 40,
+                    "guidance_scale": 2.5
                 }
                 print(f"Using OOTDiffusion with mask, category: {ootd_category}")
             else:
                 # Use IDM-VTON (best quality, no mask support)
                 queue_url = "https://queue.fal.run/fal-ai/idm-vton"
-                detailed_description = description if description else "high-quality clothing item, preserve original garment colors and textures, photorealistic fit, maintain fabric details"
+                detailed_description = description if description else "high-quality photorealistic clothing, natural lighting, preserve original garment colors and textures exactly, realistic fabric draping and wrinkles, maintain all garment details and patterns, professional photo quality"
                 payload = {
                     "human_image_url": person_image,
                     "garment_image_url": garment_image,
-                    "description": detailed_description
+                    "description": detailed_description,
+                    "num_inference_steps": 50,
+                    "guidance_scale": 2.0
                 }
                 print(f"Using IDM-VTON model without mask")
             
