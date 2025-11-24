@@ -467,8 +467,39 @@ export default function Index() {
     console.log('Total items:', allClothingItems.length);
     console.log('Items:', allClothingItems.map((item, idx) => ({
       index: idx,
+      id: item.id,
       categories: item.categories,
-      comment: item.comment
+      comment: item.comment,
+      imagePreview: item.image.substring(0, 100)
+    })));
+
+    // Сортируем элементы для правильного порядка примерки:
+    // 1. Полные образы (complete outfit)
+    // 2. Платья (dress)
+    // 3. Топы/блузки (top)
+    // 4. Низ - брюки/юбки (pants/skirt)
+    // 5. Куртки/пальто (jacket)
+    // 6. Обувь (shoes)
+    // 7. Аксессуары (accessory)
+    const sortedItems = [...allClothingItems].sort((a, b) => {
+      const getOrder = (categories: string[]) => {
+        const hint = getCategoryPlacementHint(categories);
+        if (hint.includes('complete outfit')) return 1;
+        if (hint.includes('dress')) return 2;
+        if (hint.includes('top') || hint.includes('blouse') || hint.includes('shirt')) return 3;
+        if (hint.includes('pants') || hint.includes('skirt')) return 4;
+        if (hint.includes('jacket') || hint.includes('coat')) return 5;
+        if (hint.includes('shoes')) return 6;
+        if (hint.includes('accessory')) return 7;
+        return 8;
+      };
+      return getOrder(a.categories) - getOrder(b.categories);
+    });
+    
+    console.log('Sorted order:', sortedItems.map((item, idx) => ({
+      index: idx,
+      category: getCategoryPlacementHint(item.categories),
+      id: item.id
     })));
 
     const controller = new AbortController();
@@ -479,24 +510,28 @@ export default function Index() {
     try {
       let currentPersonImage = uploadedImage;
       
-      // Генерируем каждый элемент по очереди
-      for (let i = 0; i < allClothingItems.length; i++) {
-        const item = allClothingItems[i];
+      // Генерируем каждый элемент по очереди в правильном порядке
+      for (let i = 0; i < sortedItems.length; i++) {
+        const item = sortedItems[i];
         const categoryHint = getCategoryPlacementHint(item.categories);
         const userComment = item.comment ? ` ${item.comment}` : '';
-        const description = `${categoryHint}${userComment}`;
+        // Удаляем description полностью - модель определяет тип одежды автоматически по картинке
+        const description = userComment || "high quality clothing, photorealistic, preserve original colors";
         
         const itemNumber = i + 1;
-        const totalItems = allClothingItems.length;
+        const totalItems = sortedItems.length;
         
-        toast.info(`Примеряем элемент ${itemNumber}/${totalItems}: ${item.categories[0] || 'одежда'}...`, {
+        toast.info(`Примеряем ${categoryHint}: ${item.categories[0] || 'одежда'} (${itemNumber}/${totalItems})`, {
           duration: 3000
         });
         
-        console.log(`=== STEP ${itemNumber}/${totalItems} ===`);
-        console.log('Person image:', currentPersonImage.substring(0, 50));
-        console.log('Garment image:', item.image.substring(0, 50));
-        console.log('Description:', description);
+        console.log(`\n=== STEP ${itemNumber}/${totalItems} ===`);
+        console.log('Category:', categoryHint);
+        console.log('Categories array:', item.categories);
+        console.log('Person image (base64 prefix):', currentPersonImage.substring(0, 80));
+        console.log('Garment image (base64 prefix):', item.image.substring(0, 80));
+        console.log('Description sent to API:', description);
+        console.log('Item ID:', item.id);
         
         // Отправляем запрос на генерацию
         const submitResponse = await fetch('https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885', {
@@ -583,7 +618,9 @@ export default function Index() {
       // Все элементы примерены успешно
       setLoadingProgress(100);
       setGeneratedImage(currentPersonImage);
-      toast.success(`Все элементы (${allClothingItems.length}) успешно примерены!`);
+      console.log('=== GENERATION COMPLETE ===');
+      console.log('Final image URL:', currentPersonImage.substring(0, 80));
+      toast.success(`Все элементы (${sortedItems.length}) успешно примерены!`);
       setIsGenerating(false);
       
       // Сохраняем в историю
@@ -859,6 +896,21 @@ export default function Index() {
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="space-y-4 pt-2">
+                        <div className="mb-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                          <div className="flex gap-2">
+                            <Icon name="AlertCircle" className="text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" size={16} />
+                            <div className="text-xs text-amber-800 dark:text-amber-300">
+                              <p className="font-medium mb-1">⚠️ Требования к фото одежды:</p>
+                              <ul className="list-disc pl-4 space-y-0.5">
+                                <li>Белый или светлый фон</li>
+                                <li>Вся одежда видна полностью (не обрезана)</li>
+                                <li>Четкое качество без размытия</li>
+                                <li>AI определяет тип автоматически по картинке</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                        
                         <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
                           <input
                             type="file"
