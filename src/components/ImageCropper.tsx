@@ -71,7 +71,6 @@ export default function ImageCropper({
 
       const croppedImage = canvas.toDataURL('image/jpeg', 0.95);
       onCropComplete(croppedImage);
-      onClose();
     } catch (error) {
       console.error('Error cropping image:', error);
     } finally {
