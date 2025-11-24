@@ -33,6 +33,12 @@ export default function ImageCropper({
 
   const handleCropComplete = async () => {
     if (!imgRef.current) {
+      console.error('No image reference');
+      return;
+    }
+
+    if (!imgRef.current.complete || imgRef.current.naturalWidth === 0) {
+      console.error('Image not loaded yet');
       return;
     }
 
@@ -43,12 +49,18 @@ export default function ImageCropper({
       height: (crop.height / 100) * imgRef.current.height,
     };
 
+    if (cropToUse.width <= 0 || cropToUse.height <= 0) {
+      console.error('Invalid crop dimensions');
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (!ctx) {
+        console.error('Failed to get canvas context');
         setIsProcessing(false);
         return;
       }
@@ -56,26 +68,26 @@ export default function ImageCropper({
       const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
       const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
 
-      canvas.width = cropToUse.width;
-      canvas.height = cropToUse.height;
+      canvas.width = Math.floor(cropToUse.width * scaleX);
+      canvas.height = Math.floor(cropToUse.height * scaleY);
 
       ctx.drawImage(
         imgRef.current,
-        cropToUse.x * scaleX,
-        cropToUse.y * scaleY,
-        cropToUse.width * scaleX,
-        cropToUse.height * scaleY,
+        Math.floor(cropToUse.x * scaleX),
+        Math.floor(cropToUse.y * scaleY),
+        Math.floor(cropToUse.width * scaleX),
+        Math.floor(cropToUse.height * scaleY),
         0,
         0,
-        cropToUse.width,
-        cropToUse.height
+        Math.floor(cropToUse.width * scaleX),
+        Math.floor(cropToUse.height * scaleY)
       );
 
       const croppedImage = canvas.toDataURL('image/jpeg', 0.95);
+      setIsProcessing(false);
       onCropComplete(croppedImage);
     } catch (error) {
       console.error('Error cropping image:', error);
-    } finally {
       setIsProcessing(false);
     }
   };
