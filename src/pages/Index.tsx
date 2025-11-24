@@ -755,7 +755,8 @@ export default function Index() {
         const requestBody: any = {
           person_image: currentPersonImage,
           garment_image: item.image,
-          description: description
+          description: description,
+          category_hint: categoryHint
         };
         
         if (item.zone) {
@@ -763,6 +764,9 @@ export default function Index() {
           const maskImage = await createMaskFromZone(currentPersonImage, item.zone);
           requestBody.mask_image = maskImage;
           console.log('Sending mask image:', maskImage.substring(0, 100));
+          console.log('Using OOTDiffusion model with mask for category:', categoryHint);
+        } else {
+          console.log('Using IDM-VTON model without mask');
         }
         
         const submitResponse = await fetch('https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885', {

@@ -142,6 +142,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             garment_image = body_data.get('garment_image')
             description = body_data.get('description', '')
             mask_image = body_data.get('mask_image')
+            category_hint = body_data.get('category_hint', '')
             
             if not person_image or not garment_image:
                 return {
@@ -154,20 +155,37 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing person_image or garment_image'})
                 }
             
-            detailed_description = description if description else "high-quality clothing item, preserve original garment colors and textures, photorealistic fit, maintain fabric details"
+            # Determine garment category from hint
+            ootd_category = "Upper-body"  # default
+            if category_hint:
+                hint_lower = category_hint.lower()
+                if any(x in hint_lower for x in ['dress', 'платье']):
+                    ootd_category = "Dresses"
+                elif any(x in hint_lower for x in ['pants', 'trousers', 'skirt', 'брюки', 'юбка']):
+                    ootd_category = "Lower-body"
+                else:
+                    ootd_category = "Upper-body"
             
-            queue_url = "https://queue.fal.run/fal-ai/idm-vton"
-            payload = {
-                "human_image_url": person_image,
-                "garment_image_url": garment_image,
-                "description": detailed_description
-            }
-            
-            # Add mask image if provided (for precise garment placement)
+            # Check if mask is provided to use appropriate model
             if mask_image and isinstance(mask_image, str) and len(mask_image) > 0:
-                payload['mask_image_url'] = mask_image
-                print(f"Using mask image, length: {len(mask_image)}")
-                print(f"Mask preview: {mask_image[:100]}...")
+                # Use OOTDiffusion which supports mask for precise placement
+                queue_url = "https://queue.fal.run/fal-ai/ootd"
+                payload = {
+                    "model_image_url": person_image,
+                    "garment_image_url": garment_image,
+                    "category": ootd_category
+                }
+                print(f"Using OOTDiffusion with mask, category: {ootd_category}")
+            else:
+                # Use IDM-VTON (best quality, no mask support)
+                queue_url = "https://queue.fal.run/fal-ai/idm-vton"
+                detailed_description = description if description else "high-quality clothing item, preserve original garment colors and textures, photorealistic fit, maintain fabric details"
+                payload = {
+                    "human_image_url": person_image,
+                    "garment_image_url": garment_image,
+                    "description": detailed_description
+                }
+                print(f"Using IDM-VTON model without mask")
             
             submit_response = requests.post(queue_url, headers=headers, json=payload, timeout=30)
             
