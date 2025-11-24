@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
-import ImageCropper from '@/components/ImageCropper';
-import ClothingZoneEditor from '@/components/ClothingZoneEditor';
 import VirtualFittingControls from '@/components/VirtualFittingControls';
 import VirtualFittingResult from '@/components/VirtualFittingResult';
 import VirtualFittingInfo from '@/components/VirtualFittingInfo';
@@ -29,34 +27,21 @@ interface Filters {
   archetypes: FilterOption[];
 }
 
-interface ClothingZone {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 interface SelectedClothing {
   id: string;
   image: string;
-  comment: string;
+  name?: string;
   categories: string[];
-  zone?: ClothingZone;
 }
 
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
-const IMAGE_COMPOSER_API = 'https://functions.poehali.dev/021a040a-aa04-40b9-86e3-77547b31401b';
-const IMAGE_PREPROCESSING_API = 'https://functions.poehali.dev/3fe8c892-ab5f-4d26-a2c5-ae4166276334';
 
 export default function Index() {
   const { user } = useAuth();
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [selectedClothingItems, setSelectedClothingItems] = useState<SelectedClothing[]>([]);
-  const [customClothingImage, setCustomClothingImage] = useState<string | null>(null);
-  const [customClothingItems, setCustomClothingItems] = useState<SelectedClothing[]>([]);
+  const [selectedClothing, setSelectedClothing] = useState<SelectedClothing | null>(null);
   const [clothingCatalog, setClothingCatalog] = useState<ClothingItem[]>([]);
   const [filters, setFilters] = useState<Filters | null>(null);
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [selectedColors, setSelectedColors] = useState<number[]>([]);
   const [selectedArchetypes, setSelectedArchetypes] = useState<number[]>([]);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -69,11 +54,6 @@ export default function Index() {
   const [newLookbookPersonName, setNewLookbookPersonName] = useState('');
   const [selectedLookbookId, setSelectedLookbookId] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
-  const [processingImages, setProcessingImages] = useState<Set<string>>(new Set());
-  const [cropDialogOpen, setCropDialogOpen] = useState(false);
-  const [imageToCrop, setImageToCrop] = useState<{ id: string; image: string; type: 'clothing' } | null>(null);
-  const [showClothingZoneEditor, setShowClothingZoneEditor] = useState(false);
-  const [clothingToMarkZone, setClothingToMarkZone] = useState<{ id: string; image: string; name?: string; isCatalog: boolean } | null>(null);
 
   useEffect(() => {
     const pendingGeneration = localStorage.getItem('pendingGeneration');
@@ -94,7 +74,7 @@ export default function Index() {
   
   useEffect(() => {
     fetchCatalog();
-  }, [selectedCategories, selectedColors, selectedArchetypes]);
+  }, [selectedColors, selectedArchetypes]);
   
   const fetchFilters = async () => {
     try {
@@ -111,9 +91,6 @@ export default function Index() {
   const fetchCatalog = async () => {
     try {
       const params = new URLSearchParams({ action: 'list' });
-      if (selectedCategories.length > 0) {
-        params.append('categories', selectedCategories.join(','));
-      }
       if (selectedColors.length > 0) {
         params.append('colors', selectedColors.join(','));
       }
@@ -161,149 +138,23 @@ export default function Index() {
     }
   };
 
-  const handleMarkClothingZone = (clothingId: string, clothingImage: string, clothingName: string | undefined, isCatalog: boolean) => {
-    if (!uploadedImage) {
-      toast.error('Сначала загрузите фото человека');
-      return;
-    }
-    setClothingToMarkZone({ id: clothingId, image: clothingImage, name: clothingName, isCatalog });
-    setShowClothingZoneEditor(true);
-  };
-
-  const handleSaveClothingZone = (zone: ClothingZone) => {
-    if (!clothingToMarkZone) return;
-
-    if (clothingToMarkZone.isCatalog) {
-      setSelectedClothingItems(prev => prev.map(item =>
-        item.id === clothingToMarkZone.id ? { ...item, zone } : item
-      ));
-    } else {
-      setCustomClothingItems(prev => prev.map(item =>
-        item.id === clothingToMarkZone.id ? { ...item, zone } : item
-      ));
-    }
-
-    setShowClothingZoneEditor(false);
-    setClothingToMarkZone(null);
-    toast.success('Область примерки сохранена!');
-  };
-
   const handleCustomClothingUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
     
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const id = `custom-${Date.now()}-${Math.random()}`;
-        setImageToCrop({ id, image: reader.result as string, type: 'clothing' });
-        setCropDialogOpen(true);
-      };
-      reader.readAsDataURL(file);
-    });
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const id = `custom-${Date.now()}`;
+      setSelectedClothing({
+        id,
+        image: reader.result as string,
+        name: file.name,
+        categories: []
+      });
+    };
+    reader.readAsDataURL(file);
     
     e.target.value = '';
-  };
-  
-  const updateCustomClothingCategory = (id: string, category: string) => {
-    setCustomClothingItems(customClothingItems.map(item =>
-      item.id === id ? { ...item, categories: [category] } : item
-    ));
-  };
-  
-  const updateCustomClothingComment = (id: string, comment: string) => {
-    setCustomClothingItems(customClothingItems.map(item =>
-      item.id === id ? { ...item, comment } : item
-    ));
-  };
-  
-  const removeCustomClothing = (id: string) => {
-    setCustomClothingItems(customClothingItems.filter(item => item.id !== id));
-  };
-  
-  const handleCropImage = (id: string, image: string) => {
-    setImageToCrop({ id, image, type: 'clothing' });
-    setCropDialogOpen(true);
-  };
-
-
-  
-  const handleCropComplete = (croppedImage: string) => {
-    if (imageToCrop) {
-      if (imageToCrop.type === 'clothing') {
-        const existingItem = customClothingItems.find(item => item.id === imageToCrop.id);
-        if (existingItem) {
-          setCustomClothingItems(customClothingItems.map(item =>
-            item.id === imageToCrop.id ? { ...item, image: croppedImage } : item
-          ));
-        } else {
-          const newItem: SelectedClothing = {
-            id: imageToCrop.id,
-            image: croppedImage,
-            comment: '',
-            categories: []
-          };
-          setCustomClothingItems(prev => [...prev, newItem]);
-        }
-      }
-    }
-    setImageToCrop(null);
-    setCropDialogOpen(false);
-  };
-  
-  const processImageBackground = async (imageUrl: string, itemId: string): Promise<string> => {
-    setProcessingImages(prev => new Set(prev).add(itemId));
-    console.log(`[BG Removal] Starting for item ${itemId}, image type: ${imageUrl.startsWith('data:') ? 'base64' : 'URL'}`);
-    toast.info('Удаляем фон с изображения...', { duration: 2000 });
-    
-    try {
-      const response = await fetch(IMAGE_PREPROCESSING_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          image_url: imageUrl
-        })
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[BG Removal] Failed for ${itemId}:`, response.status, errorText);
-        throw new Error(`Failed to process image: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log(`[BG Removal] Success for ${itemId}:`, {
-        original: imageUrl.substring(0, 100),
-        processed: data.processed_image?.substring(0, 100),
-        hasProcessed: !!data.processed_image
-      });
-      
-      setProcessingImages(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(itemId);
-        return newSet;
-      });
-      
-      if (!data.processed_image) {
-        console.warn(`[BG Removal] No processed_image in response for ${itemId}, using original`);
-        toast.warning('Фон не удалось обработать, используем оригинал');
-        return imageUrl;
-      }
-      
-      toast.success('Фон удалён!', { duration: 2000 });
-      return data.processed_image;
-    } catch (error) {
-      console.error(`[BG Removal] Error for ${itemId}:`, error);
-      setProcessingImages(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(itemId);
-        return newSet;
-      });
-      toast.error('Не удалось обработать изображение, используем оригинал');
-      return imageUrl;
-    }
   };
 
   const handleCancelGeneration = () => {
@@ -386,74 +237,6 @@ export default function Index() {
     }
   };
 
-  const createMaskFromZone = async (personImage: string, zone: ClothingZone): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const originalWidth = img.width;
-        const originalHeight = img.height;
-        
-        const maxCanvasWidth = 500;
-        const maxCanvasHeight = 400;
-        
-        let canvasWidth = originalWidth;
-        let canvasHeight = originalHeight;
-        
-        if (canvasWidth > maxCanvasWidth) {
-          canvasHeight = (canvasHeight * maxCanvasWidth) / canvasWidth;
-          canvasWidth = maxCanvasWidth;
-        }
-        if (canvasHeight > maxCanvasHeight) {
-          canvasWidth = (canvasWidth * maxCanvasHeight) / canvasHeight;
-          canvasHeight = maxCanvasHeight;
-        }
-        
-        const scaleX = originalWidth / canvasWidth;
-        const scaleY = originalHeight / canvasHeight;
-        
-        const canvas = document.createElement('canvas');
-        canvas.width = originalWidth;
-        canvas.height = originalHeight;
-        
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          console.error('Failed to get canvas context');
-          resolve('');
-          return;
-        }
-        
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        const maskX = Math.round(zone.x * scaleX);
-        const maskY = Math.round(zone.y * scaleY);
-        const maskWidth = Math.round(zone.width * scaleX);
-        const maskHeight = Math.round(zone.height * scaleY);
-        
-        ctx.fillStyle = 'white';
-        ctx.fillRect(maskX, maskY, maskWidth, maskHeight);
-        
-        const maskDataUrl = canvas.toDataURL('image/png');
-        console.log('Created mask:', {
-          originalImageSize: { width: originalWidth, height: originalHeight },
-          canvasSize: { width: canvasWidth, height: canvasHeight },
-          scale: { x: scaleX, y: scaleY },
-          zoneOnCanvas: zone,
-          maskOnOriginal: { x: maskX, y: maskY, width: maskWidth, height: maskHeight },
-          maskLength: maskDataUrl.length
-        });
-        
-        resolve(maskDataUrl);
-      };
-      img.onerror = () => {
-        console.error('Failed to load person image for mask creation');
-        resolve('');
-      };
-      img.src = personImage;
-    });
-  };
-
   const handleDownloadImage = async () => {
     if (!generatedImage) return;
 
@@ -476,70 +259,22 @@ export default function Index() {
 
   const handleReset = () => {
     setUploadedImage(null);
-    setSelectedClothingItems([]);
-    setCustomClothingImage(null);
-    setCustomClothingItems([]);
+    setSelectedClothing(null);
     setGeneratedImage(null);
     localStorage.removeItem('pendingGeneration');
   };
   
   const toggleClothingSelection = (item: ClothingItem) => {
-    const existing = selectedClothingItems.find(c => c.id === item.id);
-    if (existing) {
-      setSelectedClothingItems(selectedClothingItems.filter(c => c.id !== item.id));
+    if (selectedClothing?.id === item.id) {
+      setSelectedClothing(null);
     } else {
-      setSelectedClothingItems([...selectedClothingItems, {
+      setSelectedClothing({
         id: item.id,
         image: item.image_url,
-        comment: '',
+        name: item.name,
         categories: item.categories
-      }]);
+      });
     }
-  };
-  
-  const updateClothingComment = (id: string, comment: string) => {
-    setSelectedClothingItems(selectedClothingItems.map(item =>
-      item.id === id ? { ...item, comment } : item
-    ));
-  };
-  
-  const getCategoryPlacementHint = (categories: string[]): string => {
-    if (!categories || categories.length === 0) return 'clothing item';
-    
-    const categoryLower = categories.map(c => c.toLowerCase());
-    
-    if (categoryLower.some(c => c.includes('весь образ') || c.includes('full outfit') || c.includes('complete look'))) {
-      return 'complete outfit';
-    }
-    
-    if (categoryLower.some(c => c.includes('платье') || c.includes('dress'))) {
-      return 'dress';
-    }
-    
-    if (categoryLower.some(c => c.includes('топ') || c.includes('блузка') || c.includes('блуза') || c.includes('футболка') || c.includes('рубашка') || c.includes('top') || c.includes('blouse') || c.includes('shirt') || c.includes('t-shirt'))) {
-      return 'top';
-    }
-    
-    if (categoryLower.some(c => c.includes('брюки') || c.includes('джинсы') || c.includes('штаны') || c.includes('pants') || c.includes('trousers') || c.includes('jeans'))) {
-      return 'pants';
-    }
-    if (categoryLower.some(c => c.includes('юбка') || c.includes('skirt'))) {
-      return 'skirt';
-    }
-    
-    if (categoryLower.some(c => c.includes('куртка') || c.includes('пальто') || c.includes('jacket') || c.includes('coat'))) {
-      return 'jacket';
-    }
-    
-    if (categoryLower.some(c => c.includes('обувь') || c.includes('туфли') || c.includes('ботинки') || c.includes('сапоги') || c.includes('кроссовки') || c.includes('shoes') || c.includes('boots') || c.includes('sneakers') || c.includes('heels'))) {
-      return 'shoes';
-    }
-    
-    if (categoryLower.some(c => c.includes('аксессуар') || c.includes('accessory') || c.includes('шарф') || c.includes('scarf') || c.includes('сумка') || c.includes('bag') || c.includes('украшение') || c.includes('jewelry'))) {
-      return 'accessory';
-    }
-    
-    return categories[0].toLowerCase();
   };
 
   const continuePolling = async (statusUrl: string, personImage: string, garmentImg: string) => {
@@ -632,58 +367,10 @@ export default function Index() {
       return;
     }
 
-    const customItemsWithCategory = customClothingItems.filter(item => item.categories && item.categories.length > 0);
-    const allClothingItems = [...selectedClothingItems, ...customItemsWithCategory];
-    
-    if (allClothingItems.length === 0) {
+    if (!selectedClothing) {
       toast.error('Выберите или загрузите одежду');
       return;
     }
-    
-    const customItemsWithoutCategory = customClothingItems.filter(item => !item.categories || item.categories.length === 0);
-    if (customItemsWithoutCategory.length > 0) {
-      toast.error('Укажите категорию для всех загруженных элементов одежды');
-      return;
-    }
-    
-    console.log('=== GENERATION START ===');
-    console.log('Total items:', allClothingItems.length);
-    console.log('Items BEFORE sorting:', allClothingItems.map((item, idx) => ({
-      index: idx,
-      id: item.id,
-      categories: item.categories,
-      categoriesRaw: JSON.stringify(item.categories),
-      detectedType: getCategoryPlacementHint(item.categories),
-      comment: item.comment,
-      imagePreview: item.image.substring(0, 100)
-    })));
-
-    const sortedItems = [...allClothingItems].sort((a, b) => {
-      const getOrder = (categories: string[]) => {
-        const hint = getCategoryPlacementHint(categories);
-        console.log(`Determining order for categories ${JSON.stringify(categories)}: hint="${hint}"`);
-        if (hint.includes('complete outfit')) return 1;
-        if (hint.includes('dress')) return 2;
-        if (hint.includes('top') || hint.includes('blouse') || hint.includes('shirt')) return 3;
-        if (hint.includes('pants') || hint.includes('skirt')) return 4;
-        if (hint.includes('jacket') || hint.includes('coat')) return 5;
-        if (hint.includes('shoes')) return 6;
-        if (hint.includes('accessory')) return 7;
-        console.log(`No match found for hint "${hint}", defaulting to order 8`);
-        return 8;
-      };
-      const orderA = getOrder(a.categories);
-      const orderB = getOrder(b.categories);
-      console.log(`Compare: ${JSON.stringify(a.categories)} (order ${orderA}) vs ${JSON.stringify(b.categories)} (order ${orderB})`);
-      return orderA - orderB;
-    });
-    
-    console.log('Sorted order AFTER:', sortedItems.map((item, idx) => ({
-      index: idx,
-      categories: item.categories,
-      detectedType: getCategoryPlacementHint(item.categories),
-      id: item.id
-    })));
 
     const controller = new AbortController();
     setAbortController(controller);
@@ -691,164 +378,87 @@ export default function Index() {
     setLoadingProgress(0);
     
     try {
-      let currentPersonImage = uploadedImage;
+      toast.info('Начинаем примерку...', { duration: 2000 });
       
-      toast.info('Подготовка изображений...', { duration: 2000 });
-      console.log('=== PREPROCESSING USER IMAGES ===');
+      const requestBody: any = {
+        person_image: uploadedImage,
+        garment_image: selectedClothing.image,
+        description: `${selectedClothing.name || 'garment'}, photorealistic, natural fit`,
+        category_hint: selectedClothing.categories[0] || 'clothing'
+      };
       
-      const processedItems = await Promise.all(
-        sortedItems.map(async (item, idx) => {
-          const isCustomItem = item.id.startsWith('custom-');
-          
-          if (isCustomItem) {
-            console.log(`Preprocessing custom item ${idx + 1}/${sortedItems.length}: ${item.id}`);
-            try {
-              const processedImage = await processImageBackground(item.image, `preprocessing-${item.id}`);
-              console.log(`Custom item ${idx + 1} processed successfully`);
-              return { ...item, image: processedImage };
-            } catch (error) {
-              console.warn(`Failed to preprocess custom item ${idx + 1}, using original:`, error);
-              return item;
+      const submitResponse = await fetch('https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885', {
+        signal: controller.signal,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      const submitData = await submitResponse.json();
+      
+      if (!submitResponse.ok) {
+        throw new Error(submitData.error || 'Failed to submit generation');
+      }
+      
+      const statusUrl = submitData.status_url;
+      
+      if (!statusUrl) {
+        throw new Error('No status URL returned');
+      }
+
+      let checkCount = 0;
+      const maxChecks = 120;
+      
+      const waitForCompletion = async (): Promise<string> => {
+        return new Promise(async (resolve, reject) => {
+          const checkStatus = async () => {
+            if (checkCount >= maxChecks) {
+              reject(new Error('Превышено время ожидания'));
+              return;
             }
-          } else {
-            console.log(`Item ${idx + 1} from catalog (already processed): ${item.id}`);
-            return item;
-          }
-        })
-      );
-      
-      console.log('All images ready');
-      toast.success('Начинаем примерку...', { duration: 2000 });
-      
-      for (let i = 0; i < processedItems.length; i++) {
-        const item = processedItems[i];
-        const categoryHint = getCategoryPlacementHint(item.categories);
-        const userComment = item.comment ? ` ${item.comment}` : '';
-        
-        const description = userComment || 'photorealistic high quality garment, natural lighting and shadows, preserve exact original colors and patterns, realistic fabric texture and draping, maintain all garment details, professional photography quality, natural body fit';
-        
-        const itemNumber = i + 1;
-        const totalItems = processedItems.length;
-        
-        toast.info(`Примеряем ${categoryHint}: ${item.categories[0] || 'одежда'} (${itemNumber}/${totalItems})`, {
-          duration: 3000
-        });
-        
-        console.log(`\n=== STEP ${itemNumber}/${totalItems} ===`);
-        console.log('Item ID:', item.id);
-        console.log('Categories array (RAW):', JSON.stringify(item.categories));
-        console.log('Detected category type:', categoryHint);
-        console.log('User comment:', item.comment || 'none');
-        console.log('Description sent to API:', description);
-        console.log('Person image length:', currentPersonImage.length);
-        console.log('Person image type:', currentPersonImage.startsWith('data:') ? 'base64' : 'URL');
-        console.log('Garment image length:', item.image.length);
-        console.log('Garment image type:', item.image.startsWith('data:') ? 'base64' : 'URL');
-        console.log('Full item data:', JSON.stringify({
-          id: item.id,
-          categories: item.categories,
-          categoryHint: categoryHint,
-          hasComment: !!item.comment,
-          hasZone: !!item.zone
-        }));
-        
-        const requestBody: any = {
-          person_image: currentPersonImage,
-          garment_image: item.image,
-          description: description,
-          category_hint: categoryHint
-        };
-        
-        if (item.zone) {
-          console.log('Creating mask from zone:', item.zone);
-          const maskImage = await createMaskFromZone(currentPersonImage, item.zone);
-          requestBody.mask_image = maskImage;
-          console.log('Sending mask image:', maskImage.substring(0, 100));
-          console.log('Using OOTDiffusion model with mask for category:', categoryHint);
-        } else {
-          console.log('Using IDM-VTON model without mask');
-        }
-        
-        const submitResponse = await fetch('https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885', {
-          signal: controller.signal,
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody)
-        });
-
-        const submitData = await submitResponse.json();
-        
-        if (!submitResponse.ok) {
-          throw new Error(submitData.error || 'Failed to submit generation');
-        }
-        
-        const statusUrl = submitData.status_url;
-        
-        if (!statusUrl) {
-          throw new Error('No status URL returned');
-        }
-
-        let checkCount = 0;
-        const maxChecks = 120;
-        
-        const waitForCompletion = async (): Promise<string> => {
-          return new Promise(async (resolve, reject) => {
-            const checkStatus = async () => {
-              if (checkCount >= maxChecks) {
-                reject(new Error('Превышено время ожидания'));
+            
+            checkCount++;
+            setLoadingProgress(Math.min((checkCount / maxChecks) * 100, 95));
+            
+            try {
+              const statusResponse = await fetch(
+                `https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885?status_url=${encodeURIComponent(statusUrl)}`
+              );
+              
+              if (!statusResponse.ok) {
+                setTimeout(checkStatus, 2000);
                 return;
               }
               
-              checkCount++;
-              const baseProgress = (i / totalItems) * 100;
-              const stepProgress = (checkCount / maxChecks) * (100 / totalItems);
-              setLoadingProgress(Math.min(baseProgress + stepProgress, 95));
+              const statusData = await statusResponse.json();
               
-              try {
-                const statusResponse = await fetch(
-                  `https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885?status_url=${encodeURIComponent(statusUrl)}`
-                );
-                
-                if (!statusResponse.ok) {
-                  setTimeout(checkStatus, 2000);
-                  return;
-                }
-                
-                const statusData = await statusResponse.json();
-                
-                if (statusData.status === 'COMPLETED') {
-                  resolve(statusData.image_url);
-                  return;
-                }
-                
-                if (statusData.status === 'FAILED') {
-                  reject(new Error(statusData.error || 'Ошибка генерации'));
-                  return;
-                }
-                
-                setTimeout(checkStatus, 2000);
-              } catch (error) {
-                setTimeout(checkStatus, 2000);
+              if (statusData.status === 'COMPLETED') {
+                resolve(statusData.image_url);
+                return;
               }
-            };
-            
-            await checkStatus();
-          });
-        };
-        
-        const resultImageUrl = await waitForCompletion();
-        currentPersonImage = resultImageUrl;
-        
-        console.log(`Step ${itemNumber} completed:`, resultImageUrl.substring(0, 50));
-      }
+              
+              if (statusData.status === 'FAILED') {
+                reject(new Error(statusData.error || 'Ошибка генерации'));
+                return;
+              }
+              
+              setTimeout(checkStatus, 2000);
+            } catch (error) {
+              setTimeout(checkStatus, 2000);
+            }
+          };
+          
+          await checkStatus();
+        });
+      };
+      
+      const resultImageUrl = await waitForCompletion();
       
       setLoadingProgress(100);
-      setGeneratedImage(currentPersonImage);
-      console.log('=== GENERATION COMPLETE ===');
-      console.log('Final image URL:', currentPersonImage.substring(0, 80));
-      toast.success(`Все элементы (${sortedItems.length}) успешно примерены!`);
+      setGeneratedImage(resultImageUrl);
+      toast.success('Примерка завершена!');
       setIsGenerating(false);
       
       if (user) {
@@ -861,8 +471,8 @@ export default function Index() {
             },
             body: JSON.stringify({
               person_image: uploadedImage,
-              garment_image: processedItems[0].image,
-              result_image: currentPersonImage
+              garment_image: selectedClothing.image,
+              result_image: resultImageUrl
             })
           });
           if (!response.ok) {
@@ -902,31 +512,20 @@ export default function Index() {
             <VirtualFittingControls
               uploadedImage={uploadedImage}
               handleImageUpload={handleImageUpload}
-              selectedClothingItems={selectedClothingItems}
-              customClothingItems={customClothingItems}
+              selectedClothing={selectedClothing}
               clothingCatalog={clothingCatalog}
               filters={filters}
-              selectedCategories={selectedCategories}
               selectedColors={selectedColors}
               selectedArchetypes={selectedArchetypes}
-              setSelectedCategories={setSelectedCategories}
               setSelectedColors={setSelectedColors}
               setSelectedArchetypes={setSelectedArchetypes}
               toggleClothingSelection={toggleClothingSelection}
-              updateClothingComment={updateClothingComment}
-              setSelectedClothingItems={setSelectedClothingItems}
+              setSelectedClothing={setSelectedClothing}
               handleCustomClothingUpload={handleCustomClothingUpload}
-              updateCustomClothingCategory={updateCustomClothingCategory}
-              updateCustomClothingComment={updateCustomClothingComment}
-              handleCropImage={handleCropImage}
-              processImageBackground={processImageBackground}
-              setCustomClothingItems={setCustomClothingItems}
-              processingImages={processingImages}
               handleGenerate={handleGenerate}
               isGenerating={isGenerating}
               loadingProgress={loadingProgress}
               handleCancelGeneration={handleCancelGeneration}
-              onMarkClothingZone={handleMarkClothingZone}
             />
 
             <VirtualFittingResult
@@ -954,37 +553,6 @@ export default function Index() {
       </section>
 
       <VirtualFittingInfo />
-
-      {imageToCrop && (
-        <ImageCropper
-          image={imageToCrop.image}
-          open={cropDialogOpen}
-          onClose={() => {
-            setCropDialogOpen(false);
-            setImageToCrop(null);
-          }}
-          onCropComplete={handleCropComplete}
-          aspectRatio={3/4}
-        />
-      )}
-
-      {showClothingZoneEditor && uploadedImage && clothingToMarkZone && (
-        <ClothingZoneEditor
-          personImage={uploadedImage}
-          clothingImage={clothingToMarkZone.image}
-          clothingName={clothingToMarkZone.name}
-          onSave={handleSaveClothingZone}
-          onClose={() => {
-            setShowClothingZoneEditor(false);
-            setClothingToMarkZone(null);
-          }}
-          existingZone={
-            clothingToMarkZone.isCatalog
-              ? selectedClothingItems.find(i => i.id === clothingToMarkZone.id)?.zone
-              : customClothingItems.find(i => i.id === clothingToMarkZone.id)?.zone
-          }
-        />
-      )}
     </Layout>
   );
 }

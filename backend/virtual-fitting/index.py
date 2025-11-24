@@ -5,7 +5,7 @@ import requests
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Submit or check virtual try-on generation task
+    Business: Submit or check virtual try-on generation task (single garment only)
     Args: event - dict with httpMethod, body (person_image, garment_image) or query params (status_url)
           context - object with attributes: request_id, function_name
     Returns: HTTP response with status_url or image_url
@@ -141,8 +141,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             person_image = body_data.get('person_image')
             garment_image = body_data.get('garment_image')
             description = body_data.get('description', '')
-            mask_image = body_data.get('mask_image')
-            category_hint = body_data.get('category_hint', '')
             
             if not person_image or not garment_image:
                 return {
@@ -155,43 +153,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing person_image or garment_image'})
                 }
             
-            # Use IDM-VTON model
             queue_url = "https://queue.fal.run/fal-ai/idm-vton"
             
-            # Build concise but effective description
-            desc_parts = []
-            
-            # User comment first
-            if description:
-                desc_parts.append(description)
-            
-            # Category-specific instruction
-            if category_hint:
-                hint_lower = category_hint.lower()
-                if 'top' in hint_lower or 'shirt' in hint_lower or 'blouse' in hint_lower:
-                    desc_parts.append("upper body garment on torso")
-                elif 'pants' in hint_lower or 'trousers' in hint_lower or 'jeans' in hint_lower:
-                    desc_parts.append("lower body garment on legs")
-                elif 'dress' in hint_lower or 'платье' in hint_lower:
-                    desc_parts.append("full dress on body")
-                elif 'skirt' in hint_lower or 'юбка' in hint_lower:
-                    desc_parts.append("skirt on lower body")
-                elif 'jacket' in hint_lower or 'coat' in hint_lower:
-                    desc_parts.append("outerwear jacket")
-                elif 'shoes' in hint_lower or 'boots' in hint_lower or 'обувь' in hint_lower:
-                    desc_parts.append("footwear on feet")
-                elif 'accessory' in hint_lower or 'hat' in hint_lower or 'шляпа' in hint_lower:
-                    desc_parts.append("accessory item")
-            
-            # Quality keywords
-            desc_parts.extend([
-                "photorealistic",
-                "natural fit",
-                "preserve colors",
-                "realistic draping"
-            ])
-            
-            detailed_description = ', '.join(desc_parts)
+            detailed_description = description if description else "photorealistic high quality garment, natural lighting and shadows, preserve exact original colors and patterns"
             
             payload = {
                 "human_image_url": person_image,
@@ -201,7 +165,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 "guidance_scale": 2.0
             }
             
-            print(f"Using IDM-VTON, category: {category_hint}, description: {detailed_description}")
+            print(f"Using IDM-VTON, description: {detailed_description}")
             
             submit_response = requests.post(queue_url, headers=headers, json=payload, timeout=30)
             

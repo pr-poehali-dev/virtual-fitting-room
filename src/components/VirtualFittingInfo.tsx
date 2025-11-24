@@ -16,16 +16,16 @@ export default function VirtualFittingInfo() {
               </div>
               <h3 className="text-xl font-medium">1. Загрузите фото</h3>
               <p className="text-muted-foreground text-sm">
-                Выберите чёткую фотографию в полный рост на светлом фоне
+                Выберите фотографию человека в полный рост
               </p>
             </div>
             <div className="text-center space-y-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
                 <Icon name="Shirt" className="text-primary" size={32} />
               </div>
-              <h3 className="text-xl font-medium">2. Выберите одежду</h3>
+              <h3 className="text-xl font-medium">2. Выберите одну вещь</h3>
               <p className="text-muted-foreground text-sm">
-                Выберите из каталога или загрузите своё фото одежды
+                Выберите один образ из каталога или загрузите своё фото
               </p>
             </div>
             <div className="text-center space-y-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
@@ -34,7 +34,7 @@ export default function VirtualFittingInfo() {
               </div>
               <h3 className="text-xl font-medium">3. Получите результат</h3>
               <p className="text-muted-foreground text-sm">
-                AI создаст реалистичное изображение с выбранной одеждой
+                AI создаст реалистичное изображение с выбранным образом
               </p>
             </div>
           </div>
@@ -52,8 +52,8 @@ export default function VirtualFittingInfo() {
                 Какие требования к фотографии?
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                Фотография должна быть чёткой, в полный рост, на светлом однородном фоне. 
-                Человек должен быть в облегающей одежде или спортивной форме для лучшего результата.
+                Фотография должна быть чёткой, желательно в полный рост. 
+                Человек может быть в любой одежде — AI автоматически заменит её на выбранный образ.
               </AccordionContent>
             </AccordionItem>
             
@@ -62,8 +62,8 @@ export default function VirtualFittingInfo() {
                 Как работает технология?
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                Мы используем передовые AI модели машинного обучения (GAN) и компьютерного зрения 
-                для реалистичного наложения одежды на фигуру с учётом освещения и пропорций.
+                Мы используем передовые AI модели машинного обучения (IDM-VTON) 
+                для реалистичного наложения одежды на фигуру с учётом освещения, пропорций и драпировки ткани.
               </AccordionContent>
             </AccordionItem>
             
@@ -72,13 +72,12 @@ export default function VirtualFittingInfo() {
                 Сколько времени занимает генерация?
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                <p className="mb-2">Процесс состоит из нескольких этапов:</p>
+                <p className="mb-2">Процесс занимает 10-30 секунд:</p>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li><strong>Предобработка:</strong> 3-5 секунд на каждое изображение (удаление фона)</li>
-                  <li><strong>Примерка:</strong> 10-20 секунд на каждый элемент одежды</li>
-                  <li><strong>Итого:</strong> при выборе 3 элементов ~45-75 секунд</li>
+                  <li><strong>Загрузка моделей:</strong> 3-5 секунд</li>
+                  <li><strong>Примерка:</strong> 10-20 секунд</li>
                 </ul>
-                <p className="mt-2 text-sm">Первый запуск может быть медленнее (~1-2 минуты) из-за загрузки AI моделей.</p>
+                <p className="mt-2 text-sm">Первый запуск может быть медленнее (~40-60 секунд) из-за инициализации AI моделей.</p>
               </AccordionContent>
             </AccordionItem>
             
@@ -87,15 +86,13 @@ export default function VirtualFittingInfo() {
                 Можно ли использовать свою одежду?
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                <p className="mb-2">Да! Откройте раздел "Загрузить своё фото" и добавьте изображение.</p>
-                <p className="mb-2"><strong>Хорошая новость:</strong> фон удаляется автоматически! Можете загружать:</p>
+                <p className="mb-2">Да! Откройте раздел "Загрузить свою" и добавьте изображение.</p>
+                <p className="mb-2"><strong>Важно:</strong></p>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li>Фото с любым фоном (будет удалён автоматически)</li>
-                  <li>Фото манекена в одежде (AI выделит нужный элемент)</li>
-                  <li>Профессиональные фото товаров</li>
+                  <li>Загружайте фото одежды с любым фоном (необязательно белый)</li>
+                  <li>Можно загружать полные образы (вся одежда целиком)</li>
+                  <li>Предмет должен быть виден полностью и чётко</li>
                 </ul>
-                <p className="mt-2"><strong>Новая функция:</strong> используйте кнопку <strong>"Кадрировать"</strong> чтобы выделить нужную часть одежды - это повышает точность!</p>
-                <p className="mt-2"><strong>Важно:</strong> предмет должен быть виден полностью, выберите правильную категорию.</p>
               </AccordionContent>
             </AccordionItem>
             
@@ -106,13 +103,22 @@ export default function VirtualFittingInfo() {
               <AccordionContent className="text-muted-foreground">
                 <p className="mb-2">Основные причины неточностей:</p>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li><strong>Обрезанные элементы:</strong> если брюки обрезаны снизу на фото, AI может принять их за шорты</li>
-                  <li><strong>Фото человека:</strong> должно быть в полный рост, чёткое, на светлом фоне</li>
-                  <li><strong>Неправильная категория:</strong> убедитесь что выбрана правильная категория одежды</li>
+                  <li><strong>Фото человека:</strong> должно быть чётким, желательно в полный рост</li>
+                  <li><strong>Фото одежды:</strong> должно быть качественным и чётким</li>
                   <li><strong>Низкое качество:</strong> размытые или тёмные фото снижают точность</li>
+                  <li><strong>Сложная поза:</strong> человек должен стоять прямо</li>
                 </ul>
-                <p className="mt-2 text-sm"><strong>Совет:</strong> используйте <strong>кадрирование</strong> для загруженных фото - выделите только нужную часть одежды для лучшего результата!</p>
-                <p className="mt-2 text-sm"><strong>Помните:</strong> фон удаляется автоматически, не переживайте если он не идеальный!</p>
+                <p className="mt-2 text-sm"><strong>Совет:</strong> используйте качественные фото с хорошим освещением для лучшего результата!</p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-6" className="border rounded-lg px-6">
+              <AccordionTrigger className="text-left">
+                Можно ли примерить несколько вещей сразу?
+              </AccordionTrigger>
+              <AccordionContent className="text-muted-foreground">
+                <p className="mb-2">Сейчас можно примерить только одну вещь или полный образ за раз.</p>
+                <p>Для создания полного образа используйте фото с комплектом одежды из каталога (топ+брюки, платье и т.д.).</p>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
