@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
 import ImageViewer from '@/components/ImageViewer';
+import ImageCropper from '@/components/ImageCropper';
 
 interface Lookbook {
   id: string;
@@ -29,6 +30,7 @@ const LOOKBOOKS_API = 'https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3
 const CHANGE_PASSWORD_API = 'https://functions.poehali.dev/98400760-4d03-4ca8-88ab-753fde19ef83';
 const UPDATE_PROFILE_API = 'https://functions.poehali.dev/efb92b0f-c34a-4b12-ad41-744260d1173a';
 const DELETE_ACCOUNT_API = 'https://functions.poehali.dev/d8626da4-6372-40c1-abba-d4ffdc89c7c4';
+const IMAGE_PREPROCESSING_API = 'https://functions.poehali.dev/3fe8c892-ab5f-4d26-a2c5-ae4166276334';
 
 export default function Profile() {
   const { user, isLoading: authLoading, updateUser, logout } = useAuth();
@@ -48,6 +50,10 @@ export default function Profile() {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
+  const [showCropper, setShowCropper] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string>('');
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number | null>(null);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -285,6 +291,49 @@ export default function Profile() {
     setColorPalette(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleCropPhoto = (index: number) => {
+    setCurrentPhotoIndex(index);
+    setImageToCrop(selectedPhotos[index]);
+    setShowCropper(true);
+  };
+
+  const handleCropComplete = (croppedImage: string) => {
+    if (currentPhotoIndex !== null) {
+      const updatedPhotos = [...selectedPhotos];
+      updatedPhotos[currentPhotoIndex] = croppedImage;
+      setSelectedPhotos(updatedPhotos);
+    }
+    setShowCropper(false);
+    setCurrentPhotoIndex(null);
+    toast.success('Изображение обрезано');
+  };
+
+  const handleRemoveBackground = async (index: number) => {
+    const photo = selectedPhotos[index];
+    if (!photo) return;
+
+    setIsProcessingImage(true);
+    try {
+      const response = await fetch(IMAGE_PREPROCESSING_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_url: photo })
+      });
+
+      if (!response.ok) throw new Error('Failed to remove background');
+      
+      const data = await response.json();
+      const updatedPhotos = [...selectedPhotos];
+      updatedPhotos[index] = data.processed_image;
+      setSelectedPhotos(updatedPhotos);
+      toast.success('Фон удалён');
+    } catch (error) {
+      toast.error('Ошибка удаления фона');
+    } finally {
+      setIsProcessingImage(false);
+    }
+  };
+
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmNewPassword) {
       toast.error('Заполните все поля');
@@ -473,17 +522,49 @@ export default function Profile() {
                             </label>
                           </div>
                           {selectedPhotos.length > 0 && (
-                            <div className="grid grid-cols-4 gap-2 mt-4">
+                            <div className="grid grid-cols-2 gap-3 mt-4">
                               {selectedPhotos.map((photo, index) => (
-                                <div key={index} className="relative group">
-                                  <ImageViewer src={photo} alt="" className="w-full h-24 object-contain bg-muted rounded" />
-                                  <button
-                                    onClick={() => setSelectedPhotos(selectedPhotos.filter((_, i) => i !== index))}
-                                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                                    title="Удалить фото"
-                                  >
-                                    <Icon name="X" size={14} />
-                                  </button>
+                                <div key={index} className="relative group border rounded-lg p-2 bg-muted/50">
+                                  <ImageViewer src={photo} alt="" className="w-full h-32 object-contain bg-muted rounded mb-2" />
+                                  <div className="flex gap-1">
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      className="flex-1 h-8 text-xs"
+                                      onClick={() => handleRemoveBackground(index)}
+                                      disabled={isProcessingImage}
+                                    >
+                                      {isProcessingImage ? (
+                                        <Icon name="Loader2" className="animate-spin" size={12} />
+                                      ) : (
+                                        <>
+                                          <Icon name="Eraser" className="mr-1" size={12} />
+                                          Фон
+                                        </>
+                                      )}
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      className="flex-1 h-8 text-xs"
+                                      onClick={() => handleCropPhoto(index)}
+                                    >
+                                      <Icon name="Crop" className="mr-1" size={12} />
+                                      Обрезать
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="destructive"
+                                      className="h-8 w-8 p-0"
+                                      onClick={() => setSelectedPhotos(selectedPhotos.filter((_, i) => i !== index))}
+                                      title="Удалить фото"
+                                    >
+                                      <Icon name="X" size={14} />
+                                    </Button>
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -766,6 +847,18 @@ export default function Profile() {
           </Tabs>
         </div>
       </section>
+
+      {showCropper && imageToCrop && (
+        <ImageCropper
+          image={imageToCrop}
+          open={showCropper}
+          onClose={() => {
+            setShowCropper(false);
+            setCurrentPhotoIndex(null);
+          }}
+          onCropComplete={handleCropComplete}
+        />
+      )}
     </Layout>
   );
 }
