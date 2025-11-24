@@ -3,6 +3,7 @@ import os
 import hashlib
 import secrets
 import smtplib
+from typing import Dict, Any
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
