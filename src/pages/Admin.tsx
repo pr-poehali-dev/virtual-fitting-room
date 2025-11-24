@@ -36,7 +36,30 @@ interface Stats {
   today_try_ons: number;
 }
 
+interface ClothingItem {
+  id: string;
+  image_url: string;
+  name: string;
+  description: string;
+  categories: string[];
+  colors: string[];
+  archetypes: string[];
+  created_at: string;
+}
+
+interface FilterOption {
+  id: number;
+  name: string;
+}
+
+interface Filters {
+  categories: FilterOption[];
+  colors: FilterOption[];
+  archetypes: FilterOption[];
+}
+
 const ADMIN_API = 'https://functions.poehali.dev/6667a30b-a520-41d8-b23a-e240a9aefb15';
+const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -50,6 +73,18 @@ export default function Admin() {
   const [selectedHistoryUserId, setSelectedHistoryUserId] = useState<string>('all');
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  
+  const [clothingItems, setClothingItems] = useState<ClothingItem[]>([]);
+  const [filters, setFilters] = useState<Filters | null>(null);
+  const [showAddClothing, setShowAddClothing] = useState(false);
+  const [newClothing, setNewClothing] = useState({
+    image_url: '',
+    name: '',
+    description: '',
+    category_ids: [] as number[],
+    color_ids: [] as number[],
+    archetype_ids: [] as number[]
+  });
 
   useEffect(() => {
     const adminAuth = sessionStorage.getItem('admin_auth');
@@ -98,7 +133,7 @@ export default function Admin() {
     const adminPassword = sessionStorage.getItem('admin_auth');
 
     try {
-      const [statsRes, usersRes, lookbooksRes, historyRes] = await Promise.all([
+      const [statsRes, usersRes, lookbooksRes, historyRes, filtersRes, catalogRes] = await Promise.all([
         fetch(`${ADMIN_API}?action=stats`, {
           headers: { 'X-Admin-Password': adminPassword || '' }
         }),
@@ -110,18 +145,22 @@ export default function Admin() {
         }),
         fetch(`${ADMIN_API}?action=history`, {
           headers: { 'X-Admin-Password': adminPassword || '' }
-        })
+        }),
+        fetch(`${CATALOG_API}?action=filters`),
+        fetch(`${CATALOG_API}?action=list`)
       ]);
 
-      if (!statsRes.ok || !usersRes.ok || !lookbooksRes.ok || !historyRes.ok) {
+      if (!statsRes.ok || !usersRes.ok || !lookbooksRes.ok || !historyRes.ok || !filtersRes.ok || !catalogRes.ok) {
         throw new Error('Ошибка загрузки данных');
       }
 
-      const [statsData, usersData, lookbooksData, historyData] = await Promise.all([
+      const [statsData, usersData, lookbooksData, historyData, filtersData, catalogData] = await Promise.all([
         statsRes.json(),
         usersRes.json(),
         lookbooksRes.json(),
-        historyRes.json()
+        historyRes.json(),
+        filtersRes.json(),
+        catalogRes.json()
       ]);
 
       setStats(statsData);
@@ -130,6 +169,8 @@ export default function Admin() {
       setFilteredLookbooks(lookbooksData);
       setHistory(historyData);
       setFilteredHistory(historyData);
+      setFilters(filtersData);
+      setClothingItems(catalogData);
     } catch (error) {
       toast.error('Ошибка загрузки данных');
       handleLogout();
@@ -210,6 +251,72 @@ export default function Admin() {
     } catch (error) {
       toast.error('Ошибка удаления');
     }
+  };
+
+  const handleAddClothing = async () => {
+    if (!newClothing.image_url) {
+      toast.error('Добавьте ссылку на изображение');
+      return;
+    }
+
+    const adminPassword = sessionStorage.getItem('admin_auth');
+
+    try {
+      const response = await fetch(CATALOG_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Password': adminPassword || ''
+        },
+        body: JSON.stringify(newClothing)
+      });
+
+      if (response.ok) {
+        toast.success('Одежда добавлена в каталог');
+        setShowAddClothing(false);
+        setNewClothing({
+          image_url: '',
+          name: '',
+          description: '',
+          category_ids: [],
+          color_ids: [],
+          archetype_ids: []
+        });
+        fetchData();
+      } else {
+        toast.error('Ошибка добавления');
+      }
+    } catch (error) {
+      toast.error('Ошибка добавления');
+    }
+  };
+
+  const handleDeleteClothing = async (clothingId: string) => {
+    if (!confirm('Удалить этот элемент одежды?')) return;
+
+    const adminPassword = sessionStorage.getItem('admin_auth');
+
+    try {
+      const response = await fetch(`${CATALOG_API}?id=${clothingId}`, {
+        method: 'DELETE',
+        headers: { 'X-Admin-Password': adminPassword || '' }
+      });
+
+      if (response.ok) {
+        toast.success('Одежда удалена');
+        fetchData();
+      } else {
+        toast.error('Ошибка удаления');
+      }
+    } catch (error) {
+      toast.error('Ошибка удаления');
+    }
+  };
+
+  const toggleSelection = (array: number[], value: number) => {
+    return array.includes(value)
+      ? array.filter(v => v !== value)
+      : [...array, value];
   };
 
   if (!isAuthenticated) {
@@ -320,10 +427,11 @@ export default function Admin() {
               </div>
 
               <Tabs defaultValue="users" className="w-full">
-                <TabsList className="grid w-full md:w-auto grid-cols-3 mb-8">
+                <TabsList className="grid w-full md:w-auto grid-cols-4 mb-8">
                   <TabsTrigger value="users">Пользователи</TabsTrigger>
                   <TabsTrigger value="lookbooks">Лукбуки</TabsTrigger>
                   <TabsTrigger value="history">История</TabsTrigger>
+                  <TabsTrigger value="catalog">Каталог</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="users">
@@ -479,6 +587,168 @@ export default function Admin() {
                                 </p>
                               </div>
                             </div>
+                          ))
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="catalog">
+                  <Card>
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle>Каталог одежды</CardTitle>
+                        <Button onClick={() => setShowAddClothing(!showAddClothing)}>
+                          <Icon name="Plus" className="mr-2" size={18} />
+                          Добавить одежду
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {showAddClothing && (
+                        <div className="mb-6 p-4 border rounded-lg space-y-4 bg-muted/50">
+                          <h3 className="font-medium">Новая одежда</h3>
+                          
+                          <Input
+                            placeholder="Ссылка на изображение"
+                            value={newClothing.image_url}
+                            onChange={(e) => setNewClothing({ ...newClothing, image_url: e.target.value })}
+                          />
+                          
+                          <Input
+                            placeholder="Название (необязательно)"
+                            value={newClothing.name}
+                            onChange={(e) => setNewClothing({ ...newClothing, name: e.target.value })}
+                          />
+                          
+                          <Input
+                            placeholder="Описание (необязательно)"
+                            value={newClothing.description}
+                            onChange={(e) => setNewClothing({ ...newClothing, description: e.target.value })}
+                          />
+                          
+                          <div>
+                            <p className="text-sm font-medium mb-2">Категории:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {filters?.categories.map((cat) => (
+                                <Button
+                                  key={cat.id}
+                                  size="sm"
+                                  variant={newClothing.category_ids.includes(cat.id) ? 'default' : 'outline'}
+                                  onClick={() => setNewClothing({
+                                    ...newClothing,
+                                    category_ids: toggleSelection(newClothing.category_ids, cat.id)
+                                  })}
+                                >
+                                  {cat.name}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm font-medium mb-2">Цвета:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {filters?.colors.map((color) => (
+                                <Button
+                                  key={color.id}
+                                  size="sm"
+                                  variant={newClothing.color_ids.includes(color.id) ? 'default' : 'outline'}
+                                  onClick={() => setNewClothing({
+                                    ...newClothing,
+                                    color_ids: toggleSelection(newClothing.color_ids, color.id)
+                                  })}
+                                >
+                                  {color.name}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm font-medium mb-2">Архетипы Киббе:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {filters?.archetypes.map((arch) => (
+                                <Button
+                                  key={arch.id}
+                                  size="sm"
+                                  variant={newClothing.archetype_ids.includes(arch.id) ? 'default' : 'outline'}
+                                  onClick={() => setNewClothing({
+                                    ...newClothing,
+                                    archetype_ids: toggleSelection(newClothing.archetype_ids, arch.id)
+                                  })}
+                                >
+                                  {arch.name}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            <Button onClick={handleAddClothing}>Добавить</Button>
+                            <Button variant="outline" onClick={() => setShowAddClothing(false)}>
+                              Отмена
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {clothingItems.length === 0 ? (
+                          <p className="col-span-full text-center text-muted-foreground py-8">
+                            Каталог пуст
+                          </p>
+                        ) : (
+                          clothingItems.map((item) => (
+                            <Card key={item.id} className="overflow-hidden">
+                              <img
+                                src={item.image_url}
+                                alt={item.name}
+                                className="w-full h-48 object-cover"
+                              />
+                              <CardContent className="p-3 space-y-2">
+                                {item.name && (
+                                  <p className="font-medium text-sm">{item.name}</p>
+                                )}
+                                {item.categories.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {item.categories.map((cat, idx) => (
+                                      <span key={idx} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                                        {cat}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {item.colors.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {item.colors.map((color, idx) => (
+                                      <span key={idx} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                        {color}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {item.archetypes.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {item.archetypes.map((arch, idx) => (
+                                      <span key={idx} className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                                        {arch}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="w-full mt-2"
+                                  onClick={() => handleDeleteClothing(item.id)}
+                                >
+                                  <Icon name="Trash2" size={14} className="mr-1" />
+                                  Удалить
+                                </Button>
+                              </CardContent>
+                            </Card>
                           ))
                         )}
                       </div>

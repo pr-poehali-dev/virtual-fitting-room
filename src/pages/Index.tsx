@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -12,24 +12,45 @@ import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
 
-const clothingOptions = [
-  { 
-    id: '1', 
-    name: 'Элегантное чёрное платье', 
-    image: 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/25311c7a-f389-4431-83a1-e4fcdbf46690.jpg' 
-  },
-  { 
-    id: '2', 
-    name: 'Белая рубашка casual', 
-    image: 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/442312b4-1dcb-4bb2-bc77-257606189287.jpg' 
-  },
-];
+interface ClothingItem {
+  id: string;
+  image_url: string;
+  name: string;
+  description: string;
+  categories: string[];
+  colors: string[];
+  archetypes: string[];
+}
+
+interface FilterOption {
+  id: number;
+  name: string;
+}
+
+interface Filters {
+  categories: FilterOption[];
+  colors: FilterOption[];
+  archetypes: FilterOption[];
+}
+
+interface SelectedClothing {
+  id: string;
+  image: string;
+  comment: string;
+}
+
+const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
 
 export default function Index() {
   const { user } = useAuth();
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [selectedClothing, setSelectedClothing] = useState<string>('');
+  const [selectedClothingItems, setSelectedClothingItems] = useState<SelectedClothing[]>([]);
   const [customClothingImage, setCustomClothingImage] = useState<string | null>(null);
+  const [clothingCatalog, setClothingCatalog] = useState<ClothingItem[]>([]);
+  const [filters, setFilters] = useState<Filters | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [selectedColors, setSelectedColors] = useState<number[]>([]);
+  const [selectedArchetypes, setSelectedArchetypes] = useState<number[]>([]);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -54,7 +75,49 @@ export default function Index() {
     if (user) {
       fetchLookbooks();
     }
+    
+    fetchFilters();
+    fetchCatalog();
   }, [user]);
+  
+  useEffect(() => {
+    fetchCatalog();
+  }, [selectedCategories, selectedColors, selectedArchetypes]);
+  
+  const fetchFilters = async () => {
+    try {
+      const response = await fetch(`${CATALOG_API}?action=filters`);
+      if (response.ok) {
+        const data = await response.json();
+        setFilters(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch filters:', error);
+    }
+  };
+  
+  const fetchCatalog = async () => {
+    try {
+      const params = new URLSearchParams({ action: 'list' });
+      if (selectedCategories.length > 0) {
+        params.append('categories', selectedCategories.join(','));
+      }
+      if (selectedColors.length > 0) {
+        params.append('colors', selectedColors.join(','));
+      }
+      if (selectedArchetypes.length > 0) {
+        params.append('archetypes', selectedArchetypes.join(','));
+      }
+      
+      const response = await fetch(`${CATALOG_API}?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setClothingCatalog(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch catalog:', error);
+    }
+  };
 
   const fetchLookbooks = async () => {
     if (!user) return;
@@ -200,11 +263,36 @@ export default function Index() {
 
   const handleReset = () => {
     setUploadedImage(null);
-    setSelectedClothing('');
+    setSelectedClothingItems([]);
     setCustomClothingImage(null);
     setGeneratedImage(null);
     setClothingMode('preset');
     localStorage.removeItem('pendingGeneration');
+  };
+  
+  const toggleClothingSelection = (item: ClothingItem) => {
+    const existing = selectedClothingItems.find(c => c.id === item.id);
+    if (existing) {
+      setSelectedClothingItems(selectedClothingItems.filter(c => c.id !== item.id));
+    } else {
+      setSelectedClothingItems([...selectedClothingItems, {
+        id: item.id,
+        image: item.image_url,
+        comment: ''
+      }]);
+    }
+  };
+  
+  const updateClothingComment = (id: string, comment: string) => {
+    setSelectedClothingItems(selectedClothingItems.map(item =>
+      item.id === id ? { ...item, comment } : item
+    ));
+  };
+  
+  const toggleFilter = (array: number[], value: number) => {
+    return array.includes(value)
+      ? array.filter(v => v !== value)
+      : [...array, value];
   };
 
   const continuePolling = async (statusUrl: string, personImage: string, garmentImg: string) => {
@@ -297,11 +385,18 @@ export default function Index() {
       return;
     }
 
-    const garmentImage = clothingMode === 'custom' ? customClothingImage : clothingOptions.find(item => item.id === selectedClothing)?.image;
+    const garmentImage = clothingMode === 'custom' ? customClothingImage : selectedClothingItems[0]?.image;
+    const description = clothingMode === 'preset' && selectedClothingItems.length > 0
+      ? selectedClothingItems.map(item => item.comment || 'clothing item').join(', ')
+      : '';
     
     if (!garmentImage) {
       toast.error('Выберите или загрузите одежду');
       return;
+    }
+    
+    if (selectedClothingItems.length > 1) {
+      toast.info('Генерация с первой выбранной одеждой. Поддержка нескольких элементов добавится позже.');
     }
 
     const controller = new AbortController();
@@ -325,7 +420,8 @@ export default function Index() {
         },
         body: JSON.stringify({
           person_image: uploadedImage,
-          garment_image: garmentImage
+          garment_image: garmentImage,
+          description: description
         })
       });
 
@@ -419,22 +515,132 @@ export default function Index() {
                         <TabsTrigger value="preset">Из каталога</TabsTrigger>
                         <TabsTrigger value="custom">Своё фото</TabsTrigger>
                       </TabsList>
-                      <TabsContent value="preset" className="mt-4">
-                        <Select value={selectedClothing} onValueChange={setSelectedClothing}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Выберите вариант" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {clothingOptions.map((item) => (
-                              <SelectItem key={item.id} value={item.id}>
-                                <div className="flex items-center gap-3">
-                                  <img src={item.image} alt={item.name} className="w-8 h-8 object-cover rounded" />
-                                  {item.name}
+                      <TabsContent value="preset" className="mt-4 space-y-4">
+                        <Accordion type="single" collapsible>
+                          <AccordionItem value="filters">
+                            <AccordionTrigger className="text-sm">
+                              <div className="flex items-center gap-2">
+                                <Icon name="Filter" size={16} />
+                                Фильтры
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="space-y-3">
+                              {filters && (
+                                <>
+                                  <div>
+                                    <p className="text-xs font-medium mb-2">Категории:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {filters.categories.map((cat) => (
+                                        <Button
+                                          key={cat.id}
+                                          size="sm"
+                                          variant={selectedCategories.includes(cat.id) ? 'default' : 'outline'}
+                                          onClick={() => setSelectedCategories(toggleFilter(selectedCategories, cat.id))}
+                                          className="text-xs h-7"
+                                        >
+                                          {cat.name}
+                                        </Button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-medium mb-2">Цвета:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {filters.colors.map((color) => (
+                                        <Button
+                                          key={color.id}
+                                          size="sm"
+                                          variant={selectedColors.includes(color.id) ? 'default' : 'outline'}
+                                          onClick={() => setSelectedColors(toggleFilter(selectedColors, color.id))}
+                                          className="text-xs h-7"
+                                        >
+                                          {color.name}
+                                        </Button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-medium mb-2">Архетипы Киббе:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {filters.archetypes.map((arch) => (
+                                        <Button
+                                          key={arch.id}
+                                          size="sm"
+                                          variant={selectedArchetypes.includes(arch.id) ? 'default' : 'outline'}
+                                          onClick={() => setSelectedArchetypes(toggleFilter(selectedArchetypes, arch.id))}
+                                          className="text-xs h-7"
+                                        >
+                                          {arch.name}
+                                        </Button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                        
+                        <div className="grid grid-cols-2 gap-3 max-h-[400px] overflow-y-auto">
+                          {clothingCatalog.length === 0 ? (
+                            <p className="col-span-2 text-center text-muted-foreground text-sm py-4">
+                              Каталог пуст
+                            </p>
+                          ) : (
+                            clothingCatalog.map((item) => {
+                              const isSelected = selectedClothingItems.some(c => c.id === item.id);
+                              return (
+                                <div
+                                  key={item.id}
+                                  className={`relative border-2 rounded-lg overflow-hidden cursor-pointer transition-all ${
+                                    isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
+                                  }`}
+                                  onClick={() => toggleClothingSelection(item)}
+                                >
+                                  <img
+                                    src={item.image_url}
+                                    alt={item.name}
+                                    className="w-full h-32 object-cover"
+                                  />
+                                  {isSelected && (
+                                    <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
+                                      <Icon name="Check" size={14} />
+                                    </div>
+                                  )}
+                                  {item.name && (
+                                    <div className="p-2 bg-background/90 backdrop-blur-sm">
+                                      <p className="text-xs font-medium truncate">{item.name}</p>
+                                    </div>
+                                  )}
                                 </div>
-                              </SelectItem>
+                              );
+                            })
+                          )}
+                        </div>
+                        
+                        {selectedClothingItems.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Выбрано элементов: {selectedClothingItems.length}</p>
+                            {selectedClothingItems.map((item, idx) => (
+                              <div key={item.id} className="flex items-center gap-2 p-2 border rounded-lg">
+                                <img src={item.image} alt="" className="w-10 h-10 object-cover rounded" />
+                                <Input
+                                  placeholder="Комментарий (необязательно)"
+                                  value={item.comment}
+                                  onChange={(e) => updateClothingComment(item.id, e.target.value)}
+                                  className="text-sm"
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => setSelectedClothingItems(selectedClothingItems.filter(c => c.id !== item.id))}
+                                >
+                                  <Icon name="X" size={16} />
+                                </Button>
+                              </div>
                             ))}
-                          </SelectContent>
-                        </Select>
+                          </div>
+                        )}
                       </TabsContent>
                       <TabsContent value="custom" className="mt-4">
                         <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">

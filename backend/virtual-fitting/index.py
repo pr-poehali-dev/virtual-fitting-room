@@ -140,6 +140,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             body_data = json.loads(event.get('body', '{}'))
             person_image = body_data.get('person_image')
             garment_image = body_data.get('garment_image')
+            description = body_data.get('description', '')
             
             if not person_image or not garment_image:
                 return {
@@ -152,11 +153,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing person_image or garment_image'})
                 }
             
+            detailed_description = description if description else "high-quality clothing item, preserve original garment colors and textures, photorealistic fit, maintain fabric details"
+            
             queue_url = "https://queue.fal.run/fal-ai/idm-vton"
             payload = {
                 "human_image_url": person_image,
                 "garment_image_url": garment_image,
-                "description": "clothing item"
+                "description": detailed_description
             }
             
             submit_response = requests.post(queue_url, headers=headers, json=payload, timeout=30)
