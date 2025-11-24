@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
 import ImageCropper from '@/components/ImageCropper';
+import BodyZoneEditor from '@/components/BodyZoneEditor';
 import VirtualFittingControls from '@/components/VirtualFittingControls';
 import VirtualFittingResult from '@/components/VirtualFittingResult';
 import VirtualFittingInfo from '@/components/VirtualFittingInfo';
@@ -35,6 +36,16 @@ interface SelectedClothing {
   categories: string[];
 }
 
+interface BodyZone {
+  type: 'head' | 'upper_body' | 'lower_body' | 'legs' | 'feet';
+  label: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+}
+
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
 const IMAGE_COMPOSER_API = 'https://functions.poehali.dev/021a040a-aa04-40b9-86e3-77547b31401b';
 const IMAGE_PREPROCESSING_API = 'https://functions.poehali.dev/3fe8c892-ab5f-4d26-a2c5-ae4166276334';
@@ -63,6 +74,8 @@ export default function Index() {
   const [processingImages, setProcessingImages] = useState<Set<string>>(new Set());
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<{ id: string; image: string } | null>(null);
+  const [bodyZones, setBodyZones] = useState<BodyZone[]>([]);
+  const [showBodyZoneEditor, setShowBodyZoneEditor] = useState(false);
 
   useEffect(() => {
     const pendingGeneration = localStorage.getItem('pendingGeneration');
@@ -145,9 +158,34 @@ export default function Index() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setUploadedImage(reader.result as string);
+        setBodyZones([]);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleOpenBodyZoneEditor = () => {
+    if (!uploadedImage) {
+      toast.error('Сначала загрузите фото человека');
+      return;
+    }
+    setShowBodyZoneEditor(true);
+  };
+
+  const handleSaveBodyZones = (zones: BodyZone[]) => {
+    setBodyZones(zones);
+    setShowBodyZoneEditor(false);
+    toast.success('Разметка зон сохранена!');
+  };
+
+  const getCategoryZoneMapping = (category: string): BodyZone['type'] | null => {
+    const categoryLower = category.toLowerCase();
+    if (categoryLower.includes('шляп') || categoryLower.includes('шапк') || categoryLower.includes('берет')) return 'head';
+    if (categoryLower.includes('топ') || categoryLower.includes('блуз') || categoryLower.includes('рубаш') || categoryLower.includes('куртк') || categoryLower.includes('пальто') || categoryLower.includes('жакет') || categoryLower.includes('свитер') || categoryLower.includes('кофт')) return 'upper_body';
+    if (categoryLower.includes('брюки') || categoryLower.includes('джинс') || categoryLower.includes('юбк') || categoryLower.includes('шорт')) return 'lower_body';
+    if (categoryLower.includes('колготк') || categoryLower.includes('чулк')) return 'legs';
+    if (categoryLower.includes('обувь') || categoryLower.includes('ботинк') || categoryLower.includes('туфл') || categoryLower.includes('кроссов') || categoryLower.includes('сапог')) return 'feet';
+    return null;
   };
 
   const handleCustomClothingUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -794,6 +832,8 @@ export default function Index() {
               isGenerating={isGenerating}
               loadingProgress={loadingProgress}
               handleCancelGeneration={handleCancelGeneration}
+              bodyZonesCount={bodyZones.length}
+              onOpenBodyZoneEditor={handleOpenBodyZoneEditor}
             />
 
             <VirtualFittingResult
@@ -832,6 +872,15 @@ export default function Index() {
           }}
           onCropComplete={handleCropComplete}
           aspectRatio={3/4}
+        />
+      )}
+
+      {showBodyZoneEditor && uploadedImage && (
+        <BodyZoneEditor
+          image={uploadedImage}
+          onSave={handleSaveBodyZones}
+          onClose={() => setShowBodyZoneEditor(false)}
+          existingZones={bodyZones}
         />
       )}
     </Layout>

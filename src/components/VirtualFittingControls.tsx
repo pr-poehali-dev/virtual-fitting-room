@@ -60,6 +60,8 @@ interface VirtualFittingControlsProps {
   isGenerating: boolean;
   loadingProgress: number;
   handleCancelGeneration: () => void;
+  bodyZonesCount: number;
+  onOpenBodyZoneEditor: () => void;
 }
 
 export default function VirtualFittingControls({
@@ -88,7 +90,9 @@ export default function VirtualFittingControls({
   handleGenerate,
   isGenerating,
   loadingProgress,
-  handleCancelGeneration
+  handleCancelGeneration,
+  bodyZonesCount,
+  onOpenBodyZoneEditor
 }: VirtualFittingControlsProps) {
   const toggleFilter = (array: number[], value: number) => {
     return array.includes(value)
@@ -104,26 +108,39 @@ export default function VirtualFittingControls({
             <label className="block text-sm font-medium mb-3">
               Загрузите фотографию
             </label>
-            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                id="photo-upload"
-              />
-              <label htmlFor="photo-upload" className="cursor-pointer">
-                {uploadedImage ? (
-                  <img src={uploadedImage} alt="Uploaded" className="max-h-64 mx-auto rounded-lg" />
-                ) : (
-                  <div className="space-y-3">
-                    <Icon name="Upload" className="mx-auto text-muted-foreground" size={48} />
-                    <p className="text-muted-foreground">
-                      Нажмите для загрузки фотографии
-                    </p>
-                  </div>
-                )}
-              </label>
+            <div className="space-y-3">
+              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="photo-upload"
+                />
+                <label htmlFor="photo-upload" className="cursor-pointer">
+                  {uploadedImage ? (
+                    <img src={uploadedImage} alt="Uploaded" className="max-h-64 mx-auto rounded-lg" />
+                  ) : (
+                    <div className="space-y-3">
+                      <Icon name="Upload" className="mx-auto text-muted-foreground" size={48} />
+                      <p className="text-muted-foreground">
+                        Нажмите для загрузки фотографии
+                      </p>
+                    </div>
+                  )}
+                </label>
+              </div>
+              {uploadedImage && (
+                <Button
+                  variant={bodyZonesCount > 0 ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={onOpenBodyZoneEditor}
+                  className="w-full"
+                >
+                  <Icon name="Target" className="mr-2" size={16} />
+                  {bodyZonesCount > 0 ? `Разметка зон (${bodyZonesCount})` : 'Разметить зоны примерки'}
+                </Button>
+              )}
             </div>
           </div>
 
