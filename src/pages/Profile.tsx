@@ -450,7 +450,7 @@ export default function Profile() {
                     }
                   }}>
                     <DialogTrigger asChild>
-                      <Button>
+                      <Button onClick={() => setIsCreatingLookbook(true)}>
                         <Icon name="Plus" className="mr-2" size={18} />
                         Создать лукбук
                       </Button>
