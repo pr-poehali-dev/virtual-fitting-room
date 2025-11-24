@@ -616,8 +616,26 @@ export default function Index() {
         const item = processedItems[i];
         const categoryHint = getCategoryPlacementHint(item.categories);
         const userComment = item.comment ? ` ${item.comment}` : '';
-        // Удаляем description полностью - модель определяет тип одежды автоматически по картинке
-        const description = userComment || "high quality clothing, photorealistic, preserve original colors";
+        
+        // Формируем описание с явным указанием типа одежды для модели
+        let categoryInstruction = '';
+        if (categoryHint.includes('top') || categoryHint.includes('blouse') || categoryHint.includes('shirt')) {
+          categoryInstruction = 'upper body garment, top, shirt';
+        } else if (categoryHint.includes('pants')) {
+          categoryInstruction = 'lower body garment, pants, trousers';
+        } else if (categoryHint.includes('skirt')) {
+          categoryInstruction = 'lower body garment, skirt';
+        } else if (categoryHint.includes('dress')) {
+          categoryInstruction = 'full body garment, dress';
+        } else if (categoryHint.includes('jacket') || categoryHint.includes('coat')) {
+          categoryInstruction = 'outerwear, jacket, coat';
+        } else if (categoryHint.includes('shoes')) {
+          categoryInstruction = 'footwear, shoes, boots for feet';
+        } else if (categoryHint.includes('accessory')) {
+          categoryInstruction = 'accessory, hat, scarf, jewelry';
+        }
+        
+        const description = `${categoryInstruction}. ${userComment || 'high quality clothing, photorealistic, preserve original colors'}`;
         
         const itemNumber = i + 1;
         const totalItems = processedItems.length;
