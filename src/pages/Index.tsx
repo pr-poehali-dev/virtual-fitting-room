@@ -324,33 +324,33 @@ export default function Index() {
   };
   
   const getCategoryPlacementHint = (categories: string[]): string => {
-    if (!categories || categories.length === 0) return 'Clothing item.';
+    if (!categories || categories.length === 0) return 'exact clothing from provided image';
     
     const categoryLower = categories.map(c => c.toLowerCase());
     
     if (categoryLower.some(c => c.includes('платье') || c.includes('dress'))) {
-      return 'Full-length dress covering entire body.';
+      return 'EXACT DRESS from the provided garment image - full body garment';
     }
     if (categoryLower.some(c => c.includes('топ') || c.includes('блузка') || c.includes('блуза') || c.includes('футболка') || c.includes('рубашка') || c.includes('top') || c.includes('blouse') || c.includes('shirt') || c.includes('t-shirt'))) {
-      return 'Upper body garment (top/blouse/shirt) worn on torso and arms.';
+      return 'EXACT TOP/BLOUSE/SHIRT from the provided garment image - upper body only';
     }
     if (categoryLower.some(c => c.includes('брюки') || c.includes('джинсы') || c.includes('штаны') || c.includes('pants') || c.includes('trousers') || c.includes('jeans'))) {
-      return 'Lower body garment (pants/trousers) worn on legs from waist to ankles.';
+      return 'EXACT PANTS/TROUSERS from the provided garment image - lower body only';
     }
     if (categoryLower.some(c => c.includes('юбка') || c.includes('skirt'))) {
-      return 'Skirt worn on lower body from waist.';
+      return 'EXACT SKIRT from the provided garment image - lower body from waist';
     }
     if (categoryLower.some(c => c.includes('обувь') || c.includes('туфли') || c.includes('ботинки') || c.includes('shoes') || c.includes('boots') || c.includes('sneakers'))) {
-      return 'Footwear worn on feet.';
+      return 'EXACT FOOTWEAR from the provided garment image - feet only';
     }
     if (categoryLower.some(c => c.includes('куртка') || c.includes('пальто') || c.includes('jacket') || c.includes('coat'))) {
-      return 'Outerwear (jacket/coat) worn over upper body.';
+      return 'EXACT JACKET/COAT from the provided garment image - outer layer over upper body';
     }
     if (categoryLower.some(c => c.includes('аксессуар') || c.includes('accessory') || c.includes('шарф') || c.includes('scarf') || c.includes('сумка') || c.includes('bag'))) {
-      return 'Accessory item.';
+      return 'EXACT ACCESSORY from the provided garment image';
     }
     
-    return `${categories[0]} item.`;
+    return `EXACT ${categories[0]} from the provided garment image`;
   };
 
   const continuePolling = async (statusUrl: string, personImage: string, garmentImg: string) => {
@@ -466,8 +466,8 @@ export default function Index() {
       garmentImage = allClothingItems[0].image;
       const item = allClothingItems[0];
       const categoryHint = getCategoryPlacementHint(item.categories);
-      const userComment = item.comment ? ` ${item.comment}.` : '';
-      description = `${categoryHint}${userComment} High-quality clothing, preserve colors and textures, photorealistic fit.`;
+      const userComment = item.comment ? ` Additional details: ${item.comment}.` : '';
+      description = `Use ONLY the ${categoryHint}. Match colors, patterns, and style EXACTLY as shown in garment image.${userComment} Preserve all original garment details, textures, and colors precisely.`;
     } else {
       const fromCatalog = selectedClothingItems.length;
       const fromCustom = customItemsWithCategory.length;
@@ -495,13 +495,13 @@ export default function Index() {
         const composeData = await composeResponse.json();
         garmentImage = composeData.composed_image;
         
-        const itemDescriptions = allClothingItems.map(item => {
+        const itemDescriptions = allClothingItems.map((item, idx) => {
           const categoryHint = getCategoryPlacementHint(item.categories);
-          const userComment = item.comment ? ` ${item.comment}` : '';
-          return `${categoryHint}${userComment}`;
+          const userComment = item.comment ? ` (${item.comment})` : '';
+          return `Item ${idx + 1}: ${categoryHint}${userComment}`;
         });
         
-        description = `${itemDescriptions.join(', ')}. High-quality clothing, preserve colors and textures, photorealistic fit for all items.`;
+        description = `Use ALL clothing items from provided composite image. ${itemDescriptions.join('; ')}. Match each item's colors, patterns, and style EXACTLY as shown. Preserve all original details and textures precisely for every item.`;
       } catch (error) {
         toast.error('Ошибка объединения изображений');
         return;
