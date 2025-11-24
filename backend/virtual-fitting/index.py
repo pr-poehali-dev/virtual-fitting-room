@@ -141,6 +141,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             person_image = body_data.get('person_image')
             garment_image = body_data.get('garment_image')
             description = body_data.get('description', '')
+            target_zone = body_data.get('target_zone')
             
             if not person_image or not garment_image:
                 return {
@@ -161,6 +162,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 "garment_image_url": garment_image,
                 "description": detailed_description
             }
+            
+            # Add target zone if provided
+            if target_zone and isinstance(target_zone, dict):
+                x = target_zone.get('x', 0)
+                y = target_zone.get('y', 0)
+                width = target_zone.get('width', 0)
+                height = target_zone.get('height', 0)
+                
+                if width > 0 and height > 0:
+                    # Add zone coordinates to description for AI guidance
+                    detailed_description += f" | Place garment in region: x={x}, y={y}, width={width}, height={height}"
+                    payload['description'] = detailed_description
+                    print(f"Using target zone: {target_zone}")
             
             submit_response = requests.post(queue_url, headers=headers, json=payload, timeout=30)
             

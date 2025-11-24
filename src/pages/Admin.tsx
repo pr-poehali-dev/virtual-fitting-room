@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
+import ImageCropper from '@/components/ImageCropper';
 
 interface User {
   id: string;
@@ -87,6 +88,8 @@ export default function Admin() {
     color_ids: [] as number[],
     archetype_ids: [] as number[]
   });
+  const [showCropper, setShowCropper] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string>('');
 
   useEffect(() => {
     const adminAuth = sessionStorage.getItem('admin_auth');
@@ -253,6 +256,25 @@ export default function Admin() {
     } catch (error) {
       toast.error('Ошибка удаления');
     }
+  };
+
+  const handleImageUrlInput = (url: string) => {
+    setNewClothing({ ...newClothing, image_url: url });
+  };
+
+  const handleCropImage = () => {
+    if (!newClothing.image_url) {
+      toast.error('Сначала добавьте ссылку на изображение');
+      return;
+    }
+    setImageToCrop(newClothing.image_url);
+    setShowCropper(true);
+  };
+
+  const handleCropComplete = (croppedImage: string) => {
+    setNewClothing({ ...newClothing, image_url: croppedImage });
+    setShowCropper(false);
+    toast.success('Изображение обрезано');
   };
 
   const handleAddClothing = async () => {
@@ -699,11 +721,32 @@ export default function Admin() {
                         <div className="mb-6 p-4 border rounded-lg space-y-4 bg-muted/50">
                           <h3 className="font-medium">Новая одежда</h3>
                           
-                          <Input
-                            placeholder="Ссылка на изображение"
-                            value={newClothing.image_url}
-                            onChange={(e) => setNewClothing({ ...newClothing, image_url: e.target.value })}
-                          />
+                          <div className="space-y-2">
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="Ссылка на изображение"
+                                value={newClothing.image_url}
+                                onChange={(e) => handleImageUrlInput(e.target.value)}
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleCropImage}
+                                disabled={!newClothing.image_url}
+                              >
+                                <Icon name="Crop" className="mr-2" size={16} />
+                                Кадрировать
+                              </Button>
+                            </div>
+                            {newClothing.image_url && (
+                              <img
+                                src={newClothing.image_url}
+                                alt="Preview"
+                                className="w-32 h-32 object-cover rounded border"
+                              />
+                            )}
+                          </div>
                           
                           <Input
                             placeholder="Название (необязательно)"
@@ -1027,6 +1070,16 @@ export default function Admin() {
             </div>
           </div>
         </div>
+      )}
+
+      {showCropper && imageToCrop && (
+        <ImageCropper
+          image={imageToCrop}
+          open={showCropper}
+          onClose={() => setShowCropper(false)}
+          onCropComplete={handleCropComplete}
+          aspectRatio={3/4}
+        />
       )}
     </Layout>
   );
