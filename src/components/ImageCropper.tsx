@@ -32,22 +32,11 @@ export default function ImageCropper({
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleCropComplete = async () => {
-    console.log('=== handleCropComplete called ===');
-    console.log('imgRef.current:', imgRef.current);
-    console.log('crop:', crop);
-    console.log('completedCrop:', completedCrop);
-    
     if (!imgRef.current) {
-      console.error('No image reference');
       return;
     }
 
-    console.log('Image loaded:', imgRef.current.complete);
-    console.log('Natural dimensions:', imgRef.current.naturalWidth, 'x', imgRef.current.naturalHeight);
-    console.log('Display dimensions:', imgRef.current.width, 'x', imgRef.current.height);
-
     if (!imgRef.current.complete || imgRef.current.naturalWidth === 0) {
-      console.error('Image not loaded yet');
       return;
     }
 
@@ -58,37 +47,37 @@ export default function ImageCropper({
       height: (crop.height / 100) * imgRef.current.height,
     };
 
-    console.log('cropToUse:', cropToUse);
-
     if (cropToUse.width <= 0 || cropToUse.height <= 0) {
-      console.error('Invalid crop dimensions:', cropToUse);
       return;
     }
 
-    console.log('Starting crop process...');
     setIsProcessing(true);
 
     try {
+      const img = new Image();
+      img.src = image;
+      
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        if (img.complete) resolve(img);
+      });
+
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (!ctx) {
-        console.error('Failed to get canvas context');
         setIsProcessing(false);
         return;
       }
 
-      const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
-      const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
-
-      console.log('Scale:', scaleX, scaleY);
+      const scaleX = img.naturalWidth / imgRef.current.width;
+      const scaleY = img.naturalHeight / imgRef.current.height;
 
       canvas.width = Math.floor(cropToUse.width * scaleX);
       canvas.height = Math.floor(cropToUse.height * scaleY);
 
-      console.log('Canvas size:', canvas.width, 'x', canvas.height);
-
       ctx.drawImage(
-        imgRef.current,
+        img,
         Math.floor(cropToUse.x * scaleX),
         Math.floor(cropToUse.y * scaleY),
         Math.floor(cropToUse.width * scaleX),
@@ -99,14 +88,9 @@ export default function ImageCropper({
         Math.floor(cropToUse.height * scaleY)
       );
 
-      console.log('Drawing complete, converting to data URL...');
       const croppedImage = canvas.toDataURL('image/jpeg', 0.95);
-      console.log('Data URL created, length:', croppedImage.length);
-      
       setIsProcessing(false);
-      console.log('Calling onCropComplete...');
       onCropComplete(croppedImage);
-      console.log('onCropComplete called successfully');
     } catch (error) {
       console.error('Error cropping image:', error);
       setIsProcessing(false);
