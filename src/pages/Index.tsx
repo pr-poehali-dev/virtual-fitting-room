@@ -462,10 +462,13 @@ export default function Index() {
       return;
     }
     
+    // ВАЖНО: AI модель работает только с ОДНИМ элементом одежды
+    // Если выбрано несколько элементов, используем только ПЕРВЫЙ
     let garmentImage: string | null = null;
     let description = '';
     
     if (allClothingItems.length === 1) {
+      // Один элемент - идеально
       garmentImage = allClothingItems[0].image;
       const item = allClothingItems[0];
       const categoryHint = getCategoryPlacementHint(item.categories);
@@ -477,56 +480,41 @@ export default function Index() {
       console.log('Description:', description);
       console.log('Garment image preview:', garmentImage.substring(0, 100));
     } else {
-      const fromCatalog = selectedClothingItems.length;
-      const fromCustom = customItemsWithCategory.length;
-      const sources = [];
-      if (fromCatalog > 0) sources.push(`${fromCatalog} из каталога`);
-      if (fromCustom > 0) sources.push(`${fromCustom} загруженных`);
+      // Несколько элементов - используем ПЕРВЫЙ и предупреждаем
+      const firstItem = allClothingItems[0];
+      const hasCompleteOutfit = firstItem.categories.some(cat => 
+        cat.toLowerCase().includes('весь образ') || cat.toLowerCase().includes('complete')
+      );
       
-      toast.info(`Объединяем ${sources.join(' и ')}...`);
-      
-      console.log('=== GENERATION DEBUG (multiple items) ===');
-      console.log('Total items:', allClothingItems.length);
-      console.log('All items:', allClothingItems.map(item => ({
-        categories: item.categories,
-        comment: item.comment,
-        imagePreview: item.image.substring(0, 50)
-      })));
-      
-      try {
-        const composeResponse = await fetch(IMAGE_COMPOSER_API, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            clothing_images: allClothingItems.map(item => item.image)
-          })
+      if (hasCompleteOutfit) {
+        // Если первый элемент - "Весь образ", используем его
+        garmentImage = firstItem.image;
+        const categoryHint = getCategoryPlacementHint(firstItem.categories);
+        const userComment = firstItem.comment ? ` ${firstItem.comment}` : '';
+        description = `${categoryHint}${userComment}`;
+        
+        toast.info('Используется готовый комплект из первого элемента');
+      } else {
+        // Используем только ПЕРВЫЙ элемент
+        garmentImage = firstItem.image;
+        const categoryHint = getCategoryPlacementHint(firstItem.categories);
+        const userComment = firstItem.comment ? ` ${firstItem.comment}` : '';
+        description = `${categoryHint}${userComment}`;
+        
+        toast.warning(`⚠️ AI работает с одним элементом за раз. Используется: ${categoryHint}`, {
+          duration: 4000
         });
-        
-        if (!composeResponse.ok) {
-          throw new Error('Failed to compose images');
-        }
-        
-        const composeData = await composeResponse.json();
-        garmentImage = composeData.composed_image;
-        
-        console.log('Composed image preview:', garmentImage.substring(0, 100));
-        
-        const itemDescriptions = allClothingItems.map((item, idx) => {
-          const categoryHint = getCategoryPlacementHint(item.categories);
-          const userComment = item.comment ? ` ${item.comment}` : '';
-          return `${categoryHint}${userComment}`;
-        });
-        
-        description = itemDescriptions.join(', ');
-        
-        console.log('Final description:', description);
-      } catch (error) {
-        console.error('Composition error:', error);
-        toast.error('Ошибка объединения изображений');
-        return;
       }
+      
+      console.log('=== GENERATION DEBUG (multiple items - using FIRST) ===');
+      console.log('Total selected:', allClothingItems.length);
+      console.log('Using first item:', {
+        categories: firstItem.categories,
+        comment: firstItem.comment,
+        imagePreview: firstItem.image.substring(0, 50)
+      });
+      console.log('Description:', description);
+      console.log('Garment image preview:', garmentImage.substring(0, 100));
     }
     
     if (!garmentImage) {
@@ -654,6 +642,16 @@ export default function Index() {
                         </div>
                       )}
                     </div>
+                    {(selectedClothingItems.length + customClothingItems.filter(item => item.categories?.length > 0).length) > 1 && (
+                      <div className="mb-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                        <div className="flex gap-2">
+                          <Icon name="AlertCircle" className="text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" size={16} />
+                          <p className="text-xs text-amber-800 dark:text-amber-300">
+                            AI модель лучше работает с <strong>одним элементом</strong> одежды. Для нескольких элементов используйте категорию <strong>"Весь образ"</strong> (готовый комплект на одном фото).
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     <Accordion type="multiple" className="w-full" defaultValue={["catalog"]}>
                       <AccordionItem value="catalog">
                         <AccordionTrigger className="text-sm font-medium">
