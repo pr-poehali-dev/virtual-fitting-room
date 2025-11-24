@@ -498,7 +498,16 @@ export default function Profile() {
                           {selectedPhotos.length > 0 && (
                             <div className="grid grid-cols-4 gap-2 mt-4">
                               {selectedPhotos.map((photo, index) => (
-                                <ImageViewer key={index} src={photo} alt="" className="w-full h-24 object-contain bg-muted rounded" />
+                                <div key={index} className="relative group">
+                                  <ImageViewer src={photo} alt="" className="w-full h-24 object-contain bg-muted rounded" />
+                                  <button
+                                    onClick={() => setSelectedPhotos(selectedPhotos.filter((_, i) => i !== index))}
+                                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                    title="Удалить фото"
+                                  >
+                                    <Icon name="X" size={14} />
+                                  </button>
+                                </div>
                               ))}
                             </div>
                           )}
