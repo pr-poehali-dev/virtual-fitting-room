@@ -328,6 +328,9 @@ export default function Index() {
     
     const categoryLower = categories.map(c => c.toLowerCase());
     
+    if (categoryLower.some(c => c.includes('весь образ') || c.includes('full outfit') || c.includes('complete look'))) {
+      return 'complete outfit';
+    }
     if (categoryLower.some(c => c.includes('платье') || c.includes('dress'))) {
       return 'dress';
     }
@@ -867,6 +870,7 @@ export default function Index() {
                                         <SelectValue placeholder="Выберите категорию" />
                                       </SelectTrigger>
                                       <SelectContent>
+                                        <SelectItem value="Весь образ">Весь образ</SelectItem>
                                         <SelectItem value="Платье">Платье</SelectItem>
                                         <SelectItem value="Топ">Топ / Блузка</SelectItem>
                                         <SelectItem value="Брюки">Брюки</SelectItem>
