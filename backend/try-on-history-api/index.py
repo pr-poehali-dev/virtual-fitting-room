@@ -53,8 +53,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         if method == 'GET':
             cursor.execute(
-                "SELECT * FROM try_on_history WHERE user_id = %s ORDER BY created_at DESC LIMIT 50",
-                (user_id,)
+                f"SELECT * FROM try_on_history WHERE user_id = '{user_id}' ORDER BY created_at DESC LIMIT 50"
             )
             history = cursor.fetchall()
             
@@ -93,13 +92,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing required fields'})
                 }
             
+            person_image_escaped = person_image.replace("'", "''")
+            garment_image_escaped = garment_image.replace("'", "''")
+            result_image_escaped = result_image.replace("'", "''")
+            
             cursor.execute(
-                """
+                f"""
                 INSERT INTO try_on_history (person_image, garment_image, result_image, user_id)
-                VALUES (%s, %s, %s, %s)
+                VALUES ('{person_image_escaped}', '{garment_image_escaped}', '{result_image_escaped}', '{user_id}')
                 RETURNING id, person_image, garment_image, result_image, created_at
-                """,
-                (person_image, garment_image, result_image, user_id)
+                """
             )
             
             history_item = cursor.fetchone()
@@ -137,8 +139,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             cursor.execute(
-                "DELETE FROM try_on_history WHERE id = %s AND user_id = %s RETURNING id",
-                (history_id, user_id)
+                f"DELETE FROM try_on_history WHERE id = '{history_id}' AND user_id = '{user_id}' RETURNING id"
             )
             
             deleted = cursor.fetchone()
