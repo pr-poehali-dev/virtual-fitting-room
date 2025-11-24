@@ -61,6 +61,7 @@ interface Filters {
 
 const ADMIN_API = 'https://functions.poehali.dev/6667a30b-a520-41d8-b23a-e240a9aefb15';
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
+const IMAGE_PREPROCESSING_API = 'https://functions.poehali.dev/3fe8c892-ab5f-4d26-a2c5-ae4166276334';
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -91,6 +92,7 @@ export default function Admin() {
   const [showCropper, setShowCropper] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string>('');
   const [cropMode, setCropMode] = useState<'new' | 'edit'>('new');
+  const [uploadSource, setUploadSource] = useState<'url' | 'file'>('url');
 
   useEffect(() => {
     const adminAuth = sessionStorage.getItem('admin_auth');
@@ -306,6 +308,54 @@ export default function Admin() {
     setShowCropper(true);
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64Image = reader.result as string;
+      setNewClothing(prev => ({ ...prev, image_url: base64Image }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveBackground = async () => {
+    if (!newClothing.image_url) {
+      toast.error('Сначала загрузите изображение');
+      return;
+    }
+
+    setIsProcessingImage(true);
+    try {
+      const response = await fetch(IMAGE_PREPROCESSING_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_url: newClothing.image_url })
+      });
+
+      if (!response.ok) throw new Error('Failed to remove background');
+      
+      const data = await response.json();
+      setNewClothing(prev => ({ ...prev, image_url: data.processed_image }));
+      toast.success('Фон удалён');
+    } catch (error) {
+      toast.error('Ошибка удаления фона');
+    } finally {
+      setIsProcessingImage(false);
+    }
+  };
+
+  const handleCropImage = () => {
+    if (!newClothing.image_url) {
+      toast.error('Сначала загрузите изображение');
+      return;
+    }
+    setImageToCrop(newClothing.image_url);
+    setCropMode('new');
+    setShowCropper(true);
+  };
+
   const handleCropComplete = (croppedImage: string) => {
     if (cropMode === 'new') {
       setNewClothing({ ...newClothing, image_url: croppedImage });
@@ -345,6 +395,7 @@ export default function Admin() {
           color_ids: [],
           archetype_ids: []
         });
+        setUploadSource('url');
         fetchCatalogData();
       } else {
         toast.error('Ошибка добавления');
@@ -760,30 +811,85 @@ export default function Admin() {
                         <div className="mb-6 p-4 border rounded-lg space-y-4 bg-muted/50">
                           <h3 className="font-medium">Новая одежда</h3>
                           
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             <div className="flex gap-2">
-                              <Input
-                                placeholder="Ссылка на изображение"
-                                value={newClothing.image_url}
-                                onChange={(e) => handleImageUrlInput(e.target.value)}
-                                className="flex-1"
-                              />
                               <Button
                                 type="button"
-                                variant="outline"
-                                onClick={handleCropImage}
-                                disabled={!newClothing.image_url}
+                                size="sm"
+                                variant={uploadSource === 'url' ? 'default' : 'outline'}
+                                onClick={() => setUploadSource('url')}
                               >
-                                <Icon name="Crop" className="mr-2" size={16} />
-                                Кадрировать
+                                <Icon name="Link" className="mr-2" size={16} />
+                                По ссылке
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant={uploadSource === 'file' ? 'default' : 'outline'}
+                                onClick={() => setUploadSource('file')}
+                              >
+                                <Icon name="Upload" className="mr-2" size={16} />
+                                С компьютера
                               </Button>
                             </div>
-                            {newClothing.image_url && (
-                              <img
-                                src={newClothing.image_url}
-                                alt="Preview"
-                                className="w-32 h-32 object-cover rounded border"
+                            
+                            {uploadSource === 'url' ? (
+                              <Input
+                                placeholder="https://example.com/image.jpg"
+                                value={newClothing.image_url}
+                                onChange={(e) => setNewClothing({ ...newClothing, image_url: e.target.value })}
                               />
+                            ) : (
+                              <div>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleFileUpload}
+                                  className="hidden"
+                                  id="file-upload-admin"
+                                />
+                                <label htmlFor="file-upload-admin">
+                                  <div className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary transition-colors">
+                                    <Icon name="Upload" className="mx-auto mb-2 text-muted-foreground" size={32} />
+                                    <p className="text-sm text-muted-foreground">Нажмите для загрузки</p>
+                                  </div>
+                                </label>
+                              </div>
+                            )}
+                            
+                            {newClothing.image_url && (
+                              <div className="space-y-2">
+                                <img
+                                  src={newClothing.image_url}
+                                  alt="Preview"
+                                  className="w-full h-48 object-contain rounded border bg-muted"
+                                />
+                                <div className="flex gap-2">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={handleRemoveBackground}
+                                    disabled={isProcessingImage}
+                                  >
+                                    {isProcessingImage ? (
+                                      <Icon name="Loader2" className="mr-2 animate-spin" size={16} />
+                                    ) : (
+                                      <Icon name="Eraser" className="mr-2" size={16} />
+                                    )}
+                                    Удалить фон
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={handleCropImage}
+                                  >
+                                    <Icon name="Crop" className="mr-2" size={16} />
+                                    Обрезать
+                                  </Button>
+                                </div>
+                              </div>
                             )}
                           </div>
                           
@@ -876,7 +982,7 @@ export default function Admin() {
                               <img
                                 src={item.image_url}
                                 alt={item.name}
-                                className="w-full h-48 object-cover"
+                                className="w-full h-48 object-contain bg-muted"
                               />
                               <CardContent className="p-3 space-y-2">
                                 {item.name && (
