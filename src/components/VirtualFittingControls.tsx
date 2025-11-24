@@ -346,9 +346,15 @@ export default function VirtualFittingControls({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => onMarkClothingZone(item.id, item.image, item.categories[0], true)}
+                          onClick={() => {
+                            if (!uploadedImage) {
+                              return;
+                            }
+                            onMarkClothingZone(item.id, item.image, item.categories[0], true);
+                          }}
                           className="w-full text-xs"
                           disabled={!uploadedImage}
+                          title={!uploadedImage ? 'Сначала загрузите фото человека' : ''}
                         >
                           <Icon name="Target" className="mr-1" size={14} />
                           {item.zone ? 'Изменить область' : 'Указать область на фото'}
@@ -485,9 +491,15 @@ export default function VirtualFittingControls({
                               <Button
                                 size="sm"
                                 variant={item.zone ? 'default' : 'outline'}
-                                onClick={() => onMarkClothingZone(item.id, item.image, item.categories[0], false)}
+                                onClick={() => {
+                                  if (!uploadedImage) {
+                                    return;
+                                  }
+                                  onMarkClothingZone(item.id, item.image, item.categories[0], false);
+                                }}
                                 disabled={!uploadedImage}
                                 className="text-xs"
+                                title={!uploadedImage ? 'Сначала загрузите фото человека' : ''}
                               >
                                 <Icon name="Target" className="mr-1" size={14} />
                                 {item.zone ? 'Изменить' : 'Область'}
