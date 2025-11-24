@@ -33,9 +33,10 @@ interface TryOnHistory {
 const LOOKBOOKS_API = 'https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b';
 const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
 const CHANGE_PASSWORD_API = 'https://functions.poehali.dev/98400760-4d03-4ca8-88ab-753fde19ef83';
+const UPDATE_PROFILE_API = 'https://functions.poehali.dev/efb92b0f-c34a-4b12-ad41-744260d1173a';
 
 export default function Profile() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, updateUser } = useAuth();
   const navigate = useNavigate();
   const [lookbooks, setLookbooks] = useState<Lookbook[]>([]);
   const [tryOnHistory, setTryOnHistory] = useState<TryOnHistory[]>([]);
@@ -51,6 +52,8 @@ export default function Profile() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState('');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -335,6 +338,38 @@ export default function Profile() {
     }
   };
 
+  const handleUpdateName = async () => {
+    if (!editedName.trim()) {
+      toast.error('Введите имя');
+      return;
+    }
+
+    try {
+      const response = await fetch(UPDATE_PROFILE_API, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.id
+        },
+        body: JSON.stringify({
+          name: editedName
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        updateUser(data);
+        toast.success('Имя успешно изменено');
+        setIsEditingName(false);
+      } else {
+        toast.error(data.error || 'Ошибка при изменении имени');
+      }
+    } catch (error) {
+      toast.error('Ошибка соединения с сервером');
+    }
+  };
+
   return (
     <Layout>
       <section className="py-12 px-4">
@@ -580,12 +615,48 @@ export default function Profile() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Имя</p>
-                      <p className="font-medium">{user.name}</p>
+                      <p className="text-sm text-muted-foreground mb-2">Имя</p>
+                      {isEditingName ? (
+                        <div className="flex gap-2">
+                          <Input
+                            value={editedName}
+                            onChange={(e) => setEditedName(e.target.value)}
+                            placeholder="Введите имя"
+                          />
+                          <Button onClick={handleUpdateName}>
+                            <Icon name="Check" size={18} />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setIsEditingName(false);
+                              setEditedName('');
+                            }}
+                          >
+                            <Icon name="X" size={18} />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium">{user.name}</p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditedName(user.name);
+                              setIsEditingName(true);
+                            }}
+                          >
+                            <Icon name="Edit" size={16} className="mr-2" />
+                            Изменить
+                          </Button>
+                        </div>
+                      )}
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Email</p>
-                      <p className="font-medium">{user.email}</p>
+                      <p className="font-medium text-muted-foreground">{user.email}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Email нельзя изменить</p>
                     </div>
                   </CardContent>
                 </Card>
