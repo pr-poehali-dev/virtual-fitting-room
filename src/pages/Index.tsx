@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
 import ImageCropper from '@/components/ImageCropper';
-import BodyZoneEditor from '@/components/BodyZoneEditor';
+import ClothingZoneEditor from '@/components/ClothingZoneEditor';
 import VirtualFittingControls from '@/components/VirtualFittingControls';
 import VirtualFittingResult from '@/components/VirtualFittingResult';
 import VirtualFittingInfo from '@/components/VirtualFittingInfo';
@@ -29,21 +29,19 @@ interface Filters {
   archetypes: FilterOption[];
 }
 
+interface ClothingZone {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 interface SelectedClothing {
   id: string;
   image: string;
   comment: string;
   categories: string[];
-}
-
-interface BodyZone {
-  type: 'head' | 'upper_body' | 'lower_body' | 'legs' | 'feet';
-  label: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  color: string;
+  zone?: ClothingZone;
 }
 
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
@@ -74,8 +72,8 @@ export default function Index() {
   const [processingImages, setProcessingImages] = useState<Set<string>>(new Set());
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<{ id: string; image: string } | null>(null);
-  const [bodyZones, setBodyZones] = useState<BodyZone[]>([]);
-  const [showBodyZoneEditor, setShowBodyZoneEditor] = useState(false);
+  const [showClothingZoneEditor, setShowClothingZoneEditor] = useState(false);
+  const [clothingToMarkZone, setClothingToMarkZone] = useState<{ id: string; image: string; name?: string; isCatalog: boolean } | null>(null);
 
   useEffect(() => {
     const pendingGeneration = localStorage.getItem('pendingGeneration');
@@ -158,34 +156,36 @@ export default function Index() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setUploadedImage(reader.result as string);
-        setBodyZones([]);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleOpenBodyZoneEditor = () => {
+  const handleMarkClothingZone = (clothingId: string, clothingImage: string, clothingName: string | undefined, isCatalog: boolean) => {
     if (!uploadedImage) {
       toast.error('Сначала загрузите фото человека');
       return;
     }
-    setShowBodyZoneEditor(true);
+    setClothingToMarkZone({ id: clothingId, image: clothingImage, name: clothingName, isCatalog });
+    setShowClothingZoneEditor(true);
   };
 
-  const handleSaveBodyZones = (zones: BodyZone[]) => {
-    setBodyZones(zones);
-    setShowBodyZoneEditor(false);
-    toast.success('Разметка зон сохранена!');
-  };
+  const handleSaveClothingZone = (zone: ClothingZone) => {
+    if (!clothingToMarkZone) return;
 
-  const getCategoryZoneMapping = (category: string): BodyZone['type'] | null => {
-    const categoryLower = category.toLowerCase();
-    if (categoryLower.includes('шляп') || categoryLower.includes('шапк') || categoryLower.includes('берет')) return 'head';
-    if (categoryLower.includes('топ') || categoryLower.includes('блуз') || categoryLower.includes('рубаш') || categoryLower.includes('куртк') || categoryLower.includes('пальто') || categoryLower.includes('жакет') || categoryLower.includes('свитер') || categoryLower.includes('кофт')) return 'upper_body';
-    if (categoryLower.includes('брюки') || categoryLower.includes('джинс') || categoryLower.includes('юбк') || categoryLower.includes('шорт')) return 'lower_body';
-    if (categoryLower.includes('колготк') || categoryLower.includes('чулк')) return 'legs';
-    if (categoryLower.includes('обувь') || categoryLower.includes('ботинк') || categoryLower.includes('туфл') || categoryLower.includes('кроссов') || categoryLower.includes('сапог')) return 'feet';
-    return null;
+    if (clothingToMarkZone.isCatalog) {
+      setSelectedClothingItems(prev => prev.map(item =>
+        item.id === clothingToMarkZone.id ? { ...item, zone } : item
+      ));
+    } else {
+      setCustomClothingItems(prev => prev.map(item =>
+        item.id === clothingToMarkZone.id ? { ...item, zone } : item
+      ));
+    }
+
+    setShowClothingZoneEditor(false);
+    setClothingToMarkZone(null);
+    toast.success('Область примерки сохранена!');
   };
 
   const handleCustomClothingUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -668,8 +668,20 @@ export default function Index() {
           id: item.id,
           categories: item.categories,
           categoryHint: categoryHint,
-          hasComment: !!item.comment
+          hasComment: !!item.comment,
+          hasZone: !!item.zone
         }));
+        
+        const requestBody: any = {
+          person_image: currentPersonImage,
+          garment_image: item.image,
+          description: description
+        };
+        
+        if (item.zone) {
+          requestBody.target_zone = item.zone;
+          console.log('Sending target zone:', item.zone);
+        }
         
         const submitResponse = await fetch('https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885', {
           signal: controller.signal,
@@ -677,11 +689,7 @@ export default function Index() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            person_image: currentPersonImage,
-            garment_image: item.image,
-            description: description
-          })
+          body: JSON.stringify(requestBody)
         });
 
         const submitData = await submitResponse.json();
@@ -832,8 +840,7 @@ export default function Index() {
               isGenerating={isGenerating}
               loadingProgress={loadingProgress}
               handleCancelGeneration={handleCancelGeneration}
-              bodyZonesCount={bodyZones.length}
-              onOpenBodyZoneEditor={handleOpenBodyZoneEditor}
+              onMarkClothingZone={handleMarkClothingZone}
             />
 
             <VirtualFittingResult
@@ -875,12 +882,21 @@ export default function Index() {
         />
       )}
 
-      {showBodyZoneEditor && uploadedImage && (
-        <BodyZoneEditor
-          image={uploadedImage}
-          onSave={handleSaveBodyZones}
-          onClose={() => setShowBodyZoneEditor(false)}
-          existingZones={bodyZones}
+      {showClothingZoneEditor && uploadedImage && clothingToMarkZone && (
+        <ClothingZoneEditor
+          personImage={uploadedImage}
+          clothingImage={clothingToMarkZone.image}
+          clothingName={clothingToMarkZone.name}
+          onSave={handleSaveClothingZone}
+          onClose={() => {
+            setShowClothingZoneEditor(false);
+            setClothingToMarkZone(null);
+          }}
+          existingZone={
+            clothingToMarkZone.isCatalog
+              ? selectedClothingItems.find(i => i.id === clothingToMarkZone.id)?.zone
+              : customClothingItems.find(i => i.id === clothingToMarkZone.id)?.zone
+          }
         />
       )}
     </Layout>

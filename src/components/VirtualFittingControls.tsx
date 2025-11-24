@@ -60,8 +60,7 @@ interface VirtualFittingControlsProps {
   isGenerating: boolean;
   loadingProgress: number;
   handleCancelGeneration: () => void;
-  bodyZonesCount: number;
-  onOpenBodyZoneEditor: () => void;
+  onMarkClothingZone: (id: string, image: string, name: string | undefined, isCatalog: boolean) => void;
 }
 
 export default function VirtualFittingControls({
@@ -91,8 +90,7 @@ export default function VirtualFittingControls({
   isGenerating,
   loadingProgress,
   handleCancelGeneration,
-  bodyZonesCount,
-  onOpenBodyZoneEditor
+  onMarkClothingZone
 }: VirtualFittingControlsProps) {
   const toggleFilter = (array: number[], value: number) => {
     return array.includes(value)
@@ -108,39 +106,26 @@ export default function VirtualFittingControls({
             <label className="block text-sm font-medium mb-3">
               Загрузите фотографию
             </label>
-            <div className="space-y-3">
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  id="photo-upload"
-                />
-                <label htmlFor="photo-upload" className="cursor-pointer">
-                  {uploadedImage ? (
-                    <img src={uploadedImage} alt="Uploaded" className="max-h-64 mx-auto rounded-lg" />
-                  ) : (
-                    <div className="space-y-3">
-                      <Icon name="Upload" className="mx-auto text-muted-foreground" size={48} />
-                      <p className="text-muted-foreground">
-                        Нажмите для загрузки фотографии
-                      </p>
-                    </div>
-                  )}
-                </label>
-              </div>
-              {uploadedImage && (
-                <Button
-                  variant={bodyZonesCount > 0 ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={onOpenBodyZoneEditor}
-                  className="w-full"
-                >
-                  <Icon name="Target" className="mr-2" size={16} />
-                  {bodyZonesCount > 0 ? `Разметка зон (${bodyZonesCount})` : 'Разметить зоны примерки'}
-                </Button>
-              )}
+            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                id="photo-upload"
+              />
+              <label htmlFor="photo-upload" className="cursor-pointer">
+                {uploadedImage ? (
+                  <img src={uploadedImage} alt="Uploaded" className="max-h-64 mx-auto rounded-lg" />
+                ) : (
+                  <div className="space-y-3">
+                    <Icon name="Upload" className="mx-auto text-muted-foreground" size={48} />
+                    <p className="text-muted-foreground">
+                      Нажмите для загрузки фотографии
+                    </p>
+                  </div>
+                )}
+              </label>
             </div>
           </div>
 
@@ -319,6 +304,12 @@ export default function VirtualFittingControls({
                                 ))}
                               </div>
                             )}
+                            {item.zone && (
+                              <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                                <Icon name="MapPin" size={12} />
+                                Область задана
+                              </span>
+                            )}
                           </div>
                           <Button
                             size="sm"
@@ -334,6 +325,16 @@ export default function VirtualFittingControls({
                           onChange={(e) => updateClothingComment(item.id, e.target.value)}
                           className="text-sm"
                         />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onMarkClothingZone(item.id, item.image, item.categories[0], true)}
+                          className="w-full text-xs"
+                          disabled={!uploadedImage}
+                        >
+                          <Icon name="Target" className="mr-1" size={14} />
+                          {item.zone ? 'Изменить область' : 'Указать область на фото'}
+                        </Button>
                       </div>
                     ))}
                   </div>
@@ -429,7 +430,7 @@ export default function VirtualFittingControls({
                               onChange={(e) => updateCustomClothingComment(item.id, e.target.value)}
                               className="text-sm"
                             />
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-3 gap-2">
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -463,7 +464,23 @@ export default function VirtualFittingControls({
                                   </>
                                 )}
                               </Button>
+                              <Button
+                                size="sm"
+                                variant={item.zone ? 'default' : 'outline'}
+                                onClick={() => onMarkClothingZone(item.id, item.image, item.categories[0], false)}
+                                disabled={!uploadedImage}
+                                className="text-xs"
+                              >
+                                <Icon name="Target" className="mr-1" size={14} />
+                                {item.zone ? 'Изменить' : 'Область'}
+                              </Button>
                             </div>
+                            {item.zone && (
+                              <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                                <Icon name="MapPin" size={12} />
+                                Область задана
+                              </span>
+                            )}
                           </div>
                           <Button
                             size="sm"
