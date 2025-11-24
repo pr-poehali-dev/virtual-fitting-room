@@ -32,6 +32,7 @@ interface TryOnHistory {
 
 const LOOKBOOKS_API = 'https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b';
 const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
+const CHANGE_PASSWORD_API = 'https://functions.poehali.dev/98400760-4d03-4ca8-88ab-753fde19ef83';
 
 export default function Profile() {
   const { user, isLoading: authLoading } = useAuth();
@@ -46,6 +47,10 @@ export default function Profile() {
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [colorPalette, setColorPalette] = useState<string[]>(['#FF6B6B', '#4ECDC4', '#45B7D1']);
   const [isLoading, setIsLoading] = useState(true);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -285,6 +290,51 @@ export default function Profile() {
     setColorPalette(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      toast.error('Заполните все поля');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error('Пароль должен быть не менее 6 символов');
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      toast.error('Новые пароли не совпадают');
+      return;
+    }
+
+    try {
+      const response = await fetch(CHANGE_PASSWORD_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.id
+        },
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success('Пароль успешно изменён');
+        setIsChangingPassword(false);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+      } else {
+        toast.error(data.error || 'Ошибка при смене пароля');
+      }
+    } catch (error) {
+      toast.error('Ошибка соединения с сервером');
+    }
+  };
+
   return (
     <Layout>
       <section className="py-12 px-4">
@@ -295,9 +345,10 @@ export default function Profile() {
           </div>
 
           <Tabs defaultValue="lookbooks" className="w-full">
-            <TabsList className="grid w-full md:w-auto grid-cols-2 mb-8">
+            <TabsList className="grid w-full md:w-auto grid-cols-3 mb-8">
               <TabsTrigger value="lookbooks">Лукбуки</TabsTrigger>
               <TabsTrigger value="history">История примерок</TabsTrigger>
+              <TabsTrigger value="settings">Настройки</TabsTrigger>
             </TabsList>
 
             <TabsContent value="lookbooks">
@@ -516,6 +567,95 @@ export default function Profile() {
                     ))}
                   </div>
                 )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="settings">
+              <div className="space-y-6">
+                <h3 className="text-2xl font-light">Настройки аккаунта</h3>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Информация профиля</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Имя</p>
+                      <p className="font-medium">{user.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Email</p>
+                      <p className="font-medium">{user.email}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Смена пароля</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isChangingPassword ? (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            Текущий пароль
+                          </label>
+                          <Input
+                            type="password"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            placeholder="Введите текущий пароль"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            Новый пароль
+                          </label>
+                          <Input
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="Минимум 6 символов"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            Подтвердите новый пароль
+                          </label>
+                          <Input
+                            type="password"
+                            value={confirmNewPassword}
+                            onChange={(e) => setConfirmNewPassword(e.target.value)}
+                            placeholder="Повторите новый пароль"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button onClick={handleChangePassword}>
+                            <Icon name="Lock" className="mr-2" size={18} />
+                            Сохранить пароль
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setIsChangingPassword(false);
+                              setCurrentPassword('');
+                              setNewPassword('');
+                              setConfirmNewPassword('');
+                            }}
+                          >
+                            Отмена
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button onClick={() => setIsChangingPassword(true)}>
+                        <Icon name="Key" className="mr-2" size={18} />
+                        Изменить пароль
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
           </Tabs>
