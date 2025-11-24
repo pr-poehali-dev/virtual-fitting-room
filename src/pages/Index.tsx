@@ -40,6 +40,7 @@ interface SelectedClothing {
 }
 
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
+const IMAGE_COMPOSER_API = 'https://functions.poehali.dev/021a040a-aa04-40b9-86e3-77547b31401b';
 
 export default function Index() {
   const { user } = useAuth();
@@ -385,18 +386,53 @@ export default function Index() {
       return;
     }
 
-    const garmentImage = clothingMode === 'custom' ? customClothingImage : selectedClothingItems[0]?.image;
-    const description = clothingMode === 'preset' && selectedClothingItems.length > 0
-      ? selectedClothingItems.map(item => item.comment || 'clothing item').join(', ')
-      : '';
+    let garmentImage: string | null = null;
+    let description = '';
+    
+    if (clothingMode === 'custom') {
+      garmentImage = customClothingImage;
+    } else {
+      if (selectedClothingItems.length === 0) {
+        toast.error('Выберите одежду из каталога');
+        return;
+      }
+      
+      if (selectedClothingItems.length === 1) {
+        garmentImage = selectedClothingItems[0].image;
+        description = selectedClothingItems[0].comment || 'high-quality clothing item';
+      } else {
+        toast.info('Объединяем несколько элементов одежды...');
+        
+        try {
+          const composeResponse = await fetch(IMAGE_COMPOSER_API, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              clothing_images: selectedClothingItems.map(item => item.image)
+            })
+          });
+          
+          if (!composeResponse.ok) {
+            throw new Error('Failed to compose images');
+          }
+          
+          const composeData = await composeResponse.json();
+          garmentImage = composeData.composed_image;
+          description = selectedClothingItems
+            .map(item => item.comment || 'clothing item')
+            .join(', ');
+        } catch (error) {
+          toast.error('Ошибка объединения изображений');
+          return;
+        }
+      }
+    }
     
     if (!garmentImage) {
       toast.error('Выберите или загрузите одежду');
       return;
-    }
-    
-    if (selectedClothingItems.length > 1) {
-      toast.info('Генерация с первой выбранной одеждой. Поддержка нескольких элементов добавится позже.');
     }
 
     const controller = new AbortController();
@@ -421,7 +457,7 @@ export default function Index() {
         body: JSON.stringify({
           person_image: uploadedImage,
           garment_image: garmentImage,
-          description: description
+          description: description || 'high-quality clothing items, preserve colors and textures'
         })
       });
 
@@ -507,9 +543,16 @@ export default function Index() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-3">
-                      Выберите одежду
-                    </label>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="text-sm font-medium">
+                        Выберите одежду
+                      </label>
+                      {clothingMode === 'preset' && (
+                        <p className="text-xs text-muted-foreground">
+                          Можно выбрать несколько
+                        </p>
+                      )}
+                    </div>
                     <Tabs value={clothingMode} onValueChange={(v) => setClothingMode(v as 'preset' | 'custom')} className="w-full">
                       <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="preset">Из каталога</TabsTrigger>
@@ -620,7 +663,12 @@ export default function Index() {
                         
                         {selectedClothingItems.length > 0 && (
                           <div className="space-y-2">
-                            <p className="text-sm font-medium">Выбрано элементов: {selectedClothingItems.length}</p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium">Выбрано элементов: {selectedClothingItems.length}</p>
+                              {selectedClothingItems.length > 1 && (
+                                <p className="text-xs text-muted-foreground">Будут объединены</p>
+                              )}
+                            </div>
                             {selectedClothingItems.map((item, idx) => (
                               <div key={item.id} className="flex items-center gap-2 p-2 border rounded-lg">
                                 <img src={item.image} alt="" className="w-10 h-10 object-cover rounded" />
@@ -683,6 +731,11 @@ export default function Index() {
                       <>
                         <Icon name="Sparkles" className="mr-2" size={20} />
                         Генерировать изображение
+                        {clothingMode === 'preset' && selectedClothingItems.length > 0 && (
+                          <span className="ml-2 px-2 py-0.5 bg-primary-foreground text-primary rounded-full text-xs font-medium">
+                            {selectedClothingItems.length}
+                          </span>
+                        )}
                       </>
                     )}
                   </Button>
