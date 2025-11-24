@@ -34,9 +34,10 @@ const LOOKBOOKS_API = 'https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3
 const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
 const CHANGE_PASSWORD_API = 'https://functions.poehali.dev/98400760-4d03-4ca8-88ab-753fde19ef83';
 const UPDATE_PROFILE_API = 'https://functions.poehali.dev/efb92b0f-c34a-4b12-ad41-744260d1173a';
+const DELETE_ACCOUNT_API = 'https://functions.poehali.dev/d8626da4-6372-40c1-abba-d4ffdc89c7c4';
 
 export default function Profile() {
-  const { user, isLoading: authLoading, updateUser } = useAuth();
+  const { user, isLoading: authLoading, updateUser, logout } = useAuth();
   const navigate = useNavigate();
   const [lookbooks, setLookbooks] = useState<Lookbook[]>([]);
   const [tryOnHistory, setTryOnHistory] = useState<TryOnHistory[]>([]);
@@ -364,6 +365,41 @@ export default function Profile() {
         setIsEditingName(false);
       } else {
         toast.error(data.error || 'Ошибка при изменении имени');
+      }
+    } catch (error) {
+      toast.error('Ошибка соединения с сервером');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      'Вы уверены, что хотите удалить аккаунт?\n\nЭто действие нельзя отменить. Все ваши данные (лукбуки, история примерок) будут удалены безвозвратно.'
+    );
+
+    if (!confirmed) return;
+
+    const doubleConfirm = window.confirm(
+      'Последнее предупреждение!\n\nВы действительно хотите удалить аккаунт навсегда?'
+    );
+
+    if (!doubleConfirm) return;
+
+    try {
+      const response = await fetch(DELETE_ACCOUNT_API, {
+        method: 'DELETE',
+        headers: {
+          'X-User-Id': user.id
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success('Аккаунт успешно удалён');
+        logout();
+        navigate('/');
+      } else {
+        toast.error(data.error || 'Ошибка при удалении аккаунта');
       }
     } catch (error) {
       toast.error('Ошибка соединения с сервером');
@@ -725,6 +761,36 @@ export default function Profile() {
                         Изменить пароль
                       </Button>
                     )}
+                  </CardContent>
+                </Card>
+
+                <Card className="border-destructive">
+                  <CardHeader>
+                    <CardTitle className="text-destructive">Опасная зона</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Удаление аккаунта навсегда удалит все ваши данные:
+                        </p>
+                        <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                          <li>Все лукбуки</li>
+                          <li>История примерок</li>
+                          <li>Настройки профиля</li>
+                        </ul>
+                        <p className="text-sm text-destructive font-medium mt-3">
+                          Это действие нельзя отменить!
+                        </p>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        onClick={handleDeleteAccount}
+                      >
+                        <Icon name="Trash2" className="mr-2" size={18} />
+                        Удалить аккаунт
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </div>

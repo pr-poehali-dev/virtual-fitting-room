@@ -1,4 +1,5 @@
 {
+  "delete-account": "https://functions.poehali.dev/d8626da4-6372-40c1-abba-d4ffdc89c7c4",
   "update-profile": "https://functions.poehali.dev/efb92b0f-c34a-4b12-ad41-744260d1173a",
   "change-password": "https://functions.poehali.dev/98400760-4d03-4ca8-88ab-753fde19ef83",
   "password-reset": "https://functions.poehali.dev/94d17619-aeab-4b07-b099-fafb742f304c",
