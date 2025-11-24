@@ -462,122 +462,156 @@ export default function Index() {
       return;
     }
     
-    // ВАЖНО: AI модель работает только с ОДНИМ элементом одежды
-    // Если выбрано несколько элементов, используем только ПЕРВЫЙ
-    let garmentImage: string | null = null;
-    let description = '';
-    
-    if (allClothingItems.length === 1) {
-      // Один элемент - идеально
-      garmentImage = allClothingItems[0].image;
-      const item = allClothingItems[0];
-      const categoryHint = getCategoryPlacementHint(item.categories);
-      const userComment = item.comment ? ` ${item.comment}` : '';
-      description = `${categoryHint}${userComment}`;
-      
-      console.log('=== GENERATION DEBUG (1 item) ===');
-      console.log('Categories:', item.categories);
-      console.log('Description:', description);
-      console.log('Garment image preview:', garmentImage.substring(0, 100));
-    } else {
-      // Несколько элементов - используем ПЕРВЫЙ и предупреждаем
-      const firstItem = allClothingItems[0];
-      const hasCompleteOutfit = firstItem.categories.some(cat => 
-        cat.toLowerCase().includes('весь образ') || cat.toLowerCase().includes('complete')
-      );
-      
-      if (hasCompleteOutfit) {
-        // Если первый элемент - "Весь образ", используем его
-        garmentImage = firstItem.image;
-        const categoryHint = getCategoryPlacementHint(firstItem.categories);
-        const userComment = firstItem.comment ? ` ${firstItem.comment}` : '';
-        description = `${categoryHint}${userComment}`;
-        
-        toast.info('Используется готовый комплект из первого элемента');
-      } else {
-        // Используем только ПЕРВЫЙ элемент
-        garmentImage = firstItem.image;
-        const categoryHint = getCategoryPlacementHint(firstItem.categories);
-        const userComment = firstItem.comment ? ` ${firstItem.comment}` : '';
-        description = `${categoryHint}${userComment}`;
-        
-        toast.warning(`⚠️ AI работает с одним элементом за раз. Используется: ${categoryHint}`, {
-          duration: 4000
-        });
-      }
-      
-      console.log('=== GENERATION DEBUG (multiple items - using FIRST) ===');
-      console.log('Total selected:', allClothingItems.length);
-      console.log('Using first item:', {
-        categories: firstItem.categories,
-        comment: firstItem.comment,
-        imagePreview: firstItem.image.substring(0, 50)
-      });
-      console.log('Description:', description);
-      console.log('Garment image preview:', garmentImage.substring(0, 100));
-    }
-    
-    if (!garmentImage) {
-      toast.error('Выберите или загрузите одежду');
-      return;
-    }
+    // Последовательная генерация для нескольких элементов
+    console.log('=== GENERATION START ===');
+    console.log('Total items:', allClothingItems.length);
+    console.log('Items:', allClothingItems.map((item, idx) => ({
+      index: idx,
+      categories: item.categories,
+      comment: item.comment
+    })));
 
     const controller = new AbortController();
     setAbortController(controller);
     setIsGenerating(true);
     setLoadingProgress(0);
     
-    const progressInterval = setInterval(() => {
-      setLoadingProgress(prev => {
-        if (prev >= 90) return prev;
-        return prev + Math.random() * 10;
-      });
-    }, 1000);
-    
     try {
-      const submitResponse = await fetch('https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885', {
-        signal: controller.signal,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          person_image: uploadedImage,
-          garment_image: garmentImage,
-          description: description || 'high-quality clothing items, preserve colors and textures'
-        })
-      });
-
-      const submitData = await submitResponse.json();
-      console.log('Submit response:', submitData);
+      let currentPersonImage = uploadedImage;
       
-      if (!submitResponse.ok) {
-        clearInterval(progressInterval);
-        throw new Error(submitData.error || 'Failed to submit generation');
+      // Генерируем каждый элемент по очереди
+      for (let i = 0; i < allClothingItems.length; i++) {
+        const item = allClothingItems[i];
+        const categoryHint = getCategoryPlacementHint(item.categories);
+        const userComment = item.comment ? ` ${item.comment}` : '';
+        const description = `${categoryHint}${userComment}`;
+        
+        const itemNumber = i + 1;
+        const totalItems = allClothingItems.length;
+        
+        toast.info(`Примеряем элемент ${itemNumber}/${totalItems}: ${item.categories[0] || 'одежда'}...`, {
+          duration: 3000
+        });
+        
+        console.log(`=== STEP ${itemNumber}/${totalItems} ===`);
+        console.log('Person image:', currentPersonImage.substring(0, 50));
+        console.log('Garment image:', item.image.substring(0, 50));
+        console.log('Description:', description);
+        
+        // Отправляем запрос на генерацию
+        const submitResponse = await fetch('https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885', {
+          signal: controller.signal,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            person_image: currentPersonImage,
+            garment_image: item.image,
+            description: description
+          })
+        });
+
+        const submitData = await submitResponse.json();
+        
+        if (!submitResponse.ok) {
+          throw new Error(submitData.error || 'Failed to submit generation');
+        }
+        
+        const statusUrl = submitData.status_url;
+        
+        if (!statusUrl) {
+          throw new Error('No status URL returned');
+        }
+
+        // Ждем завершения генерации
+        let checkCount = 0;
+        const maxChecks = 120;
+        
+        const waitForCompletion = async (): Promise<string> => {
+          return new Promise(async (resolve, reject) => {
+            const checkStatus = async () => {
+              if (checkCount >= maxChecks) {
+                reject(new Error('Превышено время ожидания'));
+                return;
+              }
+              
+              checkCount++;
+              const baseProgress = (i / totalItems) * 100;
+              const stepProgress = (checkCount / maxChecks) * (100 / totalItems);
+              setLoadingProgress(Math.min(baseProgress + stepProgress, 95));
+              
+              try {
+                const statusResponse = await fetch(
+                  `https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885?status_url=${encodeURIComponent(statusUrl)}`
+                );
+                
+                if (!statusResponse.ok) {
+                  setTimeout(checkStatus, 2000);
+                  return;
+                }
+                
+                const statusData = await statusResponse.json();
+                
+                if (statusData.status === 'COMPLETED') {
+                  resolve(statusData.image_url);
+                  return;
+                }
+                
+                if (statusData.status === 'FAILED') {
+                  reject(new Error(statusData.error || 'Ошибка генерации'));
+                  return;
+                }
+                
+                setTimeout(checkStatus, 2000);
+              } catch (error) {
+                setTimeout(checkStatus, 2000);
+              }
+            };
+            
+            await checkStatus();
+          });
+        };
+        
+        // Получаем результат и используем его для следующей итерации
+        const resultImageUrl = await waitForCompletion();
+        currentPersonImage = resultImageUrl;
+        
+        console.log(`Step ${itemNumber} completed:`, resultImageUrl.substring(0, 50));
       }
       
-      const statusUrl = submitData.status_url;
-      console.log('Status URL:', statusUrl);
+      // Все элементы примерены успешно
+      setLoadingProgress(100);
+      setGeneratedImage(currentPersonImage);
+      toast.success(`Все элементы (${allClothingItems.length}) успешно примерены!`);
+      setIsGenerating(false);
       
-      if (!statusUrl) {
-        clearInterval(progressInterval);
-        throw new Error('No status URL returned');
+      // Сохраняем в историю
+      if (user) {
+        try {
+          await fetch('https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-User-Id': user.id
+            },
+            body: JSON.stringify({
+              person_image: uploadedImage,
+              garment_image: allClothingItems[0].image,
+              result_image: currentPersonImage
+            })
+          });
+        } catch (historyError) {
+          console.warn('Failed to save to history:', historyError);
+        }
       }
-
-      localStorage.setItem('pendingGeneration', JSON.stringify({
-        statusUrl,
-        uploadedImage,
-        garmentImage
-      }));
       
-      await continuePolling(statusUrl, uploadedImage, garmentImage);
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         toast.info('Генерация отменена');
       } else {
         toast.error(error instanceof Error ? error.message : 'Ошибка генерации');
       }
-      localStorage.removeItem('pendingGeneration');
       setIsGenerating(false);
       setLoadingProgress(0);
       setAbortController(null);
@@ -643,11 +677,11 @@ export default function Index() {
                       )}
                     </div>
                     {(selectedClothingItems.length + customClothingItems.filter(item => item.categories?.length > 0).length) > 1 && (
-                      <div className="mb-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                         <div className="flex gap-2">
-                          <Icon name="AlertCircle" className="text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" size={16} />
-                          <p className="text-xs text-amber-800 dark:text-amber-300">
-                            AI модель лучше работает с <strong>одним элементом</strong> одежды. Для нескольких элементов используйте категорию <strong>"Весь образ"</strong> (готовый комплект на одном фото).
+                          <Icon name="Info" className="text-blue-600 dark:text-blue-500 flex-shrink-0 mt-0.5" size={16} />
+                          <p className="text-xs text-blue-800 dark:text-blue-300">
+                            Выбрано {selectedClothingItems.length + customClothingItems.filter(item => item.categories?.length > 0).length} элементов. Они будут <strong>примерены последовательно</strong> (каждый элемент на результате предыдущего). Это займет больше времени, но даст точный результат.
                           </p>
                         </div>
                       </div>
@@ -911,17 +945,18 @@ export default function Index() {
                     {isGenerating ? (
                       <>
                         <Icon name="Loader2" className="mr-2 animate-spin" size={20} />
-                        Обрабатываем (20-30 сек)...
+                        Примеряем элементы...
                       </>
                     ) : (
                       <>
                         <Icon name="Sparkles" className="mr-2" size={20} />
-                        Генерировать изображение
-                        {(selectedClothingItems.length > 0 || customClothingItems.length > 0) && (
-                          <span className="ml-2 px-2 py-0.5 bg-primary-foreground text-primary rounded-full text-xs font-medium">
-                            {selectedClothingItems.length + customClothingItems.filter(item => item.categories?.length > 0).length}
-                          </span>
-                        )}
+                        {(() => {
+                          const totalItems = selectedClothingItems.length + customClothingItems.filter(item => item.categories?.length > 0).length;
+                          if (totalItems > 1) {
+                            return `Примерить ${totalItems} элемента (${totalItems} этапа)`;
+                          }
+                          return 'Генерировать изображение';
+                        })()}
                       </>
                     )}
                   </Button>
