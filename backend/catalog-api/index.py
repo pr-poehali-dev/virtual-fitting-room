@@ -48,28 +48,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # GET /catalog-api?action=list&categories=1,2&colors=3&archetypes=4
         if method == 'GET':
             if action == 'list':
-                # Build dynamic query with filters
+                # First, get all clothing items
                 base_query = """
-                    SELECT DISTINCT c.id, c.image_url, c.name, c.description, c.created_at,
-                        COALESCE(
-                            (SELECT json_agg(cat.name)
-                             FROM clothing_category_links ccl
-                             JOIN clothing_categories cat ON cat.id = ccl.category_id
-                             WHERE ccl.clothing_id = c.id), '[]'
-                        ) as categories,
-                        COALESCE(
-                            (SELECT json_agg(cg.name)
-                             FROM clothing_color_links cl
-                             JOIN color_groups cg ON cg.id = cl.color_group_id
-                             WHERE cl.clothing_id = c.id), '[]'
-                        ) as colors,
-                        COALESCE(
-                            (SELECT json_agg(ka.name)
-                             FROM clothing_archetype_links cal
-                             JOIN kibbe_archetypes ka ON ka.id = cal.archetype_id
-                             WHERE cal.clothing_id = c.id), '[]'
-                        ) as archetypes
-                    FROM clothing_catalog c
+                    SELECT id, image_url, name, description, created_at
+                    FROM clothing_catalog
                     WHERE 1=1
                 """
                 
@@ -82,8 +64,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     if category_ids_str:
                         conditions.append(f"""
                             EXISTS (
-                                SELECT 1 FROM clothing_category_links ccl2
-                                WHERE ccl2.clothing_id = c.id AND ccl2.category_id IN ({category_ids_str})
+                                SELECT 1 FROM clothing_category_links ccl
+                                WHERE ccl.clothing_id = clothing_catalog.id AND ccl.category_id IN ({category_ids_str})
                             )
                         """)
                 
@@ -94,8 +76,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     if color_ids_str:
                         conditions.append(f"""
                             EXISTS (
-                                SELECT 1 FROM clothing_color_links cl2
-                                WHERE cl2.clothing_id = c.id AND cl2.color_group_id IN ({color_ids_str})
+                                SELECT 1 FROM clothing_color_links cl
+                                WHERE cl.clothing_id = clothing_catalog.id AND cl.color_group_id IN ({color_ids_str})
                             )
                         """)
                 
@@ -106,18 +88,53 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     if archetype_ids_str:
                         conditions.append(f"""
                             EXISTS (
-                                SELECT 1 FROM clothing_archetype_links cal2
-                                WHERE cal2.clothing_id = c.id AND cal2.archetype_id IN ({archetype_ids_str})
+                                SELECT 1 FROM clothing_archetype_links cal
+                                WHERE cal.clothing_id = clothing_catalog.id AND cal.archetype_id IN ({archetype_ids_str})
                             )
                         """)
                 
                 if conditions:
                     base_query += ' AND ' + ' AND '.join(conditions)
                 
-                base_query += ' ORDER BY c.created_at DESC'
+                base_query += ' ORDER BY created_at DESC'
                 
                 cursor.execute(base_query)
                 items = cursor.fetchall()
+                
+                # Enrich each item with categories, colors, and archetypes
+                result = []
+                for item in items:
+                    item_dict = dict(item)
+                    item_id = item_dict['id']
+                    
+                    # Get categories
+                    cursor.execute("""
+                        SELECT cat.name
+                        FROM clothing_category_links ccl
+                        JOIN clothing_categories cat ON cat.id = ccl.category_id
+                        WHERE ccl.clothing_id = %s
+                    """, (item_id,))
+                    item_dict['categories'] = [row['name'] for row in cursor.fetchall()]
+                    
+                    # Get colors
+                    cursor.execute("""
+                        SELECT cg.name
+                        FROM clothing_color_links cl
+                        JOIN color_groups cg ON cg.id = cl.color_group_id
+                        WHERE cl.clothing_id = %s
+                    """, (item_id,))
+                    item_dict['colors'] = [row['name'] for row in cursor.fetchall()]
+                    
+                    # Get archetypes
+                    cursor.execute("""
+                        SELECT ka.name
+                        FROM clothing_archetype_links cal
+                        JOIN kibbe_archetypes ka ON ka.id = cal.archetype_id
+                        WHERE cal.clothing_id = %s
+                    """, (item_id,))
+                    item_dict['archetypes'] = [row['name'] for row in cursor.fetchall()]
+                    
+                    result.append(item_dict)
                 
                 return {
                     'statusCode': 200,
@@ -126,7 +143,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'Access-Control-Allow-Origin': '*'
                     },
                     'isBase64Encoded': False,
-                    'body': json.dumps([dict(item) for item in items], default=str)
+                    'body': json.dumps(result, default=str)
                 }
             
             elif action == 'filters':
