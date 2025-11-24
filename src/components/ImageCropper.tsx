@@ -33,7 +33,6 @@ export default function ImageCropper({
 
   const handleCropComplete = async () => {
     if (!imgRef.current) {
-      console.log('No image ref');
       return;
     }
 
@@ -44,14 +43,12 @@ export default function ImageCropper({
       height: (crop.height / 100) * imgRef.current.height,
     };
 
-    console.log('Starting crop process', cropToUse);
     setIsProcessing(true);
 
     try {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (!ctx) {
-        console.error('Failed to get canvas context');
         setIsProcessing(false);
         return;
       }
@@ -75,13 +72,7 @@ export default function ImageCropper({
       );
 
       const croppedImage = canvas.toDataURL('image/jpeg', 0.95);
-      console.log('Crop complete, calling callback');
-      
       onCropComplete(croppedImage);
-      
-      await new Promise(resolve => setTimeout(resolve, 100));
-      console.log('Closing dialog');
-      onClose();
     } catch (error) {
       console.error('Error cropping image:', error);
     } finally {
