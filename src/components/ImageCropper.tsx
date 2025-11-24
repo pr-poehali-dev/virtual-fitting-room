@@ -55,13 +55,16 @@ export default function ImageCropper({
 
     try {
       const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      const loadPromise = new Promise<HTMLImageElement>((resolve, reject) => {
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+      });
+      
       img.src = image;
       
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        if (img.complete) resolve(img);
-      });
+      const loadedImg = await loadPromise;
 
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -70,14 +73,14 @@ export default function ImageCropper({
         return;
       }
 
-      const scaleX = img.naturalWidth / imgRef.current.width;
-      const scaleY = img.naturalHeight / imgRef.current.height;
+      const scaleX = loadedImg.naturalWidth / imgRef.current.width;
+      const scaleY = loadedImg.naturalHeight / imgRef.current.height;
 
       canvas.width = Math.floor(cropToUse.width * scaleX);
       canvas.height = Math.floor(cropToUse.height * scaleY);
 
       ctx.drawImage(
-        img,
+        loadedImg,
         Math.floor(cropToUse.x * scaleX),
         Math.floor(cropToUse.y * scaleY),
         Math.floor(cropToUse.width * scaleX),
