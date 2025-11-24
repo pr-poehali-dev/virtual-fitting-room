@@ -37,6 +37,7 @@ interface SelectedClothing {
   id: string;
   image: string;
   comment: string;
+  categories: string[];
 }
 
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
@@ -279,7 +280,8 @@ export default function Index() {
       setSelectedClothingItems([...selectedClothingItems, {
         id: item.id,
         image: item.image_url,
-        comment: ''
+        comment: '',
+        categories: item.categories
       }]);
     }
   };
@@ -294,6 +296,36 @@ export default function Index() {
     return array.includes(value)
       ? array.filter(v => v !== value)
       : [...array, value];
+  };
+  
+  const getCategoryPlacementHint = (categories: string[]): string => {
+    if (!categories || categories.length === 0) return 'Clothing item.';
+    
+    const categoryLower = categories.map(c => c.toLowerCase());
+    
+    if (categoryLower.some(c => c.includes('платье') || c.includes('dress'))) {
+      return 'Full-length dress covering entire body.';
+    }
+    if (categoryLower.some(c => c.includes('топ') || c.includes('блузка') || c.includes('блуза') || c.includes('футболка') || c.includes('рубашка') || c.includes('top') || c.includes('blouse') || c.includes('shirt') || c.includes('t-shirt'))) {
+      return 'Upper body garment (top/blouse/shirt) worn on torso and arms.';
+    }
+    if (categoryLower.some(c => c.includes('брюки') || c.includes('джинсы') || c.includes('штаны') || c.includes('pants') || c.includes('trousers') || c.includes('jeans'))) {
+      return 'Lower body garment (pants/trousers) worn on legs from waist to ankles.';
+    }
+    if (categoryLower.some(c => c.includes('юбка') || c.includes('skirt'))) {
+      return 'Skirt worn on lower body from waist.';
+    }
+    if (categoryLower.some(c => c.includes('обувь') || c.includes('туфли') || c.includes('ботинки') || c.includes('shoes') || c.includes('boots') || c.includes('sneakers'))) {
+      return 'Footwear worn on feet.';
+    }
+    if (categoryLower.some(c => c.includes('куртка') || c.includes('пальто') || c.includes('jacket') || c.includes('coat'))) {
+      return 'Outerwear (jacket/coat) worn over upper body.';
+    }
+    if (categoryLower.some(c => c.includes('аксессуар') || c.includes('accessory') || c.includes('шарф') || c.includes('scarf') || c.includes('сумка') || c.includes('bag'))) {
+      return 'Accessory item.';
+    }
+    
+    return `${categories[0]} item.`;
   };
 
   const continuePolling = async (statusUrl: string, personImage: string, garmentImg: string) => {
@@ -399,7 +431,10 @@ export default function Index() {
       
       if (selectedClothingItems.length === 1) {
         garmentImage = selectedClothingItems[0].image;
-        description = selectedClothingItems[0].comment || 'high-quality clothing item';
+        const item = selectedClothingItems[0];
+        const categoryHint = getCategoryPlacementHint(item.categories);
+        const userComment = item.comment ? ` ${item.comment}.` : '';
+        description = `${categoryHint}${userComment} High-quality clothing, preserve colors and textures, photorealistic fit.`;
       } else {
         toast.info('Объединяем несколько элементов одежды...');
         
@@ -420,9 +455,14 @@ export default function Index() {
           
           const composeData = await composeResponse.json();
           garmentImage = composeData.composed_image;
-          description = selectedClothingItems
-            .map(item => item.comment || 'clothing item')
-            .join(', ');
+          
+          const itemDescriptions = selectedClothingItems.map(item => {
+            const categoryHint = getCategoryPlacementHint(item.categories);
+            const userComment = item.comment ? ` ${item.comment}` : '';
+            return `${categoryHint}${userComment}`;
+          });
+          
+          description = `${itemDescriptions.join(', ')}. High-quality clothing, preserve colors and textures, photorealistic fit for all items.`;
         } catch (error) {
           toast.error('Ошибка объединения изображений');
           return;
