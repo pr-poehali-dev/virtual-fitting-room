@@ -43,6 +43,8 @@ export default function Admin() {
   const [password, setPassword] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [lookbooks, setLookbooks] = useState<Lookbook[]>([]);
+  const [filteredLookbooks, setFilteredLookbooks] = useState<Lookbook[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>('all');
   const [history, setHistory] = useState<TryOnHistory[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -123,6 +125,7 @@ export default function Admin() {
       setStats(statsData);
       setUsers(usersData);
       setLookbooks(lookbooksData);
+      setFilteredLookbooks(lookbooksData);
       setHistory(historyData);
     } catch (error) {
       toast.error('Ошибка загрузки данных');
@@ -145,6 +148,7 @@ export default function Admin() {
 
       if (response.ok) {
         toast.success('Пользователь удален');
+        setSelectedUserId('all');
         fetchData();
       } else {
         toast.error('Ошибка удаления');
@@ -152,6 +156,34 @@ export default function Admin() {
     } catch (error) {
       toast.error('Ошибка удаления');
     }
+  };
+
+  const exportToCSV = () => {
+    const headers = ['ID', 'User ID', 'Name', 'Person Name', 'Photos Count', 'Created At'];
+    const rows = filteredLookbooks.map(lb => [
+      lb.id,
+      lb.user_id,
+      lb.name,
+      lb.person_name,
+      lb.photos.length.toString(),
+      new Date(lb.created_at).toLocaleString()
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    return csvContent;
+  };
+
+  const downloadCSV = (content: string, filename: string) => {
+    const blob = new Blob(['\uFEFF' + content], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    toast.success('Файл скачан');
   };
 
   const handleDeleteLookbook = async (lookbookId: string) => {
@@ -330,14 +362,49 @@ export default function Admin() {
                 <TabsContent value="lookbooks">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Все лукбуки</CardTitle>
+                      <div className="flex justify-between items-center">
+                        <CardTitle>Все лукбуки</CardTitle>
+                        <div className="flex gap-2 items-center">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const csv = exportToCSV();
+                              downloadCSV(csv, 'lookbooks.csv');
+                            }}
+                          >
+                            <Icon name="Download" className="mr-2" size={16} />
+                            Экспорт CSV
+                          </Button>
+                          <select
+                            value={selectedUserId}
+                            onChange={(e) => {
+                              const userId = e.target.value;
+                              setSelectedUserId(userId);
+                              if (userId === 'all') {
+                                setFilteredLookbooks(lookbooks);
+                              } else {
+                                setFilteredLookbooks(lookbooks.filter(lb => lb.user_id === userId));
+                              }
+                            }}
+                            className="px-3 py-2 border rounded-md text-sm"
+                          >
+                            <option value="all">Все пользователи</option>
+                            {users.map((user) => (
+                              <option key={user.id} value={user.id}>
+                                {user.name} ({user.email})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        {lookbooks.length === 0 ? (
+                        {filteredLookbooks.length === 0 ? (
                           <p className="text-center text-muted-foreground py-8">Нет лукбуков</p>
                         ) : (
-                          lookbooks.map((lookbook) => (
+                          filteredLookbooks.map((lookbook) => (
                             <div
                               key={lookbook.id}
                               className="flex items-center justify-between p-4 border rounded-lg"
