@@ -32,7 +32,14 @@ export default function ImageCropper({
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleCropComplete = async () => {
-    if (!completedCrop || !imgRef.current) return;
+    if (!imgRef.current) return;
+
+    const cropToUse = completedCrop || {
+      x: (crop.x / 100) * imgRef.current.width,
+      y: (crop.y / 100) * imgRef.current.height,
+      width: (crop.width / 100) * imgRef.current.width,
+      height: (crop.height / 100) * imgRef.current.height,
+    };
 
     setIsProcessing(true);
 
@@ -47,23 +54,24 @@ export default function ImageCropper({
       const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
       const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
 
-      canvas.width = completedCrop.width;
-      canvas.height = completedCrop.height;
+      canvas.width = cropToUse.width;
+      canvas.height = cropToUse.height;
 
       ctx.drawImage(
         imgRef.current,
-        completedCrop.x * scaleX,
-        completedCrop.y * scaleY,
-        completedCrop.width * scaleX,
-        completedCrop.height * scaleY,
+        cropToUse.x * scaleX,
+        cropToUse.y * scaleY,
+        cropToUse.width * scaleX,
+        cropToUse.height * scaleY,
         0,
         0,
-        completedCrop.width,
-        completedCrop.height
+        cropToUse.width,
+        cropToUse.height
       );
 
       const croppedImage = canvas.toDataURL('image/jpeg', 0.95);
       onCropComplete(croppedImage);
+      onClose();
     } catch (error) {
       console.error('Error cropping image:', error);
     } finally {
@@ -100,7 +108,7 @@ export default function ImageCropper({
             <Button variant="outline" onClick={onClose} disabled={isProcessing}>
               Отмена
             </Button>
-            <Button onClick={handleCropComplete} disabled={isProcessing || !completedCrop}>
+            <Button onClick={handleCropComplete} disabled={isProcessing}>
               {isProcessing ? (
                 <>
                   <Icon name="Loader2" className="mr-2 animate-spin" size={16} />
