@@ -1,0 +1,30 @@
+import { useState } from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import Icon from '@/components/ui/icon';
+
+interface ImageViewerProps {
+  src: string;
+  alt?: string;
+  className?: string;
+}
+
+export default function ImageViewer({ src, alt = '', className = '' }: ImageViewerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <div className="relative group cursor-pointer" onClick={() => setIsOpen(true)}>
+        <img src={src} alt={alt} className={className} />
+        <div className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+          <Icon name="ZoomIn" size={16} />
+        </div>
+      </div>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-4xl">
+          <img src={src} alt={alt} className="w-full h-auto" />
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

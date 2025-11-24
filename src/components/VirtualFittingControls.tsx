@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Icon from '@/components/ui/icon';
+import ImageViewer from '@/components/ImageViewer';
 
 interface ClothingItem {
   id: string;
@@ -192,10 +193,10 @@ export default function VirtualFittingControls({
                             : 'border-border hover:border-primary/50'
                         }`}
                       >
-                        <img
+                        <ImageViewer
                           src={item.image_url}
                           alt={item.name}
-                          className="w-full h-32 object-cover"
+                          className="w-full h-32 object-contain bg-muted"
                         />
                         {selectedClothing?.id === item.id && (
                           <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
@@ -243,10 +244,10 @@ export default function VirtualFittingControls({
 
                     {selectedClothing?.id.startsWith('custom-') && (
                       <div className="space-y-2 p-3 border rounded-lg bg-muted/30">
-                        <img
+                        <ImageViewer
                           src={selectedClothing.image}
                           alt="Custom clothing"
-                          className="w-full h-32 object-contain rounded"
+                          className="w-full h-32 object-contain bg-muted rounded"
                         />
                         <p className="text-xs text-center text-muted-foreground">
                           {selectedClothing.name || 'Ваша одежда'}

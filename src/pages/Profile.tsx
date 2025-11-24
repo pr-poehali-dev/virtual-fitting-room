@@ -9,6 +9,7 @@ import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
+import ImageViewer from '@/components/ImageViewer';
 
 interface Lookbook {
   id: string;
@@ -497,7 +498,7 @@ export default function Profile() {
                           {selectedPhotos.length > 0 && (
                             <div className="grid grid-cols-4 gap-2 mt-4">
                               {selectedPhotos.map((photo, index) => (
-                                <img key={index} src={photo} alt="" className="w-full h-24 object-cover rounded" />
+                                <ImageViewer key={index} src={photo} alt="" className="w-full h-24 object-contain bg-muted rounded" />
                               ))}
                             </div>
                           )}
@@ -599,7 +600,7 @@ export default function Profile() {
                           {lookbook.photos.length > 0 && (
                             <div className="grid grid-cols-3 gap-2 mb-4">
                               {lookbook.photos.slice(0, 3).map((photo, index) => (
-                                <img key={index} src={photo} alt="" className="w-full h-20 object-cover rounded" />
+                                <ImageViewer key={index} src={photo} alt="" className="w-full h-20 object-contain bg-muted rounded" />
                               ))}
                             </div>
                           )}
