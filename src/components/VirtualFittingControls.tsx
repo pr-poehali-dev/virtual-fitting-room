@@ -53,6 +53,7 @@ interface VirtualFittingControlsProps {
   updateCustomClothingCategory: (id: string, category: string) => void;
   updateCustomClothingComment: (id: string, comment: string) => void;
   handleCropImage: (id: string, image: string) => void;
+  handleCropPersonImage?: () => void;
   processImageBackground: (imageUrl: string, itemId: string) => Promise<string>;
   setCustomClothingItems: (items: SelectedClothing[]) => void;
   processingImages: Set<string>;
@@ -83,6 +84,7 @@ export default function VirtualFittingControls({
   updateCustomClothingCategory,
   updateCustomClothingComment,
   handleCropImage,
+  handleCropPersonImage,
   processImageBackground,
   setCustomClothingItems,
   processingImages,
@@ -116,7 +118,23 @@ export default function VirtualFittingControls({
               />
               <label htmlFor="photo-upload" className="cursor-pointer">
                 {uploadedImage ? (
-                  <img src={uploadedImage} alt="Uploaded" className="max-h-64 mx-auto rounded-lg" />
+                  <div className="space-y-3">
+                    <img src={uploadedImage} alt="Uploaded" className="max-h-64 mx-auto rounded-lg" />
+                    {handleCropPersonImage && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleCropPersonImage();
+                        }}
+                      >
+                        <Icon name="Crop" className="mr-2" size={16} />
+                        Кадрировать
+                      </Button>
+                    )}
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     <Icon name="Upload" className="mx-auto text-muted-foreground" size={48} />

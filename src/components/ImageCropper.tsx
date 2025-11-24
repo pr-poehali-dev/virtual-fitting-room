@@ -94,29 +94,31 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-6">
+        <DialogHeader className="flex-shrink-0 pb-4">
           <DialogTitle>Кадрировать изображение</DialogTitle>
         </DialogHeader>
         
-        <div className="w-full bg-muted rounded-lg p-4 flex items-center justify-center overflow-auto flex-shrink min-h-0" style={{ maxHeight: 'calc(90vh - 300px)' }}>
-          <ReactCrop
-            crop={crop}
-            onChange={(c) => setCrop(c)}
-            onComplete={(c) => setCompletedCrop(c)}
-            aspect={customAspect}
-          >
-            <img
-              ref={imgRef}
-              src={image}
-              alt="Crop"
-              crossOrigin="anonymous"
-              style={{ display: 'block', maxWidth: '100%', height: 'auto' }}
-            />
-          </ReactCrop>
+        <div className="flex-1 w-full bg-muted rounded-lg p-4 overflow-auto min-h-0">
+          <div className="flex items-start justify-center min-h-full">
+            <ReactCrop
+              crop={crop}
+              onChange={(c) => setCrop(c)}
+              onComplete={(c) => setCompletedCrop(c)}
+              aspect={customAspect}
+            >
+              <img
+                ref={imgRef}
+                src={image}
+                alt="Crop"
+                crossOrigin="anonymous"
+                style={{ display: 'block', maxWidth: '100%', height: 'auto' }}
+              />
+            </ReactCrop>
+          </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="flex-shrink-0 space-y-4 pt-4">
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
               {customAspect === undefined 
@@ -163,7 +165,7 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0 pt-4">
           <Button variant="outline" onClick={onClose}>
             Отмена
           </Button>

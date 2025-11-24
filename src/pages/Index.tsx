@@ -71,7 +71,7 @@ export default function Index() {
   const [isSaving, setIsSaving] = useState(false);
   const [processingImages, setProcessingImages] = useState<Set<string>>(new Set());
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
-  const [imageToCrop, setImageToCrop] = useState<{ id: string; image: string } | null>(null);
+  const [imageToCrop, setImageToCrop] = useState<{ id: string; image: string; type: 'person' | 'clothing' } | null>(null);
   const [showClothingZoneEditor, setShowClothingZoneEditor] = useState(false);
   const [clothingToMarkZone, setClothingToMarkZone] = useState<{ id: string; image: string; name?: string; isCatalog: boolean } | null>(null);
 
@@ -155,7 +155,8 @@ export default function Index() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setUploadedImage(reader.result as string);
+        setImageToCrop({ id: 'person', image: reader.result as string, type: 'person' });
+        setCropDialogOpen(true);
       };
       reader.readAsDataURL(file);
     }
@@ -226,17 +227,29 @@ export default function Index() {
   };
   
   const handleCropImage = (id: string, image: string) => {
-    setImageToCrop({ id, image });
+    setImageToCrop({ id, image, type: 'clothing' });
     setCropDialogOpen(true);
+  };
+
+  const handleCropPersonImage = () => {
+    if (uploadedImage) {
+      setImageToCrop({ id: 'person', image: uploadedImage, type: 'person' });
+      setCropDialogOpen(true);
+    }
   };
   
   const handleCropComplete = (croppedImage: string) => {
     if (imageToCrop) {
-      setCustomClothingItems(customClothingItems.map(item =>
-        item.id === imageToCrop.id ? { ...item, image: croppedImage } : item
-      ));
+      if (imageToCrop.type === 'person') {
+        setUploadedImage(croppedImage);
+      } else {
+        setCustomClothingItems(customClothingItems.map(item =>
+          item.id === imageToCrop.id ? { ...item, image: croppedImage } : item
+        ));
+      }
     }
     setImageToCrop(null);
+    setCropDialogOpen(false);
   };
   
   const processImageBackground = async (imageUrl: string, itemId: string): Promise<string> => {
@@ -833,6 +846,7 @@ export default function Index() {
               updateCustomClothingCategory={updateCustomClothingCategory}
               updateCustomClothingComment={updateCustomClothingComment}
               handleCropImage={handleCropImage}
+              handleCropPersonImage={handleCropPersonImage}
               processImageBackground={processImageBackground}
               setCustomClothingItems={setCustomClothingItems}
               processingImages={processingImages}
