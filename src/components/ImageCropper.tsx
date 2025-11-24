@@ -94,12 +94,12 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Кадрировать изображение</DialogTitle>
         </DialogHeader>
         
-        <div className="w-full bg-muted rounded-lg p-4 flex items-center justify-center">
+        <div className="w-full bg-muted rounded-lg p-4 flex items-center justify-center overflow-auto flex-shrink min-h-0" style={{ maxHeight: 'calc(90vh - 300px)' }}>
           <ReactCrop
             crop={crop}
             onChange={(c) => setCrop(c)}
@@ -111,7 +111,7 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
               src={image}
               alt="Crop"
               crossOrigin="anonymous"
-              style={{ display: 'block', width: '100%', height: 'auto' }}
+              style={{ display: 'block', maxWidth: '100%', height: 'auto' }}
             />
           </ReactCrop>
         </div>
