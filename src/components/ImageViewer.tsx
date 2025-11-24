@@ -21,8 +21,8 @@ export default function ImageViewer({ src, alt = '', className = '' }: ImageView
       </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-4xl">
-          <img src={src} alt={alt} className="w-full h-auto" />
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+          <img src={src} alt={alt} className="w-full h-auto max-h-[85vh] object-contain" />
         </DialogContent>
       </Dialog>
     </>
