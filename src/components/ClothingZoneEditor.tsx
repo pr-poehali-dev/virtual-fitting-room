@@ -40,8 +40,8 @@ export default function ClothingZoneEditor({
       const canvas = canvasRef.current;
       if (!canvas) return;
 
-      const maxWidth = 700;
-      const maxHeight = 600;
+      const maxWidth = 500;
+      const maxHeight = 400;
       let width = img.width;
       let height = img.height;
 
@@ -179,7 +179,7 @@ export default function ClothingZoneEditor({
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <Card className="w-full max-w-6xl p-6 my-4">
+      <Card className="w-full max-w-5xl max-h-[90vh] overflow-y-auto p-6 my-4">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -221,7 +221,7 @@ export default function ClothingZoneEditor({
                   <img 
                     src={clothingImage} 
                     alt="Clothing" 
-                    className="w-full h-40 object-contain rounded"
+                    className="w-full h-32 object-contain rounded"
                   />
                 </div>
               </div>
