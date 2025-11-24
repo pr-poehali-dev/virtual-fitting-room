@@ -25,7 +25,15 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
   const imgRef = useRef<HTMLImageElement>(null);
 
   const createCroppedImage = async () => {
-    if (!completedCrop || !imgRef.current) return;
+    if (!imgRef.current) return;
+
+    const cropToUse = completedCrop || crop;
+    
+    if (!cropToUse || cropToUse.width === 0 || cropToUse.height === 0) {
+      onCropComplete(image);
+      onClose();
+      return;
+    }
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -34,15 +42,26 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
     const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
     const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
 
-    canvas.width = completedCrop.width * scaleX;
-    canvas.height = completedCrop.height * scaleY;
+    let pixelCrop = cropToUse;
+    if (cropToUse.unit === '%') {
+      pixelCrop = {
+        x: (cropToUse.x / 100) * imgRef.current.width,
+        y: (cropToUse.y / 100) * imgRef.current.height,
+        width: (cropToUse.width / 100) * imgRef.current.width,
+        height: (cropToUse.height / 100) * imgRef.current.height,
+        unit: 'px'
+      };
+    }
+
+    canvas.width = pixelCrop.width * scaleX;
+    canvas.height = pixelCrop.height * scaleY;
 
     ctx.drawImage(
       imgRef.current,
-      completedCrop.x * scaleX,
-      completedCrop.y * scaleY,
-      completedCrop.width * scaleX,
-      completedCrop.height * scaleY,
+      pixelCrop.x * scaleX,
+      pixelCrop.y * scaleY,
+      pixelCrop.width * scaleX,
+      pixelCrop.height * scaleY,
       0,
       0,
       canvas.width,
