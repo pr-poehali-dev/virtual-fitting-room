@@ -155,59 +155,92 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing person_image or garment_image'})
                 }
             
-            # Check if mask is provided to use Kolors model with mask support
-            if mask_image and isinstance(mask_image, str) and len(mask_image) > 0:
-                # Use Kolors Virtual Try-On which supports masks
-                queue_url = "https://queue.fal.run/fal-ai/kolors-virtual-try-on"
-                payload = {
-                    "person_image_url": person_image,
-                    "garment_image_url": garment_image,
-                    "mask_image_url": mask_image
-                }
-                print(f"Using Kolors Virtual Try-On with mask, category hint: {category_hint}")
-            else:
-                # Use IDM-VTON without mask
-                queue_url = "https://queue.fal.run/fal-ai/idm-vton"
+            # Use IDM-VTON model with smart category-based descriptions
+            queue_url = "https://queue.fal.run/fal-ai/idm-vton"
+            
+            # Build realistic description with strong category hints
+            base_description = description if description else ""
+            
+            # Add STRONG category-specific placement instructions
+            category_instructions = []
+            if category_hint:
+                hint_lower = category_hint.lower()
                 
-                # Build realistic description with category hints
-                base_description = description if description else ""
+                # Upper body garments
+                if 'top' in hint_lower or 'shirt' in hint_lower or 'blouse' in hint_lower or 't-shirt' in hint_lower:
+                    category_instructions.append("UPPER BODY GARMENT ONLY: fit on torso, shoulders, and chest area")
+                    category_instructions.append("do not extend below waist")
+                    category_instructions.append("naturally fitting shirt/top with realistic shoulder and chest fit")
                 
-                # Add category-specific realism hints
-                category_hints = []
-                if category_hint:
-                    hint_lower = category_hint.lower()
-                    if 'top' in hint_lower or 'shirt' in hint_lower or 'blouse' in hint_lower:
-                        category_hints.append("naturally fitting upper body garment with realistic shoulder and chest fit")
-                    elif 'pants' in hint_lower or 'trousers' in hint_lower:
-                        category_hints.append("naturally fitting lower body garment with proper waist and leg draping")
-                    elif 'dress' in hint_lower:
-                        category_hints.append("naturally flowing dress with realistic body contours")
-                    elif 'skirt' in hint_lower:
-                        category_hints.append("naturally fitting skirt with proper waist placement")
+                # Lower body garments
+                elif 'pants' in hint_lower or 'trousers' in hint_lower or 'jeans' in hint_lower:
+                    category_instructions.append("LOWER BODY GARMENT ONLY: fit on legs and waist area")
+                    category_instructions.append("do not cover upper body")
+                    category_instructions.append("naturally fitting pants with proper waist and leg draping")
                 
-                realism_prompts = [
-                    "photorealistic high quality",
-                    "natural lighting and shadows",
-                    "preserve exact original garment colors and patterns",
-                    "realistic fabric texture and draping",
-                    "natural wrinkles and folds",
-                    "maintain all garment details",
-                    "professional photography quality",
-                    "natural body fit and proportions"
-                ]
+                # Dresses
+                elif 'dress' in hint_lower or 'платье' in hint_lower:
+                    category_instructions.append("FULL LENGTH DRESS: covers torso and extends to legs")
+                    category_instructions.append("naturally flowing dress with realistic body contours")
                 
-                detailed_description = f"{base_description} {' '.join(category_hints)} {' '.join(realism_prompts)}".strip()
+                # Skirts
+                elif 'skirt' in hint_lower or 'юбка' in hint_lower:
+                    category_instructions.append("SKIRT ONLY: fit on waist and hips area")
+                    category_instructions.append("do not cover upper body")
+                    category_instructions.append("naturally fitting skirt starting at waist")
                 
-                payload = {
-                    "human_image_url": person_image,
-                    "garment_image_url": garment_image,
-                    "description": detailed_description,
-                    "num_inference_steps": 50,
-                    "guidance_scale": 2.0
-                }
+                # Jackets/Coats
+                elif 'jacket' in hint_lower or 'coat' in hint_lower or 'куртка' in hint_lower or 'пальто' in hint_lower:
+                    category_instructions.append("OUTER GARMENT: jacket or coat worn over existing clothing")
+                    category_instructions.append("naturally fitting outerwear with proper shoulder fit")
                 
-                print(f"Using IDM-VTON model without mask, category hint: {category_hint}")
-                print(f"Description: {detailed_description}")
+                # Shoes
+                elif 'shoes' in hint_lower or 'boots' in hint_lower or 'обувь' in hint_lower or 'туфли' in hint_lower or 'ботинки' in hint_lower or 'сапоги' in hint_lower:
+                    category_instructions.append("FOOTWEAR ONLY: fit on feet and lower legs area")
+                    category_instructions.append("do not affect upper body or torso")
+                    category_instructions.append("realistic shoes or boots on feet")
+                
+                # Accessories
+                elif 'accessory' in hint_lower or 'hat' in hint_lower or 'шляпа' in hint_lower or 'шарф' in hint_lower or 'scarf' in hint_lower:
+                    category_instructions.append("ACCESSORY ONLY: small item worn on appropriate body part")
+                    category_instructions.append("do not replace main clothing")
+                
+                # Default fallback
+                else:
+                    category_instructions.append(f"garment type: {category_hint}")
+            
+            # Realism prompts
+            realism_prompts = [
+                "photorealistic high quality",
+                "natural lighting and shadows",
+                "preserve exact original garment colors and patterns",
+                "realistic fabric texture and draping",
+                "natural wrinkles and folds",
+                "maintain all garment details",
+                "professional photography quality",
+                "natural body fit and proportions",
+                "correct garment placement on body"
+            ]
+            
+            # Combine all parts
+            all_parts = []
+            if base_description:
+                all_parts.append(base_description)
+            all_parts.extend(category_instructions)
+            all_parts.extend(realism_prompts)
+            
+            detailed_description = ' '.join(all_parts)
+            
+            payload = {
+                "human_image_url": person_image,
+                "garment_image_url": garment_image,
+                "description": detailed_description,
+                "num_inference_steps": 50,
+                "guidance_scale": 2.0
+            }
+            
+            print(f"Using IDM-VTON model, category hint: {category_hint}")
+            print(f"Full description: {detailed_description}")
             
             submit_response = requests.post(queue_url, headers=headers, json=payload, timeout=30)
             
