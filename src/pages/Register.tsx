@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
+import Captcha from '@/components/ui/captcha';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -14,11 +15,17 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [captchaValid, setCaptchaValid] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!captchaValid) {
+      toast.error('Пожалуйста, решите пример');
+      return;
+    }
 
     if (password !== confirmPassword) {
       toast.error('Пароли не совпадают');
@@ -112,7 +119,8 @@ export default function Register() {
                   minLength={6}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Captcha onVerify={setCaptchaValid} className="space-y-2" />
+              <Button type="submit" className="w-full" disabled={isLoading || !captchaValid}>
                 {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
               </Button>
             </form>

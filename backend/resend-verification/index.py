@@ -169,6 +169,33 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         cursor.execute(
+            """
+            SELECT created_at FROM email_verifications 
+            WHERE user_id = %s 
+            ORDER BY created_at DESC 
+            LIMIT 1
+            """,
+            (user['id'],)
+        )
+        last_verification = cursor.fetchone()
+        
+        if last_verification:
+            time_since_last = datetime.now() - last_verification['created_at']
+            if time_since_last < timedelta(minutes=1):
+                remaining_seconds = int(60 - time_since_last.total_seconds())
+                return {
+                    'statusCode': 429,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({
+                        'error': f'Please wait {remaining_seconds} seconds before requesting another email'
+                    })
+                }
+        
+        cursor.execute(
             "DELETE FROM email_verifications WHERE user_id = %s AND verified = false",
             (user['id'],)
         )

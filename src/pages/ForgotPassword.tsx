@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
+import Captcha from '@/components/ui/captcha';
 
 const PASSWORD_RESET_API = 'https://functions.poehali.dev/94d17619-aeab-4b07-b099-fafb742f304c';
 
@@ -14,9 +15,15 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
+  const [captchaValid, setCaptchaValid] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!captchaValid) {
+      toast.error('Пожалуйста, решите пример');
+      return;
+    }
 
     if (!email) {
       toast.error('Введите email');
@@ -115,7 +122,9 @@ export default function ForgotPassword() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Captcha onVerify={setCaptchaValid} className="space-y-2" />
+
+                <Button type="submit" className="w-full" disabled={isLoading || !captchaValid}>
                   {isLoading ? (
                     <>
                       <Icon name="Loader2" className="mr-2 animate-spin" size={18} />

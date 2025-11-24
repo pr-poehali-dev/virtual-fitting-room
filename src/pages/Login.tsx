@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
+import Captcha from '@/components/ui/captcha';
 
 const RESEND_API = 'https://functions.poehali.dev/cf48d1a6-141c-4ecb-befe-6203d8292d89';
 
@@ -16,11 +17,18 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [showResendButton, setShowResendButton] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [captchaValid, setCaptchaValid] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!captchaValid) {
+      toast.error('Пожалуйста, решите пример');
+      return;
+    }
+
     setIsLoading(true);
     setShowResendButton(false);
 
@@ -104,7 +112,8 @@ export default function Login() {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Captcha onVerify={setCaptchaValid} className="space-y-2" />
+              <Button type="submit" className="w-full" disabled={isLoading || !captchaValid}>
                 {isLoading ? 'Вход...' : 'Войти'}
               </Button>
             </form>
