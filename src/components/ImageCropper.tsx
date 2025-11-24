@@ -94,13 +94,13 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-6">
-        <DialogHeader className="flex-shrink-0 pb-4">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+        <DialogHeader className="pb-4">
           <DialogTitle>Кадрировать изображение</DialogTitle>
         </DialogHeader>
         
-        <div className="flex-1 w-full bg-muted rounded-lg p-4 overflow-auto min-h-0">
-          <div className="flex items-start justify-center min-h-full">
+        <div className="w-full bg-muted rounded-lg p-4">
+          <div className="flex items-start justify-center">
             <ReactCrop
               crop={crop}
               onChange={(c) => setCrop(c)}
@@ -118,7 +118,7 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
           </div>
         </div>
 
-        <div className="flex-shrink-0 space-y-4 pt-4">
+        <div className="space-y-4 pt-4">
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
               {customAspect === undefined 
@@ -165,7 +165,7 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
           </div>
         </div>
 
-        <DialogFooter className="flex-shrink-0 pt-4">
+        <DialogFooter className="pt-4">
           <Button variant="outline" onClick={onClose}>
             Отмена
           </Button>
