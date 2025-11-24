@@ -134,6 +134,29 @@ export default function Admin() {
     setPassword('');
   };
 
+  const fetchCatalogData = async () => {
+    try {
+      const [filtersRes, catalogRes] = await Promise.all([
+        fetch(`${CATALOG_API}?action=filters`),
+        fetch(`${CATALOG_API}?action=list`)
+      ]);
+
+      if (!filtersRes.ok || !catalogRes.ok) {
+        throw new Error('Ошибка загрузки каталога');
+      }
+
+      const [filtersData, catalogData] = await Promise.all([
+        filtersRes.json(),
+        catalogRes.json()
+      ]);
+
+      setFilters(filtersData);
+      setClothingItems(catalogData);
+    } catch (error) {
+      toast.error('Ошибка загрузки каталога');
+    }
+  };
+
   const fetchData = async () => {
     setIsLoading(true);
     const adminPassword = sessionStorage.getItem('admin_auth');
@@ -322,7 +345,7 @@ export default function Admin() {
           color_ids: [],
           archetype_ids: []
         });
-        fetchData();
+        fetchCatalogData();
       } else {
         toast.error('Ошибка добавления');
       }
@@ -373,7 +396,7 @@ export default function Admin() {
       if (response.ok) {
         toast.success('Элемент обновлен');
         setEditingClothing(null);
-        fetchData();
+        fetchCatalogData();
       } else {
         toast.error('Ошибка обновления');
       }
@@ -431,7 +454,7 @@ export default function Admin() {
 
       if (response.ok) {
         toast.success('Одежда удалена');
-        fetchData();
+        fetchCatalogData();
       } else {
         toast.error('Ошибка удаления');
       }
