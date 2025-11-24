@@ -33,9 +33,20 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      await register(email, password, name);
-      toast.success('Регистрация успешна!');
-      navigate('/profile');
+      const response = await fetch('https://functions.poehali.dev/589c58eb-91b4-4f2a-923c-6a91ed722a82', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'register', email, password, name })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
+
+      toast.success('Проверьте почту для подтверждения');
+      navigate('/registration-success', { state: { email } });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Ошибка регистрации');
     } finally {

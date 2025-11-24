@@ -24,7 +24,13 @@ export default function Login() {
       toast.success('Вы успешно вошли!');
       navigate('/profile');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Ошибка входа');
+      const errorMessage = error instanceof Error ? error.message : 'Ошибка входа';
+      
+      if (errorMessage.includes('email') && errorMessage.toLowerCase().includes('verif')) {
+        toast.error('Email не подтвержден. Проверьте почту.');
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
