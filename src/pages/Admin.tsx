@@ -523,14 +523,6 @@ export default function Admin() {
       const data = await response.json();
       setNewClothing(prev => ({ ...prev, image_url: data.processed_image }));
       toast.success('Фон удалён');
-        setEditingClothing({
-          ...editingClothing,
-          image_url: data.processed_image_url
-        });
-        toast.success('Фон удален');
-      } else {
-        toast.error('Ошибка удаления фона');
-      }
     } catch (error) {
       toast.error('Ошибка удаления фона');
     } finally {
