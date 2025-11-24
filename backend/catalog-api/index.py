@@ -48,6 +48,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # GET /catalog-api?action=list&categories=1,2&colors=3&archetypes=4
         if method == 'GET':
+            if action == 'remove_bg':
+                # Special POST action disguised as GET for background removal
+                return {
+                    'statusCode': 405,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Use POST method for background removal'})
+                }
+            
             if action == 'list':
                 # First, get all clothing items
                 base_query = """
@@ -172,7 +184,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     })
                 }
         
-        # POST /catalog-api - Add new clothing item (admin only)
+        # POST /catalog-api - Add new clothing item OR remove background (admin only)
         elif method == 'POST':
             admin_password = event.get('headers', {}).get('x-admin-password') or event.get('headers', {}).get('X-Admin-Password')
             expected_password = os.environ.get('ADMIN_PASSWORD')
@@ -189,6 +201,81 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             body_data = json.loads(event.get('body', '{}'))
+            
+            # Handle background removal for existing item
+            if action == 'remove_bg':
+                clothing_id = body_data.get('id')
+                image_url = body_data.get('image_url')
+                
+                if not clothing_id or not image_url:
+                    return {
+                        'statusCode': 400,
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': '*'
+                        },
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'error': 'Missing id or image_url'})
+                    }
+                
+                processed_image_url = image_url
+                try:
+                    fal_api_key = os.environ.get('FAL_API_KEY')
+                    if fal_api_key:
+                        bg_removal_response = requests.post(
+                            'https://fal.run/fal-ai/birefnet',
+                            headers={
+                                'Authorization': f'Key {fal_api_key}',
+                                'Content-Type': 'application/json'
+                            },
+                            json={'image_url': image_url},
+                            timeout=60
+                        )
+                        
+                        if bg_removal_response.status_code == 200:
+                            bg_result = bg_removal_response.json()
+                            processed_url = bg_result.get('image', {}).get('url') if isinstance(bg_result.get('image'), dict) else bg_result.get('image')
+                            if processed_url:
+                                processed_image_url = processed_url
+                                
+                                # Update in database
+                                cursor.execute("""
+                                    UPDATE clothing_catalog
+                                    SET image_url = %s
+                                    WHERE id = %s
+                                """, (processed_image_url, clothing_id))
+                                
+                                return {
+                                    'statusCode': 200,
+                                    'headers': {
+                                        'Content-Type': 'application/json',
+                                        'Access-Control-Allow-Origin': '*'
+                                    },
+                                    'isBase64Encoded': False,
+                                    'body': json.dumps({'processed_image_url': processed_image_url})
+                                }
+                except Exception as e:
+                    return {
+                        'statusCode': 500,
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': '*'
+                        },
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'error': f'Background removal failed: {str(e)}'})
+                    }
+                
+                return {
+                    'statusCode': 500,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Background removal failed'})
+                }
+            
+            # Handle adding new clothing item
             image_url = body_data.get('image_url')
             name = body_data.get('name', '')
             description = body_data.get('description', '')
@@ -269,6 +356,83 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'id': str(clothing_id), 'message': 'Clothing item added'})
+            }
+        
+        # PUT /catalog-api - Update clothing item (admin only)
+        elif method == 'PUT':
+            admin_password = event.get('headers', {}).get('x-admin-password') or event.get('headers', {}).get('X-Admin-Password')
+            expected_password = os.environ.get('ADMIN_PASSWORD')
+            
+            if not admin_password or admin_password != expected_password:
+                return {
+                    'statusCode': 403,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Forbidden'})
+                }
+            
+            body_data = json.loads(event.get('body', '{}'))
+            clothing_id = body_data.get('id')
+            image_url = body_data.get('image_url')
+            name = body_data.get('name', '')
+            description = body_data.get('description', '')
+            category_ids = body_data.get('category_ids', [])
+            color_ids = body_data.get('color_ids', [])
+            archetype_ids = body_data.get('archetype_ids', [])
+            
+            if not clothing_id or not image_url:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Missing id or image_url'})
+                }
+            
+            # Update clothing item
+            cursor.execute("""
+                UPDATE clothing_catalog
+                SET image_url = %s, name = %s, description = %s
+                WHERE id = %s
+            """, (image_url, name, description, clothing_id))
+            
+            # Delete old links
+            cursor.execute('DELETE FROM clothing_category_links WHERE clothing_id = %s', (clothing_id,))
+            cursor.execute('DELETE FROM clothing_color_links WHERE clothing_id = %s', (clothing_id,))
+            cursor.execute('DELETE FROM clothing_archetype_links WHERE clothing_id = %s', (clothing_id,))
+            
+            # Add new links
+            for cat_id in category_ids:
+                cursor.execute("""
+                    INSERT INTO clothing_category_links (clothing_id, category_id)
+                    VALUES (%s, %s)
+                """, (clothing_id, cat_id))
+            
+            for color_id in color_ids:
+                cursor.execute("""
+                    INSERT INTO clothing_color_links (clothing_id, color_group_id)
+                    VALUES (%s, %s)
+                """, (clothing_id, color_id))
+            
+            for arch_id in archetype_ids:
+                cursor.execute("""
+                    INSERT INTO clothing_archetype_links (clothing_id, archetype_id)
+                    VALUES (%s, %s)
+                """, (clothing_id, arch_id))
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps({'message': 'Clothing item updated'})
             }
         
         # DELETE /catalog-api?id=uuid (admin only)

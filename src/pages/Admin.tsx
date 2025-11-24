@@ -77,6 +77,8 @@ export default function Admin() {
   const [clothingItems, setClothingItems] = useState<ClothingItem[]>([]);
   const [filters, setFilters] = useState<Filters | null>(null);
   const [showAddClothing, setShowAddClothing] = useState(false);
+  const [editingClothing, setEditingClothing] = useState<ClothingItem | null>(null);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [newClothing, setNewClothing] = useState({
     image_url: '',
     name: '',
@@ -288,6 +290,93 @@ export default function Admin() {
       }
     } catch (error) {
       toast.error('Ошибка добавления');
+    }
+  };
+
+  const handleEditClothing = (item: ClothingItem) => {
+    setEditingClothing(item);
+  };
+
+  const handleUpdateClothing = async () => {
+    if (!editingClothing) return;
+
+    const adminPassword = sessionStorage.getItem('admin_auth');
+
+    try {
+      const categoryIds = filters?.categories
+        .filter(cat => editingClothing.categories.includes(cat.name))
+        .map(cat => cat.id) || [];
+      
+      const colorIds = filters?.colors
+        .filter(col => editingClothing.colors.includes(col.name))
+        .map(col => col.id) || [];
+      
+      const archetypeIds = filters?.archetypes
+        .filter(arch => editingClothing.archetypes.includes(arch.name))
+        .map(arch => arch.id) || [];
+
+      const response = await fetch(CATALOG_API, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Password': adminPassword || ''
+        },
+        body: JSON.stringify({
+          id: editingClothing.id,
+          image_url: editingClothing.image_url,
+          name: editingClothing.name,
+          description: editingClothing.description,
+          category_ids: categoryIds,
+          color_ids: colorIds,
+          archetype_ids: archetypeIds
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Элемент обновлен');
+        setEditingClothing(null);
+        fetchData();
+      } else {
+        toast.error('Ошибка обновления');
+      }
+    } catch (error) {
+      toast.error('Ошибка обновления');
+    }
+  };
+
+  const handleRemoveBackground = async () => {
+    if (!editingClothing) return;
+
+    setIsProcessingImage(true);
+    const adminPassword = sessionStorage.getItem('admin_auth');
+
+    try {
+      const response = await fetch(`${CATALOG_API}?action=remove_bg`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Password': adminPassword || ''
+        },
+        body: JSON.stringify({
+          id: editingClothing.id,
+          image_url: editingClothing.image_url
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEditingClothing({
+          ...editingClothing,
+          image_url: data.processed_image_url
+        });
+        toast.success('Фон удален');
+      } else {
+        toast.error('Ошибка удаления фона');
+      }
+    } catch (error) {
+      toast.error('Ошибка удаления фона');
+    } finally {
+      setIsProcessingImage(false);
     }
   };
 
@@ -738,15 +827,24 @@ export default function Admin() {
                                     ))}
                                   </div>
                                 )}
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  className="w-full mt-2"
-                                  onClick={() => handleDeleteClothing(item.id)}
-                                >
-                                  <Icon name="Trash2" size={14} className="mr-1" />
-                                  Удалить
-                                </Button>
+                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleEditClothing(item)}
+                                  >
+                                    <Icon name="Edit" size={14} className="mr-1" />
+                                    Редактировать
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleDeleteClothing(item.id)}
+                                  >
+                                    <Icon name="Trash2" size={14} className="mr-1" />
+                                    Удалить
+                                  </Button>
+                                </div>
                               </CardContent>
                             </Card>
                           ))
@@ -760,6 +858,176 @@ export default function Admin() {
           )}
         </div>
       </section>
+
+      {editingClothing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-background rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold">Редактировать элемент</h3>
+              <Button variant="ghost" size="sm" onClick={() => setEditingClothing(null)}>
+                <Icon name="X" size={20} />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <img src={editingClothing.image_url} alt="Preview" className="w-full h-64 object-cover rounded mb-2" />
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleRemoveBackground}
+                  disabled={isProcessingImage}
+                >
+                  {isProcessingImage ? (
+                    <>
+                      <Icon name="Loader2" className="mr-2 animate-spin" size={16} />
+                      Удаление фона...
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="Scissors" className="mr-2" size={16} />
+                      Удалить фон заново
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-1 block">Ссылка на изображение</label>
+                <Input
+                  value={editingClothing.image_url}
+                  onChange={(e) => setEditingClothing({ ...editingClothing, image_url: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-1 block">Название</label>
+                <Input
+                  value={editingClothing.name}
+                  onChange={(e) => setEditingClothing({ ...editingClothing, name: e.target.value })}
+                  placeholder="Название элемента"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-1 block">Описание</label>
+                <Input
+                  value={editingClothing.description}
+                  onChange={(e) => setEditingClothing({ ...editingClothing, description: e.target.value })}
+                  placeholder="Описание"
+                />
+              </div>
+
+              {filters && (
+                <>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Категории</label>
+                    <div className="flex flex-wrap gap-2">
+                      {filters.categories.map((cat) => {
+                        const isSelected = editingClothing.categories.includes(cat.name);
+                        return (
+                          <Button
+                            key={cat.id}
+                            size="sm"
+                            variant={isSelected ? 'default' : 'outline'}
+                            onClick={() => {
+                              if (isSelected) {
+                                setEditingClothing({
+                                  ...editingClothing,
+                                  categories: editingClothing.categories.filter(c => c !== cat.name)
+                                });
+                              } else {
+                                setEditingClothing({
+                                  ...editingClothing,
+                                  categories: [...editingClothing.categories, cat.name]
+                                });
+                              }
+                            }}
+                          >
+                            {cat.name}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Цвета</label>
+                    <div className="flex flex-wrap gap-2">
+                      {filters.colors.map((color) => {
+                        const isSelected = editingClothing.colors.includes(color.name);
+                        return (
+                          <Button
+                            key={color.id}
+                            size="sm"
+                            variant={isSelected ? 'default' : 'outline'}
+                            onClick={() => {
+                              if (isSelected) {
+                                setEditingClothing({
+                                  ...editingClothing,
+                                  colors: editingClothing.colors.filter(c => c !== color.name)
+                                });
+                              } else {
+                                setEditingClothing({
+                                  ...editingClothing,
+                                  colors: [...editingClothing.colors, color.name]
+                                });
+                              }
+                            }}
+                          >
+                            {color.name}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Архетипы Киббе</label>
+                    <div className="flex flex-wrap gap-2">
+                      {filters.archetypes.map((arch) => {
+                        const isSelected = editingClothing.archetypes.includes(arch.name);
+                        return (
+                          <Button
+                            key={arch.id}
+                            size="sm"
+                            variant={isSelected ? 'default' : 'outline'}
+                            onClick={() => {
+                              if (isSelected) {
+                                setEditingClothing({
+                                  ...editingClothing,
+                                  archetypes: editingClothing.archetypes.filter(a => a !== arch.name)
+                                });
+                              } else {
+                                setEditingClothing({
+                                  ...editingClothing,
+                                  archetypes: [...editingClothing.archetypes, arch.name]
+                                });
+                              }
+                            }}
+                          >
+                            {arch.name}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setEditingClothing(null)}>
+                  Отмена
+                </Button>
+                <Button className="flex-1" onClick={handleUpdateClothing}>
+                  Сохранить
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }
