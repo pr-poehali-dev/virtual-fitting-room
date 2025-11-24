@@ -46,6 +46,8 @@ export default function Admin() {
   const [filteredLookbooks, setFilteredLookbooks] = useState<Lookbook[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('all');
   const [history, setHistory] = useState<TryOnHistory[]>([]);
+  const [filteredHistory, setFilteredHistory] = useState<TryOnHistory[]>([]);
+  const [selectedHistoryUserId, setSelectedHistoryUserId] = useState<string>('all');
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -127,6 +129,7 @@ export default function Admin() {
       setLookbooks(lookbooksData);
       setFilteredLookbooks(lookbooksData);
       setHistory(historyData);
+      setFilteredHistory(historyData);
     } catch (error) {
       toast.error('Ошибка загрузки данных');
       handleLogout();
@@ -149,6 +152,7 @@ export default function Admin() {
       if (response.ok) {
         toast.success('Пользователь удален');
         setSelectedUserId('all');
+        setSelectedHistoryUserId('all');
         fetchData();
       } else {
         toast.error('Ошибка удаления');
@@ -437,14 +441,36 @@ export default function Admin() {
                 <TabsContent value="history">
                   <Card>
                     <CardHeader>
-                      <CardTitle>История примерок</CardTitle>
+                      <div className="flex justify-between items-center">
+                        <CardTitle>История примерок</CardTitle>
+                        <select
+                          value={selectedHistoryUserId}
+                          onChange={(e) => {
+                            const userId = e.target.value;
+                            setSelectedHistoryUserId(userId);
+                            if (userId === 'all') {
+                              setFilteredHistory(history);
+                            } else {
+                              setFilteredHistory(history.filter(h => h.user_id === userId));
+                            }
+                          }}
+                          className="px-3 py-2 border rounded-md text-sm"
+                        >
+                          <option value="all">Все пользователи</option>
+                          {users.map((user) => (
+                            <option key={user.id} value={user.id}>
+                              {user.name} ({user.email})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        {history.length === 0 ? (
+                        {filteredHistory.length === 0 ? (
                           <p className="text-center text-muted-foreground py-8">История пуста</p>
                         ) : (
-                          history.map((item) => (
+                          filteredHistory.map((item) => (
                             <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
                               <div>
                                 <p className="text-sm">ID: {item.id}</p>
