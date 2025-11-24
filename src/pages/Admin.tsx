@@ -906,25 +906,6 @@ export default function Admin() {
                           />
                           
                           <div>
-                            <p className="text-sm font-medium mb-2">Категории:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {filters?.categories.map((cat) => (
-                                <Button
-                                  key={cat.id}
-                                  size="sm"
-                                  variant={newClothing.category_ids.includes(cat.id) ? 'default' : 'outline'}
-                                  onClick={() => setNewClothing({
-                                    ...newClothing,
-                                    category_ids: toggleSelection(newClothing.category_ids, cat.id)
-                                  })}
-                                >
-                                  {cat.name}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-                          
-                          <div>
                             <p className="text-sm font-medium mb-2">Цвета:</p>
                             <div className="flex flex-wrap gap-2">
                               {filters?.colors.map((color) => (
@@ -1015,22 +996,22 @@ export default function Admin() {
                                     ))}
                                   </div>
                                 )}
-                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                <div className="flex gap-2 mt-2">
                                   <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleEditClothing(item)}
+                                    className="flex-1"
                                   >
-                                    <Icon name="Edit" size={14} className="mr-1" />
-                                    Редактировать
+                                    <Icon name="Edit" size={16} />
                                   </Button>
                                   <Button
                                     variant="destructive"
                                     size="sm"
                                     onClick={() => handleDeleteClothing(item.id)}
+                                    className="flex-1"
                                   >
-                                    <Icon name="Trash2" size={14} className="mr-1" />
-                                    Удалить
+                                    <Icon name="Trash2" size={16} />
                                   </Button>
                                 </div>
                               </CardContent>
