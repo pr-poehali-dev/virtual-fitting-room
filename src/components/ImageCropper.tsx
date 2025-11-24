@@ -9,7 +9,7 @@ interface ImageCropperProps {
   open: boolean;
   onClose: () => void;
   onCropComplete: (croppedImage: string) => void;
-  aspectRatio?: number;
+  aspectRatio?: number | undefined;
 }
 
 interface CropArea {
@@ -19,10 +19,11 @@ interface CropArea {
   height: number;
 }
 
-export default function ImageCropper({ image, open, onClose, onCropComplete, aspectRatio = 3/4 }: ImageCropperProps) {
+export default function ImageCropper({ image, open, onClose, onCropComplete, aspectRatio }: ImageCropperProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<CropArea | null>(null);
+  const [customAspect, setCustomAspect] = useState<number | undefined>(aspectRatio);
 
   const onCropCompleteInternal = useCallback(
     (croppedArea: any, croppedAreaPixels: CropArea) => {
@@ -88,23 +89,63 @@ export default function ImageCropper({ image, open, onClose, onCropComplete, asp
             image={image}
             crop={crop}
             zoom={zoom}
-            aspect={aspectRatio}
+            aspect={customAspect}
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onCropComplete={onCropCompleteInternal}
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Масштаб</label>
-          <Slider
-            value={[zoom]}
-            onValueChange={(value) => setZoom(value[0])}
-            min={1}
-            max={3}
-            step={0.1}
-            className="w-full"
-          />
+        <div className="space-y-4">
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              size="sm"
+              variant={customAspect === undefined ? 'default' : 'outline'}
+              onClick={() => setCustomAspect(undefined)}
+            >
+              Свободно
+            </Button>
+            <Button
+              size="sm"
+              variant={customAspect === 1 ? 'default' : 'outline'}
+              onClick={() => setCustomAspect(1)}
+            >
+              Квадрат
+            </Button>
+            <Button
+              size="sm"
+              variant={customAspect === 3/4 ? 'default' : 'outline'}
+              onClick={() => setCustomAspect(3/4)}
+            >
+              3:4
+            </Button>
+            <Button
+              size="sm"
+              variant={customAspect === 4/3 ? 'default' : 'outline'}
+              onClick={() => setCustomAspect(4/3)}
+            >
+              4:3
+            </Button>
+            <Button
+              size="sm"
+              variant={customAspect === 16/9 ? 'default' : 'outline'}
+              onClick={() => setCustomAspect(16/9)}
+            >
+              16:9
+            </Button>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Масштаб</label>
+            <Slider
+              value={[zoom]}
+              onValueChange={(value) => setZoom(value[0])}
+              min={1}
+              max={3}
+              step={0.1}
+              className="w-full"
+            />
+          </div>
         </div>
 
         <DialogFooter>

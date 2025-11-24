@@ -1104,7 +1104,6 @@ export default function Admin() {
           open={showCropper}
           onClose={() => setShowCropper(false)}
           onCropComplete={handleCropComplete}
-          aspectRatio={3/4}
         />
       )}
     </Layout>
