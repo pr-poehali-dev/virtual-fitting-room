@@ -324,33 +324,33 @@ export default function Index() {
   };
   
   const getCategoryPlacementHint = (categories: string[]): string => {
-    if (!categories || categories.length === 0) return 'exact clothing from provided image';
+    if (!categories || categories.length === 0) return 'clothing item';
     
     const categoryLower = categories.map(c => c.toLowerCase());
     
     if (categoryLower.some(c => c.includes('платье') || c.includes('dress'))) {
-      return 'EXACT DRESS from the provided garment image - full body garment';
+      return 'dress';
     }
     if (categoryLower.some(c => c.includes('топ') || c.includes('блузка') || c.includes('блуза') || c.includes('футболка') || c.includes('рубашка') || c.includes('top') || c.includes('blouse') || c.includes('shirt') || c.includes('t-shirt'))) {
-      return 'EXACT TOP/BLOUSE/SHIRT from the provided garment image - upper body only';
+      return 'top';
     }
     if (categoryLower.some(c => c.includes('брюки') || c.includes('джинсы') || c.includes('штаны') || c.includes('pants') || c.includes('trousers') || c.includes('jeans'))) {
-      return 'EXACT PANTS/TROUSERS from the provided garment image - lower body only';
+      return 'pants';
     }
     if (categoryLower.some(c => c.includes('юбка') || c.includes('skirt'))) {
-      return 'EXACT SKIRT from the provided garment image - lower body from waist';
+      return 'skirt';
     }
     if (categoryLower.some(c => c.includes('обувь') || c.includes('туфли') || c.includes('ботинки') || c.includes('shoes') || c.includes('boots') || c.includes('sneakers'))) {
-      return 'EXACT FOOTWEAR from the provided garment image - feet only';
+      return 'shoes';
     }
     if (categoryLower.some(c => c.includes('куртка') || c.includes('пальто') || c.includes('jacket') || c.includes('coat'))) {
-      return 'EXACT JACKET/COAT from the provided garment image - outer layer over upper body';
+      return 'jacket';
     }
     if (categoryLower.some(c => c.includes('аксессуар') || c.includes('accessory') || c.includes('шарф') || c.includes('scarf') || c.includes('сумка') || c.includes('bag'))) {
-      return 'EXACT ACCESSORY from the provided garment image';
+      return 'accessory';
     }
     
-    return `EXACT ${categories[0]} from the provided garment image`;
+    return categories[0].toLowerCase();
   };
 
   const continuePolling = async (statusUrl: string, personImage: string, garmentImg: string) => {
@@ -466,8 +466,13 @@ export default function Index() {
       garmentImage = allClothingItems[0].image;
       const item = allClothingItems[0];
       const categoryHint = getCategoryPlacementHint(item.categories);
-      const userComment = item.comment ? ` Additional details: ${item.comment}.` : '';
-      description = `Use ONLY the ${categoryHint}. Match colors, patterns, and style EXACTLY as shown in garment image.${userComment} Preserve all original garment details, textures, and colors precisely.`;
+      const userComment = item.comment ? ` ${item.comment}` : '';
+      description = `${categoryHint}${userComment}`;
+      
+      console.log('=== GENERATION DEBUG (1 item) ===');
+      console.log('Categories:', item.categories);
+      console.log('Description:', description);
+      console.log('Garment image preview:', garmentImage.substring(0, 100));
     } else {
       const fromCatalog = selectedClothingItems.length;
       const fromCustom = customItemsWithCategory.length;
@@ -476,6 +481,14 @@ export default function Index() {
       if (fromCustom > 0) sources.push(`${fromCustom} загруженных`);
       
       toast.info(`Объединяем ${sources.join(' и ')}...`);
+      
+      console.log('=== GENERATION DEBUG (multiple items) ===');
+      console.log('Total items:', allClothingItems.length);
+      console.log('All items:', allClothingItems.map(item => ({
+        categories: item.categories,
+        comment: item.comment,
+        imagePreview: item.image.substring(0, 50)
+      })));
       
       try {
         const composeResponse = await fetch(IMAGE_COMPOSER_API, {
@@ -495,14 +508,19 @@ export default function Index() {
         const composeData = await composeResponse.json();
         garmentImage = composeData.composed_image;
         
+        console.log('Composed image preview:', garmentImage.substring(0, 100));
+        
         const itemDescriptions = allClothingItems.map((item, idx) => {
           const categoryHint = getCategoryPlacementHint(item.categories);
-          const userComment = item.comment ? ` (${item.comment})` : '';
-          return `Item ${idx + 1}: ${categoryHint}${userComment}`;
+          const userComment = item.comment ? ` ${item.comment}` : '';
+          return `${categoryHint}${userComment}`;
         });
         
-        description = `Use ALL clothing items from provided composite image. ${itemDescriptions.join('; ')}. Match each item's colors, patterns, and style EXACTLY as shown. Preserve all original details and textures precisely for every item.`;
+        description = itemDescriptions.join(', ');
+        
+        console.log('Final description:', description);
       } catch (error) {
+        console.error('Composition error:', error);
         toast.error('Ошибка объединения изображений');
         return;
       }
