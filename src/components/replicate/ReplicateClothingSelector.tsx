@@ -54,7 +54,6 @@ interface ReplicateClothingSelectorProps {
   updateClothingCategory: (id: string, category: string) => void;
   handleCustomClothingUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isGenerating: boolean;
-  REPLICATE_CATEGORIES: Array<{ value: string; label: string }>;
 }
 
 export default function ReplicateClothingSelector({
@@ -71,8 +70,7 @@ export default function ReplicateClothingSelector({
   removeClothingItem,
   updateClothingCategory,
   handleCustomClothingUpload,
-  isGenerating,
-  REPLICATE_CATEGORIES
+  isGenerating
 }: ReplicateClothingSelectorProps) {
   const toggleFilter = (array: number[], value: number) => {
     return array.includes(value)
@@ -114,7 +112,7 @@ export default function ReplicateClothingSelector({
                     {item.name || 'Одежда'}
                   </p>
                   <Select
-                    value={item.category || 'upper_body'}
+                    value={item.category || ''}
                     onValueChange={(value) => updateClothingCategory(item.id, value)}
                     disabled={isGenerating}
                   >
@@ -122,9 +120,9 @@ export default function ReplicateClothingSelector({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {REPLICATE_CATEGORIES.map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value} className="text-xs">
-                          {cat.label}
+                      {filters?.categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.name} className="text-xs">
+                          {cat.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

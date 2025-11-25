@@ -44,12 +44,7 @@ interface SelectedClothing {
 
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
 
-const REPLICATE_CATEGORIES = [
-  { value: 'Весь образ', label: 'Весь образ' },
-  { value: 'upper_body', label: 'Верх (блузки, рубашки, джемперы, куртки)' },
-  { value: 'lower_body', label: 'Низ (брюки, джинсы, юбки, шорты)' },
-  { value: 'dresses', label: 'Платья, сарафаны и комбинезоны' },
-];
+
 
 export default function ReplicateTryOn() {
   const { user } = useAuth();
@@ -159,7 +154,7 @@ export default function ReplicateTryOn() {
             id,
             image: reader.result as string,
             name: file.name,
-            category: 'upper_body',
+            category: item.replicate_category || '',
           },
         ]);
       };
@@ -180,7 +175,7 @@ export default function ReplicateTryOn() {
           id: item.id,
           image: item.image_url,
           name: item.name,
-          category: item.replicate_category || 'upper_body',
+          category: item.replicate_category || item.categories[0] || '',
         },
       ]);
     }
@@ -411,7 +406,6 @@ export default function ReplicateTryOn() {
                     updateClothingCategory={updateClothingCategory}
                     handleCustomClothingUpload={handleCustomClothingUpload}
                     isGenerating={isGenerating}
-                    REPLICATE_CATEGORIES={REPLICATE_CATEGORIES}
                   />
 
                   <div>

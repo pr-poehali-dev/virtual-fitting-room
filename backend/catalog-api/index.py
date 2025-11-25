@@ -282,7 +282,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             category_ids = body_data.get('category_ids', [])
             color_ids = body_data.get('color_ids', [])
             archetype_ids = body_data.get('archetype_ids', [])
-            replicate_category = body_data.get('replicate_category', 'upper_body')
+            replicate_category = body_data.get('replicate_category', '')
             
             if not image_url:
                 return {
@@ -383,7 +383,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             category_ids = body_data.get('category_ids', [])
             color_ids = body_data.get('color_ids', [])
             archetype_ids = body_data.get('archetype_ids', [])
-            replicate_category = body_data.get('replicate_category', 'upper_body')
+            replicate_category = body_data.get('replicate_category', '')
             
             if not clothing_id or not image_url:
                 return {

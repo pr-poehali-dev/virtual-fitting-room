@@ -113,7 +113,7 @@ export default function Admin() {
     category_ids: [] as number[],
     color_ids: [] as number[],
     archetype_ids: [] as number[],
-    replicate_category: 'upper_body' as string
+    replicate_category: '' as string
   });
   const [showCropper, setShowCropper] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string>('');
@@ -452,7 +452,7 @@ export default function Admin() {
           category_ids: [],
           color_ids: [],
           archetype_ids: [],
-          replicate_category: 'upper_body'
+          replicate_category: ''
         });
         setUploadSource('url');
         fetchCatalogData();
@@ -1175,10 +1175,9 @@ export default function Admin() {
                               onChange={(e) => setNewClothing({ ...newClothing, replicate_category: e.target.value })}
                               className="w-full border rounded-md px-3 py-2 text-sm"
                             >
-                              <option value="Весь образ">Весь образ</option>
-                              <option value="upper_body">Верх (блузки, рубашки, джемперы, куртки)</option>
-                              <option value="lower_body">Низ (брюки, джинсы, юбки, шорты)</option>
-                              <option value="dresses">Платья, сарафаны и комбинезоны</option>
+                              {filters?.categories.map((category) => (
+                                <option key={category.id} value={category.name}>{category.name}</option>
+                              ))}
                             </select>
                           </div>
                           
@@ -1571,14 +1570,13 @@ export default function Admin() {
               <div>
                 <label className="text-sm font-medium mb-2 block">Категория для Replicate примерочной</label>
                 <select
-                  value={editingClothing.replicate_category || 'upper_body'}
+                  value={editingClothing.replicate_category || filters?.categories[0]?.name || ''}
                   onChange={(e) => setEditingClothing({ ...editingClothing, replicate_category: e.target.value })}
                   className="w-full border rounded-md px-3 py-2 text-sm"
                 >
-                  <option value="Весь образ">Весь образ</option>
-                  <option value="upper_body">Верх (блузки, рубашки, джемперы, куртки)</option>
-                  <option value="lower_body">Низ (брюки, джинсы, юбки, шорты)</option>
-                  <option value="dresses">Платья, сарафаны и комбинезоны</option>
+                  {filters?.categories.map((category) => (
+                    <option key={category.id} value={category.name}>{category.name}</option>
+                  ))}
                 </select>
               </div>
 
