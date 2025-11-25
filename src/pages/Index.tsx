@@ -362,6 +362,11 @@ export default function Index() {
   };
 
   const handleGenerate = async () => {
+    if (!user) {
+      toast.error('Для генерации изображений необходимо войти в аккаунт');
+      return;
+    }
+
     if (!uploadedImage) {
       toast.error('Загрузите фотографию человека');
       return;
@@ -369,6 +374,54 @@ export default function Index() {
 
     if (!selectedClothing) {
       toast.error('Выберите или загрузите одежду');
+      return;
+    }
+
+    try {
+      const balanceCheck = await fetch('https://functions.poehali.dev/68409278-10ab-4733-b48d-b1b4360620a1', {
+        headers: {
+          'X-User-Id': user.id
+        }
+      });
+
+      if (balanceCheck.ok) {
+        const balanceData = await balanceCheck.json();
+        
+        if (!balanceData.can_generate) {
+          toast.error('Недостаточно средств. Пополните баланс в личном кабинете.');
+          return;
+        }
+      }
+
+      const deductResponse = await fetch('https://functions.poehali.dev/68409278-10ab-4733-b48d-b1b4360620a1', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.id
+        },
+        body: JSON.stringify({
+          action: 'deduct'
+        })
+      });
+
+      if (!deductResponse.ok) {
+        const errorData = await deductResponse.json();
+        toast.error(errorData.error || 'Ошибка списания средств');
+        return;
+      }
+
+      const deductData = await deductResponse.json();
+      
+      if (deductData.free_try) {
+        toast.info(`Бесплатная примерка! Осталось: ${deductData.remaining_free}`);
+      } else if (deductData.paid_try) {
+        toast.info(`Списано 20₽. Баланс: ${deductData.new_balance.toFixed(2)}₽`);
+      } else if (deductData.unlimited) {
+        toast.info('Безлимитный доступ активен');
+      }
+
+    } catch (error) {
+      toast.error('Ошибка проверки баланса');
       return;
     }
 

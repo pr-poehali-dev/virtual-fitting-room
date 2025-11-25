@@ -1,0 +1,33 @@
+{
+  "tests": [
+    {
+      "name": "Get user balance",
+      "method": "GET",
+      "headers": {
+        "X-User-Id": "test-user-123"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "balance": "number",
+        "free_tries_remaining": "number",
+        "can_generate": "boolean"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Deduct balance",
+      "method": "POST",
+      "headers": {
+        "X-User-Id": "test-user-123"
+      },
+      "body": {
+        "action": "deduct"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": "boolean"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

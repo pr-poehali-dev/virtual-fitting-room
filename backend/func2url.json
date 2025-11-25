@@ -1,4 +1,7 @@
 {
+  "sberbank-payment": "https://functions.poehali.dev/90e72041-1a9e-4a24-9d4b-dc3347bdbe77",
+  "admin-manage-access": "https://functions.poehali.dev/15f28986-cce9-4e25-a05b-0860b1cf9cf7",
+  "user-balance": "https://functions.poehali.dev/68409278-10ab-4733-b48d-b1b4360620a1",
   "image-preprocessing": "https://functions.poehali.dev/3fe8c892-ab5f-4d26-a2c5-ae4166276334",
   "image-composer": "https://functions.poehali.dev/021a040a-aa04-40b9-86e3-77547b31401b",
   "catalog-api": "https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc",

@@ -12,6 +12,9 @@ interface User {
   id: string;
   email: string;
   name: string;
+  balance?: number;
+  free_tries_used?: number;
+  unlimited_access?: boolean;
   created_at: string;
 }
 
@@ -62,6 +65,7 @@ interface Filters {
 const ADMIN_API = 'https://functions.poehali.dev/6667a30b-a520-41d8-b23a-e240a9aefb15';
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
 const IMAGE_PREPROCESSING_API = 'https://functions.poehali.dev/3fe8c892-ab5f-4d26-a2c5-ae4166276334';
+const ADMIN_MANAGE_ACCESS_API = 'https://functions.poehali.dev/15f28986-cce9-4e25-a05b-0860b1cf9cf7';
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -207,6 +211,35 @@ export default function Admin() {
       handleLogout();
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleToggleUnlimitedAccess = async (userEmail: string, currentAccess: boolean) => {
+    const adminPassword = sessionStorage.getItem('admin_auth');
+    const newAccess = !currentAccess;
+
+    try {
+      const response = await fetch(ADMIN_MANAGE_ACCESS_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Password': adminPassword || ''
+        },
+        body: JSON.stringify({
+          user_email: userEmail,
+          unlimited_access: newAccess
+        })
+      });
+
+      if (response.ok) {
+        toast.success(newAccess ? 'Безлимитный доступ предоставлен' : 'Безлимитный доступ отключён');
+        fetchData();
+      } else {
+        const data = await response.json();
+        toast.error(data.error || 'Ошибка обновления доступа');
+      }
+    } catch (error) {
+      toast.error('Ошибка соединения');
     }
   };
 
@@ -636,22 +669,62 @@ export default function Admin() {
                           users.map((user) => (
                             <div
                               key={user.id}
-                              className="flex items-center justify-between p-4 border rounded-lg"
+                              className="p-4 border rounded-lg space-y-3"
                             >
-                              <div>
-                                <p className="font-medium">{user.name}</p>
-                                <p className="text-sm text-muted-foreground">{user.email}</p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  ID: {user.id} • Создан: {new Date(user.created_at).toLocaleDateString()}
-                                </p>
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="font-medium">{user.name}</p>
+                                  <p className="text-sm text-muted-foreground">{user.email}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    ID: {user.id} • Создан: {new Date(user.created_at).toLocaleDateString()}
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleDeleteUser(user.id)}
+                                >
+                                  <Icon name="Trash2" size={16} />
+                                </Button>
                               </div>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleDeleteUser(user.id)}
-                              >
-                                <Icon name="Trash2" size={16} />
-                              </Button>
+                              
+                              <div className="flex items-center gap-4 pt-2 border-t">
+                                <div className="flex-1">
+                                  <p className="text-xs text-muted-foreground">Баланс</p>
+                                  <p className="font-medium">{user.balance?.toFixed(2) || '0.00'} ₽</p>
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-xs text-muted-foreground">Бесплатных</p>
+                                  <p className="font-medium">{3 - (user.free_tries_used || 0)} / 3</p>
+                                </div>
+                                <div className="flex-1">
+                                  {user.unlimited_access ? (
+                                    <div className="flex items-center gap-1 text-green-600">
+                                      <Icon name="Infinity" size={16} />
+                                      <span className="text-sm font-medium">Безлимит</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-sm text-muted-foreground">Обычный</span>
+                                  )}
+                                </div>
+                                <Button
+                                  variant={user.unlimited_access ? "outline" : "default"}
+                                  size="sm"
+                                  onClick={() => handleToggleUnlimitedAccess(user.email, user.unlimited_access || false)}
+                                >
+                                  {user.unlimited_access ? (
+                                    <>
+                                      <Icon name="X" className="mr-1" size={14} />
+                                      Отключить
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Icon name="Infinity" className="mr-1" size={14} />
+                                      Безлимит
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
                             </div>
                           ))
                         )}

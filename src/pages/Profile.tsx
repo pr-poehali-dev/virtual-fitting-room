@@ -11,6 +11,7 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
 import ImageViewer from '@/components/ImageViewer';
 import ImageCropper from '@/components/ImageCropper';
+import WalletTab from '@/components/WalletTab';
 
 interface Lookbook {
   id: string;
@@ -456,8 +457,9 @@ export default function Profile() {
           </div>
 
           <Tabs defaultValue="lookbooks" className="w-full">
-            <TabsList className="grid w-full md:w-auto grid-cols-2 mb-8">
+            <TabsList className="grid w-full md:w-auto grid-cols-3 mb-8">
               <TabsTrigger value="lookbooks">Лукбуки</TabsTrigger>
+              <TabsTrigger value="wallet">Кошелёк</TabsTrigger>
               <TabsTrigger value="settings">Настройки</TabsTrigger>
             </TabsList>
 
@@ -688,7 +690,9 @@ export default function Profile() {
               </div>
             </TabsContent>
 
-
+            <TabsContent value="wallet">
+              <WalletTab />
+            </TabsContent>
 
             <TabsContent value="settings">
               <div className="space-y-6">

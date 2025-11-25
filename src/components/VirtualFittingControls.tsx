@@ -98,7 +98,7 @@ export default function VirtualFittingControls({
                   <div className="space-y-3">
                     <Icon name="Upload" className="mx-auto text-muted-foreground" size={48} />
                     <p className="text-muted-foreground">
-                      Нажмите для загрузки фотографии
+                      Нажмите, чтобы загрузить фото человека, на котором вы хотите примерить одежду
                     </p>
                   </div>
                 )}
@@ -109,7 +109,7 @@ export default function VirtualFittingControls({
           <div>
             <div className="flex items-center justify-between mb-3">
               <label className="text-sm font-medium">
-                Выберите одну вещь
+                Выберите фото одежды
               </label>
               {selectedClothing && (
                 <span className="text-xs text-muted-foreground">
