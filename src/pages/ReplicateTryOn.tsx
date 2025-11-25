@@ -73,6 +73,7 @@ export default function ReplicateTryOn() {
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [totalSteps, setTotalSteps] = useState<number>(0);
   const [waitingContinue, setWaitingContinue] = useState<boolean>(false);
+  const [checkerInterval, setCheckerInterval] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     fetchFilters();
@@ -90,8 +91,11 @@ export default function ReplicateTryOn() {
       if (pollingInterval) {
         clearInterval(pollingInterval);
       }
+      if (checkerInterval) {
+        clearInterval(checkerInterval);
+      }
     };
-  }, [pollingInterval]);
+  }, [pollingInterval, checkerInterval]);
 
   const fetchFilters = async () => {
     try {
@@ -343,11 +347,19 @@ export default function ReplicateTryOn() {
     }
   };
 
+  const triggerChecker = async () => {
+    try {
+      await fetch('https://functions.poehali.dev/7d14499d-c634-495a-b28c-8a1fcb8fc5d4');
+    } catch (error) {
+      console.error('Checker trigger error:', error);
+    }
+  };
+
   const checkStatusManually = async () => {
     if (!taskId) return;
     
     try {
-      await fetch('https://functions.poehali.dev/7d14499d-c634-495a-b28c-8a1fcb8fc5d4');
+      await triggerChecker();
       toast.info('Проверяем статус...');
       
       setTimeout(async () => {
@@ -361,6 +373,7 @@ export default function ReplicateTryOn() {
             setGenerationStatus('');
             toast.success('Результат готов!');
             if (pollingInterval) clearInterval(pollingInterval);
+            if (checkerInterval) clearInterval(checkerInterval);
           }
         }
       }, 2000);
@@ -370,6 +383,11 @@ export default function ReplicateTryOn() {
   };
 
   const startPolling = (taskId: string) => {
+    const checker = setInterval(() => {
+      triggerChecker();
+    }, 10000);
+    setCheckerInterval(checker);
+    
     const interval = setInterval(async () => {
       try {
         const response = await fetch(`${REPLICATE_STATUS_API}?task_id=${taskId}`);
@@ -392,6 +410,7 @@ export default function ReplicateTryOn() {
           setGenerationStatus('');
           toast.success(`Шаг ${data.current_step}/${data.total_steps} готов!`);
           if (pollingInterval) clearInterval(pollingInterval);
+          if (checkerInterval) clearInterval(checkerInterval);
         } else if (data.status === 'completed') {
           setGeneratedImage(data.result_url);
           setIsGenerating(false);
@@ -399,12 +418,14 @@ export default function ReplicateTryOn() {
           setGenerationStatus('');
           toast.success('Все шаги завершены!');
           if (pollingInterval) clearInterval(pollingInterval);
+          if (checkerInterval) clearInterval(checkerInterval);
         } else if (data.status === 'failed') {
           setIsGenerating(false);
           setWaitingContinue(false);
           setGenerationStatus('');
           toast.error(data.error_message || 'Ошибка генерации');
           if (pollingInterval) clearInterval(pollingInterval);
+          if (checkerInterval) clearInterval(checkerInterval);
         }
       } catch (error: any) {
         console.error('Polling error:', error);
@@ -450,6 +471,10 @@ export default function ReplicateTryOn() {
     if (pollingInterval) {
       clearInterval(pollingInterval);
       setPollingInterval(null);
+    }
+    if (checkerInterval) {
+      clearInterval(checkerInterval);
+      setCheckerInterval(null);
     }
     setUploadedImage(null);
     setSelectedClothingItems([]);
