@@ -5,8 +5,8 @@ from typing import Dict, Any
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Generate virtual try-on with multiple garments using Replicate API
-    Args: event - dict with httpMethod, body (person_image, garment_images[], category, prompt_hints)
+    Business: Generate virtual try-on with multiple garments using Replicate API (auto-detects category)
+    Args: event - dict with httpMethod, body (person_image, garment_images[], prompt_hints)
           context - object with request_id attribute
     Returns: HTTP response with generated image URL
     '''
@@ -44,7 +44,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     body_data = json.loads(event.get('body', '{}'))
     person_image = body_data.get('person_image')
     garment_images = body_data.get('garment_images', [])
-    category = body_data.get('category', '')
     prompt_hints = body_data.get('prompt_hints', '')
     
     if not person_image:
@@ -63,21 +62,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'At least one garment_image is required'})
         }
     
-    if not category:
-        return {
-            'statusCode': 400,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'isBase64Encoded': False,
-            'body': json.dumps({'error': 'category is required'})
-        }
-    
     try:
         os.environ['REPLICATE_API_TOKEN'] = api_token
         
         input_data = {
             "human_img": person_image,
             "garm_img": garment_images[0],
-            "category": category,
         }
         
         if prompt_hints:
@@ -96,7 +86,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False,
             'body': json.dumps({
                 'result_url': result_url,
-                'category': category,
                 'garments_count': len(garment_images)
             })
         }

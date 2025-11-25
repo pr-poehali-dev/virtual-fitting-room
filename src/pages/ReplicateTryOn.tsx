@@ -11,12 +11,12 @@ import Icon from '@/components/ui/icon';
 import ImageViewer from '@/components/ImageViewer';
 import { Link } from 'react-router-dom';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface ClothingItem {
   id: string;
@@ -36,42 +36,27 @@ interface SelectedClothing {
 
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
 
-const CLOTHING_CATEGORIES = [
-  'Весь образ',
-  'Топы',
-  'Брюки',
-  'Шорты',
-  'Юбки',
-  'Платья',
-  'Верхняя одежда',
-  'Куртки',
-  'Пальто',
-  'Джинсы',
-  'Футболки',
-  'Рубашки',
-  'Блузки',
-  'Свитера',
-  'Кардиганы',
-  'Жилеты',
-  'Комбинезоны',
-  'Костюмы',
-  'Аксессуары',
-  'Обувь',
-];
-
 export default function ReplicateTryOn() {
   const { user } = useAuth();
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedClothingItems, setSelectedClothingItems] = useState<SelectedClothing[]>([]);
   const [clothingCatalog, setClothingCatalog] = useState<ClothingItem[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [promptHints, setPromptHints] = useState<string>('');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [lookbooks, setLookbooks] = useState<any[]>([]);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [newLookbookName, setNewLookbookName] = useState('');
+  const [newLookbookPersonName, setNewLookbookPersonName] = useState('');
+  const [selectedLookbookId, setSelectedLookbookId] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     fetchCatalog();
-  }, []);
+    if (user) {
+      fetchLookbooks();
+    }
+  }, [user]);
 
   const fetchCatalog = async () => {
     try {
@@ -83,6 +68,25 @@ export default function ReplicateTryOn() {
       }
     } catch (error) {
       console.error('Failed to fetch catalog:', error);
+    }
+  };
+
+  const fetchLookbooks = async () => {
+    if (!user) return;
+    
+    try {
+      const response = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
+        headers: {
+          'X-User-Id': user.id
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setLookbooks(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch lookbooks:', error);
     }
   };
 
@@ -151,11 +155,6 @@ export default function ReplicateTryOn() {
       return;
     }
 
-    if (!selectedCategory) {
-      toast.error('Выберите категорию одежды');
-      return;
-    }
-
     if (!user) {
       toast.error('Требуется авторизация');
       return;
@@ -174,7 +173,6 @@ export default function ReplicateTryOn() {
         body: JSON.stringify({
           person_image: uploadedImage,
           garment_images: selectedClothingItems.map((item) => item.image),
-          category: selectedCategory,
           prompt_hints: promptHints,
         }),
       });
@@ -199,8 +197,77 @@ export default function ReplicateTryOn() {
     setUploadedImage(null);
     setSelectedClothingItems([]);
     setGeneratedImage(null);
-    setSelectedCategory('');
     setPromptHints('');
+  };
+
+  const handleSaveToExistingLookbook = async () => {
+    if (!selectedLookbookId || !generatedImage || !user) return;
+
+    setIsSaving(true);
+    try {
+      const lookbook = lookbooks.find(lb => lb.id === selectedLookbookId);
+      const updatedPhotos = [...(lookbook?.photos || []), generatedImage];
+
+      const response = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.id
+        },
+        body: JSON.stringify({
+          id: selectedLookbookId,
+          photos: updatedPhotos
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Фото добавлено в лукбук!');
+        setShowSaveDialog(false);
+        setSelectedLookbookId('');
+        await fetchLookbooks();
+      } else {
+        throw new Error('Failed to save');
+      }
+    } catch (error) {
+      toast.error('Ошибка сохранения');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveToNewLookbook = async () => {
+    if (!newLookbookName || !newLookbookPersonName || !generatedImage || !user) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.id
+        },
+        body: JSON.stringify({
+          name: newLookbookName,
+          person_name: newLookbookPersonName,
+          photos: [generatedImage],
+          color_palette: []
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Лукбук создан!');
+        setShowSaveDialog(false);
+        setNewLookbookName('');
+        setNewLookbookPersonName('');
+        await fetchLookbooks();
+      } else {
+        throw new Error('Failed to create lookbook');
+      }
+    } catch (error) {
+      toast.error('Ошибка создания лукбука');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDownloadImage = async () => {
@@ -232,7 +299,7 @@ export default function ReplicateTryOn() {
               Replicate Примерочная
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Выберите несколько вещей, укажите категорию и создайте идеальный образ с помощью AI
+              Выберите несколько вещей и создайте идеальный образ с помощью AI. Модель сама определит как надеть одежду на человека
             </p>
           </div>
 
@@ -413,27 +480,8 @@ export default function ReplicateTryOn() {
 
                   <div>
                     <Label className="text-lg font-semibold mb-4 block">
-                      <Icon name="Tag" className="inline mr-2" size={20} />
-                      3. Выберите категорию одежды
-                    </Label>
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger disabled={isGenerating}>
-                        <SelectValue placeholder="Выберите категорию" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CLOTHING_CATEGORIES.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label className="text-lg font-semibold mb-4 block">
                       <Icon name="MessageSquare" className="inline mr-2" size={20} />
-                      4. Подсказки для генерации (опционально)
+                      3. Подсказки для генерации (опционально)
                     </Label>
                     <Textarea
                       placeholder="Например: casual style, bright lighting, outdoor setting"
@@ -453,7 +501,6 @@ export default function ReplicateTryOn() {
                       disabled={
                         !uploadedImage ||
                         selectedClothingItems.length === 0 ||
-                        !selectedCategory ||
                         isGenerating ||
                         !user
                       }
@@ -510,12 +557,18 @@ export default function ReplicateTryOn() {
                       alt="Generated result"
                       className="rounded-lg"
                     />
-                    <div className="flex gap-2">
-                      <Button onClick={handleDownloadImage} className="flex-1">
-                        <Icon name="Download" className="mr-2" size={16} />
-                        Скачать
-                      </Button>
-                      <Button variant="outline" onClick={handleReset} className="flex-1">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <Button onClick={handleDownloadImage} className="flex-1">
+                          <Icon name="Download" className="mr-2" size={16} />
+                          Скачать
+                        </Button>
+                        <Button variant="outline" onClick={() => setShowSaveDialog(true)} className="flex-1">
+                          <Icon name="BookOpen" className="mr-2" size={16} />
+                          В лукбук
+                        </Button>
+                      </div>
+                      <Button variant="ghost" onClick={handleReset} className="w-full">
                         <Icon name="RotateCcw" className="mr-2" size={16} />
                         Новая примерка
                       </Button>
@@ -537,6 +590,81 @@ export default function ReplicateTryOn() {
           </div>
         </div>
       </div>
+
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Сохранить в лукбук</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            {lookbooks.length > 0 && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Выбрать существующий лукбук</Label>
+                <RadioGroup value={selectedLookbookId} onValueChange={setSelectedLookbookId}>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {lookbooks.map((lookbook) => (
+                      <div key={lookbook.id} className="flex items-center space-x-2">
+                        <RadioGroupItem value={lookbook.id} id={lookbook.id} />
+                        <Label htmlFor={lookbook.id} className="flex-1 cursor-pointer">
+                          {lookbook.name} ({lookbook.person_name})
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </RadioGroup>
+                <Button 
+                  onClick={handleSaveToExistingLookbook}
+                  disabled={!selectedLookbookId || isSaving}
+                  className="w-full"
+                >
+                  {isSaving ? 'Сохранение...' : 'Добавить в выбранный лукбук'}
+                </Button>
+              </div>
+            )}
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Или создать новый
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="lookbook-name">Название лукбука</Label>
+                <Input
+                  id="lookbook-name"
+                  placeholder="Например: Осенний стиль 2024"
+                  value={newLookbookName}
+                  onChange={(e) => setNewLookbookName(e.target.value)}
+                  disabled={isSaving}
+                />
+              </div>
+              <div>
+                <Label htmlFor="person-name">Имя персоны</Label>
+                <Input
+                  id="person-name"
+                  placeholder="Например: Анна"
+                  value={newLookbookPersonName}
+                  onChange={(e) => setNewLookbookPersonName(e.target.value)}
+                  disabled={isSaving}
+                />
+              </div>
+              <Button
+                onClick={handleSaveToNewLookbook}
+                disabled={!newLookbookName || !newLookbookPersonName || isSaving}
+                className="w-full"
+              >
+                {isSaving ? 'Создание...' : 'Создать новый лукбук'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
