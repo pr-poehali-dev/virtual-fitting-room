@@ -16,6 +16,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import RegistrationSuccess from "./pages/RegistrationSuccess";
+import ReplicateTryOn from "./pages/ReplicateTryOn";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/replicate" element={<ReplicateTryOn />} />
             <Route path="/colortype" element={<ColorType />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/login" element={<Login />} />

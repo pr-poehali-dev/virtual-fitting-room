@@ -1,0 +1,542 @@
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import Layout from '@/components/Layout';
+import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import Icon from '@/components/ui/icon';
+import ImageViewer from '@/components/ImageViewer';
+import { Link } from 'react-router-dom';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface ClothingItem {
+  id: string;
+  image_url: string;
+  name: string;
+  description: string;
+  categories: string[];
+  colors: string[];
+  archetypes: string[];
+}
+
+interface SelectedClothing {
+  id: string;
+  image: string;
+  name?: string;
+}
+
+const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
+
+const CLOTHING_CATEGORIES = [
+  'Весь образ',
+  'Топы',
+  'Брюки',
+  'Шорты',
+  'Юбки',
+  'Платья',
+  'Верхняя одежда',
+  'Куртки',
+  'Пальто',
+  'Джинсы',
+  'Футболки',
+  'Рубашки',
+  'Блузки',
+  'Свитера',
+  'Кардиганы',
+  'Жилеты',
+  'Комбинезоны',
+  'Костюмы',
+  'Аксессуары',
+  'Обувь',
+];
+
+export default function ReplicateTryOn() {
+  const { user } = useAuth();
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [selectedClothingItems, setSelectedClothingItems] = useState<SelectedClothing[]>([]);
+  const [clothingCatalog, setClothingCatalog] = useState<ClothingItem[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [promptHints, setPromptHints] = useState<string>('');
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    fetchCatalog();
+  }, []);
+
+  const fetchCatalog = async () => {
+    try {
+      const params = new URLSearchParams({ action: 'list' });
+      const response = await fetch(`${CATALOG_API}?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setClothingCatalog(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch catalog:', error);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setUploadedImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCustomClothingUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const id = `custom-${Date.now()}-${Math.random()}`;
+        setSelectedClothingItems((prev) => [
+          ...prev,
+          {
+            id,
+            image: reader.result as string,
+            name: file.name,
+          },
+        ]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    e.target.value = '';
+  };
+
+  const toggleClothingSelection = (item: ClothingItem) => {
+    const exists = selectedClothingItems.find((i) => i.id === item.id);
+    if (exists) {
+      setSelectedClothingItems((prev) => prev.filter((i) => i.id !== item.id));
+    } else {
+      setSelectedClothingItems((prev) => [
+        ...prev,
+        {
+          id: item.id,
+          image: item.image_url,
+          name: item.name,
+        },
+      ]);
+    }
+  };
+
+  const removeClothingItem = (id: string) => {
+    setSelectedClothingItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const handleGenerate = async () => {
+    if (!uploadedImage) {
+      toast.error('Загрузите фото модели');
+      return;
+    }
+
+    if (selectedClothingItems.length === 0) {
+      toast.error('Выберите хотя бы одну вещь');
+      return;
+    }
+
+    if (!selectedCategory) {
+      toast.error('Выберите категорию одежды');
+      return;
+    }
+
+    if (!user) {
+      toast.error('Требуется авторизация');
+      return;
+    }
+
+    setIsGenerating(true);
+    setGeneratedImage(null);
+
+    try {
+      const response = await fetch('https://functions.poehali.dev/bb741663-c984-4bcb-b42e-c99793fd7e10', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.id,
+        },
+        body: JSON.stringify({
+          person_image: uploadedImage,
+          garment_images: selectedClothingItems.map((item) => item.image),
+          category: selectedCategory,
+          prompt_hints: promptHints,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Ошибка генерации');
+      }
+
+      const data = await response.json();
+      setGeneratedImage(data.result_url);
+      toast.success('Изображение сгенерировано!');
+    } catch (error: any) {
+      console.error('Generation error:', error);
+      toast.error(error.message || 'Ошибка при генерации изображения');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleReset = () => {
+    setUploadedImage(null);
+    setSelectedClothingItems([]);
+    setGeneratedImage(null);
+    setSelectedCategory('');
+    setPromptHints('');
+  };
+
+  const handleDownloadImage = async () => {
+    if (!generatedImage) return;
+
+    try {
+      const response = await fetch(generatedImage);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `replicate-tryon-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Изображение скачано!');
+    } catch (error) {
+      toast.error('Ошибка скачивания');
+    }
+  };
+
+  return (
+    <Layout>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+        <div className="container mx-auto px-4 py-12">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Replicate Примерочная
+            </h1>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Выберите несколько вещей, укажите категорию и создайте идеальный образ с помощью AI
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-8 mb-12">
+            <Card className="animate-scale-in">
+              <CardContent className="p-8">
+                {!user && (
+                  <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Icon name="Info" className="text-primary mt-0.5 flex-shrink-0" size={20} />
+                      <div>
+                        <p className="text-sm font-medium text-primary mb-1">
+                          Требуется авторизация
+                        </p>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Для генерации изображений необходимо войти в аккаунт
+                        </p>
+                        <div className="flex gap-2">
+                          <Link to="/login">
+                            <Button size="sm" variant="default">
+                              Войти
+                            </Button>
+                          </Link>
+                          <Link to="/register">
+                            <Button size="sm" variant="outline">
+                              Регистрация
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-lg font-semibold mb-4 block">
+                      <Icon name="User" className="inline mr-2" size={20} />
+                      1. Загрузите фото модели
+                    </Label>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        id="model-upload"
+                        disabled={isGenerating}
+                      />
+                      <label
+                        htmlFor="model-upload"
+                        className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-8 cursor-pointer transition-colors ${
+                          uploadedImage
+                            ? 'border-primary bg-primary/5'
+                            : 'border-gray-300 hover:border-primary'
+                        } ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {uploadedImage ? (
+                          <div className="relative w-full">
+                            <ImageViewer src={uploadedImage} alt="Uploaded" className="rounded-lg" />
+                            <div className="mt-2 text-center">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                disabled={isGenerating}
+                              >
+                                <Icon name="Upload" className="mr-2" size={16} />
+                                Заменить фото
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <Icon name="Upload" size={48} className="text-gray-400 mb-4" />
+                            <p className="text-sm text-gray-600 text-center">
+                              Нажмите для загрузки фото
+                            </p>
+                          </>
+                        )}
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-lg font-semibold mb-4 block">
+                      <Icon name="Shirt" className="inline mr-2" size={20} />
+                      2. Выберите вещи для примерки
+                    </Label>
+
+                    {selectedClothingItems.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Выбрано: {selectedClothingItems.length}
+                        </p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {selectedClothingItems.map((item) => (
+                            <div key={item.id} className="relative group">
+                              <ImageViewer
+                                src={item.image}
+                                alt={item.name || 'Clothing'}
+                                className="w-full h-24 object-cover rounded border-2 border-primary"
+                              />
+                              <button
+                                onClick={() => removeClothingItem(item.id)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                disabled={isGenerating}
+                              >
+                                <Icon name="X" size={16} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      <div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleCustomClothingUpload}
+                          className="hidden"
+                          id="clothing-upload"
+                          disabled={isGenerating}
+                        />
+                        <label htmlFor="clothing-upload">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full"
+                            disabled={isGenerating}
+                            asChild
+                          >
+                            <span>
+                              <Icon name="Upload" className="mr-2" size={16} />
+                              Загрузить свои вещи
+                            </span>
+                          </Button>
+                        </label>
+                      </div>
+
+                      <div className="max-h-64 overflow-y-auto border rounded-lg p-4">
+                        {clothingCatalog.length > 0 ? (
+                          <div className="grid grid-cols-3 gap-2">
+                            {clothingCatalog.map((item) => {
+                              const isSelected = selectedClothingItems.some(
+                                (i) => i.id === item.id
+                              );
+                              return (
+                                <div
+                                  key={item.id}
+                                  onClick={() => toggleClothingSelection(item)}
+                                  className={`cursor-pointer rounded-lg border-2 transition-all ${
+                                    isSelected
+                                      ? 'border-primary ring-2 ring-primary/20'
+                                      : 'border-transparent hover:border-gray-300'
+                                  } ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                  <ImageViewer
+                                    src={item.image_url}
+                                    alt={item.name}
+                                    className="w-full h-20 object-cover rounded"
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-center text-muted-foreground">
+                            Каталог пуст
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-lg font-semibold mb-4 block">
+                      <Icon name="Tag" className="inline mr-2" size={20} />
+                      3. Выберите категорию одежды
+                    </Label>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger disabled={isGenerating}>
+                        <SelectValue placeholder="Выберите категорию" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CLOTHING_CATEGORIES.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-lg font-semibold mb-4 block">
+                      <Icon name="MessageSquare" className="inline mr-2" size={20} />
+                      4. Подсказки для генерации (опционально)
+                    </Label>
+                    <Textarea
+                      placeholder="Например: casual style, bright lighting, outdoor setting"
+                      value={promptHints}
+                      onChange={(e) => setPromptHints(e.target.value)}
+                      rows={3}
+                      disabled={isGenerating}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Добавьте дополнительные описания для более точной генерации
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={handleGenerate}
+                      disabled={
+                        !uploadedImage ||
+                        selectedClothingItems.length === 0 ||
+                        !selectedCategory ||
+                        isGenerating ||
+                        !user
+                      }
+                      className="flex-1"
+                      size="lg"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Icon name="Loader2" className="mr-2 animate-spin" size={20} />
+                          Генерация...
+                        </>
+                      ) : (
+                        <>
+                          <Icon name="Sparkles" className="mr-2" size={20} />
+                          Создать образ
+                        </>
+                      )}
+                    </Button>
+                    {(uploadedImage || selectedClothingItems.length > 0) && (
+                      <Button
+                        variant="outline"
+                        onClick={handleReset}
+                        disabled={isGenerating}
+                        size="lg"
+                      >
+                        <Icon name="RotateCcw" size={20} />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="animate-scale-in">
+              <CardHeader>
+                <CardTitle className="text-2xl">
+                  <Icon name="Image" className="inline mr-2" size={24} />
+                  Результат
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8">
+                {isGenerating ? (
+                  <div className="flex flex-col items-center justify-center h-[500px] space-y-4">
+                    <Icon name="Loader2" className="animate-spin text-primary" size={64} />
+                    <p className="text-lg font-medium">Создаём образ...</p>
+                    <p className="text-sm text-muted-foreground text-center max-w-sm">
+                      Это может занять до 2 минут. AI анализирует выбранные вещи и создаёт реалистичный образ
+                    </p>
+                  </div>
+                ) : generatedImage ? (
+                  <div className="space-y-4">
+                    <ImageViewer
+                      src={generatedImage}
+                      alt="Generated result"
+                      className="rounded-lg"
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={handleDownloadImage} className="flex-1">
+                        <Icon name="Download" className="mr-2" size={16} />
+                        Скачать
+                      </Button>
+                      <Button variant="outline" onClick={handleReset} className="flex-1">
+                        <Icon name="RotateCcw" className="mr-2" size={16} />
+                        Новая примерка
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-[500px] text-center space-y-4">
+                    <Icon name="ImageOff" size={64} className="text-gray-300" />
+                    <div>
+                      <p className="text-lg font-medium mb-2">Здесь появится результат</p>
+                      <p className="text-sm text-muted-foreground max-w-sm">
+                        Загрузите фото модели, выберите вещи и нажмите "Создать образ"
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+}

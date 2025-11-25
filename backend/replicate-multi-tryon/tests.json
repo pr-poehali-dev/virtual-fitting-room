@@ -1,0 +1,66 @@
+{
+  "tests": [
+    {
+      "name": "Test OPTIONS request for CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedHeaders": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS"
+      }
+    },
+    {
+      "name": "Test missing person_image",
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Content-Type": "application/json",
+        "X-User-Id": "test-user"
+      },
+      "body": {
+        "garment_images": ["data:image/png;base64,test"],
+        "category": "Tops"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "person_image is required"
+      }
+    },
+    {
+      "name": "Test missing garment_images",
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Content-Type": "application/json",
+        "X-User-Id": "test-user"
+      },
+      "body": {
+        "person_image": "data:image/png;base64,test",
+        "garment_images": [],
+        "category": "Tops"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "At least one garment_image is required"
+      }
+    },
+    {
+      "name": "Test missing category",
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Content-Type": "application/json",
+        "X-User-Id": "test-user"
+      },
+      "body": {
+        "person_image": "data:image/png;base64,test",
+        "garment_images": ["data:image/png;base64,test"]
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "category is required"
+      }
+    }
+  ]
+}
