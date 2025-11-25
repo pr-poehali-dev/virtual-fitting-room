@@ -38,6 +38,10 @@ interface Stats {
   total_lookbooks: number;
   total_try_ons: number;
   today_try_ons: number;
+  total_revenue: number;
+  today_revenue: number;
+  month_revenue: number;
+  total_payments: number;
 }
 
 interface Payment {
@@ -613,7 +617,7 @@ export default function Admin() {
             </div>
           ) : (
             <>
-              <div className="grid md:grid-cols-4 gap-6 mb-8">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -667,6 +671,78 @@ export default function Admin() {
                       <Icon name="TrendingUp" size={24} className="text-green-600" />
                       <span className="text-3xl font-bold">{stats?.today_try_ons || 0}</span>
                     </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <Card className="border-green-200 bg-green-50/50">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Доход всего
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2">
+                      <Icon name="Coins" size={24} className="text-green-600" />
+                      <span className="text-3xl font-bold">{stats?.total_revenue.toFixed(0) || 0} ₽</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Платежей: {stats?.total_payments || 0}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-blue-200 bg-blue-50/50">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Доход за месяц
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2">
+                      <Icon name="TrendingUp" size={24} className="text-blue-600" />
+                      <span className="text-3xl font-bold">{stats?.month_revenue.toFixed(0) || 0} ₽</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Последние 30 дней
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-orange-200 bg-orange-50/50">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Доход сегодня
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2">
+                      <Icon name="Wallet" size={24} className="text-orange-600" />
+                      <span className="text-3xl font-bold">{stats?.today_revenue.toFixed(0) || 0} ₽</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      За текущий день
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-purple-200 bg-purple-50/50">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Средний чек
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2">
+                      <Icon name="CreditCard" size={24} className="text-purple-600" />
+                      <span className="text-3xl font-bold">
+                        {stats?.total_payments ? (stats.total_revenue / stats.total_payments).toFixed(0) : 0} ₽
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      На транзакцию
+                    </p>
                   </CardContent>
                 </Card>
               </div>

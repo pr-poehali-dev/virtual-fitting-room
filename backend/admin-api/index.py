@@ -87,6 +87,29 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             )
             today_try_ons = cursor.fetchone()['total']
             
+            cursor.execute(
+                "SELECT COALESCE(SUM(amount), 0) as total FROM payment_transactions WHERE status = 'completed'"
+            )
+            total_revenue = cursor.fetchone()['total']
+            
+            cursor.execute(
+                "SELECT COALESCE(SUM(amount), 0) as total FROM payment_transactions WHERE status = 'completed' AND DATE(created_at) = %s",
+                (today,)
+            )
+            today_revenue = cursor.fetchone()['total']
+            
+            cursor.execute(
+                "SELECT COUNT(*) as total FROM payment_transactions WHERE status = 'completed'"
+            )
+            total_payments = cursor.fetchone()['total']
+            
+            thirty_days_ago = today - timedelta(days=30)
+            cursor.execute(
+                "SELECT COALESCE(SUM(amount), 0) as total FROM payment_transactions WHERE status = 'completed' AND created_at >= %s",
+                (thirty_days_ago,)
+            )
+            month_revenue = cursor.fetchone()['total']
+            
             return {
                 'statusCode': 200,
                 'headers': {
@@ -98,7 +121,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'total_users': total_users,
                     'total_lookbooks': total_lookbooks,
                     'total_try_ons': total_try_ons,
-                    'today_try_ons': today_try_ons
+                    'today_try_ons': today_try_ons,
+                    'total_revenue': float(total_revenue),
+                    'today_revenue': float(today_revenue),
+                    'month_revenue': float(month_revenue),
+                    'total_payments': total_payments
                 })
             }
         
