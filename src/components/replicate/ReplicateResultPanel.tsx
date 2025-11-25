@@ -117,7 +117,7 @@ export default function ReplicateResultPanel({
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-[500px] text-center space-y-4">
-            <Icon name="Image" size={48} className="text-muted-foreground" />
+            <Icon name="Image" size={48} className="text-gray-300" />
             <div>
               <p className="text-lg font-medium mb-2">Здесь появится результат</p>
               <p className="text-sm text-muted-foreground max-w-sm">
