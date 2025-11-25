@@ -383,6 +383,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             category_ids = body_data.get('category_ids', [])
             color_ids = body_data.get('color_ids', [])
             archetype_ids = body_data.get('archetype_ids', [])
+            replicate_category = body_data.get('replicate_category', 'upper_body')
             
             if not clothing_id or not image_url:
                 return {
@@ -398,9 +399,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             # Update clothing item
             cursor.execute("""
                 UPDATE clothing_catalog
-                SET image_url = %s, name = %s, description = %s
+                SET image_url = %s, name = %s, description = %s, replicate_category = %s
                 WHERE id = %s
-            """, (image_url, name, description, clothing_id))
+            """, (image_url, name, description, replicate_category, clothing_id))
             
             # Delete old links
             cursor.execute('DELETE FROM clothing_category_links WHERE clothing_id = %s', (clothing_id,))

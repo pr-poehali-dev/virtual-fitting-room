@@ -65,6 +65,7 @@ interface ClothingItem {
   categories: string[];
   colors: string[];
   archetypes: string[];
+  replicate_category?: string;
   created_at: string;
 }
 
@@ -498,7 +499,8 @@ export default function Admin() {
           description: editingClothing.description,
           category_ids: categoryIds,
           color_ids: colorIds,
-          archetype_ids: archetypeIds
+          archetype_ids: archetypeIds,
+          replicate_category: editingClothing.replicate_category || 'upper_body'
         })
       });
 
@@ -1566,8 +1568,53 @@ export default function Admin() {
                 />
               </div>
 
+              <div>
+                <label className="text-sm font-medium mb-2 block">Категория для Replicate примерочной</label>
+                <select
+                  value={editingClothing.replicate_category || 'upper_body'}
+                  onChange={(e) => setEditingClothing({ ...editingClothing, replicate_category: e.target.value })}
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                >
+                  <option value="Весь образ">Весь образ</option>
+                  <option value="upper_body">Верх (блузки, рубашки, джемперы, куртки)</option>
+                  <option value="lower_body">Низ (брюки, джинсы, юбки, шорты)</option>
+                  <option value="dresses">Платья, сарафаны и комбинезоны</option>
+                </select>
+              </div>
+
               {filters && (
                 <>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Категории</label>
+                    <div className="flex flex-wrap gap-2">
+                      {filters.categories.map((category) => {
+                        const isSelected = editingClothing.categories.includes(category.name);
+                        return (
+                          <Button
+                            key={category.id}
+                            size="sm"
+                            variant={isSelected ? 'default' : 'outline'}
+                            onClick={() => {
+                              if (isSelected) {
+                                setEditingClothing({
+                                  ...editingClothing,
+                                  categories: editingClothing.categories.filter(c => c !== category.name)
+                                });
+                              } else {
+                                setEditingClothing({
+                                  ...editingClothing,
+                                  categories: [...editingClothing.categories, category.name]
+                                });
+                              }
+                            }}
+                          >
+                            {category.name}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <div>
                     <label className="text-sm font-medium mb-2 block">Цвета</label>
                     <div className="flex flex-wrap gap-2">
