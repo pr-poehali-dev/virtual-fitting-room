@@ -62,6 +62,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'At least one garment is required'})
         }
     
+    if len(garments) > 3:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'isBase64Encoded': False,
+            'body': json.dumps({'error': 'Максимум 3 вещи за раз (ограничение по времени генерации)'})
+        }
+    
     try:
         os.environ['REPLICATE_API_TOKEN'] = api_token
         
@@ -70,6 +78,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         for idx, garment in enumerate(garments):
             garment_image = garment.get('image') if isinstance(garment, dict) else garment
             garment_category = garment.get('category', 'upper_body') if isinstance(garment, dict) else 'upper_body'
+            
+            valid_categories = ['upper_body', 'lower_body', 'dresses', 'shoes']
+            if garment_category not in valid_categories:
+                garment_category = 'upper_body'
             
             input_data = {
                 "human_img": current_image,
@@ -80,12 +92,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if prompt_hints:
                 input_data["garment_des"] = prompt_hints
             
-            output = replicate.run(
-                "cuuupid/idm-vton:c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
-                input=input_data
-            )
-            
-            current_image = output if isinstance(output, str) else str(output)
+            try:
+                output = replicate.run(
+                    "cuuupid/idm-vton:c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
+                    input=input_data
+                )
+                current_image = output if isinstance(output, str) else str(output)
+            except Exception as garment_error:
+                return {
+                    'statusCode': 500,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'isBase64Encoded': False,
+                    'body': json.dumps({
+                        'error': f'Ошибка при примерке вещи {idx + 1}: {str(garment_error)}',
+                        'garment_index': idx
+                    })
+                }
         
         return {
             'statusCode': 200,
@@ -102,5 +124,5 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'isBase64Encoded': False,
-            'body': json.dumps({'error': f'Generation failed: {str(e)}'})
+            'body': json.dumps({'error': f'Ошибка генерации: {str(e)}'})
         }

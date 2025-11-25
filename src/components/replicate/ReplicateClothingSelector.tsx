@@ -129,6 +129,9 @@ export default function ReplicateClothingSelector({
                       <SelectItem value="dresses" className="text-xs">
                         Платья и Сарафаны
                       </SelectItem>
+                      <SelectItem value="shoes" className="text-xs">
+                        Обувь
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
