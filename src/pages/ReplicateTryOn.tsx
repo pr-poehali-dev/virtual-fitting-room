@@ -559,23 +559,6 @@ export default function ReplicateTryOn() {
                     isGenerating={isGenerating}
                   />
 
-                  <div>
-                    <Label className="text-lg font-semibold mb-4 block">
-                      <Icon name="MessageSquare" className="inline mr-2" size={20} />
-                      3. Подсказки для генерации (опционально)
-                    </Label>
-                    <Textarea
-                      placeholder="Например: casual style, bright lighting, outdoor setting"
-                      value={promptHints}
-                      onChange={(e) => setPromptHints(e.target.value)}
-                      rows={3}
-                      disabled={isGenerating}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Добавьте дополнительные описания для более точной генерации
-                    </p>
-                  </div>
-
                   {generationStatus && (
                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                       <div className="flex items-center gap-3">

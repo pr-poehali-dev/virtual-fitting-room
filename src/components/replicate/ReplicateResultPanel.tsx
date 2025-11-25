@@ -46,9 +46,7 @@ export default function ReplicateResultPanel({
             <Icon name="Loader2" className="animate-spin text-primary" size={64} />
             <p className="text-lg font-medium">Создаём образ...</p>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
-              {isPromptStep 
-                ? 'Применяем ваш промпт и создаём финальный образ. Это может занять 2-5 минут'
-                : 'AI анализирует выбранные вещи и создаёт реалистичный образ. Подождите, это может занять 2-6 минут'}
+              AI анализирует выбранные вещи и создаёт реалистичный образ. Подождите, это может занять 2-6 минут
             </p>
             {currentStep > 0 && (
               <p className="text-sm font-medium text-primary">
@@ -92,7 +90,7 @@ export default function ReplicateResultPanel({
           <div className="space-y-4">
             <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg mb-4">
               <p className="text-sm font-medium text-green-900 dark:text-green-100">
-                🎉 {promptHints ? 'Образ создан с учётом вашего промпта!' : `Все ${totalSteps} шага завершены!`}
+                🎉 Все {totalSteps} шага завершены!
               </p>
             </div>
             <ImageViewer

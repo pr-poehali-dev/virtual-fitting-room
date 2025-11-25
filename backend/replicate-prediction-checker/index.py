@@ -83,35 +83,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     ''', (output_url, datetime.utcnow(), task_id))
                     
                 else:
-                    if prompt_hints and prompt_hints.strip():
-                        bg_prediction = client.predictions.create(
-                            version="f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa",
-                            input={
-                                "image": output_url,
-                                "prompt": prompt_hints,
-                                "negative_prompt": "low quality, blurry, pixelated",
-                                "num_inference_steps": 20,
-                                "guidance_scale": 7.5
-                            }
-                        )
-                        
-                        cursor.execute('''
-                            UPDATE replicate_tasks
-                            SET status = 'processing',
-                                prediction_id = %s,
-                                current_step = %s,
-                                updated_at = %s
-                            WHERE id = %s
-                        ''', (bg_prediction.id, total_steps + 1, datetime.utcnow(), task_id))
-                    else:
-                        cursor.execute('''
-                            UPDATE replicate_tasks
-                            SET status = 'completed',
-                                result_url = %s,
-                                prediction_id = NULL,
-                                updated_at = %s
-                            WHERE id = %s
-                        ''', (output_url, datetime.utcnow(), task_id))
+                    cursor.execute('''
+                        UPDATE replicate_tasks
+                        SET status = 'completed',
+                            result_url = %s,
+                            prediction_id = NULL,
+                            updated_at = %s
+                        WHERE id = %s
+                    ''', (output_url, datetime.utcnow(), task_id))
                 
                 checked_count += 1
                 
