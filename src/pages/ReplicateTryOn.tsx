@@ -359,26 +359,51 @@ export default function ReplicateTryOn() {
     if (!taskId) return;
     
     try {
-      await triggerChecker();
-      toast.info('Проверяем статус...');
+      toast.info('Проверяем статус на Replicate...');
       
-      setTimeout(async () => {
-        const response = await fetch(`${REPLICATE_STATUS_API}?task_id=${taskId}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.status === 'waiting_continue') {
-            setIntermediateResult(data.intermediate_result);
-            setIsGenerating(false);
-            setWaitingContinue(true);
-            setGenerationStatus('');
-            toast.success('Результат готов!');
-            if (pollingInterval) clearInterval(pollingInterval);
-            if (checkerInterval) clearInterval(checkerInterval);
-          }
+      // Сначала триггерим чекер
+      await triggerChecker();
+      
+      // Ждем 3 секунды чтобы чекер успел обновить БД
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Проверяем статус в БД
+      const response = await fetch(`${REPLICATE_STATUS_API}?task_id=${taskId}`);
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.status === 'waiting_continue') {
+          setIntermediateResult(data.intermediate_result);
+          setIsGenerating(false);
+          setWaitingContinue(true);
+          setGenerationStatus('');
+          setCurrentStep(data.current_step || 1);
+          setTotalSteps(data.total_steps || selectedClothingItems.length);
+          toast.success(`Шаг ${data.current_step} готов!`);
+          if (pollingInterval) clearInterval(pollingInterval);
+          if (checkerInterval) clearInterval(checkerInterval);
+        } else if (data.status === 'completed') {
+          setGeneratedImage(data.result_url);
+          setIsGenerating(false);
+          setWaitingContinue(false);
+          setGenerationStatus('');
+          toast.success('Все шаги завершены!');
+          if (pollingInterval) clearInterval(pollingInterval);
+          if (checkerInterval) clearInterval(checkerInterval);
+        } else if (data.status === 'failed') {
+          setIsGenerating(false);
+          setWaitingContinue(false);
+          setGenerationStatus('');
+          toast.error(data.error_message || 'Ошибка генерации');
+          if (pollingInterval) clearInterval(pollingInterval);
+          if (checkerInterval) clearInterval(checkerInterval);
+        } else {
+          toast.info(`Статус: ${data.status}. Продолжаем ожидание...`);
         }
-      }, 2000);
+      }
     } catch (error) {
       console.error('Manual check error:', error);
+      toast.error('Ошибка проверки статуса');
     }
   };
 
