@@ -53,7 +53,7 @@ export default function ReplicateSaveDialog({
             <div className="space-y-3">
               <Label className="text-sm font-medium">Выбрать существующий лукбук</Label>
               <RadioGroup value={selectedLookbookId} onValueChange={setSelectedLookbookId}>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
+                <div className="space-y-2 max-h-64 overflow-y-auto border rounded-lg p-3 bg-muted/20">
                   {lookbooks.map((lookbook) => (
                     <div key={lookbook.id} className="flex items-center space-x-2">
                       <RadioGroupItem value={lookbook.id} id={lookbook.id} />
