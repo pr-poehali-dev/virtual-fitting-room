@@ -343,6 +343,32 @@ export default function ReplicateTryOn() {
     }
   };
 
+  const checkStatusManually = async () => {
+    if (!taskId) return;
+    
+    try {
+      await fetch('https://functions.poehali.dev/7d14499d-c634-495a-b28c-8a1fcb8fc5d4');
+      toast.info('Проверяем статус...');
+      
+      setTimeout(async () => {
+        const response = await fetch(`${REPLICATE_STATUS_API}?task_id=${taskId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.status === 'waiting_continue') {
+            setIntermediateResult(data.intermediate_result);
+            setIsGenerating(false);
+            setWaitingContinue(true);
+            setGenerationStatus('');
+            toast.success('Результат готов!');
+            if (pollingInterval) clearInterval(pollingInterval);
+          }
+        }
+      }, 2000);
+    } catch (error) {
+      console.error('Manual check error:', error);
+    }
+  };
+
   const startPolling = (taskId: string) => {
     const interval = setInterval(async () => {
       try {
@@ -601,12 +627,19 @@ export default function ReplicateTryOn() {
                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                       <div className="flex items-center gap-3">
                         <Icon name="Loader2" className="animate-spin text-blue-600" size={20} />
-                        <div>
+                        <div className="flex-1">
                           <p className="text-sm font-medium text-blue-900">{generationStatus}</p>
                           <p className="text-xs text-blue-700 mt-1">
                             Можете закрыть страницу и вернуться позже - задача продолжит выполняться
                           </p>
                         </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={checkStatusManually}
+                        >
+                          Проверить статус
+                        </Button>
                       </div>
                     </div>
                   )}
