@@ -190,7 +190,7 @@ export default function ReplicateTryOn() {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const resized = await resizeImage(file, 1440, 1440);
+        const resized = await resizeImage(file, 1024, 1024);
         setUploadedImage(resized);
       } catch (error) {
         console.error('Image resize error:', error);
@@ -206,7 +206,7 @@ export default function ReplicateTryOn() {
     try {
       const resizedImages = await Promise.all(
         Array.from(files).map(async (file) => {
-          const resized = await resizeImage(file, 1440, 1440);
+          const resized = await resizeImage(file, 1024, 1024);
           return {
             id: `custom-${Date.now()}-${Math.random()}`,
             image: resized,
