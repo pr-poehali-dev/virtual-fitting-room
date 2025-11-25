@@ -177,11 +177,11 @@ export default function WalletTab() {
                 className="w-full justify-between"
                 variant="outline"
                 size="lg"
-                onClick={() => handleTopUp(1000)}
+                onClick={() => handleTopUp(900)}
                 disabled={isCreatingPayment}
               >
-                <span>1000 ₽</span>
-                <span className="text-sm text-muted-foreground">40 примерок</span>
+                <span>900 ₽</span>
+                <span className="text-sm text-muted-foreground">36 примерок</span>
               </Button>
             </div>
             {isCreatingPayment && (
