@@ -152,37 +152,75 @@ export default function ReplicateTryOn() {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = Math.floor(width * ratio);
+            height = Math.floor(height * ratio);
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.9));
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUploadedImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const resized = await resizeImage(file, 1440, 1440);
+        setUploadedImage(resized);
+      } catch (error) {
+        console.error('Image resize error:', error);
+        toast.error('Ошибка обработки изображения');
+      }
     }
   };
 
-  const handleCustomClothingUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCustomClothingUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const id = `custom-${Date.now()}-${Math.random()}`;
-        setSelectedClothingItems((prev) => [
-          ...prev,
-          {
-            id,
-            image: reader.result as string,
+    try {
+      const resizedImages = await Promise.all(
+        Array.from(files).map(async (file) => {
+          const resized = await resizeImage(file, 1440, 1440);
+          return {
+            id: `custom-${Date.now()}-${Math.random()}`,
+            image: resized,
             name: file.name,
             category: '',
-          },
-        ]);
-      };
-      reader.readAsDataURL(file);
-    });
+          };
+        })
+      );
+
+      setSelectedClothingItems((prev) => [...prev, ...resizedImages]);
+    } catch (error) {
+      console.error('Image resize error:', error);
+      toast.error('Ошибка обработки изображений');
+    }
 
     e.target.value = '';
   };
