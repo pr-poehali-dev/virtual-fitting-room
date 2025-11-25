@@ -126,8 +126,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             "category": garment_category,
         }
         
-        if prompt_hints:
-            input_data["garment_des"] = prompt_hints
+        if prompt_hints and prompt_hints.strip():
+            input_data["garment_des"] = prompt_hints.strip()
         
         client = replicate.Client(api_token=api_token)
         
