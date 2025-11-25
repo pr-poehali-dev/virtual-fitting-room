@@ -98,7 +98,13 @@ export default function ReplicateTryOn() {
       const response = await fetch(`${CATALOG_API}?action=filters`);
       if (response.ok) {
         const data = await response.json();
-        setFilters(data);
+        const filteredCategories = data.categories.filter((cat: FilterOption) => 
+          !['Обувь', 'Аксессуары', 'Головные уборы'].includes(cat.name)
+        );
+        setFilters({
+          ...data,
+          categories: filteredCategories
+        });
       }
     } catch (error) {
       console.error('Failed to fetch filters:', error);
