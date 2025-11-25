@@ -33,6 +33,7 @@ interface ClothingItem {
   categories: string[];
   colors: string[];
   archetypes: string[];
+  replicate_category?: string;
 }
 
 interface FilterOption {
@@ -55,17 +56,12 @@ interface SelectedClothing {
 
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
 
-const CLOTHING_CATEGORIES = [
-  'upper_body',
-  'lower_body',
-  'dresses',
+const REPLICATE_CATEGORIES = [
+  { value: 'Весь образ', label: 'Весь образ' },
+  { value: 'upper_body', label: 'Верх (блузки, рубашки, джемперы, куртки)' },
+  { value: 'lower_body', label: 'Низ (брюки, джинсы, юбки, шорты)' },
+  { value: 'dresses', label: 'Платья, сарафаны и комбинезоны' },
 ];
-
-const CATEGORY_LABELS: Record<string, string> = {
-  'upper_body': 'Верх (топы, рубашки, куртки)',
-  'lower_body': 'Низ (брюки, юбки, шорты)',
-  'dresses': 'Платья и комбинезоны',
-};
 
 export default function ReplicateTryOn() {
   const { user } = useAuth();
@@ -196,7 +192,7 @@ export default function ReplicateTryOn() {
           id: item.id,
           image: item.image_url,
           name: item.name,
-          category: 'upper_body',
+          category: item.replicate_category || 'upper_body',
         },
       ]);
     }
@@ -502,9 +498,9 @@ export default function ReplicateTryOn() {
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {CLOTHING_CATEGORIES.map((cat) => (
-                                      <SelectItem key={cat} value={cat} className="text-xs">
-                                        {CATEGORY_LABELS[cat]}
+                                    {REPLICATE_CATEGORIES.map((cat) => (
+                                      <SelectItem key={cat.value} value={cat.value} className="text-xs">
+                                        {cat.label}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
