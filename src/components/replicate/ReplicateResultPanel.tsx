@@ -49,9 +49,16 @@ export default function ReplicateResultPanel({
               AI анализирует выбранные вещи и создаёт реалистичный образ. Подождите, это может занять 2-6 минут
             </p>
             {currentStep > 0 && (
-              <p className="text-sm font-medium text-primary">
-                {displayStep}
-              </p>
+              <>
+                <p className="text-sm font-medium text-primary">
+                  {displayStep}
+                </p>
+                {currentStep === 1 && (
+                  <p className="text-xs text-muted-foreground text-center max-w-md">
+                    После первого шага вы сможете посмотреть промежуточный результат и продолжить
+                  </p>
+                )}
+              </>
             )}
           </div>
         ) : waitingContinue && intermediateResult ? (
