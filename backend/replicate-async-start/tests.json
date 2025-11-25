@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "name": "Start async generation",
+      "method": "POST",
+      "headers": {
+        "X-User-Id": "test-user-123"
+      },
+      "body": {
+        "person_image": "https://example.com/person.jpg",
+        "garments": [
+          {"image": "https://example.com/shirt.jpg", "category": "upper_body"}
+        ],
+        "prompt_hints": "casual style"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "task_id": "string",
+        "status": "pending"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

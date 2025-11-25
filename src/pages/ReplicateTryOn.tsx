@@ -43,6 +43,8 @@ interface SelectedClothing {
 }
 
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
+const REPLICATE_START_API = 'https://functions.poehali.dev/c1cb3f04-f40a-4044-87fd-568d0271e1fe';
+const REPLICATE_STATUS_API = 'https://functions.poehali.dev/cde034e8-99be-4910-9ea6-f06cc94a6377';
 
 
 
@@ -64,6 +66,9 @@ export default function ReplicateTryOn() {
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [selectedColors, setSelectedColors] = useState<number[]>([]);
   const [selectedArchetypes, setSelectedArchetypes] = useState<number[]>([]);
+  const [taskId, setTaskId] = useState<string | null>(null);
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  const [generationStatus, setGenerationStatus] = useState<string>('');
 
   useEffect(() => {
     fetchFilters();
@@ -75,6 +80,14 @@ export default function ReplicateTryOn() {
   useEffect(() => {
     fetchCatalog();
   }, [selectedCategories, selectedColors, selectedArchetypes]);
+
+  useEffect(() => {
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [pollingInterval]);
 
   const fetchFilters = async () => {
     try {
@@ -219,9 +232,9 @@ export default function ReplicateTryOn() {
       return;
     }
 
-    if (selectedClothingItems.length > 2) {
-      toast.error('Максимум 2 вещи за раз (примерка занимает ~15 сек на вещь). Из-за ограничений API больше не получится.', {
-        duration: 6000
+    if (selectedClothingItems.length > 5) {
+      toast.error('Максимум 5 вещей за раз', {
+        duration: 4000
       });
       return;
     }
@@ -239,14 +252,15 @@ export default function ReplicateTryOn() {
 
     setIsGenerating(true);
     setGeneratedImage(null);
+    setGenerationStatus('Запускаем генерацию...');
 
-    const estimatedTime = selectedClothingItems.length * 15;
-    toast.info(`Генерация займёт ~${estimatedTime} секунд. Не закрывайте страницу!`, {
-      duration: 5000
+    const estimatedTime = selectedClothingItems.length * 20;
+    toast.info(`Генерация займёт ~${estimatedTime}-${estimatedTime + 30} секунд. Можете закрыть страницу и вернуться позже!`, {
+      duration: 6000
     });
 
     try {
-      const response = await fetch('https://functions.poehali.dev/bb741663-c984-4bcb-b42e-c99793fd7e10', {
+      const response = await fetch(REPLICATE_START_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -264,33 +278,69 @@ export default function ReplicateTryOn() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Ошибка генерации');
+        throw new Error(errorData.error || 'Ошибка запуска генерации');
       }
 
       const data = await response.json();
-      setGeneratedImage(data.result_url);
-      toast.success('Изображение сгенерировано!');
+      setTaskId(data.task_id);
+      setGenerationStatus('В очереди...');
+      toast.success('Задача создана! Ожидайте результат...');
+      
+      startPolling(data.task_id);
     } catch (error: any) {
       console.error('Generation error:', error);
-      const errorMsg = error.message || 'Ошибка при генерации изображения';
-      
-      if (errorMsg.includes('timeout') || errorMsg.includes('Execution timeout')) {
-        toast.error('Генерация заняла слишком много времени. Попробуйте выбрать меньше вещей (1-2 макс)', {
-          duration: 6000
-        });
-      } else {
-        toast.error(errorMsg);
-      }
-    } finally {
+      toast.error(error.message || 'Ошибка запуска генерации');
       setIsGenerating(false);
+      setGenerationStatus('');
     }
   };
 
+  const startPolling = (taskId: string) => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`${REPLICATE_STATUS_API}?task_id=${taskId}`);
+        if (!response.ok) {
+          throw new Error('Ошибка проверки статуса');
+        }
+
+        const data = await response.json();
+        
+        if (data.status === 'pending') {
+          setGenerationStatus('В очереди...');
+        } else if (data.status === 'processing') {
+          setGenerationStatus('Обрабатывается...');
+        } else if (data.status === 'completed') {
+          setGeneratedImage(data.result_url);
+          setIsGenerating(false);
+          setGenerationStatus('');
+          toast.success('Изображение готово!');
+          if (pollingInterval) clearInterval(pollingInterval);
+        } else if (data.status === 'failed') {
+          setIsGenerating(false);
+          setGenerationStatus('');
+          toast.error(data.error_message || 'Ошибка генерации');
+          if (pollingInterval) clearInterval(pollingInterval);
+        }
+      } catch (error: any) {
+        console.error('Polling error:', error);
+      }
+    }, 3000);
+
+    setPollingInterval(interval);
+  };
+
   const handleReset = () => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
     setUploadedImage(null);
     setSelectedClothingItems([]);
     setGeneratedImage(null);
     setPromptHints('');
+    setTaskId(null);
+    setIsGenerating(false);
+    setGenerationStatus('');
   };
 
   const handleSaveToExistingLookbook = async () => {
@@ -468,6 +518,20 @@ export default function ReplicateTryOn() {
                     </p>
                   </div>
 
+                  {generationStatus && (
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Icon name="Loader2" className="animate-spin text-blue-600" size={20} />
+                        <div>
+                          <p className="text-sm font-medium text-blue-900">{generationStatus}</p>
+                          <p className="text-xs text-blue-700 mt-1">
+                            Можете закрыть страницу и вернуться позже - задача продолжит выполняться
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex gap-3">
                     <Button
                       onClick={handleGenerate}
@@ -483,7 +547,7 @@ export default function ReplicateTryOn() {
                       {isGenerating ? (
                         <>
                           <Icon name="Loader2" className="mr-2 animate-spin" size={20} />
-                          Генерация...
+                          {generationStatus || 'Генерация...'}
                         </>
                       ) : (
                         <>

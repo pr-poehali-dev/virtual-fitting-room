@@ -1,0 +1,13 @@
+{
+  "tests": [
+    {
+      "name": "Process task queue",
+      "method": "GET",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "message": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

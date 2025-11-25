@@ -1,4 +1,7 @@
 {
+  "replicate-async-start": "https://functions.poehali.dev/c1cb3f04-f40a-4044-87fd-568d0271e1fe",
+  "replicate-async-status": "https://functions.poehali.dev/cde034e8-99be-4910-9ea6-f06cc94a6377",
+  "replicate-async-worker": "https://functions.poehali.dev/1fb0123a-5d1e-4bf3-8052-44ac16407a2e",
   "replicate-multi-tryon": "https://functions.poehali.dev/bb741663-c984-4bcb-b42e-c99793fd7e10",
   "payment-history": "https://functions.poehali.dev/4956bfc7-c402-4191-8f90-2aeffeb2c1be",
   "sberbank-payment": "https://functions.poehali.dev/90e72041-1a9e-4a24-9d4b-dc3347bdbe77",
