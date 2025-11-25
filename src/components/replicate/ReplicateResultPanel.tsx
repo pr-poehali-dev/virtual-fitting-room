@@ -46,7 +46,9 @@ export default function ReplicateResultPanel({
             <Icon name="Loader2" className="animate-spin text-primary" size={64} />
             <p className="text-lg font-medium">Создаём образ...</p>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
-              Это может занять до 2 минут. AI анализирует выбранные вещи и создаёт реалистичный образ
+              {isPromptStep 
+                ? 'Применяем ваш промпт и создаём финальный образ. Это может занять 2-5 минут'
+                : 'AI анализирует выбранные вещи и создаёт реалистичный образ. Подождите, это может занять 2-6 минут'}
             </p>
             {currentStep > 0 && (
               <p className="text-sm font-medium text-primary">
