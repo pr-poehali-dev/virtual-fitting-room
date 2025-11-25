@@ -100,6 +100,8 @@ export default function Admin() {
   const [clothingItems, setClothingItems] = useState<ClothingItem[]>([]);
   const [filters, setFilters] = useState<Filters | null>(null);
   const [showAddClothing, setShowAddClothing] = useState(false);
+  const [selectedCatalogColors, setSelectedCatalogColors] = useState<number[]>([]);
+  const [selectedCatalogArchetypes, setSelectedCatalogArchetypes] = useState<number[]>([]);
   const [editingClothing, setEditingClothing] = useState<ClothingItem | null>(null);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [newClothing, setNewClothing] = useState({
@@ -128,6 +130,12 @@ export default function Admin() {
       fetchData();
     }
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchCatalogData();
+    }
+  }, [selectedCatalogColors, selectedCatalogArchetypes, isAuthenticated]);
 
   const handleLogin = async () => {
     if (!password) {
@@ -165,9 +173,17 @@ export default function Admin() {
 
   const fetchCatalogData = async () => {
     try {
+      const params = new URLSearchParams({ action: 'list' });
+      if (selectedCatalogColors.length > 0) {
+        params.append('colors', selectedCatalogColors.join(','));
+      }
+      if (selectedCatalogArchetypes.length > 0) {
+        params.append('archetypes', selectedCatalogArchetypes.join(','));
+      }
+
       const [filtersRes, catalogRes] = await Promise.all([
         fetch(`${CATALOG_API}?action=filters`),
-        fetch(`${CATALOG_API}?action=list`)
+        fetch(`${CATALOG_API}?${params.toString()}`)
       ]);
 
       if (!filtersRes.ok || !catalogRes.ok) {
@@ -970,6 +986,63 @@ export default function Admin() {
                       </div>
                     </CardHeader>
                     <CardContent>
+                      {filters && (
+                        <div className="mb-6 space-y-3 p-4 bg-muted/30 rounded-lg">
+                          <div>
+                            <p className="text-sm font-medium mb-2">Фильтр по цвету:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {filters.colors.map((color) => (
+                                <Button
+                                  key={color.id}
+                                  size="sm"
+                                  variant={selectedCatalogColors.includes(color.id) ? 'default' : 'outline'}
+                                  onClick={() => setSelectedCatalogColors(
+                                    selectedCatalogColors.includes(color.id)
+                                      ? selectedCatalogColors.filter(v => v !== color.id)
+                                      : [...selectedCatalogColors, color.id]
+                                  )}
+                                >
+                                  {color.name}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="text-sm font-medium mb-2">Фильтр по архетипу:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {filters.archetypes.map((arch) => (
+                                <Button
+                                  key={arch.id}
+                                  size="sm"
+                                  variant={selectedCatalogArchetypes.includes(arch.id) ? 'default' : 'outline'}
+                                  onClick={() => setSelectedCatalogArchetypes(
+                                    selectedCatalogArchetypes.includes(arch.id)
+                                      ? selectedCatalogArchetypes.filter(v => v !== arch.id)
+                                      : [...selectedCatalogArchetypes, arch.id]
+                                  )}
+                                >
+                                  {arch.name}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {(selectedCatalogColors.length > 0 || selectedCatalogArchetypes.length > 0) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedCatalogColors([]);
+                                setSelectedCatalogArchetypes([]);
+                              }}
+                            >
+                              <Icon name="X" className="mr-2" size={16} />
+                              Сбросить фильтры
+                            </Button>
+                          )}
+                        </div>
+                      )}
                       {showAddClothing && (
                         <div className="mb-6 p-4 border rounded-lg space-y-4 bg-muted/50">
                           <h3 className="font-medium">Новая одежда</h3>

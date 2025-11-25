@@ -35,6 +35,17 @@ interface ClothingItem {
   archetypes: string[];
 }
 
+interface FilterOption {
+  id: number;
+  name: string;
+}
+
+interface Filters {
+  categories: FilterOption[];
+  colors: FilterOption[];
+  archetypes: FilterOption[];
+}
+
 interface SelectedClothing {
   id: string;
   image: string;
@@ -70,17 +81,42 @@ export default function ReplicateTryOn() {
   const [newLookbookPersonName, setNewLookbookPersonName] = useState('');
   const [selectedLookbookId, setSelectedLookbookId] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [filters, setFilters] = useState<Filters | null>(null);
+  const [selectedColors, setSelectedColors] = useState<number[]>([]);
+  const [selectedArchetypes, setSelectedArchetypes] = useState<number[]>([]);
 
   useEffect(() => {
-    fetchCatalog();
+    fetchFilters();
     if (user) {
       fetchLookbooks();
     }
   }, [user]);
 
+  useEffect(() => {
+    fetchCatalog();
+  }, [selectedColors, selectedArchetypes]);
+
+  const fetchFilters = async () => {
+    try {
+      const response = await fetch(`${CATALOG_API}?action=filters`);
+      if (response.ok) {
+        const data = await response.json();
+        setFilters(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch filters:', error);
+    }
+  };
+
   const fetchCatalog = async () => {
     try {
       const params = new URLSearchParams({ action: 'list' });
+      if (selectedColors.length > 0) {
+        params.append('colors', selectedColors.join(','));
+      }
+      if (selectedArchetypes.length > 0) {
+        params.append('archetypes', selectedArchetypes.join(','));
+      }
       const response = await fetch(`${CATALOG_API}?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
@@ -170,6 +206,12 @@ export default function ReplicateTryOn() {
     setSelectedClothingItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, category } : item))
     );
+  };
+
+  const toggleFilter = (array: number[], value: number) => {
+    return array.includes(value)
+      ? array.filter(v => v !== value)
+      : [...array, value];
   };
 
   const handleGenerate = async () => {
@@ -433,7 +475,7 @@ export default function ReplicateTryOn() {
                                 <ImageViewer
                                   src={item.image}
                                   alt={item.name || 'Clothing'}
-                                  className="w-20 h-20 object-cover rounded border-2 border-primary"
+                                  className="w-20 h-20 object-contain rounded border-2 border-primary bg-muted"
                                 />
                                 <button
                                   onClick={() => removeClothingItem(item.id)}
@@ -497,6 +539,44 @@ export default function ReplicateTryOn() {
                         </label>
                       </div>
 
+                      {filters && (
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-xs font-medium mb-2">Фильтр по цвету:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {filters.colors.map((color) => (
+                                <Button
+                                  key={color.id}
+                                  size="sm"
+                                  variant={selectedColors.includes(color.id) ? 'default' : 'outline'}
+                                  onClick={() => setSelectedColors(toggleFilter(selectedColors, color.id))}
+                                  className="h-7 text-xs px-2"
+                                >
+                                  {color.name}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-medium mb-2">Фильтр по архетипу:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {filters.archetypes.map((arch) => (
+                                <Button
+                                  key={arch.id}
+                                  size="sm"
+                                  variant={selectedArchetypes.includes(arch.id) ? 'default' : 'outline'}
+                                  onClick={() => setSelectedArchetypes(toggleFilter(selectedArchetypes, arch.id))}
+                                  className="h-7 text-xs px-2"
+                                >
+                                  {arch.name}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="max-h-64 overflow-y-auto border rounded-lg p-4">
                         {clothingCatalog.length > 0 ? (
                           <div className="grid grid-cols-3 gap-2">
@@ -517,7 +597,7 @@ export default function ReplicateTryOn() {
                                   <ImageViewer
                                     src={item.image_url}
                                     alt={item.name}
-                                    className="w-full h-20 object-cover rounded"
+                                    className="w-full h-20 object-contain rounded bg-muted"
                                   />
                                 </div>
                               );
