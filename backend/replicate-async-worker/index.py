@@ -69,8 +69,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         garment_image = first_garment.get('image') if isinstance(first_garment, dict) else first_garment
         garment_category = first_garment.get('category', 'upper_body') if isinstance(first_garment, dict) else 'upper_body'
         
+        if not garment_image:
+            raise ValueError('Garment image is required')
+        
         valid_categories = ['upper_body', 'lower_body', 'dresses']
-        if garment_category not in valid_categories:
+        if not garment_category or garment_category not in valid_categories:
             garment_category = 'upper_body'
         
         input_data = {
