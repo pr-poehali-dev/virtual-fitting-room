@@ -219,8 +219,10 @@ export default function ReplicateTryOn() {
       return;
     }
 
-    if (selectedClothingItems.length > 3) {
-      toast.error('Максимум 3 вещи за раз (примерка занимает ~10 сек на вещь)');
+    if (selectedClothingItems.length > 2) {
+      toast.error('Максимум 2 вещи за раз (примерка занимает ~15 сек на вещь). Из-за ограничений API больше не получится.', {
+        duration: 6000
+      });
       return;
     }
 
@@ -238,7 +240,7 @@ export default function ReplicateTryOn() {
     setIsGenerating(true);
     setGeneratedImage(null);
 
-    const estimatedTime = selectedClothingItems.length * 10;
+    const estimatedTime = selectedClothingItems.length * 15;
     toast.info(`Генерация займёт ~${estimatedTime} секунд. Не закрывайте страницу!`, {
       duration: 5000
     });
