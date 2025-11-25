@@ -40,8 +40,10 @@ interface VirtualFittingControlsProps {
   selectedClothing: SelectedClothing | null;
   clothingCatalog: ClothingItem[];
   filters: Filters | null;
+  selectedCategories: number[];
   selectedColors: number[];
   selectedArchetypes: number[];
+  setSelectedCategories: (categories: number[]) => void;
   setSelectedColors: (colors: number[]) => void;
   setSelectedArchetypes: (archetypes: number[]) => void;
   toggleClothingSelection: (item: ClothingItem) => void;
@@ -59,8 +61,10 @@ export default function VirtualFittingControls({
   selectedClothing,
   clothingCatalog,
   filters,
+  selectedCategories,
   selectedColors,
   selectedArchetypes,
+  setSelectedCategories,
   setSelectedColors,
   setSelectedArchetypes,
   toggleClothingSelection,
@@ -176,6 +180,23 @@ export default function VirtualFittingControls({
                       <AccordionContent className="space-y-3">
                         {filters && (
                           <>
+                            <div>
+                              <p className="text-xs font-medium mb-2">Категории:</p>
+                              <div className="flex flex-wrap gap-1">
+                                {filters.categories.map((category) => (
+                                  <Button
+                                    key={category.id}
+                                    size="sm"
+                                    variant={selectedCategories.includes(category.id) ? 'default' : 'outline'}
+                                    onClick={() => setSelectedCategories(toggleFilter(selectedCategories, category.id))}
+                                    className="text-xs h-7"
+                                  >
+                                    {category.name}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+
                             <div>
                               <p className="text-xs font-medium mb-2">Цвета:</p>
                               <div className="flex flex-wrap gap-1">

@@ -100,6 +100,7 @@ export default function Admin() {
   const [clothingItems, setClothingItems] = useState<ClothingItem[]>([]);
   const [filters, setFilters] = useState<Filters | null>(null);
   const [showAddClothing, setShowAddClothing] = useState(false);
+  const [selectedCatalogCategories, setSelectedCatalogCategories] = useState<number[]>([]);
   const [selectedCatalogColors, setSelectedCatalogColors] = useState<number[]>([]);
   const [selectedCatalogArchetypes, setSelectedCatalogArchetypes] = useState<number[]>([]);
   const [editingClothing, setEditingClothing] = useState<ClothingItem | null>(null);
@@ -135,7 +136,7 @@ export default function Admin() {
     if (isAuthenticated) {
       fetchCatalogData();
     }
-  }, [selectedCatalogColors, selectedCatalogArchetypes, isAuthenticated]);
+  }, [selectedCatalogCategories, selectedCatalogColors, selectedCatalogArchetypes, isAuthenticated]);
 
   const handleLogin = async () => {
     if (!password) {
@@ -174,6 +175,9 @@ export default function Admin() {
   const fetchCatalogData = async () => {
     try {
       const params = new URLSearchParams({ action: 'list' });
+      if (selectedCatalogCategories.length > 0) {
+        params.append('categories', selectedCatalogCategories.join(','));
+      }
       if (selectedCatalogColors.length > 0) {
         params.append('colors', selectedCatalogColors.join(','));
       }
@@ -989,6 +993,26 @@ export default function Admin() {
                       {filters && (
                         <div className="mb-6 space-y-3 p-4 bg-muted/30 rounded-lg">
                           <div>
+                            <p className="text-sm font-medium mb-2">Фильтр по категории:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {filters.categories.map((category) => (
+                                <Button
+                                  key={category.id}
+                                  size="sm"
+                                  variant={selectedCatalogCategories.includes(category.id) ? 'default' : 'outline'}
+                                  onClick={() => setSelectedCatalogCategories(
+                                    selectedCatalogCategories.includes(category.id)
+                                      ? selectedCatalogCategories.filter(v => v !== category.id)
+                                      : [...selectedCatalogCategories, category.id]
+                                  )}
+                                >
+                                  {category.name}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
                             <p className="text-sm font-medium mb-2">Фильтр по цвету:</p>
                             <div className="flex flex-wrap gap-2">
                               {filters.colors.map((color) => (
@@ -1028,11 +1052,12 @@ export default function Admin() {
                             </div>
                           </div>
 
-                          {(selectedCatalogColors.length > 0 || selectedCatalogArchetypes.length > 0) && (
+                          {(selectedCatalogCategories.length > 0 || selectedCatalogColors.length > 0 || selectedCatalogArchetypes.length > 0) && (
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => {
+                                setSelectedCatalogCategories([]);
                                 setSelectedCatalogColors([]);
                                 setSelectedCatalogArchetypes([]);
                               }}
@@ -1165,6 +1190,25 @@ export default function Admin() {
                               >
                                 Платья и комбинезоны
                               </Button>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm font-medium mb-2">Категории:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {filters?.categories.map((category) => (
+                                <Button
+                                  key={category.id}
+                                  size="sm"
+                                  variant={newClothing.category_ids.includes(category.id) ? 'default' : 'outline'}
+                                  onClick={() => setNewClothing({
+                                    ...newClothing,
+                                    category_ids: toggleSelection(newClothing.category_ids, category.id)
+                                  })}
+                                >
+                                  {category.name}
+                                </Button>
+                              ))}
                             </div>
                           </div>
                           

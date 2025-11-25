@@ -42,6 +42,7 @@ export default function Index() {
   const [selectedClothing, setSelectedClothing] = useState<SelectedClothing | null>(null);
   const [clothingCatalog, setClothingCatalog] = useState<ClothingItem[]>([]);
   const [filters, setFilters] = useState<Filters | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [selectedColors, setSelectedColors] = useState<number[]>([]);
   const [selectedArchetypes, setSelectedArchetypes] = useState<number[]>([]);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -74,7 +75,7 @@ export default function Index() {
   
   useEffect(() => {
     fetchCatalog();
-  }, [selectedColors, selectedArchetypes]);
+  }, [selectedCategories, selectedColors, selectedArchetypes]);
   
   const fetchFilters = async () => {
     try {
@@ -91,6 +92,9 @@ export default function Index() {
   const fetchCatalog = async () => {
     try {
       const params = new URLSearchParams({ action: 'list' });
+      if (selectedCategories.length > 0) {
+        params.append('categories', selectedCategories.join(','));
+      }
       if (selectedColors.length > 0) {
         params.append('colors', selectedColors.join(','));
       }
@@ -568,8 +572,10 @@ export default function Index() {
               selectedClothing={selectedClothing}
               clothingCatalog={clothingCatalog}
               filters={filters}
+              selectedCategories={selectedCategories}
               selectedColors={selectedColors}
               selectedArchetypes={selectedArchetypes}
+              setSelectedCategories={setSelectedCategories}
               setSelectedColors={setSelectedColors}
               setSelectedArchetypes={setSelectedArchetypes}
               toggleClothingSelection={toggleClothingSelection}

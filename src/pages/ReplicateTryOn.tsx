@@ -82,6 +82,7 @@ export default function ReplicateTryOn() {
   const [selectedLookbookId, setSelectedLookbookId] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const [filters, setFilters] = useState<Filters | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [selectedColors, setSelectedColors] = useState<number[]>([]);
   const [selectedArchetypes, setSelectedArchetypes] = useState<number[]>([]);
 
@@ -94,7 +95,7 @@ export default function ReplicateTryOn() {
 
   useEffect(() => {
     fetchCatalog();
-  }, [selectedColors, selectedArchetypes]);
+  }, [selectedCategories, selectedColors, selectedArchetypes]);
 
   const fetchFilters = async () => {
     try {
@@ -111,6 +112,9 @@ export default function ReplicateTryOn() {
   const fetchCatalog = async () => {
     try {
       const params = new URLSearchParams({ action: 'list' });
+      if (selectedCategories.length > 0) {
+        params.append('categories', selectedCategories.join(','));
+      }
       if (selectedColors.length > 0) {
         params.append('colors', selectedColors.join(','));
       }
@@ -541,6 +545,23 @@ export default function ReplicateTryOn() {
 
                       {filters && (
                         <div className="space-y-3">
+                          <div>
+                            <p className="text-xs font-medium mb-2">Фильтр по категории:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {filters.categories.map((category) => (
+                                <Button
+                                  key={category.id}
+                                  size="sm"
+                                  variant={selectedCategories.includes(category.id) ? 'default' : 'outline'}
+                                  onClick={() => setSelectedCategories(toggleFilter(selectedCategories, category.id))}
+                                  className="h-7 text-xs px-2"
+                                >
+                                  {category.name}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+
                           <div>
                             <p className="text-xs font-medium mb-2">Фильтр по цвету:</p>
                             <div className="flex flex-wrap gap-1">
