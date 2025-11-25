@@ -8,6 +8,7 @@ import { useSearchParams } from 'react-router-dom';
 
 const USER_BALANCE_API = 'https://functions.poehali.dev/68409278-10ab-4733-b48d-b1b4360620a1';
 const PAYMENT_API = 'https://functions.poehali.dev/90e72041-1a9e-4a24-9d4b-dc3347bdbe77';
+const PAYMENT_HISTORY_API = 'https://functions.poehali.dev/4956bfc7-c402-4191-8f90-2aeffeb2c1be';
 
 interface BalanceInfo {
   balance: number;
@@ -17,22 +18,37 @@ interface BalanceInfo {
   can_generate: boolean;
 }
 
+interface PaymentTransaction {
+  id: string;
+  amount: number;
+  payment_method: string;
+  status: string;
+  order_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function WalletTab() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [balanceInfo, setBalanceInfo] = useState<BalanceInfo | null>(null);
+  const [paymentHistory, setPaymentHistory] = useState<PaymentTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchBalance();
+      fetchPaymentHistory();
     }
     
     const payment = searchParams.get('payment');
     if (payment === 'success') {
       toast.success('Платеж успешно обработан!');
-      setTimeout(() => fetchBalance(), 1000);
+      setTimeout(() => {
+        fetchBalance();
+        fetchPaymentHistory();
+      }, 1000);
     } else if (payment === 'failed') {
       toast.error('Ошибка оплаты');
     }
@@ -58,6 +74,21 @@ export default function WalletTab() {
       toast.error('Ошибка соединения');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchPaymentHistory = async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch(`${PAYMENT_HISTORY_API}?user_id=${user.id}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        setPaymentHistory(data.transactions);
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки истории платежей:', error);
     }
   };
 
@@ -196,6 +227,63 @@ export default function WalletTab() {
           </CardContent>
         </Card>
       </div>
+
+      {paymentHistory.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Icon name="Receipt" size={24} />
+              История платежей
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {paymentHistory.map((transaction) => (
+                <div 
+                  key={transaction.id} 
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium">{transaction.amount.toFixed(2)} ₽</span>
+                      {transaction.status === 'completed' && (
+                        <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                          <Icon name="CheckCircle2" size={12} />
+                          Завершен
+                        </span>
+                      )}
+                      {transaction.status === 'pending' && (
+                        <span className="inline-flex items-center gap-1 text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">
+                          <Icon name="Clock" size={12} />
+                          Ожидание
+                        </span>
+                      )}
+                      {transaction.status === 'failed' && (
+                        <span className="inline-flex items-center gap-1 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                          <Icon name="XCircle" size={12} />
+                          Ошибка
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(transaction.created_at).toLocaleDateString('ru-RU', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                  <div className="text-right text-xs text-muted-foreground">
+                    ID: {transaction.order_id || transaction.id.slice(0, 8)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
