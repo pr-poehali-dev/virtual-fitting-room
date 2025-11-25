@@ -1,3 +1,4 @@
+import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
@@ -72,6 +73,8 @@ export default function ReplicateClothingSelector({
   handleCustomClothingUpload,
   isGenerating
 }: ReplicateClothingSelectorProps) {
+  const [filtersExpanded, setFiltersExpanded] = React.useState(false);
+
   const toggleFilter = (array: number[], value: number) => {
     return array.includes(value)
       ? array.filter(v => v !== value)
@@ -169,57 +172,74 @@ export default function ReplicateClothingSelector({
         </div>
 
         {filters && (
-          <div className="space-y-3">
-            <div>
-              <p className="text-xs font-medium mb-2">Фильтр по категории:</p>
-              <div className="flex flex-wrap gap-1">
-                {filters.categories.map((category) => (
-                  <Button
-                    key={category.id}
-                    size="sm"
-                    variant={selectedCategories.includes(category.id) ? 'default' : 'outline'}
-                    onClick={() => setSelectedCategories(toggleFilter(selectedCategories, category.id))}
-                    className="h-7 text-xs px-2"
-                  >
-                    {category.name}
-                  </Button>
-                ))}
-              </div>
-            </div>
+          <div className="border rounded-lg">
+            <button
+              type="button"
+              onClick={() => setFiltersExpanded(!filtersExpanded)}
+              className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+            >
+              <span className="text-sm font-medium">Фильтры каталога</span>
+              <Icon 
+                name={filtersExpanded ? "ChevronUp" : "ChevronDown"} 
+                size={20}
+                className="text-muted-foreground"
+              />
+            </button>
+            
+            {filtersExpanded && (
+              <div className="p-3 pt-0 space-y-3 border-t">
+                <div>
+                  <p className="text-xs font-medium mb-2">Фильтр по категории:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {filters.categories.map((category) => (
+                      <Button
+                        key={category.id}
+                        size="sm"
+                        variant={selectedCategories.includes(category.id) ? 'default' : 'outline'}
+                        onClick={() => setSelectedCategories(toggleFilter(selectedCategories, category.id))}
+                        className="h-7 text-xs px-2"
+                      >
+                        {category.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
 
-            <div>
-              <p className="text-xs font-medium mb-2">Фильтр по цвету:</p>
-              <div className="flex flex-wrap gap-1">
-                {filters.colors.map((color) => (
-                  <Button
-                    key={color.id}
-                    size="sm"
-                    variant={selectedColors.includes(color.id) ? 'default' : 'outline'}
-                    onClick={() => setSelectedColors(toggleFilter(selectedColors, color.id))}
-                    className="h-7 text-xs px-2"
-                  >
-                    {color.name}
-                  </Button>
-                ))}
-              </div>
-            </div>
+                <div>
+                  <p className="text-xs font-medium mb-2">Фильтр по цвету:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {filters.colors.map((color) => (
+                      <Button
+                        key={color.id}
+                        size="sm"
+                        variant={selectedColors.includes(color.id) ? 'default' : 'outline'}
+                        onClick={() => setSelectedColors(toggleFilter(selectedColors, color.id))}
+                        className="h-7 text-xs px-2"
+                      >
+                        {color.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
 
-            <div>
-              <p className="text-xs font-medium mb-2">Фильтр по архетипу:</p>
-              <div className="flex flex-wrap gap-1">
-                {filters.archetypes.map((arch) => (
-                  <Button
-                    key={arch.id}
-                    size="sm"
-                    variant={selectedArchetypes.includes(arch.id) ? 'default' : 'outline'}
-                    onClick={() => setSelectedArchetypes(toggleFilter(selectedArchetypes, arch.id))}
-                    className="h-7 text-xs px-2"
-                  >
-                    {arch.name}
-                  </Button>
-                ))}
+                <div>
+                  <p className="text-xs font-medium mb-2">Фильтр по архетипу:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {filters.archetypes.map((arch) => (
+                      <Button
+                        key={arch.id}
+                        size="sm"
+                        variant={selectedArchetypes.includes(arch.id) ? 'default' : 'outline'}
+                        onClick={() => setSelectedArchetypes(toggleFilter(selectedArchetypes, arch.id))}
+                        className="h-7 text-xs px-2"
+                      >
+                        {arch.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
