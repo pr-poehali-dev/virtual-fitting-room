@@ -636,6 +636,7 @@ export default function ReplicateTryOn() {
               waitingContinue={waitingContinue}
               currentStep={currentStep}
               totalSteps={totalSteps}
+              promptHints={promptHints}
               handleDownloadImage={handleDownloadImage}
               setShowSaveDialog={setShowSaveDialog}
               handleReset={handleReset}
