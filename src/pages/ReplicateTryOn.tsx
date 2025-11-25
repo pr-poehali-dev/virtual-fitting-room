@@ -3,27 +3,15 @@ import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
-import ImageViewer from '@/components/ImageViewer';
 import { Link } from 'react-router-dom';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import ReplicateImageUpload from '@/components/replicate/ReplicateImageUpload';
+import ReplicateClothingSelector from '@/components/replicate/ReplicateClothingSelector';
+import ReplicateResultPanel from '@/components/replicate/ReplicateResultPanel';
+import ReplicateSaveDialog from '@/components/replicate/ReplicateSaveDialog';
 
 interface ClothingItem {
   id: string;
@@ -206,12 +194,6 @@ export default function ReplicateTryOn() {
     setSelectedClothingItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, category } : item))
     );
-  };
-
-  const toggleFilter = (array: number[], value: number) => {
-    return array.includes(value)
-      ? array.filter(v => v !== value)
-      : [...array, value];
   };
 
   const handleGenerate = async () => {
@@ -408,226 +390,29 @@ export default function ReplicateTryOn() {
                 )}
 
                 <div className="space-y-6">
-                  <div>
-                    <Label className="text-lg font-semibold mb-4 block">
-                      <Icon name="User" className="inline mr-2" size={20} />
-                      1. Загрузите фото модели
-                    </Label>
-                    <div className="relative">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                        id="model-upload"
-                        disabled={isGenerating}
-                      />
-                      <label
-                        htmlFor="model-upload"
-                        className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-8 cursor-pointer transition-colors ${
-                          uploadedImage
-                            ? 'border-primary bg-primary/5'
-                            : 'border-gray-300 hover:border-primary'
-                        } ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        {uploadedImage ? (
-                          <div className="relative w-full">
-                            <ImageViewer src={uploadedImage} alt="Uploaded" className="rounded-lg" />
-                            <div className="mt-2 text-center">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                disabled={isGenerating}
-                              >
-                                <Icon name="Upload" className="mr-2" size={16} />
-                                Заменить фото
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <Icon name="Upload" size={48} className="text-gray-400 mb-4" />
-                            <p className="text-sm text-gray-600 text-center">
-                              Нажмите для загрузки фото
-                            </p>
-                          </>
-                        )}
-                      </label>
-                    </div>
-                  </div>
+                  <ReplicateImageUpload
+                    uploadedImage={uploadedImage}
+                    handleImageUpload={handleImageUpload}
+                    isGenerating={isGenerating}
+                  />
 
-                  <div>
-                    <Label className="text-lg font-semibold mb-4 block">
-                      <Icon name="Shirt" className="inline mr-2" size={20} />
-                      2. Выберите вещи для примерки
-                    </Label>
-
-                    {selectedClothingItems.length > 0 && (
-                      <div className="mb-4 space-y-3">
-                        <p className="text-sm text-muted-foreground">
-                          Выбрано: {selectedClothingItems.length}
-                        </p>
-                        <div className="space-y-3">
-                          {selectedClothingItems.map((item) => (
-                            <div key={item.id} className="flex gap-3 p-3 border rounded-lg bg-card">
-                              <div className="relative group flex-shrink-0">
-                                <ImageViewer
-                                  src={item.image}
-                                  alt={item.name || 'Clothing'}
-                                  className="w-20 h-20 object-contain rounded border-2 border-primary bg-muted"
-                                />
-                                <button
-                                  onClick={() => removeClothingItem(item.id)}
-                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  disabled={isGenerating}
-                                >
-                                  <Icon name="X" size={14} />
-                                </button>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate mb-2">
-                                  {item.name || 'Одежда'}
-                                </p>
-                                <Select
-                                  value={item.category || 'upper_body'}
-                                  onValueChange={(value) => updateClothingCategory(item.id, value)}
-                                  disabled={isGenerating}
-                                >
-                                  <SelectTrigger className="h-8 text-xs">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {REPLICATE_CATEGORIES.map((cat) => (
-                                      <SelectItem key={cat.value} value={cat.value} className="text-xs">
-                                        {cat.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="space-y-3">
-                      <div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          onChange={handleCustomClothingUpload}
-                          className="hidden"
-                          id="clothing-upload"
-                          disabled={isGenerating}
-                        />
-                        <label htmlFor="clothing-upload">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full"
-                            disabled={isGenerating}
-                            asChild
-                          >
-                            <span>
-                              <Icon name="Upload" className="mr-2" size={16} />
-                              Загрузить свои вещи
-                            </span>
-                          </Button>
-                        </label>
-                      </div>
-
-                      {filters && (
-                        <div className="space-y-3">
-                          <div>
-                            <p className="text-xs font-medium mb-2">Фильтр по категории:</p>
-                            <div className="flex flex-wrap gap-1">
-                              {filters.categories.map((category) => (
-                                <Button
-                                  key={category.id}
-                                  size="sm"
-                                  variant={selectedCategories.includes(category.id) ? 'default' : 'outline'}
-                                  onClick={() => setSelectedCategories(toggleFilter(selectedCategories, category.id))}
-                                  className="h-7 text-xs px-2"
-                                >
-                                  {category.name}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div>
-                            <p className="text-xs font-medium mb-2">Фильтр по цвету:</p>
-                            <div className="flex flex-wrap gap-1">
-                              {filters.colors.map((color) => (
-                                <Button
-                                  key={color.id}
-                                  size="sm"
-                                  variant={selectedColors.includes(color.id) ? 'default' : 'outline'}
-                                  onClick={() => setSelectedColors(toggleFilter(selectedColors, color.id))}
-                                  className="h-7 text-xs px-2"
-                                >
-                                  {color.name}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div>
-                            <p className="text-xs font-medium mb-2">Фильтр по архетипу:</p>
-                            <div className="flex flex-wrap gap-1">
-                              {filters.archetypes.map((arch) => (
-                                <Button
-                                  key={arch.id}
-                                  size="sm"
-                                  variant={selectedArchetypes.includes(arch.id) ? 'default' : 'outline'}
-                                  onClick={() => setSelectedArchetypes(toggleFilter(selectedArchetypes, arch.id))}
-                                  className="h-7 text-xs px-2"
-                                >
-                                  {arch.name}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="max-h-64 overflow-y-auto border rounded-lg p-4">
-                        {clothingCatalog.length > 0 ? (
-                          <div className="grid grid-cols-3 gap-2">
-                            {clothingCatalog.map((item) => {
-                              const isSelected = selectedClothingItems.some(
-                                (i) => i.id === item.id
-                              );
-                              return (
-                                <div
-                                  key={item.id}
-                                  onClick={() => toggleClothingSelection(item)}
-                                  className={`cursor-pointer rounded-lg border-2 transition-all ${
-                                    isSelected
-                                      ? 'border-primary ring-2 ring-primary/20'
-                                      : 'border-transparent hover:border-gray-300'
-                                  } ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                >
-                                  <ImageViewer
-                                    src={item.image_url}
-                                    alt={item.name}
-                                    className="w-full h-20 object-contain rounded bg-muted"
-                                  />
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-center text-muted-foreground">
-                            Каталог пуст
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  <ReplicateClothingSelector
+                    selectedClothingItems={selectedClothingItems}
+                    clothingCatalog={clothingCatalog}
+                    filters={filters}
+                    selectedCategories={selectedCategories}
+                    selectedColors={selectedColors}
+                    selectedArchetypes={selectedArchetypes}
+                    setSelectedCategories={setSelectedCategories}
+                    setSelectedColors={setSelectedColors}
+                    setSelectedArchetypes={setSelectedArchetypes}
+                    toggleClothingSelection={toggleClothingSelection}
+                    removeClothingItem={removeClothingItem}
+                    updateClothingCategory={updateClothingCategory}
+                    handleCustomClothingUpload={handleCustomClothingUpload}
+                    isGenerating={isGenerating}
+                    REPLICATE_CATEGORIES={REPLICATE_CATEGORIES}
+                  />
 
                   <div>
                     <Label className="text-lg font-semibold mb-4 block">
@@ -685,137 +470,31 @@ export default function ReplicateTryOn() {
               </CardContent>
             </Card>
 
-            <Card className="animate-scale-in">
-              <CardHeader>
-                <CardTitle className="text-2xl">
-                  <Icon name="Image" className="inline mr-2" size={24} />
-                  Результат
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-8">
-                {isGenerating ? (
-                  <div className="flex flex-col items-center justify-center h-[500px] space-y-4">
-                    <Icon name="Loader2" className="animate-spin text-primary" size={64} />
-                    <p className="text-lg font-medium">Создаём образ...</p>
-                    <p className="text-sm text-muted-foreground text-center max-w-sm">
-                      Это может занять до 2 минут. AI анализирует выбранные вещи и создаёт реалистичный образ
-                    </p>
-                  </div>
-                ) : generatedImage ? (
-                  <div className="space-y-4">
-                    <ImageViewer
-                      src={generatedImage}
-                      alt="Generated result"
-                      className="rounded-lg"
-                    />
-                    <div className="flex flex-col gap-2">
-                      <div className="flex gap-2">
-                        <Button onClick={handleDownloadImage} className="flex-1">
-                          <Icon name="Download" className="mr-2" size={16} />
-                          Скачать
-                        </Button>
-                        <Button variant="outline" onClick={() => setShowSaveDialog(true)} className="flex-1">
-                          <Icon name="BookOpen" className="mr-2" size={16} />
-                          В лукбук
-                        </Button>
-                      </div>
-                      <Button variant="ghost" onClick={handleReset} className="w-full">
-                        <Icon name="RotateCcw" className="mr-2" size={16} />
-                        Новая примерка
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-[500px] text-center space-y-4">
-                    <Icon name="ImageOff" size={64} className="text-gray-300" />
-                    <div>
-                      <p className="text-lg font-medium mb-2">Здесь появится результат</p>
-                      <p className="text-sm text-muted-foreground max-w-sm">
-                        Загрузите фото модели, выберите вещи и нажмите "Создать образ"
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <ReplicateResultPanel
+              isGenerating={isGenerating}
+              generatedImage={generatedImage}
+              handleDownloadImage={handleDownloadImage}
+              setShowSaveDialog={setShowSaveDialog}
+              handleReset={handleReset}
+            />
           </div>
         </div>
       </div>
 
-      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Сохранить в лукбук</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6">
-            {lookbooks.length > 0 && (
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Выбрать существующий лукбук</Label>
-                <RadioGroup value={selectedLookbookId} onValueChange={setSelectedLookbookId}>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {lookbooks.map((lookbook) => (
-                      <div key={lookbook.id} className="flex items-center space-x-2">
-                        <RadioGroupItem value={lookbook.id} id={lookbook.id} />
-                        <Label htmlFor={lookbook.id} className="flex-1 cursor-pointer">
-                          {lookbook.name} ({lookbook.person_name})
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </RadioGroup>
-                <Button 
-                  onClick={handleSaveToExistingLookbook}
-                  disabled={!selectedLookbookId || isSaving}
-                  className="w-full"
-                >
-                  {isSaving ? 'Сохранение...' : 'Добавить в выбранный лукбук'}
-                </Button>
-              </div>
-            )}
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Или создать новый
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="lookbook-name">Название лукбука</Label>
-                <Input
-                  id="lookbook-name"
-                  placeholder="Например: Осенний стиль 2024"
-                  value={newLookbookName}
-                  onChange={(e) => setNewLookbookName(e.target.value)}
-                  disabled={isSaving}
-                />
-              </div>
-              <div>
-                <Label htmlFor="person-name">Имя персоны</Label>
-                <Input
-                  id="person-name"
-                  placeholder="Например: Анна"
-                  value={newLookbookPersonName}
-                  onChange={(e) => setNewLookbookPersonName(e.target.value)}
-                  disabled={isSaving}
-                />
-              </div>
-              <Button
-                onClick={handleSaveToNewLookbook}
-                disabled={!newLookbookName || !newLookbookPersonName || isSaving}
-                className="w-full"
-              >
-                {isSaving ? 'Создание...' : 'Создать новый лукбук'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ReplicateSaveDialog
+        showSaveDialog={showSaveDialog}
+        setShowSaveDialog={setShowSaveDialog}
+        lookbooks={lookbooks}
+        selectedLookbookId={selectedLookbookId}
+        setSelectedLookbookId={setSelectedLookbookId}
+        handleSaveToExistingLookbook={handleSaveToExistingLookbook}
+        isSaving={isSaving}
+        newLookbookName={newLookbookName}
+        setNewLookbookName={setNewLookbookName}
+        newLookbookPersonName={newLookbookPersonName}
+        setNewLookbookPersonName={setNewLookbookPersonName}
+        handleSaveToNewLookbook={handleSaveToNewLookbook}
+      />
     </Layout>
   );
 }
