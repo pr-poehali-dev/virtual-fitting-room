@@ -1,6 +1,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -43,6 +44,9 @@ export default function ReplicateSaveDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Сохранить в лукбук</DialogTitle>
+          <DialogDescription>
+            Добавьте сгенерированное изображение в существующий лукбук или создайте новый
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-6">
           {lookbooks.length > 0 && (
