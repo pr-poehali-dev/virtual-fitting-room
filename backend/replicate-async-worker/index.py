@@ -7,10 +7,10 @@ from datetime import datetime
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Process ONE pending Replicate task from queue
+    Business: Start Replicate prediction for ONE pending task (async, no waiting)
     Args: event - dict with httpMethod (cron trigger or manual)
           context - object with request_id attribute
-    Returns: HTTP response with processing result
+    Returns: HTTP response with task_id and prediction_id
     '''
     method: str = event.get('httpMethod', 'GET')
     
@@ -63,51 +63,41 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         task_id, person_image, garments_json, prompt_hints = row
         garments = json.loads(garments_json)
+        total_steps = len(garments)
+        
+        first_garment = garments[0]
+        garment_image = first_garment.get('image') if isinstance(first_garment, dict) else first_garment
+        garment_category = first_garment.get('category', 'upper_body') if isinstance(first_garment, dict) else 'upper_body'
+        
+        valid_categories = ['upper_body', 'lower_body', 'dresses', 'shoes']
+        if garment_category not in valid_categories:
+            garment_category = 'upper_body'
+        
+        input_data = {
+            "human_img": person_image,
+            "garm_img": garment_image,
+            "category": garment_category,
+        }
+        
+        if prompt_hints:
+            input_data["garment_des"] = prompt_hints
+        
+        client = replicate.Client(api_token=api_token)
+        
+        prediction = client.predictions.create(
+            version="c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
+            input=input_data
+        )
         
         cursor.execute('''
             UPDATE replicate_tasks
-            SET status = 'processing', updated_at = %s
+            SET status = 'processing', 
+                prediction_id = %s,
+                current_step = 1,
+                total_steps = %s,
+                updated_at = %s
             WHERE id = %s
-        ''', (datetime.utcnow(), task_id))
-        conn.commit()
-        
-        cursor.close()
-        conn.close()
-        
-        os.environ['REPLICATE_API_TOKEN'] = api_token
-        current_image = person_image
-        
-        for idx, garment in enumerate(garments):
-            garment_image = garment.get('image') if isinstance(garment, dict) else garment
-            garment_category = garment.get('category', 'upper_body') if isinstance(garment, dict) else 'upper_body'
-            
-            valid_categories = ['upper_body', 'lower_body', 'dresses', 'shoes']
-            if garment_category not in valid_categories:
-                garment_category = 'upper_body'
-            
-            input_data = {
-                "human_img": current_image,
-                "garm_img": garment_image,
-                "category": garment_category,
-            }
-            
-            if prompt_hints:
-                input_data["garment_des"] = prompt_hints
-            
-            output = replicate.run(
-                "cuuupid/idm-vton:c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
-                input=input_data
-            )
-            current_image = output if isinstance(output, str) else str(output)
-        
-        conn = psycopg2.connect(database_url)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            UPDATE replicate_tasks
-            SET status = 'completed', result_url = %s, updated_at = %s
-            WHERE id = %s
-        ''', (current_image, datetime.utcnow(), task_id))
+        ''', (prediction.id, total_steps, datetime.utcnow(), task_id))
         
         conn.commit()
         cursor.close()
@@ -119,8 +109,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False,
             'body': json.dumps({
                 'task_id': task_id,
-                'status': 'completed',
-                'result_url': current_image
+                'prediction_id': prediction.id,
+                'status': 'started',
+                'step': f'1/{total_steps}'
             })
         }
         
@@ -145,5 +136,5 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'isBase64Encoded': False,
-            'body': json.dumps({'error': f'Processing failed: {str(e)}'})
+            'body': json.dumps({'error': f'Failed to start prediction: {str(e)}'})
         }
