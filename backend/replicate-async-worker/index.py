@@ -73,16 +73,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             raise ValueError('Garment image is required')
         
         valid_categories = ['upper_body', 'lower_body', 'dresses']
-        if not garment_category or garment_category not in valid_categories:
+        if not garment_category or garment_category == '' or garment_category not in valid_categories:
             garment_category = 'upper_body'
         
         input_data = {
             "human_img": person_image,
             "garm_img": garment_image,
-            "category": garment_category,
+            "category": str(garment_category),
         }
         
-        if prompt_hints and prompt_hints.strip():
+        if prompt_hints and isinstance(prompt_hints, str) and prompt_hints.strip():
             input_data["garment_des"] = prompt_hints.strip()
         
         client = replicate.Client(api_token=api_token)
