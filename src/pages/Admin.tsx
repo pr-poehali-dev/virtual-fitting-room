@@ -108,7 +108,8 @@ export default function Admin() {
     description: '',
     category_ids: [] as number[],
     color_ids: [] as number[],
-    archetype_ids: [] as number[]
+    archetype_ids: [] as number[],
+    replicate_category: 'upper_body' as string
   });
   const [showCropper, setShowCropper] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string>('');
@@ -429,7 +430,8 @@ export default function Admin() {
           description: '',
           category_ids: [],
           color_ids: [],
-          archetype_ids: []
+          archetype_ids: [],
+          replicate_category: 'upper_body'
         });
         setUploadSource('url');
         fetchCatalogData();
@@ -1065,6 +1067,33 @@ export default function Admin() {
                             value={newClothing.description}
                             onChange={(e) => setNewClothing({ ...newClothing, description: e.target.value })}
                           />
+                          
+                          <div>
+                            <p className="text-sm font-medium mb-2">Категория для Replicate примерочной:</p>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                variant={newClothing.replicate_category === 'upper_body' ? 'default' : 'outline'}
+                                onClick={() => setNewClothing({ ...newClothing, replicate_category: 'upper_body' })}
+                              >
+                                Верх (топы, рубашки, куртки)
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={newClothing.replicate_category === 'lower_body' ? 'default' : 'outline'}
+                                onClick={() => setNewClothing({ ...newClothing, replicate_category: 'lower_body' })}
+                              >
+                                Низ (брюки, юбки, шорты)
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={newClothing.replicate_category === 'dresses' ? 'default' : 'outline'}
+                                onClick={() => setNewClothing({ ...newClothing, replicate_category: 'dresses' })}
+                              >
+                                Платья и комбинезоны
+                              </Button>
+                            </div>
+                          </div>
                           
                           <div>
                             <p className="text-sm font-medium mb-2">Цвета:</p>

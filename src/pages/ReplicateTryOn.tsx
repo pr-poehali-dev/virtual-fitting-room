@@ -17,6 +17,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ClothingItem {
   id: string;
@@ -32,9 +39,22 @@ interface SelectedClothing {
   id: string;
   image: string;
   name?: string;
+  category?: string;
 }
 
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
+
+const CLOTHING_CATEGORIES = [
+  'upper_body',
+  'lower_body',
+  'dresses',
+];
+
+const CATEGORY_LABELS: Record<string, string> = {
+  'upper_body': 'Верх (топы, рубашки, куртки)',
+  'lower_body': 'Низ (брюки, юбки, шорты)',
+  'dresses': 'Платья и комбинезоны',
+};
 
 export default function ReplicateTryOn() {
   const { user } = useAuth();
@@ -115,6 +135,7 @@ export default function ReplicateTryOn() {
             id,
             image: reader.result as string,
             name: file.name,
+            category: 'upper_body',
           },
         ]);
       };
@@ -135,6 +156,7 @@ export default function ReplicateTryOn() {
           id: item.id,
           image: item.image_url,
           name: item.name,
+          category: 'upper_body',
         },
       ]);
     }
@@ -142,6 +164,12 @@ export default function ReplicateTryOn() {
 
   const removeClothingItem = (id: string) => {
     setSelectedClothingItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const updateClothingCategory = (id: string, category: string) => {
+    setSelectedClothingItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, category } : item))
+    );
   };
 
   const handleGenerate = async () => {
@@ -172,7 +200,10 @@ export default function ReplicateTryOn() {
         },
         body: JSON.stringify({
           person_image: uploadedImage,
-          garment_images: selectedClothingItems.map((item) => item.image),
+          garments: selectedClothingItems.map((item) => ({
+            image: item.image,
+            category: item.category || 'upper_body',
+          })),
           prompt_hints: promptHints,
         }),
       });
@@ -391,25 +422,48 @@ export default function ReplicateTryOn() {
                     </Label>
 
                     {selectedClothingItems.length > 0 && (
-                      <div className="mb-4">
-                        <p className="text-sm text-muted-foreground mb-2">
+                      <div className="mb-4 space-y-3">
+                        <p className="text-sm text-muted-foreground">
                           Выбрано: {selectedClothingItems.length}
                         </p>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="space-y-3">
                           {selectedClothingItems.map((item) => (
-                            <div key={item.id} className="relative group">
-                              <ImageViewer
-                                src={item.image}
-                                alt={item.name || 'Clothing'}
-                                className="w-full h-24 object-cover rounded border-2 border-primary"
-                              />
-                              <button
-                                onClick={() => removeClothingItem(item.id)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                disabled={isGenerating}
-                              >
-                                <Icon name="X" size={16} />
-                              </button>
+                            <div key={item.id} className="flex gap-3 p-3 border rounded-lg bg-card">
+                              <div className="relative group flex-shrink-0">
+                                <ImageViewer
+                                  src={item.image}
+                                  alt={item.name || 'Clothing'}
+                                  className="w-20 h-20 object-cover rounded border-2 border-primary"
+                                />
+                                <button
+                                  onClick={() => removeClothingItem(item.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  disabled={isGenerating}
+                                >
+                                  <Icon name="X" size={14} />
+                                </button>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate mb-2">
+                                  {item.name || 'Одежда'}
+                                </p>
+                                <Select
+                                  value={item.category || 'upper_body'}
+                                  onValueChange={(value) => updateClothingCategory(item.id, value)}
+                                  disabled={isGenerating}
+                                >
+                                  <SelectTrigger className="h-8 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {CLOTHING_CATEGORIES.map((cat) => (
+                                      <SelectItem key={cat} value={cat} className="text-xs">
+                                        {CATEGORY_LABELS[cat]}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </div>
                           ))}
                         </div>

@@ -5,8 +5,8 @@ from typing import Dict, Any
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Generate virtual try-on with multiple garments using Replicate API (auto-detects category)
-    Args: event - dict with httpMethod, body (person_image, garment_images[], prompt_hints)
+    Business: Generate virtual try-on with multiple garments using Replicate API with categories
+    Args: event - dict with httpMethod, body (person_image, garments[{image, category}], prompt_hints)
           context - object with request_id attribute
     Returns: HTTP response with generated image URL
     '''
@@ -43,7 +43,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     body_data = json.loads(event.get('body', '{}'))
     person_image = body_data.get('person_image')
-    garment_images = body_data.get('garment_images', [])
+    garments = body_data.get('garments', [])
     prompt_hints = body_data.get('prompt_hints', '')
     
     if not person_image:
@@ -54,20 +54,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'person_image is required'})
         }
     
-    if not garment_images or len(garment_images) == 0:
+    if not garments or len(garments) == 0:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'isBase64Encoded': False,
-            'body': json.dumps({'error': 'At least one garment_image is required'})
+            'body': json.dumps({'error': 'At least one garment is required'})
         }
     
     try:
         os.environ['REPLICATE_API_TOKEN'] = api_token
         
+        first_garment = garments[0]
+        garment_image = first_garment.get('image') if isinstance(first_garment, dict) else first_garment
+        garment_category = first_garment.get('category', 'upper_body') if isinstance(first_garment, dict) else 'upper_body'
+        
         input_data = {
             "human_img": person_image,
-            "garm_img": garment_images[0],
+            "garm_img": garment_image,
+            "category": garment_category,
         }
         
         if prompt_hints:
@@ -86,7 +91,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False,
             'body': json.dumps({
                 'result_url': result_url,
-                'garments_count': len(garment_images)
+                'garments_count': len(garments),
+                'category': garment_category
             })
         }
         

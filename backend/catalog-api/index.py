@@ -63,7 +63,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if action == 'list':
                 # First, get all clothing items
                 base_query = """
-                    SELECT id, image_url, name, description, created_at
+                    SELECT id, image_url, name, description, replicate_category, created_at
                     FROM clothing_catalog
                     WHERE 1=1
                 """
@@ -282,6 +282,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             category_ids = body_data.get('category_ids', [])
             color_ids = body_data.get('color_ids', [])
             archetype_ids = body_data.get('archetype_ids', [])
+            replicate_category = body_data.get('replicate_category', 'upper_body')
             
             if not image_url:
                 return {
@@ -320,10 +321,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             # Insert clothing item with processed image
             cursor.execute("""
-                INSERT INTO clothing_catalog (image_url, name, description)
-                VALUES (%s, %s, %s)
+                INSERT INTO clothing_catalog (image_url, name, description, replicate_category)
+                VALUES (%s, %s, %s, %s)
                 RETURNING id
-            """, (processed_image_url, name, description))
+            """, (processed_image_url, name, description, replicate_category))
             
             clothing_id = cursor.fetchone()['id']
             
