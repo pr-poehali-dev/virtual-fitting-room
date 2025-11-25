@@ -62,6 +62,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         task_id, person_image, garments_json, prompt_hints = row
+        
+        if not person_image or not isinstance(person_image, str) or len(person_image) < 50:
+            raise ValueError('Person image is required and must be valid base64')
+        
         garments = json.loads(garments_json)
         total_steps = len(garments)
         
@@ -69,8 +73,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         garment_image = first_garment.get('image') if isinstance(first_garment, dict) else first_garment
         garment_category = first_garment.get('category', 'upper_body') if isinstance(first_garment, dict) else 'upper_body'
         
-        if not garment_image:
-            raise ValueError('Garment image is required')
+        if not garment_image or not isinstance(garment_image, str) or len(garment_image) < 50:
+            raise ValueError('Garment image is required and must be valid base64')
         
         valid_categories = ['upper_body', 'lower_body', 'dresses']
         if not garment_category or garment_category == '' or garment_category not in valid_categories:

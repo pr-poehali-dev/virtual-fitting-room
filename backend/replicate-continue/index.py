@@ -90,7 +90,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': f'Cannot continue task with status: {status}'})
             }
         
-        if not intermediate_result:
+        if not intermediate_result or not isinstance(intermediate_result, str) or len(intermediate_result) < 50:
             cursor.close()
             conn.close()
             return {
@@ -116,8 +116,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         garment_image = next_garment.get('image') if isinstance(next_garment, dict) else next_garment
         garment_category = next_garment.get('category', 'upper_body') if isinstance(next_garment, dict) else 'upper_body'
         
-        if not garment_image:
-            raise ValueError('Garment image is required')
+        if not garment_image or not isinstance(garment_image, str) or len(garment_image) < 50:
+            raise ValueError('Garment image is required and must be valid base64')
         
         valid_categories = ['upper_body', 'lower_body', 'dresses']
         if not garment_category or garment_category == '' or garment_category not in valid_categories:
