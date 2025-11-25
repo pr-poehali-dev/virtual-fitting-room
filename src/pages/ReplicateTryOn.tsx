@@ -164,6 +164,23 @@ export default function ReplicateTryOn() {
     e.target.value = '';
   };
 
+  const mapCategoryFromCatalog = (item: ClothingItem): string => {
+    if (item.replicate_category) {
+      return item.replicate_category;
+    }
+    
+    const firstCategory = item.categories[0]?.toLowerCase() || '';
+    
+    if (firstCategory.includes('платье') || firstCategory.includes('сарафан')) {
+      return 'dresses';
+    }
+    if (firstCategory.includes('брюк') || firstCategory.includes('джинс') || 
+        firstCategory.includes('шорт') || firstCategory.includes('юбк')) {
+      return 'lower_body';
+    }
+    return 'upper_body';
+  };
+
   const toggleClothingSelection = (item: ClothingItem) => {
     const exists = selectedClothingItems.find((i) => i.id === item.id);
     if (exists) {
@@ -175,7 +192,7 @@ export default function ReplicateTryOn() {
           id: item.id,
           image: item.image_url,
           name: item.name,
-          category: item.replicate_category || item.categories[0] || '',
+          category: mapCategoryFromCatalog(item),
         },
       ]);
     }
@@ -189,20 +206,6 @@ export default function ReplicateTryOn() {
     setSelectedClothingItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, category } : item))
     );
-  };
-
-  const mapCategoryToReplicate = (category: string): string => {
-    const lowerCategory = category.toLowerCase();
-    
-    if (lowerCategory.includes('платье') || lowerCategory.includes('сарафан')) {
-      return 'dresses';
-    }
-    if (lowerCategory.includes('брюк') || lowerCategory.includes('джинс') || 
-        lowerCategory.includes('шорт') || lowerCategory.includes('юбк') ||
-        lowerCategory.includes('lower')) {
-      return 'lower_body';
-    }
-    return 'upper_body';
   };
 
   const handleGenerate = async () => {
@@ -235,7 +238,7 @@ export default function ReplicateTryOn() {
           person_image: uploadedImage,
           garments: selectedClothingItems.map((item) => ({
             image: item.image,
-            category: mapCategoryToReplicate(item.category || ''),
+            category: item.category || 'upper_body',
           })),
           prompt_hints: promptHints,
         }),

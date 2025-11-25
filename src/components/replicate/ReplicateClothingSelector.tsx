@@ -117,14 +117,18 @@ export default function ReplicateClothingSelector({
                     disabled={isGenerating}
                   >
                     <SelectTrigger className="h-8 text-xs">
-                      <SelectValue />
+                      <SelectValue placeholder="Выберите категорию" />
                     </SelectTrigger>
                     <SelectContent>
-                      {filters?.categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.name} className="text-xs">
-                          {cat.name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="upper_body" className="text-xs">
+                        Верх (Топы, Рубашки, Жакеты)
+                      </SelectItem>
+                      <SelectItem value="lower_body" className="text-xs">
+                        Низ (Брюки, Юбки, Шорты)
+                      </SelectItem>
+                      <SelectItem value="dresses" className="text-xs">
+                        Платья и Сарафаны
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
