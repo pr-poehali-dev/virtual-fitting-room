@@ -3,6 +3,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Icon from '@/components/ui/icon';
 import ImageViewer from '@/components/ImageViewer';
+import { useAuth } from '@/context/AuthContext';
+import { Link } from 'react-router-dom';
 
 interface ClothingItem {
   id: string;
@@ -69,6 +71,8 @@ export default function VirtualFittingControls({
   loadingProgress,
   handleCancelGeneration
 }: VirtualFittingControlsProps) {
+  const { user } = useAuth();
+  
   const toggleFilter = (array: number[], value: number) => {
     return array.includes(value)
       ? array.filter(v => v !== value)
@@ -78,6 +82,35 @@ export default function VirtualFittingControls({
   return (
     <Card className="animate-scale-in">
       <CardContent className="p-8">
+        {!user && (
+          <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+            <div className="flex items-start gap-3">
+              <Icon name="Info" className="text-primary mt-0.5 flex-shrink-0" size={20} />
+              <div>
+                <p className="text-sm font-medium text-primary mb-1">
+                  Требуется авторизация
+                </p>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Для генерации изображений необходимо войти в аккаунт. 
+                  Новые пользователи получают 3 бесплатные примерки.
+                </p>
+                <div className="flex gap-2">
+                  <Link to="/login">
+                    <Button size="sm" variant="default">
+                      Войти
+                    </Button>
+                  </Link>
+                  <Link to="/register">
+                    <Button size="sm" variant="outline">
+                      Регистрация
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium mb-3">
