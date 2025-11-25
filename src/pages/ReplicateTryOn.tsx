@@ -219,13 +219,29 @@ export default function ReplicateTryOn() {
       return;
     }
 
+    if (selectedClothingItems.length > 3) {
+      toast.error('Максимум 3 вещи за раз (примерка занимает ~10 сек на вещь)');
+      return;
+    }
+
     if (!user) {
       toast.error('Требуется авторизация');
       return;
     }
 
+    const itemsWithoutCategory = selectedClothingItems.filter(item => !item.category);
+    if (itemsWithoutCategory.length > 0) {
+      toast.error('Укажите категорию для всех выбранных вещей');
+      return;
+    }
+
     setIsGenerating(true);
     setGeneratedImage(null);
+
+    const estimatedTime = selectedClothingItems.length * 10;
+    toast.info(`Генерация займёт ~${estimatedTime} секунд. Не закрывайте страницу!`, {
+      duration: 5000
+    });
 
     try {
       const response = await fetch('https://functions.poehali.dev/bb741663-c984-4bcb-b42e-c99793fd7e10', {
@@ -254,7 +270,15 @@ export default function ReplicateTryOn() {
       toast.success('Изображение сгенерировано!');
     } catch (error: any) {
       console.error('Generation error:', error);
-      toast.error(error.message || 'Ошибка при генерации изображения');
+      const errorMsg = error.message || 'Ошибка при генерации изображения';
+      
+      if (errorMsg.includes('timeout') || errorMsg.includes('Execution timeout')) {
+        toast.error('Генерация заняла слишком много времени. Попробуйте выбрать меньше вещей (1-2 макс)', {
+          duration: 6000
+        });
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setIsGenerating(false);
     }
