@@ -69,6 +69,10 @@ export default function ReplicateTryOn() {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
   const [generationStatus, setGenerationStatus] = useState<string>('');
+  const [intermediateResult, setIntermediateResult] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [totalSteps, setTotalSteps] = useState<number>(0);
+  const [waitingContinue, setWaitingContinue] = useState<boolean>(false);
 
   useEffect(() => {
     fetchFilters();
@@ -304,19 +308,30 @@ export default function ReplicateTryOn() {
         }
 
         const data = await response.json();
+        setCurrentStep(data.current_step || 0);
+        setTotalSteps(data.total_steps || 0);
         
         if (data.status === 'pending') {
           setGenerationStatus('В очереди...');
         } else if (data.status === 'processing') {
-          setGenerationStatus('Обрабатывается...');
+          setGenerationStatus(`Обрабатывается... Шаг ${data.current_step}/${data.total_steps}`);
+        } else if (data.status === 'waiting_continue') {
+          setIntermediateResult(data.intermediate_result);
+          setIsGenerating(false);
+          setWaitingContinue(true);
+          setGenerationStatus('');
+          toast.success(`Шаг ${data.current_step}/${data.total_steps} готов!`);
+          if (pollingInterval) clearInterval(pollingInterval);
         } else if (data.status === 'completed') {
           setGeneratedImage(data.result_url);
           setIsGenerating(false);
+          setWaitingContinue(false);
           setGenerationStatus('');
-          toast.success('Изображение готово!');
+          toast.success('Все шаги завершены!');
           if (pollingInterval) clearInterval(pollingInterval);
         } else if (data.status === 'failed') {
           setIsGenerating(false);
+          setWaitingContinue(false);
           setGenerationStatus('');
           toast.error(data.error_message || 'Ошибка генерации');
           if (pollingInterval) clearInterval(pollingInterval);
@@ -329,6 +344,38 @@ export default function ReplicateTryOn() {
     setPollingInterval(interval);
   };
 
+  const handleContinueGeneration = async () => {
+    if (!taskId) return;
+
+    setWaitingContinue(false);
+    setIsGenerating(true);
+    setGenerationStatus('Запуск следующего шага...');
+
+    try {
+      const response = await fetch('https://functions.poehali.dev/fdb150a0-d5ba-47ec-9d9a-e13595cd92d1', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ task_id: taskId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Ошибка продолжения генерации');
+      }
+
+      toast.success('Следующий шаг запущен!');
+      startPolling(taskId);
+    } catch (error: any) {
+      console.error('Continue error:', error);
+      toast.error(error.message || 'Ошибка продолжения генерации');
+      setIsGenerating(false);
+      setWaitingContinue(true);
+      setGenerationStatus('');
+    }
+  };
+
   const handleReset = () => {
     if (pollingInterval) {
       clearInterval(pollingInterval);
@@ -337,10 +384,14 @@ export default function ReplicateTryOn() {
     setUploadedImage(null);
     setSelectedClothingItems([]);
     setGeneratedImage(null);
+    setIntermediateResult(null);
     setPromptHints('');
     setTaskId(null);
     setIsGenerating(false);
+    setWaitingContinue(false);
     setGenerationStatus('');
+    setCurrentStep(0);
+    setTotalSteps(0);
   };
 
   const handleSaveToExistingLookbook = async () => {
@@ -414,10 +465,11 @@ export default function ReplicateTryOn() {
   };
 
   const handleDownloadImage = async () => {
-    if (!generatedImage) return;
+    const imageUrl = generatedImage || intermediateResult;
+    if (!imageUrl) return;
 
     try {
-      const response = await fetch(generatedImage);
+      const response = await fetch(imageUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -574,9 +626,14 @@ export default function ReplicateTryOn() {
             <ReplicateResultPanel
               isGenerating={isGenerating}
               generatedImage={generatedImage}
+              intermediateResult={intermediateResult}
+              waitingContinue={waitingContinue}
+              currentStep={currentStep}
+              totalSteps={totalSteps}
               handleDownloadImage={handleDownloadImage}
               setShowSaveDialog={setShowSaveDialog}
               handleReset={handleReset}
+              handleContinueGeneration={handleContinueGeneration}
             />
           </div>
         </div>

@@ -57,7 +57,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT status, result_url, error_message, created_at, updated_at
+            SELECT status, result_url, error_message, created_at, updated_at, current_step, total_steps, intermediate_result
             FROM replicate_tasks
             WHERE id = %s
         ''', (task_id,))
@@ -74,17 +74,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Task not found'})
             }
         
-        status, result_url, error_message, created_at, updated_at = row
+        status, result_url, error_message, created_at, updated_at, current_step, total_steps, intermediate_result = row
         
         response_data = {
             'task_id': task_id,
             'status': status,
+            'current_step': current_step or 0,
+            'total_steps': total_steps or 0,
             'created_at': created_at.isoformat() if created_at else None,
             'updated_at': updated_at.isoformat() if updated_at else None
         }
         
         if status == 'completed' and result_url:
             response_data['result_url'] = result_url
+        
+        if status == 'waiting_continue' and intermediate_result:
+            response_data['intermediate_result'] = intermediate_result
         
         if status == 'failed' and error_message:
             response_data['error_message'] = error_message

@@ -73,35 +73,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 output_url = prediction.output if isinstance(prediction.output, str) else str(prediction.output)
                 
                 if current_step < total_steps:
-                    next_garment = garments[current_step]
-                    garment_image = next_garment.get('image') if isinstance(next_garment, dict) else next_garment
-                    garment_category = next_garment.get('category', 'upper_body') if isinstance(next_garment, dict) else 'upper_body'
-                    
-                    valid_categories = ['upper_body', 'lower_body', 'dresses', 'shoes']
-                    if garment_category not in valid_categories:
-                        garment_category = 'upper_body'
-                    
-                    input_data = {
-                        "human_img": output_url,
-                        "garm_img": garment_image,
-                        "category": garment_category,
-                    }
-                    
-                    if prompt_hints:
-                        input_data["garment_des"] = prompt_hints
-                    
-                    next_prediction = client.predictions.create(
-                        version="c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
-                        input=input_data
-                    )
-                    
                     cursor.execute('''
                         UPDATE replicate_tasks
-                        SET prediction_id = %s,
-                            current_step = %s,
+                        SET status = 'waiting_continue',
+                            intermediate_result = %s,
+                            prediction_id = NULL,
                             updated_at = %s
                         WHERE id = %s
-                    ''', (next_prediction.id, current_step + 1, datetime.utcnow(), task_id))
+                    ''', (output_url, datetime.utcnow(), task_id))
                     
                 else:
                     cursor.execute('''

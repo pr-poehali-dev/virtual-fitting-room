@@ -1,0 +1,17 @@
+{
+  "tests": [
+    {
+      "name": "Continue task endpoint",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "task_id": "test-task-123"
+      },
+      "expectedStatus": 404,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

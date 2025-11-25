@@ -1,14 +1,12 @@
 {
   "tests": [
     {
-      "name": "Check task status",
+      "name": "Check task status without task_id",
       "method": "GET",
-      "queryStringParameters": {
-        "task_id": "test-task-id"
-      },
-      "expectedStatus": 404,
+      "path": "/",
+      "expectedStatus": 400,
       "expectedBody": {
-        "error": "Task not found"
+        "error": "task_id is required"
       },
       "bodyMatcher": "partial"
     }

@@ -6,17 +6,27 @@ import ImageViewer from '@/components/ImageViewer';
 interface ReplicateResultPanelProps {
   isGenerating: boolean;
   generatedImage: string | null;
+  intermediateResult: string | null;
+  waitingContinue: boolean;
+  currentStep: number;
+  totalSteps: number;
   handleDownloadImage: () => void;
   setShowSaveDialog: (show: boolean) => void;
   handleReset: () => void;
+  handleContinueGeneration: () => void;
 }
 
 export default function ReplicateResultPanel({
   isGenerating,
   generatedImage,
+  intermediateResult,
+  waitingContinue,
+  currentStep,
+  totalSteps,
   handleDownloadImage,
   setShowSaveDialog,
-  handleReset
+  handleReset,
+  handleContinueGeneration
 }: ReplicateResultPanelProps) {
   return (
     <Card className="animate-scale-in">
@@ -34,9 +44,51 @@ export default function ReplicateResultPanel({
             <p className="text-sm text-muted-foreground text-center max-w-sm">
               Это может занять до 2 минут. AI анализирует выбранные вещи и создаёт реалистичный образ
             </p>
+            {totalSteps > 1 && currentStep > 0 && (
+              <p className="text-sm font-medium text-primary">
+                Шаг {currentStep} из {totalSteps}
+              </p>
+            )}
+          </div>
+        ) : waitingContinue && intermediateResult ? (
+          <div className="space-y-4">
+            <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg mb-4">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                ✅ Шаг {currentStep} из {totalSteps} готов!
+              </p>
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                Проверьте результат и нажмите "Продолжить" для следующей вещи
+              </p>
+            </div>
+            <ImageViewer
+              src={intermediateResult}
+              alt="Промежуточный результат"
+              className="rounded-lg"
+            />
+            <div className="flex flex-col gap-2">
+              <Button onClick={handleContinueGeneration} size="lg" className="w-full">
+                <Icon name="ArrowRight" className="mr-2" size={20} />
+                Продолжить (шаг {currentStep + 1}/{totalSteps})
+              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleDownloadImage} variant="outline" className="flex-1">
+                  <Icon name="Download" className="mr-2" size={16} />
+                  Скачать текущий
+                </Button>
+                <Button variant="outline" onClick={handleReset} className="flex-1">
+                  <Icon name="RotateCcw" className="mr-2" size={16} />
+                  Начать заново
+                </Button>
+              </div>
+            </div>
           </div>
         ) : generatedImage ? (
           <div className="space-y-4">
+            <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg mb-4">
+              <p className="text-sm font-medium text-green-900 dark:text-green-100">
+                🎉 Все {totalSteps} шагов завершены!
+              </p>
+            </div>
             <ImageViewer
               src={generatedImage}
               alt="Generated result"
