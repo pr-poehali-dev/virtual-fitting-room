@@ -7,7 +7,7 @@ from datetime import datetime
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Check Replicate predictions and continue multi-garment chains
+    Business: Check Replicate predictions and set waiting_continue status (manual control)
     Args: event - dict with httpMethod (cron trigger every 10-30 sec)
           context - object with request_id attribute
     Returns: HTTP response with checked tasks count
