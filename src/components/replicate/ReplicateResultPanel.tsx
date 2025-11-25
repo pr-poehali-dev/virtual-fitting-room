@@ -15,6 +15,7 @@ interface ReplicateResultPanelProps {
   setShowSaveDialog: (show: boolean) => void;
   handleReset: () => void;
   handleContinueGeneration: () => void;
+  checkStatusManually: () => void;
 }
 
 export default function ReplicateResultPanel({
@@ -28,7 +29,8 @@ export default function ReplicateResultPanel({
   handleDownloadImage,
   setShowSaveDialog,
   handleReset,
-  handleContinueGeneration
+  handleContinueGeneration,
+  checkStatusManually
 }: ReplicateResultPanelProps) {
   const isPromptStep = currentStep > totalSteps;
   const displayStep = isPromptStep ? 'Применяем промпт' : `Шаг ${currentStep} из ${totalSteps}`;
@@ -60,6 +62,14 @@ export default function ReplicateResultPanel({
                 )}
               </>
             )}
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={checkStatusManually}
+            >
+              <Icon name="RefreshCw" className="mr-2" size={16} />
+              Проверить статус
+            </Button>
           </div>
         ) : waitingContinue && intermediateResult ? (
           <div className="space-y-4">

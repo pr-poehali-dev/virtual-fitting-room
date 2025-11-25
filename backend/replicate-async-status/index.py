@@ -1,7 +1,9 @@
 import json
 import os
 import psycopg2
+import replicate
 from typing import Dict, Any
+from datetime import datetime
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -43,6 +45,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     params = event.get('queryStringParameters', {}) or {}
     task_id = params.get('task_id')
+    force_check = params.get('force_check', 'false').lower() == 'true'
     
     if not task_id:
         return {
@@ -57,16 +60,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT status, result_url, error_message, created_at, updated_at, current_step, total_steps, intermediate_result
+            SELECT status, result_url, error_message, created_at, updated_at, current_step, total_steps, intermediate_result, prediction_id
             FROM replicate_tasks
             WHERE id = %s
         ''', (task_id,))
         
         row = cursor.fetchone()
-        cursor.close()
-        conn.close()
         
         if not row:
+            cursor.close()
+            conn.close()
             return {
                 'statusCode': 404,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
@@ -74,7 +77,63 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Task not found'})
             }
         
-        status, result_url, error_message, created_at, updated_at, current_step, total_steps, intermediate_result = row
+        status, result_url, error_message, created_at, updated_at, current_step, total_steps, intermediate_result, prediction_id = row
+        
+        # Если force_check=true и статус processing, проверяем Replicate API
+        if force_check and status == 'processing' and prediction_id:
+            api_token = os.environ.get('REPLICATE_API_TOKEN')
+            if api_token:
+                try:
+                    client = replicate.Client(api_token=api_token)
+                    prediction = client.predictions.get(prediction_id)
+                    
+                    if prediction.status == 'succeeded':
+                        output_url = prediction.output if isinstance(prediction.output, str) else str(prediction.output)
+                        
+                        if current_step < total_steps:
+                            cursor.execute('''
+                                UPDATE replicate_tasks
+                                SET status = 'waiting_continue',
+                                    intermediate_result = %s,
+                                    prediction_id = NULL,
+                                    updated_at = %s
+                                WHERE id = %s
+                            ''', (output_url, datetime.utcnow(), task_id))
+                            status = 'waiting_continue'
+                            intermediate_result = output_url
+                        else:
+                            cursor.execute('''
+                                UPDATE replicate_tasks
+                                SET status = 'completed',
+                                    result_url = %s,
+                                    prediction_id = NULL,
+                                    updated_at = %s
+                                WHERE id = %s
+                            ''', (output_url, datetime.utcnow(), task_id))
+                            status = 'completed'
+                            result_url = output_url
+                        
+                        conn.commit()
+                        
+                    elif prediction.status == 'failed':
+                        error_msg = prediction.error if hasattr(prediction, 'error') else 'Prediction failed'
+                        cursor.execute('''
+                            UPDATE replicate_tasks
+                            SET status = 'failed',
+                                error_message = %s,
+                                prediction_id = NULL,
+                                updated_at = %s
+                            WHERE id = %s
+                        ''', (error_msg, datetime.utcnow(), task_id))
+                        status = 'failed'
+                        error_message = error_msg
+                        conn.commit()
+                        
+                except Exception as e:
+                    print(f'Force check error: {e}')
+        
+        cursor.close()
+        conn.close()
         
         response_data = {
             'task_id': task_id,

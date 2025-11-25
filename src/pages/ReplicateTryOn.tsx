@@ -347,13 +347,7 @@ export default function ReplicateTryOn() {
     }
   };
 
-  const triggerChecker = async () => {
-    try {
-      await fetch('https://functions.poehali.dev/7d14499d-c634-495a-b28c-8a1fcb8fc5d4');
-    } catch (error) {
-      console.error('Checker trigger error:', error);
-    }
-  };
+
 
   const checkStatusManually = async () => {
     if (!taskId) return;
@@ -361,14 +355,9 @@ export default function ReplicateTryOn() {
     try {
       toast.info('Проверяем статус на Replicate...');
       
-      // Сначала триггерим чекер
-      await triggerChecker();
+      // Используем force_check=true для принудительной проверки Replicate API
+      const response = await fetch(`${REPLICATE_STATUS_API}?task_id=${taskId}&force_check=true`);
       
-      // Ждем 3 секунды чтобы чекер успел обновить БД
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Проверяем статус в БД
-      const response = await fetch(`${REPLICATE_STATUS_API}?task_id=${taskId}`);
       if (response.ok) {
         const data = await response.json();
         
@@ -408,8 +397,12 @@ export default function ReplicateTryOn() {
   };
 
   const startPolling = (taskId: string) => {
-    const checker = setInterval(() => {
-      triggerChecker();
+    const checker = setInterval(async () => {
+      try {
+        await fetch(`${REPLICATE_STATUS_API}?task_id=${taskId}&force_check=true`);
+      } catch (error) {
+        console.error('Auto check error:', error);
+      }
     }, 10000);
     setCheckerInterval(checker);
     
@@ -745,6 +738,7 @@ export default function ReplicateTryOn() {
               setShowSaveDialog={setShowSaveDialog}
               handleReset={handleReset}
               handleContinueGeneration={handleContinueGeneration}
+              checkStatusManually={checkStatusManually}
             />
           </div>
         </div>
