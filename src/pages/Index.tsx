@@ -415,7 +415,7 @@ export default function Index() {
       if (deductData.free_try) {
         toast.info(`Бесплатная примерка! Осталось: ${deductData.remaining_free}`);
       } else if (deductData.paid_try) {
-        toast.info(`Списано 20₽. Баланс: ${deductData.new_balance.toFixed(2)}₽`);
+        toast.info(`Списано 25₽. Баланс: ${deductData.new_balance.toFixed(2)}₽`);
       } else if (deductData.unlimited) {
         toast.info('Безлимитный доступ активен');
       }

@@ -54,7 +54,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             balance, free_tries_used, unlimited_access = result
             free_tries_remaining = max(0, 3 - free_tries_used) if not unlimited_access else 999
-            paid_tries_available = int(balance / 20) if balance >= 20 else 0
+            paid_tries_available = int(balance / 25) if balance >= 25 else 0
             
             return {
                 'statusCode': 200,
@@ -118,10 +118,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         })
                     }
                 
-                if balance >= 20:
+                if balance >= 25:
                     cur.execute('''
                         UPDATE t_p29007832_virtual_fitting_room.users 
-                        SET balance = balance - 20, updated_at = CURRENT_TIMESTAMP
+                        SET balance = balance - 25, updated_at = CURRENT_TIMESTAMP
                         WHERE id = %s
                     ''', (user_id,))
                     conn.commit()
@@ -132,7 +132,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'body': json.dumps({
                             'success': True,
                             'paid_try': True,
-                            'new_balance': float(balance - 20)
+                            'new_balance': float(balance - 25)
                         })
                     }
                 
@@ -142,7 +142,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({
                         'error': 'Недостаточно средств',
                         'balance': float(balance),
-                        'required': 20
+                        'required': 25
                     })
                 }
             

@@ -133,7 +133,7 @@ export default function WalletTab() {
                     <span className="font-medium">{balanceInfo?.paid_tries_available}</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-3">
-                    Стоимость одной примерки: 20 ₽
+                    Стоимость одной примерки: 25 ₽
                   </p>
                 </div>
               )}
@@ -161,7 +161,7 @@ export default function WalletTab() {
                 disabled={isCreatingPayment}
               >
                 <span>100 ₽</span>
-                <span className="text-sm text-muted-foreground">5 примерок</span>
+                <span className="text-sm text-muted-foreground">4 примерки</span>
               </Button>
               <Button
                 className="w-full justify-between"
@@ -171,17 +171,17 @@ export default function WalletTab() {
                 disabled={isCreatingPayment}
               >
                 <span>300 ₽</span>
-                <span className="text-sm text-muted-foreground">15 примерок</span>
+                <span className="text-sm text-muted-foreground">12 примерок</span>
               </Button>
               <Button
                 className="w-full justify-between"
                 variant="outline"
                 size="lg"
-                onClick={() => handleTopUp(500)}
+                onClick={() => handleTopUp(1000)}
                 disabled={isCreatingPayment}
               >
-                <span>500 ₽</span>
-                <span className="text-sm text-muted-foreground">25 примерок</span>
+                <span>1000 ₽</span>
+                <span className="text-sm text-muted-foreground">40 примерок</span>
               </Button>
             </div>
             {isCreatingPayment && (
