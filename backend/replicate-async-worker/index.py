@@ -84,6 +84,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             "human_img": person_image,
             "garm_img": garment_image,
             "category": str(garment_category),
+            "garment_des": ""
         }
         
         if prompt_hints and isinstance(prompt_hints, str) and prompt_hints.strip():
