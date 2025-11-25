@@ -191,6 +191,20 @@ export default function ReplicateTryOn() {
     );
   };
 
+  const mapCategoryToReplicate = (category: string): string => {
+    const lowerCategory = category.toLowerCase();
+    
+    if (lowerCategory.includes('платье') || lowerCategory.includes('сарафан')) {
+      return 'dresses';
+    }
+    if (lowerCategory.includes('брюк') || lowerCategory.includes('джинс') || 
+        lowerCategory.includes('шорт') || lowerCategory.includes('юбк') ||
+        lowerCategory.includes('lower')) {
+      return 'lower_body';
+    }
+    return 'upper_body';
+  };
+
   const handleGenerate = async () => {
     if (!uploadedImage) {
       toast.error('Загрузите фото модели');
@@ -221,7 +235,7 @@ export default function ReplicateTryOn() {
           person_image: uploadedImage,
           garments: selectedClothingItems.map((item) => ({
             image: item.image,
-            category: item.category || 'upper_body',
+            category: mapCategoryToReplicate(item.category || ''),
           })),
           prompt_hints: promptHints,
         }),
