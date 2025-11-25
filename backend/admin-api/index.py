@@ -169,6 +169,67 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 } for h in history])
             }
         
+        elif action == 'payments':
+            status_filter = query_params.get('status')
+            date_from = query_params.get('date_from')
+            date_to = query_params.get('date_to')
+            
+            query = '''
+                SELECT 
+                    pt.id,
+                    pt.user_id,
+                    pt.amount,
+                    pt.payment_method,
+                    pt.status,
+                    pt.order_id,
+                    pt.created_at,
+                    pt.updated_at,
+                    u.email,
+                    u.name
+                FROM payment_transactions pt
+                LEFT JOIN users u ON pt.user_id = u.id
+                WHERE 1=1
+            '''
+            params = []
+            
+            if status_filter:
+                query += " AND pt.status = %s"
+                params.append(status_filter)
+            
+            if date_from:
+                query += " AND pt.created_at >= %s"
+                params.append(date_from)
+            
+            if date_to:
+                query += " AND pt.created_at <= %s"
+                params.append(date_to)
+            
+            query += " ORDER BY pt.created_at DESC"
+            
+            cursor.execute(query, params)
+            payments = cursor.fetchall()
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps([{
+                    'id': str(p['id']),
+                    'user_id': p['user_id'],
+                    'user_email': p['email'],
+                    'user_name': p['name'],
+                    'amount': float(p['amount']),
+                    'payment_method': p['payment_method'],
+                    'status': p['status'],
+                    'order_id': p['order_id'],
+                    'created_at': p['created_at'].isoformat(),
+                    'updated_at': p['updated_at'].isoformat() if p['updated_at'] else None
+                } for p in payments])
+            }
+        
         elif action == 'delete_user' and method == 'DELETE':
             user_id = query_params.get('user_id')
             

@@ -40,6 +40,19 @@ interface Stats {
   today_try_ons: number;
 }
 
+interface Payment {
+  id: string;
+  user_id: string;
+  user_email: string;
+  user_name: string;
+  amount: number;
+  payment_method: string;
+  status: string;
+  order_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface ClothingItem {
   id: string;
   image_url: string;
@@ -97,6 +110,11 @@ export default function Admin() {
   const [imageToCrop, setImageToCrop] = useState<string>('');
   const [cropMode, setCropMode] = useState<'new' | 'edit'>('new');
   const [uploadSource, setUploadSource] = useState<'url' | 'file'>('url');
+
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('all');
+  const [paymentDateFrom, setPaymentDateFrom] = useState<string>('');
+  const [paymentDateTo, setPaymentDateTo] = useState<string>('');
 
   useEffect(() => {
     const adminAuth = sessionStorage.getItem('admin_auth');
@@ -168,7 +186,7 @@ export default function Admin() {
     const adminPassword = sessionStorage.getItem('admin_auth');
 
     try {
-      const [statsRes, usersRes, lookbooksRes, historyRes, filtersRes, catalogRes] = await Promise.all([
+      const [statsRes, usersRes, lookbooksRes, historyRes, filtersRes, catalogRes, paymentsRes] = await Promise.all([
         fetch(`${ADMIN_API}?action=stats`, {
           headers: { 'X-Admin-Password': adminPassword || '' }
         }),
@@ -182,20 +200,24 @@ export default function Admin() {
           headers: { 'X-Admin-Password': adminPassword || '' }
         }),
         fetch(`${CATALOG_API}?action=filters`),
-        fetch(`${CATALOG_API}?action=list`)
+        fetch(`${CATALOG_API}?action=list`),
+        fetch(`${ADMIN_API}?action=payments`, {
+          headers: { 'X-Admin-Password': adminPassword || '' }
+        })
       ]);
 
-      if (!statsRes.ok || !usersRes.ok || !lookbooksRes.ok || !historyRes.ok || !filtersRes.ok || !catalogRes.ok) {
+      if (!statsRes.ok || !usersRes.ok || !lookbooksRes.ok || !historyRes.ok || !filtersRes.ok || !catalogRes.ok || !paymentsRes.ok) {
         throw new Error('Ошибка загрузки данных');
       }
 
-      const [statsData, usersData, lookbooksData, historyData, filtersData, catalogData] = await Promise.all([
+      const [statsData, usersData, lookbooksData, historyData, filtersData, catalogData, paymentsData] = await Promise.all([
         statsRes.json(),
         usersRes.json(),
         lookbooksRes.json(),
         historyRes.json(),
         filtersRes.json(),
-        catalogRes.json()
+        catalogRes.json(),
+        paymentsRes.json()
       ]);
 
       setStats(statsData);
@@ -206,6 +228,7 @@ export default function Admin() {
       setFilteredHistory(historyData);
       setFilters(filtersData);
       setClothingItems(catalogData);
+      setPayments(paymentsData);
     } catch (error) {
       toast.error('Ошибка загрузки данных');
       handleLogout();
@@ -649,10 +672,11 @@ export default function Admin() {
               </div>
 
               <Tabs defaultValue="users" className="w-full">
-                <TabsList className="grid w-full md:w-auto grid-cols-4 mb-8">
+                <TabsList className="grid w-full md:w-auto grid-cols-5 mb-8">
                   <TabsTrigger value="users">Пользователи</TabsTrigger>
                   <TabsTrigger value="lookbooks">Лукбуки</TabsTrigger>
                   <TabsTrigger value="history">История</TabsTrigger>
+                  <TabsTrigger value="payments">Платежи</TabsTrigger>
                   <TabsTrigger value="catalog">Каталог</TabsTrigger>
                 </TabsList>
 
@@ -1078,6 +1102,163 @@ export default function Admin() {
                               </CardContent>
                             </Card>
                           ))
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="payments">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Icon name="CreditCard" size={24} />
+                        Платежи пользователей
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-6 flex flex-wrap gap-4">
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium">Статус:</label>
+                          <select
+                            className="border rounded-md px-3 py-2"
+                            value={paymentStatusFilter}
+                            onChange={(e) => setPaymentStatusFilter(e.target.value)}
+                          >
+                            <option value="all">Все</option>
+                            <option value="completed">Завершены</option>
+                            <option value="pending">Ожидание</option>
+                            <option value="failed">Ошибка</option>
+                          </select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium">С:</label>
+                          <Input
+                            type="date"
+                            value={paymentDateFrom}
+                            onChange={(e) => setPaymentDateFrom(e.target.value)}
+                            className="w-40"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium">До:</label>
+                          <Input
+                            type="date"
+                            value={paymentDateTo}
+                            onChange={(e) => setPaymentDateTo(e.target.value)}
+                            className="w-40"
+                          />
+                        </div>
+                        <Button
+                          onClick={() => {
+                            const filtered = payments.filter(p => {
+                              if (paymentStatusFilter !== 'all' && p.status !== paymentStatusFilter) return false;
+                              if (paymentDateFrom && new Date(p.created_at) < new Date(paymentDateFrom)) return false;
+                              if (paymentDateTo && new Date(p.created_at) > new Date(paymentDateTo + 'T23:59:59')) return false;
+                              return true;
+                            });
+                            
+                            const csv = [
+                              ['ID', 'Email', 'Имя', 'Сумма', 'Метод', 'Статус', 'Order ID', 'Создан', 'Обновлен'].join(','),
+                              ...filtered.map(p => [
+                                p.id,
+                                p.user_email,
+                                p.user_name,
+                                p.amount,
+                                p.payment_method,
+                                p.status,
+                                p.order_id,
+                                new Date(p.created_at).toLocaleString('ru-RU'),
+                                p.updated_at ? new Date(p.updated_at).toLocaleString('ru-RU') : ''
+                              ].join(','))
+                            ].join('\n');
+                            
+                            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+                            const link = document.createElement('a');
+                            link.href = URL.createObjectURL(blob);
+                            link.download = `payments_${new Date().toISOString().split('T')[0]}.csv`;
+                            link.click();
+                            toast.success('CSV экспортирован');
+                          }}
+                          variant="outline"
+                        >
+                          <Icon name="Download" className="mr-2" size={16} />
+                          Экспорт в CSV
+                        </Button>
+                      </div>
+
+                      <div className="space-y-4">
+                        {payments
+                          .filter(p => {
+                            if (paymentStatusFilter !== 'all' && p.status !== paymentStatusFilter) return false;
+                            if (paymentDateFrom && new Date(p.created_at) < new Date(paymentDateFrom)) return false;
+                            if (paymentDateTo && new Date(p.created_at) > new Date(paymentDateTo + 'T23:59:59')) return false;
+                            return true;
+                          })
+                          .map((payment) => (
+                            <div key={payment.id} className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
+                              <div className="grid md:grid-cols-4 gap-4">
+                                <div>
+                                  <p className="text-sm text-muted-foreground mb-1">Пользователь</p>
+                                  <p className="font-medium">{payment.user_email}</p>
+                                  <p className="text-sm text-muted-foreground">{payment.user_name}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-muted-foreground mb-1">Сумма</p>
+                                  <p className="text-2xl font-light">{payment.amount.toFixed(2)} ₽</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-muted-foreground mb-1">Статус</p>
+                                  <div className="flex items-center gap-2">
+                                    {payment.status === 'completed' && (
+                                      <span className="inline-flex items-center gap-1 text-sm bg-green-100 text-green-700 px-3 py-1 rounded-full">
+                                        <Icon name="CheckCircle2" size={14} />
+                                        Завершен
+                                      </span>
+                                    )}
+                                    {payment.status === 'pending' && (
+                                      <span className="inline-flex items-center gap-1 text-sm bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full">
+                                        <Icon name="Clock" size={14} />
+                                        Ожидание
+                                      </span>
+                                    )}
+                                    {payment.status === 'failed' && (
+                                      <span className="inline-flex items-center gap-1 text-sm bg-red-100 text-red-700 px-3 py-1 rounded-full">
+                                        <Icon name="XCircle" size={14} />
+                                        Ошибка
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-muted-foreground mb-1">Дата</p>
+                                  <p className="text-sm">
+                                    {new Date(payment.created_at).toLocaleDateString('ru-RU', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      year: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Order: {payment.order_id}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        }
+                        {payments.filter(p => {
+                          if (paymentStatusFilter !== 'all' && p.status !== paymentStatusFilter) return false;
+                          if (paymentDateFrom && new Date(p.created_at) < new Date(paymentDateFrom)) return false;
+                          if (paymentDateTo && new Date(p.created_at) > new Date(paymentDateTo + 'T23:59:59')) return false;
+                          return true;
+                        }).length === 0 && (
+                          <div className="text-center py-12 text-muted-foreground">
+                            <Icon name="CreditCard" size={48} className="mx-auto mb-4 opacity-50" />
+                            <p>Нет платежей по выбранным фильтрам</p>
+                          </div>
                         )}
                       </div>
                     </CardContent>
