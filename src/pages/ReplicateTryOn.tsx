@@ -154,7 +154,7 @@ export default function ReplicateTryOn() {
             id,
             image: reader.result as string,
             name: file.name,
-            category: item.replicate_category || '',
+            category: '',
           },
         ]);
       };
