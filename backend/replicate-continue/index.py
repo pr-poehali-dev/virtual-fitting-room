@@ -116,7 +116,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         garment_image = next_garment.get('image') if isinstance(next_garment, dict) else next_garment
         garment_category = next_garment.get('category', 'upper_body') if isinstance(next_garment, dict) else 'upper_body'
         
-        valid_categories = ['upper_body', 'lower_body', 'dresses', 'shoes']
+        valid_categories = ['upper_body', 'lower_body', 'dresses']
         if garment_category not in valid_categories:
             garment_category = 'upper_body'
         
