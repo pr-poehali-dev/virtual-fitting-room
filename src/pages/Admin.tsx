@@ -113,7 +113,7 @@ export default function Admin() {
     category_ids: [] as number[],
     color_ids: [] as number[],
     archetype_ids: [] as number[],
-    replicate_category: '' as string
+    replicate_category: 'upper_body' as string
   });
   const [showCropper, setShowCropper] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string>('');
@@ -452,7 +452,7 @@ export default function Admin() {
           category_ids: [],
           color_ids: [],
           archetype_ids: [],
-          replicate_category: ''
+          replicate_category: 'upper_body'
         });
         setUploadSource('url');
         fetchCatalogData();
@@ -1169,35 +1169,16 @@ export default function Admin() {
                           />
                           
                           <div>
-                            <p className="text-sm font-medium mb-2">Категория для Replicate примерочной:</p>
+                            <p className="text-sm font-medium mb-2">Категория одежды:</p>
                             <select
                               value={newClothing.replicate_category}
                               onChange={(e) => setNewClothing({ ...newClothing, replicate_category: e.target.value })}
                               className="w-full border rounded-md px-3 py-2 text-sm"
                             >
-                              {filters?.categories.map((category) => (
-                                <option key={category.id} value={category.name}>{category.name}</option>
-                              ))}
+                              <option value="upper_body">Верх (Топы, Рубашки, Жакеты)</option>
+                              <option value="lower_body">Низ (Брюки, Юбки, Шорты)</option>
+                              <option value="dresses">Платья и Сарафаны</option>
                             </select>
-                          </div>
-                          
-                          <div>
-                            <p className="text-sm font-medium mb-2">Категории:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {filters?.categories.map((category) => (
-                                <Button
-                                  key={category.id}
-                                  size="sm"
-                                  variant={newClothing.category_ids.includes(category.id) ? 'default' : 'outline'}
-                                  onClick={() => setNewClothing({
-                                    ...newClothing,
-                                    category_ids: toggleSelection(newClothing.category_ids, category.id)
-                                  })}
-                                >
-                                  {category.name}
-                                </Button>
-                              ))}
-                            </div>
                           </div>
                           
                           <div>
@@ -1568,50 +1549,20 @@ export default function Admin() {
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-2 block">Категория для Replicate примерочной</label>
+                <label className="text-sm font-medium mb-2 block">Категория одежды</label>
                 <select
-                  value={editingClothing.replicate_category || filters?.categories[0]?.name || ''}
+                  value={editingClothing.replicate_category || 'upper_body'}
                   onChange={(e) => setEditingClothing({ ...editingClothing, replicate_category: e.target.value })}
                   className="w-full border rounded-md px-3 py-2 text-sm"
                 >
-                  {filters?.categories.map((category) => (
-                    <option key={category.id} value={category.name}>{category.name}</option>
-                  ))}
+                  <option value="upper_body">Верх (Топы, Рубашки, Жакеты)</option>
+                  <option value="lower_body">Низ (Брюки, Юбки, Шорты)</option>
+                  <option value="dresses">Платья и Сарафаны</option>
                 </select>
               </div>
 
               {filters && (
                 <>
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Категории</label>
-                    <div className="flex flex-wrap gap-2">
-                      {filters.categories.map((category) => {
-                        const isSelected = editingClothing.categories.includes(category.name);
-                        return (
-                          <Button
-                            key={category.id}
-                            size="sm"
-                            variant={isSelected ? 'default' : 'outline'}
-                            onClick={() => {
-                              if (isSelected) {
-                                setEditingClothing({
-                                  ...editingClothing,
-                                  categories: editingClothing.categories.filter(c => c !== category.name)
-                                });
-                              } else {
-                                setEditingClothing({
-                                  ...editingClothing,
-                                  categories: [...editingClothing.categories, category.name]
-                                });
-                              }
-                            }}
-                          >
-                            {category.name}
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  </div>
 
                   <div>
                     <label className="text-sm font-medium mb-2 block">Цвета</label>
