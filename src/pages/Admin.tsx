@@ -1197,7 +1197,7 @@ export default function Admin() {
                               <option value="">Не выбрано</option>
                               <option value="upper_body">Верх (Топы, Рубашки, Жакеты)</option>
                               <option value="lower_body">Низ (Брюки, Юбки, Шорты)</option>
-                              <option value="dresses">Платья и Сарафаны</option>
+                              <option value="dresses">Весь образ, платья, верх и низ вместе</option>
                               <option value="shoes">Обувь</option>
                             </select>
                           </div>

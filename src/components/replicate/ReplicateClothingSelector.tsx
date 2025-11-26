@@ -130,7 +130,7 @@ export default function ReplicateClothingSelector({
                         Низ (Брюки, Юбки, Шорты)
                       </SelectItem>
                       <SelectItem value="dresses" className="text-xs">
-                        Платья и Сарафаны
+                        Весь образ, платья, верх и низ вместе
                       </SelectItem>
                       <SelectItem value="shoes" className="text-xs">
                         Обувь
