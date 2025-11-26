@@ -766,6 +766,21 @@ export default function ReplicateTryOn() {
               checkStatusManually={checkStatusManually}
             />
           </div>
+          
+          <div className="text-center mt-8 pb-4">
+            <p className="text-xs text-muted-foreground">
+              Powered by{' '}
+              <a 
+                href="https://replicate.com/cuuupid/idm-vton" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="underline hover:text-primary transition-colors"
+              >
+                IDM-VTON
+              </a>
+              {' '}(CC BY 4.0)
+            </p>
+          </div>
         </div>
       </div>
 
