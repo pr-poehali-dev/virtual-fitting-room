@@ -450,44 +450,34 @@ export default function ReplicateTryOn() {
           setWaitingContinue(true);
           setGenerationStatus('');
           toast.success(`Шаг ${data.current_step}/${data.total_steps} готов!`);
-          if (pollingInterval) {
-            clearInterval(pollingInterval);
-            setPollingInterval(null);
-          }
-          if (checkerInterval) {
-            clearInterval(checkerInterval);
-            setCheckerInterval(null);
-          }
+          clearInterval(interval);
+          clearInterval(checker);
+          setPollingInterval(null);
+          setCheckerInterval(null);
         } else if (data.status === 'completed') {
           setGeneratedImage(data.result_url);
           setIsGenerating(false);
           setWaitingContinue(false);
           setGenerationStatus('');
-          if (!hasShownCompletionToast) {
-            toast.success('Все шаги завершены!');
-            setHasShownCompletionToast(true);
-          }
-          if (pollingInterval) {
-            clearInterval(pollingInterval);
-            setPollingInterval(null);
-          }
-          if (checkerInterval) {
-            clearInterval(checkerInterval);
-            setCheckerInterval(null);
-          }
+          setHasShownCompletionToast(prev => {
+            if (!prev) {
+              toast.success('Все шаги завершены!');
+            }
+            return true;
+          });
+          clearInterval(interval);
+          clearInterval(checker);
+          setPollingInterval(null);
+          setCheckerInterval(null);
         } else if (data.status === 'failed') {
           setIsGenerating(false);
           setWaitingContinue(false);
           setGenerationStatus('');
           toast.error(data.error_message || 'Ошибка генерации');
-          if (pollingInterval) {
-            clearInterval(pollingInterval);
-            setPollingInterval(null);
-          }
-          if (checkerInterval) {
-            clearInterval(checkerInterval);
-            setCheckerInterval(null);
-          }
+          clearInterval(interval);
+          clearInterval(checker);
+          setPollingInterval(null);
+          setCheckerInterval(null);
         }
       } catch (error: any) {
         console.error('Polling error:', error);
