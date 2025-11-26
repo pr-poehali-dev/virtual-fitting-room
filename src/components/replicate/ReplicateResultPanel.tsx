@@ -109,12 +109,7 @@ export default function ReplicateResultPanel({
                 🎉 Все {totalSteps} шага завершены!
               </p>
             </div>
-            <ImageViewer
-              src={generatedImage}
-              alt="Generated result"
-              className="rounded-lg"
-            />
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 mb-4">
               <div className="flex gap-2">
                 <Button onClick={handleDownloadImage} className="flex-1">
                   <Icon name="Download" className="mr-2" size={16} />
@@ -130,6 +125,11 @@ export default function ReplicateResultPanel({
                 Новая примерка
               </Button>
             </div>
+            <ImageViewer
+              src={generatedImage}
+              alt="Generated result"
+              className="rounded-lg"
+            />
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-[500px] text-center space-y-4">
