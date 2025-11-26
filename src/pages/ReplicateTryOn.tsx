@@ -12,6 +12,7 @@ import ReplicateImageUpload from '@/components/replicate/ReplicateImageUpload';
 import ReplicateClothingSelector from '@/components/replicate/ReplicateClothingSelector';
 import ReplicateResultPanel from '@/components/replicate/ReplicateResultPanel';
 import ReplicateSaveDialog from '@/components/replicate/ReplicateSaveDialog';
+import ImageCropper from '@/components/ImageCropper';
 
 interface ClothingItem {
   id: string;
@@ -74,6 +75,8 @@ export default function ReplicateTryOn() {
   const [totalSteps, setTotalSteps] = useState<number>(0);
   const [waitingContinue, setWaitingContinue] = useState<boolean>(false);
   const [checkerInterval, setCheckerInterval] = useState<NodeJS.Timeout | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const [tempImageForCrop, setTempImageForCrop] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -195,13 +198,43 @@ export default function ReplicateTryOn() {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const resized = await resizeImage(file, 1024, 1024);
-        setUploadedImage(resized);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const aspectRatio = img.width / img.height;
+            
+            if (aspectRatio > 0.9) {
+              setTempImageForCrop(event.target?.result as string);
+              setShowCropper(true);
+            } else {
+              resizeImage(file, 1024, 1024).then(resized => {
+                setUploadedImage(resized);
+              }).catch(error => {
+                console.error('Image resize error:', error);
+                toast.error('Ошибка обработки изображения');
+              });
+            }
+          };
+          img.src = event.target?.result as string;
+        };
+        reader.readAsDataURL(file);
       } catch (error) {
-        console.error('Image resize error:', error);
-        toast.error('Ошибка обработки изображения');
+        console.error('Image upload error:', error);
+        toast.error('Ошибка загрузки изображения');
       }
     }
+  };
+
+  const handleCropComplete = async (croppedImage: string) => {
+    setUploadedImage(croppedImage);
+    setShowCropper(false);
+    setTempImageForCrop(null);
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setTempImageForCrop(null);
   };
 
   const handleCustomClothingUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -798,6 +831,16 @@ export default function ReplicateTryOn() {
         setNewLookbookPersonName={setNewLookbookPersonName}
         handleSaveToNewLookbook={handleSaveToNewLookbook}
       />
+
+      {tempImageForCrop && (
+        <ImageCropper
+          image={tempImageForCrop}
+          open={showCropper}
+          onClose={handleCropCancel}
+          onCropComplete={handleCropComplete}
+          aspectRatio={3 / 4}
+        />
+      )}
     </Layout>
   );
 }
