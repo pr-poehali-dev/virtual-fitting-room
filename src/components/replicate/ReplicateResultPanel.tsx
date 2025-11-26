@@ -108,7 +108,7 @@ export default function ReplicateResultPanel({
           <div className="space-y-4">
             <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg mb-4">
               <p className="text-sm font-medium text-green-900 dark:text-green-100">
-                🎉 Все {totalSteps} шага завершены!
+                🎉 Все шаги завершены!
               </p>
             </div>
             <ImageViewer
