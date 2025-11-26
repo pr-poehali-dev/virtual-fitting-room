@@ -108,6 +108,21 @@ export default function ImageCropper({
         </DialogHeader>
         
         <div className="space-y-4">
+          {aspectRatio && aspectRatio < 1 && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <Icon name="Info" className="text-blue-600 mt-0.5 flex-shrink-0" size={18} />
+                <div className="text-sm text-blue-900">
+                  <p className="font-medium mb-1">Рекомендация по формату</p>
+                  <p className="text-blue-700">
+                    Для корректной работы примерочной используйте вертикальные фото (высота больше ширины). 
+                    Обрежьте изображение так, чтобы получился вертикальный формат.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="flex justify-center">
             <ReactCrop
               crop={crop}
