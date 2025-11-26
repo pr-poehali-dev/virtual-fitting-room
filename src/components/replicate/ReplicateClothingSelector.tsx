@@ -189,9 +189,9 @@ export default function ReplicateClothingSelector({
             </button>
             
             {filtersExpanded && (
-              <div className="p-3 pt-0 space-y-3 border-t">
-                <div>
-                  <p className="text-xs font-medium mb-2">Фильтр по категории:</p>
+              <div className="p-3 pt-0 space-y-4 border-t">
+                <div className="pt-2">
+                  <p className="text-xs font-bold mb-2">Фильтр по категории:</p>
                   <div className="flex flex-wrap gap-1">
                     {filters.categories.map((category) => (
                       <Button
@@ -207,8 +207,8 @@ export default function ReplicateClothingSelector({
                   </div>
                 </div>
 
-                <div>
-                  <p className="text-xs font-medium mb-2">Фильтр по цвету:</p>
+                <div className="pt-2">
+                  <p className="text-xs font-bold mb-2">Фильтр по цвету:</p>
                   <div className="flex flex-wrap gap-1">
                     {filters.colors.map((color) => (
                       <Button
@@ -224,8 +224,8 @@ export default function ReplicateClothingSelector({
                   </div>
                 </div>
 
-                <div>
-                  <p className="text-xs font-medium mb-2">Фильтр по архетипу:</p>
+                <div className="pt-2">
+                  <p className="text-xs font-bold mb-2">Фильтр по архетипу:</p>
                   <div className="flex flex-wrap gap-1">
                     {filters.archetypes.map((arch) => (
                       <Button
@@ -241,8 +241,8 @@ export default function ReplicateClothingSelector({
                   </div>
                 </div>
 
-                <div>
-                  <p className="text-xs font-medium mb-2">Фильтр по полу:</p>
+                <div className="pt-2">
+                  <p className="text-xs font-bold mb-2">Фильтр по полу:</p>
                   <div className="flex flex-wrap gap-1">
                     {filters.genders.map((gender) => (
                       <Button
