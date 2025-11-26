@@ -1192,13 +1192,16 @@ export default function Admin() {
                             <select
                               value={newClothing.replicate_category}
                               onChange={(e) => setNewClothing({ ...newClothing, replicate_category: e.target.value })}
-                              className="w-full border rounded-md px-3 py-2 text-sm"
+                              className="w-full border rounded-md px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                              disabled={newClothing.category_ids.some(id => {
+                                const category = filters?.categories.find(c => c.id === id);
+                                return category && ['Обувь', 'Аксессуары', 'Головные уборы'].includes(category.name);
+                              })}
                             >
                               <option value="">Не выбрано</option>
                               <option value="upper_body">Верх (Топы, Рубашки, Жакеты)</option>
                               <option value="lower_body">Низ (Брюки, Юбки, Шорты)</option>
                               <option value="dresses">Весь образ, платья, верх и низ вместе</option>
-                              <option value="shoes">Обувь</option>
                             </select>
                           </div>
                           

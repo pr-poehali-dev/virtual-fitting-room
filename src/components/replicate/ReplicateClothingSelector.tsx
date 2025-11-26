@@ -132,9 +132,6 @@ export default function ReplicateClothingSelector({
                       <SelectItem value="dresses" className="text-xs">
                         Весь образ, платья, верх и низ вместе
                       </SelectItem>
-                      <SelectItem value="shoes" className="text-xs">
-                        Обувь
-                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
