@@ -2,6 +2,7 @@ import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import ImageViewer from '@/components/ImageViewer';
 import { Button } from '@/components/ui/button';
+import { useRef } from 'react';
 
 interface ReplicateImageUploadProps {
   uploadedImage: string | null;
@@ -14,6 +15,15 @@ export default function ReplicateImageUpload({
   handleImageUpload,
   isGenerating
 }: ReplicateImageUploadProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleImageUpload(e);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div>
       <Label className="text-lg font-semibold mb-4 block">
@@ -22,9 +32,10 @@ export default function ReplicateImageUpload({
       </Label>
       <div className="relative">
         <input
+          ref={fileInputRef}
           type="file"
           accept="image/*"
-          onChange={handleImageUpload}
+          onChange={handleFileChange}
           className="hidden"
           id="model-upload"
           disabled={isGenerating}
