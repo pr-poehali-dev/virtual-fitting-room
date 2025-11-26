@@ -66,6 +66,7 @@ interface ClothingItem {
   colors: string[];
   archetypes: string[];
   replicate_category?: string;
+  gender?: string;
   created_at: string;
 }
 
@@ -458,7 +459,8 @@ export default function Admin() {
           category_ids: [],
           color_ids: [],
           archetype_ids: [],
-          replicate_category: ''
+          replicate_category: '',
+          gender: 'unisex'
         });
         setUploadSource('url');
         fetchCatalogData();
@@ -506,7 +508,8 @@ export default function Admin() {
           category_ids: categoryIds,
           color_ids: colorIds,
           archetype_ids: archetypeIds,
-          replicate_category: editingClothing.replicate_category || 'upper_body'
+          replicate_category: editingClothing.replicate_category || 'upper_body',
+          gender: editingClothing.gender || 'unisex'
         })
       });
 
@@ -1199,10 +1202,18 @@ export default function Admin() {
                                   key={category.id}
                                   size="sm"
                                   variant={newClothing.category_ids.includes(category.id) ? 'default' : 'outline'}
-                                  onClick={() => setNewClothing({
-                                    ...newClothing,
-                                    category_ids: toggleSelection(newClothing.category_ids, category.id)
-                                  })}
+                                  onClick={() => {
+                                    const newCategoryIds = toggleSelection(newClothing.category_ids, category.id);
+                                    const hasRestrictedCategory = newCategoryIds.some(id => {
+                                      const cat = filters?.categories.find(c => c.id === id);
+                                      return cat && ['Обувь', 'Аксессуары', 'Головные уборы'].includes(cat.name);
+                                    });
+                                    setNewClothing({
+                                      ...newClothing,
+                                      category_ids: newCategoryIds,
+                                      replicate_category: hasRestrictedCategory ? '' : newClothing.replicate_category
+                                    });
+                                  }}
                                 >
                                   {category.name}
                                 </Button>
@@ -1226,6 +1237,14 @@ export default function Admin() {
                               <option value="lower_body">Низ (Брюки, Юбки, Шорты)</option>
                               <option value="dresses">Весь образ, платья, верх и низ вместе</option>
                             </select>
+                            {newClothing.category_ids.some(id => {
+                              const category = filters?.categories.find(c => c.id === id);
+                              return category && ['Обувь', 'Аксессуары', 'Головные уборы'].includes(category.name);
+                            }) && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Категория Replicate недоступна для обуви, аксессуаров и головных уборов
+                              </p>
+                            )}
                           </div>
                           
                           <div>
@@ -1621,17 +1640,18 @@ export default function Admin() {
                             size="sm"
                             variant={isSelected ? 'default' : 'outline'}
                             onClick={() => {
+                              let newCategories;
                               if (isSelected) {
-                                setEditingClothing({
-                                  ...editingClothing,
-                                  categories: editingClothing.categories.filter(c => c !== category.name)
-                                });
+                                newCategories = editingClothing.categories.filter(c => c !== category.name);
                               } else {
-                                setEditingClothing({
-                                  ...editingClothing,
-                                  categories: [...editingClothing.categories, category.name]
-                                });
+                                newCategories = [...editingClothing.categories, category.name];
                               }
+                              const hasRestrictedCategory = newCategories.some(cat => ['Обувь', 'Аксессуары', 'Головные уборы'].includes(cat));
+                              setEditingClothing({
+                                ...editingClothing,
+                                categories: newCategories,
+                                replicate_category: hasRestrictedCategory ? '' : editingClothing.replicate_category
+                              });
                             }}
                           >
                             {category.name}
@@ -1646,13 +1666,31 @@ export default function Admin() {
                     <select
                       value={editingClothing.replicate_category || ''}
                       onChange={(e) => setEditingClothing({ ...editingClothing, replicate_category: e.target.value })}
-                      className="w-full border rounded-md px-3 py-2 text-sm"
+                      className="w-full border rounded-md px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={editingClothing.categories.some(cat => ['Обувь', 'Аксессуары', 'Головные уборы'].includes(cat))}
                     >
                       <option value="">Не выбрано</option>
                       <option value="upper_body">Верх (Топы, Рубашки, Жакеты)</option>
                       <option value="lower_body">Низ (Брюки, Юбки, Шорты)</option>
-                      <option value="dresses">Платья и Сарафаны</option>
-                      <option value="shoes">Обувь</option>
+                      <option value="dresses">Весь образ, платья, верх и низ вместе</option>
+                    </select>
+                    {editingClothing.categories.some(cat => ['Обувь', 'Аксессуары', 'Головные уборы'].includes(cat)) && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Категория Replicate недоступна для обуви, аксессуаров и головных уборов
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Пол</label>
+                    <select
+                      value={editingClothing.gender || 'unisex'}
+                      onChange={(e) => setEditingClothing({ ...editingClothing, gender: e.target.value })}
+                      className="w-full border rounded-md px-3 py-2 text-sm"
+                    >
+                      <option value="unisex">Унисекс</option>
+                      <option value="male">Мужской</option>
+                      <option value="female">Женский</option>
                     </select>
                   </div>
 
