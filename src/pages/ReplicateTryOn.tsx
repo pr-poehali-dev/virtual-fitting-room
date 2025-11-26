@@ -371,8 +371,14 @@ export default function ReplicateTryOn() {
           setCurrentStep(data.current_step || 1);
           setTotalSteps(data.total_steps || selectedClothingItems.length);
           toast.success(`Шаг ${data.current_step} готов!`);
-          if (pollingInterval) clearInterval(pollingInterval);
-          if (checkerInterval) clearInterval(checkerInterval);
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+            setPollingInterval(null);
+          }
+          if (checkerInterval) {
+            clearInterval(checkerInterval);
+            setCheckerInterval(null);
+          }
         } else if (data.status === 'completed') {
           setGeneratedImage(data.result_url);
           setIsGenerating(false);
@@ -382,15 +388,27 @@ export default function ReplicateTryOn() {
             toast.success('Все шаги завершены!');
             setHasShownCompletionToast(true);
           }
-          if (pollingInterval) clearInterval(pollingInterval);
-          if (checkerInterval) clearInterval(checkerInterval);
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+            setPollingInterval(null);
+          }
+          if (checkerInterval) {
+            clearInterval(checkerInterval);
+            setCheckerInterval(null);
+          }
         } else if (data.status === 'failed') {
           setIsGenerating(false);
           setWaitingContinue(false);
           setGenerationStatus('');
           toast.error(data.error_message || 'Ошибка генерации');
-          if (pollingInterval) clearInterval(pollingInterval);
-          if (checkerInterval) clearInterval(checkerInterval);
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+            setPollingInterval(null);
+          }
+          if (checkerInterval) {
+            clearInterval(checkerInterval);
+            setCheckerInterval(null);
+          }
         } else {
           toast.info(`Статус: ${data.status}. Продолжаем ожидание...`);
         }
@@ -432,8 +450,14 @@ export default function ReplicateTryOn() {
           setWaitingContinue(true);
           setGenerationStatus('');
           toast.success(`Шаг ${data.current_step}/${data.total_steps} готов!`);
-          if (pollingInterval) clearInterval(pollingInterval);
-          if (checkerInterval) clearInterval(checkerInterval);
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+            setPollingInterval(null);
+          }
+          if (checkerInterval) {
+            clearInterval(checkerInterval);
+            setCheckerInterval(null);
+          }
         } else if (data.status === 'completed') {
           setGeneratedImage(data.result_url);
           setIsGenerating(false);
@@ -443,15 +467,27 @@ export default function ReplicateTryOn() {
             toast.success('Все шаги завершены!');
             setHasShownCompletionToast(true);
           }
-          if (pollingInterval) clearInterval(pollingInterval);
-          if (checkerInterval) clearInterval(checkerInterval);
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+            setPollingInterval(null);
+          }
+          if (checkerInterval) {
+            clearInterval(checkerInterval);
+            setCheckerInterval(null);
+          }
         } else if (data.status === 'failed') {
           setIsGenerating(false);
           setWaitingContinue(false);
           setGenerationStatus('');
           toast.error(data.error_message || 'Ошибка генерации');
-          if (pollingInterval) clearInterval(pollingInterval);
-          if (checkerInterval) clearInterval(checkerInterval);
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+            setPollingInterval(null);
+          }
+          if (checkerInterval) {
+            clearInterval(checkerInterval);
+            setCheckerInterval(null);
+          }
         }
       } catch (error: any) {
         console.error('Polling error:', error);
