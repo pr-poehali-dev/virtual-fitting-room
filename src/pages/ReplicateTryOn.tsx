@@ -309,7 +309,7 @@ export default function ReplicateTryOn() {
 
 
     const estimatedTime = selectedClothingItems.length * 20;
-    toast.info(`Генерация займёт ~${estimatedTime}-${estimatedTime + 30} секунд. Можете закрыть страницу и вернуться позже!`, {
+    toast.info(`Генерация займёт ~${estimatedTime}-${estimatedTime + 30} секунд. Не закрывайте страницу!`, {
       duration: 6000
     });
 
@@ -698,7 +698,7 @@ export default function ReplicateTryOn() {
                         <div className="flex-1">
                           <p className="text-sm font-medium text-blue-900">{generationStatus}</p>
                           <p className="text-xs text-blue-700 mt-1">
-                            Можете закрыть страницу и вернуться позже - задача продолжит выполняться
+                            Не закрывайте страницу до завершения генерации
                           </p>
                         </div>
                         <Button 
