@@ -47,14 +47,14 @@ export default function ReplicateResultPanel({
             <Icon name="Loader2" className="animate-spin text-primary" size={64} />
             <p className="text-lg font-medium">Создаём образ...</p>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
-              AI анализирует выбранные вещи и создаёт реалистичный образ. Подождите, это может занять 2-6 минут
+              AI анализирует выбранные вещи и создаёт реалистичный образ. Подождите, это может занять 1-3 минуты
             </p>
             {currentStep > 0 && (
               <>
                 <p className="text-sm font-medium text-primary">
                   {displayStep}
                 </p>
-                {currentStep === 1 && (
+                {currentStep === 1 && totalSteps > 1 && (
                   <p className="text-xs text-muted-foreground text-center max-w-md">
                     После первого шага вы сможете посмотреть промежуточный результат и продолжить
                   </p>
