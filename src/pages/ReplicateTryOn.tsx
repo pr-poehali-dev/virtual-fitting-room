@@ -53,7 +53,7 @@ export default function ReplicateTryOn() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedClothingItems, setSelectedClothingItems] = useState<SelectedClothing[]>([]);
   const [clothingCatalog, setClothingCatalog] = useState<ClothingItem[]>([]);
-  const [promptHints, setPromptHints] = useState<string>('');
+
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [lookbooks, setLookbooks] = useState<any[]>([]);
@@ -324,7 +324,7 @@ export default function ReplicateTryOn() {
             image: item.image,
             category: item.category || 'upper_body',
           })),
-          prompt_hints: promptHints,
+          prompt_hints: '',
         }),
       });
 
@@ -498,7 +498,7 @@ export default function ReplicateTryOn() {
     setSelectedClothingItems([]);
     setGeneratedImage(null);
     setIntermediateResult(null);
-    setPromptHints('');
+
     setTaskId(null);
     setIsGenerating(false);
     setWaitingContinue(false);
@@ -733,7 +733,7 @@ export default function ReplicateTryOn() {
               waitingContinue={waitingContinue}
               currentStep={currentStep}
               totalSteps={totalSteps}
-              promptHints={promptHints}
+
               handleDownloadImage={handleDownloadImage}
               setShowSaveDialog={setShowSaveDialog}
               handleReset={handleReset}

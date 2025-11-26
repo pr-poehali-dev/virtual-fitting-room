@@ -10,7 +10,7 @@ interface ReplicateResultPanelProps {
   waitingContinue: boolean;
   currentStep: number;
   totalSteps: number;
-  promptHints: string;
+
   handleDownloadImage: () => void;
   setShowSaveDialog: (show: boolean) => void;
   handleReset: () => void;
@@ -25,15 +25,14 @@ export default function ReplicateResultPanel({
   waitingContinue,
   currentStep,
   totalSteps,
-  promptHints,
+
   handleDownloadImage,
   setShowSaveDialog,
   handleReset,
   handleContinueGeneration,
   checkStatusManually
 }: ReplicateResultPanelProps) {
-  const isPromptStep = currentStep > totalSteps;
-  const displayStep = isPromptStep ? 'Применяем промпт' : `Шаг ${currentStep} из ${totalSteps}`;
+  const displayStep = `Шаг ${currentStep} из ${totalSteps}`;
   return (
     <Card className="animate-scale-in">
       <CardHeader>
@@ -89,7 +88,7 @@ export default function ReplicateResultPanel({
             <div className="flex flex-col gap-2">
               <Button onClick={handleContinueGeneration} size="lg" className="w-full">
                 <Icon name="ArrowRight" className="mr-2" size={20} />
-                {currentStep < totalSteps ? `Продолжить (шаг ${currentStep + 1}/${totalSteps})` : 'Применить промпт'}
+                Продолжить (шаг {currentStep + 1}/{totalSteps})
               </Button>
               <div className="flex gap-2">
                 <Button onClick={handleDownloadImage} variant="outline" className="flex-1">
