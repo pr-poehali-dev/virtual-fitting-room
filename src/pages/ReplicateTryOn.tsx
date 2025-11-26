@@ -26,7 +26,7 @@ interface ClothingItem {
 }
 
 interface FilterOption {
-  id: number;
+  id: number | string;
   name: string;
 }
 
@@ -34,6 +34,7 @@ interface Filters {
   categories: FilterOption[];
   colors: FilterOption[];
   archetypes: FilterOption[];
+  genders: FilterOption[];
 }
 
 interface SelectedClothing {
@@ -67,6 +68,7 @@ export default function ReplicateTryOn() {
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [selectedColors, setSelectedColors] = useState<number[]>([]);
   const [selectedArchetypes, setSelectedArchetypes] = useState<number[]>([]);
+  const [selectedGender, setSelectedGender] = useState<string>('');
   const [taskId, setTaskId] = useState<string | null>(null);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
   const [generationStatus, setGenerationStatus] = useState<string>('');
@@ -88,7 +90,7 @@ export default function ReplicateTryOn() {
 
   useEffect(() => {
     fetchCatalog();
-  }, [selectedCategories, selectedColors, selectedArchetypes]);
+  }, [selectedCategories, selectedColors, selectedArchetypes, selectedGender]);
 
   useEffect(() => {
     return () => {
@@ -130,6 +132,9 @@ export default function ReplicateTryOn() {
       }
       if (selectedArchetypes.length > 0) {
         params.append('archetypes', selectedArchetypes.join(','));
+      }
+      if (selectedGender) {
+        params.append('gender', selectedGender);
       }
       const response = await fetch(`${CATALOG_API}?${params.toString()}`);
       if (response.ok) {
@@ -714,9 +719,11 @@ export default function ReplicateTryOn() {
                     selectedCategories={selectedCategories}
                     selectedColors={selectedColors}
                     selectedArchetypes={selectedArchetypes}
+                    selectedGender={selectedGender}
                     setSelectedCategories={setSelectedCategories}
                     setSelectedColors={setSelectedColors}
                     setSelectedArchetypes={setSelectedArchetypes}
+                    setSelectedGender={setSelectedGender}
                     toggleClothingSelection={toggleClothingSelection}
                     removeClothingItem={removeClothingItem}
                     updateClothingCategory={updateClothingCategory}

@@ -23,7 +23,7 @@ interface ClothingItem {
 }
 
 interface FilterOption {
-  id: number;
+  id: number | string;
   name: string;
 }
 
@@ -31,6 +31,7 @@ interface Filters {
   categories: FilterOption[];
   colors: FilterOption[];
   archetypes: FilterOption[];
+  genders: FilterOption[];
 }
 
 interface SelectedClothing {
@@ -47,9 +48,11 @@ interface ReplicateClothingSelectorProps {
   selectedCategories: number[];
   selectedColors: number[];
   selectedArchetypes: number[];
+  selectedGender: string;
   setSelectedCategories: (categories: number[]) => void;
   setSelectedColors: (colors: number[]) => void;
   setSelectedArchetypes: (archetypes: number[]) => void;
+  setSelectedGender: (gender: string) => void;
   toggleClothingSelection: (item: ClothingItem) => void;
   removeClothingItem: (id: string) => void;
   updateClothingCategory: (id: string, category: string) => void;
@@ -64,9 +67,11 @@ export default function ReplicateClothingSelector({
   selectedCategories,
   selectedColors,
   selectedArchetypes,
+  selectedGender,
   setSelectedCategories,
   setSelectedColors,
   setSelectedArchetypes,
+  setSelectedGender,
   toggleClothingSelection,
   removeClothingItem,
   updateClothingCategory,
@@ -226,11 +231,28 @@ export default function ReplicateClothingSelector({
                       <Button
                         key={arch.id}
                         size="sm"
-                        variant={selectedArchetypes.includes(arch.id) ? 'default' : 'outline'}
-                        onClick={() => setSelectedArchetypes(toggleFilter(selectedArchetypes, arch.id))}
+                        variant={selectedArchetypes.includes(arch.id as number) ? 'default' : 'outline'}
+                        onClick={() => setSelectedArchetypes(toggleFilter(selectedArchetypes, arch.id as number))}
                         className="h-7 text-xs px-2"
                       >
                         {arch.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs font-medium mb-2">Фильтр по полу:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {filters.genders.map((gender) => (
+                      <Button
+                        key={gender.id}
+                        size="sm"
+                        variant={selectedGender === gender.id ? 'default' : 'outline'}
+                        onClick={() => setSelectedGender(selectedGender === gender.id ? '' : gender.id as string)}
+                        className="h-7 text-xs px-2"
+                      >
+                        {gender.name}
                       </Button>
                     ))}
                   </div>

@@ -113,7 +113,8 @@ export default function Admin() {
     category_ids: [] as number[],
     color_ids: [] as number[],
     archetype_ids: [] as number[],
-    replicate_category: '' as string
+    replicate_category: '' as string,
+    gender: 'unisex' as string
   });
   const [showCropper, setShowCropper] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string>('');
@@ -1202,6 +1203,19 @@ export default function Admin() {
                               <option value="upper_body">Верх (Топы, Рубашки, Жакеты)</option>
                               <option value="lower_body">Низ (Брюки, Юбки, Шорты)</option>
                               <option value="dresses">Весь образ, платья, верх и низ вместе</option>
+                            </select>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm font-medium mb-2">Пол:</p>
+                            <select
+                              value={newClothing.gender}
+                              onChange={(e) => setNewClothing({ ...newClothing, gender: e.target.value })}
+                              className="w-full border rounded-md px-3 py-2 text-sm"
+                            >
+                              <option value="unisex">Унисекс</option>
+                              <option value="male">Мужской</option>
+                              <option value="female">Женский</option>
                             </select>
                           </div>
                           

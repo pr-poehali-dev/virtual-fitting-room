@@ -63,7 +63,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if action == 'list':
                 # First, get all clothing items
                 base_query = """
-                    SELECT id, image_url, name, description, replicate_category, created_at
+                    SELECT id, image_url, name, description, replicate_category, gender, created_at
                     FROM clothing_catalog
                     WHERE 1=1
                 """
@@ -105,6 +105,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 WHERE cal.clothing_id = clothing_catalog.id AND cal.archetype_id IN ({archetype_ids_str})
                             )
                         """)
+                
+                # Filter by gender
+                gender = query_params.get('gender', '').strip()
+                if gender and gender in ['male', 'female', 'unisex']:
+                    conditions.append(f"clothing_catalog.gender = '{gender}'")
                 
                 if conditions:
                     base_query += ' AND ' + ' AND '.join(conditions)
@@ -170,6 +175,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 cursor.execute('SELECT id, name FROM kibbe_archetypes ORDER BY name')
                 archetypes = cursor.fetchall()
                 
+                genders = [
+                    {'id': 'male', 'name': 'Мужской'},
+                    {'id': 'female', 'name': 'Женский'},
+                    {'id': 'unisex', 'name': 'Унисекс'}
+                ]
+                
                 return {
                     'statusCode': 200,
                     'headers': {
@@ -180,7 +191,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({
                         'categories': [dict(c) for c in categories],
                         'colors': [dict(c) for c in colors],
-                        'archetypes': [dict(a) for a in archetypes]
+                        'archetypes': [dict(a) for a in archetypes],
+                        'genders': genders
                     })
                 }
         
@@ -283,6 +295,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             color_ids = body_data.get('color_ids', [])
             archetype_ids = body_data.get('archetype_ids', [])
             replicate_category = body_data.get('replicate_category', '')
+            gender = body_data.get('gender', 'unisex')
             
             if not image_url:
                 return {
@@ -321,10 +334,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             # Insert clothing item with processed image
             cursor.execute("""
-                INSERT INTO clothing_catalog (image_url, name, description, replicate_category)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO clothing_catalog (image_url, name, description, replicate_category, gender)
+                VALUES (%s, %s, %s, %s, %s)
                 RETURNING id
-            """, (processed_image_url, name, description, replicate_category))
+            """, (processed_image_url, name, description, replicate_category, gender))
             
             clothing_id = cursor.fetchone()['id']
             
@@ -384,6 +397,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             color_ids = body_data.get('color_ids', [])
             archetype_ids = body_data.get('archetype_ids', [])
             replicate_category = body_data.get('replicate_category', '')
+            gender = body_data.get('gender', 'unisex')
             
             if not clothing_id or not image_url:
                 return {
@@ -399,9 +413,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             # Update clothing item
             cursor.execute("""
                 UPDATE clothing_catalog
-                SET image_url = %s, name = %s, description = %s, replicate_category = %s
+                SET image_url = %s, name = %s, description = %s, replicate_category = %s, gender = %s
                 WHERE id = %s
-            """, (image_url, name, description, replicate_category, clothing_id))
+            """, (image_url, name, description, replicate_category, gender, clothing_id))
             
             # Delete old links
             cursor.execute('DELETE FROM clothing_category_links WHERE clothing_id = %s', (clothing_id,))
