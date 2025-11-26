@@ -70,7 +70,7 @@ interface ClothingItem {
 }
 
 interface FilterOption {
-  id: number;
+  id: number | string;
   name: string;
 }
 
@@ -78,6 +78,7 @@ interface Filters {
   categories: FilterOption[];
   colors: FilterOption[];
   archetypes: FilterOption[];
+  genders: FilterOption[];
 }
 
 const ADMIN_API = 'https://functions.poehali.dev/6667a30b-a520-41d8-b23a-e240a9aefb15';
@@ -104,6 +105,7 @@ export default function Admin() {
   const [selectedCatalogCategories, setSelectedCatalogCategories] = useState<number[]>([]);
   const [selectedCatalogColors, setSelectedCatalogColors] = useState<number[]>([]);
   const [selectedCatalogArchetypes, setSelectedCatalogArchetypes] = useState<number[]>([]);
+  const [selectedCatalogGender, setSelectedCatalogGender] = useState<string>('');
   const [editingClothing, setEditingClothing] = useState<ClothingItem | null>(null);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [newClothing, setNewClothing] = useState({
@@ -138,7 +140,7 @@ export default function Admin() {
     if (isAuthenticated) {
       fetchCatalogData();
     }
-  }, [selectedCatalogCategories, selectedCatalogColors, selectedCatalogArchetypes, isAuthenticated]);
+  }, [selectedCatalogCategories, selectedCatalogColors, selectedCatalogArchetypes, selectedCatalogGender, isAuthenticated]);
 
   const handleLogin = async () => {
     if (!password) {
@@ -185,6 +187,9 @@ export default function Admin() {
       }
       if (selectedCatalogArchetypes.length > 0) {
         params.append('archetypes', selectedCatalogArchetypes.join(','));
+      }
+      if (selectedCatalogGender) {
+        params.append('gender', selectedCatalogGender);
       }
 
       const [filtersRes, catalogRes] = await Promise.all([
@@ -1055,7 +1060,23 @@ export default function Admin() {
                             </div>
                           </div>
 
-                          {(selectedCatalogCategories.length > 0 || selectedCatalogColors.length > 0 || selectedCatalogArchetypes.length > 0) && (
+                          <div>
+                            <p className="text-sm font-medium mb-2">Фильтр по полу:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {filters.genders.map((gender) => (
+                                <Button
+                                  key={gender.id}
+                                  size="sm"
+                                  variant={selectedCatalogGender === gender.id ? 'default' : 'outline'}
+                                  onClick={() => setSelectedCatalogGender(selectedCatalogGender === gender.id ? '' : gender.id as string)}
+                                >
+                                  {gender.name}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {(selectedCatalogCategories.length > 0 || selectedCatalogColors.length > 0 || selectedCatalogArchetypes.length > 0 || selectedCatalogGender) && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -1063,6 +1084,7 @@ export default function Admin() {
                                 setSelectedCatalogCategories([]);
                                 setSelectedCatalogColors([]);
                                 setSelectedCatalogArchetypes([]);
+                                setSelectedCatalogGender('');
                               }}
                             >
                               <Icon name="X" className="mr-2" size={16} />
