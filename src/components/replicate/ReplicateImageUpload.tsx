@@ -51,16 +51,11 @@ export default function ReplicateImageUpload({
           {uploadedImage ? (
             <div className="relative w-full">
               <ImageViewer src={uploadedImage} alt="Uploaded" className="rounded-lg" />
-              <div className="mt-2 text-center">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled={isGenerating}
-                >
+              <div className="mt-4 text-center">
+                <span className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors">
                   <Icon name="Upload" className="mr-2" size={16} />
                   Заменить фото
-                </Button>
+                </span>
               </div>
             </div>
           ) : (
