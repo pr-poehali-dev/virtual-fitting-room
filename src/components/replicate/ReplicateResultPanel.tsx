@@ -86,10 +86,12 @@ export default function ReplicateResultPanel({
               className="rounded-lg"
             />
             <div className="flex flex-col gap-2">
-              <Button onClick={handleContinueGeneration} size="lg" className="w-full">
-                <Icon name="ArrowRight" className="mr-2" size={20} />
-                Продолжить (шаг {currentStep + 1}/{totalSteps})
-              </Button>
+              {currentStep < totalSteps && (
+                <Button onClick={handleContinueGeneration} size="lg" className="w-full">
+                  <Icon name="ArrowRight" className="mr-2" size={20} />
+                  Продолжить (шаг {currentStep + 1}/{totalSteps})
+                </Button>
+              )}
               <div className="flex gap-2">
                 <Button onClick={handleDownloadImage} variant="outline" className="flex-1">
                   <Icon name="Download" className="mr-2" size={16} />

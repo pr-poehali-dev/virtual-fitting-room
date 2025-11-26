@@ -74,7 +74,7 @@ export default function ReplicateTryOn() {
   const [totalSteps, setTotalSteps] = useState<number>(0);
   const [waitingContinue, setWaitingContinue] = useState<boolean>(false);
   const [checkerInterval, setCheckerInterval] = useState<NodeJS.Timeout | null>(null);
-  const [hasShownCompletionToast, setHasShownCompletionToast] = useState<boolean>(false);
+
 
   useEffect(() => {
     fetchFilters();
@@ -306,7 +306,7 @@ export default function ReplicateTryOn() {
     setIsGenerating(true);
     setGeneratedImage(null);
     setGenerationStatus('Запускаем генерацию...');
-    setHasShownCompletionToast(false);
+
 
     const estimatedTime = selectedClothingItems.length * 20;
     toast.info(`Генерация займёт ~${estimatedTime}-${estimatedTime + 30} секунд. Можете закрыть страницу и вернуться позже!`, {
@@ -384,10 +384,6 @@ export default function ReplicateTryOn() {
           setIsGenerating(false);
           setWaitingContinue(false);
           setGenerationStatus('');
-          if (!hasShownCompletionToast) {
-            toast.success('Все шаги завершены!');
-            setHasShownCompletionToast(true);
-          }
           if (pollingInterval) {
             clearInterval(pollingInterval);
             setPollingInterval(null);
@@ -459,12 +455,6 @@ export default function ReplicateTryOn() {
           setIsGenerating(false);
           setWaitingContinue(false);
           setGenerationStatus('');
-          setHasShownCompletionToast(prev => {
-            if (!prev) {
-              toast.success('Все шаги завершены!');
-            }
-            return true;
-          });
           clearInterval(interval);
           clearInterval(checker);
           setPollingInterval(null);
@@ -539,7 +529,7 @@ export default function ReplicateTryOn() {
     setGenerationStatus('');
     setCurrentStep(0);
     setTotalSteps(0);
-    setHasShownCompletionToast(false);
+
   };
 
   const handleSaveToExistingLookbook = async () => {
