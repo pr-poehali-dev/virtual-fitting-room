@@ -136,7 +136,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         client = replicate.Client(api_token=api_token)
         
         prediction = client.predictions.create(
-            version="c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
+            version="0452664a003fbcc9bd2b9dbe31207b6bde4fb33932a226d67b72a28e5306bf77",
             input=input_data
         )
         
