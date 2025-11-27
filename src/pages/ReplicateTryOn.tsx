@@ -214,17 +214,22 @@ export default function ReplicateTryOn() {
           const img = new Image();
           img.onload = () => {
             const aspectRatio = img.width / img.height;
+            const targetRatio = 3 / 4;
+            const tolerance = 0.05;
             
-            if (aspectRatio > 0.9) {
-              setTempImageForCrop(event.target?.result as string);
-              setShowCropper(true);
-            } else {
+            const isCorrectAspectRatio = Math.abs(aspectRatio - targetRatio) < tolerance;
+            
+            if (isCorrectAspectRatio) {
               resizeImage(file, 1024, 1024).then(resized => {
                 setUploadedImage(resized);
+                toast.success('Фото загружено');
               }).catch(error => {
                 console.error('Image resize error:', error);
                 toast.error('Ошибка обработки изображения');
               });
+            } else {
+              setTempImageForCrop(event.target?.result as string);
+              setShowCropper(true);
             }
           };
           img.src = event.target?.result as string;
