@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import Icon from '@/components/ui/icon';
 
 interface ImageCropperProps {
@@ -107,6 +107,9 @@ export default function ImageCropper({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
         <DialogHeader>
           <DialogTitle>Обрезка изображения</DialogTitle>
+          <DialogDescription>
+            Выберите область изображения для обрезки
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">
