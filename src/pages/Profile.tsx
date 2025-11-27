@@ -240,12 +240,26 @@ export default function Profile() {
       const margin = 15;
       const usableWidth = pageWidth - 2 * margin;
       
+      const encodeText = (text: string) => {
+        const chars: { [key: string]: string } = {
+          'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo', 'Ж': 'Zh',
+          'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N', 'О': 'O',
+          'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U', 'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts',
+          'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Shch', 'Ъ': '', 'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
+          'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
+          'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
+          'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts',
+          'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+        };
+        return text.split('').map(char => chars[char] || char).join('');
+      };
+      
       pdf.setFontSize(24);
-      pdf.text(viewingLookbook.name, margin, margin + 10);
+      pdf.text(encodeText(viewingLookbook.name), margin, margin + 10);
       
       pdf.setFontSize(14);
       pdf.setTextColor(100, 100, 100);
-      pdf.text(`Для: ${viewingLookbook.person_name}`, margin, margin + 20);
+      pdf.text(`For: ${encodeText(viewingLookbook.person_name)}`, margin, margin + 20);
       
       let yPos = margin + 35;
       
@@ -275,42 +289,67 @@ export default function Profile() {
       };
       
       const photos = viewingLookbook.photos;
-      for (let i = 0; i < photos.length; i++) {
-        if (i > 0 && i % 4 === 0) {
+      
+      const gridPattern = [
+        { cols: 2, rows: 2 },
+        { cols: 1, rows: 1 },
+        { cols: 1, rows: 1 },
+        { cols: 1, rows: 1 },
+        { cols: 1, rows: 1 }
+      ];
+      
+      let photoIndex = 0;
+      let currentPage = 0;
+      
+      while (photoIndex < photos.length) {
+        if (currentPage > 0) {
           pdf.addPage();
           yPos = margin;
         }
         
-        const col = i % 2;
-        const row = Math.floor((i % 4) / 2);
-        const imgWidth = (usableWidth - 5) / 2;
-        const imgHeight = imgWidth * 1.4;
-        const xPos = margin + col * (imgWidth + 5);
-        const imgYPos = yPos + row * (imgHeight + 5);
+        const pagePhotos = photos.slice(photoIndex, photoIndex + 5);
+        const cellWidth = usableWidth / 2;
+        const cellHeight = (pageHeight - 2 * margin - 10) / 2;
         
-        if (imgYPos + imgHeight > pageHeight - margin) {
-          pdf.addPage();
-          yPos = margin;
-          const newRow = 0;
-          const newImgYPos = yPos + newRow * (imgHeight + 5);
+        for (let i = 0; i < pagePhotos.length && i < gridPattern.length; i++) {
+          const pattern = gridPattern[i];
+          let x = margin;
+          let y = yPos;
+          let w = cellWidth * pattern.cols - 5;
+          let h = cellHeight * pattern.rows - 5;
+          
+          if (i === 0) {
+            x = margin;
+            y = yPos;
+          } else if (i === 1) {
+            x = margin + cellWidth;
+            y = yPos;
+          } else if (i === 2) {
+            x = margin + cellWidth;
+            y = yPos + cellHeight;
+          } else if (i === 3) {
+            x = margin;
+            y = yPos + cellHeight;
+          } else if (i === 4) {
+            x = margin + cellWidth / 2;
+            y = yPos + cellHeight * 1.5;
+            w = cellWidth - 5;
+            h = cellHeight / 2 - 5;
+          }
           
           try {
-            const imgData = await loadImage(photos[i]);
-            pdf.addImage(imgData, 'JPEG', xPos, newImgYPos, imgWidth, imgHeight);
-          } catch (e) {
-            console.error('Failed to load image:', e);
-          }
-        } else {
-          try {
-            const imgData = await loadImage(photos[i]);
-            pdf.addImage(imgData, 'JPEG', xPos, imgYPos, imgWidth, imgHeight);
+            const imgData = await loadImage(pagePhotos[i]);
+            pdf.addImage(imgData, 'JPEG', x, y, w, h, undefined, 'FAST');
           } catch (e) {
             console.error('Failed to load image:', e);
           }
         }
+        
+        photoIndex += 5;
+        currentPage++;
       }
       
-      pdf.save(`${viewingLookbook.name}.pdf`);
+      pdf.save(`${encodeText(viewingLookbook.name)}.pdf`);
       toast.success('PDF скачан!');
     } catch (error) {
       console.error('PDF generation error:', error);
@@ -893,23 +932,33 @@ export default function Profile() {
               {viewingLookbook.photos.length > 0 && (
                 <div>
                   <h3 className="text-sm font-medium mb-3">Результаты примерок</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {viewingLookbook.photos.map((photo, index) => {
-                      const isLarge = index % 5 === 0;
+                  <div className="space-y-6">
+                    {Array.from({ length: Math.ceil(viewingLookbook.photos.length / 5) }).map((_, pageIndex) => {
+                      const pagePhotos = viewingLookbook.photos.slice(pageIndex * 5, (pageIndex + 1) * 5);
                       return (
-                        <div 
-                          key={index} 
-                          className={`relative rounded-lg overflow-hidden bg-muted ${
-                            isLarge ? 'md:col-span-2 md:row-span-2' : ''
-                          }`}
-                        >
-                          <ImageViewer 
-                            src={photo} 
-                            alt={`Photo ${index + 1}`}
-                            className={`w-full h-full object-contain ${
-                              isLarge ? 'min-h-[400px]' : 'min-h-[200px]'
-                            }`}
-                          />
+                        <div key={pageIndex} className="grid grid-cols-2 gap-3 auto-rows-fr">
+                          {pagePhotos.map((photo, i) => {
+                            let className = 'relative rounded-lg overflow-hidden bg-muted';
+                            let minHeight = 'min-h-[200px]';
+                            
+                            if (i === 0) {
+                              className += ' col-span-1 row-span-2';
+                              minHeight = 'min-h-[416px]';
+                            } else if (i === 4) {
+                              className += ' col-span-2 row-span-1';
+                              minHeight = 'min-h-[100px]';
+                            }
+                            
+                            return (
+                              <div key={`${pageIndex}-${i}`} className={className}>
+                                <ImageViewer 
+                                  src={photo} 
+                                  alt={`Photo ${pageIndex * 5 + i + 1}`}
+                                  className={`w-full h-full object-contain ${minHeight}`}
+                                />
+                              </div>
+                            );
+                          })}
                         </div>
                       );
                     })}
