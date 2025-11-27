@@ -186,21 +186,17 @@ export default function ReplicateClothingSelector({
                       <SelectValue placeholder="Выберите категорию" />
                     </SelectTrigger>
                     <SelectContent>
-                      {(selectedClothingItems.length === 1 || (selectedClothingItems.length === 2 && selectedClothingItems.find(i => i.id !== item.id)?.category !== 'lower_body')) ? (
-                        <SelectItem value="upper_body" className="text-xs">
-                          Верх (Топы, Рубашки, Жакеты)
-                        </SelectItem>
-                      ) : null}
-                      {(selectedClothingItems.length === 1 || (selectedClothingItems.length === 2 && selectedClothingItems.find(i => i.id !== item.id)?.category !== 'upper_body')) ? (
-                        <SelectItem value="lower_body" className="text-xs">
-                          Низ (Брюки, Юбки, Шорты)
-                        </SelectItem>
-                      ) : null}
-                      {selectedClothingItems.length === 1 ? (
+                      <SelectItem value="upper_body" className="text-xs">
+                        Верх (Топы, Рубашки, Жакеты)
+                      </SelectItem>
+                      <SelectItem value="lower_body" className="text-xs">
+                        Низ (Брюки, Юбки, Шорты)
+                      </SelectItem>
+                      {selectedClothingItems.length === 1 && (
                         <SelectItem value="dresses" className="text-xs">
                           Весь образ, платья, верх и низ вместе
                         </SelectItem>
-                      ) : null}
+                      )}
                     </SelectContent>
                   </Select>
                   {getCategoryHint(item.id, item.category) && (
@@ -232,6 +228,38 @@ export default function ReplicateClothingSelector({
           <p className="text-sm text-green-900">
             <Icon name="CheckCircle2" className="inline mr-1" size={16} />
             Отлично! Выбран комплект: верх и низ. Можно создавать образ
+          </p>
+        </div>
+      )}
+
+      {selectedClothingItems.length === 2 && 
+       selectedClothingItems.every(item => item.category) &&
+       selectedClothingItems.filter(item => item.category === 'upper_body').length === 2 && (
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm text-amber-900">
+            <Icon name="AlertCircle" className="inline mr-1" size={16} />
+            Выбрано два верха. Измените одну вещь на категорию "Низ"
+          </p>
+        </div>
+      )}
+
+      {selectedClothingItems.length === 2 && 
+       selectedClothingItems.every(item => item.category) &&
+       selectedClothingItems.filter(item => item.category === 'lower_body').length === 2 && (
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm text-amber-900">
+            <Icon name="AlertCircle" className="inline mr-1" size={16} />
+            Выбрано два низа. Измените одну вещь на категорию "Верх"
+          </p>
+        </div>
+      )}
+
+      {selectedClothingItems.length === 2 && 
+       selectedClothingItems.some(item => item.category === 'dresses') && (
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm text-amber-900">
+            <Icon name="AlertCircle" className="inline mr-1" size={16} />
+            Полный образ нельзя комбинировать с другими вещами. Удалите одну вещь
           </p>
         </div>
       )}
