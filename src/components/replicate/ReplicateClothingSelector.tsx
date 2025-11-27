@@ -101,11 +101,11 @@ export default function ReplicateClothingSelector({
           <div className="space-y-3">
             {selectedClothingItems.map((item) => (
               <div key={item.id} className="flex gap-3 p-3 border rounded-lg bg-card">
-                <div className="relative group flex-shrink-0">
+                <div className="relative group flex-shrink-0 w-20 h-20">
                   <ImageViewer
                     src={item.image}
                     alt={item.name || 'Clothing'}
-                    className="w-20 h-20 object-contain rounded border-2 border-primary bg-muted"
+                    className="w-full h-full object-cover rounded border-2 border-primary bg-muted"
                   />
                   <button
                     onClick={() => removeClothingItem(item.id)}
