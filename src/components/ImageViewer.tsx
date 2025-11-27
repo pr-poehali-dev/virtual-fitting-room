@@ -14,7 +14,7 @@ export default function ImageViewer({ src, alt = '', className = '' }: ImageView
   return (
     <>
       <div className="relative group">
-        <img src={src} alt={alt} className={className} />
+        <img src={src} alt={alt} className={`object-contain w-full h-auto ${className}`} />
         <button
           onClick={() => setIsOpen(true)}
           className="absolute top-2 left-2 bg-black/50 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70 cursor-pointer"
