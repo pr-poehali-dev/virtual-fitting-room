@@ -892,7 +892,7 @@ export default function Profile() {
             <div className="space-y-6 py-4">
               <div>
                 <h3 className="text-sm font-medium mb-3">Цветовая палитра</h3>
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-wrap">
                   {viewingLookbook.color_palette.map((color, index) => (
                     <div
                       key={index}
