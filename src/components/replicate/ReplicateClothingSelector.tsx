@@ -153,6 +153,17 @@ export default function ReplicateClothingSelector({
                     alt={item.name || 'Clothing'}
                     className="w-full h-full object-cover rounded border-2 border-primary bg-muted"
                   />
+                  {item.category && (
+                    <div className={`absolute -top-2 -left-2 px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm ${
+                      item.category === 'upper_body' ? 'bg-blue-500 text-white' :
+                      item.category === 'lower_body' ? 'bg-green-500 text-white' :
+                      'bg-purple-500 text-white'
+                    }`}>
+                      {item.category === 'upper_body' ? '👕 Верх' :
+                       item.category === 'lower_body' ? '👖 Низ' :
+                       '👗 Образ'}
+                    </div>
+                  )}
                   <button
                     onClick={() => removeClothingItem(item.id)}
                     className="absolute -top-2 -right-2 bg-gray-600 hover:bg-gray-700 text-white rounded-full p-1 shadow-sm transition-colors"
