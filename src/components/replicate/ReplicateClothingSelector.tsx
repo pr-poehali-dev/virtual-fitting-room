@@ -203,6 +203,15 @@ export default function ReplicateClothingSelector({
         </div>
       )}
 
+      {selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses' && (
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm text-amber-900">
+            <Icon name="AlertCircle" className="inline mr-1" size={16} />
+            Выбран полный образ. Удалите его, если хотите выбрать другие вещи
+          </p>
+        </div>
+      )}
+
       <div className="space-y-3">
         <div>
           <input
@@ -212,14 +221,14 @@ export default function ReplicateClothingSelector({
             onChange={handleCustomClothingUpload}
             className="hidden"
             id="clothing-upload"
-            disabled={isGenerating}
+            disabled={isGenerating || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses')}
           />
           <label htmlFor="clothing-upload">
             <Button
               type="button"
               variant="outline"
               className="w-full"
-              disabled={isGenerating}
+              disabled={isGenerating || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses')}
               asChild
             >
               <span>
@@ -326,15 +335,18 @@ export default function ReplicateClothingSelector({
                 const isSelected = selectedClothingItems.some(
                   (i) => i.id === item.id
                 );
+                const isDisabled = isGenerating || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses' && !isSelected);
                 return (
                   <div
                     key={item.id}
-                    onClick={() => toggleClothingSelection(item)}
-                    className={`cursor-pointer rounded-lg border-2 transition-all ${
+                    onClick={() => !isDisabled && toggleClothingSelection(item)}
+                    className={`rounded-lg border-2 transition-all ${
                       isSelected
                         ? 'border-primary ring-2 ring-primary/20'
                         : 'border-transparent hover:border-gray-300'
-                    } ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    } ${
+                      isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                    }`}
                   >
                     <ImageViewer
                       src={item.image_url}

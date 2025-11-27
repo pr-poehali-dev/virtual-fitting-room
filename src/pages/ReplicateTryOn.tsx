@@ -268,6 +268,12 @@ export default function ReplicateTryOn() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    if (selectedClothingItems.length >= 1 && selectedClothingItems[0].category === 'dresses') {
+      toast.error('Уже выбран полный образ. Удалите его, если хотите загрузить другую вещь');
+      e.target.value = '';
+      return;
+    }
+
     const remainingSlots = 2 - selectedClothingItems.length;
     if (remainingSlots <= 0) {
       toast.error('Максимум 2 вещи можно выбрать');
@@ -324,17 +330,29 @@ export default function ReplicateTryOn() {
     if (exists) {
       setSelectedClothingItems((prev) => prev.filter((i) => i.id !== item.id));
     } else {
+      if (selectedClothingItems.length >= 1 && selectedClothingItems[0].category === 'dresses') {
+        toast.error('Уже выбран полный образ. Удалите его, если хотите выбрать другую вещь');
+        return;
+      }
+      
       if (selectedClothingItems.length >= 2) {
         toast.error('Максимум 2 вещи можно выбрать');
         return;
       }
+      
+      const newCategory = mapCategoryFromCatalog(item);
+      if (newCategory === 'dresses' && selectedClothingItems.length > 0) {
+        toast.error('Полный образ нельзя комбинировать с другими вещами. Удалите уже выбранные вещи');
+        return;
+      }
+      
       setSelectedClothingItems((prev) => [
         ...prev,
         {
           id: item.id,
           image: item.image_url,
           name: item.name,
-          category: mapCategoryFromCatalog(item),
+          category: newCategory,
         },
       ]);
     }
