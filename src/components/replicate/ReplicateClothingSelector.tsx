@@ -387,7 +387,9 @@ export default function ReplicateClothingSelector({
                 const isSelected = selectedClothingItems.some(
                   (i) => i.id === item.id
                 );
-                const isDisabled = isGenerating || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses' && !isSelected);
+                const isDisabled = isGenerating || 
+                  (selectedClothingItems.length >= 2 && !isSelected) || 
+                  (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses' && !isSelected);
                 return (
                   <div
                     key={item.id}
