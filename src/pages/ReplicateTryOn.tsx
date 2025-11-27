@@ -268,9 +268,21 @@ export default function ReplicateTryOn() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    const remainingSlots = 2 - selectedClothingItems.length;
+    if (remainingSlots <= 0) {
+      toast.error('Максимум 2 вещи можно выбрать');
+      e.target.value = '';
+      return;
+    }
+
+    const filesToProcess = Array.from(files).slice(0, remainingSlots);
+    if (files.length > remainingSlots) {
+      toast.warning(`Можно добавить только ${remainingSlots} вещь(и)`);
+    }
+
     try {
       const resizedImages = await Promise.all(
-        Array.from(files).map(async (file) => {
+        filesToProcess.map(async (file) => {
           const resized = await resizeImage(file, 1024, 1024);
           return {
             id: `custom-${Date.now()}-${Math.random()}`,
@@ -312,6 +324,10 @@ export default function ReplicateTryOn() {
     if (exists) {
       setSelectedClothingItems((prev) => prev.filter((i) => i.id !== item.id));
     } else {
+      if (selectedClothingItems.length >= 2) {
+        toast.error('Максимум 2 вещи можно выбрать');
+        return;
+      }
       setSelectedClothingItems((prev) => [
         ...prev,
         {
@@ -345,10 +361,8 @@ export default function ReplicateTryOn() {
       return;
     }
 
-    if (selectedClothingItems.length > 5) {
-      toast.error('Максимум 5 вещей за раз', {
-        duration: 4000
-      });
+    if (selectedClothingItems.length > 2) {
+      toast.error('Максимум 2 вещи можно выбрать');
       return;
     }
 
@@ -361,6 +375,17 @@ export default function ReplicateTryOn() {
     if (itemsWithoutCategory.length > 0) {
       toast.error('Укажите категорию для всех выбранных вещей');
       return;
+    }
+
+    if (selectedClothingItems.length === 2) {
+      const categories = selectedClothingItems.map(item => item.category);
+      const hasUpper = categories.includes('upper_body');
+      const hasLower = categories.includes('lower_body');
+      
+      if (!hasUpper || !hasLower) {
+        toast.error('При выборе 2 вещей нужно выбрать одну для верха и одну для низа');
+        return;
+      }
     }
 
     setIsGenerating(true);
@@ -382,10 +407,15 @@ export default function ReplicateTryOn() {
         },
         body: JSON.stringify({
           person_image: uploadedImage,
-          garments: selectedClothingItems.map((item) => ({
-            image: item.image,
-            category: item.category || 'upper_body',
-          })),
+          garments: selectedClothingItems
+            .sort((a, b) => {
+              const order = { 'upper_body': 0, 'lower_body': 1, 'dresses': 2 };
+              return (order[a.category as keyof typeof order] || 99) - (order[b.category as keyof typeof order] || 99);
+            })
+            .map((item) => ({
+              image: item.image,
+              category: item.category || 'upper_body',
+            })),
           prompt_hints: '',
         }),
       });
@@ -845,9 +875,9 @@ export default function ReplicateTryOn() {
                 <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
                   <Icon name="Shirt" className="text-purple-600" size={32} />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">2. Выберите одну вещь</h3>
+                <h3 className="text-xl font-semibold mb-2">2. Выберите вещи</h3>
                 <p className="text-muted-foreground">
-                  Выберите один образ из каталога или загрузите своё фото
+                  Выберите 1-2 вещи из каталога или загрузите свои фото
                 </p>
               </div>
               <div className="text-center">
@@ -876,18 +906,20 @@ export default function ReplicateTryOn() {
                     </AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="item-2">
-                    <AccordionTrigger>Как работает технология?</AccordionTrigger>
+                    <AccordionTrigger>Сколько вещей можно примерить одновременно?</AccordionTrigger>
                     <AccordionContent>
-                      Мы используем нейросеть IDM-VTON, которая анализирует фото человека и одежды, 
-                      затем создаёт реалистичное изображение, где человек одет в выбранную вещь. 
-                      Технология учитывает позу, освещение и текстуру ткани.
+                      Вы можете выбрать одну вещь (любой категории: верх, низ, платье или полный образ) 
+                      или две вещи (одну для верха и одну для низа). При выборе двух вещей обязательно 
+                      указывайте разные категории (верх + низ).
                     </AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="item-3">
-                    <AccordionTrigger>Сколько времени занимает генерация?</AccordionTrigger>
+                    <AccordionTrigger>Как работает технология?</AccordionTrigger>
                     <AccordionContent>
-                      Обычно генерация занимает от 1 до 3 минут. 
-                      Время может варьироваться в зависимости от сложности изображения и загрузки сервера.
+                      Мы используем нейросеть IDM-VTON, которая анализирует фото человека и одежды, 
+                      затем создаёт реалистичное изображение, где человек одет в выбранные вещи. 
+                      Технология учитывает позу, освещение и форму тела. При выборе двух вещей сначала 
+                      надевается верх, затем низ.
                     </AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="item-4">
@@ -906,10 +938,11 @@ export default function ReplicateTryOn() {
                     </AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="item-6">
-                    <AccordionTrigger>Можно ли примерить несколько вещей сразу?</AccordionTrigger>
+                    <AccordionTrigger>Сколько времени занимает генерация?</AccordionTrigger>
                     <AccordionContent>
-                      Да, вы можете выбрать несколько вещей. Система будет примерять их поэтапно — 
-                      после каждого шага вы увидите промежуточный результат и сможете продолжить или начать заново.
+                      Генерация обычно занимает 20-30 секунд для одной вещи и 40-60 секунд для двух вещей. 
+                      Время может увеличиться в зависимости от нагрузки на серверы. При выборе двух вещей 
+                      вы увидите промежуточный результат после первой вещи.
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>

@@ -86,12 +86,41 @@ export default function ReplicateClothingSelector({
       : [...array, value];
   };
 
+  const getCategoryHint = (itemId: string, currentCategory: string | undefined) => {
+    if (selectedClothingItems.length === 1) {
+      return 'Любая категория';
+    }
+    
+    if (selectedClothingItems.length === 2) {
+      const otherItem = selectedClothingItems.find(item => item.id !== itemId);
+      if (!otherItem || !otherItem.category) {
+        return 'Выберите категорию';
+      }
+      
+      if (otherItem.category === 'upper_body') {
+        return currentCategory === 'lower_body' ? 'Низ (правильно ✓)' : 'Выберите "Низ"';
+      }
+      
+      if (otherItem.category === 'lower_body') {
+        return currentCategory === 'upper_body' ? 'Верх (правильно ✓)' : 'Выберите "Верх"';
+      }
+    }
+    
+    return '';
+  };
+
   return (
     <div>
-      <Label className="text-lg font-semibold mb-4 block">
+      <Label className="text-lg font-semibold mb-2 block">
         <Icon name="Shirt" className="inline mr-2" size={20} />
         2. Выберите вещи для примерки
       </Label>
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-sm text-blue-900">
+          <Icon name="Info" className="inline mr-1" size={16} />
+          Можно выбрать 1 вещь (любой категории) или 2 вещи (верх + низ)
+        </p>
+      </div>
 
       {selectedClothingItems.length > 0 && (
         <div className="mb-4 space-y-3">
@@ -115,30 +144,41 @@ export default function ReplicateClothingSelector({
                     <Icon name="X" size={14} />
                   </button>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate mb-2">
+                <div className="flex-1 min-w-0 space-y-2">
+                  <p className="text-sm font-medium truncate">
                     {item.name || 'Одежда'}
                   </p>
                   <Select
                     value={item.category || ''}
                     onValueChange={(value) => updateClothingCategory(item.id, value)}
-                    disabled={isGenerating}
+                    disabled={isGenerating || (selectedClothingItems.length === 2 && item.category && selectedClothingItems.find(i => i.id !== item.id && i.category && i.category !== item.category && ['upper_body', 'lower_body'].includes(i.category)) !== undefined)}
                   >
                     <SelectTrigger className="h-8 text-xs">
                       <SelectValue placeholder="Выберите категорию" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="upper_body" className="text-xs">
-                        Верх (Топы, Рубашки, Жакеты)
-                      </SelectItem>
-                      <SelectItem value="lower_body" className="text-xs">
-                        Низ (Брюки, Юбки, Шорты)
-                      </SelectItem>
-                      <SelectItem value="dresses" className="text-xs">
-                        Весь образ, платья, верх и низ вместе
-                      </SelectItem>
+                      {selectedClothingItems.length === 1 || selectedClothingItems.find(i => i.id !== item.id)?.category !== 'lower_body' ? (
+                        <SelectItem value="upper_body" className="text-xs">
+                          Верх (Топы, Рубашки, Жакеты)
+                        </SelectItem>
+                      ) : null}
+                      {selectedClothingItems.length === 1 || selectedClothingItems.find(i => i.id !== item.id)?.category !== 'upper_body' ? (
+                        <SelectItem value="lower_body" className="text-xs">
+                          Низ (Брюки, Юбки, Шорты)
+                        </SelectItem>
+                      ) : null}
+                      {selectedClothingItems.length === 1 ? (
+                        <SelectItem value="dresses" className="text-xs">
+                          Весь образ, платья, верх и низ вместе
+                        </SelectItem>
+                      ) : null}
                     </SelectContent>
                   </Select>
+                  {getCategoryHint(item.id, item.category) && (
+                    <p className="text-xs text-muted-foreground">
+                      {getCategoryHint(item.id, item.category)}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
