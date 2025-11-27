@@ -80,11 +80,13 @@ export default function ReplicateResultPanel({
                 Проверьте результат и нажмите "Продолжить" для следующей вещи
               </p>
             </div>
-            <ImageViewer
-              src={intermediateResult}
-              alt="Промежуточный результат"
-              className="rounded-lg"
-            />
+            <div className="flex justify-center">
+              <ImageViewer
+                src={intermediateResult}
+                alt="Промежуточный результат"
+                className="rounded-lg max-w-md"
+              />
+            </div>
             <div className="flex flex-col gap-2">
               {currentStep < totalSteps && (
                 <Button onClick={handleContinueGeneration} size="lg" className="w-full">
@@ -111,11 +113,13 @@ export default function ReplicateResultPanel({
                 🎉 Все шаги завершены!
               </p>
             </div>
-            <ImageViewer
-              src={generatedImage}
-              alt="Generated result"
-              className="rounded-lg"
-            />
+            <div className="flex justify-center">
+              <ImageViewer
+                src={generatedImage}
+                alt="Generated result"
+                className="rounded-lg max-w-md"
+              />
+            </div>
             <div className="flex flex-col gap-2">
               <div className="flex gap-2">
                 <Button onClick={handleDownloadImage} className="flex-1">
