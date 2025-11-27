@@ -88,6 +88,9 @@ export default function ReplicateClothingSelector({
 
   const getCategoryHint = (itemId: string, currentCategory: string | undefined) => {
     if (selectedClothingItems.length === 1) {
+      if (currentCategory === 'dresses') {
+        return 'Это фото полного образа';
+      }
       return 'Любая категория';
     }
     
@@ -97,11 +100,25 @@ export default function ReplicateClothingSelector({
         return 'Выберите категорию';
       }
       
+      if (currentCategory === 'dresses') {
+        return 'Это фото полного образа (нельзя комбинировать с другими вещами)';
+      }
+      
+      if (otherItem.category === 'dresses') {
+        return 'Другая вещь — полный образ (нельзя комбинировать)';
+      }
+      
       if (otherItem.category === 'upper_body') {
+        if (currentCategory === 'upper_body') {
+          return 'Выберите фото из категории низ (брюки, шорты, юбки)';
+        }
         return currentCategory === 'lower_body' ? 'Низ (правильно ✓)' : 'Нужен низ (брюки, юбки, шорты)';
       }
       
       if (otherItem.category === 'lower_body') {
+        if (currentCategory === 'lower_body') {
+          return 'Выберите фото из категории верх (топы, рубашки, жакеты)';
+        }
         return currentCategory === 'upper_body' ? 'Верх (правильно ✓)' : 'Нужен верх (топы, рубашки, жакеты)';
       }
     }
