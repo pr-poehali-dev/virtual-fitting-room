@@ -186,12 +186,12 @@ export default function ReplicateClothingSelector({
                       <SelectValue placeholder="Выберите категорию" />
                     </SelectTrigger>
                     <SelectContent>
-                      {selectedClothingItems.length === 1 || selectedClothingItems.find(i => i.id !== item.id)?.category !== 'lower_body' ? (
+                      {(selectedClothingItems.length === 1 || (selectedClothingItems.length === 2 && selectedClothingItems.find(i => i.id !== item.id)?.category !== 'lower_body')) ? (
                         <SelectItem value="upper_body" className="text-xs">
                           Верх (Топы, Рубашки, Жакеты)
                         </SelectItem>
                       ) : null}
-                      {selectedClothingItems.length === 1 || selectedClothingItems.find(i => i.id !== item.id)?.category !== 'upper_body' ? (
+                      {(selectedClothingItems.length === 1 || (selectedClothingItems.length === 2 && selectedClothingItems.find(i => i.id !== item.id)?.category !== 'upper_body')) ? (
                         <SelectItem value="lower_body" className="text-xs">
                           Низ (Брюки, Юбки, Шорты)
                         </SelectItem>
