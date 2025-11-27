@@ -308,36 +308,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing image_url'})
                 }
             
-            # Remove background from image before saving to catalog
-            processed_image_url = image_url
-            try:
-                fal_api_key = os.environ.get('FAL_API_KEY')
-                if fal_api_key:
-                    bg_removal_response = requests.post(
-                        'https://fal.run/fal-ai/birefnet',
-                        headers={
-                            'Authorization': f'Key {fal_api_key}',
-                            'Content-Type': 'application/json'
-                        },
-                        json={'image_url': image_url},
-                        timeout=60
-                    )
-                    
-                    if bg_removal_response.status_code == 200:
-                        bg_result = bg_removal_response.json()
-                        processed_url = bg_result.get('image', {}).get('url') if isinstance(bg_result.get('image'), dict) else bg_result.get('image')
-                        if processed_url:
-                            processed_image_url = processed_url
-                            print(f"Background removed for catalog item: {processed_image_url}")
-            except Exception as e:
-                print(f"Failed to remove background, using original: {e}")
-            
-            # Insert clothing item with processed image
+            # Insert clothing item with original image (no automatic background removal)
             cursor.execute("""
                 INSERT INTO clothing_catalog (image_url, name, description, replicate_category, gender)
                 VALUES (%s, %s, %s, %s, %s)
                 RETURNING id
-            """, (processed_image_url, name, description, replicate_category, gender))
+            """, (image_url, name, description, replicate_category, gender))
             
             clothing_id = cursor.fetchone()['id']
             
