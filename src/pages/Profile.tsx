@@ -178,6 +178,58 @@ export default function Profile() {
     if (!editingLookbookId) return;
 
     try {
+      if (selectedPhotoIndexes.length > 0 && targetLookbookId) {
+        const photosToMove = selectedPhotoIndexes.map(i => selectedPhotos[i]);
+        const photosToKeep = selectedPhotos.filter((_, i) => !selectedPhotoIndexes.includes(i));
+        const targetLookbook = lookbooks.find(lb => lb.id === targetLookbookId);
+        
+        if (targetLookbook) {
+          await fetch(LOOKBOOKS_API, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-User-Id': user.id
+            },
+            body: JSON.stringify({
+              id: targetLookbookId,
+              name: targetLookbook.name,
+              person_name: targetLookbook.person_name,
+              photos: [...targetLookbook.photos, ...photosToMove],
+              color_palette: targetLookbook.color_palette
+            })
+          });
+          
+          const response = await fetch(LOOKBOOKS_API, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-User-Id': user.id
+            },
+            body: JSON.stringify({
+              id: editingLookbookId,
+              name: newLookbookName,
+              person_name: newPersonName,
+              photos: photosToKeep,
+              color_palette: colorPalette
+            })
+          });
+
+          if (!response.ok) throw new Error('Failed to update lookbook');
+          
+          await fetchLookbooks();
+          setNewLookbookName('');
+          setNewPersonName('');
+          setSelectedPhotos([]);
+          setColorPalette(['#FF6B6B', '#4ECDC4', '#45B7D1']);
+          setSelectedPhotoIndexes([]);
+          setTargetLookbookId('');
+          setEditingLookbookId(null);
+          setIsEditingLookbook(false);
+          toast.success('Лукбук обновлён и фото перенесены!');
+          return;
+        }
+      }
+      
       const response = await fetch(LOOKBOOKS_API, {
         method: 'PUT',
         headers: {
@@ -200,6 +252,8 @@ export default function Profile() {
       setNewPersonName('');
       setSelectedPhotos([]);
       setColorPalette(['#FF6B6B', '#4ECDC4', '#45B7D1']);
+      setSelectedPhotoIndexes([]);
+      setTargetLookbookId('');
       setEditingLookbookId(null);
       setIsEditingLookbook(false);
       toast.success('Лукбук обновлён!');
@@ -570,7 +624,7 @@ export default function Profile() {
                               {selectedPhotos.map((photo, index) => (
                                 <div key={index} className="relative group border rounded-lg overflow-hidden bg-muted">
                                   <ImageViewer src={photo} alt="" className="w-full h-full object-contain" />
-                                  <div className="absolute bottom-2 left-2">
+                                  <div className="absolute bottom-2 left-2" title="Выберите фото для переноса в другой лукбук">
                                     <input
                                       type="checkbox"
                                       checked={selectedPhotoIndexes.includes(index)}
@@ -582,6 +636,7 @@ export default function Profile() {
                                         }
                                       }}
                                       className="w-5 h-5 cursor-pointer"
+                                      title="Выберите фото для переноса в другой лукбук"
                                     />
                                   </div>
                                   <Button
@@ -598,10 +653,11 @@ export default function Profile() {
                               ))}
                             </div>
                             {isEditingLookbook && selectedPhotoIndexes.length > 0 && (
-                              <div className="flex gap-2 mb-4">
+                              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <label className="block text-sm font-medium mb-2">Перенос фото в другой лукбук</label>
                                 <Select value={targetLookbookId} onValueChange={setTargetLookbookId}>
-                                  <SelectTrigger className="flex-1">
-                                    <SelectValue placeholder="Выберите лукбук" />
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Выберите целевой лукбук" />
                                   </SelectTrigger>
                                   <SelectContent>
                                     {lookbooks
@@ -613,48 +669,9 @@ export default function Profile() {
                                       ))}
                                   </SelectContent>
                                 </Select>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  onClick={async () => {
-                                    if (!targetLookbookId) {
-                                      toast.error('Выберите лукбук');
-                                      return;
-                                    }
-                                    const photosToMove = selectedPhotoIndexes.map(i => selectedPhotos[i]);
-                                    const targetLookbook = lookbooks.find(lb => lb.id === targetLookbookId);
-                                    if (!targetLookbook) return;
-                                    
-                                    try {
-                                      await fetch(LOOKBOOKS_API, {
-                                        method: 'PUT',
-                                        headers: {
-                                          'Content-Type': 'application/json',
-                                          'X-User-Id': user.id
-                                        },
-                                        body: JSON.stringify({
-                                          id: targetLookbookId,
-                                          name: targetLookbook.name,
-                                          person_name: targetLookbook.person_name,
-                                          photos: [...targetLookbook.photos, ...photosToMove],
-                                          color_palette: targetLookbook.color_palette
-                                        })
-                                      });
-                                      
-                                      setSelectedPhotos(selectedPhotos.filter((_, i) => !selectedPhotoIndexes.includes(i)));
-                                      setSelectedPhotoIndexes([]);
-                                      setTargetLookbookId('');
-                                      await fetchLookbooks();
-                                      toast.success('Фото перенесены');
-                                    } catch (error) {
-                                      toast.error('Ошибка переноса фото');
-                                    }
-                                  }}
-                                  disabled={!targetLookbookId}
-                                  title="Перенести выбранные фото"
-                                >
-                                  <Icon name="ArrowRight" size={18} />
-                                </Button>
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  Выбранные фото ({selectedPhotoIndexes.length}) будут перенесены при нажатии "Обновить лукбук"
+                                </p>
                               </div>
                             )}
                           </div>
