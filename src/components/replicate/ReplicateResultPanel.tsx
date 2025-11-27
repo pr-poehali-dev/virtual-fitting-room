@@ -81,11 +81,13 @@ export default function ReplicateResultPanel({
               </p>
             </div>
             <div className="flex justify-center">
-              <ImageViewer
-                src={intermediateResult}
-                alt="Промежуточный результат"
-                className="rounded-lg max-w-md"
-              />
+              <div className="relative w-full max-w-md" style={{ aspectRatio: '3/4' }}>
+                <ImageViewer
+                  src={intermediateResult}
+                  alt="Промежуточный результат"
+                  className="rounded-lg w-full h-full object-cover"
+                />
+              </div>
             </div>
             <div className="flex flex-col gap-2">
               {currentStep < totalSteps && (
@@ -114,11 +116,13 @@ export default function ReplicateResultPanel({
               </p>
             </div>
             <div className="flex justify-center">
-              <ImageViewer
-                src={generatedImage}
-                alt="Generated result"
-                className="rounded-lg max-w-md"
-              />
+              <div className="relative w-full max-w-md" style={{ aspectRatio: '3/4' }}>
+                <ImageViewer
+                  src={generatedImage}
+                  alt="Generated result"
+                  className="rounded-lg w-full h-full object-cover"
+                />
+              </div>
             </div>
             <div className="flex flex-col gap-2">
               <div className="flex gap-2">
