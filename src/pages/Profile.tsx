@@ -570,7 +570,7 @@ export default function Profile() {
                               {selectedPhotos.map((photo, index) => (
                                 <div key={index} className="relative group border rounded-lg overflow-hidden bg-muted">
                                   <ImageViewer src={photo} alt="" className="w-full h-full object-contain" />
-                                  <div className="absolute top-2 left-2">
+                                  <div className="absolute bottom-2 left-2">
                                     <input
                                       type="checkbox"
                                       checked={selectedPhotoIndexes.includes(index)}
