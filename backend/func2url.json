@@ -1,4 +1,5 @@
 {
+  "image-storage": "https://functions.poehali.dev/ddd729d2-d0da-4647-9854-4f31ce85e95f",
   "replicate-continue": "https://functions.poehali.dev/fdb150a0-d5ba-47ec-9d9a-e13595cd92d1",
   "replicate-prediction-checker": "https://functions.poehali.dev/b4e78e2b-eef9-4061-8647-4ae4373a0c4d",
   "replicate-async-start": "https://functions.poehali.dev/c1cb3f04-f40a-4044-87fd-568d0271e1fe",
