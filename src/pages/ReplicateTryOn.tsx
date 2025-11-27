@@ -13,6 +13,12 @@ import ReplicateClothingSelector from '@/components/replicate/ReplicateClothingS
 import ReplicateResultPanel from '@/components/replicate/ReplicateResultPanel';
 import ReplicateSaveDialog from '@/components/replicate/ReplicateSaveDialog';
 import ImageCropper from '@/components/ImageCropper';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 interface ClothingItem {
   id: string;
@@ -805,6 +811,94 @@ export default function ReplicateTryOn() {
               handleContinueGeneration={handleContinueGeneration}
               checkStatusManually={checkStatusManually}
             />
+          </div>
+
+          <div className="max-w-5xl mx-auto mt-16 mb-12">
+            <h2 className="text-3xl font-bold text-center mb-12">Как пользоваться примерочной</h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Icon name="Upload" className="text-purple-600" size={32} />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">1. Загрузите фото</h3>
+                <p className="text-muted-foreground">
+                  Выберите фотографию человека в полный рост
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Icon name="Shirt" className="text-purple-600" size={32} />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">2. Выберите одну вещь</h3>
+                <p className="text-muted-foreground">
+                  Выберите один образ из каталога или загрузите своё фото
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Icon name="Sparkles" className="text-purple-600" size={32} />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">3. Получите результат</h3>
+                <p className="text-muted-foreground">
+                  AI создаст реалистичное изображение с выбранным образом
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="max-w-3xl mx-auto mt-16 mb-12">
+            <h2 className="text-3xl font-bold text-center mb-8">Часто задаваемые вопросы</h2>
+            <Card>
+              <CardContent className="p-6">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="item-1">
+                    <AccordionTrigger>Какие требования к фотографии?</AccordionTrigger>
+                    <AccordionContent>
+                      Лучше всего использовать фотографии в полный рост с хорошим освещением. 
+                      Человек должен быть хорошо виден, без сильных искажений. 
+                      Рекомендуем вертикальный формат фото (высота больше ширины).
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="item-2">
+                    <AccordionTrigger>Как работает технология?</AccordionTrigger>
+                    <AccordionContent>
+                      Мы используем нейросеть IDM-VTON, которая анализирует фото человека и одежды, 
+                      затем создаёт реалистичное изображение, где человек одет в выбранную вещь. 
+                      Технология учитывает позу, освещение и текстуру ткани.
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="item-3">
+                    <AccordionTrigger>Сколько времени занимает генерация?</AccordionTrigger>
+                    <AccordionContent>
+                      Обычно генерация занимает от 1 до 3 минут. 
+                      Время может варьироваться в зависимости от сложности изображения и загрузки сервера.
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="item-4">
+                    <AccordionTrigger>Можно ли использовать свою одежду?</AccordionTrigger>
+                    <AccordionContent>
+                      Да! Вы можете загрузить фото своей одежды через кнопку "Загрузить свою вещь". 
+                      Лучше всего использовать фото на белом фоне или на модели.
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="item-5">
+                    <AccordionTrigger>Что делать, если результат неточный?</AccordionTrigger>
+                    <AccordionContent>
+                      Попробуйте использовать другое фото модели или одежды. 
+                      Лучшие результаты получаются на фото с хорошим освещением, 
+                      где человек стоит прямо и хорошо видна вся фигура.
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="item-6">
+                    <AccordionTrigger>Можно ли примерить несколько вещей сразу?</AccordionTrigger>
+                    <AccordionContent>
+                      Да, вы можете выбрать несколько вещей. Система будет примерять их поэтапно — 
+                      после каждого шага вы увидите промежуточный результат и сможете продолжить или начать заново.
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </CardContent>
+            </Card>
           </div>
           
           <div className="text-center mt-8 pb-4">
