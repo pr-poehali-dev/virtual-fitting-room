@@ -98,11 +98,11 @@ export default function ReplicateClothingSelector({
       }
       
       if (otherItem.category === 'upper_body') {
-        return currentCategory === 'lower_body' ? 'Низ (правильно ✓)' : 'Выберите "Низ"';
+        return currentCategory === 'lower_body' ? 'Низ (правильно ✓)' : 'Нужен низ (брюки, юбки, шорты)';
       }
       
       if (otherItem.category === 'lower_body') {
-        return currentCategory === 'upper_body' ? 'Верх (правильно ✓)' : 'Выберите "Верх"';
+        return currentCategory === 'upper_body' ? 'Верх (правильно ✓)' : 'Нужен верх (топы, рубашки, жакеты)';
       }
     }
     
@@ -130,7 +130,7 @@ export default function ReplicateClothingSelector({
           <div className="space-y-3">
             {selectedClothingItems.map((item) => (
               <div key={item.id} className="flex gap-3 p-3 border rounded-lg bg-card">
-                <div className="relative group flex-shrink-0 w-20 h-20">
+                <div className="relative flex-shrink-0 w-20 h-20">
                   <ImageViewer
                     src={item.image}
                     alt={item.name || 'Clothing'}
@@ -138,7 +138,7 @@ export default function ReplicateClothingSelector({
                   />
                   <button
                     onClick={() => removeClothingItem(item.id)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute -top-2 -right-2 bg-gray-600 hover:bg-gray-700 text-white rounded-full p-1 shadow-sm transition-colors"
                     disabled={isGenerating}
                   >
                     <Icon name="X" size={14} />
