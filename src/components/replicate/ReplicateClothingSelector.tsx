@@ -219,7 +219,7 @@ export default function ReplicateClothingSelector({
         <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
           <p className="text-sm text-amber-900">
             <Icon name="AlertCircle" className="inline mr-1" size={16} />
-            Выбран полный образ. Удалите его, если хотите выбрать другие вещи
+            Выбран полный образ. Чтобы выбрать другие вещи, удалите выбранные
           </p>
         </div>
       )}
