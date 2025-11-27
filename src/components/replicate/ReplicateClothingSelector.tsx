@@ -224,6 +224,18 @@ export default function ReplicateClothingSelector({
         </div>
       )}
 
+      {selectedClothingItems.length === 2 && 
+       selectedClothingItems.every(item => item.category) &&
+       selectedClothingItems.some(item => item.category === 'upper_body') &&
+       selectedClothingItems.some(item => item.category === 'lower_body') && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-sm text-green-900">
+            <Icon name="CheckCircle2" className="inline mr-1" size={16} />
+            Отлично! Выбран комплект: верх и низ. Можно создавать образ
+          </p>
+        </div>
+      )}
+
       <div className="space-y-3">
         <div>
           <input
