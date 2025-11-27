@@ -289,61 +289,39 @@ export default function Profile() {
       };
       
       const photos = viewingLookbook.photos;
+      const cellWidth = usableWidth / 3;
+      const gap = 3;
+      const imageWidth = cellWidth - gap;
+      const imageHeight = imageWidth * 1.4;
       
-      let photoIndex = 0;
-      let currentPage = 0;
+      let currentX = margin;
+      let currentY = yPos;
+      let photosInRow = 0;
       
-      while (photoIndex < photos.length) {
-        if (currentPage > 0) {
+      for (let i = 0; i < photos.length; i++) {
+        if (currentY + imageHeight > pageHeight - margin) {
           pdf.addPage();
-          yPos = margin;
+          currentY = margin;
+          currentX = margin;
+          photosInRow = 0;
         }
         
-        const pagePhotos = photos.slice(photoIndex, photoIndex + 6);
-        const cellWidth = usableWidth / 3;
-        const cellHeight = (pageHeight - yPos - margin) / 2;
-        const gap = 3;
-        
-        for (let i = 0; i < pagePhotos.length; i++) {
-          let x = margin;
-          let y = yPos;
-          let w = cellWidth - gap;
-          let h = cellHeight - gap;
-          
-          if (i === 0) {
-            x = margin;
-            y = yPos;
-            w = cellWidth * 2 - gap;
-            h = cellHeight * 2 - gap;
-          } else if (i === 1) {
-            x = margin + cellWidth * 2;
-            y = yPos;
-          } else if (i === 2) {
-            x = margin + cellWidth * 2;
-            y = yPos + cellHeight;
-          } else if (i === 3) {
-            x = margin;
-            y = yPos + cellHeight * 2;
-          } else if (i === 4) {
-            x = margin;
-            y = yPos + cellHeight * 3;
-          } else if (i === 5) {
-            x = margin + cellWidth;
-            y = yPos + cellHeight * 2;
-            w = cellWidth * 2 - gap;
-            h = cellHeight * 2 - gap;
-          }
-          
-          try {
-            const imgData = await loadImage(pagePhotos[i]);
-            pdf.addImage(imgData, 'JPEG', x, y, w, h, undefined, 'FAST');
-          } catch (e) {
-            console.error('Failed to load image:', e);
-          }
+        try {
+          const imgData = await loadImage(photos[i]);
+          pdf.addImage(imgData, 'JPEG', currentX, currentY, imageWidth, imageHeight, undefined, 'FAST');
+        } catch (e) {
+          console.error('Failed to load image:', e);
         }
         
-        photoIndex += 6;
-        currentPage++;
+        photosInRow++;
+        
+        if (photosInRow === 3) {
+          currentX = margin;
+          currentY += imageHeight + gap;
+          photosInRow = 0;
+        } else {
+          currentX += cellWidth;
+        }
       }
       
       pdf.save(`${encodeText(viewingLookbook.name)}.pdf`);
@@ -929,48 +907,16 @@ export default function Profile() {
               {viewingLookbook.photos.length > 0 && (
                 <div>
                   <h3 className="text-sm font-medium mb-3">Результаты примерок</h3>
-                  <div className="space-y-6">
-                    {Array.from({ length: Math.ceil(viewingLookbook.photos.length / 6) }).map((_, pageIndex) => {
-                      const pagePhotos = viewingLookbook.photos.slice(pageIndex * 6, (pageIndex + 1) * 6);
-                      return (
-                        <div key={pageIndex} className="grid grid-cols-3 gap-3" style={{ gridAutoRows: '150px' }}>
-                          {pagePhotos.map((photo, i) => {
-                            let className = 'relative rounded-lg overflow-hidden bg-muted';
-                            let style = {};
-                            
-                            if (i === 0) {
-                              className += ' col-span-2 row-span-2';
-                              style = { gridRowStart: 1, gridColumnStart: 1 };
-                            } else if (i === 1) {
-                              className += ' col-span-1 row-span-1';
-                              style = { gridRowStart: 1, gridColumnStart: 3 };
-                            } else if (i === 2) {
-                              className += ' col-span-1 row-span-1';
-                              style = { gridRowStart: 2, gridColumnStart: 3 };
-                            } else if (i === 3) {
-                              className += ' col-span-1 row-span-1';
-                              style = { gridRowStart: 3, gridColumnStart: 1 };
-                            } else if (i === 4) {
-                              className += ' col-span-1 row-span-1';
-                              style = { gridRowStart: 4, gridColumnStart: 1 };
-                            } else if (i === 5) {
-                              className += ' col-span-2 row-span-2';
-                              style = { gridRowStart: 3, gridColumnStart: 2 };
-                            }
-                            
-                            return (
-                              <div key={`${pageIndex}-${i}`} className={className} style={style}>
-                                <ImageViewer 
-                                  src={photo} 
-                                  alt={`Photo ${pageIndex * 6 + i + 1}`}
-                                  className="w-full h-full object-contain"
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })}
+                  <div className="grid grid-cols-3 gap-3">
+                    {viewingLookbook.photos.map((photo, index) => (
+                      <div key={index} className="relative rounded-lg overflow-hidden bg-muted aspect-[5/7]">
+                        <ImageViewer 
+                          src={photo} 
+                          alt={`Photo ${index + 1}`}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
