@@ -509,8 +509,8 @@ export default function Profile() {
 
                         {selectedPhotos.length > 0 && (
                           <div>
-                            <label className="block text-sm font-medium mb-2">Фотографии одежды</label>
-                            <div className="grid grid-cols-2 gap-3">
+                            <label className="block text-sm font-medium mb-2">Результаты примерок</label>
+                            <div className="grid grid-cols-3 gap-3">
                               {selectedPhotos.map((photo, index) => (
                                 <div key={index} className="relative group border rounded-lg overflow-hidden bg-muted">
                                   <ImageViewer src={photo} alt="" className="w-full h-full object-contain" />
