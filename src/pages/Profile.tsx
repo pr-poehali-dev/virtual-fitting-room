@@ -570,7 +570,7 @@ export default function Profile() {
                             <label className="block text-sm font-medium mb-2">Результаты примерок</label>
                             <div className="grid grid-cols-3 gap-3 mb-4">
                               {selectedPhotos.map((photo, index) => (
-                                <div key={index} className="relative group border rounded-lg overflow-hidden bg-muted">
+                                <div key={index} className="relative group border rounded-lg overflow-hidden bg-muted aspect-[5/7]">
                                   <ImageViewer src={photo} alt="" className="w-full h-full object-contain" />
                                   <div className="absolute bottom-2 left-2" title="Выберите фото для переноса в другой лукбук">
                                     <input
