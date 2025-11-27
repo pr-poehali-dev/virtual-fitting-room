@@ -325,8 +325,8 @@ export default function Profile() {
             x = margin;
             y = yPos + cellHeight * 2;
           } else if (i === 4) {
-            x = margin + cellWidth;
-            y = yPos + cellHeight * 2;
+            x = margin;
+            y = yPos + cellHeight * 3;
           } else if (i === 5) {
             x = margin + cellWidth;
             y = yPos + cellHeight * 2;
@@ -933,22 +933,33 @@ export default function Profile() {
                     {Array.from({ length: Math.ceil(viewingLookbook.photos.length / 6) }).map((_, pageIndex) => {
                       const pagePhotos = viewingLookbook.photos.slice(pageIndex * 6, (pageIndex + 1) * 6);
                       return (
-                        <div key={pageIndex} className="grid grid-cols-3 gap-3" style={{ gridAutoRows: '200px' }}>
+                        <div key={pageIndex} className="grid grid-cols-3 gap-3" style={{ gridAutoRows: '150px' }}>
                           {pagePhotos.map((photo, i) => {
                             let className = 'relative rounded-lg overflow-hidden bg-muted';
+                            let style = {};
                             
                             if (i === 0) {
                               className += ' col-span-2 row-span-2';
-                            } else if (i === 1 || i === 2) {
+                              style = { gridRowStart: 1, gridColumnStart: 1 };
+                            } else if (i === 1) {
                               className += ' col-span-1 row-span-1';
-                            } else if (i === 3 || i === 4) {
+                              style = { gridRowStart: 1, gridColumnStart: 3 };
+                            } else if (i === 2) {
                               className += ' col-span-1 row-span-1';
+                              style = { gridRowStart: 2, gridColumnStart: 3 };
+                            } else if (i === 3) {
+                              className += ' col-span-1 row-span-1';
+                              style = { gridRowStart: 3, gridColumnStart: 1 };
+                            } else if (i === 4) {
+                              className += ' col-span-1 row-span-1';
+                              style = { gridRowStart: 4, gridColumnStart: 1 };
                             } else if (i === 5) {
                               className += ' col-span-2 row-span-2';
+                              style = { gridRowStart: 3, gridColumnStart: 2 };
                             }
                             
                             return (
-                              <div key={`${pageIndex}-${i}`} className={className}>
+                              <div key={`${pageIndex}-${i}`} className={className} style={style}>
                                 <ImageViewer 
                                   src={photo} 
                                   alt={`Photo ${pageIndex * 6 + i + 1}`}
