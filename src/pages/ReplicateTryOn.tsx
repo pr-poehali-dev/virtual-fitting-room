@@ -146,7 +146,11 @@ export default function ReplicateTryOn() {
       const response = await fetch(`${CATALOG_API}?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
-        setClothingCatalog(data);
+        const filteredData = data.filter((item: ClothingItem) => {
+          const category = mapCategoryFromCatalog(item);
+          return category === 'upper_body' || category === 'lower_body' || category === 'dresses';
+        });
+        setClothingCatalog(filteredData);
       }
     } catch (error) {
       console.error('Failed to fetch catalog:', error);
