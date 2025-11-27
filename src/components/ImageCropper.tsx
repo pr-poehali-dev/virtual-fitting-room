@@ -30,6 +30,8 @@ export default function ImageCropper({
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [isHorizontal, setIsHorizontal] = useState(false);
 
   const handleCropComplete = async () => {
     if (!imgRef.current) {
@@ -108,7 +110,7 @@ export default function ImageCropper({
         </DialogHeader>
         
         <div className="space-y-4">
-          {aspectRatio && aspectRatio < 1 && (
+          {imageLoaded && isHorizontal && (
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-start gap-2">
                 <Icon name="Info" className="text-blue-600 mt-0.5 flex-shrink-0" size={18} />
@@ -136,6 +138,11 @@ export default function ImageCropper({
                 src={image}
                 alt="Crop preview"
                 className="max-w-full h-auto"
+                onLoad={(e) => {
+                  const img = e.currentTarget;
+                  setIsHorizontal(img.naturalWidth > img.naturalHeight);
+                  setImageLoaded(true);
+                }}
               />
             </ReactCrop>
           </div>
