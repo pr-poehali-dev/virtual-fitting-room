@@ -12,6 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import ImageViewer from '@/components/ImageViewer';
 import ImageCropper from '@/components/ImageCropper';
 import WalletTab from '@/components/WalletTab';
+import { jsPDF } from 'jspdf';
 
 interface Lookbook {
   id: string;
@@ -55,6 +56,8 @@ export default function Profile() {
   const [imageToCrop, setImageToCrop] = useState<string>('');
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number | null>(null);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [viewingLookbook, setViewingLookbook] = useState<Lookbook | null>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -222,64 +225,98 @@ export default function Profile() {
     }
   };
 
-  const handleShareLookbook = async (lookbookId: string) => {
-    const lookbook = lookbooks.find(lb => lb.id === lookbookId);
-    
-    if (lookbook?.is_public && lookbook?.share_token) {
-      const shareUrl = `${window.location.origin}/lookbook/${lookbook.share_token}`;
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success('Ссылка скопирована в буфер обмена!');
-      return;
-    }
-    
-    try {
-      const shareToken = crypto.randomUUID();
-      
-      const response = await fetch(LOOKBOOKS_API, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
-        },
-        body: JSON.stringify({
-          id: lookbookId,
-          is_public: true,
-          share_token: shareToken
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to share lookbook');
-      
-      const shareUrl = `${window.location.origin}/lookbook/${shareToken}`;
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success('Ссылка скопирована в буфер обмена!');
-      await fetchLookbooks();
-    } catch (error) {
-      toast.error('Ошибка создания ссылки');
-    }
+  const handleViewLookbook = (lookbook: Lookbook) => {
+    setViewingLookbook(lookbook);
   };
 
-  const handleUnshareLookbook = async (lookbookId: string) => {
+  const handleDownloadPDF = async () => {
+    if (!viewingLookbook) return;
+    
+    setIsGeneratingPDF(true);
     try {
-      const response = await fetch(LOOKBOOKS_API, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
-        },
-        body: JSON.stringify({
-          id: lookbookId,
-          is_public: false,
-          share_token: null
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to unshare lookbook');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      const usableWidth = pageWidth - 2 * margin;
       
-      toast.success('Публичный доступ отключён');
-      await fetchLookbooks();
+      pdf.setFontSize(24);
+      pdf.text(viewingLookbook.name, margin, margin + 10);
+      
+      pdf.setFontSize(14);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`Для: ${viewingLookbook.person_name}`, margin, margin + 20);
+      
+      let yPos = margin + 35;
+      
+      const colorSize = 8;
+      viewingLookbook.color_palette.forEach((color, i) => {
+        pdf.setFillColor(parseInt(color.slice(1, 3), 16), parseInt(color.slice(3, 5), 16), parseInt(color.slice(5, 7), 16));
+        pdf.rect(margin + i * (colorSize + 2), yPos, colorSize, colorSize, 'F');
+      });
+      
+      yPos += 20;
+      
+      const loadImage = (url: string): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx?.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/jpeg', 0.8));
+          };
+          img.onerror = reject;
+          img.src = url;
+        });
+      };
+      
+      const photos = viewingLookbook.photos;
+      for (let i = 0; i < photos.length; i++) {
+        if (i > 0 && i % 4 === 0) {
+          pdf.addPage();
+          yPos = margin;
+        }
+        
+        const col = i % 2;
+        const row = Math.floor((i % 4) / 2);
+        const imgWidth = (usableWidth - 5) / 2;
+        const imgHeight = imgWidth * 1.4;
+        const xPos = margin + col * (imgWidth + 5);
+        const imgYPos = yPos + row * (imgHeight + 5);
+        
+        if (imgYPos + imgHeight > pageHeight - margin) {
+          pdf.addPage();
+          yPos = margin;
+          const newRow = 0;
+          const newImgYPos = yPos + newRow * (imgHeight + 5);
+          
+          try {
+            const imgData = await loadImage(photos[i]);
+            pdf.addImage(imgData, 'JPEG', xPos, newImgYPos, imgWidth, imgHeight);
+          } catch (e) {
+            console.error('Failed to load image:', e);
+          }
+        } else {
+          try {
+            const imgData = await loadImage(photos[i]);
+            pdf.addImage(imgData, 'JPEG', xPos, imgYPos, imgWidth, imgHeight);
+          } catch (e) {
+            console.error('Failed to load image:', e);
+          }
+        }
+      }
+      
+      pdf.save(`${viewingLookbook.name}.pdf`);
+      toast.success('PDF скачан!');
     } catch (error) {
-      toast.error('Ошибка отключения доступа');
+      console.error('PDF generation error:', error);
+      toast.error('Ошибка создания PDF');
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -583,26 +620,14 @@ export default function Profile() {
                               <p className="text-sm text-muted-foreground mt-1">Для: {lookbook.person_name}</p>
                             </div>
                             <div className="flex gap-2">
-                              {lookbook.is_public ? (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleUnshareLookbook(lookbook.id)}
-                                  title="Отключить публичный доступ"
-                                  className="text-green-600 hover:text-green-700"
-                                >
-                                  <Icon name="Globe" size={16} />
-                                </Button>
-                              ) : (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleShareLookbook(lookbook.id)}
-                                  title="Поделиться"
-                                >
-                                  <Icon name="Share2" size={16} />
-                                </Button>
-                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewLookbook(lookbook)}
+                                title="Просмотр"
+                              >
+                                <Icon name="Eye" size={16} />
+                              </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -820,6 +845,81 @@ export default function Profile() {
           onCropComplete={handleCropComplete}
         />
       )}
+
+      <Dialog open={!!viewingLookbook} onOpenChange={(open) => !open && setViewingLookbook(null)}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-light">{viewingLookbook?.name}</h2>
+                <p className="text-sm text-muted-foreground mt-1">Для: {viewingLookbook?.person_name}</p>
+              </div>
+              <Button 
+                onClick={handleDownloadPDF} 
+                disabled={isGeneratingPDF}
+                size="sm"
+              >
+                {isGeneratingPDF ? (
+                  <>
+                    <Icon name="Loader2" className="mr-2 animate-spin" size={16} />
+                    Создание PDF...
+                  </>
+                ) : (
+                  <>
+                    <Icon name="Download" className="mr-2" size={16} />
+                    Скачать PDF
+                  </>
+                )}
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {viewingLookbook && (
+            <div className="space-y-6 py-4">
+              <div>
+                <h3 className="text-sm font-medium mb-3">Цветовая палитра</h3>
+                <div className="flex gap-3">
+                  {viewingLookbook.color_palette.map((color, index) => (
+                    <div
+                      key={index}
+                      className="w-14 h-14 rounded-lg shadow-md"
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {viewingLookbook.photos.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Результаты примерок</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {viewingLookbook.photos.map((photo, index) => {
+                      const isLarge = index % 5 === 0;
+                      return (
+                        <div 
+                          key={index} 
+                          className={`relative rounded-lg overflow-hidden bg-muted ${
+                            isLarge ? 'md:col-span-2 md:row-span-2' : ''
+                          }`}
+                        >
+                          <ImageViewer 
+                            src={photo} 
+                            alt={`Photo ${index + 1}`}
+                            className={`w-full h-full object-contain ${
+                              isLarge ? 'min-h-[400px]' : 'min-h-[200px]'
+                            }`}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
