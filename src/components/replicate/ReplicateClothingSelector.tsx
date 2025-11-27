@@ -273,14 +273,14 @@ export default function ReplicateClothingSelector({
             onChange={handleCustomClothingUpload}
             className="hidden"
             id="clothing-upload"
-            disabled={isGenerating || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses')}
+            disabled={isGenerating || selectedClothingItems.length >= 2 || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses')}
           />
           <label htmlFor="clothing-upload">
             <Button
               type="button"
               variant="outline"
-              className={`w-full ${(isGenerating || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses')) ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={isGenerating || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses')}
+              className={`w-full ${(isGenerating || selectedClothingItems.length >= 2 || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses')) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isGenerating || selectedClothingItems.length >= 2 || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses')}
               asChild
             >
               <span>
