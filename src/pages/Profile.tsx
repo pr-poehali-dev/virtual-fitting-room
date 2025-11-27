@@ -507,24 +507,10 @@ export default function Profile() {
                           />
                         </div>
 
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Фотографии одежды</label>
-                          <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              multiple
-                              onChange={handlePhotoUpload}
-                              className="hidden"
-                              id="lookbook-photos"
-                            />
-                            <label htmlFor="lookbook-photos" className="cursor-pointer">
-                              <Icon name="Upload" className="mx-auto mb-2 text-muted-foreground" size={32} />
-                              <p className="text-sm text-muted-foreground">Загрузите фото одежды</p>
-                            </label>
-                          </div>
-                          {selectedPhotos.length > 0 && (
-                            <div className="grid grid-cols-1 gap-3 mt-4">
+                        {selectedPhotos.length > 0 && (
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Фотографии одежды</label>
+                            <div className="grid grid-cols-1 gap-3">
                               {selectedPhotos.map((photo, index) => (
                                 <div key={index} className="relative border rounded-lg overflow-hidden">
                                   <ImageViewer src={photo} alt="" className="w-full h-48 object-cover" />
@@ -541,8 +527,8 @@ export default function Profile() {
                                 </div>
                               ))}
                             </div>
-                          )}
-                        </div>
+                          </div>
+                        )}
 
                         <div>
                           <label className="block text-sm font-medium mb-2">Цветовая палитра</label>
