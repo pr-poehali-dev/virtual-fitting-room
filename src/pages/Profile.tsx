@@ -290,14 +290,6 @@ export default function Profile() {
       
       const photos = viewingLookbook.photos;
       
-      const gridPattern = [
-        { cols: 2, rows: 2 },
-        { cols: 1, rows: 1 },
-        { cols: 1, rows: 1 },
-        { cols: 1, rows: 1 },
-        { cols: 1, rows: 1 }
-      ];
-      
       let photoIndex = 0;
       let currentPage = 0;
       
@@ -307,34 +299,39 @@ export default function Profile() {
           yPos = margin;
         }
         
-        const pagePhotos = photos.slice(photoIndex, photoIndex + 5);
-        const cellWidth = usableWidth / 2;
-        const cellHeight = (pageHeight - 2 * margin - 10) / 2;
+        const pagePhotos = photos.slice(photoIndex, photoIndex + 6);
+        const cellWidth = usableWidth / 3;
+        const cellHeight = (pageHeight - yPos - margin) / 2;
+        const gap = 3;
         
-        for (let i = 0; i < pagePhotos.length && i < gridPattern.length; i++) {
-          const pattern = gridPattern[i];
+        for (let i = 0; i < pagePhotos.length; i++) {
           let x = margin;
           let y = yPos;
-          let w = cellWidth * pattern.cols - 5;
-          let h = cellHeight * pattern.rows - 5;
+          let w = cellWidth - gap;
+          let h = cellHeight - gap;
           
           if (i === 0) {
             x = margin;
             y = yPos;
+            w = cellWidth * 2 - gap;
+            h = cellHeight * 2 - gap;
           } else if (i === 1) {
-            x = margin + cellWidth;
+            x = margin + cellWidth * 2;
             y = yPos;
           } else if (i === 2) {
-            x = margin + cellWidth;
+            x = margin + cellWidth * 2;
             y = yPos + cellHeight;
           } else if (i === 3) {
             x = margin;
-            y = yPos + cellHeight;
+            y = yPos + cellHeight * 2;
           } else if (i === 4) {
-            x = margin + cellWidth / 2;
-            y = yPos + cellHeight * 1.5;
-            w = cellWidth - 5;
-            h = cellHeight / 2 - 5;
+            x = margin + cellWidth;
+            y = yPos + cellHeight * 2;
+          } else if (i === 5) {
+            x = margin + cellWidth;
+            y = yPos + cellHeight * 2;
+            w = cellWidth * 2 - gap;
+            h = cellHeight * 2 - gap;
           }
           
           try {
@@ -345,7 +342,7 @@ export default function Profile() {
           }
         }
         
-        photoIndex += 5;
+        photoIndex += 6;
         currentPage++;
       }
       
@@ -933,28 +930,29 @@ export default function Profile() {
                 <div>
                   <h3 className="text-sm font-medium mb-3">Результаты примерок</h3>
                   <div className="space-y-6">
-                    {Array.from({ length: Math.ceil(viewingLookbook.photos.length / 5) }).map((_, pageIndex) => {
-                      const pagePhotos = viewingLookbook.photos.slice(pageIndex * 5, (pageIndex + 1) * 5);
+                    {Array.from({ length: Math.ceil(viewingLookbook.photos.length / 6) }).map((_, pageIndex) => {
+                      const pagePhotos = viewingLookbook.photos.slice(pageIndex * 6, (pageIndex + 1) * 6);
                       return (
-                        <div key={pageIndex} className="grid grid-cols-2 gap-3 auto-rows-fr">
+                        <div key={pageIndex} className="grid grid-cols-3 gap-3" style={{ gridAutoRows: '200px' }}>
                           {pagePhotos.map((photo, i) => {
                             let className = 'relative rounded-lg overflow-hidden bg-muted';
-                            let minHeight = 'min-h-[200px]';
                             
                             if (i === 0) {
-                              className += ' col-span-1 row-span-2';
-                              minHeight = 'min-h-[416px]';
-                            } else if (i === 4) {
-                              className += ' col-span-2 row-span-1';
-                              minHeight = 'min-h-[100px]';
+                              className += ' col-span-2 row-span-2';
+                            } else if (i === 1 || i === 2) {
+                              className += ' col-span-1 row-span-1';
+                            } else if (i === 3 || i === 4) {
+                              className += ' col-span-1 row-span-1';
+                            } else if (i === 5) {
+                              className += ' col-span-2 row-span-2';
                             }
                             
                             return (
                               <div key={`${pageIndex}-${i}`} className={className}>
                                 <ImageViewer 
                                   src={photo} 
-                                  alt={`Photo ${pageIndex * 5 + i + 1}`}
-                                  className={`w-full h-full object-contain ${minHeight}`}
+                                  alt={`Photo ${pageIndex * 6 + i + 1}`}
+                                  className="w-full h-full object-contain"
                                 />
                               </div>
                             );
