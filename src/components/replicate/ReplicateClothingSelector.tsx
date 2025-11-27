@@ -279,7 +279,7 @@ export default function ReplicateClothingSelector({
             <Button
               type="button"
               variant="outline"
-              className="w-full"
+              className={`w-full ${(isGenerating || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses')) ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={isGenerating || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses')}
               asChild
             >
