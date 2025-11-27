@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
@@ -58,6 +59,8 @@ export default function Profile() {
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [viewingLookbook, setViewingLookbook] = useState<Lookbook | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [selectedPhotoIndexes, setSelectedPhotoIndexes] = useState<number[]>([]);
+  const [targetLookbookId, setTargetLookbookId] = useState<string>('');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -527,6 +530,8 @@ export default function Profile() {
                       setNewPersonName('');
                       setSelectedPhotos([]);
                       setColorPalette(['#FF6B6B', '#4ECDC4', '#45B7D1']);
+                      setSelectedPhotoIndexes([]);
+                      setTargetLookbookId('');
                     }
                   }}>
                     <DialogTrigger asChild>
@@ -561,10 +566,24 @@ export default function Profile() {
                         {selectedPhotos.length > 0 && (
                           <div>
                             <label className="block text-sm font-medium mb-2">Результаты примерок</label>
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-3 gap-3 mb-4">
                               {selectedPhotos.map((photo, index) => (
                                 <div key={index} className="relative group border rounded-lg overflow-hidden bg-muted">
                                   <ImageViewer src={photo} alt="" className="w-full h-full object-contain" />
+                                  <div className="absolute top-2 left-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedPhotoIndexes.includes(index)}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setSelectedPhotoIndexes([...selectedPhotoIndexes, index]);
+                                        } else {
+                                          setSelectedPhotoIndexes(selectedPhotoIndexes.filter(i => i !== index));
+                                        }
+                                      }}
+                                      className="w-5 h-5 cursor-pointer"
+                                    />
+                                  </div>
                                   <Button
                                     type="button"
                                     size="sm"
@@ -578,6 +597,66 @@ export default function Profile() {
                                 </div>
                               ))}
                             </div>
+                            {isEditingLookbook && selectedPhotoIndexes.length > 0 && (
+                              <div className="flex gap-2 mb-4">
+                                <Select value={targetLookbookId} onValueChange={setTargetLookbookId}>
+                                  <SelectTrigger className="flex-1">
+                                    <SelectValue placeholder="Выберите лукбук" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {lookbooks
+                                      .filter(lb => lb.id !== editingLookbookId)
+                                      .map(lb => (
+                                        <SelectItem key={lb.id} value={lb.id}>
+                                          {lb.name}
+                                        </SelectItem>
+                                      ))}
+                                  </SelectContent>
+                                </Select>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={async () => {
+                                    if (!targetLookbookId) {
+                                      toast.error('Выберите лукбук');
+                                      return;
+                                    }
+                                    const photosToMove = selectedPhotoIndexes.map(i => selectedPhotos[i]);
+                                    const targetLookbook = lookbooks.find(lb => lb.id === targetLookbookId);
+                                    if (!targetLookbook) return;
+                                    
+                                    try {
+                                      await fetch(LOOKBOOKS_API, {
+                                        method: 'PUT',
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                          'X-User-Id': user.id
+                                        },
+                                        body: JSON.stringify({
+                                          id: targetLookbookId,
+                                          name: targetLookbook.name,
+                                          person_name: targetLookbook.person_name,
+                                          photos: [...targetLookbook.photos, ...photosToMove],
+                                          color_palette: targetLookbook.color_palette
+                                        })
+                                      });
+                                      
+                                      setSelectedPhotos(selectedPhotos.filter((_, i) => !selectedPhotoIndexes.includes(i)));
+                                      setSelectedPhotoIndexes([]);
+                                      setTargetLookbookId('');
+                                      await fetchLookbooks();
+                                      toast.success('Фото перенесены');
+                                    } catch (error) {
+                                      toast.error('Ошибка переноса фото');
+                                    }
+                                  }}
+                                  disabled={!targetLookbookId}
+                                  title="Перенести выбранные фото"
+                                >
+                                  <Icon name="ArrowRight" size={18} />
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         )}
 
