@@ -216,10 +216,10 @@ export default function ReplicateClothingSelector({
       )}
 
       {selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses' && (
-        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-          <p className="text-sm text-amber-900">
-            <Icon name="AlertCircle" className="inline mr-1" size={16} />
-            Выбран полный образ. Чтобы выбрать другие вещи, удалите выбранные
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-sm text-green-900">
+            <Icon name="CheckCircle2" className="inline mr-1" size={16} />
+            Отлично! Выбран полный образ. Чтобы выбрать другие вещи, удалите выбранные
           </p>
         </div>
       )}
