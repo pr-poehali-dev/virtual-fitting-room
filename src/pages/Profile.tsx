@@ -631,6 +631,8 @@ export default function Profile() {
                                       const targetLookbook = lookbooks.find(lb => lb.id === targetLookbookId);
                                       if (!targetLookbook) return;
                                       
+                                      const updatedSourcePhotos = selectedPhotos.filter((_, i) => !selectedPhotoIndexes.includes(i));
+                                      
                                       try {
                                         await fetch(LOOKBOOKS_API, {
                                           method: 'PUT',
@@ -647,7 +649,22 @@ export default function Profile() {
                                           })
                                         });
                                         
-                                        setSelectedPhotos(selectedPhotos.filter((_, i) => !selectedPhotoIndexes.includes(i)));
+                                        await fetch(LOOKBOOKS_API, {
+                                          method: 'PUT',
+                                          headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-User-Id': user.id
+                                          },
+                                          body: JSON.stringify({
+                                            id: editingLookbookId,
+                                            name: newLookbookName,
+                                            person_name: newPersonName,
+                                            photos: updatedSourcePhotos,
+                                            color_palette: colorPalette
+                                          })
+                                        });
+                                        
+                                        setSelectedPhotos(updatedSourcePhotos);
                                         setSelectedPhotoIndexes([]);
                                         setTargetLookbookId('');
                                         await fetchLookbooks();
