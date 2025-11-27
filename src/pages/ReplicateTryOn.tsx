@@ -243,9 +243,20 @@ export default function ReplicateTryOn() {
   };
 
   const handleCropComplete = async (croppedImage: string) => {
-    setUploadedImage(croppedImage);
-    setShowCropper(false);
-    setTempImageForCrop(null);
+    try {
+      const response = await fetch(croppedImage);
+      const blob = await response.blob();
+      const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
+      
+      const resized = await resizeImage(file, 1024, 1024);
+      setUploadedImage(resized);
+      setShowCropper(false);
+      setTempImageForCrop(null);
+      toast.success('Фото обрезано и загружено');
+    } catch (error) {
+      console.error('Crop processing error:', error);
+      toast.error('Ошибка обработки обрезанного изображения');
+    }
   };
 
   const handleCropCancel = () => {
