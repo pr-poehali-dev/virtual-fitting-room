@@ -39,6 +39,7 @@ interface SelectedClothing {
   image: string;
   name?: string;
   category?: string;
+  isFromCatalog?: boolean;
 }
 
 interface ReplicateClothingSelectorProps {
@@ -179,7 +180,7 @@ export default function ReplicateClothingSelector({
                   <Select
                     value={item.category || ''}
                     onValueChange={(value) => updateClothingCategory(item.id, value)}
-                    disabled={isGenerating || (selectedClothingItems.length === 2 && item.category && selectedClothingItems.find(i => i.id !== item.id && i.category && i.category !== item.category && ['upper_body', 'lower_body'].includes(i.category)) !== undefined)}
+                    disabled={item.isFromCatalog || isGenerating || (selectedClothingItems.length === 2 && item.category && selectedClothingItems.find(i => i.id !== item.id && i.category && i.category !== item.category && ['upper_body', 'lower_body'].includes(i.category)) !== undefined)}
                   >
                     <SelectTrigger className="h-8 text-xs">
                       <SelectValue placeholder="Выберите категорию" />

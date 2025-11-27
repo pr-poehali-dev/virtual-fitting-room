@@ -48,6 +48,7 @@ interface SelectedClothing {
   image: string;
   name?: string;
   category?: string;
+  isFromCatalog?: boolean;
 }
 
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
@@ -295,6 +296,7 @@ export default function ReplicateTryOn() {
             image: resized,
             name: file.name,
             category: '',
+            isFromCatalog: false,
           };
         })
       );
@@ -353,6 +355,7 @@ export default function ReplicateTryOn() {
           image: item.image_url,
           name: item.name,
           category: newCategory,
+          isFromCatalog: true,
         },
       ]);
     }
