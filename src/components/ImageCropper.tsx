@@ -20,21 +20,53 @@ export default function ImageCropper({
   onCropComplete,
   aspectRatio
 }: ImageCropperProps) {
-  const [crop, setCrop] = useState<Crop>({
-    unit: '%',
-    width: 90,
-    height: 90,
-    x: 5,
-    y: 5
-  });
+  const [crop, setCrop] = useState<Crop | undefined>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isHorizontal, setIsHorizontal] = useState(false);
 
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    const isHoriz = img.naturalWidth > img.naturalHeight;
+    setIsHorizontal(isHoriz);
+    setImageLoaded(true);
+
+    if (aspectRatio && imgRef.current) {
+      const { width, height } = imgRef.current;
+      
+      let cropWidth = width * 0.9;
+      let cropHeight = cropWidth / aspectRatio;
+      
+      if (cropHeight > height * 0.9) {
+        cropHeight = height * 0.9;
+        cropWidth = cropHeight * aspectRatio;
+      }
+      
+      const x = (width - cropWidth) / 2;
+      const y = (height - cropHeight) / 2;
+      
+      const newCrop: Crop = {
+        unit: 'px',
+        x,
+        y,
+        width: cropWidth,
+        height: cropHeight
+      };
+      
+      setCrop(newCrop);
+      setCompletedCrop({
+        x,
+        y,
+        width: cropWidth,
+        height: cropHeight
+      });
+    }
+  };
+
   const handleCropComplete = async () => {
-    if (!imgRef.current) {
+    if (!imgRef.current || !completedCrop) {
       return;
     }
 
@@ -42,14 +74,7 @@ export default function ImageCropper({
       return;
     }
 
-    const cropToUse = completedCrop || {
-      x: (crop.x / 100) * imgRef.current.width,
-      y: (crop.y / 100) * imgRef.current.height,
-      width: (crop.width / 100) * imgRef.current.width,
-      height: (crop.height / 100) * imgRef.current.height,
-    };
-
-    if (cropToUse.width <= 0 || cropToUse.height <= 0) {
+    if (completedCrop.width <= 0 || completedCrop.height <= 0) {
       return;
     }
 
@@ -78,19 +103,19 @@ export default function ImageCropper({
       const scaleX = loadedImg.naturalWidth / imgRef.current.width;
       const scaleY = loadedImg.naturalHeight / imgRef.current.height;
 
-      canvas.width = Math.floor(cropToUse.width * scaleX);
-      canvas.height = Math.floor(cropToUse.height * scaleY);
+      canvas.width = Math.floor(completedCrop.width * scaleX);
+      canvas.height = Math.floor(completedCrop.height * scaleY);
 
       ctx.drawImage(
         loadedImg,
-        Math.floor(cropToUse.x * scaleX),
-        Math.floor(cropToUse.y * scaleY),
-        Math.floor(cropToUse.width * scaleX),
-        Math.floor(cropToUse.height * scaleY),
+        Math.floor(completedCrop.x * scaleX),
+        Math.floor(completedCrop.y * scaleY),
+        Math.floor(completedCrop.width * scaleX),
+        Math.floor(completedCrop.height * scaleY),
         0,
         0,
-        Math.floor(cropToUse.width * scaleX),
-        Math.floor(cropToUse.height * scaleY)
+        Math.floor(completedCrop.width * scaleX),
+        Math.floor(completedCrop.height * scaleY)
       );
 
       const croppedImage = canvas.toDataURL('image/jpeg', 0.95);
@@ -141,11 +166,7 @@ export default function ImageCropper({
                 src={image}
                 alt="Crop preview"
                 className="max-w-full h-auto"
-                onLoad={(e) => {
-                  const img = e.currentTarget;
-                  setIsHorizontal(img.naturalWidth > img.naturalHeight);
-                  setImageLoaded(true);
-                }}
+                onLoad={handleImageLoad}
               />
             </ReactCrop>
           </div>
