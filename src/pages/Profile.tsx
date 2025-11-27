@@ -524,49 +524,20 @@ export default function Profile() {
                             </label>
                           </div>
                           {selectedPhotos.length > 0 && (
-                            <div className="grid grid-cols-2 gap-3 mt-4">
+                            <div className="grid grid-cols-1 gap-3 mt-4">
                               {selectedPhotos.map((photo, index) => (
-                                <div key={index} className="relative group border rounded-lg p-2 bg-muted/50">
-                                  <ImageViewer src={photo} alt="" className="w-full h-32 object-contain bg-muted rounded mb-2" />
-                                  <div className="flex gap-1">
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="outline"
-                                      className="flex-1 h-8 text-xs"
-                                      onClick={() => handleRemoveBackground(index)}
-                                      disabled={isProcessingImage}
-                                    >
-                                      {isProcessingImage ? (
-                                        <Icon name="Loader2" className="animate-spin" size={12} />
-                                      ) : (
-                                        <>
-                                          <Icon name="Eraser" className="mr-1" size={12} />
-                                          Фон
-                                        </>
-                                      )}
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="outline"
-                                      className="flex-1 h-8 text-xs"
-                                      onClick={() => handleCropPhoto(index)}
-                                    >
-                                      <Icon name="Crop" className="mr-1" size={12} />
-                                      Обрезать
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="destructive"
-                                      className="h-8 w-8 p-0"
-                                      onClick={() => setSelectedPhotos(selectedPhotos.filter((_, i) => i !== index))}
-                                      title="Удалить фото"
-                                    >
-                                      <Icon name="X" size={14} />
-                                    </Button>
-                                  </div>
+                                <div key={index} className="relative border rounded-lg overflow-hidden">
+                                  <ImageViewer src={photo} alt="" className="w-full h-48 object-cover" />
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="destructive"
+                                    className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full shadow-lg"
+                                    onClick={() => setSelectedPhotos(selectedPhotos.filter((_, i) => i !== index))}
+                                    title="Удалить фото"
+                                  >
+                                    <Icon name="X" size={14} />
+                                  </Button>
                                 </div>
                               ))}
                             </div>
