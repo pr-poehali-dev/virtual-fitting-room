@@ -510,15 +510,15 @@ export default function Profile() {
                         {selectedPhotos.length > 0 && (
                           <div>
                             <label className="block text-sm font-medium mb-2">Фотографии одежды</label>
-                            <div className="grid grid-cols-1 gap-3">
+                            <div className="grid grid-cols-2 gap-3">
                               {selectedPhotos.map((photo, index) => (
-                                <div key={index} className="relative border rounded-lg overflow-hidden">
-                                  <ImageViewer src={photo} alt="" className="w-full h-48 object-cover" />
+                                <div key={index} className="relative group border rounded-lg overflow-hidden bg-muted">
+                                  <ImageViewer src={photo} alt="" className="w-full h-full object-contain" />
                                   <Button
                                     type="button"
                                     size="sm"
                                     variant="destructive"
-                                    className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full shadow-lg"
+                                    className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
                                     onClick={() => setSelectedPhotos(selectedPhotos.filter((_, i) => i !== index))}
                                     title="Удалить фото"
                                   >
