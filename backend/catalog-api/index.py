@@ -308,11 +308,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing image_url'})
                 }
             
-            # Save image to hosting via FTP if it's an external URL
+            # Save image to S3 if it's an external URL
             saved_image_url = image_url
             if image_url.startswith(('http://', 'https://', 'data:')):
-                ftp_enabled = os.environ.get('FTP_HOST')
-                if ftp_enabled:
+                s3_enabled = os.environ.get('S3_ACCESS_KEY')
+                if s3_enabled:
                     try:
                         save_response = requests.post(
                             'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',

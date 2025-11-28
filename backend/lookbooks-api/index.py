@@ -188,11 +188,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing name or person_name'})
                 }
             
-            # Save photos to hosting via FTP
+            # Save photos to S3
             saved_photos = []
-            ftp_enabled = os.environ.get('FTP_HOST')
+            s3_enabled = os.environ.get('S3_ACCESS_KEY')
             for photo in photos:
-                if photo.startswith(('http://', 'https://', 'data:')) and ftp_enabled:
+                if photo.startswith(('http://', 'https://', 'data:')) and s3_enabled:
                     try:
                         save_response = requests.post(
                             'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',
@@ -203,17 +203,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             },
                             timeout=30
                         )
-                        print(f'FTP save response: {save_response.status_code}, body: {save_response.text}')
+                        print(f'S3 save response: {save_response.status_code}, body: {save_response.text}')
                         if save_response.status_code == 200:
                             save_data = save_response.json()
                             new_url = save_data.get('url', photo)
                             print(f'Got new URL: {new_url}')
                             saved_photos.append(new_url)
                         else:
-                            print(f'FTP save failed with status {save_response.status_code}')
+                            print(f'S3 save failed with status {save_response.status_code}')
                             saved_photos.append(photo)
                     except Exception as e:
-                        print(f'FTP save exception: {str(e)}')
+                        print(f'S3 save exception: {str(e)}')
                         saved_photos.append(photo)
                 else:
                     saved_photos.append(photo)
@@ -293,13 +293,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if old_lookbook:
                     old_photos = old_lookbook['photos'] or []
             
-            # Save new photos to hosting via FTP
+            # Save new photos to S3
             saved_photos = photos
             if photos:
                 saved_photos = []
-                ftp_enabled = os.environ.get('FTP_HOST')
+                s3_enabled = os.environ.get('S3_ACCESS_KEY')
                 for photo in photos:
-                    if photo.startswith(('http://', 'https://', 'data:')) and ftp_enabled:
+                    if photo.startswith(('http://', 'https://', 'data:')) and s3_enabled:
                         try:
                             save_response = requests.post(
                                 'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',
@@ -310,36 +310,36 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 },
                                 timeout=30
                             )
-                            print(f'FTP save response (PUT): {save_response.status_code}, body: {save_response.text}')
+                            print(f'S3 save response (PUT): {save_response.status_code}, body: {save_response.text}')
                             if save_response.status_code == 200:
                                 save_data = save_response.json()
                                 new_url = save_data.get('url', photo)
                                 print(f'Got new URL (PUT): {new_url}')
                                 saved_photos.append(new_url)
                             else:
-                                print(f'FTP save failed (PUT) with status {save_response.status_code}')
+                                print(f'S3 save failed (PUT) with status {save_response.status_code}')
                                 saved_photos.append(photo)
                         except Exception as e:
-                            print(f'FTP save exception (PUT): {str(e)}')
+                            print(f'S3 save exception (PUT): {str(e)}')
                             saved_photos.append(photo)
                     else:
                         saved_photos.append(photo)
             
-            # Delete removed photos from FTP
+            # Delete removed photos from S3
             if old_photos and saved_photos:
                 deleted_photos = set(old_photos) - set(saved_photos)
-                ftp_enabled = os.environ.get('FTP_HOST')
+                s3_enabled = os.environ.get('S3_ACCESS_KEY')
                 for deleted_photo in deleted_photos:
-                    if ftp_enabled:
+                    if s3_enabled:
                         try:
                             requests.post(
                                 'https://functions.poehali.dev/caf33ea6-1aaa-46b4-bc76-9b03bee18925',
                                 json={'image_url': deleted_photo},
                                 timeout=10
                             )
-                            print(f'Deleted from FTP: {deleted_photo}')
+                            print(f'Deleted from S3: {deleted_photo}')
                         except Exception as e:
-                            print(f'FTP delete failed: {str(e)}')
+                            print(f'S3 delete failed: {str(e)}')
             
             cursor.execute(
                 """
@@ -446,9 +446,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             conn.commit()
             
-            # Delete photos from FTP after successful DB deletion
-            ftp_enabled = os.environ.get('FTP_HOST')
-            if photos_to_delete and ftp_enabled:
+            # Delete photos from S3 after successful DB deletion
+            s3_enabled = os.environ.get('S3_ACCESS_KEY')
+            if photos_to_delete and s3_enabled:
                 for photo in photos_to_delete:
                     try:
                         requests.post(
@@ -456,9 +456,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             json={'image_url': photo},
                             timeout=10
                         )
-                        print(f'Deleted from FTP on lookbook delete: {photo}')
+                        print(f'Deleted from S3 on lookbook delete: {photo}')
                     except Exception as e:
-                        print(f'FTP delete failed on lookbook delete: {str(e)}')
+                        print(f'S3 delete failed on lookbook delete: {str(e)}')
             
             return {
                 'statusCode': 200,

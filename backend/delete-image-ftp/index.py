@@ -1,13 +1,14 @@
 '''
-Business: Delete images from hosting via SFTP
-Args: event with httpMethod, body containing image_url or filename
+Business: Delete images from Yandex Object Storage (S3)
+Args: event with httpMethod, body containing image_url
 Returns: HTTP response confirming deletion
 '''
 
 import json
 import os
 from typing import Dict, Any
-import paramiko
+import boto3
+from botocore.config import Config
 
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -54,14 +55,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Missing image_url'})
         }
     
-    # Get SFTP credentials from environment
-    sftp_host = os.environ.get('FTP_HOST')
-    sftp_user = os.environ.get('FTP_USER')
-    sftp_password = os.environ.get('FTP_PASSWORD')
-    sftp_base_path = os.environ.get('FTP_BASE_PATH', '/public_html')
-    site_url = os.environ.get('SITE_URL', '')
+    # Get S3 credentials from environment
+    s3_access_key = os.environ.get('S3_ACCESS_KEY')
+    s3_secret_key = os.environ.get('S3_SECRET_KEY')
+    s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
     
-    if not sftp_host or not sftp_user or not sftp_password:
+    if not s3_access_key or not s3_secret_key or not s3_bucket_name:
         return {
             'statusCode': 500,
             'headers': {
@@ -69,15 +68,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'isBase64Encoded': False,
-            'body': json.dumps({'error': 'SFTP not configured'})
+            'body': json.dumps({'error': 'S3 not configured'})
         }
     
-    # Ensure site_url has protocol
-    if site_url and not site_url.startswith(('http://', 'https://')):
-        site_url = f'https://{site_url}'
-    
-    # Only delete if image is from our hosting
-    if not site_url or not image_url.startswith(site_url):
+    # Only delete if image is from our S3
+    s3_url_base = f'https://{s3_bucket_name}.storage.yandexcloud.net/'
+    if not image_url.startswith(s3_url_base):
         return {
             'statusCode': 200,
             'headers': {
@@ -85,13 +81,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'isBase64Encoded': False,
-            'body': json.dumps({'message': 'Not our hosting, skipping deletion'})
+            'body': json.dumps({'message': 'Not our S3 bucket, skipping deletion'})
         }
     
-    # Extract path from URL: https://fitting-room.ru/images/lookbooks/file.jpg -> images/lookbooks/file.jpg
+    # Extract S3 key from URL: https://bucket.storage.yandexcloud.net/images/lookbooks/file.jpg -> images/lookbooks/file.jpg
     try:
-        path_part = image_url.replace(site_url, '').lstrip('/')
-        if not path_part.startswith('images/'):
+        s3_key = image_url.replace(s3_url_base, '')
+        
+        if not s3_key.startswith('images/'):
             return {
                 'statusCode': 400,
                 'headers': {
@@ -102,35 +99,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Invalid image path'})
             }
         
-        # Parse host and port
-        sftp_port = 22
-        if ':' in sftp_host:
-            host_parts = sftp_host.split(':')
-            sftp_host = host_parts[0]
-            sftp_port = int(host_parts[1])
+        print(f'Deleting from S3: {s3_bucket_name}/{s3_key}')
         
-        print(f'Connecting to SFTP: {sftp_host}:{sftp_port}')
-        
-        # Create SSH client
-        transport = paramiko.Transport((sftp_host, sftp_port))
-        transport.connect(username=sftp_user, password=sftp_password)
-        print('SFTP connected and authenticated')
-        
-        # Create SFTP client
-        sftp = paramiko.SFTPClient.from_transport(transport)
-        print('SFTP client created')
-        
-        # Build full SFTP path
-        full_sftp_path = f'{sftp_base_path}/{path_part}'
-        print(f'Deleting file: {full_sftp_path}')
+        # Configure S3 client for Yandex Cloud
+        s3_client = boto3.client(
+            's3',
+            endpoint_url='https://storage.yandexcloud.net',
+            aws_access_key_id=s3_access_key,
+            aws_secret_access_key=s3_secret_key,
+            region_name='ru-central1',
+            config=Config(signature_version='s3v4')
+        )
         
         # Delete file
-        sftp.remove(full_sftp_path)
-        print('File deleted successfully')
+        s3_client.delete_object(
+            Bucket=s3_bucket_name,
+            Key=s3_key
+        )
         
-        # Close connections
-        sftp.close()
-        transport.close()
+        print('File deleted successfully')
         
         return {
             'statusCode': 200,
@@ -151,5 +138,5 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'isBase64Encoded': False,
-            'body': json.dumps({'error': f'SFTP deletion failed: {str(e)}'})
+            'body': json.dumps({'error': f'S3 deletion failed: {str(e)}'})
         }

@@ -1,5 +1,5 @@
 '''
-Business: Save images to hosting via SFTP with unique filenames
+Business: Save images to Yandex Object Storage (S3) with unique filenames
 Args: event with httpMethod, body containing image_url, folder (catalog/lookbooks), user_id
 Returns: HTTP response with public image URL
 '''
@@ -11,7 +11,8 @@ import requests
 from datetime import datetime
 from typing import Dict, Any
 from io import BytesIO
-import paramiko
+import boto3
+from botocore.config import Config
 
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -61,14 +62,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if folder not in ['catalog', 'lookbooks']:
         folder = 'catalog'
     
-    # Get SFTP credentials from environment
-    sftp_host = os.environ.get('FTP_HOST')
-    sftp_user = os.environ.get('FTP_USER')
-    sftp_password = os.environ.get('FTP_PASSWORD')
-    sftp_base_path = os.environ.get('FTP_BASE_PATH', '/public_html')
-    site_url = os.environ.get('SITE_URL', '')
+    # Get S3 credentials from environment
+    s3_access_key = os.environ.get('S3_ACCESS_KEY')
+    s3_secret_key = os.environ.get('S3_SECRET_KEY')
+    s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
     
-    if not sftp_host or not sftp_user or not sftp_password:
+    if not s3_access_key or not s3_secret_key or not s3_bucket_name:
         return {
             'statusCode': 500,
             'headers': {
@@ -76,7 +75,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'isBase64Encoded': False,
-            'body': json.dumps({'error': 'SFTP not configured'})
+            'body': json.dumps({'error': 'S3 not configured'})
         }
     
     # Generate unique filename: YYYYMMDD_HHMMSS_userid
@@ -116,47 +115,45 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         image_data = response.content
     
-    # Upload via SFTP
+    # Upload to S3
     try:
-        # Parse host and port
-        sftp_port = 22
-        if ':' in sftp_host:
-            host_parts = sftp_host.split(':')
-            sftp_host = host_parts[0]
-            sftp_port = int(host_parts[1])
+        # Configure S3 client for Yandex Cloud
+        s3_client = boto3.client(
+            's3',
+            endpoint_url='https://storage.yandexcloud.net',
+            aws_access_key_id=s3_access_key,
+            aws_secret_access_key=s3_secret_key,
+            region_name='ru-central1',
+            config=Config(signature_version='s3v4')
+        )
         
-        print(f'Connecting to SFTP: {sftp_host}:{sftp_port}')
+        # Build S3 key (path in bucket)
+        s3_key = f'images/{folder}/{filename}'
         
-        # Create SSH client
-        transport = paramiko.Transport((sftp_host, sftp_port))
-        transport.connect(username=sftp_user, password=sftp_password)
-        print('SFTP connected and authenticated')
+        print(f'Uploading to S3: {s3_bucket_name}/{s3_key}')
         
-        # Create SFTP client
-        sftp = paramiko.SFTPClient.from_transport(transport)
-        print('SFTP client created')
-        
-        # Build full remote path
-        remote_path = f'{sftp_base_path}/images/{folder}/{filename}'
-        print(f'Uploading to: {remote_path}')
+        # Determine content type
+        content_type = 'image/jpeg'
+        if file_ext == '.png':
+            content_type = 'image/png'
+        elif file_ext == '.webp':
+            content_type = 'image/webp'
+        elif file_ext == '.gif':
+            content_type = 'image/gif'
         
         # Upload file
-        bio = BytesIO(image_data)
-        sftp.putfo(bio, remote_path)
+        s3_client.put_object(
+            Bucket=s3_bucket_name,
+            Key=s3_key,
+            Body=image_data,
+            ContentType=content_type,
+            ACL='public-read'
+        )
+        
         print(f'File uploaded successfully')
         
-        # Close connections
-        sftp.close()
-        transport.close()
-        
         # Construct public URL
-        if site_url:
-            # Ensure site_url has protocol
-            if not site_url.startswith(('http://', 'https://')):
-                site_url = f'https://{site_url}'
-            public_url = f'{site_url.rstrip("/")}/images/{folder}/{filename}'
-        else:
-            public_url = f'/images/{folder}/{filename}'
+        public_url = f'https://{s3_bucket_name}.storage.yandexcloud.net/{s3_key}'
         
         return {
             'statusCode': 200,
@@ -169,6 +166,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     except Exception as e:
+        print(f'S3 upload error: {str(e)}')
         return {
             'statusCode': 500,
             'headers': {
@@ -176,5 +174,5 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'isBase64Encoded': False,
-            'body': json.dumps({'error': f'SFTP upload failed: {str(e)}'})
+            'body': json.dumps({'error': f'S3 upload failed: {str(e)}'})
         }
