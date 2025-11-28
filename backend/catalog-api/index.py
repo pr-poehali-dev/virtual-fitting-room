@@ -308,12 +308,31 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing image_url'})
                 }
             
-            # Insert clothing item with image URL
+            # Save image to project folder if it's an external URL
+            saved_image_url = image_url
+            if image_url.startswith(('http://', 'https://', 'data:')):
+                try:
+                    save_image_response = requests.post(
+                        'https://functions.poehali.dev/save-image',
+                        json={
+                            'image_url': image_url,
+                            'folder': 'catalog',
+                            'user_id': 'admin'
+                        },
+                        timeout=30
+                    )
+                    if save_image_response.status_code == 200:
+                        save_data = save_image_response.json()
+                        saved_image_url = save_data.get('url', image_url)
+                except:
+                    pass
+            
+            # Insert clothing item with saved image URL
             cursor.execute("""
                 INSERT INTO clothing_catalog (image_url, name, description, replicate_category, gender)
                 VALUES (%s, %s, %s, %s, %s)
                 RETURNING id
-            """, (image_url, name, description, replicate_category, gender))
+            """, (saved_image_url, name, description, replicate_category, gender))
             
             clothing_id = cursor.fetchone()['id']
             
