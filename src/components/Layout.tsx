@@ -10,7 +10,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { path: '/', label: 'Виртуальная примерочная', icon: 'Shirt' },
-    { path: '/replicate', label: 'Replicate примерочная', icon: 'Sparkles' },
     { path: '/colortype', label: 'Определение цветотипа', icon: 'Palette' },
     { path: '/profile', label: 'Личный кабинет', icon: 'User' },
   ];
