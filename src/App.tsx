@@ -31,7 +31,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<ReplicateTryOn />} />
-            <Route path="/old-tryon" element={<Index />} />
+            <Route path="/old-tryon" element={<OldTryOn />} />
             <Route path="/colortype" element={<ColorType />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/login" element={<Login />} />
