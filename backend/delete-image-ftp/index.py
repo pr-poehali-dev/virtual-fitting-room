@@ -1,5 +1,5 @@
 '''
-Business: Delete images from hosting via FTP
+Business: Delete images from hosting via SFTP
 Args: event with httpMethod, body containing image_url or filename
 Returns: HTTP response confirming deletion
 '''
@@ -7,7 +7,7 @@ Returns: HTTP response confirming deletion
 import json
 import os
 from typing import Dict, Any
-from ftplib import FTP
+import paramiko
 
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -54,14 +54,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Missing image_url'})
         }
     
-    # Get FTP credentials from environment
-    ftp_host = os.environ.get('FTP_HOST')
-    ftp_user = os.environ.get('FTP_USER')
-    ftp_password = os.environ.get('FTP_PASSWORD')
-    ftp_base_path = os.environ.get('FTP_BASE_PATH', '/public_html')
+    # Get SFTP credentials from environment
+    sftp_host = os.environ.get('FTP_HOST')
+    sftp_user = os.environ.get('FTP_USER')
+    sftp_password = os.environ.get('FTP_PASSWORD')
+    sftp_base_path = os.environ.get('FTP_BASE_PATH', '/public_html')
     site_url = os.environ.get('SITE_URL', '')
     
-    if not ftp_host or not ftp_user or not ftp_password:
+    if not sftp_host or not sftp_user or not sftp_password:
         return {
             'statusCode': 500,
             'headers': {
@@ -69,7 +69,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'isBase64Encoded': False,
-            'body': json.dumps({'error': 'FTP not configured'})
+            'body': json.dumps({'error': 'SFTP not configured'})
         }
     
     # Ensure site_url has protocol
@@ -103,29 +103,34 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         # Parse host and port
-        ftp_port = 21
-        if ':' in ftp_host:
-            host_parts = ftp_host.split(':')
-            ftp_host = host_parts[0]
-            ftp_port = int(host_parts[1])
+        sftp_port = 22
+        if ':' in sftp_host:
+            host_parts = sftp_host.split(':')
+            sftp_host = host_parts[0]
+            sftp_port = int(host_parts[1])
         
-        print(f'Connecting to FTP: {ftp_host}:{ftp_port}')
-        ftp = FTP()
-        ftp.connect(ftp_host, ftp_port, timeout=30)
-        print('FTP connected, logging in...')
-        ftp.login(ftp_user, ftp_password)
-        print('FTP logged in successfully')
-        ftp.set_pasv(True)
-        print('FTP passive mode enabled')
+        print(f'Connecting to SFTP: {sftp_host}:{sftp_port}')
         
-        # Build full FTP path
-        full_ftp_path = f'{ftp_base_path}/{path_part}'
-        print(f'Deleting file: {full_ftp_path}')
+        # Create SSH client
+        transport = paramiko.Transport((sftp_host, sftp_port))
+        transport.connect(username=sftp_user, password=sftp_password)
+        print('SFTP connected and authenticated')
+        
+        # Create SFTP client
+        sftp = paramiko.SFTPClient.from_transport(transport)
+        print('SFTP client created')
+        
+        # Build full SFTP path
+        full_sftp_path = f'{sftp_base_path}/{path_part}'
+        print(f'Deleting file: {full_sftp_path}')
         
         # Delete file
-        ftp.delete(full_ftp_path)
+        sftp.remove(full_sftp_path)
         print('File deleted successfully')
-        ftp.quit()
+        
+        # Close connections
+        sftp.close()
+        transport.close()
         
         return {
             'statusCode': 200,
@@ -146,5 +151,5 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'isBase64Encoded': False,
-            'body': json.dumps({'error': f'FTP deletion failed: {str(e)}'})
+            'body': json.dumps({'error': f'SFTP deletion failed: {str(e)}'})
         }

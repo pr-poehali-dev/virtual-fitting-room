@@ -1,5 +1,5 @@
 '''
-Business: Save images to hosting via FTP with unique filenames
+Business: Save images to hosting via SFTP with unique filenames
 Args: event with httpMethod, body containing image_url, folder (catalog/lookbooks), user_id
 Returns: HTTP response with public image URL
 '''
@@ -10,8 +10,8 @@ import base64
 import requests
 from datetime import datetime
 from typing import Dict, Any
-from ftplib import FTP
 from io import BytesIO
+import paramiko
 
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -61,14 +61,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if folder not in ['catalog', 'lookbooks']:
         folder = 'catalog'
     
-    # Get FTP credentials from environment
-    ftp_host = os.environ.get('FTP_HOST')
-    ftp_user = os.environ.get('FTP_USER')
-    ftp_password = os.environ.get('FTP_PASSWORD')
-    ftp_base_path = os.environ.get('FTP_BASE_PATH', '/public_html')
+    # Get SFTP credentials from environment
+    sftp_host = os.environ.get('FTP_HOST')
+    sftp_user = os.environ.get('FTP_USER')
+    sftp_password = os.environ.get('FTP_PASSWORD')
+    sftp_base_path = os.environ.get('FTP_BASE_PATH', '/public_html')
     site_url = os.environ.get('SITE_URL', '')
     
-    if not ftp_host or not ftp_user or not ftp_password:
+    if not sftp_host or not sftp_user or not sftp_password:
         return {
             'statusCode': 500,
             'headers': {
@@ -76,7 +76,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'isBase64Encoded': False,
-            'body': json.dumps({'error': 'FTP not configured'})
+            'body': json.dumps({'error': 'SFTP not configured'})
         }
     
     # Generate unique filename: YYYYMMDD_HHMMSS_userid
@@ -116,36 +116,38 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         image_data = response.content
     
-    # Upload to FTP
+    # Upload via SFTP
     try:
         # Parse host and port
-        ftp_port = 21
-        if ':' in ftp_host:
-            host_parts = ftp_host.split(':')
-            ftp_host = host_parts[0]
-            ftp_port = int(host_parts[1])
+        sftp_port = 22
+        if ':' in sftp_host:
+            host_parts = sftp_host.split(':')
+            sftp_host = host_parts[0]
+            sftp_port = int(host_parts[1])
         
-        print(f'Connecting to FTP: {ftp_host}:{ftp_port}')
-        ftp = FTP()
-        ftp.connect(ftp_host, ftp_port, timeout=30)
-        print('FTP connected, logging in...')
-        ftp.login(ftp_user, ftp_password)
-        print('FTP logged in successfully')
-        ftp.set_pasv(True)
-        print('FTP passive mode enabled')
+        print(f'Connecting to SFTP: {sftp_host}:{sftp_port}')
         
-        # Navigate to target directory
-        target_dir = f'{ftp_base_path}/images/{folder}'
-        print(f'Changing to directory: {target_dir}')
-        ftp.cwd(target_dir)
-        print(f'Directory changed successfully')
+        # Create SSH client
+        transport = paramiko.Transport((sftp_host, sftp_port))
+        transport.connect(username=sftp_user, password=sftp_password)
+        print('SFTP connected and authenticated')
         
-        # Upload file to current directory
-        print(f'Uploading file: {filename}')
+        # Create SFTP client
+        sftp = paramiko.SFTPClient.from_transport(transport)
+        print('SFTP client created')
+        
+        # Build full remote path
+        remote_path = f'{sftp_base_path}/images/{folder}/{filename}'
+        print(f'Uploading to: {remote_path}')
+        
+        # Upload file
         bio = BytesIO(image_data)
-        ftp.storbinary(f'STOR {filename}', bio)
+        sftp.putfo(bio, remote_path)
         print(f'File uploaded successfully')
-        ftp.quit()
+        
+        # Close connections
+        sftp.close()
+        transport.close()
         
         # Construct public URL
         if site_url:
@@ -174,5 +176,5 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'isBase64Encoded': False,
-            'body': json.dumps({'error': f'FTP upload failed: {str(e)}'})
+            'body': json.dumps({'error': f'SFTP upload failed: {str(e)}'})
         }
