@@ -134,29 +134,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         ftp.set_pasv(True)
         print('FTP passive mode enabled')
         
-        # Navigate to base path and create directories if needed
-        try:
-            ftp.cwd(ftp_base_path)
-        except:
-            pass
+        # Build full path: /public_html/images/lookbooks/filename.jpg
+        full_path = f'{ftp_base_path}/images/{folder}/{filename}'
+        print(f'Uploading to: {full_path}')
         
-        # Create images directory
-        try:
-            ftp.mkd('images')
-        except:
-            pass
-        ftp.cwd('images')
-        
-        # Create folder directory (catalog or lookbooks)
-        try:
-            ftp.mkd(folder)
-        except:
-            pass
-        ftp.cwd(folder)
-        
-        # Upload file
+        # Upload file directly to full path
         bio = BytesIO(image_data)
-        ftp.storbinary(f'STOR {filename}', bio)
+        ftp.storbinary(f'STOR {full_path}', bio)
+        print(f'File uploaded successfully')
         ftp.quit()
         
         # Construct public URL
