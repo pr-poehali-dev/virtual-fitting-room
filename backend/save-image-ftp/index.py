@@ -8,6 +8,7 @@ import json
 import os
 import base64
 import requests
+import uuid
 from datetime import datetime
 from typing import Dict, Any
 from io import BytesIO
@@ -78,8 +79,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'S3 not configured'})
         }
     
-    # Generate unique filename: YYYYMMDD_HHMMSS_userid
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    # Generate unique filename with microseconds and UUID to avoid collisions
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+    unique_id = str(uuid.uuid4())[:8]
     
     # Determine file extension
     file_ext = '.jpg'
@@ -95,7 +97,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if url_ext in ['jpg', 'jpeg', 'png', 'webp', 'gif']:
             file_ext = f'.{url_ext}'
     
-    filename = f'{timestamp}_{user_id}{file_ext}'
+    filename = f'{timestamp}_{user_id}_{unique_id}{file_ext}'
     
     # Download image
     if image_url.startswith('data:'):
