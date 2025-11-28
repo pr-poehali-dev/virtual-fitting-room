@@ -10,7 +10,7 @@ import base64
 import requests
 from datetime import datetime
 from typing import Dict, Any
-from ftplib import FTP
+from ftplib import FTP, FTP_TLS
 from io import BytesIO
 
 
@@ -125,13 +125,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             ftp_host = host_parts[0]
             ftp_port = int(host_parts[1])
         
-        print(f'Connecting to FTP: {ftp_host}:{ftp_port}')
-        ftp = FTP()
+        print(f'Connecting to FTPS: {ftp_host}:{ftp_port}')
+        ftp = FTP_TLS()
         ftp.connect(ftp_host, ftp_port, timeout=30)
-        print('FTP connected, logging in...')
+        print('FTPS connected, logging in...')
         ftp.login(ftp_user, ftp_password)
-        print('FTP logged in successfully')
-        ftp.set_pasv(False)  # Use active mode instead
+        print('FTPS logged in successfully')
+        ftp.prot_p()  # Enable encryption for data channel
+        print('FTPS encryption enabled')
         
         # Navigate to base path and create directories if needed
         try:
