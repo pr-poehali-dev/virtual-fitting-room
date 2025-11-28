@@ -282,6 +282,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing id'})
                 }
             
+            # Get old photos to detect deletions
+            old_photos = []
+            if photos:
+                cursor.execute(
+                    "SELECT photos FROM lookbooks WHERE id = %s AND user_id = %s",
+                    (lookbook_id, user_id)
+                )
+                old_lookbook = cursor.fetchone()
+                if old_lookbook:
+                    old_photos = old_lookbook['photos'] or []
+            
             # Save new photos to hosting via FTP
             saved_photos = photos
             if photos:
@@ -313,6 +324,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             saved_photos.append(photo)
                     else:
                         saved_photos.append(photo)
+            
+            # Delete removed photos from FTP
+            if old_photos and saved_photos:
+                deleted_photos = set(old_photos) - set(saved_photos)
+                ftp_enabled = os.environ.get('FTP_HOST')
+                for deleted_photo in deleted_photos:
+                    if ftp_enabled:
+                        try:
+                            requests.post(
+                                'https://functions.poehali.dev/caf33ea6-1aaa-46b4-bc76-9b03bee18925',
+                                json={'image_url': deleted_photo},
+                                timeout=10
+                            )
+                            print(f'Deleted from FTP: {deleted_photo}')
+                        except Exception as e:
+                            print(f'FTP delete failed: {str(e)}')
             
             cursor.execute(
                 """
@@ -390,6 +417,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing id'})
                 }
             
+            # Get photos before deletion to delete from FTP
+            cursor.execute(
+                "SELECT photos FROM lookbooks WHERE id = %s AND user_id = %s",
+                (lookbook_id, user_id)
+            )
+            lookbook_to_delete = cursor.fetchone()
+            photos_to_delete = lookbook_to_delete['photos'] if lookbook_to_delete else []
+            
             cursor.execute(
                 "DELETE FROM lookbooks WHERE id = %s AND user_id = %s RETURNING id",
                 (lookbook_id, user_id)
@@ -410,6 +445,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             conn.commit()
+            
+            # Delete photos from FTP after successful DB deletion
+            ftp_enabled = os.environ.get('FTP_HOST')
+            if photos_to_delete and ftp_enabled:
+                for photo in photos_to_delete:
+                    try:
+                        requests.post(
+                            'https://functions.poehali.dev/caf33ea6-1aaa-46b4-bc76-9b03bee18925',
+                            json={'image_url': photo},
+                            timeout=10
+                        )
+                        print(f'Deleted from FTP on lookbook delete: {photo}')
+                    except Exception as e:
+                        print(f'FTP delete failed on lookbook delete: {str(e)}')
             
             return {
                 'statusCode': 200,

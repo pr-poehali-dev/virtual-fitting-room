@@ -1,17 +1,13 @@
 '''
-Business: Save images to hosting via FTP with unique filenames
-Args: event with httpMethod, body containing image_url, folder (catalog/lookbooks), user_id
-Returns: HTTP response with public image URL
+Business: Delete images from hosting via FTP
+Args: event with httpMethod, body containing image_url or filename
+Returns: HTTP response confirming deletion
 '''
 
 import json
 import os
-import base64
-import requests
-from datetime import datetime
 from typing import Dict, Any
 from ftplib import FTP
-from io import BytesIO
 
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -41,11 +37,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     body_str = event.get('body', '{}')
+    if not body_str:
+        body_str = '{}'
     body_data = json.loads(body_str)
     
     image_url = body_data.get('image_url')
-    folder = body_data.get('folder', 'catalog')
-    user_id = body_data.get('user_id', 'guest')
     
     if not image_url:
         return {
@@ -57,9 +53,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'Missing image_url'})
         }
-    
-    if folder not in ['catalog', 'lookbooks']:
-        folder = 'catalog'
     
     # Get FTP credentials from environment
     ftp_host = os.environ.get('FTP_HOST')
@@ -79,32 +72,26 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'FTP not configured'})
         }
     
-    # Generate unique filename: YYYYMMDD_HHMMSS_userid
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    # Ensure site_url has protocol
+    if site_url and not site_url.startswith(('http://', 'https://')):
+        site_url = f'https://{site_url}'
     
-    # Determine file extension
-    file_ext = '.jpg'
-    if image_url.startswith('data:image/'):
-        if 'png' in image_url:
-            file_ext = '.png'
-        elif 'webp' in image_url:
-            file_ext = '.webp'
-        elif 'gif' in image_url:
-            file_ext = '.gif'
-    elif '.' in image_url.split('/')[-1]:
-        url_ext = image_url.split('/')[-1].split('.')[-1].split('?')[0].lower()
-        if url_ext in ['jpg', 'jpeg', 'png', 'webp', 'gif']:
-            file_ext = f'.{url_ext}'
+    # Only delete if image is from our hosting
+    if not site_url or not image_url.startswith(site_url):
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'isBase64Encoded': False,
+            'body': json.dumps({'message': 'Not our hosting, skipping deletion'})
+        }
     
-    filename = f'{timestamp}_{user_id}{file_ext}'
-    
-    # Download image
-    if image_url.startswith('data:'):
-        header, encoded = image_url.split(',', 1)
-        image_data = base64.b64decode(encoded)
-    else:
-        response = requests.get(image_url, timeout=30)
-        if response.status_code != 200:
+    # Extract path from URL: https://fitting-room.ru/images/lookbooks/file.jpg -> images/lookbooks/file.jpg
+    try:
+        path_part = image_url.replace(site_url, '').lstrip('/')
+        if not path_part.startswith('images/'):
             return {
                 'statusCode': 400,
                 'headers': {
@@ -112,12 +99,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'Access-Control-Allow-Origin': '*'
                 },
                 'isBase64Encoded': False,
-                'body': json.dumps({'error': 'Failed to download image'})
+                'body': json.dumps({'error': 'Invalid image path'})
             }
-        image_data = response.content
-    
-    # Upload to FTP
-    try:
+        
         # Parse host and port
         ftp_port = 21
         if ':' in ftp_host:
@@ -134,27 +118,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         ftp.set_pasv(True)
         print('FTP passive mode enabled')
         
-        # Navigate to target directory
-        target_dir = f'{ftp_base_path}/images/{folder}'
-        print(f'Changing to directory: {target_dir}')
-        ftp.cwd(target_dir)
-        print(f'Directory changed successfully')
+        # Build full FTP path
+        full_ftp_path = f'{ftp_base_path}/{path_part}'
+        print(f'Deleting file: {full_ftp_path}')
         
-        # Upload file to current directory
-        print(f'Uploading file: {filename}')
-        bio = BytesIO(image_data)
-        ftp.storbinary(f'STOR {filename}', bio)
-        print(f'File uploaded successfully')
+        # Delete file
+        ftp.delete(full_ftp_path)
+        print('File deleted successfully')
         ftp.quit()
-        
-        # Construct public URL
-        if site_url:
-            # Ensure site_url has protocol
-            if not site_url.startswith(('http://', 'https://')):
-                site_url = f'https://{site_url}'
-            public_url = f'{site_url.rstrip("/")}/images/{folder}/{filename}'
-        else:
-            public_url = f'/images/{folder}/{filename}'
         
         return {
             'statusCode': 200,
@@ -163,10 +134,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'isBase64Encoded': False,
-            'body': json.dumps({'url': public_url, 'filename': filename})
+            'body': json.dumps({'message': 'File deleted successfully'})
         }
     
     except Exception as e:
+        print(f'Deletion error: {str(e)}')
         return {
             'statusCode': 500,
             'headers': {
@@ -174,5 +146,5 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'isBase64Encoded': False,
-            'body': json.dumps({'error': f'FTP upload failed: {str(e)}'})
+            'body': json.dumps({'error': f'FTP deletion failed: {str(e)}'})
         }

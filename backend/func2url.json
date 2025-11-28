@@ -1,4 +1,5 @@
 {
+  "delete-image-ftp": "https://functions.poehali.dev/caf33ea6-1aaa-46b4-bc76-9b03bee18925",
   "save-image-ftp": "https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8",
   "replicate-continue": "https://functions.poehali.dev/fdb150a0-d5ba-47ec-9d9a-e13595cd92d1",
   "replicate-prediction-checker": "https://functions.poehali.dev/b4e78e2b-eef9-4061-8647-4ae4373a0c4d",
