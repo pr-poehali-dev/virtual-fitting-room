@@ -308,27 +308,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing image_url'})
                 }
             
-            # Upload image to permanent storage
-            permanent_url = image_url
-            if image_url.startswith(('http://', 'https://', 'data:')):
-                try:
-                    storage_response = requests.post(
-                        'https://functions.poehali.dev/ddd729d2-d0da-4647-9854-4f31ce85e95f',
-                        json={'image_url': image_url},
-                        timeout=30
-                    )
-                    if storage_response.status_code == 200:
-                        storage_data = storage_response.json()
-                        permanent_url = storage_data.get('url', image_url)
-                except:
-                    pass
-            
-            # Insert clothing item with permanent image URL
+            # Insert clothing item with image URL
             cursor.execute("""
                 INSERT INTO clothing_catalog (image_url, name, description, replicate_category, gender)
                 VALUES (%s, %s, %s, %s, %s)
                 RETURNING id
-            """, (permanent_url, name, description, replicate_category, gender))
+            """, (image_url, name, description, replicate_category, gender))
             
             clothing_id = cursor.fetchone()['id']
             

@@ -3,7 +3,6 @@ import os
 from typing import Dict, Any, List
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import requests
 
 def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')
@@ -188,33 +187,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing name or person_name'})
                 }
             
-            # Upload photos to permanent storage
-            permanent_photos = []
-            for photo in photos:
-                if photo.startswith(('http://', 'https://', 'data:')):
-                    try:
-                        storage_response = requests.post(
-                            'https://functions.poehali.dev/ddd729d2-d0da-4647-9854-4f31ce85e95f',
-                            json={'image_url': photo},
-                            timeout=30
-                        )
-                        if storage_response.status_code == 200:
-                            storage_data = storage_response.json()
-                            permanent_photos.append(storage_data.get('url', photo))
-                        else:
-                            permanent_photos.append(photo)
-                    except:
-                        permanent_photos.append(photo)
-                else:
-                    permanent_photos.append(photo)
-            
             cursor.execute(
                 """
                 INSERT INTO lookbooks (name, person_name, photos, color_palette, user_id)
                 VALUES (%s, %s, %s, %s, %s)
                 RETURNING id, name, person_name, photos, color_palette, created_at, updated_at
                 """,
-                (name, person_name, permanent_photos, color_palette, user_id)
+                (name, person_name, photos, color_palette, user_id)
             )
             
             lookbook = cursor.fetchone()
@@ -272,28 +251,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing id'})
                 }
             
-            # Upload new photos to permanent storage
-            permanent_photos = photos
-            if photos:
-                permanent_photos = []
-                for photo in photos:
-                    if photo.startswith(('http://', 'https://', 'data:')):
-                        try:
-                            storage_response = requests.post(
-                                'https://functions.poehali.dev/ddd729d2-d0da-4647-9854-4f31ce85e95f',
-                                json={'image_url': photo},
-                                timeout=30
-                            )
-                            if storage_response.status_code == 200:
-                                storage_data = storage_response.json()
-                                permanent_photos.append(storage_data.get('url', photo))
-                            else:
-                                permanent_photos.append(photo)
-                        except:
-                            permanent_photos.append(photo)
-                    else:
-                        permanent_photos.append(photo)
-            
             cursor.execute(
                 """
                 UPDATE lookbooks 
@@ -307,7 +264,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 WHERE id = %s AND user_id = %s
                 RETURNING id, name, person_name, photos, color_palette, created_at, updated_at
                 """,
-                (name, person_name, permanent_photos, color_palette, is_public, share_token, lookbook_id, user_id)
+                (name, person_name, photos, color_palette, is_public, share_token, lookbook_id, user_id)
             )
             
             lookbook = cursor.fetchone()
