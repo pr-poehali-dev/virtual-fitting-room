@@ -3,6 +3,7 @@ import os
 from typing import Dict, Any, List
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import requests
 
 def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')
@@ -187,13 +188,38 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing name or person_name'})
                 }
             
+            # Save photos to hosting via FTP
+            saved_photos = []
+            ftp_enabled = os.environ.get('FTP_HOST')
+            for photo in photos:
+                if photo.startswith(('http://', 'https://', 'data:')) and ftp_enabled:
+                    try:
+                        save_response = requests.post(
+                            'https://functions.poehali.dev/save-image-ftp',
+                            json={
+                                'image_url': photo,
+                                'folder': 'lookbooks',
+                                'user_id': str(user_id)
+                            },
+                            timeout=30
+                        )
+                        if save_response.status_code == 200:
+                            save_data = save_response.json()
+                            saved_photos.append(save_data.get('url', photo))
+                        else:
+                            saved_photos.append(photo)
+                    except:
+                        saved_photos.append(photo)
+                else:
+                    saved_photos.append(photo)
+            
             cursor.execute(
                 """
                 INSERT INTO lookbooks (name, person_name, photos, color_palette, user_id)
                 VALUES (%s, %s, %s, %s, %s)
                 RETURNING id, name, person_name, photos, color_palette, created_at, updated_at
                 """,
-                (name, person_name, photos, color_palette, user_id)
+                (name, person_name, saved_photos, color_palette, user_id)
             )
             
             lookbook = cursor.fetchone()
@@ -251,6 +277,33 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing id'})
                 }
             
+            # Save new photos to hosting via FTP
+            saved_photos = photos
+            if photos:
+                saved_photos = []
+                ftp_enabled = os.environ.get('FTP_HOST')
+                for photo in photos:
+                    if photo.startswith(('http://', 'https://', 'data:')) and ftp_enabled:
+                        try:
+                            save_response = requests.post(
+                                'https://functions.poehali.dev/save-image-ftp',
+                                json={
+                                    'image_url': photo,
+                                    'folder': 'lookbooks',
+                                    'user_id': str(user_id)
+                                },
+                                timeout=30
+                            )
+                            if save_response.status_code == 200:
+                                save_data = save_response.json()
+                                saved_photos.append(save_data.get('url', photo))
+                            else:
+                                saved_photos.append(photo)
+                        except:
+                            saved_photos.append(photo)
+                    else:
+                        saved_photos.append(photo)
+            
             cursor.execute(
                 """
                 UPDATE lookbooks 
@@ -264,7 +317,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 WHERE id = %s AND user_id = %s
                 RETURNING id, name, person_name, photos, color_palette, created_at, updated_at
                 """,
-                (name, person_name, photos, color_palette, is_public, share_token, lookbook_id, user_id)
+                (name, person_name, saved_photos, color_palette, is_public, share_token, lookbook_id, user_id)
             )
             
             lookbook = cursor.fetchone()
