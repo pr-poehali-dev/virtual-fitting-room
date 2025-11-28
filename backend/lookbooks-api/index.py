@@ -195,7 +195,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if photo.startswith(('http://', 'https://', 'data:')) and ftp_enabled:
                     try:
                         save_response = requests.post(
-                            'https://functions.poehali.dev/save-image-ftp',
+                            'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',
                             json={
                                 'image_url': photo,
                                 'folder': 'lookbooks',
@@ -286,7 +286,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     if photo.startswith(('http://', 'https://', 'data:')) and ftp_enabled:
                         try:
                             save_response = requests.post(
-                                'https://functions.poehali.dev/save-image-ftp',
+                                'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',
                                 json={
                                     'image_url': photo,
                                     'folder': 'lookbooks',
