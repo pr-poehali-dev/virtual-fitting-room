@@ -131,7 +131,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print('FTP connected, logging in...')
         ftp.login(ftp_user, ftp_password)
         print('FTP logged in successfully')
-        ftp.set_pasv(True)  # Enable passive mode
+        ftp.set_pasv(False)  # Use active mode instead
         
         # Navigate to base path and create directories if needed
         try:
