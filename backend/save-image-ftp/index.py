@@ -148,6 +148,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # Construct public URL
         if site_url:
+            # Ensure site_url has protocol
+            if not site_url.startswith(('http://', 'https://')):
+                site_url = f'https://{site_url}'
             public_url = f'{site_url.rstrip("/")}/images/{folder}/{filename}'
         else:
             public_url = f'/images/{folder}/{filename}'
