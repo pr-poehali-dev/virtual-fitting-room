@@ -203,12 +203,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             },
                             timeout=30
                         )
+                        print(f'FTP save response: {save_response.status_code}, body: {save_response.text}')
                         if save_response.status_code == 200:
                             save_data = save_response.json()
-                            saved_photos.append(save_data.get('url', photo))
+                            new_url = save_data.get('url', photo)
+                            print(f'Got new URL: {new_url}')
+                            saved_photos.append(new_url)
                         else:
+                            print(f'FTP save failed with status {save_response.status_code}')
                             saved_photos.append(photo)
-                    except:
+                    except Exception as e:
+                        print(f'FTP save exception: {str(e)}')
                         saved_photos.append(photo)
                 else:
                     saved_photos.append(photo)
@@ -294,12 +299,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 },
                                 timeout=30
                             )
+                            print(f'FTP save response (PUT): {save_response.status_code}, body: {save_response.text}')
                             if save_response.status_code == 200:
                                 save_data = save_response.json()
-                                saved_photos.append(save_data.get('url', photo))
+                                new_url = save_data.get('url', photo)
+                                print(f'Got new URL (PUT): {new_url}')
+                                saved_photos.append(new_url)
                             else:
+                                print(f'FTP save failed (PUT) with status {save_response.status_code}')
                                 saved_photos.append(photo)
-                        except:
+                        except Exception as e:
+                            print(f'FTP save exception (PUT): {str(e)}')
                             saved_photos.append(photo)
                     else:
                         saved_photos.append(photo)
