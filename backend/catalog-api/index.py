@@ -476,6 +476,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing id parameter'})
                 }
             
+            # Get image URL before deletion to delete from S3
+            cursor.execute('SELECT image_url FROM clothing_catalog WHERE id = %s', (clothing_id,))
+            clothing_item = cursor.fetchone()
+            image_url = clothing_item['image_url'] if clothing_item else None
+            
             # Delete links first
             cursor.execute('DELETE FROM clothing_category_links WHERE clothing_id = %s', (clothing_id,))
             cursor.execute('DELETE FROM clothing_color_links WHERE clothing_id = %s', (clothing_id,))
@@ -483,6 +488,23 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             # Delete clothing item
             cursor.execute('DELETE FROM clothing_catalog WHERE id = %s', (clothing_id,))
+            
+            # Delete image from S3 if it's from our storage
+            if image_url:
+                s3_enabled = os.environ.get('S3_ACCESS_KEY')
+                s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
+                s3_url_prefix = f'https://{s3_bucket_name}.storage.yandexcloud.net/'
+                
+                if s3_enabled and image_url.startswith(s3_url_prefix):
+                    try:
+                        requests.post(
+                            'https://functions.poehali.dev/caf33ea6-1aaa-46b4-bc76-9b03bee18925',
+                            json={'image_url': image_url},
+                            timeout=10
+                        )
+                        print(f'Deleted from S3: {image_url}')
+                    except Exception as e:
+                        print(f'S3 delete failed: {str(e)}')
             
             return {
                 'statusCode': 200,

@@ -1555,26 +1555,6 @@ export default function Admin() {
                 <label className="text-sm font-medium mb-2 block">Изображение</label>
                 <img src={editingClothing.image_url} alt="Preview" className="w-full h-64 object-contain rounded mb-3 bg-muted border" />
                 <div className="flex gap-2 mb-3">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUploadEdit}
-                    className="hidden"
-                    id="file-upload-edit"
-                  />
-                  <label htmlFor="file-upload-edit" className="flex-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      asChild
-                    >
-                      <span>
-                        <Icon name="Upload" className="mr-2" size={16} />
-                        Загрузить новое
-                      </span>
-                    </Button>
-                  </label>
                   <Button
                     type="button"
                     variant="outline"
