@@ -118,8 +118,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     # Upload to FTP
     try:
-        ftp = FTP(ftp_host)
+        # Parse host and port
+        ftp_port = 21
+        if ':' in ftp_host:
+            host_parts = ftp_host.split(':')
+            ftp_host = host_parts[0]
+            ftp_port = int(host_parts[1])
+        
+        print(f'Connecting to FTP: {ftp_host}:{ftp_port}')
+        ftp = FTP()
+        ftp.connect(ftp_host, ftp_port, timeout=30)
+        print('FTP connected, logging in...')
         ftp.login(ftp_user, ftp_password)
+        print('FTP logged in successfully')
+        ftp.set_pasv(True)  # Enable passive mode
         
         # Navigate to base path and create directories if needed
         try:
