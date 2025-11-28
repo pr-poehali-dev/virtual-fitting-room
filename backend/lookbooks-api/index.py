@@ -191,8 +191,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             # Save photos to S3
             saved_photos = []
             s3_enabled = os.environ.get('S3_ACCESS_KEY')
+            s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
+            s3_url_prefix = f'https://{s3_bucket_name}.storage.yandexcloud.net/'
+            
             for photo in photos:
-                if photo.startswith(('http://', 'https://', 'data:')) and s3_enabled:
+                # Skip if already in our S3
+                if s3_enabled and photo.startswith(s3_url_prefix):
+                    print(f'Photo already in S3, skipping: {photo}')
+                    saved_photos.append(photo)
+                elif photo.startswith(('http://', 'https://', 'data:')) and s3_enabled:
                     try:
                         save_response = requests.post(
                             'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',
@@ -298,8 +305,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if photos:
                 saved_photos = []
                 s3_enabled = os.environ.get('S3_ACCESS_KEY')
+                s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
+                s3_url_prefix = f'https://{s3_bucket_name}.storage.yandexcloud.net/'
+                
                 for photo in photos:
-                    if photo.startswith(('http://', 'https://', 'data:')) and s3_enabled:
+                    # Skip if already in our S3
+                    if s3_enabled and photo.startswith(s3_url_prefix):
+                        print(f'Photo already in S3 (PUT), skipping: {photo}')
+                        saved_photos.append(photo)
+                    elif photo.startswith(('http://', 'https://', 'data:')) and s3_enabled:
                         try:
                             save_response = requests.post(
                                 'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',
