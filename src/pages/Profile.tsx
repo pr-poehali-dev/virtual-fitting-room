@@ -211,7 +211,7 @@ export default function Profile() {
   };
 
   const handleDeleteLookbook = async (id: string) => {
-    if (!confirm('Удалить лукбук?')) return;
+    if (!confirm('Удалить лукбук?\n\nВсе фото из лукбука также будут удалены из хранилища.')) return;
 
     try {
       const response = await fetch(`${LOOKBOOKS_API}?id=${id}`, {
@@ -592,7 +592,11 @@ export default function Profile() {
                                     size="sm"
                                     variant="destructive"
                                     className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                                    onClick={() => setSelectedPhotos(selectedPhotos.filter((_, i) => i !== index))}
+                                    onClick={() => {
+                                      if (confirm('Удалить фото из лукбука?')) {
+                                        setSelectedPhotos(selectedPhotos.filter((_, i) => i !== index));
+                                      }
+                                    }}
                                     title="Удалить фото"
                                   >
                                     <Icon name="X" size={14} />

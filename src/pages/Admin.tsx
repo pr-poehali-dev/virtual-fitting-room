@@ -574,7 +574,7 @@ export default function Admin() {
   };
 
   const handleDeleteClothing = async (clothingId: string) => {
-    if (!confirm('Удалить этот элемент одежды?')) return;
+    if (!confirm('Удалить этот элемент одежды из каталога?\n\nФото также будет удалено из облачного хранилища.')) return;
 
     const adminPassword = sessionStorage.getItem('admin_auth');
 
