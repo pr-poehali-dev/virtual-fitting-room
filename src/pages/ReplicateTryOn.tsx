@@ -13,6 +13,7 @@ import ReplicateClothingSelector from '@/components/replicate/ReplicateClothingS
 import ReplicateResultPanel from '@/components/replicate/ReplicateResultPanel';
 import ReplicateSaveDialog from '@/components/replicate/ReplicateSaveDialog';
 import ImageCropper from '@/components/ImageCropper';
+import { checkReplicateBalance, deductReplicateBalance } from '@/utils/replicateBalanceUtils';
 import {
   Accordion,
   AccordionContent,
@@ -54,6 +55,7 @@ interface SelectedClothing {
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
 const REPLICATE_START_API = 'https://functions.poehali.dev/c1cb3f04-f40a-4044-87fd-568d0271e1fe';
 const REPLICATE_STATUS_API = 'https://functions.poehali.dev/cde034e8-99be-4910-9ea6-f06cc94a6377';
+const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
 
 
 
@@ -413,6 +415,16 @@ export default function ReplicateTryOn() {
       }
     }
 
+    const balanceCheck = await checkReplicateBalance(user, selectedClothingItems.length);
+    if (!balanceCheck.canGenerate) {
+      return;
+    }
+
+    const balanceDeducted = await deductReplicateBalance(user, selectedClothingItems.length);
+    if (!balanceDeducted) {
+      return;
+    }
+
     setIsGenerating(true);
     setGeneratedImage(null);
     setGenerationStatus('Запускаем генерацию...');
@@ -507,6 +519,25 @@ export default function ReplicateTryOn() {
             clearInterval(checkerInterval);
             setCheckerInterval(null);
           }
+          
+          if (user && uploadedImage && data.result_url) {
+            try {
+              await fetch(HISTORY_API, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-User-Id': user.id
+                },
+                body: JSON.stringify({
+                  person_image: uploadedImage,
+                  garments: selectedClothingItems.map(item => ({ image: item.image, category: item.category })),
+                  result_image: data.result_url
+                })
+              });
+            } catch (error) {
+              console.error('Failed to save history:', error);
+            }
+          }
         } else if (data.status === 'failed') {
           setIsGenerating(false);
           setWaitingContinue(false);
@@ -574,6 +605,25 @@ export default function ReplicateTryOn() {
           clearInterval(checker);
           setPollingInterval(null);
           setCheckerInterval(null);
+          
+          if (user && uploadedImage && data.result_url) {
+            try {
+              await fetch(HISTORY_API, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-User-Id': user.id
+                },
+                body: JSON.stringify({
+                  person_image: uploadedImage,
+                  garments: selectedClothingItems.map(item => ({ image: item.image, category: item.category })),
+                  result_image: data.result_url
+                })
+              });
+            } catch (error) {
+              console.error('Failed to save history:', error);
+            }
+          }
         } else if (data.status === 'failed') {
           setIsGenerating(false);
           setWaitingContinue(false);

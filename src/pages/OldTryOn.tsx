@@ -38,7 +38,7 @@ interface SelectedClothing {
   categories: string[];
 }
 
-export default function Index() {
+export default function OldTryOn() {
   const { user } = useAuth();
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedClothing, setSelectedClothing] = useState<SelectedClothing | null>(null);
@@ -227,10 +227,10 @@ export default function Index() {
         <div className="container mx-auto max-w-7xl">
           <div className="text-center mb-16 animate-fade-in">
             <h2 className="text-5xl md:text-6xl font-light mb-4">
-              Виртуальная примерочная
+              Старая примерочная
             </h2>
             <p className="text-muted-foreground text-lg">
-              Примерьте одежду онлайн с помощью AI технологий
+              Это старая версия примерочной (fal.ai)
             </p>
           </div>
 
@@ -259,28 +259,27 @@ export default function Index() {
             <VirtualFittingResult
               isGenerating={isGenerating}
               generatedImage={generatedImage}
-              loadingProgress={loadingProgress}
+              handleSaveToLookbook={() => setShowSaveDialog(true)}
               handleDownloadImage={handleDownloadImage}
-              user={user}
+              handleReset={handleReset}
               showSaveDialog={showSaveDialog}
               setShowSaveDialog={setShowSaveDialog}
-              lookbooks={lookbooks}
-              selectedLookbookId={selectedLookbookId}
-              setSelectedLookbookId={setSelectedLookbookId}
-              handleSaveToExistingLookbook={handleSaveToExistingLookbook}
-              isSaving={isSaving}
               newLookbookName={newLookbookName}
               setNewLookbookName={setNewLookbookName}
               newLookbookPersonName={newLookbookPersonName}
               setNewLookbookPersonName={setNewLookbookPersonName}
+              lookbooks={lookbooks}
+              selectedLookbookId={selectedLookbookId}
+              setSelectedLookbookId={setSelectedLookbookId}
+              handleSaveToExistingLookbook={handleSaveToExistingLookbook}
               handleSaveToNewLookbook={handleSaveToNewLookbook}
-              handleReset={handleReset}
+              isSaving={isSaving}
             />
           </div>
+
+          <VirtualFittingInfo />
         </div>
       </section>
-
-      <VirtualFittingInfo />
     </Layout>
   );
 }

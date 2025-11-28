@@ -78,10 +78,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             body_data = json.loads(body_str)
             
             person_image = body_data.get('person_image')
-            garment_image = body_data.get('garment_image')
+            garments = body_data.get('garments')
             result_image = body_data.get('result_image')
             
-            if not person_image or not garment_image or not result_image:
+            if not person_image or not result_image:
                 return {
                     'statusCode': 400,
                     'headers': {
@@ -93,13 +93,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             person_image_escaped = person_image.replace("'", "''")
-            garment_image_escaped = garment_image.replace("'", "''")
             result_image_escaped = result_image.replace("'", "''")
+            
+            if garments and isinstance(garments, list):
+                garments_json = json.dumps(garments).replace("'", "''")
+                garment_image_escaped = garments[0]['image'] if len(garments) > 0 else ''
+                garment_image_escaped = garment_image_escaped.replace("'", "''")
+            else:
+                garment_image = body_data.get('garment_image', '')
+                garment_image_escaped = garment_image.replace("'", "''")
+                garments_json = json.dumps([{'image': garment_image}]).replace("'", "''")
             
             cursor.execute(
                 f"""
-                INSERT INTO try_on_history (person_image, garment_image, result_image, user_id)
-                VALUES ('{person_image_escaped}', '{garment_image_escaped}', '{result_image_escaped}', '{user_id}')
+                INSERT INTO try_on_history (person_image, garment_image, result_image, user_id, garments)
+                VALUES ('{person_image_escaped}', '{garment_image_escaped}', '{result_image_escaped}', '{user_id}', '{garments_json}')
                 RETURNING id, person_image, garment_image, result_image, created_at
                 """
             )
