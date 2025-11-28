@@ -1554,33 +1554,6 @@ export default function Admin() {
               <div>
                 <label className="text-sm font-medium mb-2 block">Изображение</label>
                 <img src={editingClothing.image_url} alt="Preview" className="w-full h-64 object-contain rounded mb-3 bg-muted border" />
-                <div className="flex gap-2 mb-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={handleCropImageEdit}
-                  >
-                    <Icon name="Crop" className="mr-2" size={16} />
-                    Обрезать
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={handleRemoveBackgroundEdit}
-                    disabled={isProcessingImage}
-                  >
-                    {isProcessingImage ? (
-                      <Icon name="Loader2" className="animate-spin" size={16} />
-                    ) : (
-                      <>
-                        <Icon name="Eraser" className="mr-2" size={16} />
-                        Удалить фон
-                      </>
-                    )}
-                  </Button>
-                </div>
                 <Input
                   value={editingClothing.image_url}
                   onChange={(e) => setEditingClothing({ ...editingClothing, image_url: e.target.value })}
