@@ -29,33 +29,17 @@ def build_prompt(garments: list, custom_prompt: str) -> str:
     
     return base_prompt
 
-def upload_image_to_s3(image: str, prefix: str) -> str:
-    '''Upload base64 or data URI image to S3 and return public URL'''
+def normalize_image_format(image: str) -> str:
+    '''Convert image to data URI format if needed'''
     if image.startswith('http://') or image.startswith('https://'):
         return image
     
-    save_image_api = 'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8'
+    if image.startswith('data:'):
+        return image
     
-    if not image.startswith('data:'):
-        image = f'data:image/jpeg;base64,{image}'
-    
-    response = requests.post(
-        save_image_api,
-        json={
-            'image_url': image,
-            'folder': 'catalog',
-            'user_id': prefix
-        },
-        timeout=60
-    )
-    
-    if response.status_code == 200:
-        data = response.json()
-        return data['url']
-    
-    raise Exception(f'Failed to upload to S3: {response.status_code} - {response.text}')
+    return f'data:image/jpeg;base64,{image}'
 
-def submit_to_fal_queue(person_image: str, garments: list, prompt: str, task_id: str) -> tuple:
+def submit_to_fal_queue(person_image: str, garments: list, prompt: str) -> tuple:
     '''Submit task to fal.ai queue and return (request_id, response_url) with proper sorting by category'''
     fal_api_key = os.environ.get('FAL_API_KEY')
     if not fal_api_key:
@@ -63,8 +47,8 @@ def submit_to_fal_queue(person_image: str, garments: list, prompt: str, task_id:
     
     sorted_garments = sorted(garments, key=lambda g: 0 if g.get('category') == 'upper_body' else (1 if g.get('category') == 'lower_body' else 2))
     
-    person_data = upload_image_to_s3(person_image, f'{task_id}_person')
-    garment_data = [upload_image_to_s3(g['image'], f'{task_id}_g{i}') for i, g in enumerate(sorted_garments)]
+    person_data = normalize_image_format(person_image)
+    garment_data = [normalize_image_format(g['image']) for g in sorted_garments]
     
     headers = {
         'Authorization': f'Key {fal_api_key}',
@@ -118,25 +102,7 @@ def check_fal_status(response_url: str) -> Optional[dict]:
     
     raise Exception(f'Failed to check status: {response.status_code} - {response.text}')
 
-def save_to_s3(image_url: str, task_id: str) -> str:
-    '''Save fal.ai image to Yandex S3 and return public URL'''
-    save_image_api = 'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8'
-    
-    response = requests.post(
-        save_image_api,
-        json={
-            'image_url': image_url,
-            'folder': 'catalog',
-            'user_id': task_id
-        },
-        timeout=60
-    )
-    
-    if response.status_code == 200:
-        data = response.json()
-        return data['url']
-    
-    raise Exception(f'Failed to save to S3: {response.status_code} - {response.text}')
+
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -191,7 +157,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 try:
                     prompt = build_prompt(garments, prompt_hints or '')
                     
-                    request_id, response_url = submit_to_fal_queue(person_image, garments, prompt, task_id)
+                    request_id, response_url = submit_to_fal_queue(person_image, garments, prompt)
                     
                     cursor.execute('''
                         UPDATE seedream_tasks
@@ -262,22 +228,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
                 if task_status == 'COMPLETED' or 'images' in status_data or 'image' in status_data:
                     if 'images' in status_data and len(status_data['images']) > 0:
-                        fal_url = status_data['images'][0]['url']
+                        result_url = status_data['images'][0]['url']
                     elif 'image' in status_data:
                         if isinstance(status_data['image'], dict):
-                            fal_url = status_data['image']['url']
+                            result_url = status_data['image']['url']
                         else:
-                            fal_url = status_data['image']
+                            result_url = status_data['image']
                     else:
                         raise Exception('No image in response')
-                    
-                    s3_url = save_to_s3(fal_url, task_id)
                     
                     cursor.execute('''
                         UPDATE seedream_tasks
                         SET status = 'completed', result_url = %s, updated_at = %s
                         WHERE id = %s
-                    ''', (s3_url, datetime.utcnow(), task_id))
+                    ''', (result_url, datetime.utcnow(), task_id))
                     conn.commit()
                     results.append({'task_id': task_id, 'status': 'completed'})
                     
