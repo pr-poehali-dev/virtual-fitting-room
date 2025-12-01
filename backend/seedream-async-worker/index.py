@@ -202,7 +202,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             FROM seedream_tasks
             WHERE status = 'processing' AND fal_response_url IS NOT NULL
             ORDER BY created_at ASC
-            LIMIT 5
+            LIMIT 10
         ''')
         
         processing_rows = cursor.fetchall()
@@ -235,12 +235,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     else:
                         raise Exception('No image in response')
                     
+                    print(f'[Worker] Task {task_id} completed! Saving result URL: {result_url}')
                     cursor.execute('''
                         UPDATE seedream_tasks
                         SET status = 'completed', result_url = %s, updated_at = %s
                         WHERE id = %s
                     ''', (result_url, datetime.utcnow(), task_id))
                     conn.commit()
+                    print(f'[Worker] Task {task_id} saved to DB as completed')
                     results.append({'task_id': task_id, 'status': 'completed'})
                     
                 elif task_status in ['FAILED', 'EXPIRED']:
@@ -253,6 +255,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     conn.commit()
                     results.append({'task_id': task_id, 'status': 'failed'})
                 else:
+                    print(f'[Worker] Task {task_id} still processing, fal.ai status: {task_status}')
                     results.append({'task_id': task_id, 'status': 'still_processing', 'fal_status': task_status})
                     
             except Exception as e:
@@ -263,13 +266,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         has_still_processing = any(r.get('status') == 'still_processing' for r in results)
         if has_still_processing:
-            import time
-            time.sleep(5)
+            print('[Worker] Still have processing tasks, triggering next check immediately')
             try:
                 import urllib.request
                 worker_url = 'https://functions.poehali.dev/339123e0-038a-4b96-8197-101145bcd877'
                 req = urllib.request.Request(worker_url, method='GET')
-                urllib.request.urlopen(req, timeout=2)
+                urllib.request.urlopen(req, timeout=1)
             except:
                 pass
         
