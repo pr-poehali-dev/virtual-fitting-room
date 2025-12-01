@@ -240,11 +240,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             try:
                 status_data = check_fal_status(response_url)
                 
-                if status_data['status'] == 'COMPLETED':
+                task_status = status_data.get('status', status_data.get('state', 'UNKNOWN'))
+                
+                if task_status == 'COMPLETED' or 'images' in status_data or 'image' in status_data:
                     if 'images' in status_data and len(status_data['images']) > 0:
                         fal_url = status_data['images'][0]['url']
                     elif 'image' in status_data:
-                        fal_url = status_data['image']['url']
+                        if isinstance(status_data['image'], dict):
+                            fal_url = status_data['image']['url']
+                        else:
+                            fal_url = status_data['image']
                     else:
                         raise Exception('No image in response')
                     
@@ -258,7 +263,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     conn.commit()
                     results.append({'task_id': task_id, 'status': 'completed'})
                     
-                elif status_data['status'] in ['FAILED', 'EXPIRED']:
+                elif task_status in ['FAILED', 'EXPIRED']:
                     error_msg = status_data.get('error', 'Generation failed')
                     cursor.execute('''
                         UPDATE seedream_tasks
@@ -268,7 +273,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     conn.commit()
                     results.append({'task_id': task_id, 'status': 'failed'})
                 else:
-                    results.append({'task_id': task_id, 'status': 'still_processing'})
+                    results.append({'task_id': task_id, 'status': 'still_processing', 'fal_status': task_status})
                     
             except Exception as e:
                 results.append({'task_id': task_id, 'error': str(e)})
