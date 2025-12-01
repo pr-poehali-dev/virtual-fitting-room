@@ -8,18 +8,19 @@ from datetime import datetime
 
 def build_prompt(garments: list, custom_prompt: str) -> str:
     '''Build Russian prompt for SeeDream 4'''
-    garment_descriptions = []
-    for g in garments:
-        category = g.get('category', 'одежда')
-        category_map = {
-            'upper_body': 'верхнюю одежду',
-            'lower_body': 'нижнюю одежду',
-            'dresses': 'платье'
-        }
-        garment_descriptions.append(category_map.get(category, 'одежду'))
+    if len(garments) == 1:
+        category = garments[0].get('category', 'одежда')
+        if category == 'dresses':
+            base_prompt = "Перенеси платье ПОЛНОСТЬЮ со второго изображения (референс одежды) на человека с первого изображения (модель). "
+        elif category == 'upper_body':
+            base_prompt = "Перенеси ТОЛЬКО верхнюю одежду (топ, блузку, рубашку, жакет) со второго изображения (референс одежды) на человека с первого изображения (модель). Не меняй низ (брюки, юбку) с фото модели. "
+        else:
+            base_prompt = "Перенеси ТОЛЬКО нижнюю одежду (брюки, юбку, шорты) со второго изображения (референс одежды) на человека с первого изображения (модель). Не меняй верх (топ, блузку, рубашку) с фото модели. "
+    else:
+        base_prompt = "Перенеси верхнюю одежду (топ, блузку, рубашку, жакет) со второго изображения И нижнюю одежду (брюки, юбку) с третьего изображения на человека с первого изображения (модель). "
+        base_prompt += "ВАЖНО: Верх бери ТОЛЬКО со второго фото, низ бери ТОЛЬКО с третьего фото. Не смешивай элементы одежды между референсами. "
     
-    base_prompt = f"Перенеси {', '.join(garment_descriptions)} с референсных изображений одежды на человека с фото модели. "
-    base_prompt += "ВАЖНО: Сохрани лицо, причёску, телосложение и позу человека с фото модели. Возьми ТОЛЬКО одежду с референсных изображений. "
+    base_prompt += "КРИТИЧНО: Сохрани лицо, причёску, телосложение и позу человека ТОЛЬКО с первого изображения (модель). "
     base_prompt += "Сохрани естественную посадку одежды на теле, правильные пропорции и реалистичное освещение. "
     
     if custom_prompt:
@@ -37,8 +38,8 @@ def normalize_image_format(image: str) -> str:
     
     return image
 
-def call_seedream_api_sync(person_image: str, garment_images: list, prompt: str) -> Optional[str]:
-    '''Call SeeDream 4 API via fal.ai - direct sync call'''
+def submit_to_fal_queue(person_image: str, garment_images: list, prompt: str) -> str:
+    '''Submit task to fal.ai queue and return request_id'''
     fal_api_key = os.environ.get('FAL_API_KEY')
     if not fal_api_key:
         raise Exception('FAL_API_KEY not configured')
@@ -61,20 +62,39 @@ def call_seedream_api_sync(person_image: str, garment_images: list, prompt: str)
     }
     
     response = requests.post(
-        'https://fal.run/fal-ai/bytedance/seedream/v4/edit',
+        'https://queue.fal.run/fal-ai/bytedance/seedream/v4/edit',
         headers=headers,
         json=payload,
-        timeout=180
+        timeout=30
     )
     
     if response.status_code == 200:
         result = response.json()
-        if 'images' in result and len(result['images']) > 0 and 'url' in result['images'][0]:
-            return result['images'][0]['url']
-        if 'image' in result and 'url' in result['image']:
-            return result['image']['url']
+        if 'request_id' in result:
+            return result['request_id']
     
-    raise Exception(f'SeeDream API error: {response.status_code} - {response.text}')
+    raise Exception(f'Failed to submit to queue: {response.status_code} - {response.text}')
+
+def check_fal_status(request_id: str) -> Optional[dict]:
+    '''Check status of fal.ai request'''
+    fal_api_key = os.environ.get('FAL_API_KEY')
+    if not fal_api_key:
+        raise Exception('FAL_API_KEY not configured')
+    
+    headers = {
+        'Authorization': f'Key {fal_api_key}'
+    }
+    
+    response = requests.get(
+        f'https://queue.fal.run/fal-ai/bytedance/seedream/v4/edit/requests/{request_id}/status',
+        headers=headers,
+        timeout=10
+    )
+    
+    if response.status_code == 200:
+        return response.json()
+    
+    raise Exception(f'Failed to check status: {response.status_code} - {response.text}')
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -111,7 +131,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT id, person_image, garments, prompt_hints
+            SELECT id, person_image, garments, prompt_hints, fal_request_id
             FROM seedream_tasks
             WHERE status = 'pending'
             ORDER BY created_at ASC
@@ -119,75 +139,139 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             FOR UPDATE SKIP LOCKED
         ''')
         
-        row = cursor.fetchone()
+        pending_row = cursor.fetchone()
         
-        if not row:
-            cursor.close()
-            conn.close()
-            return {
-                'statusCode': 200,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'isBase64Encoded': False,
-                'body': json.dumps({'message': 'No pending tasks'})
-            }
-        
-        task_id, person_image, garments_json, prompt_hints = row
-        garments = json.loads(garments_json)
+        if pending_row:
+            task_id, person_image, garments_json, prompt_hints, fal_request_id = pending_row
+            garments = json.loads(garments_json)
+            
+            if not fal_request_id:
+                try:
+                    garment_images = [g['image'] for g in garments]
+                    prompt = build_prompt(garments, prompt_hints or '')
+                    
+                    request_id = submit_to_fal_queue(person_image, garment_images, prompt)
+                    
+                    cursor.execute('''
+                        UPDATE seedream_tasks
+                        SET status = 'processing', fal_request_id = %s, updated_at = %s
+                        WHERE id = %s
+                    ''', (request_id, datetime.utcnow(), task_id))
+                    conn.commit()
+                    cursor.close()
+                    conn.close()
+                    
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'isBase64Encoded': False,
+                        'body': json.dumps({
+                            'message': 'Task submitted to queue',
+                            'task_id': task_id,
+                            'request_id': request_id
+                        })
+                    }
+                except Exception as e:
+                    cursor.execute('''
+                        UPDATE seedream_tasks
+                        SET status = 'failed', error_message = %s, updated_at = %s
+                        WHERE id = %s
+                    ''', (str(e), datetime.utcnow(), task_id))
+                    conn.commit()
+                    cursor.close()
+                    conn.close()
+                    
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'isBase64Encoded': False,
+                        'body': json.dumps({
+                            'message': 'Task submission failed',
+                            'task_id': task_id,
+                            'error': str(e)
+                        })
+                    }
         
         cursor.execute('''
-            UPDATE seedream_tasks
-            SET status = 'processing', updated_at = %s
-            WHERE id = %s
-        ''', (datetime.utcnow(), task_id))
-        conn.commit()
+            SELECT id, fal_request_id
+            FROM seedream_tasks
+            WHERE status = 'processing' AND fal_request_id IS NOT NULL
+            ORDER BY created_at ASC
+            LIMIT 5
+        ''')
         
-        try:
-            garment_images = [g['image'] for g in garments]
-            prompt = build_prompt(garments, prompt_hints or '')
-            
-            result_url = call_seedream_api_sync(person_image, garment_images, prompt)
-            
-            cursor.execute('''
-                UPDATE seedream_tasks
-                SET status = 'completed', result_url = %s, updated_at = %s
-                WHERE id = %s
-            ''', (result_url, datetime.utcnow(), task_id))
-            conn.commit()
-            
+        processing_rows = cursor.fetchall()
+        
+        if not processing_rows:
             cursor.close()
             conn.close()
-            
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                 'isBase64Encoded': False,
-                'body': json.dumps({
-                    'message': 'Task completed',
-                    'task_id': task_id,
-                    'result_url': result_url
-                })
+                'body': json.dumps({'message': 'No tasks to process'})
             }
-            
-        except Exception as e:
-            cursor.execute('''
-                UPDATE seedream_tasks
-                SET status = 'failed', error_message = %s, updated_at = %s
-                WHERE id = %s
-            ''', (str(e), datetime.utcnow(), task_id))
-            conn.commit()
-            cursor.close()
-            conn.close()
-            
-            return {
-                'statusCode': 200,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'isBase64Encoded': False,
-                'body': json.dumps({
-                    'message': 'Task failed',
-                    'task_id': task_id,
-                    'error': str(e)
-                })
-            }
+        
+        results = []
+        for task_id, request_id in processing_rows:
+            try:
+                status_data = check_fal_status(request_id)
+                
+                if status_data['status'] == 'COMPLETED':
+                    if 'images' in status_data and len(status_data['images']) > 0:
+                        result_url = status_data['images'][0]['url']
+                    elif 'image' in status_data:
+                        result_url = status_data['image']['url']
+                    else:
+                        raise Exception('No image in response')
+                    
+                    cursor.execute('''
+                        UPDATE seedream_tasks
+                        SET status = 'completed', result_url = %s, updated_at = %s
+                        WHERE id = %s
+                    ''', (result_url, datetime.utcnow(), task_id))
+                    conn.commit()
+                    results.append({'task_id': task_id, 'status': 'completed'})
+                    
+                elif status_data['status'] in ['FAILED', 'EXPIRED']:
+                    error_msg = status_data.get('error', 'Generation failed')
+                    cursor.execute('''
+                        UPDATE seedream_tasks
+                        SET status = 'failed', error_message = %s, updated_at = %s
+                        WHERE id = %s
+                    ''', (error_msg, datetime.utcnow(), task_id))
+                    conn.commit()
+                    results.append({'task_id': task_id, 'status': 'failed'})
+                else:
+                    results.append({'task_id': task_id, 'status': 'still_processing'})
+                    
+            except Exception as e:
+                results.append({'task_id': task_id, 'error': str(e)})
+        
+        cursor.close()
+        conn.close()
+        
+        has_still_processing = any(r.get('status') == 'still_processing' for r in results)
+        if has_still_processing:
+            import time
+            time.sleep(5)
+            try:
+                import urllib.request
+                worker_url = 'https://functions.poehali.dev/339123e0-038a-4b96-8197-101145bcd877'
+                req = urllib.request.Request(worker_url, method='GET')
+                urllib.request.urlopen(req, timeout=2)
+            except:
+                pass
+        
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'isBase64Encoded': False,
+            'body': json.dumps({
+                'message': 'Polling completed',
+                'results': results
+            })
+        }
         
     except Exception as e:
         return {
