@@ -38,7 +38,7 @@ def normalize_image_format(image: str) -> str:
     return image
 
 def call_seedream_api_sync(person_image: str, garment_images: list, prompt: str) -> Optional[str]:
-    '''Call SeeDream 4 API via fal.ai in sync mode (blocks until complete)'''
+    '''Call SeeDream 4 API via fal.ai - direct sync call'''
     fal_api_key = os.environ.get('FAL_API_KEY')
     if not fal_api_key:
         raise Exception('FAL_API_KEY not configured')
@@ -57,12 +57,11 @@ def call_seedream_api_sync(person_image: str, garment_images: list, prompt: str)
         'image_urls': image_urls,
         'prompt': prompt,
         'num_inference_steps': 30,
-        'guidance_scale': 2.5,
-        'sync_mode': True
+        'guidance_scale': 2.5
     }
     
     response = requests.post(
-        'https://queue.fal.run/fal-ai/bytedance/seedream/v4/edit',
+        'https://fal.run/fal-ai/bytedance/seedream/v4/edit',
         headers=headers,
         json=payload,
         timeout=180
