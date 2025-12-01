@@ -26,18 +26,53 @@ def build_prompt(garments: list, custom_prompt: str) -> str:
     
     return base_prompt
 
-def call_seedream_api(person_image: str, garment_images: list, prompt: str) -> Optional[str]:
-    '''Call SeeDream 4 API via fal.ai'''
-    fal_api_key = os.environ.get('FAL_API_KEY')
-    if not fal_api_key:
-        raise Exception('FAL_API_KEY not configured')
+def upload_base64_to_fal(base64_image: str, fal_api_key: str) -> str:
+    '''Upload base64 image to fal.ai storage and return URL'''
+    if base64_image.startswith('http://') or base64_image.startswith('https://'):
+        return base64_image
+    
+    if not base64_image.startswith('data:'):
+        base64_image = f'data:image/jpeg;base64,{base64_image}'
     
     headers = {
         'Authorization': f'Key {fal_api_key}',
         'Content-Type': 'application/json'
     }
     
-    image_urls = [person_image] + garment_images
+    payload = {
+        'file_data': base64_image,
+        'content_type': 'image/jpeg'
+    }
+    
+    response = requests.post(
+        'https://fal.run/storage/upload',
+        headers=headers,
+        json=payload,
+        timeout=30
+    )
+    
+    if response.status_code == 200:
+        result = response.json()
+        if 'url' in result:
+            return result['url']
+    
+    raise Exception(f'fal.ai upload error: {response.status_code} - {response.text}')
+
+def call_seedream_api(person_image: str, garment_images: list, prompt: str) -> Optional[str]:
+    '''Call SeeDream 4 API via fal.ai'''
+    fal_api_key = os.environ.get('FAL_API_KEY')
+    if not fal_api_key:
+        raise Exception('FAL_API_KEY not configured')
+    
+    person_url = upload_base64_to_fal(person_image, fal_api_key)
+    garment_urls = [upload_base64_to_fal(img, fal_api_key) for img in garment_images]
+    
+    headers = {
+        'Authorization': f'Key {fal_api_key}',
+        'Content-Type': 'application/json'
+    }
+    
+    image_urls = [person_url] + garment_urls
     
     payload = {
         'image_urls': image_urls,
