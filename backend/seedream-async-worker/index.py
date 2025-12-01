@@ -37,16 +37,14 @@ def call_seedream_api(person_image: str, garment_images: list, prompt: str) -> O
         'Content-Type': 'application/json'
     }
     
+    image_urls = [person_image] + garment_images
+    
     payload = {
-        'model_image': person_image,
-        'cloth_image': garment_images[0] if len(garment_images) > 0 else None,
+        'image_urls': image_urls,
         'prompt': prompt,
         'num_inference_steps': 30,
         'guidance_scale': 2.5
     }
-    
-    if len(garment_images) > 1:
-        payload['cloth_image_2'] = garment_images[1]
     
     response = requests.post(
         'https://fal.run/fal-ai/bytedance/seedream/v4/edit',
