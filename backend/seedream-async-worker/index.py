@@ -37,8 +37,8 @@ def normalize_image_format(image: str) -> str:
     
     return image
 
-def call_seedream_api(person_image: str, garment_images: list, prompt: str) -> Optional[str]:
-    '''Call SeeDream 4 API via fal.ai'''
+def call_seedream_api_sync(person_image: str, garment_images: list, prompt: str) -> Optional[str]:
+    '''Call SeeDream 4 API via fal.ai in sync mode (blocks until complete)'''
     fal_api_key = os.environ.get('FAL_API_KEY')
     if not fal_api_key:
         raise Exception('FAL_API_KEY not configured')
@@ -57,18 +57,21 @@ def call_seedream_api(person_image: str, garment_images: list, prompt: str) -> O
         'image_urls': image_urls,
         'prompt': prompt,
         'num_inference_steps': 30,
-        'guidance_scale': 2.5
+        'guidance_scale': 2.5,
+        'sync_mode': True
     }
     
     response = requests.post(
-        'https://fal.run/fal-ai/bytedance/seedream/v4/edit',
+        'https://queue.fal.run/fal-ai/bytedance/seedream/v4/edit',
         headers=headers,
         json=payload,
-        timeout=120
+        timeout=180
     )
     
     if response.status_code == 200:
         result = response.json()
+        if 'images' in result and len(result['images']) > 0 and 'url' in result['images'][0]:
+            return result['images'][0]['url']
         if 'image' in result and 'url' in result['image']:
             return result['image']['url']
     
@@ -143,7 +146,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             garment_images = [g['image'] for g in garments]
             prompt = build_prompt(garments, prompt_hints or '')
             
-            result_url = call_seedream_api(person_image, garment_images, prompt)
+            result_url = call_seedream_api_sync(person_image, garment_images, prompt)
             
             cursor.execute('''
                 UPDATE seedream_tasks
