@@ -20,8 +20,9 @@ def build_prompt(garments: list, custom_prompt: str) -> str:
         base_prompt = "Надень на модель с первого изображения верхнюю одежду (топ, блузку, рубашку, жакет) со второго изображения И нижнюю одежду (брюки, юбку, шорты) с третьего изображения. "
         base_prompt += "ВАЖНО: Второе изображение — это ТОЛЬКО верх (upper_body). Третье изображение — это ТОЛЬКО низ (lower_body). Не смешивай элементы одежды между референсами. "
     
-    base_prompt += "КРИТИЧНО: Сохрани лицо, причёску, телосложение и позу человека ТОЛЬКО с первого изображения (модель). НЕЛЬЗЯ менять лицо модели! "
-    base_prompt += "Сохрани естественную посадку одежды на теле, правильные пропорции и реалистичное освещение. "
+    base_prompt += "КРИТИЧНО: Сохрани ВСЁ от модели (первое изображение): лицо, волосы, цвет кожи, телосложение, рост, комплекцию, позу, фон. Меняется ТОЛЬКО одежда! "
+    base_prompt += "КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО брать фигуру или позу с референсов одежды (второе/третье изображение). Используй ТОЛЬКО тело модели с первого фото. "
+    base_prompt += "Одежда должна естественно сидеть на СУЩЕСТВУЮЩЕМ теле модели, сохраняя все её физические параметры. "
     
     if custom_prompt:
         base_prompt += f"Дополнительно: {custom_prompt}"
@@ -38,8 +39,8 @@ def normalize_image_format(image: str) -> str:
     
     return image
 
-def submit_to_fal_queue(person_image: str, garments: list, prompt: str) -> str:
-    '''Submit task to fal.ai queue and return request_id (with proper sorting by category)'''
+def submit_to_fal_queue(person_image: str, garments: list, prompt: str) -> tuple:
+    '''Submit task to fal.ai queue and return (request_id, response_url) with proper sorting by category'''
     fal_api_key = os.environ.get('FAL_API_KEY')
     if not fal_api_key:
         raise Exception('FAL_API_KEY not configured')
@@ -72,23 +73,24 @@ def submit_to_fal_queue(person_image: str, garments: list, prompt: str) -> str:
     
     if response.status_code == 200:
         result = response.json()
-        if 'request_id' in result:
-            return result['request_id']
+        if 'request_id' in result and 'response_url' in result:
+            return (result['request_id'], result['response_url'])
     
     raise Exception(f'Failed to submit to queue: {response.status_code} - {response.text}')
 
-def check_fal_status(request_id: str) -> Optional[dict]:
-    '''Check status of fal.ai request'''
+def check_fal_status(response_url: str) -> Optional[dict]:
+    '''Check status of fal.ai request using response_url'''
     fal_api_key = os.environ.get('FAL_API_KEY')
     if not fal_api_key:
         raise Exception('FAL_API_KEY not configured')
     
     headers = {
-        'Authorization': f'Key {fal_api_key}'
+        'Authorization': f'Key {fal_api_key}',
+        'Content-Type': 'application/json'
     }
     
     response = requests.get(
-        f'https://queue.fal.run/fal-ai/bytedance/seedream/v4/edit/requests/{request_id}/status',
+        response_url,
         headers=headers,
         timeout=10
     )
@@ -97,6 +99,26 @@ def check_fal_status(request_id: str) -> Optional[dict]:
         return response.json()
     
     raise Exception(f'Failed to check status: {response.status_code} - {response.text}')
+
+def save_to_s3(image_url: str, task_id: str) -> str:
+    '''Save fal.ai image to Yandex S3 and return public URL'''
+    save_image_api = 'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8'
+    
+    response = requests.post(
+        save_image_api,
+        json={
+            'image_url': image_url,
+            'folder': 'catalog',
+            'user_id': task_id
+        },
+        timeout=60
+    )
+    
+    if response.status_code == 200:
+        data = response.json()
+        return data['url']
+    
+    raise Exception(f'Failed to save to S3: {response.status_code} - {response.text}')
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -133,7 +155,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT id, person_image, garments, prompt_hints, fal_request_id
+            SELECT id, person_image, garments, prompt_hints, fal_request_id, fal_response_url
             FROM seedream_tasks
             WHERE status = 'pending'
             ORDER BY created_at ASC
@@ -144,20 +166,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         pending_row = cursor.fetchone()
         
         if pending_row:
-            task_id, person_image, garments_json, prompt_hints, fal_request_id = pending_row
+            task_id, person_image, garments_json, prompt_hints, fal_request_id, fal_response_url = pending_row
             garments = json.loads(garments_json)
             
             if not fal_request_id:
                 try:
                     prompt = build_prompt(garments, prompt_hints or '')
                     
-                    request_id = submit_to_fal_queue(person_image, garments, prompt)
+                    request_id, response_url = submit_to_fal_queue(person_image, garments, prompt)
                     
                     cursor.execute('''
                         UPDATE seedream_tasks
-                        SET status = 'processing', fal_request_id = %s, updated_at = %s
+                        SET status = 'processing', fal_request_id = %s, fal_response_url = %s, updated_at = %s
                         WHERE id = %s
-                    ''', (request_id, datetime.utcnow(), task_id))
+                    ''', (request_id, response_url, datetime.utcnow(), task_id))
                     conn.commit()
                     cursor.close()
                     conn.close()
@@ -194,9 +216,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     }
         
         cursor.execute('''
-            SELECT id, fal_request_id
+            SELECT id, fal_response_url
             FROM seedream_tasks
-            WHERE status = 'processing' AND fal_request_id IS NOT NULL
+            WHERE status = 'processing' AND fal_response_url IS NOT NULL
             ORDER BY created_at ASC
             LIMIT 5
         ''')
@@ -214,23 +236,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         results = []
-        for task_id, request_id in processing_rows:
+        for task_id, response_url in processing_rows:
             try:
-                status_data = check_fal_status(request_id)
+                status_data = check_fal_status(response_url)
                 
                 if status_data['status'] == 'COMPLETED':
                     if 'images' in status_data and len(status_data['images']) > 0:
-                        result_url = status_data['images'][0]['url']
+                        fal_url = status_data['images'][0]['url']
                     elif 'image' in status_data:
-                        result_url = status_data['image']['url']
+                        fal_url = status_data['image']['url']
                     else:
                         raise Exception('No image in response')
+                    
+                    s3_url = save_to_s3(fal_url, task_id)
                     
                     cursor.execute('''
                         UPDATE seedream_tasks
                         SET status = 'completed', result_url = %s, updated_at = %s
                         WHERE id = %s
-                    ''', (result_url, datetime.utcnow(), task_id))
+                    ''', (s3_url, datetime.utcnow(), task_id))
                     conn.commit()
                     results.append({'task_id': task_id, 'status': 'completed'})
                     
