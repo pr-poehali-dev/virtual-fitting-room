@@ -19,6 +19,7 @@ def build_prompt(garments: list, custom_prompt: str) -> str:
         garment_descriptions.append(category_map.get(category, 'одежду'))
     
     base_prompt = f"Перенеси {', '.join(garment_descriptions)} с референсных изображений одежды на человека с фото модели. "
+    base_prompt += "ВАЖНО: Сохрани лицо, причёску, телосложение и позу человека с фото модели. Возьми ТОЛЬКО одежду с референсных изображений. "
     base_prompt += "Сохрани естественную посадку одежды на теле, правильные пропорции и реалистичное освещение. "
     
     if custom_prompt:

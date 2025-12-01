@@ -472,88 +472,7 @@ export default function ReplicateTryOn() {
 
 
 
-  const checkStatusManually = async () => {
-    if (!taskId) return;
-    
-    try {
-      toast.info('Проверяем статус на Replicate...');
-      
-      // Используем force_check=true для принудительной проверки Replicate API
-      const response = await fetch(`${REPLICATE_STATUS_API}?task_id=${taskId}&force_check=true`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.status === 'waiting_continue') {
-          setIntermediateResult(data.intermediate_result);
-          setIsGenerating(false);
-          setWaitingContinue(true);
-          setGenerationStatus('');
-          setCurrentStep(data.current_step || 1);
-          setTotalSteps(data.total_steps || selectedClothingItems.length);
-          toast.success(`Шаг ${data.current_step} готов!`);
-          if (pollingInterval) {
-            clearInterval(pollingInterval);
-            setPollingInterval(null);
-          }
-          if (checkerInterval) {
-            clearInterval(checkerInterval);
-            setCheckerInterval(null);
-          }
-        } else if (data.status === 'completed') {
-          setGeneratedImage(data.result_url);
-          setIsGenerating(false);
-          setWaitingContinue(false);
-          setGenerationStatus('');
-          if (pollingInterval) {
-            clearInterval(pollingInterval);
-            setPollingInterval(null);
-          }
-          if (checkerInterval) {
-            clearInterval(checkerInterval);
-            setCheckerInterval(null);
-          }
-          
-          if (user && uploadedImage && data.result_url) {
-            try {
-              await fetch(HISTORY_API, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-User-Id': user.id
-                },
-                body: JSON.stringify({
-                  person_image: uploadedImage,
-                  garments: selectedClothingItems.map(item => ({ image: item.image, category: item.category })),
-                  result_image: data.result_url
-                })
-              });
-            } catch (error) {
-              console.error('Failed to save history:', error);
-            }
-          }
-        } else if (data.status === 'failed') {
-          setIsGenerating(false);
-          setWaitingContinue(false);
-          setGenerationStatus('');
-          toast.error(data.error_message || 'Ошибка генерации');
-          if (pollingInterval) {
-            clearInterval(pollingInterval);
-            setPollingInterval(null);
-          }
-          if (checkerInterval) {
-            clearInterval(checkerInterval);
-            setCheckerInterval(null);
-          }
-        } else {
-          toast.info(`Статус: ${data.status}. Продолжаем ожидание...`);
-        }
-      }
-    } catch (error) {
-      console.error('Manual check error:', error);
-      toast.error('Ошибка проверки статуса');
-    }
-  };
+
 
   const startPolling = (taskId: string) => {
     const interval = setInterval(async () => {
@@ -794,13 +713,6 @@ export default function ReplicateTryOn() {
                             Не закрывайте страницу до завершения генерации
                           </p>
                         </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={checkStatusManually}
-                        >
-                          Проверить статус
-                        </Button>
                       </div>
                     </div>
                   )}
