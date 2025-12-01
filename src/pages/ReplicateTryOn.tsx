@@ -55,6 +55,8 @@ interface SelectedClothing {
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
 const REPLICATE_START_API = 'https://functions.poehali.dev/c1cb3f04-f40a-4044-87fd-568d0271e1fe';
 const REPLICATE_STATUS_API = 'https://functions.poehali.dev/cde034e8-99be-4910-9ea6-f06cc94a6377';
+const SEEDREAM_START_API = 'https://functions.poehali.dev/4bb70873-fda7-4a2d-a0a8-ee558a3b50e7';
+const SEEDREAM_STATUS_API = 'https://functions.poehali.dev/ffebd367-227e-4e12-a5f1-64db84bddc81';
 const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
 
 
@@ -376,6 +378,154 @@ export default function ReplicateTryOn() {
     setSelectedClothingItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, category } : item))
     );
+  };
+
+  const handleGenerateSeeDream = async () => {
+    if (!uploadedImage) {
+      toast.error('Загрузите фото модели');
+      return;
+    }
+
+    if (selectedClothingItems.length === 0) {
+      toast.error('Выберите хотя бы одну вещь');
+      return;
+    }
+
+    if (selectedClothingItems.length > 2) {
+      toast.error('Максимум 2 вещи можно выбрать');
+      return;
+    }
+
+    if (!user) {
+      toast.error('Требуется авторизация');
+      return;
+    }
+
+    const itemsWithoutCategory = selectedClothingItems.filter(item => !item.category);
+    if (itemsWithoutCategory.length > 0) {
+      toast.error('Укажите категорию для всех выбранных вещей');
+      return;
+    }
+
+    if (selectedClothingItems.length === 2) {
+      const categories = selectedClothingItems.map(item => item.category);
+      const hasUpper = categories.includes('upper_body');
+      const hasLower = categories.includes('lower_body');
+      
+      if (!hasUpper || !hasLower) {
+        toast.error('При выборе 2 вещей нужно выбрать одну для верха и одну для низа');
+        return;
+      }
+    }
+
+    const balanceCheck = await checkReplicateBalance(user, selectedClothingItems.length);
+    if (!balanceCheck.canGenerate) {
+      return;
+    }
+
+    const balanceDeducted = await deductReplicateBalance(user, selectedClothingItems.length);
+    if (!balanceDeducted) {
+      return;
+    }
+
+    setIsGenerating(true);
+    setGeneratedImage(null);
+    setIntermediateResult(null);
+    setWaitingContinue(false);
+    setGenerationStatus('Запускаем генерацию...');
+
+    toast.info('Генерация займёт ~30 секунд. Не закрывайте страницу!', {
+      duration: 6000
+    });
+
+    try {
+      const response = await fetch(SEEDREAM_START_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.id,
+        },
+        body: JSON.stringify({
+          person_image: uploadedImage,
+          garments: selectedClothingItems.map((item) => ({
+            image: item.image,
+            category: item.category || 'upper_body',
+          })),
+          custom_prompt: '',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Ошибка запуска генерации');
+      }
+
+      const data = await response.json();
+      setTaskId(data.task_id);
+      setGenerationStatus('В очереди...');
+      toast.success('Задача создана! Ожидайте результат...');
+      
+      startSeeDreamPolling(data.task_id);
+    } catch (error: any) {
+      console.error('Generation error:', error);
+      toast.error(error.message || 'Ошибка запуска генерации');
+      setIsGenerating(false);
+      setGenerationStatus('');
+    }
+  };
+
+  const startSeeDreamPolling = (taskId: string) => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`${SEEDREAM_STATUS_API}?task_id=${taskId}`);
+        if (!response.ok) {
+          throw new Error('Ошибка проверки статуса');
+        }
+
+        const data = await response.json();
+        
+        if (data.status === 'pending') {
+          setGenerationStatus('В очереди...');
+        } else if (data.status === 'processing') {
+          setGenerationStatus('Обрабатывается...');
+        } else if (data.status === 'completed') {
+          setGeneratedImage(data.result_url);
+          setIsGenerating(false);
+          setGenerationStatus('');
+          clearInterval(interval);
+          setPollingInterval(null);
+          
+          if (user && uploadedImage && data.result_url) {
+            try {
+              await fetch(HISTORY_API, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-User-Id': user.id
+                },
+                body: JSON.stringify({
+                  person_image: uploadedImage,
+                  garments: selectedClothingItems.map(item => ({ image: item.image, category: item.category })),
+                  result_image: data.result_url
+                })
+              });
+            } catch (error) {
+              console.error('Failed to save history:', error);
+            }
+          }
+        } else if (data.status === 'failed') {
+          setIsGenerating(false);
+          setGenerationStatus('');
+          toast.error(data.error_message || 'Ошибка генерации');
+          clearInterval(interval);
+          setPollingInterval(null);
+        }
+      } catch (error: any) {
+        console.error('Polling error:', error);
+      }
+    }, 3000);
+
+    setPollingInterval(interval);
   };
 
   const handleGenerate = async () => {
@@ -899,7 +1049,7 @@ export default function ReplicateTryOn() {
 
                   <div className="flex gap-3">
                     <Button
-                      onClick={handleGenerate}
+                      onClick={activeFittingRoom === 'replicate' ? handleGenerate : handleGenerateSeeDream}
                       disabled={
                         !uploadedImage ||
                         selectedClothingItems.length === 0 ||

@@ -17,8 +17,8 @@ def build_prompt(garments: list, custom_prompt: str) -> str:
         else:
             base_prompt = "Надень на модель с первого изображения нижнюю одежду (брюки, юбку, шорты) со второго изображения (референс). Не меняй верх (топ, блузку, рубашку) с фото модели. "
     else:
-        base_prompt = "Надень на модель с первого изображения верхнюю одежду со второго изображения (референс верха) И нижнюю одежду с третьего изображения (референс низа). "
-        base_prompt += "ВАЖНО: Верх бери ТОЛЬКО со второго фото, низ бери ТОЛЬКО с третьего фото. Не смешивай элементы одежды между референсами. "
+        base_prompt = "Надень на модель с первого изображения верхнюю одежду (топ, блузку, рубашку, жакет) со второго изображения И нижнюю одежду (брюки, юбку, шорты) с третьего изображения. "
+        base_prompt += "ВАЖНО: Второе изображение — это ТОЛЬКО верх (upper_body). Третье изображение — это ТОЛЬКО низ (lower_body). Не смешивай элементы одежды между референсами. "
     
     base_prompt += "КРИТИЧНО: Сохрани лицо, причёску, телосложение и позу человека ТОЛЬКО с первого изображения (модель). НЕЛЬЗЯ менять лицо модели! "
     base_prompt += "Сохрани естественную посадку одежды на теле, правильные пропорции и реалистичное освещение. "
@@ -38,14 +38,16 @@ def normalize_image_format(image: str) -> str:
     
     return image
 
-def submit_to_fal_queue(person_image: str, garment_images: list, prompt: str) -> str:
-    '''Submit task to fal.ai queue and return request_id'''
+def submit_to_fal_queue(person_image: str, garments: list, prompt: str) -> str:
+    '''Submit task to fal.ai queue and return request_id (with proper sorting by category)'''
     fal_api_key = os.environ.get('FAL_API_KEY')
     if not fal_api_key:
         raise Exception('FAL_API_KEY not configured')
     
+    sorted_garments = sorted(garments, key=lambda g: 0 if g.get('category') == 'upper_body' else (1 if g.get('category') == 'lower_body' else 2))
+    
     person_data = normalize_image_format(person_image)
-    garment_data = [normalize_image_format(img) for img in garment_images]
+    garment_data = [normalize_image_format(g['image']) for g in sorted_garments]
     
     headers = {
         'Authorization': f'Key {fal_api_key}',
@@ -147,10 +149,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             if not fal_request_id:
                 try:
-                    garment_images = [g['image'] for g in garments]
                     prompt = build_prompt(garments, prompt_hints or '')
                     
-                    request_id = submit_to_fal_queue(person_image, garment_images, prompt)
+                    request_id = submit_to_fal_queue(person_image, garments, prompt)
                     
                     cursor.execute('''
                         UPDATE seedream_tasks

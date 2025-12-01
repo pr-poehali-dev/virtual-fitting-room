@@ -1,4 +1,7 @@
 {
+  "seedream-async-worker": "https://functions.poehali.dev/339123e0-038a-4b96-8197-101145bcd877",
+  "seedream-async-start": "https://functions.poehali.dev/4bb70873-fda7-4a2d-a0a8-ee558a3b50e7",
+  "seedream-async-status": "https://functions.poehali.dev/ffebd367-227e-4e12-a5f1-64db84bddc81",
   "delete-image-ftp": "https://functions.poehali.dev/caf33ea6-1aaa-46b4-bc76-9b03bee18925",
   "save-image-ftp": "https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8",
   "replicate-continue": "https://functions.poehali.dev/fdb150a0-d5ba-47ec-9d9a-e13595cd92d1",
@@ -24,6 +27,5 @@
   "auth-api": "https://functions.poehali.dev/589c58eb-91b4-4f2a-923c-6a91ed722a82",
   "try-on-history-api": "https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd",
   "lookbooks-api": "https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b",
-  "color-type-analysis": "https://functions.poehali.dev/dc1d4a27-c7b0-448b-8b71-3dc704a7c27b",
-  "virtual-fitting": "https://functions.poehali.dev/87fa03b9-724d-4af9-85a2-dda57f503885"
+  "color-type-analysis": "https://functions.poehali.dev/dc1d4a27-c7b0-448b-8b71-3dc704a7c27b"
 }
