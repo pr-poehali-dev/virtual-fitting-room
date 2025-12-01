@@ -88,6 +88,7 @@ export default function ReplicateTryOn() {
   const [checkerInterval, setCheckerInterval] = useState<NodeJS.Timeout | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageForCrop, setTempImageForCrop] = useState<string | null>(null);
+  const [activeFittingRoom, setActiveFittingRoom] = useState<'replicate' | 'seedream'>('replicate');
 
 
   useEffect(() => {
@@ -794,11 +795,28 @@ export default function ReplicateTryOn() {
         <div className="container mx-auto px-4 py-12">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Replicate Примерочная
+              Онлайн примерочная
             </h1>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
               Выберите несколько вещей и создайте идеальный образ с помощью AI. Модель сама определит как надеть одежду на человека
             </p>
+            
+            <div className="flex justify-center gap-3">
+              <Button
+                variant={activeFittingRoom === 'replicate' ? 'default' : 'outline'}
+                onClick={() => setActiveFittingRoom('replicate')}
+                size="lg"
+              >
+                Примерочная 1
+              </Button>
+              <Button
+                variant={activeFittingRoom === 'seedream' ? 'default' : 'outline'}
+                onClick={() => setActiveFittingRoom('seedream')}
+                size="lg"
+              >
+                Примерочная 2
+              </Button>
+            </div>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
