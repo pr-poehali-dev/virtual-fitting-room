@@ -476,6 +476,7 @@ export default function ReplicateTryOn() {
   };
 
   const startSeeDreamPolling = (taskId: string) => {
+    console.log('[SeeDream] Starting polling for task:', taskId);
     const interval = setInterval(async () => {
       try {
         const response = await fetch(`${SEEDREAM_STATUS_API}?task_id=${taskId}`);
@@ -484,17 +485,20 @@ export default function ReplicateTryOn() {
         }
 
         const data = await response.json();
+        console.log('[SeeDream] Status check result:', data);
         
         if (data.status === 'pending') {
           setGenerationStatus('В очереди...');
         } else if (data.status === 'processing') {
           setGenerationStatus('Обрабатывается...');
         } else if (data.status === 'completed') {
+          console.log('[SeeDream] COMPLETED! Result URL:', data.result_url);
           setGeneratedImage(data.result_url);
           setIsGenerating(false);
           setGenerationStatus('');
           clearInterval(interval);
           setPollingInterval(null);
+          toast.success('Образ готов!');
           
           if (user && uploadedImage && data.result_url) {
             try {
@@ -515,14 +519,17 @@ export default function ReplicateTryOn() {
             }
           }
         } else if (data.status === 'failed') {
+          console.error('[SeeDream] FAILED:', data.error_message);
           setIsGenerating(false);
           setGenerationStatus('');
           toast.error(data.error_message || 'Ошибка генерации');
           clearInterval(interval);
           setPollingInterval(null);
+        } else {
+          console.log('[SeeDream] Unknown status:', data.status);
         }
       } catch (error: any) {
-        console.error('Polling error:', error);
+        console.error('[SeeDream] Polling error:', error);
       }
     }, 3000);
 
