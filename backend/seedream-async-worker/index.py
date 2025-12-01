@@ -7,25 +7,13 @@ import requests
 from datetime import datetime
 
 def build_prompt(garments: list, custom_prompt: str) -> str:
-    '''Build Russian prompt for SeeDream 4'''
-    if len(garments) == 1:
-        category = garments[0].get('category', 'одежда')
-        if category == 'dresses':
-            base_prompt = "Надень на модель с первого изображения всю одежду со второго изображения (референс). "
-        elif category == 'upper_body':
-            base_prompt = "Надень на модель с первого изображения верхнюю одежду (топ, блузку, рубашку, жакет) со второго изображения (референс). Не меняй низ (брюки, юбку) с фото модели. "
-        else:
-            base_prompt = "Надень на модель с первого изображения нижнюю одежду (брюки, юбку, шорты) со второго изображения (референс). Не меняй верх (топ, блузку, рубашку) с фото модели. "
-    else:
-        base_prompt = "Надень на модель с первого изображения верхнюю одежду (топ, блузку, рубашку, жакет) со второго изображения И нижнюю одежду (брюки, юбку, шорты) с третьего изображения. "
-        base_prompt += "ВАЖНО: Второе изображение — это ТОЛЬКО верх (upper_body). Третье изображение — это ТОЛЬКО низ (lower_body). Не смешивай элементы одежды между референсами. "
-    
-    base_prompt += "КРИТИЧНО: Сохрани АБСОЛЮТНО ВСЁ от модели (первое изображение): точное лицо, причёску, цвет кожи, ТИП ФИГУРЫ, рост, комплекцию (худая/полная), ширину плеч, объём талии, объём бедёр, длину ног, позу, фон, освещение. Меняется ИСКЛЮЧИТЕЛЬНО одежда! "
-    base_prompt += "СТРОЖАЙШИЙ ЗАПРЕТ: НЕ БЕРИ фигуру, телосложение, комплекцию, рост или позу с фото одежды (второе/третье изображение)! Модель на фото одежды - это ТОЛЬКО референс для самой одежды, НЕ для тела! "
-    base_prompt += "Используй ТОЧНУЮ копию тела модели с первого фото. Одежда должна естественно сесть НА ЭТО тело, адаптируясь к ЕГО формам, а не наоборот. Сохрани исходное соотношение сторон изображения модели. "
+    '''Build simple English prompt for SeeDream 4 - works better than Russian'''
+    base_prompt = "Put the clothing from image 2 onto the person from image 1. "
+    base_prompt += "CRITICAL: Keep EXACT person from image 1 - same face, hair, skin, body type, pose, background. ONLY change clothes. "
+    base_prompt += "FORBIDDEN: Do NOT use body/pose/face from clothing reference image. Clothing image is ONLY for garment reference. "
     
     if custom_prompt:
-        base_prompt += f"Дополнительно: {custom_prompt}"
+        base_prompt += f"Additional: {custom_prompt}"
     
     return base_prompt
 

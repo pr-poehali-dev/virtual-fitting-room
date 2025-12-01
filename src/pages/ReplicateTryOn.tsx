@@ -1059,13 +1059,15 @@ export default function ReplicateTryOn() {
                             Не закрывайте страницу до завершения генерации
                           </p>
                         </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={checkStatusManually}
-                        >
-                          Проверить статус
-                        </Button>
+                        {activeFittingRoom === 'replicate' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={checkStatusManually}
+                          >
+                            Проверить статус
+                          </Button>
+                        )}
                       </div>
                     </div>
                   )}
