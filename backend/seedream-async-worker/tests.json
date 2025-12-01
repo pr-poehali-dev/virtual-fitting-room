@@ -1,0 +1,13 @@
+{
+  "tests": [
+    {
+      "name": "Test worker endpoint availability",
+      "method": "GET",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "message": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

@@ -53,8 +53,8 @@ interface SelectedClothing {
 }
 
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
-const REPLICATE_START_API = 'https://functions.poehali.dev/c1cb3f04-f40a-4044-87fd-568d0271e1fe';
-const REPLICATE_STATUS_API = 'https://functions.poehali.dev/cde034e8-99be-4910-9ea6-f06cc94a6377';
+const SEEDREAM_START_API = 'https://functions.poehali.dev/4bb70873-fda7-4a2d-a0a8-ee558a3b50e7';
+const SEEDREAM_STATUS_API = 'https://functions.poehali.dev/ffebd367-227e-4e12-a5f1-64db84bddc81';
 const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
 
 
@@ -81,13 +81,10 @@ export default function ReplicateTryOn() {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
   const [generationStatus, setGenerationStatus] = useState<string>('');
-  const [intermediateResult, setIntermediateResult] = useState<string | null>(null);
-  const [currentStep, setCurrentStep] = useState<number>(0);
-  const [totalSteps, setTotalSteps] = useState<number>(0);
-  const [waitingContinue, setWaitingContinue] = useState<boolean>(false);
-  const [checkerInterval, setCheckerInterval] = useState<NodeJS.Timeout | null>(null);
+
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageForCrop, setTempImageForCrop] = useState<string | null>(null);
+  const [customPrompt, setCustomPrompt] = useState<string>('');
 
 
   useEffect(() => {
@@ -106,11 +103,8 @@ export default function ReplicateTryOn() {
       if (pollingInterval) {
         clearInterval(pollingInterval);
       }
-      if (checkerInterval) {
-        clearInterval(checkerInterval);
-      }
     };
-  }, [pollingInterval, checkerInterval]);
+  }, [pollingInterval]);
 
   const fetchFilters = async () => {
     try {
@@ -436,7 +430,7 @@ export default function ReplicateTryOn() {
     });
 
     try {
-      const response = await fetch(REPLICATE_START_API, {
+      const response = await fetch(SEEDREAM_START_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -453,7 +447,7 @@ export default function ReplicateTryOn() {
               image: item.image,
               category: item.category || 'upper_body',
             })),
-          prompt_hints: '',
+          custom_prompt: customPrompt,
         }),
       });
 
@@ -562,49 +556,26 @@ export default function ReplicateTryOn() {
   };
 
   const startPolling = (taskId: string) => {
-    const checker = setInterval(async () => {
-      try {
-        await fetch(`${REPLICATE_STATUS_API}?task_id=${taskId}&force_check=true`);
-      } catch (error) {
-        console.error('Auto check error:', error);
-      }
-    }, 10000);
-    setCheckerInterval(checker);
-    
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`${REPLICATE_STATUS_API}?task_id=${taskId}`);
+        const response = await fetch(`${SEEDREAM_STATUS_API}?task_id=${taskId}`);
         if (!response.ok) {
           throw new Error('Ошибка проверки статуса');
         }
 
         const data = await response.json();
-        setCurrentStep(data.current_step || 0);
-        setTotalSteps(data.total_steps || 0);
         
         if (data.status === 'pending') {
           setGenerationStatus('В очереди...');
         } else if (data.status === 'processing') {
-          setGenerationStatus(`Обрабатывается... Шаг ${data.current_step}/${data.total_steps}`);
-        } else if (data.status === 'waiting_continue') {
-          setIntermediateResult(data.intermediate_result);
-          setIsGenerating(false);
-          setWaitingContinue(true);
-          setGenerationStatus('');
-          toast.success(`Шаг ${data.current_step}/${data.total_steps} готов!`);
-          clearInterval(interval);
-          clearInterval(checker);
-          setPollingInterval(null);
-          setCheckerInterval(null);
+          setGenerationStatus('Генерация изображения...');
         } else if (data.status === 'completed') {
           setGeneratedImage(data.result_url);
           setIsGenerating(false);
-          setWaitingContinue(false);
           setGenerationStatus('');
           clearInterval(interval);
-          clearInterval(checker);
           setPollingInterval(null);
-          setCheckerInterval(null);
+          toast.success('Образ готов!');
           
           if (user && uploadedImage && data.result_url) {
             try {
@@ -626,13 +597,10 @@ export default function ReplicateTryOn() {
           }
         } else if (data.status === 'failed') {
           setIsGenerating(false);
-          setWaitingContinue(false);
           setGenerationStatus('');
           toast.error(data.error_message || 'Ошибка генерации');
           clearInterval(interval);
-          clearInterval(checker);
           setPollingInterval(null);
-          setCheckerInterval(null);
         }
       } catch (error: any) {
         console.error('Polling error:', error);
@@ -642,59 +610,17 @@ export default function ReplicateTryOn() {
     setPollingInterval(interval);
   };
 
-  const handleContinueGeneration = async () => {
-    if (!taskId) return;
-
-    setWaitingContinue(false);
-    setIsGenerating(true);
-    setGenerationStatus('Запуск следующего шага...');
-
-    try {
-      const response = await fetch('https://functions.poehali.dev/fdb150a0-d5ba-47ec-9d9a-e13595cd92d1', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ task_id: taskId }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Ошибка продолжения генерации');
-      }
-
-      toast.success('Следующий шаг запущен!');
-      startPolling(taskId);
-    } catch (error: any) {
-      console.error('Continue error:', error);
-      toast.error(error.message || 'Ошибка продолжения генерации');
-      setIsGenerating(false);
-      setWaitingContinue(true);
-      setGenerationStatus('');
-    }
-  };
-
   const handleReset = () => {
     if (pollingInterval) {
       clearInterval(pollingInterval);
       setPollingInterval(null);
     }
-    if (checkerInterval) {
-      clearInterval(checkerInterval);
-      setCheckerInterval(null);
-    }
     setUploadedImage(null);
     setSelectedClothingItems([]);
     setGeneratedImage(null);
-    setIntermediateResult(null);
-
     setTaskId(null);
     setIsGenerating(false);
-    setWaitingContinue(false);
     setGenerationStatus('');
-    setCurrentStep(0);
-    setTotalSteps(0);
-
   };
 
   const handleSaveToExistingLookbook = async () => {
@@ -794,10 +720,10 @@ export default function ReplicateTryOn() {
         <div className="container mx-auto px-4 py-12">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Replicate Примерочная
+              Виртуальная Примерочная
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Выберите несколько вещей и создайте идеальный образ с помощью AI. Модель сама определит как надеть одежду на человека
+              Выберите одежду и создайте идеальный образ с помощью AI. Модель умеет естественно переносить одежду на человека
             </p>
           </div>
 
@@ -879,6 +805,23 @@ export default function ReplicateTryOn() {
                     </div>
                   )}
 
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="customPrompt" className="text-sm font-medium mb-2 block">
+                        Дополнительные детали (опционально)
+                      </Label>
+                      <Textarea
+                        id="customPrompt"
+                        placeholder="Опишите фон, освещение, настроение образа... Например: 'студийное освещение, нейтральный фон' или 'уличная съёмка, городской пейзаж'"
+                        value={customPrompt}
+                        onChange={(e) => setCustomPrompt(e.target.value)}
+                        disabled={isGenerating}
+                        className="resize-none"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+
                   <div className="flex gap-3">
                     <Button
                       onClick={handleGenerate}
@@ -921,16 +864,9 @@ export default function ReplicateTryOn() {
             <ReplicateResultPanel
               isGenerating={isGenerating}
               generatedImage={generatedImage}
-              intermediateResult={intermediateResult}
-              waitingContinue={waitingContinue}
-              currentStep={currentStep}
-              totalSteps={totalSteps}
-
               handleDownloadImage={handleDownloadImage}
               setShowSaveDialog={setShowSaveDialog}
               handleReset={handleReset}
-              handleContinueGeneration={handleContinueGeneration}
-              checkStatusManually={checkStatusManually}
             />
           </div>
 

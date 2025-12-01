@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "Test missing task_id",
+      "method": "GET",
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "task_id is required"
+      }
+    },
+    {
+      "name": "Test with task_id parameter",
+      "method": "GET",
+      "queryParams": {
+        "task_id": "test-task-123"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "task_id": "string",
+        "status": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

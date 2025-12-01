@@ -1,0 +1,50 @@
+{
+  "tests": [
+    {
+      "name": "Test missing person_image",
+      "method": "POST",
+      "headers": {
+        "X-User-Id": "test-user-123"
+      },
+      "body": {
+        "garments": [{"image": "https://example.com/garment.jpg", "category": "upper_body"}]
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "person_image is required"
+      }
+    },
+    {
+      "name": "Test missing garments",
+      "method": "POST",
+      "headers": {
+        "X-User-Id": "test-user-123"
+      },
+      "body": {
+        "person_image": "data:image/jpeg;base64,test"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "At least one garment is required"
+      }
+    },
+    {
+      "name": "Test successful task creation",
+      "method": "POST",
+      "headers": {
+        "X-User-Id": "test-user-123"
+      },
+      "body": {
+        "person_image": "data:image/jpeg;base64,test",
+        "garments": [{"image": "https://example.com/garment.jpg", "category": "upper_body"}],
+        "custom_prompt": "студийное освещение"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "task_id": "string",
+        "status": "pending"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
