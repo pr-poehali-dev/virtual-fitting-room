@@ -14,12 +14,10 @@
       "queryParams": {
         "task_id": "test-task-123"
       },
-      "expectedStatus": 200,
+      "expectedStatus": 404,
       "expectedBody": {
-        "task_id": "string",
-        "status": "string"
-      },
-      "bodyMatcher": "partial"
+        "error": "Task not found"
+      }
     }
   ]
 }

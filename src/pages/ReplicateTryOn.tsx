@@ -477,15 +477,18 @@ export default function ReplicateTryOn() {
 
   const startSeeDreamPolling = (taskId: string) => {
     console.log('[SeeDream] Starting polling for task:', taskId);
+    let checkCount = 0;
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`${SEEDREAM_STATUS_API}?task_id=${taskId}`);
+        checkCount++;
+        const forceCheck = checkCount % 3 === 0;
+        const response = await fetch(`${SEEDREAM_STATUS_API}?task_id=${taskId}&force_check=${forceCheck}`);
         if (!response.ok) {
           throw new Error('Ошибка проверки статуса');
         }
 
         const data = await response.json();
-        console.log('[SeeDream] Status check result:', data);
+        console.log('[SeeDream] Status check result:', data, forceCheck ? '(force checked)' : '');
         
         if (data.status === 'pending') {
           setGenerationStatus('В очереди...');
