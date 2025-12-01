@@ -47,6 +47,9 @@ interface TryOnClothingSectionProps {
   setSelectedGender: (gender: string) => void;
   handleSelectFromCatalog: (item: ClothingItem) => void;
   handleRemoveClothing: (clothingId: string) => void;
+  updateClothingCategory: (id: string, category: string) => void;
+  handleCustomClothingUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  isGenerating: boolean;
 }
 
 export default function TryOnClothingSection({
@@ -62,7 +65,10 @@ export default function TryOnClothingSection({
   setSelectedArchetypes,
   setSelectedGender,
   handleSelectFromCatalog,
-  handleRemoveClothing
+  handleRemoveClothing,
+  updateClothingCategory,
+  handleCustomClothingUpload,
+  isGenerating
 }: TryOnClothingSectionProps) {
   return (
     <Card>
@@ -71,19 +77,22 @@ export default function TryOnClothingSection({
           Выберите одежду из каталога
         </Label>
         <ReplicateClothingSelector
+          selectedClothingItems={selectedClothingItems}
           clothingCatalog={clothingCatalog}
-          selectedItems={selectedClothingItems}
-          onSelectFromCatalog={handleSelectFromCatalog}
-          onRemoveClothing={handleRemoveClothing}
           filters={filters}
           selectedCategories={selectedCategories}
           selectedColors={selectedColors}
           selectedArchetypes={selectedArchetypes}
           selectedGender={selectedGender}
-          onCategoryChange={setSelectedCategories}
-          onColorChange={setSelectedColors}
-          onArchetypeChange={setSelectedArchetypes}
-          onGenderChange={setSelectedGender}
+          setSelectedCategories={setSelectedCategories}
+          setSelectedColors={setSelectedColors}
+          setSelectedArchetypes={setSelectedArchetypes}
+          setSelectedGender={setSelectedGender}
+          toggleClothingSelection={handleSelectFromCatalog}
+          removeClothingItem={handleRemoveClothing}
+          updateClothingCategory={updateClothingCategory}
+          handleCustomClothingUpload={handleCustomClothingUpload}
+          isGenerating={isGenerating}
         />
       </CardContent>
     </Card>

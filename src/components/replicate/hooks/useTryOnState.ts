@@ -284,6 +284,40 @@ export function useTryOnState() {
     setSelectedClothingItems(prev => prev.filter(item => item.id !== clothingId));
   };
 
+  const updateClothingCategory = (id: string, category: string) => {
+    setSelectedClothingItems(prev =>
+      prev.map(item =>
+        item.id === id ? { ...item, category } : item
+      )
+    );
+  };
+
+  const handleCustomClothingUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (selectedClothingItems.length >= 2) {
+      toast.error('Можно выбрать максимум 2 вещи');
+      return;
+    }
+
+    try {
+      const resizedImage = await resizeImage(file, 1024, 1024);
+      const newItem: SelectedClothing = {
+        id: `custom-${Date.now()}`,
+        image: resizedImage,
+        name: file.name,
+        isFromCatalog: false
+      };
+      
+      setSelectedClothingItems(prev => [...prev, newItem]);
+      toast.success('Фото одежды загружено');
+    } catch (error) {
+      console.error('Error uploading custom clothing:', error);
+      toast.error('Ошибка загрузки фото одежды');
+    }
+  };
+
   const handleContinueGeneration = async () => {
     if (!taskId || !intermediateResult) {
       toast.error('Нет промежуточного результата для продолжения');
@@ -616,6 +650,8 @@ export function useTryOnState() {
     handleCropCancel,
     handleSelectFromCatalog,
     handleRemoveClothing,
+    updateClothingCategory,
+    handleCustomClothingUpload,
     handleGenerate,
     handleSaveImage,
     handleContinueGeneration,
