@@ -49,7 +49,7 @@ def call_seedream_api(person_image: str, garment_images: list, prompt: str) -> O
         payload['cloth_image_2'] = garment_images[1]
     
     response = requests.post(
-        'https://fal.run/fal-ai/seedream',
+        'https://fal.run/fal-ai/bytedance/seedream/v4/edit',
         headers=headers,
         json=payload,
         timeout=120
