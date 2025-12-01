@@ -91,6 +91,7 @@ export default function ReplicateTryOn() {
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageForCrop, setTempImageForCrop] = useState<string | null>(null);
   const [activeFittingRoom, setActiveFittingRoom] = useState<'replicate' | 'seedream'>('replicate');
+  const [customPrompt, setCustomPrompt] = useState<string>('');
 
 
   useEffect(() => {
@@ -451,7 +452,7 @@ export default function ReplicateTryOn() {
             image: item.image,
             category: item.category || 'upper_body',
           })),
-          custom_prompt: '',
+          custom_prompt: customPrompt,
         }),
       });
 
@@ -1025,6 +1026,21 @@ export default function ReplicateTryOn() {
                     handleCustomClothingUpload={handleCustomClothingUpload}
                     isGenerating={isGenerating}
                   />
+
+                  {activeFittingRoom === 'seedream' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="custom-prompt">Дополнительные пожелания (опционально)</Label>
+                      <Textarea
+                        id="custom-prompt"
+                        placeholder="Например: студийное освещение, яркие цвета, минималистичный стиль..."
+                        value={customPrompt}
+                        onChange={(e) => setCustomPrompt(e.target.value)}
+                        rows={3}
+                        disabled={isGenerating}
+                        className="resize-none"
+                      />
+                    </div>
+                  )}
 
                   {generationStatus && (
                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
