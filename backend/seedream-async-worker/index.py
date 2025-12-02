@@ -7,12 +7,22 @@ import requests
 from datetime import datetime
 
 def build_prompt(garments: list, custom_prompt: str) -> str:
-    '''Build clear prompt for SeeDream 4 with strict image role specification'''
+    '''Build clear prompt for SeeDream 4 with category-based specifications'''
     
-    base_prompt = "Image 1 = person model. Image 2 = clothes reference. Put ONLY the clothes from image 2 onto the person on image 1. "
+    base_prompt = "Image 1 = person model. "
     
-    if len(garments) == 2:
-        base_prompt = "Image 1 = person model. Image 2 = clothes reference. Image 3 = clothes reference. Put ONLY the clothes from images 2 and 3 onto the person on image 1. "
+    if len(garments) == 1:
+        category = garments[0].get('category', 'dresses')
+        if category == 'upper_body':
+            base_prompt += "Image 2 has upper_body clothing. Take ONLY the top (blouse/shirt/jacket/sweater) from image 2. Do NOT change bottom clothing on person. "
+        elif category == 'lower_body':
+            base_prompt += "Image 2 has lower_body clothing. Take ONLY the bottom (pants/skirt/shorts) from image 2. Do NOT change top clothing on person. "
+        else:
+            base_prompt += "Image 2 has full outfit/dress. Take the complete outfit from image 2. "
+    else:
+        cat1 = garments[0].get('category', 'upper_body')
+        cat2 = garments[1].get('category', 'lower_body')
+        base_prompt += f"Image 2 has {cat1} clothing. Image 3 has {cat2} clothing. Take clothing from BOTH images 2 and 3. "
     
     base_prompt += "CRITICAL: On image 1 (person) keep EVERYTHING - exact face, hairstyle, skin color, body shape, height, body proportions, shoulders width, waist size, hips size, leg length, pose, background, lighting. Change ONLY clothing! "
     base_prompt += "STRICT RULE: DO NOT take body/face/pose from images 2 or 3. Those images are ONLY clothing reference, NOT body reference. The clothing must adapt to the body on image 1, not vice versa. "
