@@ -1028,7 +1028,7 @@ export default function ReplicateTryOn() {
                       <div>
                         <h3 className="text-lg font-semibold">Выберите примерочную</h3>
                         <p className="text-sm text-muted-foreground">
-                          В разных примерочных разные AI модели и результат может отличаться
+                          Попробуйте обе примерочные - они работают по-разному
                         </p>
                       </div>
                     </div>
