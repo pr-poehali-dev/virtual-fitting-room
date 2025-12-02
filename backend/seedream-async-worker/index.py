@@ -108,7 +108,11 @@ def submit_to_fal_queue(person_image: str, garments: list, prompt: str) -> tuple
         'num_inference_steps': 30,
         'guidance_scale': 2.5,
         'output_format': 'png',
-        'crop_input': False
+        'crop_input': False,
+        'image_size': {
+            'width': 768,
+            'height': 1024
+        }
     }
     
     response = requests.post(
