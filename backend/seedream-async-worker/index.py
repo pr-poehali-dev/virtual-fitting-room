@@ -20,9 +20,15 @@ def build_prompt(garments: list, custom_prompt: str) -> str:
         else:
             base_prompt += "Image 2 has full outfit/dress. Take the complete outfit from image 2. "
     else:
-        cat1 = garments[0].get('category', 'upper_body')
-        cat2 = garments[1].get('category', 'lower_body')
-        base_prompt += f"Image 2 has {cat1} clothing. Image 3 has {cat2} clothing. Take clothing from BOTH images 2 and 3. "
+        for i, garment in enumerate(garments):
+            img_num = i + 2
+            category = garment.get('category', 'dresses')
+            if category == 'upper_body':
+                base_prompt += f"Image {img_num} has upper_body clothing - take ONLY the top (blouse/shirt/jacket/sweater) from image {img_num}. "
+            elif category == 'lower_body':
+                base_prompt += f"Image {img_num} has lower_body clothing - take ONLY the bottom (pants/skirt/shorts) from image {img_num}. "
+            else:
+                base_prompt += f"Image {img_num} has full outfit - take complete outfit from image {img_num}. "
     
     base_prompt += "CRITICAL: On image 1 (person) keep EVERYTHING - exact face, hairstyle, skin color, body shape, height, body proportions, shoulders width, waist size, hips size, leg length, pose, background, lighting. Change ONLY clothing! "
     base_prompt += "STRICT RULE: DO NOT take body/face/pose from images 2 or 3. Those images are ONLY clothing reference, NOT body reference. The clothing must adapt to the body on image 1, not vice versa. "
