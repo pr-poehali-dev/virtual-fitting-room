@@ -961,23 +961,6 @@ export default function ReplicateTryOn() {
             <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
               Выберите несколько вещей и создайте идеальный образ с помощью AI. Модель сама определит как надеть одежду на человека
             </p>
-            
-            <div className="flex justify-center gap-3">
-              <Button
-                variant={activeFittingRoom === 'replicate' ? 'default' : 'outline'}
-                onClick={() => setActiveFittingRoom('replicate')}
-                size="lg"
-              >
-                Примерочная 1
-              </Button>
-              <Button
-                variant={activeFittingRoom === 'seedream' ? 'default' : 'outline'}
-                onClick={() => setActiveFittingRoom('seedream')}
-                size="lg"
-              >
-                Примерочная 2
-              </Button>
-            </div>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
@@ -1036,6 +1019,23 @@ export default function ReplicateTryOn() {
                     handleCustomClothingUpload={handleCustomClothingUpload}
                     isGenerating={isGenerating}
                   />
+
+                  <div className="flex justify-center gap-3">
+                    <Button
+                      variant={activeFittingRoom === 'replicate' ? 'default' : 'outline'}
+                      onClick={() => setActiveFittingRoom('replicate')}
+                      size="lg"
+                    >
+                      Примерочная 1
+                    </Button>
+                    <Button
+                      variant={activeFittingRoom === 'seedream' ? 'default' : 'outline'}
+                      onClick={() => setActiveFittingRoom('seedream')}
+                      size="lg"
+                    >
+                      Примерочная 2
+                    </Button>
+                  </div>
 
                   {activeFittingRoom === 'seedream' && (
                     <div className="space-y-2">
@@ -1222,18 +1222,24 @@ export default function ReplicateTryOn() {
           </div>
           
           <div className="text-center mt-8 pb-4">
-            <p className="text-xs text-muted-foreground">
-              Powered by{' '}
-              <a 
-                href="https://replicate.com/cuuupid/idm-vton" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="underline hover:text-primary transition-colors"
-              >
-                IDM-VTON
-              </a>
-              {' '}(CC BY 4.0)
-            </p>
+            {activeFittingRoom === 'replicate' ? (
+              <p className="text-xs text-muted-foreground">
+                Powered by{' '}
+                <a 
+                  href="https://replicate.com/cuuupid/idm-vton" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="underline hover:text-primary transition-colors"
+                >
+                  IDM-VTON
+                </a>
+                {' '}(CC BY 4.0)
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Powered by SeeDream 4
+              </p>
+            )}
           </div>
         </div>
       </div>
