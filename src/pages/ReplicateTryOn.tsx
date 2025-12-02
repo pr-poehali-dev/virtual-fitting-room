@@ -1084,7 +1084,7 @@ export default function ReplicateTryOn() {
                       <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
                         <p className="text-sm text-blue-900 dark:text-blue-100">
                           <Icon name="Info" className="inline mr-1" size={14} />
-                          Если выбрано 2 вещи, генерация будет в 2 этапа. Фото модели идеально подбирать в похожей одежде
+                          Если выбрано 2 вещи, генерация будет в 2 этапа. Для лучшего результата фото модели лучше подбирать в похожей одежде на ту, которую будете примерять: верх и низ или полный образ
                         </p>
                       </div>
                     )}
