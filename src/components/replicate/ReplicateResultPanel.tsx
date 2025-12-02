@@ -118,6 +118,9 @@ export default function ReplicateResultPanel({
               <p className="text-sm font-medium text-green-900 dark:text-green-100">
                 🎉 Все шаги завершены!
               </p>
+              <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                Не забудьте сохранить фото, если результат работы нейросети Вам нравится!
+              </p>
             </div>
             <div className="flex justify-center">
               <div className="relative w-full max-w-md" style={{ aspectRatio: '3/4' }}>
