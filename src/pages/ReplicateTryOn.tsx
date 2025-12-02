@@ -483,10 +483,30 @@ export default function ReplicateTryOn() {
   const startSeeDreamPolling = (taskId: string) => {
     console.log('[SeeDream] Starting polling for task:', taskId);
     let checkCount = 0;
+    const startTime = Date.now();
+    const TIMEOUT_MS = 180000;
+    
     const interval = setInterval(async () => {
       try {
         checkCount++;
         const forceCheck = checkCount % 3 === 0;
+        
+        const elapsedTime = Date.now() - startTime;
+        if (elapsedTime > TIMEOUT_MS) {
+          console.error('[SeeDream] Timeout after 180 seconds');
+          setIsGenerating(false);
+          setGenerationStatus('');
+          toast.error('Генерация заняла слишком много времени. Попробуйте обновить страницу и создать образ заново');
+          clearInterval(interval);
+          setPollingInterval(null);
+          
+          if (user) {
+            await refundReplicateBalance(user, selectedClothingItems.length);
+            console.log('[SeeDream] Balance refunded due to timeout');
+          }
+          return;
+        }
+        
         const response = await fetch(`${SEEDREAM_STATUS_API}?task_id=${taskId}&force_check=${forceCheck}`);
         if (!response.ok) {
           throw new Error('Ошибка проверки статуса');

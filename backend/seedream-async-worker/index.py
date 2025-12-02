@@ -5,6 +5,36 @@ from typing import Dict, Any, Optional
 import base64
 import requests
 from datetime import datetime
+import re
+
+def translate_to_english(text: str) -> str:
+    '''Translate Russian text to English using Google Translate API'''
+    if not text or not text.strip():
+        return text
+    
+    has_cyrillic = bool(re.search('[а-яА-Я]', text))
+    if not has_cyrillic:
+        return text
+    
+    try:
+        url = 'https://translate.googleapis.com/translate_a/single'
+        params = {
+            'client': 'gtx',
+            'sl': 'ru',
+            'tl': 'en',
+            'dt': 't',
+            'q': text
+        }
+        response = requests.get(url, params=params, timeout=5)
+        if response.status_code == 200:
+            result = response.json()
+            translated = ''.join([sentence[0] for sentence in result[0]])
+            print(f'[Translate] "{text}" -> "{translated}"')
+            return translated
+    except Exception as e:
+        print(f'[Translate] Failed to translate: {str(e)}')
+    
+    return text
 
 def build_prompt(garments: list, custom_prompt: str) -> str:
     '''Build clear prompt for SeeDream 4 with category-based specifications'''
@@ -34,7 +64,8 @@ def build_prompt(garments: list, custom_prompt: str) -> str:
     base_prompt += "STRICT RULE: NEVER EVER take face/body/pose/background from clothing images (2 or 3). Those images show ONLY clothing items on mannequins or models - ignore their faces and bodies completely! Use ONLY clothing items from those images. The person's face and body from image 1 must remain 100% identical. "
     
     if custom_prompt:
-        base_prompt += f"Additional: {custom_prompt}"
+        translated_prompt = translate_to_english(custom_prompt)
+        base_prompt += f"Additional: {translated_prompt}"
     
     return base_prompt
 
