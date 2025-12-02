@@ -1020,21 +1020,44 @@ export default function ReplicateTryOn() {
                     isGenerating={isGenerating}
                   />
 
-                  <div className="flex justify-center gap-3">
-                    <Button
-                      variant={activeFittingRoom === 'replicate' ? 'default' : 'outline'}
-                      onClick={() => setActiveFittingRoom('replicate')}
-                      size="lg"
-                    >
-                      Примерочная 1
-                    </Button>
-                    <Button
-                      variant={activeFittingRoom === 'seedream' ? 'default' : 'outline'}
-                      onClick={() => setActiveFittingRoom('seedream')}
-                      size="lg"
-                    >
-                      Примерочная 2
-                    </Button>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">
+                        3
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold">Выберите примерочную</h3>
+                        <p className="text-sm text-muted-foreground">
+                          В разных примерочных разные AI модели и результат может отличаться
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-center gap-3">
+                      <Button
+                        variant={activeFittingRoom === 'replicate' ? 'default' : 'outline'}
+                        onClick={() => setActiveFittingRoom('replicate')}
+                        size="lg"
+                      >
+                        Примерочная 1
+                      </Button>
+                      <Button
+                        variant={activeFittingRoom === 'seedream' ? 'default' : 'outline'}
+                        onClick={() => setActiveFittingRoom('seedream')}
+                        size="lg"
+                      >
+                        Примерочная 2
+                      </Button>
+                    </div>
+
+                    {activeFittingRoom === 'seedream' && (
+                      <div className="p-3 bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 rounded-lg">
+                        <p className="text-sm text-purple-900 dark:text-purple-100">
+                          <Icon name="Info" className="inline mr-1" size={14} />
+                          В Примерочной 2 можно изменять фон и добавлять дополнительные пожелания
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {activeFittingRoom === 'seedream' && (
