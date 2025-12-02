@@ -30,8 +30,8 @@ def build_prompt(garments: list, custom_prompt: str) -> str:
             else:
                 base_prompt += f"Image {img_num} has full outfit - take complete outfit from image {img_num}. "
     
-    base_prompt += "CRITICAL: On image 1 (person) keep EVERYTHING - exact face, hairstyle, skin color, body shape, height, body proportions, shoulders width, waist size, hips size, leg length, pose, background, lighting. Change ONLY clothing! "
-    base_prompt += "STRICT RULE: DO NOT take body/face/pose from images 2 or 3. Those images are ONLY clothing reference, NOT body reference. The clothing must adapt to the body on image 1, not vice versa. "
+    base_prompt += "CRITICAL: On image 1 (person) keep EVERYTHING - EXACT SAME FACE, exact hairstyle, exact skin color, exact body shape, height, body proportions, shoulders width, waist size, hips size, leg length, exact pose, exact background, exact lighting. Change ONLY clothing items! "
+    base_prompt += "STRICT RULE: NEVER EVER take face/body/pose/background from clothing images (2 or 3). Those images show ONLY clothing items on mannequins or models - ignore their faces and bodies completely! Use ONLY clothing items from those images. The person's face and body from image 1 must remain 100% identical. "
     
     if custom_prompt:
         base_prompt += f"Additional: {custom_prompt}"
@@ -169,9 +169,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             if not fal_request_id:
                 try:
-                    prompt = build_prompt(garments, prompt_hints or '')
+                    sorted_garments = sorted(garments, key=lambda g: 0 if g.get('category') == 'upper_body' else (1 if g.get('category') == 'lower_body' else 2))
                     
-                    request_id, response_url = submit_to_fal_queue(person_image, garments, prompt)
+                    print(f'[SeeDream] Building prompt with sorted garments:')
+                    for i, g in enumerate(sorted_garments):
+                        print(f'[SeeDream]   Position {i+2}: category={g.get("category")}')
+                    
+                    prompt = build_prompt(sorted_garments, prompt_hints or '')
+                    print(f'[SeeDream] Final prompt: {prompt}')
+                    
+                    request_id, response_url = submit_to_fal_queue(person_image, sorted_garments, prompt)
                     
                     cursor.execute('''
                         UPDATE seedream_tasks
