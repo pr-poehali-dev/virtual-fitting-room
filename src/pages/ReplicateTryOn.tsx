@@ -1065,7 +1065,7 @@ export default function ReplicateTryOn() {
                       <Label htmlFor="custom-prompt">Дополнительные пожелания (опционально)</Label>
                       <Textarea
                         id="custom-prompt"
-                        placeholder="Например: студийное освещение, яркие цвета, минималистичный стиль..."
+                        placeholder="Например: студийное освещение или на фоне природы или на фоне городского пейзажа"
                         value={customPrompt}
                         onChange={(e) => setCustomPrompt(e.target.value)}
                         rows={3}
