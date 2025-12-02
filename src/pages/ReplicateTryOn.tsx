@@ -1102,6 +1102,10 @@ export default function ReplicateTryOn() {
                         disabled={isGenerating}
                         className="resize-none"
                       />
+                      <p className="text-xs text-muted-foreground">
+                        <Icon name="AlertCircle" className="inline mr-1" size={12} />
+                        Если промпт будет слишком большой, есть вероятность, что нейросеть не сгенерирует фото
+                      </p>
                     </div>
                   )}
 
