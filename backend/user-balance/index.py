@@ -155,6 +155,76 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     })
                 }
             
+            elif action == 'refund':
+                steps = body_data.get('steps', 1)
+                cost_per_step = 30
+                total_refund = cost_per_step * steps
+                
+                cur.execute('''
+                    SELECT balance, free_tries_used, unlimited_access 
+                    FROM t_p29007832_virtual_fitting_room.users 
+                    WHERE id = %s
+                ''', (user_id,))
+                
+                result = cur.fetchone()
+                if not result:
+                    return {
+                        'statusCode': 404,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Пользователь не найден'})
+                    }
+                
+                balance, free_tries_used, unlimited_access = result
+                
+                if unlimited_access:
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({
+                            'success': True,
+                            'unlimited': True,
+                            'message': 'Безлимитный пользователь - возврат не требуется'
+                        })
+                    }
+                
+                if free_tries_used > 0 and free_tries_used <= 3:
+                    cur.execute('''
+                        UPDATE t_p29007832_virtual_fitting_room.users 
+                        SET free_tries_used = free_tries_used - 1, updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s AND free_tries_used > 0
+                    ''', (user_id,))
+                    conn.commit()
+                    
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({
+                            'success': True,
+                            'refunded': True,
+                            'refund_type': 'free_try',
+                            'new_free_tries': 3 - (free_tries_used - 1)
+                        })
+                    }
+                
+                cur.execute('''
+                    UPDATE t_p29007832_virtual_fitting_room.users 
+                    SET balance = balance + %s, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s
+                ''', (total_refund, user_id))
+                conn.commit()
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({
+                        'success': True,
+                        'refunded': True,
+                        'refund_type': 'paid',
+                        'refund_amount': total_refund,
+                        'new_balance': float(balance + total_refund)
+                    })
+                }
+            
             return {
                 'statusCode': 400,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},

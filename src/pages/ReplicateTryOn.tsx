@@ -13,7 +13,7 @@ import ReplicateClothingSelector from '@/components/replicate/ReplicateClothingS
 import ReplicateResultPanel from '@/components/replicate/ReplicateResultPanel';
 import ReplicateSaveDialog from '@/components/replicate/ReplicateSaveDialog';
 import ImageCropper from '@/components/ImageCropper';
-import { checkReplicateBalance, deductReplicateBalance } from '@/utils/replicateBalanceUtils';
+import { checkReplicateBalance, deductReplicateBalance, refundReplicateBalance } from '@/utils/replicateBalanceUtils';
 import {
   Accordion,
   AccordionContent,
@@ -472,6 +472,11 @@ export default function ReplicateTryOn() {
       toast.error(error.message || 'Ошибка запуска генерации');
       setIsGenerating(false);
       setGenerationStatus('');
+      
+      if (user) {
+        await refundReplicateBalance(user, selectedClothingItems.length);
+        console.log('[SeeDream] Balance refunded due to start error');
+      }
     }
   };
 
@@ -528,6 +533,11 @@ export default function ReplicateTryOn() {
           toast.error(data.error_message || 'Ошибка генерации');
           clearInterval(interval);
           setPollingInterval(null);
+          
+          if (user) {
+            await refundReplicateBalance(user, selectedClothingItems.length);
+            console.log('[SeeDream] Balance refunded due to API error');
+          }
         } else {
           console.log('[SeeDream] Unknown status:', data.status);
         }

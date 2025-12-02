@@ -97,3 +97,37 @@ export const deductReplicateBalance = async (
     return false;
   }
 };
+
+export const refundReplicateBalance = async (
+  user: User | null,
+  steps: number
+): Promise<boolean> => {
+  if (!user) {
+    return false;
+  }
+
+  try {
+    const refundResponse = await fetch('https://functions.poehali.dev/68409278-10ab-4733-b48d-b1b4360620a1', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': user.id
+      },
+      body: JSON.stringify({
+        action: 'refund',
+        steps: steps
+      })
+    });
+
+    if (!refundResponse.ok) {
+      console.error('Failed to refund balance');
+      return false;
+    }
+
+    console.log(`Refunded ${steps} steps for user ${user.id}`);
+    return true;
+  } catch (error) {
+    console.error('Error refunding balance:', error);
+    return false;
+  }
+};

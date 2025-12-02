@@ -269,19 +269,33 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     results.append({'task_id': task_id, 'status': 'completed'})
                     
                 elif task_status in ['FAILED', 'EXPIRED']:
-                    error_msg = status_data.get('error', 'Generation failed')
+                    error_raw = status_data.get('error', 'Generation failed')
+                    
+                    if 'validating the input' in str(error_raw).lower():
+                        user_message = 'Ошибка на стороне сервиса генерации. Попробуйте обновить страницу и создать образ заново'
+                    elif 'timeout' in str(error_raw).lower():
+                        user_message = 'Сервис генерации не ответил вовремя. Попробуйте ещё раз'
+                    elif 'rate limit' in str(error_raw).lower():
+                        user_message = 'Сервис генерации перегружен. Подождите немного и попробуйте снова'
+                    else:
+                        user_message = f'Ошибка генерации: {str(error_raw)[:100]}. Попробуйте другие фото или обновите страницу'
+                    
+                    print(f'[Worker] Task {task_id} failed with fal.ai error: {error_raw}')
+                    print(f'[Worker] User-friendly message: {user_message}')
+                    
                     cursor.execute('''
                         UPDATE seedream_tasks
                         SET status = 'failed', error_message = %s, updated_at = %s
                         WHERE id = %s
-                    ''', (error_msg, datetime.utcnow(), task_id))
+                    ''', (user_message, datetime.utcnow(), task_id))
                     conn.commit()
-                    results.append({'task_id': task_id, 'status': 'failed'})
+                    results.append({'task_id': task_id, 'status': 'failed', 'reason': 'fal_api_error'})
                 else:
                     print(f'[Worker] Task {task_id} still processing, fal.ai status: {task_status}')
                     results.append({'task_id': task_id, 'status': 'still_processing', 'fal_status': task_status})
                     
             except Exception as e:
+                print(f'[Worker] Exception checking task {task_id}: {str(e)}')
                 results.append({'task_id': task_id, 'error': str(e)})
         
         cursor.close()
