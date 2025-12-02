@@ -10,6 +10,7 @@ interface ReplicateResultPanelProps {
   waitingContinue: boolean;
   currentStep: number;
   totalSteps: number;
+  activeFittingRoom?: 'replicate' | 'seedream';
 
   handleDownloadImage: () => void;
   setShowSaveDialog: (show: boolean) => void;
@@ -25,6 +26,7 @@ export default function ReplicateResultPanel({
   waitingContinue,
   currentStep,
   totalSteps,
+  activeFittingRoom = 'replicate',
 
   handleDownloadImage,
   setShowSaveDialog,
@@ -61,14 +63,16 @@ export default function ReplicateResultPanel({
                 )}
               </>
             )}
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={checkStatusManually}
-            >
-              <Icon name="RefreshCw" className="mr-2" size={16} />
-              Проверить статус
-            </Button>
+            {activeFittingRoom === 'replicate' && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={checkStatusManually}
+              >
+                <Icon name="RefreshCw" className="mr-2" size={16} />
+                Проверить статус
+              </Button>
+            )}
           </div>
         ) : waitingContinue && intermediateResult ? (
           <div className="space-y-4">

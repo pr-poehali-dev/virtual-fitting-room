@@ -1121,6 +1121,7 @@ export default function ReplicateTryOn() {
               waitingContinue={waitingContinue}
               currentStep={currentStep}
               totalSteps={totalSteps}
+              activeFittingRoom={activeFittingRoom}
 
               handleDownloadImage={handleDownloadImage}
               setShowSaveDialog={setShowSaveDialog}
