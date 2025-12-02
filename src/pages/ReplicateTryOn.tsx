@@ -1080,6 +1080,14 @@ export default function ReplicateTryOn() {
                       </Button>
                     </div>
 
+                    {activeFittingRoom === 'replicate' && (
+                      <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <p className="text-sm text-blue-900 dark:text-blue-100">
+                          <Icon name="Info" className="inline mr-1" size={14} />
+                          Если выбрано 2 вещи, генерация будет в 2 этапа. Фото модели идеально подбирать в похожей одежде
+                        </p>
+                      </div>
+                    )}
                     {activeFittingRoom === 'seedream' && (
                       <div className="p-3 bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 rounded-lg">
                         <p className="text-sm text-purple-900 dark:text-purple-100">
