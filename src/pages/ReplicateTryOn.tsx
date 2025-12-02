@@ -484,7 +484,7 @@ export default function ReplicateTryOn() {
     console.log('[SeeDream] Starting polling for task:', taskId);
     let checkCount = 0;
     const startTime = Date.now();
-    const TIMEOUT_MS = 180000;
+    const TIMEOUT_MS = 300000;
     
     const interval = setInterval(async () => {
       try {
@@ -493,7 +493,7 @@ export default function ReplicateTryOn() {
         
         const elapsedTime = Date.now() - startTime;
         if (elapsedTime > TIMEOUT_MS) {
-          console.error('[SeeDream] Timeout after 180 seconds');
+          console.error('[SeeDream] Timeout after 300 seconds');
           setIsGenerating(false);
           setGenerationStatus('');
           toast.error('Генерация заняла слишком много времени. Попробуйте обновить страницу и создать образ заново');
