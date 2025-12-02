@@ -7,20 +7,15 @@ import requests
 from datetime import datetime
 
 def build_prompt(garments: list, custom_prompt: str) -> str:
-    '''Build clear prompt for SeeDream 4 with category specification'''
-    if len(garments) == 1:
-        category = garments[0].get('category', 'одежда')
-        if category == 'dresses':
-            base_prompt = "Image 1 = person model. Image 2 = dress reference. Put ONLY the dress from image 2 onto the person from image 1. "
-        elif category == 'upper_body':
-            base_prompt = "Image 1 = person model. Image 2 = top clothing reference (shirt/blouse/jacket). Put ONLY the top from image 2 onto the person from image 1. Keep original bottom (pants/skirt) from image 1. "
-        else:
-            base_prompt = "Image 1 = person model. Image 2 = bottom clothing reference (pants/skirt/shorts). Put ONLY the bottom from image 2 onto the person from image 1. Keep original top (shirt/blouse) from image 1. "
-    else:
-        base_prompt = "Image 1 = person model. Image 2 = top clothing (shirt/blouse). Image 3 = bottom clothing (pants/skirt). Put top from image 2 AND bottom from image 3 onto person from image 1. "
+    '''Build clear prompt for SeeDream 4 with strict image role specification'''
     
-    base_prompt += "CRITICAL: From image 1 (person) keep EVERYTHING - exact face, hairstyle, skin color, body shape, height, body proportions, shoulders width, waist size, hips size, leg length, pose, background, lighting. Change ONLY clothing! "
-    base_prompt += "STRICT RULE: DO NOT take body/face/pose from images 2 or 3. Those images are ONLY clothing reference, NOT body reference. The clothing must adapt to the body from image 1, not vice versa. "
+    base_prompt = "Image 1 = person model. Image 2 = clothes reference. Put ONLY the clothes from image 2 onto the person on image 1. "
+    
+    if len(garments) == 2:
+        base_prompt = "Image 1 = person model. Image 2 = clothes reference. Image 3 = clothes reference. Put ONLY the clothes from images 2 and 3 onto the person on image 1. "
+    
+    base_prompt += "CRITICAL: On image 1 (person) keep EVERYTHING - exact face, hairstyle, skin color, body shape, height, body proportions, shoulders width, waist size, hips size, leg length, pose, background, lighting. Change ONLY clothing! "
+    base_prompt += "STRICT RULE: DO NOT take body/face/pose from images 2 or 3. Those images are ONLY clothing reference, NOT body reference. The clothing must adapt to the body on image 1, not vice versa. "
     
     if custom_prompt:
         base_prompt += f"Additional: {custom_prompt}"
@@ -47,6 +42,11 @@ def submit_to_fal_queue(person_image: str, garments: list, prompt: str) -> tuple
     
     person_data = normalize_image_format(person_image)
     garment_data = [normalize_image_format(g['image']) for g in sorted_garments]
+    
+    print(f'[SeeDream] Image order: 1=Person, 2-{len(garment_data)+1}=Clothes')
+    print(f'[SeeDream] Person: {person_image[:50]}...')
+    for i, g in enumerate(sorted_garments):
+        print(f'[SeeDream] Garment {i+2}: category={g.get("category")}, image={g["image"][:50]}...')
     
     headers = {
         'Authorization': f'Key {fal_api_key}',
