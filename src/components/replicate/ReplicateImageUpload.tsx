@@ -68,7 +68,7 @@ export default function ReplicateImageUpload({
                 Нажмите для загрузки фото
               </p>
               <p className="text-xs text-gray-500 text-center mt-2">
-                Человек в полный рост на светлом фоне
+                Модель в полный рост на светлом фоне
               </p>
             </>
           )}
