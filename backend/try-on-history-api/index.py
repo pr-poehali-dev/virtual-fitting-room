@@ -53,10 +53,31 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         if method == 'GET':
+            print(f'[HistoryAPI] GET request for user {user_id}')
             cursor.execute(
                 f"SELECT * FROM try_on_history WHERE user_id = '{user_id}' ORDER BY created_at DESC LIMIT 50"
             )
             history = cursor.fetchall()
+            print(f'[HistoryAPI] Found {len(history)} records')
+            
+            result_items = []
+            for h in history:
+                try:
+                    item = {
+                        'id': str(h['id']),
+                        'person_image': h['person_image'],
+                        'garment_image': h['garment_image'],
+                        'result_image': h['result_image'],
+                        'created_at': h['created_at'].isoformat(),
+                        'model_used': h.get('model_used'),
+                        'saved_to_lookbook': h.get('saved_to_lookbook', False),
+                        'cost': float(h.get('cost', 0))
+                    }
+                    result_items.append(item)
+                except Exception as item_error:
+                    print(f'[HistoryAPI] Error processing item {h.get("id")}: {item_error}')
+            
+            print(f'[HistoryAPI] Successfully processed {len(result_items)} items')
             
             return {
                 'statusCode': 200,
@@ -65,16 +86,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'Access-Control-Allow-Origin': '*'
                 },
                 'isBase64Encoded': False,
-                'body': json.dumps([{
-                    'id': str(h['id']),
-                    'person_image': h['person_image'],
-                    'garment_image': h['garment_image'],
-                    'result_image': h['result_image'],
-                    'created_at': h['created_at'].isoformat(),
-                    'model_used': h.get('model_used'),
-                    'saved_to_lookbook': h.get('saved_to_lookbook', False),
-                    'cost': float(h.get('cost', 0))
-                } for h in history])
+                'body': json.dumps(result_items)
             }
         
         elif method == 'POST':

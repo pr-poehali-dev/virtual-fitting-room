@@ -38,21 +38,30 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
   const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
+    console.log('[HistoryTab] userId received:', userId);
     fetchHistory();
     fetchLookbooks();
   }, [userId]);
 
   const fetchHistory = async () => {
     try {
+      console.log('[HistoryTab] Fetching history with userId:', userId);
       const response = await fetch(HISTORY_API, {
         headers: {
           'X-User-Id': userId
         }
       });
       
+      console.log('[HistoryTab] Response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('[HistoryTab] Received data:', data);
         setHistory(Array.isArray(data) ? data : []);
+      } else {
+        const errorData = await response.json();
+        console.error('[HistoryTab] Error response:', errorData);
+        toast.error('Ошибка загрузки истории');
       }
     } catch (error) {
       console.error('Failed to fetch history:', error);
