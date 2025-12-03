@@ -275,13 +275,6 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
                   alt="История примерки"
                   className="w-full aspect-[3/4] object-cover"
                 />
-                <div className="absolute top-2 left-2">
-                  <Checkbox
-                    checked={selectedItems.includes(item.id)}
-                    onCheckedChange={() => toggleSelection(item.id)}
-                    className="bg-white border-2"
-                  />
-                </div>
                 <div className="absolute top-2 right-2">
                   <Button
                     variant="destructive"
@@ -293,7 +286,20 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
                   </Button>
                 </div>
               </div>
-              <div className="p-2 bg-muted">
+              <div className="p-2 bg-muted space-y-2">
+                <div className="flex items-center gap-2 justify-center">
+                  <Checkbox
+                    checked={selectedItems.includes(item.id)}
+                    onCheckedChange={() => toggleSelection(item.id)}
+                    id={`history-checkbox-${item.id}`}
+                  />
+                  <label 
+                    htmlFor={`history-checkbox-${item.id}`}
+                    className="text-xs text-muted-foreground cursor-pointer select-none"
+                  >
+                    Выбрать фото
+                  </label>
+                </div>
                 <p className="text-xs text-muted-foreground text-center">
                   {new Date(item.created_at).toLocaleDateString('ru-RU', {
                     day: 'numeric',
