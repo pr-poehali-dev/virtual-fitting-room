@@ -329,7 +329,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             print(f'[NanoBanana] Still have {processing_count} processing tasks, triggering next check')
             try:
                 import urllib.request
-                worker_url = 'https://functions.poehali.dev/6b9e69c4-1dd8-421f-bcda-53efce2f95ad'
+                worker_url = 'https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d'
                 req = urllib.request.Request(worker_url, method='GET')
                 urllib.request.urlopen(req, timeout=1)
             except:
