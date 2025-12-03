@@ -220,6 +220,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         processing_rows = cursor.fetchall()
         
+        results = []
         for task_id, response_url, first_result_at, user_id in processing_rows:
             try:
                 status_data = check_fal_status(response_url)
@@ -285,6 +286,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             print(f'[NanoBanana] ✗ No task data found for task {task_id}')
                     except Exception as e:
                         print(f'[NanoBanana] ✗ Failed to save to history: {type(e).__name__}: {str(e)}')
+                    
+                    results.append({'task_id': task_id, 'status': 'completed'})
                 
                 elif task_status in ['FAILED', 'EXPIRED']:
                     error_raw = status_data.get('error', 'Generation failed')
@@ -299,9 +302,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         WHERE id = %s
                     ''', (error_msg, datetime.utcnow(), task_id))
                     conn.commit()
+                    results.append({'task_id': task_id, 'status': 'failed', 'reason': 'fal_api_error'})
                 
                 else:
                     print(f'[NanoBanana] Task {task_id} still processing, status={task_status}')
+                    results.append({'task_id': task_id, 'status': 'still_processing', 'fal_status': task_status})
             
             except Exception as e:
                 error_str = str(e)
