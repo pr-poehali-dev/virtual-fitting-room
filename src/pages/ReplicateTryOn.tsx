@@ -1514,7 +1514,7 @@ export default function ReplicateTryOn() {
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Powered by NanoBananaPro
+                Powered by NanoBanana
               </p>
             )}
           </div>

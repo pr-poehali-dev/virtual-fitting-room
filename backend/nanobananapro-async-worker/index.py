@@ -90,7 +90,8 @@ def submit_to_fal_queue(person_image: str, garments: list, custom_prompt: str) -
     
     payload = {
         'image_urls': image_urls,
-        'prompt': prompt
+        'prompt': prompt,
+        'aspect_ratio': '3:4'
     }
     
     response = requests.post(
