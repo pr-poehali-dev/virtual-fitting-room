@@ -377,6 +377,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 (name, person_name, saved_photos, color_palette, is_public, share_token, lookbook_id, user_id)
             )
             
+            # CRITICAL: Save the result IMMEDIATELY before other queries
+            lookbook = cursor.fetchone()
+            
+            if not lookbook:
+                conn.rollback()
+                return {
+                    'statusCode': 404,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Lookbook not found'})
+                }
+            
             # Mark new photos as saved to lookbook in history
             if saved_photos:
                 for photo_url in saved_photos:
@@ -431,20 +446,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             print(f'Deleted from S3 (removed from lookbook, not in history): {s3_key}')
                         except Exception as e:
                             print(f'Failed to delete from S3: {e}')
-            
-            lookbook = cursor.fetchone()
-            
-            if not lookbook:
-                conn.rollback()
-                return {
-                    'statusCode': 404,
-                    'headers': {
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
-                    },
-                    'isBase64Encoded': False,
-                    'body': json.dumps({'error': 'Lookbook not found'})
-                }
             
             conn.commit()
             
