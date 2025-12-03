@@ -29,7 +29,7 @@ def check_fal_status(response_url: str) -> dict:
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Check NanoBananaPro task status with optional force_check
+    Business: Check NanoBanana task status with optional force_check
     Args: event - dict with httpMethod, queryStringParameters (task_id, force_check)
           context - object with request_id attribute
     Returns: HTTP response with task status and result_url if completed

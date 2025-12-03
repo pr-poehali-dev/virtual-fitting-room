@@ -39,7 +39,7 @@ def translate_to_english(text: str) -> str:
         return text
 
 def build_prompt(garments: list, custom_prompt: str) -> str:
-    '''Build detailed prompt for NanoBananaPro with category instructions'''
+    '''Build detailed prompt for NanoBanana with category instructions'''
     base_prompt = "Image 1 = person model. "
     
     if len(garments) == 1:
@@ -70,7 +70,7 @@ def build_prompt(garments: list, custom_prompt: str) -> str:
     return base_prompt
 
 def submit_to_fal_queue(person_image: str, garments: list, custom_prompt: str) -> tuple:
-    '''Submit task to fal.ai nano-banana-pro queue and return (request_id, response_url)'''
+    '''Submit task to fal.ai nano-banana queue and return (request_id, response_url)'''
     fal_api_key = os.environ.get('FAL_API_KEY')
     if not fal_api_key:
         raise Exception('FAL_API_KEY not configured')
@@ -79,7 +79,7 @@ def submit_to_fal_queue(person_image: str, garments: list, custom_prompt: str) -
     garment_data = [normalize_image_format(g['image']) for g in garments]
     
     prompt = build_prompt(garments, custom_prompt)
-    print(f'[NanoBananaPro] Final prompt: {prompt}')
+    print(f'[NanoBanana] Final prompt: {prompt}')
     
     headers = {
         'Authorization': f'Key {fal_api_key}',
@@ -90,14 +90,11 @@ def submit_to_fal_queue(person_image: str, garments: list, custom_prompt: str) -
     
     payload = {
         'image_urls': image_urls,
-        'prompt': prompt,
-        'num_inference_steps': 50,
-        'guidance_scale': 7.5,
-        'output_format': 'png'
+        'prompt': prompt
     }
     
     response = requests.post(
-        'https://queue.fal.run/fal-ai/nano-banana-pro/edit',
+        'https://queue.fal.run/fal-ai/nano-banana/edit',
         headers=headers,
         json=payload,
         timeout=30
@@ -135,7 +132,7 @@ def check_fal_status(response_url: str) -> Optional[dict]:
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Process pending NanoBananaPro tasks from database
+    Business: Process pending NanoBanana tasks from database
     Args: event - dict with httpMethod
           context - object with request_id attribute
     Returns: HTTP response with processing status
@@ -185,7 +182,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if not fal_request_id:
                 try:
                     request_id, response_url = submit_to_fal_queue(person_image, garments, prompt_hints or '')
-                    print(f'[NanoBananaPro] Task {task_id} submitted to fal.ai: request_id={request_id}')
+                    print(f'[NanoBanana] Task {task_id} submitted to fal.ai: request_id={request_id}')
                     
                     cursor.execute('''
                         UPDATE nanobananapro_tasks
@@ -199,7 +196,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     
                 except Exception as e:
                     error_msg = str(e)
-                    print(f'[NanoBananaPro] Failed to submit task {task_id}: {error_msg}')
+                    print(f'[NanoBanana] Failed to submit task {task_id}: {error_msg}')
                     
                     cursor.execute('''
                         UPDATE nanobananapro_tasks
@@ -240,7 +237,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     now = datetime.utcnow()
                     
                     if not first_result_at:
-                        print(f'[NanoBananaPro] Task {task_id} got first result, waiting 10s for final version')
+                        print(f'[NanoBanana] Task {task_id} got first result, waiting 10s for final version')
                         cursor.execute('''
                             UPDATE nanobananapro_tasks
                             SET first_result_at = %s,
@@ -253,10 +250,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     time_since_first = (now - first_result_at).total_seconds()
                     
                     if time_since_first < 10:
-                        print(f'[NanoBananaPro] Task {task_id} waiting for final version ({time_since_first:.1f}s / 10s)')
+                        print(f'[NanoBanana] Task {task_id} waiting for final version ({time_since_first:.1f}s / 10s)')
                         continue
                     
-                    print(f'[NanoBananaPro] Task {task_id} completed! Result URL: {result_url}')
+                    print(f'[NanoBanana] Task {task_id} completed! Result URL: {result_url}')
                     cursor.execute('''
                         UPDATE nanobananapro_tasks
                         SET status = 'completed',
@@ -265,13 +262,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         WHERE id = %s
                     ''', (result_url, datetime.utcnow(), task_id))
                     conn.commit()
-                    print(f'[NanoBananaPro] Task {task_id} saved to DB as completed')
+                    print(f'[NanoBanana] Task {task_id} saved to DB as completed')
                 
                 elif task_status in ['FAILED', 'EXPIRED']:
                     error_raw = status_data.get('error', 'Generation failed')
                     error_msg = f'Ошибка генерации: {str(error_raw)[:100]}'
                     
-                    print(f'[NanoBananaPro] Task {task_id} failed: {error_raw}')
+                    print(f'[NanoBanana] Task {task_id} failed: {error_raw}')
                     cursor.execute('''
                         UPDATE nanobananapro_tasks
                         SET status = 'failed',
@@ -282,14 +279,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     conn.commit()
                 
                 else:
-                    print(f'[NanoBananaPro] Task {task_id} still processing, status={task_status}')
+                    print(f'[NanoBanana] Task {task_id} still processing, status={task_status}')
             
             except Exception as e:
                 error_str = str(e)
                 if 'still in progress' in error_str.lower():
-                    print(f'[NanoBananaPro] Task {task_id} still processing (in progress)')
+                    print(f'[NanoBanana] Task {task_id} still processing (in progress)')
                 else:
-                    print(f'[NanoBananaPro] Error checking task {task_id}: {error_str}')
+                    print(f'[NanoBanana] Error checking task {task_id}: {error_str}')
         
         cursor.close()
         conn.close()

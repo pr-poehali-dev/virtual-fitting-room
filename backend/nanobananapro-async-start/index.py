@@ -7,7 +7,7 @@ from datetime import datetime
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Start async NanoBananaPro generation and return task_id immediately
+    Business: Start async NanoBanana generation and return task_id immediately
     Args: event - dict with httpMethod, body (person_image, garments, custom_prompt)
           context - object with request_id attribute
     Returns: HTTP response with task_id (no waiting)
@@ -78,7 +78,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'isBase64Encoded': False,
-            'body': json.dumps({'error': 'Максимум 2 вещи за раз для NanoBananaPro'})
+            'body': json.dumps({'error': 'Максимум 2 вещи за раз для NanoBanana'})
         }
     
     task_id = str(uuid.uuid4())
