@@ -382,7 +382,7 @@ export default function ReplicateClothingSelector({
 
         <div className="max-h-64 overflow-y-auto border rounded-lg p-4">
           {clothingCatalog.length > 0 ? (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {clothingCatalog.map((item) => {
                 const isSelected = selectedClothingItems.some(
                   (i) => i.id === item.id
