@@ -1252,7 +1252,7 @@ export default function ReplicateTryOn() {
                       </div>
                     </div>
 
-                    <div className="flex justify-center gap-3">
+                    <div className="flex flex-wrap justify-center gap-3">
                       <Button
                         variant={activeFittingRoom === 'replicate' ? 'default' : 'outline'}
                         onClick={() => setActiveFittingRoom('replicate')}
