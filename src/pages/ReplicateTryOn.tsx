@@ -1178,7 +1178,7 @@ export default function ReplicateTryOn() {
               Онлайн примерочная
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
-              Выберите несколько вещей и создайте идеальный образ с помощью AI. Модель сама определит как надеть одежду на человека
+              Примерьте одежду онлайн с помощью AI. Три разных примерочные для лучшего результата
             </p>
           </div>
 
@@ -1288,7 +1288,7 @@ export default function ReplicateTryOn() {
                       <div className="p-3 bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 rounded-lg">
                         <p className="text-sm text-purple-900 dark:text-purple-100">
                           <Icon name="Info" className="inline mr-1" size={14} />
-                          В Примерочной 2 можно изменять фон и добавлять дополнительные пожелания
+                          В Примерочной 2 генерация быстрее (~30 секунд), можно изменять фон и добавлять дополнительные пожелания для стиля
                         </p>
                       </div>
                     )}
@@ -1296,7 +1296,7 @@ export default function ReplicateTryOn() {
                       <div className="p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
                         <p className="text-sm text-green-900 dark:text-green-100">
                           <Icon name="Info" className="inline mr-1" size={14} />
-                          В Примерочной 3 можно изменять фон и добавлять дополнительные пожелания
+                          В Примерочной 3 более реалистичный результат, можно изменять фон и добавлять дополнительные пожелания
                         </p>
                       </div>
                     )}
@@ -1417,9 +1417,9 @@ export default function ReplicateTryOn() {
                 <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
                   <Icon name="Sparkles" className="text-purple-600" size={32} />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">3. Получите результат</h3>
+                <h3 className="text-xl font-semibold mb-2">3. Выберите примерочную и получите результат</h3>
                 <p className="text-muted-foreground">
-                  AI создаст реалистичное изображение с выбранным образом
+                  AI создаст реалистичное изображение в выбранном стиле
                 </p>
               </div>
             </div>
@@ -1448,10 +1448,9 @@ export default function ReplicateTryOn() {
                   <AccordionItem value="item-3">
                     <AccordionTrigger>Как работает технология?</AccordionTrigger>
                     <AccordionContent>
-                      Мы используем нейросеть IDM-VTON, которая анализирует фото человека и одежды, 
-                      затем создаёт реалистичное изображение, где человек одет в выбранные вещи. 
-                      Технология учитывает позу, освещение и форму тела. При выборе двух вещей сначала 
-                      надевается верх, затем низ.
+                      Мы используем три разных AI модели. Примерочная 1 (IDM-VTON) работает в 2 этапа при выборе 2 вещей. 
+                      Примерочные 2 и 3 (SeeDream, NanoBanana) позволяют добавлять промпты для изменения фона и стиля. 
+                      Все модели анализируют фото человека и одежды, затем создают реалистичное изображение с учётом позы, освещения и формы тела.
                     </AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="item-4">
@@ -1472,9 +1471,9 @@ export default function ReplicateTryOn() {
                   <AccordionItem value="item-6">
                     <AccordionTrigger>Сколько времени занимает генерация?</AccordionTrigger>
                     <AccordionContent>
-                      Генерация обычно занимает 20-30 секунд для одной вещи и 40-60 секунд для двух вещей. 
-                      Время может увеличиться в зависимости от нагрузки на серверы. При выборе двух вещей 
-                      вы увидите промежуточный результат после первой вещи.
+                      Примерочная 1: 20-30 секунд для одной вещи, 40-60 секунд для двух (поэтапно, с промежуточным результатом). 
+                      Примерочные 2 и 3: ~30 секунд независимо от количества вещей. 
+                      Время может увеличиться в зависимости от нагрузки на серверы.
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
