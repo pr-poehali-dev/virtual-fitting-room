@@ -27,11 +27,7 @@ interface Lookbook {
   created_at: string;
 }
 
-interface TryOnHistory {
-  id: string;
-  user_id: string;
-  created_at: string;
-}
+
 
 interface Stats {
   total_users: number;
@@ -117,9 +113,7 @@ export default function Admin() {
   const [lookbooks, setLookbooks] = useState<Lookbook[]>([]);
   const [filteredLookbooks, setFilteredLookbooks] = useState<Lookbook[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('all');
-  const [history, setHistory] = useState<TryOnHistory[]>([]);
-  const [filteredHistory, setFilteredHistory] = useState<TryOnHistory[]>([]);
-  const [selectedHistoryUserId, setSelectedHistoryUserId] = useState<string>('all');
+
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -266,7 +260,7 @@ export default function Admin() {
     const adminPassword = sessionStorage.getItem('admin_auth');
 
     try {
-      const [statsRes, usersRes, lookbooksRes, historyRes, filtersRes, catalogRes, paymentsRes] = await Promise.all([
+      const [statsRes, usersRes, lookbooksRes, filtersRes, catalogRes, paymentsRes] = await Promise.all([
         fetch(`${ADMIN_API}?action=stats`, {
           headers: { 'X-Admin-Password': adminPassword || '' }
         }),
@@ -276,9 +270,6 @@ export default function Admin() {
         fetch(`${ADMIN_API}?action=lookbooks`, {
           headers: { 'X-Admin-Password': adminPassword || '' }
         }),
-        fetch(`${ADMIN_API}?action=history`, {
-          headers: { 'X-Admin-Password': adminPassword || '' }
-        }),
         fetch(`${CATALOG_API}?action=filters`),
         fetch(`${CATALOG_API}?action=list`),
         fetch(`${ADMIN_API}?action=payments`, {
@@ -286,15 +277,14 @@ export default function Admin() {
         })
       ]);
 
-      if (!statsRes.ok || !usersRes.ok || !lookbooksRes.ok || !historyRes.ok || !filtersRes.ok || !catalogRes.ok || !paymentsRes.ok) {
+      if (!statsRes.ok || !usersRes.ok || !lookbooksRes.ok || !filtersRes.ok || !catalogRes.ok || !paymentsRes.ok) {
         throw new Error('Ошибка загрузки данных');
       }
 
-      const [statsData, usersData, lookbooksData, historyData, filtersData, catalogData, paymentsData] = await Promise.all([
+      const [statsData, usersData, lookbooksData, filtersData, catalogData, paymentsData] = await Promise.all([
         statsRes.json(),
         usersRes.json(),
         lookbooksRes.json(),
-        historyRes.json(),
         filtersRes.json(),
         catalogRes.json(),
         paymentsRes.json()
@@ -304,8 +294,6 @@ export default function Admin() {
       setUsers(usersData);
       setLookbooks(lookbooksData);
       setFilteredLookbooks(lookbooksData);
-      setHistory(historyData);
-      setFilteredHistory(historyData);
       setFilters(filtersData);
       setClothingItems(catalogData);
       setPayments(paymentsData);
@@ -410,7 +398,6 @@ export default function Admin() {
       if (response.ok) {
         toast.success('Пользователь удален');
         setSelectedUserId('all');
-        setSelectedHistoryUserId('all');
         fetchData();
       } else {
         toast.error('Ошибка удаления');
@@ -878,10 +865,9 @@ export default function Admin() {
               </div>
 
               <Tabs defaultValue="users" className="w-full">
-                <TabsList className="grid w-full md:w-auto grid-cols-7 mb-8">
+                <TabsList className="grid w-full md:w-auto grid-cols-6 mb-8">
                   <TabsTrigger value="users">Пользователи</TabsTrigger>
                   <TabsTrigger value="lookbooks">Лукбуки</TabsTrigger>
-                  <TabsTrigger value="history">История</TabsTrigger>
                   <TabsTrigger value="payments">Платежи</TabsTrigger>
                   <TabsTrigger value="catalog">Каталог</TabsTrigger>
                   <TabsTrigger value="generations">Генерации</TabsTrigger>
@@ -1040,53 +1026,7 @@ export default function Admin() {
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="history">
-                  <Card>
-                    <CardHeader>
-                      <div className="flex justify-between items-center">
-                        <CardTitle>История примерок</CardTitle>
-                        <select
-                          value={selectedHistoryUserId}
-                          onChange={(e) => {
-                            const userId = e.target.value;
-                            setSelectedHistoryUserId(userId);
-                            if (userId === 'all') {
-                              setFilteredHistory(history);
-                            } else {
-                              setFilteredHistory(history.filter(h => h.user_id === userId));
-                            }
-                          }}
-                          className="px-3 py-2 border rounded-md text-sm"
-                        >
-                          <option value="all">Все пользователи</option>
-                          {users.map((user) => (
-                            <option key={user.id} value={user.id}>
-                              {user.name} ({user.email})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {filteredHistory.length === 0 ? (
-                          <p className="text-center text-muted-foreground py-8">История пуста</p>
-                        ) : (
-                          filteredHistory.map((item) => (
-                            <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
-                              <div>
-                                <p className="text-sm">ID: {item.id}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  User ID: {item.user_id} • {new Date(item.created_at).toLocaleString()}
-                                </p>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+
 
                 <TabsContent value="catalog">
                   <Card>
