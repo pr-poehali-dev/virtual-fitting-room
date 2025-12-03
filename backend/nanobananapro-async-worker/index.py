@@ -270,15 +270,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     print(f'[NanoBanana] Task {task_id} saved to DB as completed')
                     
                     # Save to history with model and cost info
+                    print(f'[NanoBanana] Attempting to save task {task_id} to history for user {user_id}')
                     try:
                         # Get task details for history
                         cursor.execute('''
                             SELECT person_image, garments FROM nanobananapro_tasks WHERE id = %s
                         ''', (task_id,))
                         task_data = cursor.fetchone()
+                        print(f'[NanoBanana] Retrieved task data: {bool(task_data)}')
                         
                         if task_data:
                             garments_list = json.loads(task_data[1]) if isinstance(task_data[1], str) else task_data[1]
+                            print(f'[NanoBanana] Calling history API with user_id={user_id}, result_url={result_url[:50]}...')
                             
                             history_response = requests.post(
                                 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd',
@@ -292,10 +295,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 },
                                 timeout=10
                             )
+                            print(f'[NanoBanana] History API response: status={history_response.status_code}, body={history_response.text[:200]}')
                             if history_response.status_code == 201:
-                                print(f'[NanoBanana] Saved to history: task {task_id}')
+                                print(f'[NanoBanana] ✓ Successfully saved to history: task {task_id}')
+                            else:
+                                print(f'[NanoBanana] ✗ History API returned non-201: {history_response.status_code}')
+                        else:
+                            print(f'[NanoBanana] ✗ No task data found for task {task_id}')
                     except Exception as e:
-                        print(f'[NanoBanana] Failed to save to history: {e}')
+                        print(f'[NanoBanana] ✗ Failed to save to history: {type(e).__name__}: {str(e)}')
                 
                 elif task_status in ['FAILED', 'EXPIRED']:
                     error_raw = status_data.get('error', 'Generation failed')
