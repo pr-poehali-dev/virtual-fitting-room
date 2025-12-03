@@ -1344,45 +1344,33 @@ export default function ReplicateTryOn() {
                     </div>
                   )}
 
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={
-                        activeFittingRoom === 'replicate' ? handleGenerate :
-                        activeFittingRoom === 'seedream' ? handleGenerateSeeDream :
-                        handleGenerateNanoBananaPro
-                      }
-                      disabled={
-                        !uploadedImage ||
-                        selectedClothingItems.length === 0 ||
-                        isGenerating ||
-                        !user
-                      }
-                      className="flex-1"
-                      size="lg"
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Icon name="Loader2" className="mr-2 animate-spin" size={20} />
-                          {generationStatus || 'Генерация...'}
-                        </>
-                      ) : (
-                        <>
-                          <Icon name="Sparkles" className="mr-2" size={20} />
-                          Создать образ
-                        </>
-                      )}
-                    </Button>
-                    {(uploadedImage || selectedClothingItems.length > 0) && (
-                      <Button
-                        variant="outline"
-                        onClick={handleReset}
-                        disabled={isGenerating}
-                        size="lg"
-                      >
-                        <Icon name="RotateCcw" size={20} />
-                      </Button>
+                  <Button
+                    onClick={
+                      activeFittingRoom === 'replicate' ? handleGenerate :
+                      activeFittingRoom === 'seedream' ? handleGenerateSeeDream :
+                      handleGenerateNanoBananaPro
+                    }
+                    disabled={
+                      !uploadedImage ||
+                      selectedClothingItems.length === 0 ||
+                      isGenerating ||
+                      !user
+                    }
+                    className="w-full"
+                    size="lg"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Icon name="Loader2" className="mr-2 animate-spin" size={20} />
+                        {generationStatus || 'Генерация...'}
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="Sparkles" className="mr-2" size={20} />
+                        Создать образ
+                      </>
                     )}
-                  </div>
+                  </Button>
                 </div>
               </CardContent>
             </Card>
