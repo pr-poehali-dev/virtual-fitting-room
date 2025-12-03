@@ -2,6 +2,7 @@ import json
 import os
 import psycopg2
 import replicate
+import requests
 from typing import Dict, Any
 from datetime import datetime
 
@@ -60,7 +61,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT status, result_url, error_message, created_at, updated_at, current_step, total_steps, intermediate_result, prediction_id
+            SELECT status, result_url, error_message, created_at, updated_at, current_step, total_steps, intermediate_result, prediction_id, person_image, garments, user_id
             FROM replicate_tasks
             WHERE id = %s
         ''', (task_id,))
@@ -77,7 +78,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Task not found'})
             }
         
-        status, result_url, error_message, created_at, updated_at, current_step, total_steps, intermediate_result, prediction_id = row
+        status, result_url, error_message, created_at, updated_at, current_step, total_steps, intermediate_result, prediction_id, person_image, garments_json, user_id = row
         
         # Если force_check=true и статус processing, проверяем Replicate API
         if force_check and status == 'processing' and prediction_id:
@@ -112,6 +113,33 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             ''', (output_url, datetime.utcnow(), task_id))
                             status = 'completed'
                             result_url = output_url
+                            
+                            # Save to history with model and cost info
+                            print(f'[ReplicateStatus] Attempting to save task {task_id} to history for user {user_id}')
+                            try:
+                                garments = json.loads(garments_json) if isinstance(garments_json, str) else garments_json
+                                history_payload = {
+                                    'person_image': person_image,
+                                    'garments': garments,
+                                    'result_image': output_url,
+                                    'model_used': 'replicate',
+                                    'cost': 0
+                                }
+                                print(f'[ReplicateStatus] History payload: model_used={history_payload["model_used"]}, result_url={output_url[:50]}...')
+                                
+                                history_response = requests.post(
+                                    'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd',
+                                    headers={'X-User-Id': user_id},
+                                    json=history_payload,
+                                    timeout=10
+                                )
+                                print(f'[ReplicateStatus] History API response: status={history_response.status_code}, body={history_response.text[:200]}')
+                                if history_response.status_code == 201:
+                                    print(f'[ReplicateStatus] ✓ Successfully saved to history: task {task_id}')
+                                else:
+                                    print(f'[ReplicateStatus] ✗ History API returned non-201: {history_response.status_code}')
+                            except Exception as e:
+                                print(f'[ReplicateStatus] ✗ Failed to save to history: {type(e).__name__}: {str(e)}')
                         
                         conn.commit()
                         
