@@ -237,25 +237,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     else:
                         raise Exception('No image in response')
                     
-                    now = datetime.utcnow()
-                    
-                    if not first_result_at:
-                        print(f'[NanoBanana] Task {task_id} got first result, waiting 10s for final version')
-                        cursor.execute('''
-                            UPDATE nanobananapro_tasks
-                            SET first_result_at = %s,
-                                updated_at = %s
-                            WHERE id = %s
-                        ''', (now, now, task_id))
-                        conn.commit()
-                        continue
-                    
-                    time_since_first = (now - first_result_at).total_seconds()
-                    
-                    if time_since_first < 10:
-                        print(f'[NanoBanana] Task {task_id} waiting for final version ({time_since_first:.1f}s / 10s)')
-                        continue
-                    
                     print(f'[NanoBanana] Task {task_id} completed! Result URL: {result_url}')
                     
                     # Keep original FAL URL (no S3 save here)
