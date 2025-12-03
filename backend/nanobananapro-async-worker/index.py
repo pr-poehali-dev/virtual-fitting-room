@@ -41,7 +41,7 @@ def translate_to_english(text: str) -> str:
 def build_prompt(garments: list, custom_prompt: str) -> str:
     '''Build clear prompt for NanoBanana with category-based specifications'''
     
-    base_prompt = "Image 1 = person model. "
+    base_prompt = "Create ONE photo where the model from image 1 is wearing clothes from image 2. Image 1 = person model. "
     
     if len(garments) == 1:
         category = garments[0].get('category', 'dresses')
