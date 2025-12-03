@@ -34,36 +34,58 @@ def save_photo_to_s3(photo_url: str, user_id: str, cursor, s3_enabled: bool, s3_
         return photo_url
     
     # Get model_used from history to determine prefix
-    # Try to find by exact URL match first
     model_used = 'replicate'  # default
     try:
+        # Try exact URL match first
+        escaped_url = photo_url.replace(chr(39), chr(39)+chr(39))
         cursor.execute(
-            f"SELECT model_used FROM try_on_history WHERE user_id = '{user_id}' AND result_image = '{photo_url.replace(chr(39), chr(39)+chr(39))}' LIMIT 1"
+            f"SELECT model_used FROM try_on_history WHERE user_id = '{user_id}' AND result_image = '{escaped_url}' LIMIT 1"
         )
         history_row = cursor.fetchone()
+        
         if history_row and history_row.get('model_used'):
             model_used = history_row['model_used']
             print(f'Found model in history by exact URL: {model_used}')
         else:
-            # If not found by exact URL, try to detect from URL pattern
-            if 'replicate' in photo_url.lower() or 'pbxt.replicate.delivery' in photo_url:
-                model_used = 'replicate'
-                print(f'Detected replicate from URL')
-            elif 'fal.media' in photo_url or 'seedream' in photo_url.lower():
-                # Need to distinguish between seedream and nanobananapro
-                # Check if URL contains specific patterns or check recent history
-                cursor.execute(
-                    f"SELECT model_used FROM try_on_history WHERE user_id = '{user_id}' AND model_used IN ('seedream', 'nanobananapro') ORDER BY created_at DESC LIMIT 1"
-                )
-                recent_row = cursor.fetchone()
-                if recent_row and recent_row.get('model_used'):
-                    model_used = recent_row['model_used']
-                    print(f'Using recent FAL model: {model_used}')
+            print(f'Exact URL match failed for: {photo_url[:100]}...')
+            
+            # If exact match failed, try LIKE pattern for FAL URLs
+            if 'fal.media' in photo_url:
+                # Extract unique part of FAL URL (request ID)
+                # FAL URLs look like: https://fal.media/files/lion/xxxxx-request-id-xxxxx.png
+                url_parts = photo_url.split('/')
+                if len(url_parts) >= 5:
+                    request_part = url_parts[-1].split('.')[0]  # Get filename without extension
+                    print(f'Searching by FAL request pattern: {request_part[:30]}...')
+                    
+                    cursor.execute(
+                        f"SELECT model_used FROM try_on_history WHERE user_id = '{user_id}' AND result_image LIKE '%{request_part[:30]}%' ORDER BY created_at DESC LIMIT 1"
+                    )
+                    pattern_row = cursor.fetchone()
+                    
+                    if pattern_row and pattern_row.get('model_used'):
+                        model_used = pattern_row['model_used']
+                        print(f'Found model by FAL pattern: {model_used}')
+                    else:
+                        # Last resort: use most recent FAL generation
+                        cursor.execute(
+                            f"SELECT model_used FROM try_on_history WHERE user_id = '{user_id}' AND model_used IN ('seedream', 'nanobananapro') ORDER BY created_at DESC LIMIT 1"
+                        )
+                        recent_row = cursor.fetchone()
+                        if recent_row and recent_row.get('model_used'):
+                            model_used = recent_row['model_used']
+                            print(f'Using recent FAL model: {model_used}')
+                        else:
+                            model_used = 'seedream'
+                            print(f'Defaulting to seedream for FAL URL')
                 else:
-                    model_used = 'seedream'  # default FAL model
-                    print(f'Defaulting to seedream for FAL URL')
+                    model_used = 'seedream'
+                    print(f'Could not parse FAL URL, defaulting to seedream')
+            elif 'replicate' in photo_url.lower() or 'pbxt.replicate.delivery' in photo_url:
+                model_used = 'replicate'
+                print(f'Detected replicate from URL pattern')
             else:
-                print(f'Could not detect model, using default: {model_used}')
+                print(f'Unknown URL pattern, using default: {model_used}')
         
         prefix = get_fitting_prefix(model_used)
         print(f'Using prefix: {prefix} for model: {model_used}')
