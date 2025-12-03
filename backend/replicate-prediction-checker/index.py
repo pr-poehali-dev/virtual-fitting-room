@@ -73,26 +73,27 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if prediction.status == 'succeeded':
                 output_url = prediction.output if isinstance(prediction.output, str) else str(prediction.output)
                 
-                # Save to FTP with user_id subfolder and fitting room number
+                # Save to FTP with user_id subfolder and fitting room number (always 1fitting for Replicate)
                 saved_url = output_url
                 try:
-                    fitting_room_number = '1fitting' if current_step == 0 else f'{current_step + 1}fitting'
                     save_response = requests.post(
                         'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',
                         json={
                             'image_url': output_url,
                             'folder': 'lookbooks',
                             'user_id': user_id,
-                            'prefix': fitting_room_number
+                            'prefix': '1fitting'
                         },
                         timeout=30
                     )
                     if save_response.status_code == 200:
                         save_data = save_response.json()
                         saved_url = save_data.get('url', output_url)
-                        print(f'Image saved to FTP: {saved_url}')
+                        print(f'[Replicate] Image saved to FTP: {saved_url}')
+                    else:
+                        print(f'[Replicate] FTP save failed with status {save_response.status_code}')
                 except Exception as e:
-                    print(f'FTP save error (using original URL): {e}')
+                    print(f'[Replicate] FTP save error (using original URL): {e}')
                 
                 if current_step < total_steps:
                     cursor.execute('''

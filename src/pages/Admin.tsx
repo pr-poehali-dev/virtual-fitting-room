@@ -1625,6 +1625,14 @@ export default function Admin() {
                               if (response.ok) {
                                 toast.success('История генераций очищена');
                                 fetchGenerationHistory();
+                                
+                                const statsRes = await fetch(`${ADMIN_API}?action=stats`, {
+                                  headers: { 'X-Admin-Password': adminPassword || '' }
+                                });
+                                if (statsRes.ok) {
+                                  const statsData = await statsRes.json();
+                                  setStats(statsData);
+                                }
                               } else {
                                 toast.error('Ошибка очистки');
                               }
@@ -1712,7 +1720,6 @@ export default function Admin() {
                                   <th className="text-left p-2">Пользователь</th>
                                   <th className="text-left p-2">ID</th>
                                   <th className="text-left p-2">Модель</th>
-                                  <th className="text-left p-2">В лукбуке</th>
                                   <th className="text-left p-2">Статус фото</th>
                                   <th className="text-left p-2">Стоимость</th>
                                   <th className="text-left p-2">Дата</th>
@@ -1734,29 +1741,27 @@ export default function Admin() {
                                         {gen.model_used || 'unknown'}
                                       </span>
                                     </td>
-                                    <td className="p-2 text-center">
-                                      {gen.saved_to_lookbook ? (
-                                        <Icon name="Check" size={16} className="text-green-600 inline" />
-                                      ) : (
-                                        <Icon name="X" size={16} className="text-gray-400 inline" />
-                                      )}
-                                    </td>
                                     <td className="p-2">
-                                      {gen.photo_status === 'in_lookbook' && (
-                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
-                                          В лукбуке
-                                        </span>
-                                      )}
-                                      {gen.photo_status === 'in_history' && (
-                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-700">
-                                          В истории
-                                        </span>
-                                      )}
-                                      {gen.photo_status === 'removed' && (
-                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">
-                                          Удалено
-                                        </span>
-                                      )}
+                                      <div className="flex items-center gap-2">
+                                        {gen.photo_status === 'in_lookbook' && (
+                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                                            В лукбуке
+                                          </span>
+                                        )}
+                                        {gen.photo_status === 'in_history' && (
+                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-700">
+                                            В истории
+                                          </span>
+                                        )}
+                                        {gen.photo_status === 'removed' && (
+                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">
+                                            Удалено
+                                          </span>
+                                        )}
+                                        {gen.saved_to_lookbook && (
+                                          <Icon name="Check" size={14} className="text-green-600" title="Сохранено в лукбук" />
+                                        )}
+                                      </div>
                                     </td>
                                     <td className="p-2 text-xs">{gen.cost} ₽</td>
                                     <td className="p-2 text-xs">
