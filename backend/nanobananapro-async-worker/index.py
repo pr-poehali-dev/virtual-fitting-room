@@ -252,8 +252,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     conn.commit()
                     print(f'[NanoBanana] Task {task_id} saved to DB as completed')
                     
-                    # Save to history ONLY if not already saved
-                    if not saved_to_history:
+                    # ATOMIC: Mark as "being saved" FIRST to prevent race condition
+                    cursor.execute('''
+                        UPDATE nanobananapro_tasks
+                        SET saved_to_history = TRUE
+                        WHERE id = %s AND (saved_to_history IS NULL OR saved_to_history = FALSE)
+                        RETURNING id
+                    ''', (task_id,))
+                    updated_row = cursor.fetchone()
+                    conn.commit()
+                    
+                    # Only save to history if we successfully set the flag (no other worker did it)
+                    if updated_row:
                         print(f'[NanoBanana] Attempting to save task {task_id} to history for user {user_id}')
                         try:
                             # Get task details for history
@@ -281,13 +291,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 )
                                 print(f'[NanoBanana] History API response: status={history_response.status_code}, body={history_response.text[:200]}')
                                 if history_response.status_code == 201:
-                                    # Mark as saved to prevent duplicate saves
-                                    cursor.execute('''
-                                        UPDATE nanobananapro_tasks
-                                        SET saved_to_history = TRUE
-                                        WHERE id = %s
-                                    ''', (task_id,))
-                                    conn.commit()
                                     print(f'[NanoBanana] ✓ Successfully saved to history: task {task_id}')
                                 else:
                                     print(f'[NanoBanana] ✗ History API returned non-201: {history_response.status_code}')
@@ -296,7 +299,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         except Exception as e:
                             print(f'[NanoBanana] ✗ Failed to save to history: {type(e).__name__}: {str(e)}')
                     else:
-                        print(f'[NanoBanana] ⊘ Task {task_id} already saved to history, skipping')
+                        print(f'[NanoBanana] ⊘ Task {task_id} already being saved by another worker, skipping')
                     
                     results.append({'task_id': task_id, 'status': 'completed'})
                 
