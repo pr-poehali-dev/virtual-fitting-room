@@ -454,6 +454,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'success': True})
             }
         
+        elif action == 'clear_generation_history' and method == 'DELETE':
+            cursor.execute("DELETE FROM try_on_history")
+            deleted_count = cursor.rowcount
+            conn.commit()
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps({'success': True, 'deleted': deleted_count})
+            }
+        
         else:
             return {
                 'statusCode': 400,

@@ -1577,10 +1577,39 @@ export default function Admin() {
                 <TabsContent value="generations">
                   <Card>
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Icon name="Sparkles" size={24} />
-                        История генераций
-                      </CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          <Icon name="Sparkles" size={24} />
+                          История генераций
+                        </CardTitle>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={async () => {
+                            if (!confirm('Удалить ВСЕ записи из истории генераций?\n\nЭто действие необратимо!')) return;
+                            
+                            const adminPassword = sessionStorage.getItem('admin_auth');
+                            try {
+                              const response = await fetch(`${ADMIN_API}?action=clear_generation_history`, {
+                                method: 'DELETE',
+                                headers: { 'X-Admin-Password': adminPassword || '' }
+                              });
+                              
+                              if (response.ok) {
+                                toast.success('История генераций очищена');
+                                fetchGenerationHistory();
+                              } else {
+                                toast.error('Ошибка очистки');
+                              }
+                            } catch (error) {
+                              toast.error('Ошибка очистки');
+                            }
+                          }}
+                        >
+                          <Icon name="Trash2" size={16} className="mr-2" />
+                          Очистить всё
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="mb-6 flex flex-wrap gap-4">
