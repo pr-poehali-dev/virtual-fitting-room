@@ -50,7 +50,7 @@ def build_prompt(garments: list, custom_prompt: str) -> str:
         elif category == 'lower_body':
             base_prompt += "Image 2 has lower_body clothing. Take ONLY the bottom (pants/skirt/shorts) from image 2. Do NOT change top clothing on person. "
         else:
-            base_prompt += "Image 2 has full outfit/dress. Take the complete outfit from image 2. "
+            base_prompt += "Image 2 shows full outfit clothing (dress/jumpsuit/full body outfit). Take the COMPLETE clothing from image 2 and replace ALL clothing on person - change both top AND bottom parts. Person should wear the exact same full outfit/dress shown in image 2. "
     else:
         for i, garment in enumerate(garments):
             img_num = i + 2
@@ -60,7 +60,7 @@ def build_prompt(garments: list, custom_prompt: str) -> str:
             elif category == 'lower_body':
                 base_prompt += f"Image {img_num} has lower_body clothing - take ONLY the bottom (pants/skirt/shorts) from image {img_num}. "
             else:
-                base_prompt += f"Image {img_num} has full outfit - take complete outfit from image {img_num}. "
+                base_prompt += f"Image {img_num} shows full outfit clothing (dress/jumpsuit/full body outfit) - take the COMPLETE clothing from image {img_num} and replace ALL clothing on person (both top AND bottom parts). Person should wear the exact same full outfit/dress shown in image {img_num}. "
     
     base_prompt += "CRITICAL: On image 1 (person) keep EVERYTHING - EXACT SAME FACE, exact hairstyle, exact skin color, exact body shape, height, body proportions, shoulders width, waist size, hips size, leg length, exact pose, exact background, exact lighting. Change ONLY clothing items! "
     base_prompt += "STRICT RULE: NEVER EVER take face/body/pose/background from clothing images (2 or 3). Those images show ONLY clothing items on mannequins or models - ignore their faces and bodies completely! Use ONLY clothing items from those images. The person's face and body from image 1 must remain 100% identical. "
