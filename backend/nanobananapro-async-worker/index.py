@@ -46,23 +46,23 @@ def build_prompt(garments: list, custom_prompt: str) -> str:
     if len(garments) == 1:
         category = garments[0].get('category', 'dresses')
         if category == 'upper_body':
-            base_prompt += "Image 2 shows upper body clothing (top/shirt/jacket/sweater). PUT THIS TOP from image 2 onto the person. Keep the bottom clothing unchanged. "
+            base_prompt += "Image 2 shows upper body clothing (top/shirt/jacket/sweater). PUT THIS TOP from image 2 onto the person from image 1. Keep the bottom clothing unchanged. "
         elif category == 'lower_body':
-            base_prompt += "Image 2 shows lower body clothing (pants/skirt/shorts). PUT THIS BOTTOM from image 2 onto the person. Keep the top clothing unchanged. "
+            base_prompt += "Image 2 shows lower body clothing (pants/skirt/shorts). PUT THIS BOTTOM from image 2 onto the person from image 1. Keep the top clothing unchanged. "
         else:
-            base_prompt += "Image 2 shows a DRESS (full-body garment). PUT THIS DRESS from image 2 onto the person - replace ALL clothing with this dress. "
+            base_prompt += "Image 2 shows a DRESS (full-body garment). PUT THIS DRESS from image 2 onto the person from image 1 - replace ALL clothing with this dress. "
     else:
         for i, garment in enumerate(garments):
             img_num = i + 2
             category = garment.get('category', 'dresses')
             if category == 'upper_body':
-                base_prompt += f"Image {img_num} shows upper body clothing. PUT the top from image {img_num} onto the person. "
+                base_prompt += f"Image {img_num} shows upper body clothing. PUT the top from image {img_num} onto the person from image 1. "
             elif category == 'lower_body':
-                base_prompt += f"Image {img_num} shows lower body clothing. PUT the bottom from image {img_num} onto the person. "
+                base_prompt += f"Image {img_num} shows lower body clothing. PUT the bottom from image {img_num} onto the person from image 1. "
             else:
-                base_prompt += f"Image {img_num} shows a dress. PUT this dress from image {img_num} onto the person. "
+                base_prompt += f"Image {img_num} shows a dress. PUT this dress from image {img_num} onto the person from image 1. "
     
-    base_prompt += "IMPORTANT: Keep person's FACE, body shape, pose, and background identical to image 1. Only change the clothing. "
+    base_prompt += "CRITICAL RULES: Use ONLY the CLOTHING from image 2 (or 3). Do NOT use the face, body, pose, or background from image 2 (or 3). Keep the EXACT face, body shape, pose, and background from image 1. Change ONLY the clothing. "
     
     if custom_prompt:
         translated_prompt = translate_to_english(custom_prompt)
