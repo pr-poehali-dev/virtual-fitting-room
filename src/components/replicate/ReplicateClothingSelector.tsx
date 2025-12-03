@@ -59,6 +59,7 @@ interface ReplicateClothingSelectorProps {
   updateClothingCategory: (id: string, category: string) => void;
   handleCustomClothingUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isGenerating: boolean;
+  showCategoryError: boolean;
 }
 
 export default function ReplicateClothingSelector({
@@ -77,7 +78,8 @@ export default function ReplicateClothingSelector({
   removeClothingItem,
   updateClothingCategory,
   handleCustomClothingUpload,
-  isGenerating
+  isGenerating,
+  showCategoryError
 }: ReplicateClothingSelectorProps) {
   const [filtersExpanded, setFiltersExpanded] = React.useState(false);
 
@@ -182,8 +184,8 @@ export default function ReplicateClothingSelector({
                     onValueChange={(value) => updateClothingCategory(item.id, value)}
                     disabled={item.isFromCatalog || isGenerating || (selectedClothingItems.length === 2 && item.category && selectedClothingItems.find(i => i.id !== item.id && i.category && i.category !== item.category && ['upper_body', 'lower_body'].includes(i.category)) !== undefined)}
                   >
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue placeholder="Выберите категорию" />
+                    <SelectTrigger className={`h-8 text-xs ${showCategoryError && !item.category ? 'border-red-500 border-2' : ''}`}>
+                      <SelectValue placeholder="Выберите категорию" className={showCategoryError && !item.category ? 'text-red-500' : ''} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="upper_body" className="text-xs">
@@ -200,7 +202,7 @@ export default function ReplicateClothingSelector({
                     </SelectContent>
                   </Select>
                   {getCategoryHint(item.id, item.category) && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className={`text-xs ${showCategoryError && !item.category ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
                       {getCategoryHint(item.id, item.category)}
                     </p>
                   )}

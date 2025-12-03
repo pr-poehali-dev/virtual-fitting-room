@@ -94,6 +94,7 @@ export default function ReplicateTryOn() {
   const [tempImageForCrop, setTempImageForCrop] = useState<string | null>(null);
   const [activeFittingRoom, setActiveFittingRoom] = useState<'replicate' | 'seedream' | 'nanobananapro'>('replicate');
   const [customPrompt, setCustomPrompt] = useState<string>('');
+  const [showCategoryError, setShowCategoryError] = useState(false);
 
 
   useEffect(() => {
@@ -406,9 +407,11 @@ export default function ReplicateTryOn() {
 
     const itemsWithoutCategory = selectedClothingItems.filter(item => !item.category);
     if (itemsWithoutCategory.length > 0) {
+      setShowCategoryError(true);
       toast.error('Укажите категорию для всех выбранных вещей');
       return;
     }
+    setShowCategoryError(false);
 
     if (selectedClothingItems.length === 2) {
       const categories = selectedClothingItems.map(item => item.category);
@@ -505,9 +508,11 @@ export default function ReplicateTryOn() {
 
     const itemsWithoutCategory = selectedClothingItems.filter(item => !item.category);
     if (itemsWithoutCategory.length > 0) {
+      setShowCategoryError(true);
       toast.error('Укажите категорию для всех выбранных вещей');
       return;
     }
+    setShowCategoryError(false);
 
     if (selectedClothingItems.length === 2) {
       const categories = selectedClothingItems.map(item => item.category);
@@ -781,9 +786,11 @@ export default function ReplicateTryOn() {
 
     const itemsWithoutCategory = selectedClothingItems.filter(item => !item.category);
     if (itemsWithoutCategory.length > 0) {
+      setShowCategoryError(true);
       toast.error('Укажите категорию для всех выбранных вещей');
       return;
     }
+    setShowCategoryError(false);
 
     if (selectedClothingItems.length === 2) {
       const categories = selectedClothingItems.map(item => item.category);
@@ -1237,6 +1244,7 @@ export default function ReplicateTryOn() {
                     updateClothingCategory={updateClothingCategory}
                     handleCustomClothingUpload={handleCustomClothingUpload}
                     isGenerating={isGenerating}
+                    showCategoryError={showCategoryError}
                   />
 
                   <div className="space-y-4">
