@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Worker processes tasks",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "status": "worker_completed"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

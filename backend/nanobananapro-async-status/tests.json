@@ -1,0 +1,15 @@
+{
+  "tests": [
+    {
+      "name": "Check task status",
+      "method": "GET",
+      "path": "/?task_id=test-task-123",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "task_id": "string",
+        "status": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
