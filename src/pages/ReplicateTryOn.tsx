@@ -1247,7 +1247,7 @@ export default function ReplicateTryOn() {
                       <div>
                         <h3 className="text-lg font-semibold">Выберите примерочную</h3>
                         <p className="text-sm text-muted-foreground">
-                          Попробуйте обе примерочные - они работают по-разному
+                          Попробуйте разные примерочные - они работают по-разному
                         </p>
                       </div>
                     </div>
