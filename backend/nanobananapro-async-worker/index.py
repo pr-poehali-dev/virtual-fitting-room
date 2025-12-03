@@ -41,7 +41,7 @@ def translate_to_english(text: str) -> str:
 def build_prompt(garments: list, custom_prompt: str) -> str:
     '''Build clear prompt for NanoBanana with category-based specifications'''
     
-    base_prompt = "Create ONE photograph where the model from Image 1 is wearing the outfit from Image 2. Image 1 = the human model. Image 2 is the outfit. PUT THESE CLOTHES from Image 2 on the model from Image 1, replacing ALL the clothes with these clothes. IMPORTANT RULES: Use ONLY the CLOTHES from Image 2 (or 3). DO NOT use the face, body, pose, or background from Image 2 (or 3). Keep the EXACT face, body shape, pose, and background from Image 1. Change ONLY the clothes. "
+    base_prompt = "Make a photo where the model from Image 1 is wearing the outfit from Image 2. Image 1 = the human model. Image 2 is the outfit. PUT THESE CLOTHES from Image 2 on the model from Image 1, replacing ALL the clothes with these clothes. IMPORTANT RULES: Use ONLY the CLOTHES from Image 2 (or 3). DO NOT use the face, body, pose, or background from Image 2 (or 3). Keep the EXACT face, body shape, pose, and background from Image 1. Change ONLY the clothes. "
     
     if custom_prompt:
         translated_prompt = translate_to_english(custom_prompt)
