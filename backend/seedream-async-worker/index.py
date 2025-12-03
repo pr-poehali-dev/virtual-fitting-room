@@ -221,19 +221,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         WHERE id = %s
                     ''', (request_id, response_url, datetime.utcnow(), task_id))
                     conn.commit()
-                    cursor.close()
-                    conn.close()
-                    
-                    return {
-                        'statusCode': 200,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                        'isBase64Encoded': False,
-                        'body': json.dumps({
-                            'message': 'Task submitted to queue',
-                            'task_id': task_id,
-                            'request_id': request_id
-                        })
-                    }
+                    print(f'[SeeDream] Task {task_id} submitted to queue, continuing to check processing tasks')
                 except Exception as e:
                     cursor.execute('''
                         UPDATE seedream_tasks
@@ -241,19 +229,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         WHERE id = %s
                     ''', (str(e), datetime.utcnow(), task_id))
                     conn.commit()
-                    cursor.close()
-                    conn.close()
-                    
-                    return {
-                        'statusCode': 200,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                        'isBase64Encoded': False,
-                        'body': json.dumps({
-                            'message': 'Task submission failed',
-                            'task_id': task_id,
-                            'error': str(e)
-                        })
-                    }
+                    print(f'[SeeDream] Task {task_id} submission failed: {e}, continuing to check processing tasks')
         
         cursor.execute('''
             SELECT id, fal_response_url, user_id
