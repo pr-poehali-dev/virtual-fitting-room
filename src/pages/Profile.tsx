@@ -13,6 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 import ImageViewer from '@/components/ImageViewer';
 import ImageCropper from '@/components/ImageCropper';
 import WalletTab from '@/components/WalletTab';
+import HistoryTab from '@/components/HistoryTab';
 import { jsPDF } from 'jspdf';
 
 interface Lookbook {
@@ -30,6 +31,7 @@ interface Lookbook {
 
 
 const LOOKBOOKS_API = 'https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b';
+const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
 const CHANGE_PASSWORD_API = 'https://functions.poehali.dev/98400760-4d03-4ca8-88ab-753fde19ef83';
 const UPDATE_PROFILE_API = 'https://functions.poehali.dev/efb92b0f-c34a-4b12-ad41-744260d1173a';
 const DELETE_ACCOUNT_API = 'https://functions.poehali.dev/d8626da4-6372-40c1-abba-d4ffdc89c7c4';
@@ -509,12 +511,13 @@ export default function Profile() {
         <div className="container mx-auto max-w-7xl">
           <div className="mb-8">
             <h2 className="text-4xl font-light mb-2">Личный кабинет</h2>
-            <p className="text-muted-foreground">Управляйте лукбуками</p>
+            <p className="text-muted-foreground">Управляйте лукбуками и историей примерок</p>
           </div>
 
           <Tabs defaultValue="lookbooks" className="w-full">
-            <TabsList className="grid w-full md:w-auto grid-cols-3 mb-8">
+            <TabsList className="grid w-full md:w-auto grid-cols-4 mb-8">
               <TabsTrigger value="lookbooks">Лукбуки</TabsTrigger>
+              <TabsTrigger value="history">История</TabsTrigger>
               <TabsTrigger value="wallet">Кошелёк</TabsTrigger>
               <TabsTrigger value="settings">Настройки</TabsTrigger>
             </TabsList>
@@ -797,6 +800,10 @@ export default function Profile() {
                   </div>
                 )}
               </div>
+            </TabsContent>
+
+            <TabsContent value="history">
+              <HistoryTab userId={user.id} />
             </TabsContent>
 
             <TabsContent value="wallet">

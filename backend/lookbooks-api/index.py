@@ -339,21 +339,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     else:
                         saved_photos.append(photo)
             
-            # Delete removed photos from S3
-            if old_photos and saved_photos:
-                deleted_photos = set(old_photos) - set(saved_photos)
-                s3_enabled = os.environ.get('S3_ACCESS_KEY')
-                for deleted_photo in deleted_photos:
-                    if s3_enabled:
-                        try:
-                            requests.post(
-                                'https://functions.poehali.dev/caf33ea6-1aaa-46b4-bc76-9b03bee18925',
-                                json={'image_url': deleted_photo},
-                                timeout=10
-                            )
-                            print(f'Deleted from S3: {deleted_photo}')
-                        except Exception as e:
-                            print(f'S3 delete failed: {str(e)}')
+            # NOTE: DO NOT delete photos from S3 when removing from lookbook
+            # Photos may still be used in history and will be auto-deleted after 6 months
             
             cursor.execute(
                 """
@@ -431,14 +418,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing id'})
                 }
             
-            # Get photos before deletion to delete from FTP
-            cursor.execute(
-                "SELECT photos FROM lookbooks WHERE id = %s AND user_id = %s",
-                (lookbook_id, user_id)
-            )
-            lookbook_to_delete = cursor.fetchone()
-            photos_to_delete = lookbook_to_delete['photos'] if lookbook_to_delete else []
-            
+            # Delete lookbook from DB
+            # NOTE: DO NOT delete photos from S3 - they may be in history
             cursor.execute(
                 "DELETE FROM lookbooks WHERE id = %s AND user_id = %s RETURNING id",
                 (lookbook_id, user_id)
@@ -459,20 +440,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             conn.commit()
-            
-            # Delete photos from S3 after successful DB deletion
-            s3_enabled = os.environ.get('S3_ACCESS_KEY')
-            if photos_to_delete and s3_enabled:
-                for photo in photos_to_delete:
-                    try:
-                        requests.post(
-                            'https://functions.poehali.dev/caf33ea6-1aaa-46b4-bc76-9b03bee18925',
-                            json={'image_url': photo},
-                            timeout=10
-                        )
-                        print(f'Deleted from S3 on lookbook delete: {photo}')
-                    except Exception as e:
-                        print(f'S3 delete failed on lookbook delete: {str(e)}')
             
             return {
                 'statusCode': 200,

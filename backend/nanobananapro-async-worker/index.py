@@ -257,13 +257,33 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         continue
                     
                     print(f'[NanoBanana] Task {task_id} completed! Result URL: {result_url}')
+                    
+                    # Save to FTP
+                    saved_url = result_url
+                    try:
+                        save_response = requests.post(
+                            'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',
+                            json={
+                                'image_url': result_url,
+                                'folder': 'lookbooks',
+                                'user_id': task_id
+                            },
+                            timeout=30
+                        )
+                        if save_response.status_code == 200:
+                            save_data = save_response.json()
+                            saved_url = save_data.get('url', result_url)
+                            print(f'[NanoBanana] Image saved to FTP: {saved_url}')
+                    except Exception as e:
+                        print(f'[NanoBanana] FTP save error (using original URL): {e}')
+                    
                     cursor.execute('''
                         UPDATE nanobananapro_tasks
                         SET status = 'completed',
                             result_url = %s,
                             updated_at = %s
                         WHERE id = %s
-                    ''', (result_url, datetime.utcnow(), task_id))
+                    ''', (saved_url, datetime.utcnow(), task_id))
                     conn.commit()
                     print(f'[NanoBanana] Task {task_id} saved to DB as completed')
                 
