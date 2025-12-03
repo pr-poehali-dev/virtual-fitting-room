@@ -345,8 +345,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     results.append({'task_id': task_id, 'status': 'still_processing', 'fal_status': task_status})
                     
             except Exception as e:
-                print(f'[Worker] Exception checking task {task_id}: {str(e)}')
-                results.append({'task_id': task_id, 'error': str(e)})
+                error_str = str(e)
+                print(f'[Worker] Exception checking task {task_id}: {error_str}')
+                # "Request is still in progress" is normal - treat as still_processing
+                if 'still in progress' in error_str.lower():
+                    results.append({'task_id': task_id, 'status': 'still_processing', 'note': 'fal_in_progress'})
+                else:
+                    results.append({'task_id': task_id, 'error': error_str})
         
         cursor.close()
         conn.close()

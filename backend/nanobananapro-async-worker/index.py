@@ -329,14 +329,31 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 else:
                     print(f'[NanoBanana] Error checking task {task_id}: {error_str}')
         
+        # Check if we have unfinished tasks before closing
+        cursor.execute('''
+            SELECT COUNT(*) FROM nanobananapro_tasks 
+            WHERE status = 'processing' AND fal_response_url IS NOT NULL
+        ''')
+        processing_count = cursor.fetchone()[0]
+        
         cursor.close()
         conn.close()
+        
+        if processing_count > 0:
+            print(f'[NanoBanana] Still have {processing_count} processing tasks, triggering next check')
+            try:
+                import urllib.request
+                worker_url = 'https://functions.poehali.dev/6b9e69c4-1dd8-421f-bcda-53efce2f95ad'
+                req = urllib.request.Request(worker_url, method='GET')
+                urllib.request.urlopen(req, timeout=1)
+            except:
+                pass
         
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'isBase64Encoded': False,
-            'body': json.dumps({'status': 'worker_completed'})
+            'body': json.dumps({'status': 'worker_completed', 'processing_tasks': processing_count})
         }
         
     except Exception as e:
