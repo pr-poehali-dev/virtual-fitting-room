@@ -15,6 +15,65 @@ def get_db_connection():
         dsn += '?options=-c%20search_path%3Dt_p29007832_virtual_fitting_room'
     return psycopg2.connect(dsn)
 
+def get_fitting_prefix(model_used: str) -> str:
+    '''Get fitting room prefix based on model name'''
+    if model_used == 'replicate':
+        return '1fitting'
+    elif model_used == 'seedream':
+        return '2fitting'
+    elif model_used == 'nanobananapro':
+        return '3fitting'
+    else:
+        return '1fitting'  # default to fitting1
+
+def save_photo_to_s3(photo_url: str, user_id: str, cursor, s3_enabled: bool, s3_bucket_name: str, s3_url_prefix: str) -> str:
+    '''Save photo to S3 with fitting room prefix based on model used'''
+    # Skip if already in our S3
+    if s3_enabled and photo_url.startswith(s3_url_prefix):
+        print(f'Photo already in S3, skipping: {photo_url}')
+        return photo_url
+    
+    # Get model_used from history to determine prefix
+    try:
+        cursor.execute(
+            f"SELECT model_used FROM try_on_history WHERE user_id = '{user_id}' AND result_image = '{photo_url.replace(chr(39), chr(39)+chr(39))}' LIMIT 1"
+        )
+        history_row = cursor.fetchone()
+        model_used = history_row['model_used'] if history_row else 'replicate'
+        prefix = get_fitting_prefix(model_used)
+        print(f'Photo model: {model_used}, prefix: {prefix}')
+    except Exception as e:
+        print(f'Failed to get model from history: {e}, using default prefix')
+        prefix = '1fitting'
+    
+    # Save to S3 with prefix
+    if photo_url.startswith(('http://', 'https://', 'data:')) and s3_enabled:
+        try:
+            save_response = requests.post(
+                'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',
+                json={
+                    'image_url': photo_url,
+                    'folder': 'lookbooks',
+                    'user_id': str(user_id),
+                    'prefix': prefix
+                },
+                timeout=30
+            )
+            print(f'S3 save response: {save_response.status_code}')
+            if save_response.status_code == 200:
+                save_data = save_response.json()
+                new_url = save_data.get('url', photo_url)
+                print(f'Saved to S3: {new_url}')
+                return new_url
+            else:
+                print(f'S3 save failed with status {save_response.status_code}')
+                return photo_url
+        except Exception as e:
+            print(f'S3 save exception: {str(e)}')
+            return photo_url
+    else:
+        return photo_url
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
     Business: CRUD operations for lookbooks
@@ -190,42 +249,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing name or person_name'})
                 }
             
-            # Save photos to S3
+            # Save photos to S3 with fitting room prefix
             saved_photos = []
             s3_enabled = os.environ.get('S3_ACCESS_KEY')
             s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
             s3_url_prefix = f'https://{s3_bucket_name}.storage.yandexcloud.net/'
             
             for photo in photos:
-                # Skip if already in our S3
-                if s3_enabled and photo.startswith(s3_url_prefix):
-                    print(f'Photo already in S3, skipping: {photo}')
-                    saved_photos.append(photo)
-                elif photo.startswith(('http://', 'https://', 'data:')) and s3_enabled:
-                    try:
-                        save_response = requests.post(
-                            'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',
-                            json={
-                                'image_url': photo,
-                                'folder': 'lookbooks',
-                                'user_id': str(user_id)
-                            },
-                            timeout=30
-                        )
-                        print(f'S3 save response: {save_response.status_code}, body: {save_response.text}')
-                        if save_response.status_code == 200:
-                            save_data = save_response.json()
-                            new_url = save_data.get('url', photo)
-                            print(f'Got new URL: {new_url}')
-                            saved_photos.append(new_url)
-                        else:
-                            print(f'S3 save failed with status {save_response.status_code}')
-                            saved_photos.append(photo)
-                    except Exception as e:
-                        print(f'S3 save exception: {str(e)}')
-                        saved_photos.append(photo)
-                else:
-                    saved_photos.append(photo)
+                saved_url = save_photo_to_s3(photo, user_id, cursor, s3_enabled, s3_bucket_name, s3_url_prefix)
+                saved_photos.append(saved_url)
             
             cursor.execute(
                 """
@@ -312,7 +344,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if old_lookbook:
                     old_photos = old_lookbook['photos'] or []
             
-            # Save new photos to S3
+            # Save new photos to S3 with fitting room prefix
             saved_photos = photos
             if photos:
                 saved_photos = []
@@ -321,35 +353,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 s3_url_prefix = f'https://{s3_bucket_name}.storage.yandexcloud.net/'
                 
                 for photo in photos:
-                    # Skip if already in our S3
-                    if s3_enabled and photo.startswith(s3_url_prefix):
-                        print(f'Photo already in S3 (PUT), skipping: {photo}')
-                        saved_photos.append(photo)
-                    elif photo.startswith(('http://', 'https://', 'data:')) and s3_enabled:
-                        try:
-                            save_response = requests.post(
-                                'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',
-                                json={
-                                    'image_url': photo,
-                                    'folder': 'lookbooks',
-                                    'user_id': str(user_id)
-                                },
-                                timeout=30
-                            )
-                            print(f'S3 save response (PUT): {save_response.status_code}, body: {save_response.text}')
-                            if save_response.status_code == 200:
-                                save_data = save_response.json()
-                                new_url = save_data.get('url', photo)
-                                print(f'Got new URL (PUT): {new_url}')
-                                saved_photos.append(new_url)
-                            else:
-                                print(f'S3 save failed (PUT) with status {save_response.status_code}')
-                                saved_photos.append(photo)
-                        except Exception as e:
-                            print(f'S3 save exception (PUT): {str(e)}')
-                            saved_photos.append(photo)
-                    else:
-                        saved_photos.append(photo)
+                    saved_url = save_photo_to_s3(photo, user_id, cursor, s3_enabled, s3_bucket_name, s3_url_prefix)
+                    saved_photos.append(saved_url)
             
             # Get old photos to check which ones were removed
             cursor.execute(

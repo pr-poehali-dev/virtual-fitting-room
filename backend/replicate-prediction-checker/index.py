@@ -73,28 +73,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if prediction.status == 'succeeded':
                 output_url = prediction.output if isinstance(prediction.output, str) else str(prediction.output)
                 
-                # Save to FTP with user_id subfolder and fitting room number (always 1fitting for Replicate)
-                saved_url = output_url
-                try:
-                    save_response = requests.post(
-                        'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',
-                        json={
-                            'image_url': output_url,
-                            'folder': 'lookbooks',
-                            'user_id': user_id,
-                            'prefix': '1fitting'
-                        },
-                        timeout=30
-                    )
-                    if save_response.status_code == 200:
-                        save_data = save_response.json()
-                        saved_url = save_data.get('url', output_url)
-                        print(f'[Replicate] Image saved to FTP: {saved_url}')
-                    else:
-                        print(f'[Replicate] FTP save failed with status {save_response.status_code}')
-                except Exception as e:
-                    print(f'[Replicate] FTP save error (using original URL): {e}')
-                
+                # Keep original Replicate URL (no S3 save here)
                 if current_step < total_steps:
                     cursor.execute('''
                         UPDATE replicate_tasks
@@ -103,7 +82,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             prediction_id = NULL,
                             updated_at = %s
                         WHERE id = %s
-                    ''', (saved_url, datetime.utcnow(), task_id))
+                    ''', (output_url, datetime.utcnow(), task_id))
                     
                 else:
                     cursor.execute('''
@@ -113,7 +92,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             prediction_id = NULL,
                             updated_at = %s
                         WHERE id = %s
-                    ''', (saved_url, datetime.utcnow(), task_id))
+                    ''', (output_url, datetime.utcnow(), task_id))
                     
                     # Save to history with model and cost info
                     try:
@@ -123,7 +102,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             json={
                                 'person_image': person_image,
                                 'garments': garments,
-                                'result_image': saved_url,
+                                'result_image': output_url,
                                 'model_used': 'replicate',
                                 'cost': 0
                             },

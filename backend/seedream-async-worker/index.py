@@ -295,31 +295,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     
                     print(f'[Worker] Task {task_id} completed! Saving result URL: {result_url}')
                     
-                    # Save to FTP with user_id subfolder and fitting room number (SeeDream = fitting room 2)
-                    saved_url = result_url
-                    try:
-                        save_response = requests.post(
-                            'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',
-                            json={
-                                'image_url': result_url,
-                                'folder': 'lookbooks',
-                                'user_id': user_id,
-                                'prefix': '2fitting'
-                            },
-                            timeout=30
-                        )
-                        if save_response.status_code == 200:
-                            save_data = save_response.json()
-                            saved_url = save_data.get('url', result_url)
-                            print(f'[Worker] Image saved to FTP: {saved_url}')
-                    except Exception as e:
-                        print(f'[Worker] FTP save error (using original URL): {e}')
-                    
+                    # Keep original FAL URL (no S3 save here)
                     cursor.execute('''
                         UPDATE seedream_tasks
                         SET status = 'completed', result_url = %s, updated_at = %s
                         WHERE id = %s
-                    ''', (saved_url, datetime.utcnow(), task_id))
+                    ''', (result_url, datetime.utcnow(), task_id))
                     conn.commit()
                     print(f'[Worker] Task {task_id} saved to DB as completed')
                     
@@ -340,7 +321,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 json={
                                     'person_image': task_data[0],
                                     'garments': garments_list,
-                                    'result_image': saved_url,
+                                    'result_image': result_url,
                                     'model_used': 'seedream',
                                     'cost': 0
                                 },
