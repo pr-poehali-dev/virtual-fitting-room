@@ -196,6 +196,146 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 } for h in history])
             }
         
+        elif action == 'generation_history':
+            # Build WHERE clause based on filters
+            filters = []
+            filter_values = []
+            
+            user_id_filter = query_params.get('user_id')
+            model_filter = query_params.get('model')
+            saved_filter = query_params.get('saved_to_lookbook')
+            date_from = query_params.get('date_from')
+            date_to = query_params.get('date_to')
+            
+            if user_id_filter:
+                filters.append("h.user_id = %s")
+                filter_values.append(user_id_filter)
+            
+            if model_filter:
+                filters.append("h.model_used = %s")
+                filter_values.append(model_filter)
+            
+            if saved_filter == 'true':
+                filters.append("h.saved_to_lookbook = true")
+            elif saved_filter == 'false':
+                filters.append("h.saved_to_lookbook = false")
+            
+            if date_from:
+                filters.append("h.created_at >= %s")
+                filter_values.append(date_from)
+            
+            if date_to:
+                filters.append("h.created_at <= %s")
+                filter_values.append(date_to)
+            
+            where_clause = " AND ".join(filters) if filters else "1=1"
+            
+            query = f"""
+                SELECT 
+                    h.id,
+                    h.user_id,
+                    u.email as user_email,
+                    u.name as user_name,
+                    h.model_used,
+                    h.saved_to_lookbook,
+                    h.cost,
+                    h.result_image,
+                    h.created_at,
+                    CASE 
+                        WHEN EXISTS (SELECT 1 FROM lookbooks l WHERE h.user_id = l.user_id AND h.result_image = ANY(l.photos)) THEN 'in_lookbook'
+                        WHEN h.created_at >= NOW() - INTERVAL '180 days' THEN 'in_history'
+                        ELSE 'removed'
+                    END as photo_status
+                FROM try_on_history h
+                LEFT JOIN users u ON h.user_id = u.id
+                WHERE {where_clause}
+                ORDER BY h.created_at DESC
+                LIMIT 500
+            """
+            
+            cursor.execute(query, filter_values)
+            history = cursor.fetchall()
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps([{
+                    'id': str(h['id']),
+                    'user_id': str(h['user_id']) if h['user_id'] else None,
+                    'user_email': h['user_email'],
+                    'user_name': h['user_name'],
+                    'model_used': h['model_used'],
+                    'saved_to_lookbook': h['saved_to_lookbook'],
+                    'cost': float(h['cost']) if h['cost'] else 0,
+                    'photo_status': h['photo_status'],
+                    'result_image': h['result_image'],
+                    'created_at': h['created_at'].isoformat()
+                } for h in history])
+            }
+        
+        elif action == 'cleanup_logs':
+            # Build WHERE clause based on filters
+            filters = []
+            filter_values = []
+            
+            cleanup_type_filter = query_params.get('cleanup_type')
+            date_from = query_params.get('date_from')
+            date_to = query_params.get('date_to')
+            
+            if cleanup_type_filter:
+                filters.append("cleanup_type = %s")
+                filter_values.append(cleanup_type_filter)
+            
+            if date_from:
+                filters.append("created_at >= %s")
+                filter_values.append(date_from)
+            
+            if date_to:
+                filters.append("created_at <= %s")
+                filter_values.append(date_to)
+            
+            where_clause = " AND ".join(filters) if filters else "1=1"
+            
+            query = f"""
+                SELECT 
+                    id,
+                    cleanup_type,
+                    removed_from_history,
+                    removed_from_s3,
+                    total_checked,
+                    error_message,
+                    created_at
+                FROM cleanup_logs
+                WHERE {where_clause}
+                ORDER BY created_at DESC
+                LIMIT 100
+            """
+            
+            cursor.execute(query, filter_values)
+            logs = cursor.fetchall()
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps([{
+                    'id': str(log['id']),
+                    'cleanup_type': log['cleanup_type'],
+                    'removed_from_history': log['removed_from_history'],
+                    'removed_from_s3': log['removed_from_s3'],
+                    'total_checked': log['total_checked'],
+                    'error_message': log['error_message'],
+                    'created_at': log['created_at'].isoformat()
+                } for log in logs])
+            }
+        
         elif action == 'payments':
             status_filter = query_params.get('status')
             date_from = query_params.get('date_from')

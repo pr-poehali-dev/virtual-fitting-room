@@ -111,6 +111,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             updated_at = %s
                         WHERE id = %s
                     ''', (saved_url, datetime.utcnow(), task_id))
+                    
+                    # Save to history with model and cost info
+                    try:
+                        history_response = requests.post(
+                            'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd',
+                            headers={'X-User-Id': user_id},
+                            json={
+                                'person_image': person_image,
+                                'garments': garments,
+                                'result_image': saved_url,
+                                'model_used': 'replicate',
+                                'cost': 0
+                            },
+                            timeout=10
+                        )
+                        if history_response.status_code == 201:
+                            print(f'Saved to history: task {task_id}')
+                    except Exception as e:
+                        print(f'Failed to save to history: {e}')
                 
                 checked_count += 1
                 

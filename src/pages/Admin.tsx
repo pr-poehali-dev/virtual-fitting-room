@@ -57,6 +57,29 @@ interface Payment {
   updated_at: string;
 }
 
+interface GenerationHistory {
+  id: string;
+  user_id: string;
+  user_email: string;
+  user_name: string;
+  model_used: string;
+  saved_to_lookbook: boolean;
+  cost: number;
+  photo_status: 'in_history' | 'in_lookbook' | 'removed';
+  result_image: string;
+  created_at: string;
+}
+
+interface CleanupLog {
+  id: string;
+  cleanup_type: string;
+  removed_from_history: number;
+  removed_from_s3: number;
+  total_checked: number;
+  error_message: string | null;
+  created_at: string;
+}
+
 interface ClothingItem {
   id: string;
   image_url: string;
@@ -129,6 +152,18 @@ export default function Admin() {
   const [paymentDateFrom, setPaymentDateFrom] = useState<string>('');
   const [paymentDateTo, setPaymentDateTo] = useState<string>('');
 
+  const [generationHistory, setGenerationHistory] = useState<GenerationHistory[]>([]);
+  const [genUserFilter, setGenUserFilter] = useState<string>('all');
+  const [genModelFilter, setGenModelFilter] = useState<string>('all');
+  const [genSavedFilter, setGenSavedFilter] = useState<string>('all');
+  const [genDateFrom, setGenDateFrom] = useState<string>('');
+  const [genDateTo, setGenDateTo] = useState<string>('');
+
+  const [cleanupLogs, setCleanupLogs] = useState<CleanupLog[]>([]);
+  const [cleanupTypeFilter, setCleanupTypeFilter] = useState<string>('all');
+  const [cleanupDateFrom, setCleanupDateFrom] = useState<string>('');
+  const [cleanupDateTo, setCleanupDateTo] = useState<string>('');
+
   useEffect(() => {
     const adminAuth = sessionStorage.getItem('admin_auth');
     if (adminAuth) {
@@ -142,6 +177,18 @@ export default function Admin() {
       fetchCatalogData();
     }
   }, [selectedCatalogCategories, selectedCatalogColors, selectedCatalogArchetypes, selectedCatalogGender, isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchGenerationHistory();
+    }
+  }, [genUserFilter, genModelFilter, genSavedFilter, genDateFrom, genDateTo, isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchCleanupLogs();
+    }
+  }, [cleanupTypeFilter, cleanupDateFrom, cleanupDateTo, isAuthenticated]);
 
   const handleLogin = async () => {
     if (!password) {
@@ -267,6 +314,56 @@ export default function Admin() {
       handleLogout();
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchGenerationHistory = async () => {
+    const adminPassword = sessionStorage.getItem('admin_auth');
+    const params = new URLSearchParams({ action: 'generation_history' });
+    
+    if (genUserFilter && genUserFilter !== 'all') params.append('user_id', genUserFilter);
+    if (genModelFilter && genModelFilter !== 'all') params.append('model', genModelFilter);
+    if (genSavedFilter && genSavedFilter !== 'all') params.append('saved_to_lookbook', genSavedFilter);
+    if (genDateFrom) params.append('date_from', genDateFrom);
+    if (genDateTo) params.append('date_to', genDateTo);
+
+    try {
+      const response = await fetch(`${ADMIN_API}?${params.toString()}`, {
+        headers: { 'X-Admin-Password': adminPassword || '' }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setGenerationHistory(data);
+      } else {
+        toast.error('Ошибка загрузки истории генераций');
+      }
+    } catch (error) {
+      toast.error('Ошибка загрузки истории генераций');
+    }
+  };
+
+  const fetchCleanupLogs = async () => {
+    const adminPassword = sessionStorage.getItem('admin_auth');
+    const params = new URLSearchParams({ action: 'cleanup_logs' });
+    
+    if (cleanupTypeFilter && cleanupTypeFilter !== 'all') params.append('cleanup_type', cleanupTypeFilter);
+    if (cleanupDateFrom) params.append('date_from', cleanupDateFrom);
+    if (cleanupDateTo) params.append('date_to', cleanupDateTo);
+
+    try {
+      const response = await fetch(`${ADMIN_API}?${params.toString()}`, {
+        headers: { 'X-Admin-Password': adminPassword || '' }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCleanupLogs(data);
+      } else {
+        toast.error('Ошибка загрузки логов очистки');
+      }
+    } catch (error) {
+      toast.error('Ошибка загрузки логов очистки');
     }
   };
 
@@ -781,12 +878,14 @@ export default function Admin() {
               </div>
 
               <Tabs defaultValue="users" className="w-full">
-                <TabsList className="grid w-full md:w-auto grid-cols-5 mb-8">
+                <TabsList className="grid w-full md:w-auto grid-cols-7 mb-8">
                   <TabsTrigger value="users">Пользователи</TabsTrigger>
                   <TabsTrigger value="lookbooks">Лукбуки</TabsTrigger>
                   <TabsTrigger value="history">История</TabsTrigger>
                   <TabsTrigger value="payments">Платежи</TabsTrigger>
                   <TabsTrigger value="catalog">Каталог</TabsTrigger>
+                  <TabsTrigger value="generations">Генерации</TabsTrigger>
+                  <TabsTrigger value="cleanup">Очистка</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="users">
@@ -1528,6 +1627,264 @@ export default function Admin() {
                           <div className="text-center py-12 text-muted-foreground">
                             <Icon name="CreditCard" size={48} className="mx-auto mb-4 opacity-50" />
                             <p>Нет платежей по выбранным фильтрам</p>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="generations">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Icon name="Sparkles" size={24} />
+                        История генераций
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-6 flex flex-wrap gap-4">
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium">Пользователь:</label>
+                          <select
+                            className="border rounded-md px-3 py-2"
+                            value={genUserFilter}
+                            onChange={(e) => setGenUserFilter(e.target.value)}
+                          >
+                            <option value="all">Все</option>
+                            {users.map(u => (
+                              <option key={u.id} value={u.id}>{u.email}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium">Модель:</label>
+                          <select
+                            className="border rounded-md px-3 py-2"
+                            value={genModelFilter}
+                            onChange={(e) => setGenModelFilter(e.target.value)}
+                          >
+                            <option value="all">Все</option>
+                            <option value="replicate">Replicate</option>
+                            <option value="seedream">SeeDream</option>
+                            <option value="nanobananapro">NanoBanana</option>
+                          </select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium">Сохранено:</label>
+                          <select
+                            className="border rounded-md px-3 py-2"
+                            value={genSavedFilter}
+                            onChange={(e) => setGenSavedFilter(e.target.value)}
+                          >
+                            <option value="all">Все</option>
+                            <option value="true">Да</option>
+                            <option value="false">Нет</option>
+                          </select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium">С:</label>
+                          <Input
+                            type="date"
+                            value={genDateFrom}
+                            onChange={(e) => setGenDateFrom(e.target.value)}
+                            className="w-40"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium">До:</label>
+                          <Input
+                            type="date"
+                            value={genDateTo}
+                            onChange={(e) => setGenDateTo(e.target.value)}
+                            className="w-40"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        {generationHistory.length === 0 ? (
+                          <div className="text-center py-12 text-muted-foreground">
+                            <Icon name="Sparkles" size={48} className="mx-auto mb-4 opacity-50" />
+                            <p>Нет генераций</p>
+                          </div>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b">
+                                  <th className="text-left p-2">Пользователь</th>
+                                  <th className="text-left p-2">ID</th>
+                                  <th className="text-left p-2">Модель</th>
+                                  <th className="text-left p-2">В лукбуке</th>
+                                  <th className="text-left p-2">Статус фото</th>
+                                  <th className="text-left p-2">Стоимость</th>
+                                  <th className="text-left p-2">Дата</th>
+                                  <th className="text-left p-2">Превью</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {generationHistory.map(gen => (
+                                  <tr key={gen.id} className="border-b hover:bg-muted/50">
+                                    <td className="p-2">
+                                      <div>
+                                        <div className="font-medium text-xs">{gen.user_email}</div>
+                                        <div className="text-xs text-muted-foreground">{gen.user_name}</div>
+                                      </div>
+                                    </td>
+                                    <td className="p-2 text-xs font-mono">{gen.id.slice(0, 8)}...</td>
+                                    <td className="p-2">
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
+                                        {gen.model_used || 'unknown'}
+                                      </span>
+                                    </td>
+                                    <td className="p-2 text-center">
+                                      {gen.saved_to_lookbook ? (
+                                        <Icon name="Check" size={16} className="text-green-600 inline" />
+                                      ) : (
+                                        <Icon name="X" size={16} className="text-gray-400 inline" />
+                                      )}
+                                    </td>
+                                    <td className="p-2">
+                                      {gen.photo_status === 'in_lookbook' && (
+                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                                          В лукбуке
+                                        </span>
+                                      )}
+                                      {gen.photo_status === 'in_history' && (
+                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-700">
+                                          В истории
+                                        </span>
+                                      )}
+                                      {gen.photo_status === 'removed' && (
+                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">
+                                          Удалено
+                                        </span>
+                                      )}
+                                    </td>
+                                    <td className="p-2 text-xs">{gen.cost} ₽</td>
+                                    <td className="p-2 text-xs">
+                                      {new Date(gen.created_at).toLocaleDateString('ru-RU', {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </td>
+                                    <td className="p-2">
+                                      <img 
+                                        src={gen.result_image} 
+                                        alt="Result" 
+                                        className="w-12 h-12 object-cover rounded cursor-pointer hover:scale-150 transition-transform"
+                                        onClick={() => window.open(gen.result_image, '_blank')}
+                                      />
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="cleanup">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Icon name="Trash2" size={24} />
+                        Журнал очистки
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-6 flex flex-wrap gap-4">
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium">Тип:</label>
+                          <select
+                            className="border rounded-md px-3 py-2"
+                            value={cleanupTypeFilter}
+                            onChange={(e) => setCleanupTypeFilter(e.target.value)}
+                          >
+                            <option value="all">Все</option>
+                            <option value="auto_6months">Авто (6 месяцев)</option>
+                            <option value="manual">Ручная</option>
+                          </select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium">С:</label>
+                          <Input
+                            type="date"
+                            value={cleanupDateFrom}
+                            onChange={(e) => setCleanupDateFrom(e.target.value)}
+                            className="w-40"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium">До:</label>
+                          <Input
+                            type="date"
+                            value={cleanupDateTo}
+                            onChange={(e) => setCleanupDateTo(e.target.value)}
+                            className="w-40"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        {cleanupLogs.length === 0 ? (
+                          <div className="text-center py-12 text-muted-foreground">
+                            <Icon name="Trash2" size={48} className="mx-auto mb-4 opacity-50" />
+                            <p>Нет записей очистки</p>
+                          </div>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b">
+                                  <th className="text-left p-2">Дата</th>
+                                  <th className="text-left p-2">Тип</th>
+                                  <th className="text-right p-2">Проверено</th>
+                                  <th className="text-right p-2">Из истории</th>
+                                  <th className="text-right p-2">Из S3</th>
+                                  <th className="text-left p-2">Ошибка</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {cleanupLogs.map(log => (
+                                  <tr key={log.id} className="border-b hover:bg-muted/50">
+                                    <td className="p-2 text-xs">
+                                      {new Date(log.created_at).toLocaleDateString('ru-RU', {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </td>
+                                    <td className="p-2">
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-700">
+                                        {log.cleanup_type === 'auto_6months' ? 'Авто (6 мес)' : log.cleanup_type}
+                                      </span>
+                                    </td>
+                                    <td className="p-2 text-right font-medium">{log.total_checked}</td>
+                                    <td className="p-2 text-right text-red-600 font-medium">{log.removed_from_history}</td>
+                                    <td className="p-2 text-right text-red-600 font-medium">{log.removed_from_s3}</td>
+                                    <td className="p-2 text-xs text-red-600">
+                                      {log.error_message ? (
+                                        <span title={log.error_message}>
+                                          {log.error_message.slice(0, 50)}{log.error_message.length > 50 ? '...' : ''}
+                                        </span>
+                                      ) : (
+                                        <span className="text-green-600">✓ Успешно</span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
                         )}
                       </div>

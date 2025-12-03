@@ -237,6 +237,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             )
             
             lookbook = cursor.fetchone()
+            
+            # Mark photos as saved to lookbook in history
+            for photo_url in saved_photos:
+                try:
+                    cursor.execute(
+                        f"UPDATE try_on_history SET saved_to_lookbook = true WHERE user_id = '{user_id}' AND result_image = '{photo_url.replace(chr(39), chr(39)+chr(39))}'"
+                    )
+                except Exception as e:
+                    print(f'Failed to update history for photo {photo_url}: {e}')
+            
             conn.commit()
             
             return {
@@ -366,6 +376,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 """,
                 (name, person_name, saved_photos, color_palette, is_public, share_token, lookbook_id, user_id)
             )
+            
+            # Mark new photos as saved to lookbook in history
+            if saved_photos:
+                for photo_url in saved_photos:
+                    if photo_url not in old_photos:
+                        try:
+                            cursor.execute(
+                                f"UPDATE try_on_history SET saved_to_lookbook = true WHERE user_id = '{user_id}' AND result_image = '{photo_url.replace(chr(39), chr(39)+chr(39))}'"
+                            )
+                        except Exception as e:
+                            print(f'Failed to update history for photo {photo_url}: {e}')
             
             # Check if removed photos should be deleted from S3
             # Delete from S3 if photo is NOT in history AND NOT in any other lookbook

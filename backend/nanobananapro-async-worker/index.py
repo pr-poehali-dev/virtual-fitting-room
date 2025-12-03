@@ -286,6 +286,34 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     ''', (saved_url, datetime.utcnow(), task_id))
                     conn.commit()
                     print(f'[NanoBanana] Task {task_id} saved to DB as completed')
+                    
+                    # Save to history with model and cost info
+                    try:
+                        # Get task details for history
+                        cursor.execute('''
+                            SELECT person_image, garments FROM nanobananapro_tasks WHERE id = %s
+                        ''', (task_id,))
+                        task_data = cursor.fetchone()
+                        
+                        if task_data:
+                            garments_list = json.loads(task_data[1]) if isinstance(task_data[1], str) else task_data[1]
+                            
+                            history_response = requests.post(
+                                'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd',
+                                headers={'X-User-Id': user_id},
+                                json={
+                                    'person_image': task_data[0],
+                                    'garments': garments_list,
+                                    'result_image': saved_url,
+                                    'model_used': 'nanobananapro',
+                                    'cost': 0
+                                },
+                                timeout=10
+                            )
+                            if history_response.status_code == 201:
+                                print(f'[NanoBanana] Saved to history: task {task_id}')
+                    except Exception as e:
+                        print(f'[NanoBanana] Failed to save to history: {e}')
                 
                 elif task_status in ['FAILED', 'EXPIRED']:
                     error_raw = status_data.get('error', 'Generation failed')

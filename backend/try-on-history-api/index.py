@@ -71,7 +71,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'person_image': h['person_image'],
                     'garment_image': h['garment_image'],
                     'result_image': h['result_image'],
-                    'created_at': h['created_at'].isoformat()
+                    'created_at': h['created_at'].isoformat(),
+                    'model_used': h.get('model_used'),
+                    'saved_to_lookbook': h.get('saved_to_lookbook', False),
+                    'cost': float(h.get('cost', 0))
                 } for h in history])
             }
         
@@ -82,6 +85,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             person_image = body_data.get('person_image')
             garments = body_data.get('garments')
             result_image = body_data.get('result_image')
+            model_used = body_data.get('model_used', 'unknown')
+            cost = body_data.get('cost', 0)
             
             if not person_image or not result_image:
                 return {
@@ -96,6 +101,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             person_image_escaped = person_image.replace("'", "''")
             result_image_escaped = result_image.replace("'", "''")
+            model_used_escaped = model_used.replace("'", "''")
             
             if garments and isinstance(garments, list):
                 garments_json = json.dumps(garments).replace("'", "''")
@@ -108,9 +114,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             cursor.execute(
                 f"""
-                INSERT INTO try_on_history (person_image, garment_image, result_image, user_id, garments)
-                VALUES ('{person_image_escaped}', '{garment_image_escaped}', '{result_image_escaped}', '{user_id}', '{garments_json}')
-                RETURNING id, person_image, garment_image, result_image, created_at
+                INSERT INTO try_on_history (person_image, garment_image, result_image, user_id, garments, model_used, cost, saved_to_lookbook)
+                VALUES ('{person_image_escaped}', '{garment_image_escaped}', '{result_image_escaped}', '{user_id}', '{garments_json}', '{model_used_escaped}', {cost}, false)
+                RETURNING id, person_image, garment_image, result_image, created_at, model_used, cost, saved_to_lookbook
                 """
             )
             
@@ -129,7 +135,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'person_image': history_item['person_image'],
                     'garment_image': history_item['garment_image'],
                     'result_image': history_item['result_image'],
-                    'created_at': history_item['created_at'].isoformat()
+                    'created_at': history_item['created_at'].isoformat(),
+                    'model_used': history_item.get('model_used'),
+                    'cost': float(history_item.get('cost', 0)),
+                    'saved_to_lookbook': history_item.get('saved_to_lookbook', False)
                 })
             }
         

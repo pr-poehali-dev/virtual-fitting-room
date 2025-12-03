@@ -110,6 +110,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     print(f'Failed to delete from S3: {e}')
         
         conn.commit()
+        
+        # Log cleanup results to cleanup_logs table
+        try:
+            cursor.execute(
+                """
+                INSERT INTO cleanup_logs (cleanup_type, removed_from_history, removed_from_s3, total_checked)
+                VALUES ('auto_6months', %s, %s, %s)
+                """,
+                (deleted_count, s3_deleted_count, len(old_items))
+            )
+            conn.commit()
+            print(f'Cleanup log saved: {deleted_count} history, {s3_deleted_count} S3, {len(old_items)} checked')
+        except Exception as e:
+            print(f'Failed to save cleanup log: {e}')
+        
         cursor.close()
         conn.close()
         
@@ -122,12 +137,29 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False,
             'body': json.dumps({
                 'message': f'Cleaned up {deleted_count} old history items',
-                'deleted_from_history': deleted_count,
-                'deleted_from_s3': s3_deleted_count
+                'removed_from_history': deleted_count,
+                'removed_from_s3': s3_deleted_count,
+                'total_checked': len(old_items)
             })
         }
         
     except Exception as e:
+        error_msg = f'Cleanup failed: {str(e)}'
+        print(error_msg)
+        
+        # Log failed cleanup
+        try:
+            cursor.execute(
+                """
+                INSERT INTO cleanup_logs (cleanup_type, removed_from_history, removed_from_s3, total_checked, error_message)
+                VALUES ('auto_6months', 0, 0, 0, %s)
+                """,
+                (str(e),)
+            )
+            conn.commit()
+        except:
+            pass
+        
         conn.rollback()
         cursor.close()
         conn.close()
@@ -138,5 +170,5 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'isBase64Encoded': False,
-            'body': json.dumps({'error': f'Cleanup failed: {str(e)}'})
+            'body': json.dumps({'error': error_msg})
         }
