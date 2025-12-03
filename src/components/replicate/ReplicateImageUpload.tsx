@@ -28,8 +28,11 @@ export default function ReplicateImageUpload({
     <div>
       <Label className="text-lg font-semibold mb-4 block">
         <Icon name="User" className="inline mr-2" size={20} />
-        1. Загрузите фото модели
+        1. Загрузите фото человека
       </Label>
+      <p className="text-sm text-muted-foreground mb-3">
+        Фото человека, на которого хотите примерить одежду
+      </p>
       <div className="relative">
         <input
           ref={fileInputRef}
@@ -61,8 +64,11 @@ export default function ReplicateImageUpload({
           ) : (
             <>
               <Icon name="Upload" size={48} className="text-gray-400 mb-4" />
-              <p className="text-sm text-gray-600 text-center">
+              <p className="text-sm text-gray-600 text-center font-medium">
                 Нажмите для загрузки фото
+              </p>
+              <p className="text-xs text-gray-500 text-center mt-2">
+                Человек в полный рост на светлом фоне
               </p>
             </>
           )}

@@ -1411,9 +1411,9 @@ export default function ReplicateTryOn() {
                 <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
                   <Icon name="Upload" className="text-purple-600" size={32} />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">1. Загрузите фото</h3>
+                <h3 className="text-xl font-semibold mb-2">1. Загрузите фото человека</h3>
                 <p className="text-muted-foreground">
-                  Выберите фотографию человека в полный рост
+                  На которого хотите примерить одежду в полный рост
                 </p>
               </div>
               <div className="text-center">
