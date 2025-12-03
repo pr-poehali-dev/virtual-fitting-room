@@ -34,14 +34,39 @@ def save_photo_to_s3(photo_url: str, user_id: str, cursor, s3_enabled: bool, s3_
         return photo_url
     
     # Get model_used from history to determine prefix
+    # Try to find by exact URL match first
+    model_used = 'replicate'  # default
     try:
         cursor.execute(
             f"SELECT model_used FROM try_on_history WHERE user_id = '{user_id}' AND result_image = '{photo_url.replace(chr(39), chr(39)+chr(39))}' LIMIT 1"
         )
         history_row = cursor.fetchone()
-        model_used = history_row['model_used'] if history_row else 'replicate'
+        if history_row and history_row.get('model_used'):
+            model_used = history_row['model_used']
+            print(f'Found model in history by exact URL: {model_used}')
+        else:
+            # If not found by exact URL, try to detect from URL pattern
+            if 'replicate' in photo_url.lower() or 'pbxt.replicate.delivery' in photo_url:
+                model_used = 'replicate'
+                print(f'Detected replicate from URL')
+            elif 'fal.media' in photo_url or 'seedream' in photo_url.lower():
+                # Need to distinguish between seedream and nanobananapro
+                # Check if URL contains specific patterns or check recent history
+                cursor.execute(
+                    f"SELECT model_used FROM try_on_history WHERE user_id = '{user_id}' AND model_used IN ('seedream', 'nanobananapro') ORDER BY created_at DESC LIMIT 1"
+                )
+                recent_row = cursor.fetchone()
+                if recent_row and recent_row.get('model_used'):
+                    model_used = recent_row['model_used']
+                    print(f'Using recent FAL model: {model_used}')
+                else:
+                    model_used = 'seedream'  # default FAL model
+                    print(f'Defaulting to seedream for FAL URL')
+            else:
+                print(f'Could not detect model, using default: {model_used}')
+        
         prefix = get_fitting_prefix(model_used)
-        print(f'Photo model: {model_used}, prefix: {prefix}')
+        print(f'Using prefix: {prefix} for model: {model_used}')
     except Exception as e:
         print(f'Failed to get model from history: {e}, using default prefix')
         prefix = '1fitting'
@@ -63,7 +88,7 @@ def save_photo_to_s3(photo_url: str, user_id: str, cursor, s3_enabled: bool, s3_
             if save_response.status_code == 200:
                 save_data = save_response.json()
                 new_url = save_data.get('url', photo_url)
-                print(f'Saved to S3: {new_url}')
+                print(f'Saved to S3 with prefix {prefix}: {new_url}')
                 return new_url
             else:
                 print(f'S3 save failed with status {save_response.status_code}')
