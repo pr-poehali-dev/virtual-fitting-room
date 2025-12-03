@@ -55,7 +55,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if method == 'GET':
             print(f'[HistoryAPI] GET request for user {user_id}')
             cursor.execute(
-                f"SELECT * FROM try_on_history WHERE user_id = '{user_id}' ORDER BY created_at DESC LIMIT 50"
+                f"SELECT id, result_image, created_at, model_used, saved_to_lookbook, cost FROM try_on_history WHERE user_id = '{user_id}' ORDER BY created_at DESC LIMIT 50"
             )
             history = cursor.fetchall()
             print(f'[HistoryAPI] Found {len(history)} records')
@@ -65,8 +65,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 try:
                     item = {
                         'id': str(h['id']),
-                        'person_image': h['person_image'],
-                        'garment_image': h['garment_image'],
                         'result_image': h['result_image'],
                         'created_at': h['created_at'].isoformat(),
                         'model_used': h.get('model_used'),

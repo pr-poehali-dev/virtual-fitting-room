@@ -9,10 +9,11 @@ import { toast } from 'sonner';
 
 interface HistoryItem {
   id: string;
-  person_image: string;
-  garment_image: string;
   result_image: string;
   created_at: string;
+  model_used?: string;
+  saved_to_lookbook?: boolean;
+  cost?: number;
 }
 
 interface Lookbook {
