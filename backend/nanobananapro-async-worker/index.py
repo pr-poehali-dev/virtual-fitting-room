@@ -211,7 +211,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     conn.commit()
         
         cursor.execute('''
-            SELECT id, fal_response_url
+            SELECT id, fal_response_url, first_result_at
             FROM nanobananapro_tasks
             WHERE status = 'processing' AND fal_response_url IS NOT NULL
             ORDER BY created_at ASC
@@ -220,7 +220,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         processing_rows = cursor.fetchall()
         
-        for task_id, response_url in processing_rows:
+        for task_id, response_url, first_result_at in processing_rows:
             try:
                 status_data = check_fal_status(response_url)
                 
@@ -236,6 +236,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             result_url = status_data['image']
                     else:
                         raise Exception('No image in response')
+                    
+                    now = datetime.utcnow()
+                    
+                    if not first_result_at:
+                        print(f'[NanoBananaPro] Task {task_id} got first result, waiting 10s for final version')
+                        cursor.execute('''
+                            UPDATE nanobananapro_tasks
+                            SET first_result_at = %s,
+                                updated_at = %s
+                            WHERE id = %s
+                        ''', (now, now, task_id))
+                        conn.commit()
+                        continue
+                    
+                    time_since_first = (now - first_result_at).total_seconds()
+                    
+                    if time_since_first < 10:
+                        print(f'[NanoBananaPro] Task {task_id} waiting for final version ({time_since_first:.1f}s / 10s)')
+                        continue
                     
                     print(f'[NanoBananaPro] Task {task_id} completed! Result URL: {result_url}')
                     cursor.execute('''
