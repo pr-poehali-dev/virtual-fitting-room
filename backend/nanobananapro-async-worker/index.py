@@ -41,28 +41,7 @@ def translate_to_english(text: str) -> str:
 def build_prompt(garments: list, custom_prompt: str) -> str:
     '''Build clear prompt for NanoBanana with category-based specifications'''
     
-    base_prompt = "Create ONE photo where the model from image 1 is wearing clothes from image 2. Image 1 = person model. "
-    
-    if len(garments) == 1:
-        category = garments[0].get('category', 'dresses')
-        if category == 'upper_body':
-            base_prompt += "Image 2 has upper_body clothes (top/shirt/jacket/sweater). PUT THIS TOP from image 2 onto the person from image 1. Keep the bottom clothing unchanged. "
-        elif category == 'lower_body':
-            base_prompt += "Image 2 has lower_body clothes (pants/skirt/shorts). PUT THIS BOTTOM from image 2 onto the person from image 1. Keep the top clothing unchanged. "
-        else:
-            base_prompt += "Image 2 has dresses clothes (full-body garment: dress/jumpsuit/bodysuit/romper). PUT THIS FULL-BODY GARMENT from image 2 onto the person from image 1 - replace ALL clothing with this garment. "
-    else:
-        for i, garment in enumerate(garments):
-            img_num = i + 2
-            category = garment.get('category', 'dresses')
-            if category == 'upper_body':
-                base_prompt += f"Image {img_num} has upper_body clothes. PUT the top from image {img_num} onto the person from image 1. "
-            elif category == 'lower_body':
-                base_prompt += f"Image {img_num} has lower_body clothes. PUT the bottom from image {img_num} onto the person from image 1. "
-            else:
-                base_prompt += f"Image {img_num} has dresses clothes (full-body garment). PUT this full-body garment from image {img_num} onto the person from image 1. "
-    
-    base_prompt += "CRITICAL RULES: Use ONLY the CLOTHING from image 2 (or 3). Do NOT use the face, body, pose, or background from image 2 (or 3). Keep the EXACT face, body shape, pose, and background from image 1. Change ONLY the clothing. "
+    base_prompt = "Create ONE photograph where the model from Image 1 is wearing the outfit from Image 2. Image 1 = the human model. Image 2 is the outfit. PUT THESE CLOTHES from Image 2 on the model from Image 1, replacing ALL the clothes with these clothes. IMPORTANT RULES: Use ONLY the CLOTHES from Image 2 (or 3). DO NOT use the face, body, pose, or background from Image 2 (or 3). Keep the EXACT face, body shape, pose, and background from Image 1. Change ONLY the clothes. "
     
     if custom_prompt:
         translated_prompt = translate_to_english(custom_prompt)
