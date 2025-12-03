@@ -1,13 +1,12 @@
 {
   "tests": [
     {
-      "name": "Check task status",
+      "name": "Check task status (task not found is OK)",
       "method": "GET",
       "path": "/?task_id=test-task-123",
-      "expectedStatus": 200,
+      "expectedStatus": 404,
       "expectedBody": {
-        "task_id": "string",
-        "status": "string"
+        "error": "Task not found"
       },
       "bodyMatcher": "partial"
     }

@@ -4,6 +4,7 @@ import psycopg2
 from typing import Dict, Any, Optional
 import requests
 from datetime import datetime
+from googletrans import Translator
 
 def normalize_image_format(image: str) -> str:
     '''Convert image to data URI format if needed'''
@@ -14,6 +15,28 @@ def normalize_image_format(image: str) -> str:
         return image
     
     return f'data:image/jpeg;base64,{image}'
+
+def translate_to_english(text: str) -> str:
+    '''Translate Russian text to English'''
+    if not text or not text.strip():
+        return text
+    
+    try:
+        translator = Translator()
+        detected = translator.detect(text)
+        
+        if detected.lang == 'ru':
+            print(f'[Translate] Detected Russian, translating: {text}')
+            translated = translator.translate(text, src='ru', dest='en')
+            result = translated.text
+            print(f'[Translate] Translated to: {result}')
+            return result
+        else:
+            print(f'[Translate] Detected {detected.lang}, keeping original')
+            return text
+    except Exception as e:
+        print(f'[Translate] Error: {e}, keeping original text')
+        return text
 
 def build_prompt(garments: list, custom_prompt: str) -> str:
     '''Build detailed prompt for NanoBananaPro with category instructions'''
@@ -41,7 +64,8 @@ def build_prompt(garments: list, custom_prompt: str) -> str:
     base_prompt += "CRITICAL: Keep EXACT SAME FACE, hairstyle, skin color, body shape, pose, background from image 1. Change ONLY clothing items! "
     
     if custom_prompt:
-        base_prompt += f"Additional: {custom_prompt}"
+        translated_prompt = translate_to_english(custom_prompt)
+        base_prompt += f"Additional: {translated_prompt}"
     
     return base_prompt
 

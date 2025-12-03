@@ -589,7 +589,7 @@ export default function ReplicateTryOn() {
     const interval = setInterval(async () => {
       try {
         checkCount++;
-        const forceCheck = checkCount % 3 === 0;
+        const forceCheck = checkCount % 2 === 0;
         
         const elapsedTime = Date.now() - startTime;
         if (elapsedTime > TIMEOUT_MS) {
