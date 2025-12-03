@@ -95,23 +95,30 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     ''', (output_url, datetime.utcnow(), task_id))
                     
                     # Save to history with model and cost info
+                    print(f'[Replicate] Attempting to save task {task_id} to history for user {user_id}')
                     try:
+                        history_payload = {
+                            'person_image': person_image,
+                            'garments': garments,
+                            'result_image': output_url,
+                            'model_used': 'replicate',
+                            'cost': 0
+                        }
+                        print(f'[Replicate] History payload: model_used={history_payload["model_used"]}, result_url={output_url[:50]}...')
+                        
                         history_response = requests.post(
                             'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd',
                             headers={'X-User-Id': user_id},
-                            json={
-                                'person_image': person_image,
-                                'garments': garments,
-                                'result_image': output_url,
-                                'model_used': 'replicate',
-                                'cost': 0
-                            },
+                            json=history_payload,
                             timeout=10
                         )
+                        print(f'[Replicate] History API response: status={history_response.status_code}, body={history_response.text[:200]}')
                         if history_response.status_code == 201:
-                            print(f'Saved to history: task {task_id}')
+                            print(f'[Replicate] ✓ Successfully saved to history: task {task_id}')
+                        else:
+                            print(f'[Replicate] ✗ History API returned non-201: {history_response.status_code}')
                     except Exception as e:
-                        print(f'Failed to save to history: {e}')
+                        print(f'[Replicate] ✗ Failed to save to history: {type(e).__name__}: {str(e)}')
                 
                 checked_count += 1
                 
