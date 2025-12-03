@@ -1068,7 +1068,7 @@ export default function ReplicateTryOn() {
     setSelectedClothingItems([]);
     setGeneratedImage(null);
     setIntermediateResult(null);
-
+    setCustomPrompt('');
     setTaskId(null);
     setIsGenerating(false);
     setWaitingContinue(false);
