@@ -1296,7 +1296,7 @@ export default function ReplicateTryOn() {
                       <div className="p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
                         <p className="text-sm text-green-900 dark:text-green-100">
                           <Icon name="Info" className="inline mr-1" size={14} />
-                          Примерочная 3 использует модель NanoBananaPro для высококачественных результатов
+                          В Примерочной 3 можно изменять фон и добавлять дополнительные пожелания
                         </p>
                       </div>
                     )}
