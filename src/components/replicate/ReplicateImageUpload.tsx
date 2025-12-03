@@ -31,7 +31,7 @@ export default function ReplicateImageUpload({
         1. Загрузите фото человека
       </Label>
       <p className="text-sm text-muted-foreground mb-3">
-        Фото человека, на которого хотите примерить одежду
+        На которого хотите примерить одежду
       </p>
       <div className="relative">
         <input
