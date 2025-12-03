@@ -88,6 +88,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             model_used = body_data.get('model_used', 'unknown')
             cost = body_data.get('cost', 0)
             
+            # Debug logging - log every POST request
+            try:
+                result_preview = result_image[:60] if result_image else ''
+                result_preview_escaped = result_preview.replace("'", "''")
+                model_used_log = model_used.replace("'", "''")
+                raw_body_escaped = body_str[:500].replace("'", "''")
+                
+                cursor.execute(
+                    f"""INSERT INTO history_api_debug_log (user_id, model_used, result_image_preview, raw_body) 
+                    VALUES ('{user_id}', '{model_used_log}', '{result_preview_escaped}', '{raw_body_escaped}')"""
+                )
+                conn.commit()
+            except Exception as log_error:
+                pass  # Don't fail if logging fails
+            
             if not person_image or not result_image:
                 return {
                     'statusCode': 400,
