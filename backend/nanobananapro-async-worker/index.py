@@ -39,31 +39,30 @@ def translate_to_english(text: str) -> str:
         return text
 
 def build_prompt(garments: list, custom_prompt: str) -> str:
-    '''Build clear prompt for NanoBanana with category-based specifications (same as SeeDream)'''
+    '''Build clear prompt for NanoBanana with category-based specifications'''
     
     base_prompt = "Image 1 = person model. "
     
     if len(garments) == 1:
         category = garments[0].get('category', 'dresses')
         if category == 'upper_body':
-            base_prompt += "Image 2 has upper_body clothing. Take ONLY the top (blouse/shirt/jacket/sweater) from image 2. Do NOT change bottom clothing on person. "
+            base_prompt += "Image 2 shows upper body clothing (top/shirt/jacket/sweater). PUT THIS TOP from image 2 onto the person. Keep the bottom clothing unchanged. "
         elif category == 'lower_body':
-            base_prompt += "Image 2 has lower_body clothing. Take ONLY the bottom (pants/skirt/shorts) from image 2. Do NOT change top clothing on person. "
+            base_prompt += "Image 2 shows lower body clothing (pants/skirt/shorts). PUT THIS BOTTOM from image 2 onto the person. Keep the top clothing unchanged. "
         else:
-            base_prompt += "Image 2 has full outfit/dress. Take the complete outfit from image 2. "
+            base_prompt += "Image 2 shows a DRESS (full-body garment). PUT THIS DRESS from image 2 onto the person - replace ALL clothing with this dress. "
     else:
         for i, garment in enumerate(garments):
             img_num = i + 2
             category = garment.get('category', 'dresses')
             if category == 'upper_body':
-                base_prompt += f"Image {img_num} has upper_body clothing - take ONLY the top (blouse/shirt/jacket/sweater) from image {img_num}. "
+                base_prompt += f"Image {img_num} shows upper body clothing. PUT the top from image {img_num} onto the person. "
             elif category == 'lower_body':
-                base_prompt += f"Image {img_num} has lower_body clothing - take ONLY the bottom (pants/skirt/shorts) from image {img_num}. "
+                base_prompt += f"Image {img_num} shows lower body clothing. PUT the bottom from image {img_num} onto the person. "
             else:
-                base_prompt += f"Image {img_num} has full outfit - take complete outfit from image {img_num}. "
+                base_prompt += f"Image {img_num} shows a dress. PUT this dress from image {img_num} onto the person. "
     
-    base_prompt += "CRITICAL: On image 1 (person) keep EVERYTHING - EXACT SAME FACE, exact hairstyle, exact skin color, exact body shape, height, body proportions, shoulders width, waist size, hips size, leg length, exact pose, exact background, exact lighting. Change ONLY clothing items! "
-    base_prompt += "STRICT RULE: NEVER EVER take face/body/pose/background from clothing images (2 or 3). Those images show ONLY clothing items on mannequins or models - ignore their faces and bodies completely! Use ONLY clothing items from those images. The person's face and body from image 1 must remain 100% identical. "
+    base_prompt += "IMPORTANT: Keep person's FACE, body shape, pose, and background identical to image 1. Only change the clothing. "
     
     if custom_prompt:
         translated_prompt = translate_to_english(custom_prompt)
