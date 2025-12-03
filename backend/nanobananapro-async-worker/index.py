@@ -15,7 +15,37 @@ def normalize_image_format(image: str) -> str:
     
     return f'data:image/jpeg;base64,{image}'
 
-def submit_to_fal_queue(person_image: str, garments: list, prompt: str) -> tuple:
+def build_prompt(garments: list, custom_prompt: str) -> str:
+    '''Build detailed prompt for NanoBananaPro with category instructions'''
+    base_prompt = "Image 1 = person model. "
+    
+    if len(garments) == 1:
+        category = garments[0].get('category', 'dresses')
+        if category == 'upper_body':
+            base_prompt += "Image 2 has upper_body clothing. Take ONLY the top (blouse/shirt/jacket/sweater) from image 2. Do NOT change bottom clothing on person. "
+        elif category == 'lower_body':
+            base_prompt += "Image 2 has lower_body clothing. Take ONLY the bottom (pants/skirt/shorts) from image 2. Do NOT change top clothing on person. "
+        else:
+            base_prompt += "Image 2 has full outfit/dress. Take the complete outfit from image 2. "
+    else:
+        for i, garment in enumerate(garments):
+            img_num = i + 2
+            category = garment.get('category', 'dresses')
+            if category == 'upper_body':
+                base_prompt += f"Image {img_num} has upper_body clothing - take ONLY the top from image {img_num}. "
+            elif category == 'lower_body':
+                base_prompt += f"Image {img_num} has lower_body clothing - take ONLY the bottom from image {img_num}. "
+            else:
+                base_prompt += f"Image {img_num} has full outfit from image {img_num}. "
+    
+    base_prompt += "CRITICAL: Keep EXACT SAME FACE, hairstyle, skin color, body shape, pose, background from image 1. Change ONLY clothing items! "
+    
+    if custom_prompt:
+        base_prompt += f"Additional: {custom_prompt}"
+    
+    return base_prompt
+
+def submit_to_fal_queue(person_image: str, garments: list, custom_prompt: str) -> tuple:
     '''Submit task to fal.ai nano-banana-pro queue and return (request_id, response_url)'''
     fal_api_key = os.environ.get('FAL_API_KEY')
     if not fal_api_key:
@@ -24,15 +54,19 @@ def submit_to_fal_queue(person_image: str, garments: list, prompt: str) -> tuple
     person_data = normalize_image_format(person_image)
     garment_data = [normalize_image_format(g['image']) for g in garments]
     
+    prompt = build_prompt(garments, custom_prompt)
+    print(f'[NanoBananaPro] Final prompt: {prompt}')
+    
     headers = {
         'Authorization': f'Key {fal_api_key}',
         'Content-Type': 'application/json'
     }
     
+    image_urls = [person_data] + garment_data
+    
     payload = {
-        'person_image_url': person_data,
-        'garment_image_url': garment_data[0] if len(garment_data) == 1 else garment_data,
-        'prompt': prompt if prompt else 'High quality virtual try-on result',
+        'image_urls': image_urls,
+        'prompt': prompt,
         'num_inference_steps': 50,
         'guidance_scale': 7.5,
         'output_format': 'png'
@@ -127,6 +161,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if not fal_request_id:
                 try:
                     request_id, response_url = submit_to_fal_queue(person_image, garments, prompt_hints or '')
+                    print(f'[NanoBananaPro] Task {task_id} submitted to fal.ai: request_id={request_id}')
                     
                     cursor.execute('''
                         UPDATE nanobananapro_tasks
@@ -137,8 +172,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         WHERE id = %s
                     ''', (request_id, response_url, datetime.utcnow(), task_id))
                     conn.commit()
-                    
-                    print(f'[NanoBananaPro] Task {task_id} submitted to fal.ai: request_id={request_id}')
                     
                 except Exception as e:
                     error_msg = str(e)
@@ -165,31 +198,37 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         for task_id, response_url in processing_rows:
             try:
-                result = check_fal_status(response_url)
+                status_data = check_fal_status(response_url)
                 
-                if result.get('status') == 'COMPLETED':
-                    images = result.get('images', [])
-                    if images and len(images) > 0:
-                        result_url = images[0].get('url')
-                        if result_url:
-                            cursor.execute('''
-                                UPDATE nanobananapro_tasks
-                                SET status = 'completed',
-                                    result_url = %s,
-                                    updated_at = %s
-                                WHERE id = %s
-                            ''', (result_url, datetime.utcnow(), task_id))
-                            conn.commit()
-                            print(f'[NanoBananaPro] Task {task_id} completed: {result_url}')
+                task_status = status_data.get('status', status_data.get('state', 'UNKNOWN'))
+                
+                if task_status == 'COMPLETED' or 'images' in status_data or 'image' in status_data:
+                    if 'images' in status_data and len(status_data['images']) > 0:
+                        result_url = status_data['images'][0]['url']
+                    elif 'image' in status_data:
+                        if isinstance(status_data['image'], dict):
+                            result_url = status_data['image']['url']
                         else:
-                            raise Exception('No result URL in completed response')
+                            result_url = status_data['image']
                     else:
-                        raise Exception('No images in completed response')
-                
-                elif result.get('status') == 'FAILED':
-                    error = result.get('error', {})
-                    error_msg = error.get('message', 'Unknown error')
+                        raise Exception('No image in response')
                     
+                    print(f'[NanoBananaPro] Task {task_id} completed! Result URL: {result_url}')
+                    cursor.execute('''
+                        UPDATE nanobananapro_tasks
+                        SET status = 'completed',
+                            result_url = %s,
+                            updated_at = %s
+                        WHERE id = %s
+                    ''', (result_url, datetime.utcnow(), task_id))
+                    conn.commit()
+                    print(f'[NanoBananaPro] Task {task_id} saved to DB as completed')
+                
+                elif task_status in ['FAILED', 'EXPIRED']:
+                    error_raw = status_data.get('error', 'Generation failed')
+                    error_msg = f'Ошибка генерации: {str(error_raw)[:100]}'
+                    
+                    print(f'[NanoBananaPro] Task {task_id} failed: {error_raw}')
                     cursor.execute('''
                         UPDATE nanobananapro_tasks
                         SET status = 'failed',
@@ -198,13 +237,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         WHERE id = %s
                     ''', (error_msg, datetime.utcnow(), task_id))
                     conn.commit()
-                    print(f'[NanoBananaPro] Task {task_id} failed: {error_msg}')
                 
                 else:
-                    print(f'[NanoBananaPro] Task {task_id} still processing, status={result.get("status")}')
+                    print(f'[NanoBananaPro] Task {task_id} still processing, status={task_status}')
             
             except Exception as e:
-                print(f'[NanoBananaPro] Error checking task {task_id}: {str(e)}')
+                error_str = str(e)
+                if 'still in progress' in error_str.lower():
+                    print(f'[NanoBananaPro] Task {task_id} still processing (in progress)')
+                else:
+                    print(f'[NanoBananaPro] Error checking task {task_id}: {error_str}')
         
         cursor.close()
         conn.close()
