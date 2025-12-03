@@ -73,7 +73,7 @@ def submit_to_fal_queue(person_image: str, garments: list, custom_prompt: str) -
     }
     
     response = requests.post(
-        'https://queue.fal.run/fal-ai/nano-banana-pro',
+        'https://queue.fal.run/fal-ai/nano-banana-pro/edit',
         headers=headers,
         json=payload,
         timeout=30
