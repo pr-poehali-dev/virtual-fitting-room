@@ -48,6 +48,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     image_url = body_data.get('image_url')
     folder = body_data.get('folder', 'catalog')
     user_id = body_data.get('user_id', 'guest')
+    prefix = body_data.get('prefix', '')
     
     if not image_url:
         return {
@@ -99,9 +100,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     # For lookbooks folder, use user_id subfolder structure
     if folder == 'lookbooks':
-        filename = f'{user_id}/{timestamp}_{user_id}_{unique_id}{file_ext}'
+        if prefix:
+            filename = f'{user_id}/{prefix}_{timestamp}_{user_id}_{unique_id}{file_ext}'
+        else:
+            filename = f'{user_id}/{timestamp}_{user_id}_{unique_id}{file_ext}'
     else:
-        filename = f'{timestamp}_{user_id}_{unique_id}{file_ext}'
+        if prefix:
+            filename = f'{prefix}_{timestamp}_{user_id}_{unique_id}{file_ext}'
+        else:
+            filename = f'{timestamp}_{user_id}_{unique_id}{file_ext}'
     
     # Download image
     if image_url.startswith('data:'):

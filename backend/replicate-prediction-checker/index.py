@@ -73,15 +73,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if prediction.status == 'succeeded':
                 output_url = prediction.output if isinstance(prediction.output, str) else str(prediction.output)
                 
-                # Save to FTP with user_id subfolder
+                # Save to FTP with user_id subfolder and fitting room number
                 saved_url = output_url
                 try:
+                    fitting_room_number = '1fitting' if current_step == 0 else f'{current_step + 1}fitting'
                     save_response = requests.post(
                         'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',
                         json={
                             'image_url': output_url,
                             'folder': 'lookbooks',
-                            'user_id': user_id
+                            'user_id': user_id,
+                            'prefix': fitting_room_number
                         },
                         timeout=30
                     )

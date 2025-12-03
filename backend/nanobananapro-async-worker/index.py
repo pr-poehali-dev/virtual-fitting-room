@@ -258,7 +258,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     
                     print(f'[NanoBanana] Task {task_id} completed! Result URL: {result_url}')
                     
-                    # Save to FTP with user_id subfolder
+                    # Save to FTP with user_id subfolder and fitting room number (NanoBanana = fitting room 3)
                     saved_url = result_url
                     try:
                         save_response = requests.post(
@@ -266,7 +266,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             json={
                                 'image_url': result_url,
                                 'folder': 'lookbooks',
-                                'user_id': user_id
+                                'user_id': user_id,
+                                'prefix': '3fitting'
                             },
                             timeout=30
                         )
