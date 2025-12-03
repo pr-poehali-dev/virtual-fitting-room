@@ -59,7 +59,6 @@ const SEEDREAM_START_API = 'https://functions.poehali.dev/4bb70873-fda7-4a2d-a0a
 const SEEDREAM_STATUS_API = 'https://functions.poehali.dev/ffebd367-227e-4e12-a5f1-64db84bddc81';
 const NANOBANANAPRO_START_API = 'https://functions.poehali.dev/aac1d5d8-c9bd-43c6-822e-857c18f3c1f8';
 const NANOBANANAPRO_STATUS_API = 'https://functions.poehali.dev/6d603f3d-bbe3-450d-863a-63d513ad5ba7';
-const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
 
 
 
@@ -956,24 +955,7 @@ export default function ReplicateTryOn() {
           setPollingInterval(null);
           setCheckerInterval(null);
           
-          if (user && uploadedImage && data.result_url) {
-            try {
-              await fetch(HISTORY_API, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-User-Id': user.id
-                },
-                body: JSON.stringify({
-                  person_image: uploadedImage,
-                  garments: selectedClothingItems.map(item => ({ image: item.image, category: item.category })),
-                  result_image: data.result_url
-                })
-              });
-            } catch (error) {
-              console.error('Failed to save history:', error);
-            }
-          }
+          // History is saved automatically by backend (replicate-prediction-checker)
         } else if (data.status === 'failed') {
           setIsGenerating(false);
           setWaitingContinue(false);

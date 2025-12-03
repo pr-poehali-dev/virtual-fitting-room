@@ -37,7 +37,6 @@ interface SelectedClothing {
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
 const REPLICATE_START_API = 'https://functions.poehali.dev/c1cb3f04-f40a-4044-87fd-568d0271e1fe';
 const REPLICATE_STATUS_API = 'https://functions.poehali.dev/cde034e8-99be-4910-9ea6-f06cc94a6377';
-const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
 
 export function useTryOnState() {
   const { user } = useAuth();
@@ -405,20 +404,7 @@ export function useTryOnState() {
             deductReplicateBalance();
           }
 
-          if (user) {
-            await fetch(HISTORY_API, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-User-Id': user.id
-              },
-              body: JSON.stringify({
-                model_image: uploadedImage,
-                clothing_images: selectedClothingItems.map(c => c.image),
-                result_image: data.output
-              })
-            });
-          }
+          // History is saved automatically by backend (replicate-prediction-checker)
         } else if (data.status === 'failed') {
           clearInterval(interval);
           setPollingInterval(null);
