@@ -77,15 +77,33 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             cursor.execute("SELECT COUNT(*) as total FROM lookbooks")
             total_lookbooks = cursor.fetchone()['total']
             
-            cursor.execute("SELECT COUNT(*) as total FROM try_on_history")
-            total_try_ons = cursor.fetchone()['total']
+            cursor.execute("SELECT COUNT(*) as total FROM try_on_history WHERE model_used = 'replicate'")
+            total_replicate = cursor.fetchone()['total']
+            
+            cursor.execute("SELECT COUNT(*) as total FROM try_on_history WHERE model_used = 'seedream'")
+            total_seedream = cursor.fetchone()['total']
+            
+            cursor.execute("SELECT COUNT(*) as total FROM try_on_history WHERE model_used = 'nanobananapro'")
+            total_nanobana = cursor.fetchone()['total']
             
             today = datetime.now().date()
             cursor.execute(
-                "SELECT COUNT(*) as total FROM try_on_history WHERE DATE(created_at) = %s",
+                "SELECT COUNT(*) as total FROM try_on_history WHERE DATE(created_at) = %s AND model_used = 'replicate'",
                 (today,)
             )
-            today_try_ons = cursor.fetchone()['total']
+            today_replicate = cursor.fetchone()['total']
+            
+            cursor.execute(
+                "SELECT COUNT(*) as total FROM try_on_history WHERE DATE(created_at) = %s AND model_used = 'seedream'",
+                (today,)
+            )
+            today_seedream = cursor.fetchone()['total']
+            
+            cursor.execute(
+                "SELECT COUNT(*) as total FROM try_on_history WHERE DATE(created_at) = %s AND model_used = 'nanobananapro'",
+                (today,)
+            )
+            today_nanobana = cursor.fetchone()['total']
             
             cursor.execute(
                 "SELECT COALESCE(SUM(amount), 0) as total FROM payment_transactions WHERE status = 'completed'"
@@ -120,8 +138,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({
                     'total_users': total_users,
                     'total_lookbooks': total_lookbooks,
-                    'total_try_ons': total_try_ons,
-                    'today_try_ons': today_try_ons,
+                    'total_replicate': total_replicate,
+                    'total_seedream': total_seedream,
+                    'total_nanobana': total_nanobana,
+                    'today_replicate': today_replicate,
+                    'today_seedream': today_seedream,
+                    'today_nanobana': today_nanobana,
                     'total_revenue': float(total_revenue),
                     'today_revenue': float(today_revenue),
                     'month_revenue': float(month_revenue),

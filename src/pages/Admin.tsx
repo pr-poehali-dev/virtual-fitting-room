@@ -32,8 +32,12 @@ interface Lookbook {
 interface Stats {
   total_users: number;
   total_lookbooks: number;
-  total_try_ons: number;
-  today_try_ons: number;
+  total_replicate: number;
+  total_seedream: number;
+  total_nanobana: number;
+  today_replicate: number;
+  today_seedream: number;
+  today_nanobana: number;
   total_revenue: number;
   today_revenue: number;
   month_revenue: number;
@@ -734,7 +738,7 @@ export default function Admin() {
             </div>
           ) : (
             <>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -766,13 +770,16 @@ export default function Admin() {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Примерок всего
+                      Примерочная 1 (Replicate)
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center gap-2">
-                      <Icon name="History" size={24} className="text-primary" />
-                      <span className="text-3xl font-bold">{stats?.total_try_ons || 0}</span>
+                      <Icon name="Shirt" size={24} className="text-blue-600" />
+                      <div>
+                        <div className="text-2xl font-bold">{stats?.total_replicate || 0}</div>
+                        <div className="text-xs text-muted-foreground">Сегодня: {stats?.today_replicate || 0}</div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -780,19 +787,39 @@ export default function Admin() {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Примерок сегодня
+                      Примерочная 2 (SeeDream)
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center gap-2">
-                      <Icon name="TrendingUp" size={24} className="text-green-600" />
-                      <span className="text-3xl font-bold">{stats?.today_try_ons || 0}</span>
+                      <Icon name="Sparkles" size={24} className="text-purple-600" />
+                      <div>
+                        <div className="text-2xl font-bold">{stats?.total_seedream || 0}</div>
+                        <div className="text-xs text-muted-foreground">Сегодня: {stats?.today_seedream || 0}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Примерочная 3 (NanoBanana)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2">
+                      <Icon name="Zap" size={24} className="text-orange-600" />
+                      <div>
+                        <div className="text-2xl font-bold">{stats?.total_nanobana || 0}</div>
+                        <div className="text-xs text-muted-foreground">Сегодня: {stats?.today_nanobana || 0}</div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               </div>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="grid md:grid-cols-3 gap-6 mb-8">
                 <Card className="border-green-200 bg-green-50/50">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
