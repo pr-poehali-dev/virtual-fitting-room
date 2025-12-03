@@ -35,10 +35,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': ''
         }
     
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-    
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
         headers = event.get('headers', {})
         user_id = headers.get('x-user-id') or headers.get('X-User-Id')
         
@@ -244,7 +243,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
     
     except Exception as e:
-        conn.rollback()
+        print(f'[HistoryAPI] Error: {type(e).__name__}: {str(e)}')
+        try:
+            if 'conn' in locals():
+                conn.rollback()
+        except:
+            pass
         return {
             'statusCode': 500,
             'headers': {
@@ -255,5 +259,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': str(e)})
         }
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'conn' in locals():
+                conn.close()
+        except:
+            pass
