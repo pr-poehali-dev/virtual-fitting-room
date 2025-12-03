@@ -214,7 +214,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor.execute('''
             SELECT id, fal_response_url, first_result_at, user_id, saved_to_history
             FROM nanobananapro_tasks
-            WHERE status = 'processing' AND fal_response_url IS NOT NULL
+            WHERE status = 'processing' AND fal_response_url IS NOT NULL AND (saved_to_history IS NULL OR saved_to_history = FALSE)
             ORDER BY created_at ASC
             LIMIT 5
         ''')
