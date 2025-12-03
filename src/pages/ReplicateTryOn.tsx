@@ -632,25 +632,6 @@ export default function ReplicateTryOn() {
           clearInterval(interval);
           setPollingInterval(null);
           toast.success('Образ готов!');
-          
-          if (user && uploadedImage && data.result_url) {
-            try {
-              await fetch(HISTORY_API, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-User-Id': user.id
-                },
-                body: JSON.stringify({
-                  person_image: uploadedImage,
-                  garments: selectedClothingItems.map(item => ({ image: item.image, category: item.category })),
-                  result_image: data.result_url
-                })
-              });
-            } catch (error) {
-              console.error('Failed to save history:', error);
-            }
-          }
         } else if (data.status === 'failed') {
           console.error('[NanoBananaPro] FAILED:', data.error_message);
           setIsGenerating(false);
@@ -721,25 +702,6 @@ export default function ReplicateTryOn() {
           clearInterval(interval);
           setPollingInterval(null);
           toast.success('Образ готов!');
-          
-          if (user && uploadedImage && data.result_url) {
-            try {
-              await fetch(HISTORY_API, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-User-Id': user.id
-                },
-                body: JSON.stringify({
-                  person_image: uploadedImage,
-                  garments: selectedClothingItems.map(item => ({ image: item.image, category: item.category })),
-                  result_image: data.result_url
-                })
-              });
-            } catch (error) {
-              console.error('Failed to save history:', error);
-            }
-          }
         } else if (data.status === 'failed') {
           console.error('[SeeDream] FAILED:', data.error_message);
           setIsGenerating(false);
