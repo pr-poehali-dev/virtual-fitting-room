@@ -155,7 +155,14 @@ export default function Profile() {
 
       if (!response.ok) throw new Error('Failed to create lookbook');
       
+      const newLookbook = await response.json();
+      
+      // Добавляем новый лукбук в список мгновенно
+      setLookbooks(prev => [newLookbook, ...prev]);
+      
+      // Также делаем fetch для синхронизации с сервером
       await fetchLookbooks();
+      
       setNewLookbookName('');
       setNewPersonName('');
       setSelectedPhotos([]);
@@ -197,7 +204,16 @@ export default function Profile() {
 
       if (!response.ok) throw new Error('Failed to update lookbook');
       
+      // Обновляем список лукбуков сразу после редактирования
+      setLookbooks(prev => prev.map(lb => 
+        lb.id === editingLookbookId 
+          ? { ...lb, name: newLookbookName, person_name: newPersonName, photos: selectedPhotos, color_palette: colorPalette, updated_at: new Date().toISOString() }
+          : lb
+      ));
+      
+      // Также делаем fetch для синхронизации с сервером
       await fetchLookbooks();
+      
       setNewLookbookName('');
       setNewPersonName('');
       setSelectedPhotos([]);
@@ -225,7 +241,12 @@ export default function Profile() {
 
       if (!response.ok) throw new Error('Failed to delete lookbook');
       
+      // Обновляем список лукбуков сразу после удаления
+      setLookbooks(prev => prev.filter(lb => lb.id !== id));
+      
+      // Также делаем fetch для синхронизации с сервером
       await fetchLookbooks();
+      
       toast.success('Лукбук удалён');
     } catch (error) {
       toast.error('Ошибка удаления лукбука');
@@ -671,10 +692,24 @@ export default function Profile() {
                                           })
                                         });
                                         
+                                        // Обновляем список лукбуков мгновенно
+                                        setLookbooks(prev => prev.map(lb => {
+                                          if (lb.id === targetLookbookId) {
+                                            return { ...lb, photos: [...lb.photos, ...photosToMove], updated_at: new Date().toISOString() };
+                                          }
+                                          if (lb.id === editingLookbookId) {
+                                            return { ...lb, photos: updatedSourcePhotos, updated_at: new Date().toISOString() };
+                                          }
+                                          return lb;
+                                        }));
+                                        
                                         setSelectedPhotos(updatedSourcePhotos);
                                         setSelectedPhotoIndexes([]);
                                         setTargetLookbookId('');
+                                        
+                                        // Также делаем fetch для синхронизации с сервером
                                         await fetchLookbooks();
+                                        
                                         toast.success('Фото перенесены!');
                                       } catch (error) {
                                         toast.error('Ошибка переноса фото');

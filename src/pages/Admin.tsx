@@ -451,8 +451,14 @@ export default function Admin() {
       });
 
       if (response.ok) {
-        toast.success('Лукбук удален');
+        // Обновляем список лукбуков сразу после удаления
+        setLookbooks(prev => prev.filter(lb => lb.id !== lookbookId));
+        setFilteredLookbooks(prev => prev.filter(lb => lb.id !== lookbookId));
+        
+        // Также делаем fetch для синхронизации с сервером
         fetchData();
+        
+        toast.success('Лукбук удален');
       } else {
         toast.error('Ошибка удаления');
       }
