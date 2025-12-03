@@ -4,6 +4,8 @@ from typing import Dict, Any, List
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import requests
+import boto3
+from botocore.config import Config
 
 def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')
@@ -339,8 +341,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     else:
                         saved_photos.append(photo)
             
-            # NOTE: DO NOT delete photos from S3 when removing from lookbook
-            # Photos may still be used in history and will be auto-deleted after 6 months
+            # Get old photos to check which ones were removed
+            cursor.execute(
+                "SELECT photos FROM lookbooks WHERE id = %s AND user_id = %s",
+                (lookbook_id, user_id)
+            )
+            old_lookbook = cursor.fetchone()
+            old_photos = old_lookbook['photos'] if old_lookbook else []
+            
+            removed_photos = [p for p in old_photos if p not in saved_photos]
             
             cursor.execute(
                 """
@@ -357,6 +366,50 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 """,
                 (name, person_name, saved_photos, color_palette, is_public, share_token, lookbook_id, user_id)
             )
+            
+            # Check if removed photos should be deleted from S3
+            # Delete from S3 if photo is NOT in history AND NOT in any other lookbook
+            if removed_photos:
+                s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
+                s3_url_prefix = f'https://{s3_bucket_name}.storage.yandexcloud.net/'
+                
+                for photo_url in removed_photos:
+                    if not photo_url.startswith(s3_url_prefix):
+                        continue
+                    
+                    # Check if in history
+                    cursor.execute(
+                        f"SELECT COUNT(*) as count FROM try_on_history WHERE user_id = '{user_id}' AND result_image = '{photo_url.replace(chr(39), chr(39)+chr(39))}'"
+                    )
+                    history_count = cursor.fetchone()['count']
+                    
+                    # Check if in other lookbooks
+                    cursor.execute(
+                        f"SELECT COUNT(*) as count FROM lookbooks WHERE user_id = '{user_id}' AND id != '{lookbook_id}' AND '{photo_url.replace(chr(39), chr(39)+chr(39))}' = ANY(photos)"
+                    )
+                    other_lookbooks_count = cursor.fetchone()['count']
+                    
+                    # Delete from S3 only if NOT in history and NOT in other lookbooks
+                    if history_count == 0 and other_lookbooks_count == 0:
+                        try:
+                            s3_key = photo_url.replace(s3_url_prefix, '')
+                            
+                            s3_client = boto3.client(
+                                's3',
+                                endpoint_url='https://storage.yandexcloud.net',
+                                aws_access_key_id=os.environ.get('S3_ACCESS_KEY'),
+                                aws_secret_access_key=os.environ.get('S3_SECRET_KEY'),
+                                region_name='ru-central1',
+                                config=Config(signature_version='s3v4')
+                            )
+                            
+                            s3_client.delete_object(
+                                Bucket=s3_bucket_name,
+                                Key=s3_key
+                            )
+                            print(f'Deleted from S3 (removed from lookbook, not in history): {s3_key}')
+                        except Exception as e:
+                            print(f'Failed to delete from S3: {e}')
             
             lookbook = cursor.fetchone()
             
@@ -418,12 +471,75 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing id'})
                 }
             
+            # Get photos before deletion to check if they should be deleted from S3
+            cursor.execute(
+                "SELECT photos FROM lookbooks WHERE id = %s AND user_id = %s",
+                (lookbook_id, user_id)
+            )
+            lookbook = cursor.fetchone()
+            
+            if not lookbook:
+                return {
+                    'statusCode': 404,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Lookbook not found'})
+                }
+            
+            photos_to_check = lookbook['photos'] or []
+            
             # Delete lookbook from DB
-            # NOTE: DO NOT delete photos from S3 - they may be in history
             cursor.execute(
                 "DELETE FROM lookbooks WHERE id = %s AND user_id = %s RETURNING id",
                 (lookbook_id, user_id)
             )
+            
+            # Check if photos should be deleted from S3
+            # Delete from S3 if photo is NOT in history AND NOT in any other lookbook
+            if photos_to_check:
+                s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
+                s3_url_prefix = f'https://{s3_bucket_name}.storage.yandexcloud.net/'
+                
+                for photo_url in photos_to_check:
+                    if not photo_url.startswith(s3_url_prefix):
+                        continue
+                    
+                    # Check if in history
+                    cursor.execute(
+                        f"SELECT COUNT(*) as count FROM try_on_history WHERE user_id = '{user_id}' AND result_image = '{photo_url.replace(chr(39), chr(39)+chr(39))}'"
+                    )
+                    history_count = cursor.fetchone()['count']
+                    
+                    # Check if in other lookbooks
+                    cursor.execute(
+                        f"SELECT COUNT(*) as count FROM lookbooks WHERE user_id = '{user_id}' AND id != '{lookbook_id}' AND '{photo_url.replace(chr(39), chr(39)+chr(39))}' = ANY(photos)"
+                    )
+                    other_lookbooks_count = cursor.fetchone()['count']
+                    
+                    # Delete from S3 only if NOT in history and NOT in other lookbooks
+                    if history_count == 0 and other_lookbooks_count == 0:
+                        try:
+                            s3_key = photo_url.replace(s3_url_prefix, '')
+                            
+                            s3_client = boto3.client(
+                                's3',
+                                endpoint_url='https://storage.yandexcloud.net',
+                                aws_access_key_id=os.environ.get('S3_ACCESS_KEY'),
+                                aws_secret_access_key=os.environ.get('S3_SECRET_KEY'),
+                                region_name='ru-central1',
+                                config=Config(signature_version='s3v4')
+                            )
+                            
+                            s3_client.delete_object(
+                                Bucket=s3_bucket_name,
+                                Key=s3_key
+                            )
+                            print(f'Deleted from S3 (lookbook deleted, not in history or other lookbooks): {s3_key}')
+                        except Exception as e:
+                            print(f'Failed to delete from S3: {e}')
             
             deleted = cursor.fetchone()
             

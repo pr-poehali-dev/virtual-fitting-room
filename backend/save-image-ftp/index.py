@@ -97,7 +97,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if url_ext in ['jpg', 'jpeg', 'png', 'webp', 'gif']:
             file_ext = f'.{url_ext}'
     
-    filename = f'{timestamp}_{user_id}_{unique_id}{file_ext}'
+    # For lookbooks folder, use user_id subfolder structure
+    if folder == 'lookbooks':
+        filename = f'{user_id}/{timestamp}_{user_id}_{unique_id}{file_ext}'
+    else:
+        filename = f'{timestamp}_{user_id}_{unique_id}{file_ext}'
     
     # Download image
     if image_url.startswith('data:'):

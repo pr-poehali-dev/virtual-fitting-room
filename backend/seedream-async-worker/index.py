@@ -188,7 +188,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT id, person_image, garments, prompt_hints, fal_request_id, fal_response_url
+            SELECT id, person_image, garments, prompt_hints, fal_request_id, fal_response_url, user_id
             FROM seedream_tasks
             WHERE status = 'pending'
             ORDER BY created_at ASC
@@ -199,7 +199,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         pending_row = cursor.fetchone()
         
         if pending_row:
-            task_id, person_image, garments_json, prompt_hints, fal_request_id, fal_response_url = pending_row
+            task_id, person_image, garments_json, prompt_hints, fal_request_id, fal_response_url, user_id = pending_row
             garments = json.loads(garments_json)
             
             if not fal_request_id:
@@ -256,7 +256,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     }
         
         cursor.execute('''
-            SELECT id, fal_response_url
+            SELECT id, fal_response_url, user_id
             FROM seedream_tasks
             WHERE status = 'processing' AND fal_response_url IS NOT NULL
             ORDER BY created_at ASC
@@ -276,7 +276,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         results = []
-        for task_id, response_url in processing_rows:
+        for task_id, response_url, user_id in processing_rows:
             try:
                 status_data = check_fal_status(response_url)
                 
@@ -295,7 +295,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     
                     print(f'[Worker] Task {task_id} completed! Saving result URL: {result_url}')
                     
-                    # Save to FTP
+                    # Save to FTP with user_id subfolder
                     saved_url = result_url
                     try:
                         save_response = requests.post(
@@ -303,7 +303,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             json={
                                 'image_url': result_url,
                                 'folder': 'lookbooks',
-                                'user_id': task_id
+                                'user_id': user_id
                             },
                             timeout=30
                         )

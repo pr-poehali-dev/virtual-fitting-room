@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Test cleanup without password",
+      "method": "POST",
+      "path": "/",
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "Unauthorized"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

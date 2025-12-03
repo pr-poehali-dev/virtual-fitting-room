@@ -43,7 +43,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT id, person_image, garments, prompt_hints, prediction_id, current_step, total_steps
+            SELECT id, person_image, garments, prompt_hints, prediction_id, current_step, total_steps, user_id
             FROM replicate_tasks
             WHERE status = 'processing' AND prediction_id IS NOT NULL
             ORDER BY created_at ASC
@@ -65,7 +65,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         checked_count = 0
         
         for row in rows:
-            task_id, person_image, garments_json, prompt_hints, prediction_id, current_step, total_steps = row
+            task_id, person_image, garments_json, prompt_hints, prediction_id, current_step, total_steps, user_id = row
             garments = json.loads(garments_json)
             
             prediction = client.predictions.get(prediction_id)
@@ -73,7 +73,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if prediction.status == 'succeeded':
                 output_url = prediction.output if isinstance(prediction.output, str) else str(prediction.output)
                 
-                # Save to FTP first
+                # Save to FTP with user_id subfolder
                 saved_url = output_url
                 try:
                     save_response = requests.post(
@@ -81,7 +81,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         json={
                             'image_url': output_url,
                             'folder': 'lookbooks',
-                            'user_id': task_id
+                            'user_id': user_id
                         },
                         timeout=30
                     )

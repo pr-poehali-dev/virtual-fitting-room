@@ -3,6 +3,8 @@ import os
 from typing import Dict, Any
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import boto3
+from botocore.config import Config
 
 def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')
@@ -146,6 +148,33 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing id'})
                 }
             
+            # Get result_image before deletion to check if it should be deleted from storage
+            cursor.execute(
+                f"SELECT result_image FROM try_on_history WHERE id = '{history_id}' AND user_id = '{user_id}'"
+            )
+            history_item = cursor.fetchone()
+            
+            if not history_item:
+                return {
+                    'statusCode': 404,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'History item not found'})
+                }
+            
+            result_image_url = history_item['result_image']
+            
+            # Check if this photo exists in any lookbook
+            cursor.execute(
+                f"""SELECT COUNT(*) as count FROM lookbooks 
+                WHERE user_id = '{user_id}' AND '{result_image_url}' = ANY(photos)"""
+            )
+            lookbook_count = cursor.fetchone()['count']
+            
+            # Delete from history
             cursor.execute(
                 f"DELETE FROM try_on_history WHERE id = '{history_id}' AND user_id = '{user_id}' RETURNING id"
             )
@@ -165,6 +194,32 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             conn.commit()
+            
+            # If photo is NOT in any lookbook, delete from S3
+            if lookbook_count == 0:
+                s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
+                s3_url_prefix = f'https://{s3_bucket_name}.storage.yandexcloud.net/'
+                
+                if result_image_url.startswith(s3_url_prefix):
+                    try:
+                        s3_key = result_image_url.replace(s3_url_prefix, '')
+                        
+                        s3_client = boto3.client(
+                            's3',
+                            endpoint_url='https://storage.yandexcloud.net',
+                            aws_access_key_id=os.environ.get('S3_ACCESS_KEY'),
+                            aws_secret_access_key=os.environ.get('S3_SECRET_KEY'),
+                            region_name='ru-central1',
+                            config=Config(signature_version='s3v4')
+                        )
+                        
+                        s3_client.delete_object(
+                            Bucket=s3_bucket_name,
+                            Key=s3_key
+                        )
+                        print(f'Deleted from S3: {s3_key}')
+                    except Exception as e:
+                        print(f'Failed to delete from S3: {e}')
             
             return {
                 'statusCode': 200,
