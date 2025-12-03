@@ -1742,24 +1742,29 @@ export default function Admin() {
                                       </span>
                                     </td>
                                     <td className="p-2">
-                                      <div className="flex items-center gap-2">
-                                        {gen.photo_status === 'in_lookbook' && (
-                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
-                                            В лукбуке
-                                          </span>
-                                        )}
-                                        {gen.photo_status === 'in_history' && (
-                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-700">
-                                            В истории
-                                          </span>
-                                        )}
-                                        {gen.photo_status === 'removed' && (
-                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">
-                                            Удалено
-                                          </span>
-                                        )}
+                                      <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-2">
+                                          {gen.photo_status === 'in_lookbook' && (
+                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                                              В лукбуке
+                                            </span>
+                                          )}
+                                          {gen.photo_status === 'in_history' && (
+                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-700">
+                                              В истории
+                                            </span>
+                                          )}
+                                          {gen.photo_status === 'removed' && (
+                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">
+                                              Удалено
+                                            </span>
+                                          )}
+                                        </div>
                                         {gen.saved_to_lookbook && (
-                                          <Icon name="Check" size={14} className="text-green-600" title="Сохранено в лукбук" />
+                                          <div className="flex items-center gap-1 text-xs text-green-600">
+                                            <Icon name="Check" size={12} />
+                                            <span>Сохранено в лукбук</span>
+                                          </div>
                                         )}
                                       </div>
                                     </td>
