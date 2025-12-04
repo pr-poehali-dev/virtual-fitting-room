@@ -27,7 +27,7 @@ def send_reset_email(email: str, token: str, user_name: str):
     
     message = MIMEMultipart('alternative')
     message['Subject'] = 'Сброс пароля - Виртуальная примерочная'
-    message['From'] = 'info@fitting-room.ru'
+    message['From'] = 'virtualfitting@mail.ru'
     message['To'] = email
     
     text_content = f"""
