@@ -81,10 +81,15 @@ def send_reset_email(email: str, token: str, user_name: str):
     message.attach(text_part)
     message.attach(html_part)
     
-    with smtplib.SMTP(smtp_host, smtp_port) as server:
-        server.starttls()
-        server.login(smtp_user, smtp_password)
-        server.send_message(message)
+    if smtp_port == 465:
+        with smtplib.SMTP_SSL(smtp_host, smtp_port) as server:
+            server.login(smtp_user, smtp_password)
+            server.send_message(message)
+    else:
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.send_message(message)
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
