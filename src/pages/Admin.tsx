@@ -404,10 +404,13 @@ export default function Admin() {
         setSelectedUserId('all');
         fetchData();
       } else {
-        toast.error('Ошибка удаления');
+        const data = await response.json();
+        toast.error(`Ошибка удаления: ${data.error || 'неизвестная ошибка'}`);
+        console.error('Delete user error:', data);
       }
     } catch (error) {
-      toast.error('Ошибка удаления');
+      toast.error(`Ошибка удаления: ${error}`);
+      console.error('Delete user exception:', error);
     }
   };
 
