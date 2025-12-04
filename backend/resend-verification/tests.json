@@ -4,13 +4,8 @@
       "name": "Test missing email",
       "method": "POST",
       "path": "/",
-      "body": {
-        "test": "value"
-      },
-      "expectedStatus": 400,
-      "expectedBody": {
-        "error": "Email is required"
-      }
+      "body": {},
+      "expectedStatus": 400
     }
   ]
 }

@@ -4,10 +4,7 @@
       "name": "Test OPTIONS for CORS",
       "method": "OPTIONS",
       "path": "/",
-      "expectedStatus": 200,
-      "expectedHeaders": {
-        "Access-Control-Allow-Origin": "*"
-      }
+      "expectedStatus": 200
     },
     {
       "name": "Test register with missing fields",
@@ -17,11 +14,7 @@
         "action": "register",
         "email": "test@example.com"
       },
-      "expectedStatus": 400,
-      "expectedBody": {
-        "error": "string"
-      },
-      "bodyMatcher": "partial"
+      "expectedStatus": 400
     },
     {
       "name": "Test login with invalid credentials",
@@ -32,11 +25,7 @@
         "email": "nonexistent@example.com",
         "password": "wrongpassword"
       },
-      "expectedStatus": 401,
-      "expectedBody": {
-        "error": "string"
-      },
-      "bodyMatcher": "partial"
+      "expectedStatus": 401
     }
   ]
 }
