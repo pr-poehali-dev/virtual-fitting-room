@@ -23,11 +23,11 @@ def send_reset_email(email: str, token: str, user_name: str):
     smtp_user = os.environ.get('SMTP_USER')
     smtp_password = os.environ.get('SMTP_PASSWORD')
     
-    reset_url = f"https://p29007832.poehali.dev/reset-password?token={token}"
+    reset_url = f"https://fitting-room.ru/reset-password?token={token}"
     
     message = MIMEMultipart('alternative')
     message['Subject'] = 'Сброс пароля - Виртуальная примерочная'
-    message['From'] = smtp_user
+    message['From'] = 'info@fitting-room.ru'
     message['To'] = email
     
     text_content = f"""

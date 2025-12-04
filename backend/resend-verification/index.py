@@ -28,11 +28,11 @@ def send_verification_email(email: str, token: str, user_name: str):
     smtp_user = os.environ.get('SMTP_USER')
     smtp_password = os.environ.get('SMTP_PASSWORD')
     
-    verify_url = f"https://p29007832.poehali.dev/verify-email?token={token}"
+    verify_url = f"https://fitting-room.ru/verify-email?token={token}"
     
     message = MIMEMultipart('alternative')
     message['Subject'] = 'Подтверждение email - Виртуальная примерочная'
-    message['From'] = smtp_user
+    message['From'] = 'info@fitting-room.ru'
     message['To'] = email
     
     text_content = f"""
