@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { useEffect } from "react";
 
 import ColorType from "./pages/ColorType";
 import Profile from "./pages/Profile";
@@ -19,10 +20,28 @@ import RegistrationSuccess from "./pages/RegistrationSuccess";
 import ReplicateTryOn from "./pages/ReplicateTryOn";
 import NotFound from "./pages/NotFound";
 
+const APP_VERSION = "2.0.0";
+
 const queryClient = new QueryClient();
+
+const VersionManager = () => {
+  useEffect(() => {
+    const storedVersion = localStorage.getItem("app_version");
+    
+    if (storedVersion !== APP_VERSION) {
+      console.log(`Обновление приложения: ${storedVersion || 'старая версия'} → ${APP_VERSION}`);
+      localStorage.clear();
+      localStorage.setItem("app_version", APP_VERSION);
+      window.location.reload();
+    }
+  }, []);
+  
+  return null;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <VersionManager />
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
