@@ -435,9 +435,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             cursor.execute("DELETE FROM try_on_history WHERE user_id = %s", (user_id,))
             cursor.execute("DELETE FROM lookbooks WHERE user_id = %s", (user_id,))
+            cursor.execute("DELETE FROM email_verifications WHERE user_id = %s", (user_id,))
             cursor.execute("DELETE FROM password_reset_tokens WHERE user_id = %s", (user_id,))
             cursor.execute("DELETE FROM sessions WHERE user_id = %s", (user_id,))
             cursor.execute("DELETE FROM payment_transactions WHERE user_id = %s", (user_id,))
+            cursor.execute("DELETE FROM login_attempts WHERE email = (SELECT email FROM users WHERE id = %s)", (user_id,))
             cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
             
             conn.commit()
