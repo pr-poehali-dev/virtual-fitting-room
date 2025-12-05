@@ -41,28 +41,28 @@ def translate_to_english(text: str) -> str:
 def build_prompt(garments: list, custom_prompt: str) -> str:
     '''Build clear prompt for NanoBanana with category-based specifications'''
     
-    base_prompt = "Make just one photo where the model from first picture is wearing the clothes from next pictures. "
+    base_prompt = "Make just one photo where the model from first uploaded image is wearing the clothes from others uploaded images. "
     
     if len(garments) == 1:
         category = garments[0].get('category', 'dresses')
         if category == 'upper_body':
-            base_prompt += "Dress ONLY the top (blouse/shirt/jacket/sweater) from second picture. Do NOT change bottom clothing on the model from first picture. "
+            base_prompt += "Dress ONLY the top (blouse/shirt/jacket/sweater) from second uploaded image on the model from first . Do NOT change bottom clothing on the model from first uploaded image. "
         elif category == 'lower_body':
-            base_prompt += "Dress ONLY the bottom (pants/skirt/shorts) from second picture. Do NOT change top clothing on the model from first picture. "
+            base_prompt += "Dress ONLY the bottom (pants/skirt/shorts) from second uploaded image on the model from first . Do NOT change bottom clothing on the model from first uploaded image. "
         else:
-            base_prompt += "Dress full clothes from second picture and dress on the model from first picture. "
+            base_prompt += "Dress full clothes from second uploaded image and dress on the model from first uploaded image. "
     else:
         for i, garment in enumerate(garments):
             img_num = i + 2
             category = garment.get('category', 'dresses')
             if category == 'upper_body':
-                base_prompt += f"Dress the top (blouse/shirt/jacket/sweater) from picture {img_num} on the model from first picture. "
+                base_prompt += f"Dress the top (blouse/shirt/jacket/sweater) from second uploaded image on the model from first uploaded image. "
             elif category == 'lower_body':
-                base_prompt += f"Dress the bottom (pants/skirt/shorts) from picture {img_num} on the model from first picture. "
+                base_prompt += f"Dress the bottom (pants/skirt/shorts) from third uploaded image on the model from first second uploaded image. "
             else:
-                base_prompt += f"Dress full clothes from second picture and dress on the model from first picture. "
+                base_prompt += f"Dress full clothes from second second uploaded image and dress on the model from first second uploaded image. "
     
-    base_prompt += "IMPORTANT RULES: Use ONLY the CLOTHES from picture 2 and 3. DO NOT use the face, body, pose, or background from pictures 2 or file 3. Keep the EXACT face, body shape, pose, and background from first picture. Change ONLY the clothes. "
+    base_prompt += "IMPORTANT RULES: Use ONLY the CLOTHES from second or third uploaded images. DO NOT use the face, body, pose, or background from second or third uploaded images. Keep the EXACT face, body shape, pose, and background from first uploaded image. Change ONLY the clothes. "
     
     if custom_prompt:
         translated_prompt = translate_to_english(custom_prompt)
