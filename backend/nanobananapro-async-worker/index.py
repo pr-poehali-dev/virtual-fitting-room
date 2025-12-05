@@ -41,7 +41,28 @@ def translate_to_english(text: str) -> str:
 def build_prompt(garments: list, custom_prompt: str) -> str:
     '''Build clear prompt for NanoBanana with category-based specifications'''
     
-    base_prompt = "Make a photo where the model from Image 1 is wearing the outfit from Image 2. Image 1 = the human model. Image 2 is the outfit. PUT THESE CLOTHES from Image 2 on the model from Image 1, replacing ALL the clothes with these clothes. IMPORTANT RULES: Use ONLY the CLOTHES from Image 2 (or 3). DO NOT use the face, body, pose, or background from Image 2 (or 3). Keep the EXACT face, body shape, pose, and background from Image 1. Change ONLY the clothes. "
+    base_prompt = "Make a photo where the model from Image 1 is wearing the outfit from Image 2. Image 1 = the human model. "
+    
+    if len(garments) == 1:
+        category = garments[0].get('category', 'dresses')
+        if category == 'upper_body':
+            base_prompt += "Image 2 has upper_body clothing. Take ONLY the top (blouse/shirt/jacket/sweater) from image 2. Do NOT change bottom clothing on person. "
+        elif category == 'lower_body':
+            base_prompt += "Image 2 has lower_body clothing. Take ONLY the bottom (pants/skirt/shorts) from image 2. Do NOT change top clothing on person. "
+        else:
+            base_prompt += "Image 2 has full outfit/dress. Take the complete outfit from image 2. "
+    else:
+        for i, garment in enumerate(garments):
+            img_num = i + 2
+            category = garment.get('category', 'dresses')
+            if category == 'upper_body':
+                base_prompt += f"Image {img_num} has upper_body clothing - take ONLY the top (blouse/shirt/jacket/sweater) from image {img_num}. "
+            elif category == 'lower_body':
+                base_prompt += f"Image {img_num} has lower_body clothing - take ONLY the bottom (pants/skirt/shorts) from image {img_num}. "
+            else:
+                base_prompt += f"Image {img_num} has full outfit - take complete outfit from image {img_num}. "
+    
+    base_prompt += "IMPORTANT RULES: Use ONLY the CLOTHES from Image 2 (or 3). DO NOT use the face, body, pose, or background from Image 2 (or 3). Keep the EXACT face, body shape, pose, and background from Image 1. Change ONLY the clothes. "
     
     if custom_prompt:
         translated_prompt = translate_to_english(custom_prompt)
@@ -55,11 +76,17 @@ def submit_to_fal_queue(person_image: str, garments: list, custom_prompt: str) -
     if not fal_api_key:
         raise Exception('FAL_API_KEY not configured')
     
-    person_data = normalize_image_format(person_image)
-    garment_data = [normalize_image_format(g['image']) for g in garments]
+    # Sort garments: upper_body first, then lower_body, then dresses
+    sorted_garments = sorted(garments, key=lambda g: 0 if g.get('category') == 'upper_body' else (1 if g.get('category') == 'lower_body' else 2))
     
-    prompt = build_prompt(garments, custom_prompt)
+    person_data = normalize_image_format(person_image)
+    garment_data = [normalize_image_format(g['image']) for g in sorted_garments]
+    
+    prompt = build_prompt(sorted_garments, custom_prompt)
     print(f'[NanoBanana] Final prompt: {prompt}')
+    print(f'[NanoBanana] Image order: 1=Person, 2-{len(garment_data)+1}=Clothes')
+    for i, g in enumerate(sorted_garments):
+        print(f'[NanoBanana] Garment {i+2}: category={g.get("category")}')
     
     headers = {
         'Authorization': f'Key {fal_api_key}',
