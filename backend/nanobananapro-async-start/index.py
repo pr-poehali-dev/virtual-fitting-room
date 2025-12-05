@@ -81,7 +81,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Максимум 2 вещи за раз для NanoBanana'})
         }
     
-    garments_json = json.dumps(garments)
     task_id = str(uuid.uuid4())
     
     try:
@@ -96,11 +95,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             user_id,
             'pending',
             person_image,
-            garments_json,
+            json.dumps(garments),
             prompt_hints,
             datetime.utcnow()
         ))
-        print(f'[NanoBanana] Task created: {task_id}')
         
         conn.commit()
         cursor.close()
