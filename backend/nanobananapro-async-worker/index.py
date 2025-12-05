@@ -41,28 +41,28 @@ def translate_to_english(text: str) -> str:
 def build_prompt(garments: list, custom_prompt: str) -> str:
     '''Build clear prompt for NanoBanana with category-based specifications'''
     
-    base_prompt = "Make only one photo option where the model from first uploaded image dressed "
+    base_prompt = "Make only one photo option where the model from first uploaded image is wearing "
     
     if len(garments) == 1:
         category = garments[0].get('category', 'dresses')
         if category == 'upper_body':
-            base_prompt += "the top clothes (blouse/shirt/jacket/sweater/top/t-shirt/sweatshirt/hoodie) from second uploaded image, and do NOT change bottom clothing on the model from first uploaded image, "
+            base_prompt += "the top clothes (blouse/shirt/jacket/sweater/top/t-shirt/sweatshirt/hoodie) from second uploaded image, and do NOT change bottom clothing on the model from first uploaded image so change just top clothes, "
         elif category == 'lower_body':
-            base_prompt += "the bottom clothes (pants/skirt/shorts/underpants) from second uploaded image, and do NOT change bottom clothing on the model from first uploaded image, "
+            base_prompt += "the bottom clothes (pants/skirt/shorts/underpants) from second uploaded image, and do NOT change bottom clothing on the model from first uploaded image so change just bottom clothes, "
         else:
-            base_prompt += "the full clothes from second uploaded image, "
+            base_prompt += "the full clothes from second uploaded image, so change full clothes, "
     else:
         for i, garment in enumerate(garments):
             img_num = i + 2
             category = garment.get('category', 'dresses')
             if category == 'upper_body':
-                base_prompt += f"the top clothes (blouse/shirt/jacket/sweater/top/t-shirt/sweatshirt/hoodie) from second uploaded image, "
+                base_prompt += f"the top clothes (blouse/shirt/jacket/sweater/top/t-shirt/sweatshirt/hoodie) from second uploaded image, so change top clothes, "
             elif category == 'lower_body':
-                base_prompt += f"the bottom clothes (pants/skirt/shorts/underpants) from third uploaded image, "
+                base_prompt += f"the bottom clothes (pants/skirt/shorts/underpants) from third uploaded image, so change bottom clothes, "
             else:
-                base_prompt += f"the full clothes from second uploaded image. "
+                base_prompt += f"the full clothes from second uploaded image, so change full clothes, "
     
-    base_prompt += " and keep the EXACT face, body shape, pose from first uploaded image. "
+    base_prompt += " but keep the EXACT face, body shape, pose from first uploaded image. "
     
     if custom_prompt:
         translated_prompt = translate_to_english(custom_prompt)
