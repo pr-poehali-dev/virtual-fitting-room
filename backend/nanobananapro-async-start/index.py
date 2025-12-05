@@ -81,24 +81,43 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Максимум 2 вещи за раз для NanoBanana'})
         }
     
-    task_id = str(uuid.uuid4())
-    
     try:
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
         
+        # Check for existing pending/processing tasks with same parameters (last 60 seconds)
         cursor.execute('''
-            INSERT INTO nanobananapro_tasks (id, user_id, status, person_image, garments, prompt_hints, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        ''', (
-            task_id,
-            user_id,
-            'pending',
-            person_image,
-            json.dumps(garments),
-            prompt_hints,
-            datetime.utcnow()
-        ))
+            SELECT id, status FROM nanobananapro_tasks
+            WHERE user_id = %s
+            AND status IN ('pending', 'processing')
+            AND person_image = %s
+            AND garments = %s
+            AND (prompt_hints = %s OR (prompt_hints IS NULL AND %s IS NULL))
+            AND created_at > NOW() - INTERVAL '60 seconds'
+            ORDER BY created_at DESC
+            LIMIT 1
+        ''', (user_id, person_image, json.dumps(garments), prompt_hints, prompt_hints))
+        
+        existing_task = cursor.fetchone()
+        
+        if existing_task:
+            task_id = existing_task[0]
+            print(f'[NanoBanana] Duplicate request detected, returning existing task: {task_id}')
+        else:
+            task_id = str(uuid.uuid4())
+            
+            cursor.execute('''
+                INSERT INTO nanobananapro_tasks (id, user_id, status, person_image, garments, prompt_hints, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ''', (
+                task_id,
+                user_id,
+                'pending',
+                person_image,
+                json.dumps(garments),
+                prompt_hints,
+                datetime.utcnow()
+            ))
         
         conn.commit()
         cursor.close()
