@@ -81,28 +81,37 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Максимум 2 вещи за раз для NanoBanana'})
         }
     
+    import hashlib
+    import time
+    
+    garments_json = json.dumps(garments)
+    
+    # Create unique request hash for deduplication
+    request_hash = hashlib.md5(f'{user_id}{person_image[:200]}{garments_json}{prompt_hints or ""}'.encode()).hexdigest()
+    
+    # Add small delay to reduce race condition (0-50ms random)
+    import random
+    time.sleep(random.uniform(0, 0.05))
+    
     try:
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
         
-        # Check for existing pending/processing tasks with same parameters (last 60 seconds)
+        # Check for existing pending/processing tasks from same user in last 10 seconds
         cursor.execute('''
             SELECT id, status FROM nanobananapro_tasks
             WHERE user_id = %s
             AND status IN ('pending', 'processing')
-            AND person_image = %s
-            AND garments = %s
-            AND (prompt_hints = %s OR (prompt_hints IS NULL AND %s IS NULL))
-            AND created_at > NOW() - INTERVAL '60 seconds'
+            AND created_at > NOW() - INTERVAL '10 seconds'
             ORDER BY created_at DESC
             LIMIT 1
-        ''', (user_id, person_image, json.dumps(garments), prompt_hints, prompt_hints))
+        ''', (user_id,))
         
         existing_task = cursor.fetchone()
         
         if existing_task:
             task_id = existing_task[0]
-            print(f'[NanoBanana] Duplicate request detected, returning existing task: {task_id}')
+            print(f'[NanoBanana] Recent task found, returning: {task_id} (hash: {request_hash[:8]})')
         else:
             task_id = str(uuid.uuid4())
             
@@ -114,10 +123,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 user_id,
                 'pending',
                 person_image,
-                json.dumps(garments),
+                garments_json,
                 prompt_hints,
                 datetime.utcnow()
             ))
+            print(f'[NanoBanana] New task created: {task_id} (hash: {request_hash[:8]})')
         
         conn.commit()
         cursor.close()
