@@ -485,6 +485,9 @@ export default function ReplicateTryOn() {
   };
 
   const handleGenerateNanoBananaPro = async () => {
+    const callId = Math.random().toString(36).substring(7);
+    console.log(`[NanoBananaPro-CALL-START] Function called, ID: ${callId}, isGenerating: ${isGenerating}`);
+    
     if (!uploadedImage) {
       toast.error('Загрузите фото модели');
       return;
@@ -544,6 +547,7 @@ export default function ReplicateTryOn() {
     });
 
     try {
+      console.log(`[NanoBananaPro-CALL-${callId}] About to send fetch request...`);
       const response = await fetch(NANOBANANAPRO_START_API, {
         method: 'POST',
         headers: {
