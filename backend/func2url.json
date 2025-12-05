@@ -1,7 +1,4 @@
 {
-  "run-cleanup-lookbooks": "https://functions.poehali.dev/404184da-7a3f-4f07-bc06-04ef889272ea",
-  "cleanup-old-history": "https://functions.poehali.dev/c2f9dcb3-4656-40a6-a4de-6fb6ec247310",
-  "cleanup-s3-lookbooks": "https://functions.poehali.dev/31cbeaca-808e-49f5-ad02-90c19dbf1001",
   "nanobananapro-async-status": "https://functions.poehali.dev/6d603f3d-bbe3-450d-863a-63d513ad5ba7",
   "nanobananapro-async-worker": "https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d",
   "nanobananapro-async-start": "https://functions.poehali.dev/aac1d5d8-c9bd-43c6-822e-857c18f3c1f8",

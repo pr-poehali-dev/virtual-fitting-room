@@ -353,65 +353,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 } for h in history])
             }
         
-        elif action == 'cleanup_logs':
-            # Build WHERE clause based on filters
-            filters = []
-            filter_values = []
-            
-            cleanup_type_filter = query_params.get('cleanup_type')
-            date_from = query_params.get('date_from')
-            date_to = query_params.get('date_to')
-            
-            if cleanup_type_filter:
-                filters.append("cleanup_type = %s")
-                filter_values.append(cleanup_type_filter)
-            
-            if date_from:
-                filters.append("created_at >= %s")
-                filter_values.append(date_from)
-            
-            if date_to:
-                filters.append("created_at <= %s")
-                filter_values.append(date_to)
-            
-            where_clause = " AND ".join(filters) if filters else "1=1"
-            
-            query = f"""
-                SELECT 
-                    id,
-                    cleanup_type,
-                    removed_from_history,
-                    removed_from_s3,
-                    total_checked,
-                    error_message,
-                    created_at
-                FROM cleanup_logs
-                WHERE {where_clause}
-                ORDER BY created_at DESC
-                LIMIT 100
-            """
-            
-            cursor.execute(query, filter_values)
-            logs = cursor.fetchall()
-            
-            return {
-                'statusCode': 200,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                'isBase64Encoded': False,
-                'body': json.dumps([{
-                    'id': str(log['id']),
-                    'cleanup_type': log['cleanup_type'],
-                    'removed_from_history': log['removed_from_history'],
-                    'removed_from_s3': log['removed_from_s3'],
-                    'total_checked': log['total_checked'],
-                    'error_message': log['error_message'],
-                    'created_at': log['created_at'].isoformat()
-                } for log in logs])
-            }
-        
         elif action == 'payments':
             status_filter = query_params.get('status')
             date_from = query_params.get('date_from')

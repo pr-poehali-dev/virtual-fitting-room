@@ -70,15 +70,6 @@ interface GenerationHistory {
   created_at: string;
 }
 
-interface CleanupLog {
-  id: string;
-  cleanup_type: string;
-  removed_from_history: number;
-  removed_from_s3: number;
-  total_checked: number;
-  error_message: string | null;
-  created_at: string;
-}
 
 interface ClothingItem {
   id: string;
@@ -157,10 +148,6 @@ export default function Admin() {
   const [genDateFrom, setGenDateFrom] = useState<string>('');
   const [genDateTo, setGenDateTo] = useState<string>('');
 
-  const [cleanupLogs, setCleanupLogs] = useState<CleanupLog[]>([]);
-  const [cleanupTypeFilter, setCleanupTypeFilter] = useState<string>('all');
-  const [cleanupDateFrom, setCleanupDateFrom] = useState<string>('');
-  const [cleanupDateTo, setCleanupDateTo] = useState<string>('');
 
   useEffect(() => {
     const adminAuth = sessionStorage.getItem('admin_auth');
@@ -335,29 +322,7 @@ export default function Admin() {
     }
   };
 
-  const fetchCleanupLogs = async () => {
-    const adminPassword = sessionStorage.getItem('admin_auth');
-    const params = new URLSearchParams({ action: 'cleanup_logs' });
-    
-    if (cleanupTypeFilter && cleanupTypeFilter !== 'all') params.append('cleanup_type', cleanupTypeFilter);
-    if (cleanupDateFrom) params.append('date_from', cleanupDateFrom);
-    if (cleanupDateTo) params.append('date_to', cleanupDateTo);
 
-    try {
-      const response = await fetch(`${ADMIN_API}?${params.toString()}`, {
-        headers: { 'X-Admin-Password': adminPassword || '' }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCleanupLogs(data);
-      } else {
-        toast.error('Ошибка загрузки логов очистки');
-      }
-    } catch (error) {
-      toast.error('Ошибка загрузки логов очистки');
-    }
-  };
 
   const handleToggleUnlimitedAccess = async (userEmail: string, currentAccess: boolean) => {
     const adminPassword = sessionStorage.getItem('admin_auth');
@@ -901,13 +866,12 @@ export default function Admin() {
               </div>
 
               <Tabs defaultValue="users" className="w-full">
-                <TabsList className="grid w-full md:w-auto grid-cols-6 mb-8">
+                <TabsList className="grid w-full md:w-auto grid-cols-5 mb-8">
                   <TabsTrigger value="users">Пользователи</TabsTrigger>
                   <TabsTrigger value="lookbooks">Лукбуки</TabsTrigger>
                   <TabsTrigger value="payments">Платежи</TabsTrigger>
                   <TabsTrigger value="catalog">Каталог</TabsTrigger>
                   <TabsTrigger value="generations">Генерации</TabsTrigger>
-                  <TabsTrigger value="cleanup">Очистка</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="users">
@@ -1794,107 +1758,6 @@ export default function Admin() {
                                         className="w-12 h-12 object-cover rounded cursor-pointer hover:scale-150 transition-transform"
                                         onClick={() => window.open(gen.result_image, '_blank')}
                                       />
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent value="cleanup">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Icon name="Trash2" size={24} />
-                        Журнал очистки
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="mb-6 flex flex-wrap gap-4">
-                        <div className="flex items-center gap-2">
-                          <label className="text-sm font-medium">Тип:</label>
-                          <select
-                            className="border rounded-md px-3 py-2"
-                            value={cleanupTypeFilter}
-                            onChange={(e) => setCleanupTypeFilter(e.target.value)}
-                          >
-                            <option value="all">Все</option>
-                            <option value="auto_6months">Авто (6 месяцев)</option>
-                            <option value="manual">Ручная</option>
-                          </select>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <label className="text-sm font-medium">С:</label>
-                          <Input
-                            type="date"
-                            value={cleanupDateFrom}
-                            onChange={(e) => setCleanupDateFrom(e.target.value)}
-                            className="w-40"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <label className="text-sm font-medium">До:</label>
-                          <Input
-                            type="date"
-                            value={cleanupDateTo}
-                            onChange={(e) => setCleanupDateTo(e.target.value)}
-                            className="w-40"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        {cleanupLogs.length === 0 ? (
-                          <div className="text-center py-12 text-muted-foreground">
-                            <Icon name="Trash2" size={48} className="mx-auto mb-4 opacity-50" />
-                            <p>Нет записей очистки</p>
-                          </div>
-                        ) : (
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="border-b">
-                                  <th className="text-left p-2">Дата</th>
-                                  <th className="text-left p-2">Тип</th>
-                                  <th className="text-right p-2">Проверено</th>
-                                  <th className="text-right p-2">Из истории</th>
-                                  <th className="text-right p-2">Из S3</th>
-                                  <th className="text-left p-2">Ошибка</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {cleanupLogs.map(log => (
-                                  <tr key={log.id} className="border-b hover:bg-muted/50">
-                                    <td className="p-2 text-xs">
-                                      {new Date(log.created_at).toLocaleDateString('ru-RU', {
-                                        day: '2-digit',
-                                        month: '2-digit',
-                                        year: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                      })}
-                                    </td>
-                                    <td className="p-2">
-                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-700">
-                                        {log.cleanup_type === 'auto_6months' ? 'Авто (6 мес)' : log.cleanup_type}
-                                      </span>
-                                    </td>
-                                    <td className="p-2 text-right font-medium">{log.total_checked}</td>
-                                    <td className="p-2 text-right text-red-600 font-medium">{log.removed_from_history}</td>
-                                    <td className="p-2 text-right text-red-600 font-medium">{log.removed_from_s3}</td>
-                                    <td className="p-2 text-xs text-red-600">
-                                      {log.error_message ? (
-                                        <span title={log.error_message}>
-                                          {log.error_message.slice(0, 50)}{log.error_message.length > 50 ? '...' : ''}
-                                        </span>
-                                      ) : (
-                                        <span className="text-green-600">✓ Успешно</span>
-                                      )}
                                     </td>
                                   </tr>
                                 ))}
