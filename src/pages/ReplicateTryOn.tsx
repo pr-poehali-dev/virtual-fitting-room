@@ -71,6 +71,7 @@ export default function ReplicateTryOn() {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const isGeneratingRef = useRef(false);
+  const lastClickTimeRef = useRef(0);
   const [lookbooks, setLookbooks] = useState<any[]>([]);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [newLookbookName, setNewLookbookName] = useState('');
@@ -486,10 +487,20 @@ export default function ReplicateTryOn() {
   };
 
   const handleGenerateNanoBananaPro = async () => {
+    const now = Date.now();
+    const timeSinceLastClick = now - lastClickTimeRef.current;
+    
+    if (timeSinceLastClick < 2000) {
+      console.log(`[NanoBananaPro] Duplicate click detected (${timeSinceLastClick}ms ago), ignoring`);
+      return;
+    }
+    
     if (isGeneratingRef.current) {
       console.log('[NanoBananaPro] Already generating, ignoring duplicate request');
       return;
     }
+    
+    lastClickTimeRef.current = now;
 
     if (!uploadedImage) {
       toast.error('Загрузите фото модели');
@@ -1033,6 +1044,7 @@ export default function ReplicateTryOn() {
     setCustomPrompt('');
     setTaskId(null);
     isGeneratingRef.current = false;
+    lastClickTimeRef.current = 0;
     setIsGenerating(false);
     setWaitingContinue(false);
     setGenerationStatus('');
