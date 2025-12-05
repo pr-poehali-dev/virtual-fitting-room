@@ -178,6 +178,52 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
     }
   };
 
+  const handleDeleteSelected = async () => {
+    const count = selectedItems.length;
+    const photoWord = count === 1 ? 'фото' : (count < 5 ? 'фото' : 'фото');
+    
+    if (!confirm(`Удалить выбранные фото?\n\nВы собираетесь удалить ${count} ${photoWord} из истории примерок.\nЭто действие нельзя отменить.`)) return;
+
+    try {
+      const deletePromises = selectedItems.map(id => 
+        fetch(`${HISTORY_API}?id=${id}`, {
+          method: 'DELETE',
+          headers: {
+            'X-User-Id': userId
+          }
+        })
+      );
+
+      await Promise.all(deletePromises);
+      
+      toast.success(`Удалено ${count} ${photoWord}`);
+      setSelectedItems([]);
+      await fetchHistory();
+    } catch (error) {
+      console.error('Failed to delete selected:', error);
+      toast.error('Ошибка удаления');
+    }
+  };
+
+  const handleDownloadImage = async (imageUrl: string, historyId: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `fitting-room-${historyId}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Фото скачано');
+    } catch (error) {
+      console.error('Failed to download image:', error);
+      toast.error('Ошибка скачивания');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -244,6 +290,13 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
                   )}
                 </Button>
                 <Button 
+                  variant="destructive" 
+                  onClick={handleDeleteSelected}
+                >
+                  <Icon name="Trash2" className="mr-2" size={16} />
+                  Удалить
+                </Button>
+                <Button 
                   variant="outline" 
                   onClick={() => setSelectedItems([])}
                 >
@@ -285,12 +338,22 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
                   alt="История примерки"
                   className="w-full aspect-[3/4] object-cover"
                 />
-                <div className="absolute top-2 right-2">
+                <div className="absolute top-2 right-2 flex gap-1">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-8 w-8 bg-white/90 hover:bg-white"
+                    onClick={() => handleDownloadImage(item.result_image, item.id)}
+                    title="Скачать фото"
+                  >
+                    <Icon name="Download" size={14} />
+                  </Button>
                   <Button
                     variant="destructive"
                     size="icon"
                     className="h-8 w-8"
                     onClick={() => handleDeleteFromHistory(item.id)}
+                    title="Удалить фото"
                   >
                     <Icon name="Trash2" size={14} />
                   </Button>
@@ -323,17 +386,17 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
         ))}
       </div>
 
-      <Card className="bg-amber-50 border-amber-200">
+      <Card className="bg-yellow-50 border-yellow-200">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <Icon name="Info" className="text-amber-600 mt-0.5 flex-shrink-0" size={20} />
+            <Icon name="AlertTriangle" className="text-yellow-600 mt-0.5 flex-shrink-0" size={20} />
             <div>
-              <p className="text-sm font-medium text-amber-900">
-                Автоматическое удаление
+              <p className="text-sm font-medium text-yellow-900">
+                ⚠️ Временное хранение
               </p>
-              <p className="text-sm text-amber-700 mt-1">
-                Фото в истории хранятся 6 месяцев, после чего автоматически удаляются. 
-                Если хотите сохранить фото надолго - добавьте их в лукбук.
+              <p className="text-sm text-yellow-700 mt-1">
+                Фото из истории примерок хранятся ограниченное время и могут быть удалены. 
+                Сохраните важные изображения: добавьте в лукбуки или скачайте на устройство.
               </p>
             </div>
           </div>
