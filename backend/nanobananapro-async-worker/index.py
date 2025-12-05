@@ -41,16 +41,16 @@ def translate_to_english(text: str) -> str:
 def build_prompt(garments: list, custom_prompt: str) -> str:
     '''Build clear prompt for NanoBanana with category-based specifications'''
     
-    base_prompt = "Make only one photo where the model from first uploaded image is wearing "
+    base_prompt = "Make only one photo option where the model from first uploaded image dressed "
     
     if len(garments) == 1:
         category = garments[0].get('category', 'dresses')
         if category == 'upper_body':
-            base_prompt += "the top clothes (blouse/shirt/jacket/sweater/top/t-shirt/sweatshirt/hoodie) from second uploaded image, do NOT change bottom clothing on the model from first uploaded image, "
+            base_prompt += "the top clothes (blouse/shirt/jacket/sweater/top/t-shirt/sweatshirt/hoodie) from second uploaded image, and do NOT change bottom clothing on the model from first uploaded image, "
         elif category == 'lower_body':
-            base_prompt += "the bottom clothes (pants/skirt/shorts/underpants) from second uploaded image, do NOT change bottom clothing on the model from first uploaded image, "
+            base_prompt += "the bottom clothes (pants/skirt/shorts/underpants) from second uploaded image, and do NOT change bottom clothing on the model from first uploaded image, "
         else:
-            base_prompt += "full clothes from second uploaded image, "
+            base_prompt += "the full clothes from second uploaded image, "
     else:
         for i, garment in enumerate(garments):
             img_num = i + 2
@@ -60,9 +60,9 @@ def build_prompt(garments: list, custom_prompt: str) -> str:
             elif category == 'lower_body':
                 base_prompt += f"the bottom clothes (pants/skirt/shorts/underpants) from third uploaded image, "
             else:
-                base_prompt += f"full clothes from second uploaded image. "
+                base_prompt += f"the full clothes from second uploaded image. "
     
-    base_prompt += " keep the EXACT face, body shape, pose from first uploaded image, change ONLY the clothes. "
+    base_prompt += " and keep the EXACT face, body shape, pose from first uploaded image. "
     
     if custom_prompt:
         translated_prompt = translate_to_english(custom_prompt)
