@@ -81,11 +81,47 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Максимум 2 вещи за раз для NanoBanana'})
         }
     
-    task_id = str(uuid.uuid4())
-    
     try:
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
+        
+        # Deduplication: check for identical request in last 50ms (0.05 sec)
+        person_prefix = person_image[:100] if len(person_image) > 100 else person_image
+        garments_str = json.dumps(garments)
+        garments_prefix = garments_str[:200] if len(garments_str) > 200 else garments_str
+        
+        cursor.execute('''
+            SELECT id, created_at FROM nanobananapro_tasks
+            WHERE user_id = %s
+              AND status IN ('pending', 'processing')
+              AND LEFT(person_image, 100) = %s
+              AND LEFT(garments::text, 200) = %s
+              AND created_at > NOW() - INTERVAL '0.05 seconds'
+            ORDER BY created_at DESC
+            LIMIT 1
+        ''', (user_id, person_prefix, garments_prefix))
+        
+        existing = cursor.fetchone()
+        
+        if existing:
+            existing_task_id, existing_created = existing
+            print(f'[Dedup] Found duplicate request from user {user_id}, returning existing task {existing_task_id} (created {existing_created})')
+            cursor.close()
+            conn.close()
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'isBase64Encoded': False,
+                'body': json.dumps({
+                    'task_id': existing_task_id,
+                    'status': 'pending',
+                    'estimated_time_seconds': 30,
+                    'deduplicated': True
+                })
+            }
+        
+        task_id = str(uuid.uuid4())
+        print(f'[Start] Creating new task {task_id} for user {user_id}')
         
         cursor.execute('''
             INSERT INTO nanobananapro_tasks (id, user_id, status, person_image, garments, prompt_hints, created_at)
