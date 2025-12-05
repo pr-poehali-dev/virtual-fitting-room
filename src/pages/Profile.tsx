@@ -1027,6 +1027,7 @@ export default function Profile() {
                 onClick={handleDownloadPDF} 
                 disabled={isGeneratingPDF}
                 size="sm"
+                className="mr-5"
               >
                 {isGeneratingPDF ? (
                   <>
