@@ -338,26 +338,6 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
                   alt="История примерки"
                   className="w-full aspect-[3/4] object-cover"
                 />
-                <div className="absolute top-2 right-2 flex gap-1">
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="h-8 w-8 bg-white/90 hover:bg-white"
-                    onClick={() => handleDownloadImage(item.result_image, item.id)}
-                    title="Скачать фото"
-                  >
-                    <Icon name="Download" size={14} />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => handleDeleteFromHistory(item.id)}
-                    title="Удалить фото"
-                  >
-                    <Icon name="Trash2" size={14} />
-                  </Button>
-                </div>
               </div>
               <div className="p-2 bg-muted space-y-2">
                 <div className="flex items-center gap-2 justify-center">
@@ -380,6 +360,26 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
                     year: 'numeric'
                   })}
                 </p>
+                <div className="flex gap-1 justify-center">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-8 w-8 bg-blue-500 hover:bg-blue-600 text-white"
+                    onClick={() => handleDownloadImage(item.result_image, item.id)}
+                    title="Скачать фото"
+                  >
+                    <Icon name="Download" size={14} />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleDeleteFromHistory(item.id)}
+                    title="Удалить фото"
+                  >
+                    <Icon name="Trash2" size={14} />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
