@@ -81,53 +81,26 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Максимум 2 вещи за раз для NanoBanana'})
         }
     
-    import hashlib
-    import time
-    
     garments_json = json.dumps(garments)
-    
-    # Create unique request hash for deduplication
-    request_hash = hashlib.md5(f'{user_id}{person_image[:200]}{garments_json}{prompt_hints or ""}'.encode()).hexdigest()
-    
-    # Add small delay to reduce race condition (0-50ms random)
-    import random
-    time.sleep(random.uniform(0, 0.05))
+    task_id = str(uuid.uuid4())
     
     try:
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
         
-        # Check for existing pending/processing tasks from same user in last 10 seconds
         cursor.execute('''
-            SELECT id, status FROM nanobananapro_tasks
-            WHERE user_id = %s
-            AND status IN ('pending', 'processing')
-            AND created_at > NOW() - INTERVAL '10 seconds'
-            ORDER BY created_at DESC
-            LIMIT 1
-        ''', (user_id,))
-        
-        existing_task = cursor.fetchone()
-        
-        if existing_task:
-            task_id = existing_task[0]
-            print(f'[NanoBanana] Recent task found, returning: {task_id} (hash: {request_hash[:8]})')
-        else:
-            task_id = str(uuid.uuid4())
-            
-            cursor.execute('''
-                INSERT INTO nanobananapro_tasks (id, user_id, status, person_image, garments, prompt_hints, created_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            ''', (
-                task_id,
-                user_id,
-                'pending',
-                person_image,
-                garments_json,
-                prompt_hints,
-                datetime.utcnow()
-            ))
-            print(f'[NanoBanana] New task created: {task_id} (hash: {request_hash[:8]})')
+            INSERT INTO nanobananapro_tasks (id, user_id, status, person_image, garments, prompt_hints, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        ''', (
+            task_id,
+            user_id,
+            'pending',
+            person_image,
+            garments_json,
+            prompt_hints,
+            datetime.utcnow()
+        ))
+        print(f'[NanoBanana] Task created: {task_id}')
         
         conn.commit()
         cursor.close()

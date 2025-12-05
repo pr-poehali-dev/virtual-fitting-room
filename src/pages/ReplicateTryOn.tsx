@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
@@ -70,6 +70,7 @@ export default function ReplicateTryOn() {
 
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const isGeneratingRef = useRef(false);
   const [lookbooks, setLookbooks] = useState<any[]>([]);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [newLookbookName, setNewLookbookName] = useState('');
@@ -485,6 +486,11 @@ export default function ReplicateTryOn() {
   };
 
   const handleGenerateNanoBananaPro = async () => {
+    if (isGeneratingRef.current) {
+      console.log('[NanoBananaPro] Already generating, ignoring duplicate request');
+      return;
+    }
+
     if (!uploadedImage) {
       toast.error('Загрузите фото модели');
       return;
@@ -533,6 +539,7 @@ export default function ReplicateTryOn() {
       return;
     }
 
+    isGeneratingRef.current = true;
     setIsGenerating(true);
     setGeneratedImage(null);
     setIntermediateResult(null);
@@ -574,6 +581,7 @@ export default function ReplicateTryOn() {
     } catch (error: any) {
       console.error('Generation error:', error);
       toast.error(error.message || 'Ошибка запуска генерации');
+      isGeneratingRef.current = false;
       setIsGenerating(false);
       setGenerationStatus('');
       
@@ -598,6 +606,7 @@ export default function ReplicateTryOn() {
         const elapsedTime = Date.now() - startTime;
         if (elapsedTime > TIMEOUT_MS) {
           console.error('[NanoBananaPro] Timeout after 300 seconds');
+          isGeneratingRef.current = false;
           setIsGenerating(false);
           setGenerationStatus('');
           toast.error('Генерация заняла слишком много времени. Попробуйте обновить страницу и создать образ заново');
@@ -626,6 +635,7 @@ export default function ReplicateTryOn() {
         } else if (data.status === 'completed') {
           console.log('[NanoBananaPro] COMPLETED! Result URL:', data.result_url);
           setGeneratedImage(data.result_url);
+          isGeneratingRef.current = false;
           setIsGenerating(false);
           setGenerationStatus('');
           clearInterval(interval);
@@ -633,6 +643,7 @@ export default function ReplicateTryOn() {
           toast.success('Образ готов!');
         } else if (data.status === 'failed') {
           console.error('[NanoBananaPro] FAILED:', data.error_message);
+          isGeneratingRef.current = false;
           setIsGenerating(false);
           setGenerationStatus('');
           toast.error(data.error_message || 'Ошибка генерации');
@@ -1021,6 +1032,7 @@ export default function ReplicateTryOn() {
     setIntermediateResult(null);
     setCustomPrompt('');
     setTaskId(null);
+    isGeneratingRef.current = false;
     setIsGenerating(false);
     setWaitingContinue(false);
     setGenerationStatus('');
