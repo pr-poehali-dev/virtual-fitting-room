@@ -169,12 +169,6 @@ export default function Admin() {
     }
   }, [genUserFilter, genModelFilter, genSavedFilter, genDateFrom, genDateTo, isAuthenticated]);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchCleanupLogs();
-    }
-  }, [cleanupTypeFilter, cleanupDateFrom, cleanupDateTo, isAuthenticated]);
-
   const handleLogin = async () => {
     if (!password) {
       toast.error('Введите пароль');
