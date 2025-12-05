@@ -241,13 +241,13 @@ export default function Profile() {
 
       if (!response.ok) throw new Error('Failed to delete lookbook');
       
+      toast.success('Лукбук удалён');
+      
       // Обновляем список лукбуков сразу после удаления
       setLookbooks(prev => prev.filter(lb => lb.id !== id));
       
       // Также делаем fetch для синхронизации с сервером
-      await fetchLookbooks();
-      
-      toast.success('Лукбук удалён');
+      fetchLookbooks().catch(() => {}); // Игнорируем ошибки обновления списка
     } catch (error) {
       toast.error('Ошибка удаления лукбука');
     }
