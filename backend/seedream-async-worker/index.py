@@ -61,7 +61,7 @@ def build_prompt(garments: list, custom_prompt: str) -> str:
                 base_prompt += f"Image {img_num} has full outfit - take complete outfit from image {img_num}. "
     
     base_prompt += "CRITICAL: On image 1 (person) keep EVERYTHING - EXACT SAME FACE, exact hairstyle, exact skin color, exact body shape, height, body proportions, shoulders width, waist size, hips size, leg length, exact pose, exact background, exact lighting. Change ONLY clothing items! "
-    base_prompt += "STRICT RULE: NEVER EVER take face/body/pose/background from clothing images (2 or 3). Those images show ONLY clothing items on mannequins or models - ignore their faces and bodies completely! Use ONLY clothing items from those images. The person's face and body from image 1 must remain 100% identical. "
+    base_prompt += "STRICT RULE: NEVER EVER take face/body/pose/background from clothing image 2 or image 3. Those images show ONLY clothing items on mannequins or models - ignore their faces and bodies completely! Use ONLY clothing items from those images. The person's face and body from image 1 must remain 100% identical. "
     
     if custom_prompt:
         translated_prompt = translate_to_english(custom_prompt)
