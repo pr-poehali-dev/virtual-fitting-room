@@ -85,7 +85,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
         
-        # Deduplication: check for identical request in last 50ms (0.05 sec)
+        # Deduplication: check for identical request in last 10ms (0.01 sec)
         person_prefix = person_image[:100] if len(person_image) > 100 else person_image
         garments_str = json.dumps(garments)
         garments_prefix = garments_str[:200] if len(garments_str) > 200 else garments_str
@@ -96,7 +96,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
               AND status IN ('pending', 'processing')
               AND LEFT(person_image, 100) = %s
               AND LEFT(garments::text, 200) = %s
-              AND created_at > NOW() - INTERVAL '0.05 seconds'
+              AND created_at > NOW() - INTERVAL '0.01 seconds'
             ORDER BY created_at DESC
             LIMIT 1
         ''', (user_id, person_prefix, garments_prefix))
