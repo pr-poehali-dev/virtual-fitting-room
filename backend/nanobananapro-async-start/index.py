@@ -34,6 +34,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Method not allowed'})
         }
     
+    # Generate unique request ID for tracking
+    import time
+    request_timestamp = time.time()
+    request_id = f"{context.request_id[:8]}-{int(request_timestamp * 1000)}"
+    print(f'[START-{request_id}] ========== NEW REQUEST RECEIVED ==========')
+    print(f'[START-{request_id}] Timestamp: {request_timestamp}')
+    
     database_url = os.environ.get('DATABASE_URL')
     if not database_url:
         return {
@@ -44,6 +51,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     user_id = event.get('headers', {}).get('X-User-Id') or event.get('headers', {}).get('x-user-id')
+    print(f'[START-{request_id}] User ID: {user_id}')
     if not user_id:
         return {
             'statusCode': 401,
@@ -90,6 +98,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         garments_str = json.dumps(garments)
         garments_prefix = garments_str[:200] if len(garments_str) > 200 else garments_str
         
+        print(f'[START-{request_id}] Checking for duplicates in last 10ms...')
         cursor.execute('''
             SELECT id, created_at FROM nanobananapro_tasks
             WHERE user_id = %s
@@ -102,10 +111,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         ''', (user_id, person_prefix, garments_prefix))
         
         existing = cursor.fetchone()
+        print(f'[START-{request_id}] Duplicate check result: {"FOUND" if existing else "NOT FOUND"}')
         
         if existing:
             existing_task_id, existing_created = existing
-            print(f'[Dedup] Found duplicate request from user {user_id}, returning existing task {existing_task_id} (created {existing_created})')
+            print(f'[START-{request_id}] ✓ DEDUPLICATED! Returning existing task {existing_task_id} (created {existing_created})')
+            print(f'[START-{request_id}] ========== REQUEST COMPLETED (DEDUPLICATED) ==========')
             cursor.close()
             conn.close()
             return {
@@ -121,7 +132,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         task_id = str(uuid.uuid4())
-        print(f'[Start] Creating new task {task_id} for user {user_id}')
+        print(f'[START-{request_id}] ✓ NEW TASK! Creating task {task_id} for user {user_id}')
         
         cursor.execute('''
             INSERT INTO nanobananapro_tasks (id, user_id, status, person_image, garments, prompt_hints, created_at)
@@ -137,6 +148,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         ))
         
         conn.commit()
+        print(f'[START-{request_id}] Task {task_id} saved to database')
         cursor.close()
         conn.close()
         
@@ -145,9 +157,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             worker_url = 'https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d'
             req = urllib.request.Request(worker_url, method='GET')
             urllib.request.urlopen(req, timeout=2)
-        except:
-            pass
+            print(f'[START-{request_id}] Worker triggered successfully')
+        except Exception as e:
+            print(f'[START-{request_id}] Worker trigger failed (non-critical): {e}')
         
+        print(f'[START-{request_id}] ========== REQUEST COMPLETED (NEW TASK) ==========')
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
