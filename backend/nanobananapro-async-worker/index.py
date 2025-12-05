@@ -189,14 +189,35 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             garments = json.loads(garments_json)
             
             if not fal_request_id:
+                # ATOMIC: Mark as processing FIRST to prevent race condition
+                print(f'[NanoBanana] Task {task_id}: ATOMIC UPDATE to prevent duplicate submission')
+                cursor.execute('''
+                    UPDATE nanobananapro_tasks
+                    SET status = 'processing', updated_at = %s
+                    WHERE id = %s AND status = 'pending'
+                    RETURNING id
+                ''', (datetime.utcnow(), task_id))
+                updated_row = cursor.fetchone()
+                conn.commit()
+                
+                if not updated_row:
+                    print(f'[NanoBanana] Task {task_id} already being processed by another worker, skipping')
+                    cursor.close()
+                    conn.close()
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'status': 'task_already_processing'})
+                    }
+                
                 try:
                     request_id, response_url = submit_to_fal_queue(person_image, garments, prompt_hints or '')
                     print(f'[NanoBanana] Task {task_id} submitted to fal.ai: request_id={request_id}')
                     
                     cursor.execute('''
                         UPDATE nanobananapro_tasks
-                        SET status = 'processing',
-                            fal_request_id = %s,
+                        SET fal_request_id = %s,
                             fal_response_url = %s,
                             updated_at = %s
                         WHERE id = %s
