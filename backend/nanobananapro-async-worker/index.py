@@ -219,7 +219,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor.execute('''
             SELECT id, fal_response_url, first_result_at, user_id, saved_to_history
             FROM nanobananapro_tasks
-            WHERE status = 'processing' AND fal_response_url IS NOT NULL AND (saved_to_history IS NULL OR saved_to_history = FALSE)
+            WHERE status = 'processing' AND fal_response_url IS NOT NULL
             ORDER BY created_at ASC
             LIMIT 5
         ''')
@@ -333,6 +333,58 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     print(f'[NanoBanana] Task {task_id} still processing (in progress)')
                 else:
                     print(f'[NanoBanana] Error checking task {task_id}: {error_str}')
+        
+        # Also check for completed tasks that weren't saved to history yet
+        cursor.execute('''
+            SELECT id, user_id, person_image, garments, result_url
+            FROM nanobananapro_tasks
+            WHERE status = 'completed' AND (saved_to_history IS NULL OR saved_to_history = FALSE) AND result_url IS NOT NULL
+            ORDER BY created_at ASC
+            LIMIT 5
+        ''')
+        
+        completed_unsaved = cursor.fetchall()
+        print(f'[NanoBanana] Found {len(completed_unsaved)} completed tasks not saved to history')
+        
+        for task_id, user_id, person_image, garments_json, result_url in completed_unsaved:
+            # ATOMIC: Mark as "being saved" FIRST to prevent race condition
+            cursor.execute('''
+                UPDATE nanobananapro_tasks
+                SET saved_to_history = TRUE
+                WHERE id = %s AND (saved_to_history IS NULL OR saved_to_history = FALSE)
+                RETURNING id
+            ''', (task_id,))
+            updated_row = cursor.fetchone()
+            conn.commit()
+            
+            # Only save to history if we successfully set the flag (no other worker did it)
+            if updated_row:
+                print(f'[NanoBanana] Attempting to save completed task {task_id} to history for user {user_id}')
+                try:
+                    garments_list = json.loads(garments_json) if isinstance(garments_json, str) else garments_json
+                    print(f'[NanoBanana] Calling history API with user_id={user_id}, result_url={result_url[:50]}...')
+                    
+                    history_response = requests.post(
+                        'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd',
+                        headers={'X-User-Id': user_id},
+                        json={
+                            'person_image': person_image,
+                            'garments': garments_list,
+                            'result_image': result_url,
+                            'model_used': 'nanobananapro',
+                            'cost': 0
+                        },
+                        timeout=10
+                    )
+                    print(f'[NanoBanana] History API response: status={history_response.status_code}, body={history_response.text[:200]}')
+                    if history_response.status_code == 201:
+                        print(f'[NanoBanana] ✓ Successfully saved completed task to history: {task_id}')
+                    else:
+                        print(f'[NanoBanana] ✗ History API returned non-201: {history_response.status_code}')
+                except Exception as e:
+                    print(f'[NanoBanana] ✗ Failed to save completed task to history: {type(e).__name__}: {str(e)}')
+            else:
+                print(f'[NanoBanana] ⊘ Completed task {task_id} already being saved by another worker, skipping')
         
         # Check if we have unfinished tasks before closing
         cursor.execute('''

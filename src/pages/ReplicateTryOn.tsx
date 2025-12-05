@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
@@ -94,6 +94,7 @@ export default function ReplicateTryOn() {
   const [activeFittingRoom, setActiveFittingRoom] = useState<'replicate' | 'seedream' | 'nanobananapro'>('replicate');
   const [customPrompt, setCustomPrompt] = useState<string>('');
   const [showCategoryError, setShowCategoryError] = useState(false);
+  const isNanoBananaRequestInProgress = useRef(false);
 
 
   useEffect(() => {
@@ -486,67 +487,75 @@ export default function ReplicateTryOn() {
 
   const handleGenerateNanoBananaPro = async () => {
     const callId = Math.random().toString(36).substring(7);
-    console.log(`[NanoBananaPro-CALL-START] Function called, ID: ${callId}, isGenerating: ${isGenerating}`);
+    console.log(`[NanoBananaPro-CALL-START] Function called, ID: ${callId}, isGenerating: ${isGenerating}, inProgress: ${isNanoBananaRequestInProgress.current}`);
     
-    if (!uploadedImage) {
-      toast.error('Загрузите фото модели');
+    if (isNanoBananaRequestInProgress.current) {
+      console.log(`[NanoBananaPro-CALL-${callId}] BLOCKED: Request already in progress`);
       return;
     }
-
-    if (selectedClothingItems.length === 0) {
-      toast.error('Выберите хотя бы одну вещь');
-      return;
-    }
-
-    if (selectedClothingItems.length > 2) {
-      toast.error('Максимум 2 вещи можно выбрать');
-      return;
-    }
-
-    if (!user) {
-      toast.error('Требуется авторизация');
-      return;
-    }
-
-    const itemsWithoutCategory = selectedClothingItems.filter(item => !item.category);
-    if (itemsWithoutCategory.length > 0) {
-      setShowCategoryError(true);
-      toast.error('Укажите категорию для всех выбранных вещей');
-      return;
-    }
-    setShowCategoryError(false);
-
-    if (selectedClothingItems.length === 2) {
-      const categories = selectedClothingItems.map(item => item.category);
-      const hasUpperAndLower = categories.includes('upper_body') && categories.includes('lower_body');
-      
-      if (!hasUpperAndLower) {
-        toast.error('При выборе 2-х вещей одна должна быть "Верх", другая - "Низ"');
+    
+    isNanoBananaRequestInProgress.current = true;
+    console.log(`[NanoBananaPro-CALL-${callId}] Lock acquired, proceeding...`);
+    
+    try {
+      if (!uploadedImage) {
+        toast.error('Загрузите фото модели');
         return;
       }
-    }
 
-    const balanceCheck = await checkReplicateBalance(user, selectedClothingItems.length);
-    if (!balanceCheck.canGenerate) {
-      return;
-    }
+      if (selectedClothingItems.length === 0) {
+        toast.error('Выберите хотя бы одну вещь');
+        return;
+      }
 
-    const balanceDeducted = await deductReplicateBalance(user, selectedClothingItems.length);
-    if (!balanceDeducted) {
-      return;
-    }
+      if (selectedClothingItems.length > 2) {
+        toast.error('Максимум 2 вещи можно выбрать');
+        return;
+      }
 
-    setIsGenerating(true);
-    setGeneratedImage(null);
-    setIntermediateResult(null);
-    setWaitingContinue(false);
-    setGenerationStatus('Запускаем генерацию...');
+      if (!user) {
+        toast.error('Требуется авторизация');
+        return;
+      }
 
-    toast.info('Генерация займёт ~30 секунд. Не закрывайте страницу!', {
-      duration: 6000
-    });
+      const itemsWithoutCategory = selectedClothingItems.filter(item => !item.category);
+      if (itemsWithoutCategory.length > 0) {
+        setShowCategoryError(true);
+        toast.error('Укажите категорию для всех выбранных вещей');
+        return;
+      }
+      setShowCategoryError(false);
 
-    try {
+      if (selectedClothingItems.length === 2) {
+        const categories = selectedClothingItems.map(item => item.category);
+        const hasUpperAndLower = categories.includes('upper_body') && categories.includes('lower_body');
+        
+        if (!hasUpperAndLower) {
+          toast.error('При выборе 2-х вещей одна должна быть "Верх", другая - "Низ"');
+          return;
+        }
+      }
+
+      const balanceCheck = await checkReplicateBalance(user, selectedClothingItems.length);
+      if (!balanceCheck.canGenerate) {
+        return;
+      }
+
+      const balanceDeducted = await deductReplicateBalance(user, selectedClothingItems.length);
+      if (!balanceDeducted) {
+        return;
+      }
+
+      setIsGenerating(true);
+      setGeneratedImage(null);
+      setIntermediateResult(null);
+      setWaitingContinue(false);
+      setGenerationStatus('Запускаем генерацию...');
+
+      toast.info('Генерация займёт ~30 секунд. Не закрывайте страницу!', {
+        duration: 6000
+      });
+
       console.log(`[NanoBananaPro-CALL-${callId}] About to send fetch request...`);
       const response = await fetch(NANOBANANAPRO_START_API, {
         method: 'POST',
@@ -585,6 +594,9 @@ export default function ReplicateTryOn() {
         await refundReplicateBalance(user, selectedClothingItems.length);
         console.log('[NanoBananaPro] Balance refunded due to start error');
       }
+    } finally {
+      isNanoBananaRequestInProgress.current = false;
+      console.log(`[NanoBananaPro-CALL-${callId}] Lock released`);
     }
   };
 
