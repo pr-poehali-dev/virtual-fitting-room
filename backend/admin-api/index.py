@@ -4,6 +4,8 @@ from typing import Dict, Any
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime, timedelta
+import boto3
+from botocore.config import Config
 
 def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')
@@ -16,6 +18,58 @@ def get_db_connection():
 def verify_admin_password(provided_password: str) -> bool:
     admin_password = os.environ.get('ADMIN_PASSWORD')
     return provided_password == admin_password
+
+def delete_user_folder_from_s3(user_id: str) -> int:
+    '''
+    Delete all files in user's S3 folder
+    Returns: number of deleted files
+    '''
+    try:
+        s3_client = boto3.client(
+            's3',
+            endpoint_url='https://storage.yandexcloud.net',
+            aws_access_key_id=os.environ.get('S3_ACCESS_KEY'),
+            aws_secret_access_key=os.environ.get('S3_SECRET_KEY'),
+            region_name='ru-central1',
+            config=Config(signature_version='s3v4')
+        )
+        
+        s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
+        user_folder_prefix = f'images/lookbooks/{user_id}/'
+        
+        deleted_count = 0
+        continuation_token = None
+        
+        # List and delete all files in user's folder (may require pagination)
+        while True:
+            list_params = {
+                'Bucket': s3_bucket_name,
+                'Prefix': user_folder_prefix
+            }
+            
+            if continuation_token:
+                list_params['ContinuationToken'] = continuation_token
+            
+            response = s3_client.list_objects_v2(**list_params)
+            
+            if 'Contents' in response:
+                for obj in response['Contents']:
+                    s3_client.delete_object(
+                        Bucket=s3_bucket_name,
+                        Key=obj['Key']
+                    )
+                    deleted_count += 1
+            
+            # Check if there are more files to list
+            if response.get('IsTruncated'):
+                continuation_token = response.get('NextContinuationToken')
+            else:
+                break
+        
+        return deleted_count
+    except Exception as e:
+        print(f'Error deleting S3 folder for user {user_id}: {str(e)}')
+        return 0
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -446,6 +500,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
             
             conn.commit()
+            
+            # Delete user's S3 folder after successful DB deletion
+            deleted_files_count = delete_user_folder_from_s3(user_id)
             
             return {
                 'statusCode': 200,
