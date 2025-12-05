@@ -570,6 +570,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 "DELETE FROM lookbooks WHERE id = %s AND user_id = %s RETURNING id",
                 (lookbook_id, user_id)
             )
+            deleted = cursor.fetchone()
+            
+            if not deleted:
+                conn.rollback()
+                return {
+                    'statusCode': 404,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Lookbook not found'})
+                }
             
             # Check if photos should be deleted from S3
             # Delete from S3 if photo is NOT in history AND NOT in any other lookbook
@@ -614,20 +627,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             print(f'Deleted from S3 (lookbook deleted, not in history or other lookbooks): {s3_key}')
                         except Exception as e:
                             print(f'Failed to delete from S3: {e}')
-            
-            deleted = cursor.fetchone()
-            
-            if not deleted:
-                conn.rollback()
-                return {
-                    'statusCode': 404,
-                    'headers': {
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
-                    },
-                    'isBase64Encoded': False,
-                    'body': json.dumps({'error': 'Lookbook not found'})
-                }
             
             conn.commit()
             
