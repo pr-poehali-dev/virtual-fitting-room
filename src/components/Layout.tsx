@@ -39,7 +39,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-2">
               {user ? (
                 <>
-                  <span className="text-sm text-muted-foreground hidden md:inline">{user.name}</span>
+                  <span className="text-sm text-muted-foreground hidden lg:inline">{user.name}</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => navigate('/profile')}
+                    className="hidden lg:flex"
+                  >
+                    <Icon name="User" size={16} className="mr-2" />
+                    Личный кабинет
+                  </Button>
                   <button
                     onClick={() => navigate('/profile')}
                     className="md:hidden p-2 hover:bg-muted rounded-lg transition-colors"
