@@ -43,8 +43,8 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
         `}
       >
         <div className="flex flex-col h-full">
-          {/* Burger Button - Desktop only, inside sidebar */}
-          <div className="hidden lg:flex items-center justify-center py-4 border-b border-gray-700">
+          {/* Burger Button */}
+          <div className="flex items-center py-4 border-b border-gray-700 px-3">
             <button
               onClick={onToggle}
               className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
@@ -55,7 +55,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
           </div>
 
           {/* Menu Items */}
-          <nav className="flex-1 px-3 py-4 space-y-2 mt-16 lg:mt-0">
+          <nav className="flex-1 px-3 py-4 space-y-2">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
 
@@ -70,13 +70,14 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
                   }}
                   className={`
                     flex items-center gap-4 px-4 py-3 rounded-lg
-                    transition-all duration-200
+                    transition-all duration-200 relative group
                     ${
                       isActive
                         ? "bg-purple-600 text-white"
                         : "text-gray-300 hover:bg-gray-700 hover:text-white"
                     }
                   `}
+                  title={!isOpen ? item.label : undefined}
                 >
                   <Icon
                     name={item.icon}
@@ -87,6 +88,13 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
                   <span className={`transition-opacity duration-200 ${isOpen ? "opacity-100" : "lg:opacity-0"}`} style={{ whiteSpace: 'normal' }}>
                     {item.label}
                   </span>
+                  
+                  {/* Tooltip for desktop when closed */}
+                  {!isOpen && (
+                    <span className="hidden lg:block absolute left-full ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                      {item.label}
+                    </span>
+                  )}
                 </Link>
               );
             })}
