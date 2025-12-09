@@ -44,25 +44,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     variant="ghost" 
                     size="sm" 
                     onClick={() => navigate('/profile')}
-                    className="hidden md:flex"
+                    className="hidden lg:flex"
                   >
                     <Icon name="User" size={16} className="mr-2" />
                     Личный кабинет
                   </Button>
                   <button
                     onClick={() => navigate('/profile')}
-                    className="md:hidden p-2 hover:bg-muted rounded-lg transition-colors"
+                    className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
                     aria-label="Profile"
                   >
                     <Icon name="User" size={24} />
                   </button>
-                  <Button variant="outline" size="sm" onClick={handleLogout} className="hidden md:flex">
+                  <Button variant="outline" size="sm" onClick={handleLogout} className="hidden lg:flex">
                     <Icon name="LogOut" size={16} className="mr-2" />
                     Выйти
                   </Button>
                   <button
                     onClick={handleLogout}
-                    className="md:hidden p-2 hover:bg-muted rounded-lg transition-colors"
+                    className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
                     aria-label="Logout"
                   >
                     <Icon name="LogOut" size={24} />
