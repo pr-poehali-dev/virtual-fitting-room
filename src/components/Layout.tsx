@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { useAuth } from '@/context/AuthContext';
+import Footer from '@/components/Footer';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -67,6 +68,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       <main>{children}</main>
+      <Footer />
     </div>
   );
 }

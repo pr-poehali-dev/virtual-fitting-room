@@ -19,6 +19,9 @@ import VerifyEmail from "./pages/VerifyEmail";
 import RegistrationSuccess from "./pages/RegistrationSuccess";
 import ReplicateTryOn from "./pages/ReplicateTryOn";
 import NotFound from "./pages/NotFound";
+import Payment from "./pages/Payment";
+import Offer from "./pages/Offer";
+import Contacts from "./pages/Contacts";
 
 const APP_VERSION = "2.0.0";
 
@@ -60,6 +63,9 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/registration-success" element={<RegistrationSuccess />} />
+            <Route path="/payment" element={<Payment />} />
+            <Route path="/offer" element={<Offer />} />
+            <Route path="/contacts" element={<Contacts />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
