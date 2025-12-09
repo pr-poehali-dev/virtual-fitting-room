@@ -25,7 +25,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4 py-4">
           <nav className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <img src="/logo-fitting-room-text.svg" alt="Virtual Fitting" className="h-8 md:h-10" />
+              <img src="/logo-fitting-room-text.svg?v=2" alt="Virtual Fitting" className="h-8 md:h-10" />
             </Link>
             <div className="flex items-center gap-2 md:gap-4">
               <div className="flex gap-2 md:gap-4">
