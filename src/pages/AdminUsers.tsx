@@ -85,7 +85,7 @@ export default function AdminUsers() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center py-12">
             <Icon name="Loader2" className="animate-spin" size={48} />
           </div>
@@ -96,7 +96,7 @@ export default function AdminUsers() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           <AdminMenu />
           
