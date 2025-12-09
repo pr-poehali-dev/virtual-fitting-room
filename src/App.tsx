@@ -9,10 +9,21 @@ import { useEffect } from "react";
 
 import ColorType from "./pages/ColorType";
 import Profile from "./pages/Profile";
+import ProfileDashboard from "./pages/ProfileDashboard";
+import ProfileLookbooks from "./pages/ProfileLookbooks";
+import ProfileHistory from "./pages/ProfileHistory";
+import ProfileWallet from "./pages/ProfileWallet";
+import ProfileSettings from "./pages/ProfileSettings";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import SharedLookbook from "./pages/SharedLookbook";
 import Admin from "./pages/Admin";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminUsers from "./pages/AdminUsers";
+import AdminLookbooks from "./pages/AdminLookbooks";
+import AdminPayments from "./pages/AdminPayments";
+import AdminCatalog from "./pages/AdminCatalog";
+import AdminGenerations from "./pages/AdminGenerations";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
@@ -54,11 +65,27 @@ const App = () => (
             <Route path="/" element={<ReplicateTryOn />} />
             <Route path="/replicate" element={<Navigate to="/" replace />} />
             <Route path="/colortype" element={<ColorType />} />
-            <Route path="/profile" element={<Profile />} />
+            
+            {/* Profile Routes */}
+            <Route path="/profile" element={<ProfileDashboard />} />
+            <Route path="/profile/lookbooks" element={<ProfileLookbooks />} />
+            <Route path="/profile/history" element={<ProfileHistory />} />
+            <Route path="/profile/wallet" element={<ProfileWallet />} />
+            <Route path="/profile/settings" element={<ProfileSettings />} />
+            <Route path="/profile-old" element={<Profile />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/lookbooks" element={<AdminLookbooks />} />
+            <Route path="/admin/payments" element={<AdminPayments />} />
+            <Route path="/admin/catalog" element={<AdminCatalog />} />
+            <Route path="/admin/generations" element={<AdminGenerations />} />
+            <Route path="/admin-old" element={<Admin />} />
+            
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/lookbook/:shareToken" element={<SharedLookbook />} />
-            <Route path="/admin" element={<Admin />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
