@@ -38,13 +38,27 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </Link>
               <div className="flex items-center gap-2">
               {user ? (
-                <div className="flex items-center gap-2">
+                <>
                   <span className="text-sm text-muted-foreground hidden md:inline">{user.name}</span>
-                  <Button variant="outline" size="sm" onClick={handleLogout}>
-                    <Icon name="LogOut" size={16} className="md:mr-2" />
-                    <span className="hidden md:inline">Выйти</span>
+                  <button
+                    onClick={() => navigate('/profile')}
+                    className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
+                    aria-label="Profile"
+                  >
+                    <Icon name="User" size={24} />
+                  </button>
+                  <Button variant="outline" size="sm" onClick={handleLogout} className="hidden md:flex">
+                    <Icon name="LogOut" size={16} className="mr-2" />
+                    Выйти
                   </Button>
-                </div>
+                  <button
+                    onClick={handleLogout}
+                    className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
+                    aria-label="Logout"
+                  >
+                    <Icon name="LogOut" size={24} />
+                  </button>
+                </>
               ) : (
                 <>
                   <Button 
