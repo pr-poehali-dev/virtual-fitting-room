@@ -42,7 +42,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <span className="text-sm text-muted-foreground hidden md:inline">{user.name}</span>
                   <button
                     onClick={() => navigate('/profile')}
-                    className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
+                    className="md:hidden p-2 hover:bg-muted rounded-lg transition-colors"
                     aria-label="Profile"
                   >
                     <Icon name="User" size={24} />
@@ -53,7 +53,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </Button>
                   <button
                     onClick={handleLogout}
-                    className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
+                    className="md:hidden p-2 hover:bg-muted rounded-lg transition-colors"
                     aria-label="Logout"
                   >
                     <Icon name="LogOut" size={24} />
