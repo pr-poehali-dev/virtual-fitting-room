@@ -44,7 +44,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       >
         <div className="flex flex-col h-full">
           {/* Burger Button */}
-          <div className="flex items-center py-4 border-b border-gray-700 px-3">
+          <div className="flex items-center py-4 border-b border-gray-700 px-4">
             <button
               onClick={onToggle}
               className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
