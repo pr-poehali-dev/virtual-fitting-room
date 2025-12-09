@@ -69,12 +69,15 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
                     }
                   }}
                   className={`
-                    flex items-center gap-4 px-4 py-3 rounded-lg
+                    flex items-center justify-center lg:justify-start gap-4 rounded-lg
                     transition-all duration-200 relative group
                     ${
                       isActive
-                        ? "bg-purple-600 text-white"
+                        ? "bg-purple-500/30 text-white"
                         : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                    }
+                    ${
+                      isOpen ? "px-4 py-3" : "lg:w-14 lg:h-14 lg:p-0"
                     }
                   `}
                   title={!isOpen ? item.label : undefined}
@@ -85,7 +88,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
                     className="flex-shrink-0"
                   />
                   
-                  <span className={`transition-opacity duration-200 ${isOpen ? "opacity-100" : "lg:opacity-0"}`} style={{ whiteSpace: 'normal' }}>
+                  <span className={`transition-opacity duration-200 ${isOpen ? "opacity-100" : "lg:opacity-0 lg:hidden"}`} style={{ whiteSpace: 'normal' }}>
                     {item.label}
                   </span>
                   
