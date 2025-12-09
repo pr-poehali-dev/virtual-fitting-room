@@ -21,23 +21,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background">
       <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
       
-      <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-40">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+      <div className="lg:pl-20">
+        <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-40">
+          <div className="container mx-auto px-4 py-4">
+            <nav className="flex items-center justify-between lg:justify-end">
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-2 hover:bg-muted rounded-lg transition-colors"
+                className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
                 aria-label="Toggle menu"
               >
                 <Icon name="Menu" size={24} />
               </button>
-              <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
+              
+              <Link to="/" className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 lg:mr-auto flex items-center hover:opacity-80 transition-opacity">
                 <img src="/logo-fitting-room-text.svg?v=2" alt="Virtual Fitting" className="h-8 md:h-10" />
               </Link>
-            </div>
-            
-            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
               {user ? (
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground hidden md:inline">{user.name}</span>
@@ -72,12 +71,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </button>
                 </>
               )}
-            </div>
-          </nav>
-        </div>
-      </header>
-      <main>{children}</main>
-      <Footer />
+              </div>
+            </nav>
+          </div>
+        </header>
+        <main>{children}</main>
+        <Footer />
+      </div>
     </div>
   );
 }
