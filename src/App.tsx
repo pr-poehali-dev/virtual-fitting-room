@@ -19,6 +19,7 @@ import Register from "./pages/Register";
 import SharedLookbook from "./pages/SharedLookbook";
 import Admin from "./pages/Admin";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminStats from "./pages/AdminStats";
 import AdminUsers from "./pages/AdminUsers";
 import AdminLookbooks from "./pages/AdminLookbooks";
 import AdminPayments from "./pages/AdminPayments";
@@ -76,6 +77,7 @@ const App = () => (
             
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/stats" element={<AdminStats />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/lookbooks" element={<AdminLookbooks />} />
             <Route path="/admin/payments" element={<AdminPayments />} />

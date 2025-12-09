@@ -5,6 +5,7 @@ const AdminMenu = () => {
   const location = useLocation();
 
   const menuItems = [
+    { path: '/admin/stats', icon: 'BarChart3', label: 'Статистика' },
     { path: '/admin/users', icon: 'Users', label: 'Пользователи' },
     { path: '/admin/lookbooks', icon: 'Album', label: 'Лукбуки' },
     { path: '/admin/payments', icon: 'CreditCard', label: 'Платежи' },

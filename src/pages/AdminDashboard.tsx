@@ -120,6 +120,14 @@ export default function AdminDashboard() {
 
   const dashboardCards = [
     {
+      title: 'Статистика',
+      description: 'Общая статистика платформы',
+      icon: 'BarChart3',
+      path: '/admin/stats',
+      color: 'bg-indigo-100 text-indigo-700',
+      value: '-'
+    },
+    {
       title: 'Пользователи',
       description: 'Управление пользователями',
       icon: 'Users',
