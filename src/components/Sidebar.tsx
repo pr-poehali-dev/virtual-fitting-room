@@ -84,7 +84,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
                     className="flex-shrink-0"
                   />
                   
-                  <span className={`whitespace-nowrap transition-opacity duration-200 ${isOpen ? "opacity-100" : "lg:opacity-0"}`}>
+                  <span className={`transition-opacity duration-200 ${isOpen ? "opacity-100" : "lg:opacity-0"}`} style={{ whiteSpace: 'normal' }}>
                     {item.label}
                   </span>
                 </Link>

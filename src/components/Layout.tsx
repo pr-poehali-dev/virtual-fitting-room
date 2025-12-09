@@ -27,7 +27,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <nav className="flex items-center justify-between lg:justify-end">
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
+                className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors z-[60]"
                 aria-label="Toggle menu"
               >
                 <Icon name="Menu" size={24} />
