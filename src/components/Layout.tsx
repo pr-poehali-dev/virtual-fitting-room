@@ -44,7 +44,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     variant="ghost" 
                     size="sm" 
                     onClick={() => navigate('/profile')}
-                    className="hidden lg:flex"
+                    className="hidden md:flex"
                   >
                     <Icon name="User" size={16} className="mr-2" />
                     Личный кабинет
