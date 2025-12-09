@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { useAuth } from '@/context/AuthContext';
+import Logo from '@/components/Logo';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -24,8 +25,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-50">
         <div className="container mx-auto px-4 py-4">
           <nav className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2">
-              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Virtual Fitting</h1>
+            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+              <Logo size={40} />
+              <h1 className="text-xl md:text-2xl font-semibold tracking-tight">Virtual Fitting</h1>
             </Link>
             <div className="flex items-center gap-2 md:gap-4">
               <div className="flex gap-2 md:gap-4">
