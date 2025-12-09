@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import Icon from "@/components/ui/icon";
 
 const Footer = () => {
   const { user } = useAuth();
@@ -11,9 +12,9 @@ const Footer = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">S</span>
+                <Icon name="Sparkles" size={20} className="text-white" />
               </div>
-              <span className="text-xl font-bold text-white">StyleAI</span>
+              <span className="text-xl font-bold text-white">StyleSelect</span>
             </div>
             <p className="text-sm leading-relaxed">
               Здесь вы сможете быстро примерить одежду онлайн и сэкономить время на примерке большого количества вещей, чтобы подобрать лучший вариант для вас, а также определить цветовую палитру оттенков, которые идеально сочетаются с вашей природной внешностью.
@@ -87,7 +88,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-          <p>&copy; {new Date().getFullYear()} StyleAI. Все права защищены.</p>
+          <p>&copy; {new Date().getFullYear()} StyleSelect. Все права защищены.</p>
         </div>
       </div>
     </footer>

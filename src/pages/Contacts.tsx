@@ -1,18 +1,10 @@
-import { Link } from "react-router-dom";
+import Layout from "@/components/Layout";
 import Icon from "@/components/ui/icon";
 
 const Contacts = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+    <Layout>
       <div className="container mx-auto px-4 py-12">
-        <Link 
-          to="/" 
-          className="inline-flex items-center space-x-2 text-purple-600 hover:text-purple-700 mb-8"
-        >
-          <Icon name="ArrowLeft" size={20} />
-          <span>На главную</span>
-        </Link>
-
         <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg p-8 md:p-12">
           <h1 className="text-3xl md:text-4xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             Контакты
@@ -31,8 +23,8 @@ const Contacts = () => {
                   <Icon name="Mail" size={24} className="text-purple-600 mt-1" />
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">Электронная почта</h3>
-                    <a href="mailto:support@styleai.ru" className="text-purple-600 hover:text-purple-700">
-                      support@styleai.ru
+                    <a href="mailto:support@styleselect.ru" className="text-purple-600 hover:text-purple-700">
+                      support@styleselect.ru
                     </a>
                     <p className="text-sm text-gray-600 mt-1">Ответим в течение 24 часов</p>
                   </div>
@@ -42,8 +34,8 @@ const Contacts = () => {
                   <Icon name="MessageCircle" size={24} className="text-pink-600 mt-1" />
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">Telegram</h3>
-                    <a href="https://t.me/styleai_support" className="text-pink-600 hover:text-pink-700">
-                      @styleai_support
+                    <a href="https://t.me/styleselect_support" className="text-pink-600 hover:text-pink-700">
+                      @styleselect_support
                     </a>
                     <p className="text-sm text-gray-600 mt-1">Быстрая поддержка в мессенджере</p>
                   </div>
@@ -95,7 +87,7 @@ const Contacts = () => {
                 Напишите нам, и мы обязательно поможем вам разобраться!
               </p>
               <a 
-                href="mailto:support@styleai.ru"
+                href="mailto:support@styleselect.ru"
                 className="inline-flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors"
               >
                 <Icon name="Send" size={20} />
@@ -105,7 +97,7 @@ const Contacts = () => {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

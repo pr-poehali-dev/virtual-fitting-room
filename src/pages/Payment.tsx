@@ -1,18 +1,9 @@
-import { Link } from "react-router-dom";
-import Icon from "@/components/ui/icon";
+import Layout from "@/components/Layout";
 
 const Payment = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+    <Layout>
       <div className="container mx-auto px-4 py-12">
-        <Link 
-          to="/" 
-          className="inline-flex items-center space-x-2 text-purple-600 hover:text-purple-700 mb-8"
-        >
-          <Icon name="ArrowLeft" size={20} />
-          <span>На главную</span>
-        </Link>
-
         <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg p-8 md:p-12">
           <h1 className="text-3xl md:text-4xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             Информация об оплате
@@ -56,7 +47,7 @@ const Payment = () => {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 
