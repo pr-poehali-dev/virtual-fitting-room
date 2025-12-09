@@ -69,7 +69,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
                     }
                   }}
                   className={`
-                    flex items-center justify-center lg:justify-start gap-4 rounded-lg
+                    flex items-center gap-4 rounded-lg
                     transition-all duration-200 relative group
                     ${
                       isActive
@@ -77,7 +77,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
                         : "text-gray-300 hover:bg-gray-700 hover:text-white"
                     }
                     ${
-                      isOpen ? "px-4 py-3" : "lg:w-14 lg:h-14 lg:p-0"
+                      isOpen ? "px-4 py-3 justify-start" : "lg:w-14 lg:h-14 lg:p-0 lg:justify-center justify-center"
                     }
                   `}
                   title={!isOpen ? item.label : undefined}

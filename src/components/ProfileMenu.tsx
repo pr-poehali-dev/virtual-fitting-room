@@ -5,6 +5,7 @@ const ProfileMenu = () => {
   const location = useLocation();
 
   const menuItems = [
+    { path: '/profile', icon: 'Home', label: 'Главная' },
     { path: '/profile/lookbooks', icon: 'Album', label: 'Лукбуки' },
     { path: '/profile/history', icon: 'History', label: 'История' },
     { path: '/profile/wallet', icon: 'Wallet', label: 'Кошелёк' },
