@@ -51,6 +51,16 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/privacy" className="hover:text-white transition-colors">
+                  Конфиденциальность
+                </Link>
+              </li>
+              <li>
+                <Link to="/personal-data" className="hover:text-white transition-colors">
+                  Обработка персональных данных
+                </Link>
+              </li>
+              <li>
                 <Link to="/contacts" className="hover:text-white transition-colors">
                   Контакты
                 </Link>

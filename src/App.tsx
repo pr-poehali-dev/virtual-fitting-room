@@ -35,6 +35,8 @@ import NotFound from "./pages/NotFound";
 import Payment from "./pages/Payment";
 import Offer from "./pages/Offer";
 import Contacts from "./pages/Contacts";
+import Privacy from "./pages/Privacy";
+import PersonalData from "./pages/PersonalData";
 
 const APP_VERSION = "2.0.0";
 
@@ -97,6 +99,8 @@ const App = () => (
             <Route path="/payment" element={<Payment />} />
             <Route path="/offer" element={<Offer />} />
             <Route path="/contacts" element={<Contacts />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/personal-data" element={<PersonalData />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
