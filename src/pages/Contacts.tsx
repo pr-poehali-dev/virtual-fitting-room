@@ -55,10 +55,10 @@ const Contacts = () => {
                       Telegram
                     </h3>
                     <a
-                      href="https://t.me/styleselect_support"
+                      href="https://t.me/styleselect_fashion"
                       className="text-pink-600 hover:text-pink-700"
                     >
-                      @styleselect_support
+                      @styleselect_fashion
                     </a>
                     <p className="text-sm text-gray-600 mt-1">
                       Быстрая поддержка в мессенджере
