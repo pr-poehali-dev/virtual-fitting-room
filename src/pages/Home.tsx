@@ -126,7 +126,7 @@ const Home = () => {
                 Добро пожаловать на сервис StyleSelect
               </h1>
               <p className="text-gray-300 text-lg">
-                Выберите сервис для работы с вашим стилем
+                Fashion Studio для подбора идеального стиля
               </p>
             </div>
 
