@@ -11,17 +11,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="relative w-8 h-8 flex items-center justify-center">
-                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2L15.5 9.5L22 8L17 14L24 16L17 18L20 24L14 19L8 24L11 18L4 16L11 14L6 8L12.5 9.5L14 2Z" fill="white"/>
-                  <circle cx="14" cy="14" r="3" fill="url(#star-gradient)"/>
-                  <defs>
-                    <linearGradient id="star-gradient" x1="11" y1="11" x2="17" y2="17" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="#a855f7"/>
-                      <stop offset="1" stopColor="#ec4899"/>
-                    </linearGradient>
-                  </defs>
-                </svg>
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                <Icon name="Sparkles" size={20} className="text-white" />
               </div>
               <span className="text-xl font-bold text-white">StyleSelect</span>
             </div>
