@@ -53,7 +53,7 @@ const Home = () => {
               </button>
               
               <Link to="/" className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 lg:mr-auto flex items-center hover:opacity-80 transition-opacity">
-                <img src="/logo-fitting-room-text.svg?v=2" alt="Virtual Fitting" className="h-8 md:h-10" />
+                <img src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/logo-fitting-room-2.svg" alt="Virtual Fitting" className="h-8 md:h-10" />
               </Link>
               <div className="flex items-center gap-2">
               {user ? (
