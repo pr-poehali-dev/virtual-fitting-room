@@ -50,13 +50,19 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       >
         <div className="flex flex-col h-full">
           {/* Burger Button */}
-          <div className="flex items-center py-4 border-b border-gray-700 px-4">
+          <div className="flex items-center border-b border-gray-700 px-3 py-4">
             <button
               onClick={onToggle}
-              className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+              className={`
+                flex items-center rounded-lg
+                transition-all duration-200 text-gray-300 hover:bg-gray-700 hover:text-white
+                ${
+                  isOpen ? "px-4 py-3 justify-start" : "lg:w-14 lg:h-14 lg:p-0 lg:justify-center justify-center"
+                }
+              `}
               aria-label="Toggle menu"
             >
-              <Icon name="Menu" size={24} className="text-gray-300" />
+              <Icon name="Menu" size={24} className="flex-shrink-0" />
             </button>
           </div>
 
