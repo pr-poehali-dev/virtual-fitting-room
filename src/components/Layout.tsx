@@ -44,7 +44,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     variant="ghost" 
                     size="sm" 
                     onClick={() => navigate('/profile')}
-                    className={`hidden lg:flex ${location.pathname === '/profile' ? 'bg-purple-700 text-white hover:bg-purple-800' : 'hover:bg-purple-700 hover:text-white'}`}
+                    className={`hidden lg:flex ${['/profile', '/lookbooks', '/history', '/wallet', '/settings'].includes(location.pathname) ? 'text-white hover:text-white' : 'hover:bg-purple-700 hover:text-white'}`}
+                    style={['/profile', '/lookbooks', '/history', '/wallet', '/settings'].includes(location.pathname) ? { backgroundColor: 'rgb(150, 115, 211)' } : {}}
                   >
                     <Icon name="User" size={16} className="mr-2" />
                     Личный кабинет
