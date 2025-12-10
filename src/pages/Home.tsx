@@ -90,17 +90,18 @@ const Home = () => {
               ) : (
                 <>
                   <Button 
-                    variant="outline" 
+                    variant="ghost" 
                     size="sm" 
                     onClick={() => navigate('/login')}
-                    className="hidden md:flex text-white border-gray-600 hover:bg-gray-700"
+                    className="hidden md:flex text-white hover:bg-white/10"
                   >
                     Войти
                   </Button>
                   <Button 
                     size="sm" 
                     onClick={() => navigate('/register')}
-                    className="hidden md:flex bg-purple-600 hover:bg-purple-700"
+                    className="hidden md:flex text-white hover:opacity-90"
+                    style={{ backgroundColor: 'rgb(150, 115, 211)' }}
                   >
                     Регистрация
                   </Button>
