@@ -22,7 +22,7 @@ const Home = () => {
       id: 'virtual-fitting',
       title: 'Виртуальная примерочная',
       description: 'Примерьте одежду онлайн с помощью ИИ — загрузите своё фото и посмотрите, как на вас сидит выбранная вещь',
-      image: 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/bb9401b7-92a7-4804-8298-f97f6e1cb97d.jpg',
+      image: 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/43210158-1027-4ed8-af4b-76272ee9b0ca.jpg',
       icon: 'Shirt',
       path: '/virtualfitting',
     },
