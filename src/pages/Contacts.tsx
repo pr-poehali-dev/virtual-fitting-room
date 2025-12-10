@@ -133,7 +133,7 @@ const Contacts = () => {
                 Напишите нам, и мы обязательно поможем вам разобраться!
               </p>
               <a
-                href="mailto:support@styleselect.ru"
+                href="mailto:styleselect@mail.ru"
                 className="inline-flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors"
               >
                 <Icon name="Send" size={20} />
