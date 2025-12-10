@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { useEffect } from "react";
 
+import Home from "./pages/Home";
 import ColorType from "./pages/ColorType";
 import Profile from "./pages/Profile";
 import ProfileDashboard from "./pages/ProfileDashboard";
@@ -63,8 +64,9 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<ReplicateTryOn />} />
-            <Route path="/replicate" element={<Navigate to="/" replace />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/virtualfitting" element={<ReplicateTryOn />} />
+            <Route path="/replicate" element={<Navigate to="/virtualfitting" replace />} />
             <Route path="/colortype" element={<ColorType />} />
             
             {/* Profile Routes */}

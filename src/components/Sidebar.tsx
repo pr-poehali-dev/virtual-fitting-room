@@ -11,8 +11,14 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
 
   const menuItems = [
     {
-      id: "virtual-fitting",
+      id: "home",
       path: "/",
+      icon: "Home",
+      label: "Главная",
+    },
+    {
+      id: "virtual-fitting",
+      path: "/virtualfitting",
       icon: "Shirt",
       label: "Виртуальная примерочная",
     },
