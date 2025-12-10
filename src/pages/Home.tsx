@@ -37,7 +37,7 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-gray-950">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/50 to-gray-900">
       <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
       
       <div className="lg:pl-20">
@@ -63,7 +63,7 @@ const Home = () => {
                     variant="ghost" 
                     size="sm" 
                     onClick={() => navigate('/profile')}
-                    className="hidden lg:flex text-white hover:bg-gray-700"
+                    className="hidden lg:flex text-white hover:bg-purple-600 hover:text-white"
                   >
                     <Icon name="User" size={16} className="mr-2" />
                     Личный кабинет

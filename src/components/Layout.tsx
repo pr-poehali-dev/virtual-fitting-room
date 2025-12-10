@@ -44,7 +44,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     variant="ghost" 
                     size="sm" 
                     onClick={() => navigate('/profile')}
-                    className="hidden lg:flex"
+                    className={`hidden lg:flex ${location.pathname === '/profile' ? 'bg-purple-600 text-white hover:bg-purple-700' : 'hover:bg-purple-600 hover:text-white'}`}
                   >
                     <Icon name="User" size={16} className="mr-2" />
                     Личный кабинет
