@@ -30,7 +30,7 @@ const Home = () => {
       id: 'color-type',
       title: 'Определение цветотипа',
       description: 'Узнайте свой цветотип и получите персональные рекомендации по цветам в одежде и макияже',
-      image: 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/ea8fecaf-191e-4a21-b3ca-c1c3e2ea4a9f.jpg',
+      image: 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/d96ad16b-ff6b-4813-8977-18009089868f.jpg',
       icon: 'Palette',
       path: '/colortype',
     },
