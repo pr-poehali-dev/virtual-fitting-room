@@ -123,10 +123,10 @@ const Home = () => {
           <div className="container mx-auto px-4 py-12">
             <div className="mb-12">
               <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4">
-                Fashion-платформа с технологиями ИИ
+                Fashion-платформа StyleSelect
               </h1>
               <p className="text-gray-300 text-lg">
-                Создайте Ваш идеальный стиль за минуты.
+                Создайте Ваш идеальный стиль с технологиями ИИ
               </p>
             </div>
 
