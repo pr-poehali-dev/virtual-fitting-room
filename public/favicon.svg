@@ -13,7 +13,7 @@
   <!-- Rounded square background -->
   <rect x="5" y="5" width="90" height="90" rx="18" ry="18" fill="url(#bg-gradient)"/>
   
-  <!-- Star icon similar to footer -->
-  <path d="M50 20L52.5 35L65 32L55 45L68 50L55 55L60 68L50 58L40 68L45 55L32 50L45 45L35 32L47.5 35L50 20Z" fill="white"/>
-  <circle cx="50" cy="50" r="8" fill="url(#star-gradient)"/>
+  <!-- Star icon similar to footer - larger -->
+  <path d="M50 15L53 33L70 28L58 45L75 50L58 55L65 72L50 60L35 72L42 55L25 50L42 45L30 28L47 33L50 15Z" fill="white"/>
+  <circle cx="50" cy="50" r="10" fill="url(#star-gradient)"/>
 </svg>
