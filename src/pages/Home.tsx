@@ -75,7 +75,7 @@ const Home = () => {
                   >
                     <Icon name="User" size={24} className="text-white" />
                   </button>
-                  <Button variant="outline" size="sm" onClick={handleLogout} className="hidden lg:flex text-white border-gray-600 hover:bg-gray-700">
+                  <Button variant="outline" size="sm" onClick={handleLogout} className="hidden lg:flex text-white border-white/30 hover:bg-white/10 hover:border-white/50">
                     <Icon name="LogOut" size={16} className="mr-2" />
                     Выйти
                   </Button>
