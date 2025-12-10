@@ -16,6 +16,8 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [captchaValid, setCaptchaValid] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const [acceptedPersonalData, setAcceptedPersonalData] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -24,6 +26,11 @@ export default function Register() {
 
     if (!captchaValid) {
       toast.error('Пожалуйста, решите пример');
+      return;
+    }
+
+    if (!acceptedPrivacy || !acceptedPersonalData) {
+      toast.error('Необходимо согласие на обработку персональных данных');
       return;
     }
 
@@ -120,7 +127,44 @@ export default function Register() {
                 />
               </div>
               <Captcha onVerify={setCaptchaValid} className="space-y-2" />
-              <Button type="submit" className="w-full" disabled={isLoading || !captchaValid}>
+              
+              <div className="space-y-3 pt-2">
+                <div className="flex items-start space-x-2">
+                  <input
+                    type="checkbox"
+                    id="privacy"
+                    checked={acceptedPrivacy}
+                    onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    required
+                  />
+                  <label htmlFor="privacy" className="text-sm text-gray-600">
+                    Я согласен с{' '}
+                    <Link to="/privacy" target="_blank" className="text-purple-600 hover:underline">
+                      Политикой конфиденциальности
+                    </Link>
+                  </label>
+                </div>
+                
+                <div className="flex items-start space-x-2">
+                  <input
+                    type="checkbox"
+                    id="personalData"
+                    checked={acceptedPersonalData}
+                    onChange={(e) => setAcceptedPersonalData(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    required
+                  />
+                  <label htmlFor="personalData" className="text-sm text-gray-600">
+                    Я даю согласие на{' '}
+                    <Link to="/personal-data" target="_blank" className="text-purple-600 hover:underline">
+                      обработку персональных данных
+                    </Link>
+                  </label>
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isLoading || !captchaValid || !acceptedPrivacy || !acceptedPersonalData}>
                 {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
               </Button>
             </form>
