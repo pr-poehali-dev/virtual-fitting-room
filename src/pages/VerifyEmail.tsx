@@ -26,13 +26,22 @@ export default function VerifyEmail() {
       return;
     }
 
+    let isCancelled = false;
+
     const verifyEmail = async () => {
       try {
         const response = await fetch(`${VERIFY_API}?token=${token}`);
         const data = await response.json();
 
+        if (isCancelled) return;
+
         if (!response.ok) {
-          setError(data.error || 'Ошибка подтверждения email');
+          // Если email уже подтвержден, показываем специальное сообщение
+          if (data.error === 'Email already verified') {
+            setError('Этот email уже был подтвержден ранее. Вы можете войти в свой аккаунт.');
+          } else {
+            setError(data.error || 'Ошибка подтверждения email');
+          }
           setIsVerifying(false);
           return;
         }
@@ -45,17 +54,27 @@ export default function VerifyEmail() {
         toast.success('Email успешно подтвержден!');
 
         setTimeout(() => {
-          navigate('/profile');
+          if (!isCancelled) {
+            navigate('/profile');
+          }
         }, 2000);
       } catch (err) {
-        setError('Ошибка подтверждения email');
-        toast.error('Ошибка подтверждения');
+        if (!isCancelled) {
+          setError('Ошибка подтверждения email');
+          toast.error('Ошибка подтверждения');
+        }
       } finally {
-        setIsVerifying(false);
+        if (!isCancelled) {
+          setIsVerifying(false);
+        }
       }
     };
 
     verifyEmail();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [searchParams, navigate, updateUser]);
 
   return (
