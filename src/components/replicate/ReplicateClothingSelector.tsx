@@ -310,7 +310,7 @@ export default function ReplicateClothingSelector({
             
             {filtersExpanded && (
               <div className="p-3 pt-0 border-t">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <div>
                     <p className="text-sm font-medium mb-2">Категории</p>
                     <div className="space-y-1 max-h-32 overflow-y-auto border rounded p-2 bg-background">
