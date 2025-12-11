@@ -67,60 +67,54 @@ export default function ImageCropper({
 
   const handleCropComplete = async () => {
     if (!imgRef.current || !completedCrop) {
+      console.error('Missing imgRef or completedCrop');
       return;
     }
 
     if (!imgRef.current.complete || imgRef.current.naturalWidth === 0) {
+      console.error('Image not loaded properly');
       return;
     }
 
     if (completedCrop.width <= 0 || completedCrop.height <= 0) {
+      console.error('Invalid crop dimensions');
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      
-      const loadPromise = new Promise<HTMLImageElement>((resolve, reject) => {
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-      });
-      
-      img.src = image;
-      
-      const loadedImg = await loadPromise;
-
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (!ctx) {
+        console.error('Failed to get canvas context');
         setIsProcessing(false);
         return;
       }
 
-      const scaleX = loadedImg.naturalWidth / imgRef.current.width;
-      const scaleY = loadedImg.naturalHeight / imgRef.current.height;
+      const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
+      const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
 
       canvas.width = Math.floor(completedCrop.width * scaleX);
       canvas.height = Math.floor(completedCrop.height * scaleY);
 
       ctx.drawImage(
-        loadedImg,
+        imgRef.current,
         Math.floor(completedCrop.x * scaleX),
         Math.floor(completedCrop.y * scaleY),
         Math.floor(completedCrop.width * scaleX),
         Math.floor(completedCrop.height * scaleY),
         0,
         0,
-        Math.floor(completedCrop.width * scaleX),
-        Math.floor(completedCrop.height * scaleY)
+        canvas.width,
+        canvas.height
       );
 
       const croppedImage = canvas.toDataURL('image/jpeg', 0.95);
-      setIsProcessing(false);
+      console.log('Crop complete, calling callback');
       onCropComplete(croppedImage);
+      setIsProcessing(false);
+      onClose();
     } catch (error) {
       console.error('Error cropping image:', error);
       setIsProcessing(false);
