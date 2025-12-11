@@ -309,72 +309,89 @@ export default function ReplicateClothingSelector({
             </button>
             
             {filtersExpanded && (
-              <div className="p-3 pt-0 space-y-4 border-t">
-                <div className="pt-2">
-                  <p className="text-xs font-bold mb-2">Фильтр по категории:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {filters.categories.map((category) => (
-                      <Button
-                        key={category.id}
-                        size="sm"
-                        variant={selectedCategories.includes(category.id) ? 'default' : 'outline'}
-                        onClick={() => setSelectedCategories(toggleFilter(selectedCategories, category.id))}
-                        className="h-7 text-xs px-2"
-                      >
-                        {category.name}
-                      </Button>
-                    ))}
+              <div className="p-3 pt-0 border-t">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+                  <div>
+                    <p className="text-sm font-medium mb-2">Категории</p>
+                    <div className="space-y-1 max-h-32 overflow-y-auto border rounded p-2 bg-background">
+                      {filters.categories.map((category) => (
+                        <label key={category.id} className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedCategories.includes(category.id as number)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedCategories([...selectedCategories, category.id as number]);
+                              } else {
+                                setSelectedCategories(selectedCategories.filter(id => id !== category.id));
+                              }
+                            }}
+                            className="rounded"
+                          />
+                          <span className="text-sm">{category.name}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div className="pt-2">
-                  <p className="text-xs font-bold mb-2">Фильтр по цвету:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {filters.colors.map((color) => (
-                      <Button
-                        key={color.id}
-                        size="sm"
-                        variant={selectedColors.includes(color.id) ? 'default' : 'outline'}
-                        onClick={() => setSelectedColors(toggleFilter(selectedColors, color.id))}
-                        className="h-7 text-xs px-2"
-                      >
-                        {color.name}
-                      </Button>
-                    ))}
+                  <div>
+                    <p className="text-sm font-medium mb-2">Цвета</p>
+                    <div className="space-y-1 max-h-32 overflow-y-auto border rounded p-2 bg-background">
+                      {filters.colors.map((color) => (
+                        <label key={color.id} className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedColors.includes(color.id as number)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedColors([...selectedColors, color.id as number]);
+                              } else {
+                                setSelectedColors(selectedColors.filter(id => id !== color.id));
+                              }
+                            }}
+                            className="rounded"
+                          />
+                          <span className="text-sm">{color.name}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div className="pt-2">
-                  <p className="text-xs font-bold mb-2">Фильтр по архетипу:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {filters.archetypes.map((arch) => (
-                      <Button
-                        key={arch.id}
-                        size="sm"
-                        variant={selectedArchetypes.includes(arch.id as number) ? 'default' : 'outline'}
-                        onClick={() => setSelectedArchetypes(toggleFilter(selectedArchetypes, arch.id as number))}
-                        className="h-7 text-xs px-2"
-                      >
-                        {arch.name}
-                      </Button>
-                    ))}
+                  <div>
+                    <p className="text-sm font-medium mb-2">Архетипы</p>
+                    <div className="space-y-1 max-h-32 overflow-y-auto border rounded p-2 bg-background">
+                      {filters.archetypes.map((arch) => (
+                        <label key={arch.id} className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedArchetypes.includes(arch.id as number)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedArchetypes([...selectedArchetypes, arch.id as number]);
+                              } else {
+                                setSelectedArchetypes(selectedArchetypes.filter(id => id !== arch.id));
+                              }
+                            }}
+                            className="rounded"
+                          />
+                          <span className="text-sm">{arch.name}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div className="pt-2">
-                  <p className="text-xs font-bold mb-2">Фильтр по полу:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {filters.genders.map((gender) => (
-                      <Button
-                        key={gender.id}
-                        size="sm"
-                        variant={selectedGender === gender.id ? 'default' : 'outline'}
-                        onClick={() => setSelectedGender(selectedGender === gender.id ? '' : gender.id as string)}
-                        className="h-7 text-xs px-2"
-                      >
-                        {gender.name}
-                      </Button>
-                    ))}
+                  <div>
+                    <p className="text-sm font-medium mb-2">Пол</p>
+                    <select
+                      value={selectedGender}
+                      onChange={(e) => setSelectedGender(e.target.value)}
+                      className="w-full p-2 border rounded text-sm bg-background"
+                    >
+                      <option value="">Все</option>
+                      {filters.genders.map((gender) => (
+                        <option key={gender.id} value={gender.id}>{gender.name}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
