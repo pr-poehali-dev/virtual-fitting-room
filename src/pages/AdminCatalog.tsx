@@ -438,6 +438,14 @@ export default function AdminCatalog() {
                                 }
                               }}
                             />
+                            {(editingClothing?.image_url || newClothing.image_url) && (
+                              <div className="mt-2">
+                                <p className="text-xs text-green-600 flex items-center gap-1">
+                                  <Icon name="Check" size={14} />
+                                  Файл загружен и обрезан
+                                </p>
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -447,7 +455,7 @@ export default function AdminCatalog() {
                             <img 
                               src={editingClothing ? editingClothing.image_url : newClothing.image_url} 
                               alt="Preview" 
-                              className="w-32 h-32 object-cover rounded"
+                              className="w-32 h-32 object-cover rounded border"
                             />
                           </div>
                         )}
