@@ -257,21 +257,37 @@ export default function ProfileLookbooks() {
       
       yPos += 20;
       
-      const loadImage = (url: string): Promise<string> => {
-        return new Promise((resolve, reject) => {
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            ctx?.drawImage(img, 0, 0);
-            resolve(canvas.toDataURL('image/jpeg', 0.8));
-          };
-          img.onerror = reject;
-          img.src = url;
-        });
+      const loadImage = async (url: string): Promise<string> => {
+        try {
+          const response = await fetch(url);
+          const blob = await response.blob();
+          
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const img = new Image();
+              img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                  ctx.drawImage(img, 0, 0);
+                  resolve(canvas.toDataURL('image/jpeg', 0.8));
+                } else {
+                  reject(new Error('Failed to get canvas context'));
+                }
+              };
+              img.onerror = () => reject(new Error('Failed to load image'));
+              img.src = reader.result as string;
+            };
+            reader.onerror = () => reject(new Error('Failed to read blob'));
+            reader.readAsDataURL(blob);
+          });
+        } catch (error) {
+          console.error('Error fetching image:', error);
+          throw error;
+        }
       };
       
       const photos = viewingLookbook.photos;
