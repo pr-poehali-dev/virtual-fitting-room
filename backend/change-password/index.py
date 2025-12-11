@@ -4,6 +4,7 @@ from typing import Dict, Any
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import bcrypt
+import hashlib
 
 def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')
@@ -113,12 +114,30 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print(f'[ChangePassword] User found, checking password')
         
         stored_hash = user['password_hash']
-        if isinstance(stored_hash, str):
-            stored_hash_bytes = stored_hash.encode('utf-8')
-        else:
-            stored_hash_bytes = stored_hash
+        password_correct = False
+        is_old_format = False
         
-        if not bcrypt.checkpw(current_password.encode('utf-8'), stored_hash_bytes):
+        # Check if it's old SHA-256 format (64 hex chars) or new bcrypt format
+        if isinstance(stored_hash, str) and len(stored_hash) == 64 and all(c in '0123456789abcdef' for c in stored_hash):
+            # Old SHA-256 format
+            print(f'[ChangePassword] Detected old SHA-256 format, will migrate to bcrypt')
+            is_old_format = True
+            current_password_sha256 = hashlib.sha256(current_password.encode('utf-8')).hexdigest()
+            password_correct = (current_password_sha256 == stored_hash)
+        else:
+            # New bcrypt format
+            if isinstance(stored_hash, str):
+                stored_hash_bytes = stored_hash.encode('utf-8')
+            else:
+                stored_hash_bytes = stored_hash
+            
+            try:
+                password_correct = bcrypt.checkpw(current_password.encode('utf-8'), stored_hash_bytes)
+            except ValueError as e:
+                print(f'[ChangePassword] Bcrypt error: {e}, stored_hash: {stored_hash}')
+                password_correct = False
+        
+        if not password_correct:
             print(f'[ChangePassword] Current password incorrect')
             return {
                 'statusCode': 400,
