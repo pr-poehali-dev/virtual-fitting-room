@@ -248,7 +248,28 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             bg_result = bg_removal_response.json()
                             processed_url = bg_result.get('image', {}).get('url') if isinstance(bg_result.get('image'), dict) else bg_result.get('image')
                             if processed_url:
-                                processed_image_url = processed_url
+                                # Save processed image to S3
+                                s3_enabled = os.environ.get('S3_ACCESS_KEY')
+                                if s3_enabled:
+                                    try:
+                                        save_response = requests.post(
+                                            'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',
+                                            json={
+                                                'image_url': processed_url,
+                                                'folder': 'catalog',
+                                                'user_id': 'admin'
+                                            },
+                                            timeout=30
+                                        )
+                                        if save_response.status_code == 200:
+                                            save_data = save_response.json()
+                                            processed_image_url = save_data.get('url', processed_url)
+                                        else:
+                                            processed_image_url = processed_url
+                                    except:
+                                        processed_image_url = processed_url
+                                else:
+                                    processed_image_url = processed_url
                                 
                                 # Update in database
                                 cursor.execute("""
@@ -407,12 +428,33 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing id or image_url'})
                 }
             
-            # Update clothing item
+            # Save image to S3 if it's base64 or external URL
+            saved_image_url = image_url
+            if image_url.startswith(('http://', 'https://', 'data:')):
+                s3_enabled = os.environ.get('S3_ACCESS_KEY')
+                if s3_enabled:
+                    try:
+                        save_response = requests.post(
+                            'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8',
+                            json={
+                                'image_url': image_url,
+                                'folder': 'catalog',
+                                'user_id': 'admin'
+                            },
+                            timeout=30
+                        )
+                        if save_response.status_code == 200:
+                            save_data = save_response.json()
+                            saved_image_url = save_data.get('url', image_url)
+                    except:
+                        pass
+            
+            # Update clothing item with saved image URL
             cursor.execute("""
                 UPDATE clothing_catalog
                 SET image_url = %s, name = %s, description = %s, replicate_category = %s, gender = %s
                 WHERE id = %s
-            """, (image_url, name, description, replicate_category, gender, clothing_id))
+            """, (saved_image_url, name, description, replicate_category, gender, clothing_id))
             
             # Delete old links
             cursor.execute('DELETE FROM clothing_category_links WHERE clothing_id = %s', (clothing_id,))
