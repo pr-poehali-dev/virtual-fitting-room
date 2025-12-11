@@ -410,15 +410,6 @@ export default function ProfileLookbooks() {
                         placeholder="Имя"
                       />
                     </div>
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Загрузить фото</label>
-                      <Input 
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={handlePhotoUpload}
-                      />
-                    </div>
                     {selectedPhotos.length > 0 && (
                       <div className="grid grid-cols-3 gap-2">
                         {selectedPhotos.map((photo, index) => (
