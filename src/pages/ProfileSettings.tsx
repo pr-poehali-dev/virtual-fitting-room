@@ -20,6 +20,10 @@ export default function ProfileSettings() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordMismatch, setPasswordMismatch] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
 
@@ -226,30 +230,71 @@ export default function ProfileSettings() {
                 <CardContent className="space-y-4">
                   <div>
                     <label className="text-sm font-medium mb-1 block">Текущий пароль</label>
-                    <Input 
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder="Введите текущий пароль"
-                    />
+                    <div className="relative">
+                      <Input 
+                        type={showCurrentPassword ? "text" : "password"}
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="Введите текущий пароль"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        <Icon name={showCurrentPassword ? "EyeOff" : "Eye"} size={20} />
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium mb-1 block">Новый пароль</label>
-                    <Input 
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Минимум 6 символов"
-                    />
+                    <div className="relative">
+                      <Input 
+                        type={showNewPassword ? "text" : "password"}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Минимум 6 символов"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        <Icon name={showNewPassword ? "EyeOff" : "Eye"} size={20} />
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium mb-1 block">Подтвердите новый пароль</label>
-                    <Input 
-                      type="password"
-                      value={confirmNewPassword}
-                      onChange={(e) => setConfirmNewPassword(e.target.value)}
-                      placeholder="Повторите новый пароль"
-                    />
+                    <div className="relative">
+                      <Input 
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={confirmNewPassword}
+                        onChange={(e) => {
+                          setConfirmNewPassword(e.target.value);
+                          setPasswordMismatch(false);
+                        }}
+                        onBlur={() => {
+                          if (confirmNewPassword && newPassword !== confirmNewPassword) {
+                            setPasswordMismatch(true);
+                          }
+                        }}
+                        placeholder="Повторите новый пароль"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        <Icon name={showConfirmPassword ? "EyeOff" : "Eye"} size={20} />
+                      </button>
+                    </div>
+                    {passwordMismatch && (
+                      <p className="text-sm text-red-600 mt-1">Пароли не совпадают</p>
+                    )}
                   </div>
                   <Button 
                     onClick={handleChangePassword}

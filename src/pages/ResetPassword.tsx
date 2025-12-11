@@ -16,6 +16,9 @@ export default function ResetPassword() {
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordMismatch, setPasswordMismatch] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isValidating, setIsValidating] = useState(true);
   const [isValidToken, setIsValidToken] = useState(false);
@@ -149,30 +152,63 @@ export default function ResetPassword() {
                   <label htmlFor="newPassword" className="text-sm font-medium">
                     Новый пароль
                   </label>
-                  <Input
-                    id="newPassword"
-                    type="password"
-                    placeholder="Минимум 6 символов"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    disabled={isLoading}
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="newPassword"
+                      type={showNewPassword ? "text" : "password"}
+                      placeholder="Минимум 6 символов"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      disabled={isLoading}
+                      required
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      disabled={isLoading}
+                    >
+                      <Icon name={showNewPassword ? "EyeOff" : "Eye"} size={20} />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <label htmlFor="confirmPassword" className="text-sm font-medium">
                     Подтвердите пароль
                   </label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="Повторите пароль"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    disabled={isLoading}
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Повторите пароль"
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        setPasswordMismatch(false);
+                      }}
+                      onBlur={() => {
+                        if (confirmPassword && newPassword !== confirmPassword) {
+                          setPasswordMismatch(true);
+                        }
+                      }}
+                      disabled={isLoading}
+                      required
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      disabled={isLoading}
+                    >
+                      <Icon name={showConfirmPassword ? "EyeOff" : "Eye"} size={20} />
+                    </button>
+                  </div>
+                  {passwordMismatch && (
+                    <p className="text-sm text-red-600">Пароли не совпадают</p>
+                  )}
                 </div>
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
