@@ -215,6 +215,111 @@ export default function ProfileLookbooks() {
     }
   };
 
+  const handleDownloadPDF = async () => {
+    if (!viewingLookbook) return;
+    
+    setIsGeneratingPDF(true);
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      const usableWidth = pageWidth - 2 * margin;
+      
+      const encodeText = (text: string) => {
+        const chars: { [key: string]: string } = {
+          'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo', 'Ж': 'Zh',
+          'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N', 'О': 'O',
+          'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U', 'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts',
+          'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Shch', 'Ъ': '', 'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
+          'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
+          'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
+          'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts',
+          'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+        };
+        return text.split('').map(char => chars[char] || char).join('');
+      };
+      
+      pdf.setFontSize(24);
+      pdf.text(encodeText(viewingLookbook.name), margin, margin + 10);
+      
+      pdf.setFontSize(14);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`For: ${encodeText(viewingLookbook.person_name)}`, margin, margin + 20);
+      
+      let yPos = margin + 35;
+      
+      const colorSize = 8;
+      viewingLookbook.color_palette.forEach((color, i) => {
+        pdf.setFillColor(parseInt(color.slice(1, 3), 16), parseInt(color.slice(3, 5), 16), parseInt(color.slice(5, 7), 16));
+        pdf.rect(margin + i * (colorSize + 2), yPos, colorSize, colorSize, 'F');
+      });
+      
+      yPos += 20;
+      
+      const loadImage = (url: string): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx?.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/jpeg', 0.8));
+          };
+          img.onerror = reject;
+          img.src = url;
+        });
+      };
+      
+      const photos = viewingLookbook.photos;
+      const cellWidth = usableWidth / 3;
+      const gap = 3;
+      const imageWidth = cellWidth - gap;
+      const imageHeight = imageWidth * 1.4;
+      
+      let currentX = margin;
+      let currentY = yPos;
+      let photosInRow = 0;
+      
+      for (let i = 0; i < photos.length; i++) {
+        if (currentY + imageHeight > pageHeight - margin) {
+          pdf.addPage();
+          currentY = margin;
+          currentX = margin;
+          photosInRow = 0;
+        }
+        
+        try {
+          const imgData = await loadImage(photos[i]);
+          pdf.addImage(imgData, 'JPEG', currentX, currentY, imageWidth, imageHeight, undefined, 'FAST');
+        } catch (e) {
+          console.error('Failed to load image:', e);
+        }
+        
+        photosInRow++;
+        
+        if (photosInRow === 3) {
+          currentX = margin;
+          currentY += imageHeight + gap;
+          photosInRow = 0;
+        } else {
+          currentX += cellWidth;
+        }
+      }
+      
+      pdf.save(`${encodeText(viewingLookbook.name)}.pdf`);
+      toast.success('PDF скачан!');
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error('Ошибка создания PDF');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   const handleShareToggle = async (lookbook: Lookbook) => {
     try {
       const newPublicState = !lookbook.is_public;
@@ -410,12 +515,268 @@ export default function ProfileLookbooks() {
         </div>
       </div>
 
-      {viewingLookbook && (
-        <ImageViewer
-          lookbook={viewingLookbook}
-          onClose={() => setViewingLookbook(null)}
-        />
-      )}
+      <Dialog open={!!viewingLookbook} onOpenChange={(open) => !open && setViewingLookbook(null)}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-light">{viewingLookbook?.name}</h2>
+                <p className="text-sm text-muted-foreground mt-1">Для: {viewingLookbook?.person_name}</p>
+              </div>
+              <Button 
+                onClick={handleDownloadPDF} 
+                disabled={isGeneratingPDF}
+                size="sm"
+                className="mr-5"
+              >
+                {isGeneratingPDF ? (
+                  <>
+                    <Icon name="Loader2" className="mr-2 animate-spin" size={16} />
+                    Создание PDF...
+                  </>
+                ) : (
+                  <>
+                    <Icon name="Download" className="mr-2" size={16} />
+                    Скачать PDF
+                  </>
+                )}
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {viewingLookbook && (
+            <div className="space-y-6 py-4">
+              <div>
+                <h3 className="text-sm font-medium mb-3">Цветовая палитра</h3>
+                <div className="flex gap-3 flex-wrap">
+                  {viewingLookbook.color_palette.map((color, index) => (
+                    <div
+                      key={index}
+                      className="w-14 h-14 rounded-lg shadow-md"
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {viewingLookbook.photos.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Результаты примерок</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    {viewingLookbook.photos.map((photo, index) => (
+                      <div key={index} className="relative rounded-lg overflow-hidden bg-muted aspect-[5/7]">
+                        <ImageViewer 
+                          src={photo} 
+                          alt={`Photo ${index + 1}`}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditingLookbook} onOpenChange={(open) => {
+        if (!open) {
+          setIsEditingLookbook(false);
+          setEditingLookbookId(null);
+          setNewLookbookName('');
+          setNewPersonName('');
+          setSelectedPhotos([]);
+          setColorPalette(['#FF6B6B', '#4ECDC4', '#45B7D1']);
+          setSelectedPhotoIndexes([]);
+          setTargetLookbookId('');
+        }
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Редактировать лукбук</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Название лукбука</label>
+              <Input
+                value={newLookbookName}
+                onChange={(e) => setNewLookbookName(e.target.value)}
+                placeholder="Например: Весна 2025"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Для кого</label>
+              <Input
+                value={newPersonName}
+                onChange={(e) => setNewPersonName(e.target.value)}
+                placeholder="Имя человека"
+              />
+            </div>
+
+            {selectedPhotos.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium mb-2">Результаты примерок</label>
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  {selectedPhotos.map((photo, index) => (
+                    <div key={index} className="relative group border rounded-lg overflow-hidden bg-muted aspect-[5/7]">
+                      <ImageViewer src={photo} alt="" className="w-full h-full object-contain" />
+                      <div className="absolute bottom-2 left-2" title="Выберите фото для переноса в другой лукбук">
+                        <input
+                          type="checkbox"
+                          checked={selectedPhotoIndexes.includes(index)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedPhotoIndexes([...selectedPhotoIndexes, index]);
+                            } else {
+                              setSelectedPhotoIndexes(selectedPhotoIndexes.filter(i => i !== index));
+                            }
+                          }}
+                          className="w-5 h-5 cursor-pointer"
+                          title="Выберите фото для переноса в другой лукбук"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="destructive"
+                        className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          if (confirm('Удалить фото из лукбука?')) {
+                            setSelectedPhotos(selectedPhotos.filter((_, i) => i !== index));
+                          }
+                        }}
+                        title="Удалить фото"
+                      >
+                        <Icon name="X" size={14} />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                {selectedPhotoIndexes.length > 0 && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+                    <label className="block text-sm font-medium">Перенос фото в другой лукбук</label>
+                    <div className="flex gap-2">
+                      <Select value={targetLookbookId} onValueChange={setTargetLookbookId}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Выберите лукбук" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {lookbooks
+                            .filter(lb => lb.id !== editingLookbookId)
+                            .map(lb => (
+                              <SelectItem key={lb.id} value={lb.id}>
+                                {lb.name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="outline"
+                        onClick={async () => {
+                          if (!targetLookbookId || selectedPhotoIndexes.length === 0) return;
+                          
+                          try {
+                            const targetLookbook = lookbooks.find(lb => lb.id === targetLookbookId);
+                            if (!targetLookbook) return;
+
+                            const photosToMove = selectedPhotoIndexes.map(idx => selectedPhotos[idx]);
+                            const updatedPhotos = [...targetLookbook.photos, ...photosToMove];
+
+                            const response = await fetch(LOOKBOOKS_API, {
+                              method: 'PUT',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'X-User-Id': user.id
+                              },
+                              body: JSON.stringify({
+                                id: targetLookbookId,
+                                photos: updatedPhotos
+                              })
+                            });
+
+                            if (!response.ok) throw new Error('Failed to move photos');
+
+                            const remainingPhotos = selectedPhotos.filter((_, idx) => !selectedPhotoIndexes.includes(idx));
+                            setSelectedPhotos(remainingPhotos);
+                            setSelectedPhotoIndexes([]);
+                            setTargetLookbookId('');
+                            await fetchLookbooks();
+                            toast.success('Фото перенесены!');
+                          } catch (error) {
+                            toast.error('Ошибка переноса фото');
+                          }
+                        }}
+                        disabled={!targetLookbookId || selectedPhotoIndexes.length === 0}
+                      >
+                        Перенести
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Цветовая палитра</label>
+              <div className="flex gap-2 flex-wrap mb-3">
+                {colorPalette.map((color, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={color}
+                      onChange={(e) => {
+                        const newPalette = [...colorPalette];
+                        newPalette[index] = e.target.value;
+                        setColorPalette(newPalette);
+                      }}
+                      className="w-10 h-10 rounded cursor-pointer"
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setColorPalette(colorPalette.filter((_, i) => i !== index))}
+                    >
+                      <Icon name="X" size={14} />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setColorPalette([...colorPalette, '#000000'])}
+              >
+                <Icon name="Plus" className="mr-2" size={14} />
+                Добавить цвет
+              </Button>
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button onClick={handleUpdateLookbook} className="flex-1">
+                Сохранить изменения
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsEditingLookbook(false);
+                  setEditingLookbookId(null);
+                  setNewLookbookName('');
+                  setNewPersonName('');
+                  setSelectedPhotos([]);
+                  setColorPalette(['#FF6B6B', '#4ECDC4', '#45B7D1']);
+                  setSelectedPhotoIndexes([]);
+                  setTargetLookbookId('');
+                }}
+              >
+                Отмена
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
