@@ -138,11 +138,12 @@ export default function AdminCatalog() {
 
   const handleCropComplete = (croppedImage: string) => {
     if (cropMode === 'new') {
-      setNewClothing({ ...newClothing, image_url: croppedImage });
+      setNewClothing(prev => ({ ...prev, image_url: croppedImage }));
     } else if (cropMode === 'edit' && editingClothing) {
       setEditingClothing({ ...editingClothing, image_url: croppedImage });
     }
     setShowCropper(false);
+    setImageToCrop('');
     toast.success('Изображение обрезано');
   };
 
