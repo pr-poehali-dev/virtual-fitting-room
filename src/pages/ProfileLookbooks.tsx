@@ -28,6 +28,7 @@ interface Lookbook {
 
 const LOOKBOOKS_API = 'https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b';
 const IMAGE_PREPROCESSING_API = 'https://functions.poehali.dev/3fe8c892-ab5f-4d26-a2c5-ae4166276334';
+const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
 
 export default function ProfileLookbooks() {
   const { user, isLoading: authLoading } = useAuth();
@@ -260,65 +261,23 @@ export default function ProfileLookbooks() {
       const loadImage = async (url: string): Promise<string> => {
         console.log('[PDF] Loading image:', url);
         try {
-          // Если это уже base64, возвращаем как есть
           if (url.startsWith('data:')) {
             console.log('[PDF] Image is already base64');
             return url;
           }
 
-          // Загружаем через fetch
-          const response = await fetch(url, { mode: 'cors' });
+          console.log('[PDF] Using image proxy for:', url);
+          const proxyUrl = `${IMAGE_PROXY_API}?url=${encodeURIComponent(url)}`;
+          const response = await fetch(proxyUrl);
+          
           if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            throw new Error(`Proxy failed: HTTP ${response.status}`);
           }
           
-          const blob = await response.blob();
-          console.log('[PDF] Blob loaded, size:', blob.size, 'type:', blob.type);
+          const data = await response.json();
+          console.log('[PDF] Image loaded via proxy, size:', data.data_url.length);
           
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              console.log('[PDF] FileReader completed');
-              const base64data = reader.result as string;
-              
-              // Проверяем, что это валидный data URL
-              if (!base64data || !base64data.startsWith('data:')) {
-                reject(new Error('Invalid base64 data'));
-                return;
-              }
-              
-              // Проверяем изображение через Image объект
-              const img = new Image();
-              img.onload = () => {
-                console.log('[PDF] Image validated, dimensions:', img.width, 'x', img.height);
-                
-                // Создаем canvas для конвертации в JPEG
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                
-                if (ctx) {
-                  ctx.drawImage(img, 0, 0);
-                  const jpegData = canvas.toDataURL('image/jpeg', 0.9);
-                  console.log('[PDF] Converted to JPEG, size:', jpegData.length);
-                  resolve(jpegData);
-                } else {
-                  reject(new Error('Failed to get canvas context'));
-                }
-              };
-              img.onerror = (e) => {
-                console.error('[PDF] Image validation failed:', e);
-                reject(new Error('Failed to validate image'));
-              };
-              img.src = base64data;
-            };
-            reader.onerror = (e) => {
-              console.error('[PDF] FileReader error:', e);
-              reject(new Error('Failed to read blob'));
-            };
-            reader.readAsDataURL(blob);
-          });
+          return data.data_url;
         } catch (error) {
           console.error('[PDF] Error loading image:', url, error);
           throw error;
