@@ -160,6 +160,7 @@ export default function ImageCropper({
                 src={image}
                 alt="Crop preview"
                 className="max-w-full h-auto"
+                crossOrigin="anonymous"
                 onLoad={handleImageLoad}
               />
             </ReactCrop>
