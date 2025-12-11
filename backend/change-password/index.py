@@ -69,6 +69,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         current_password = body_data.get('current_password')
         new_password = body_data.get('new_password')
         
+        print(f'[ChangePassword] Processing for user_id: {user_id}')
+        
         if not current_password or not new_password:
             return {
                 'statusCode': 400,
@@ -97,6 +99,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         user = cursor.fetchone()
         
         if not user:
+            print(f'[ChangePassword] User not found: {user_id}')
             return {
                 'statusCode': 404,
                 'headers': {
@@ -107,7 +110,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'User not found'})
             }
         
-        if not bcrypt.checkpw(current_password.encode('utf-8'), user['password_hash'].encode('utf-8')):
+        print(f'[ChangePassword] User found, checking password')
+        
+        stored_hash = user['password_hash']
+        if isinstance(stored_hash, str):
+            stored_hash_bytes = stored_hash.encode('utf-8')
+        else:
+            stored_hash_bytes = stored_hash
+        
+        if not bcrypt.checkpw(current_password.encode('utf-8'), stored_hash_bytes):
+            print(f'[ChangePassword] Current password incorrect')
             return {
                 'statusCode': 400,
                 'headers': {
@@ -118,14 +130,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Current password is incorrect'})
             }
         
+        print(f'[ChangePassword] Password verified, generating new hash')
+        
         new_password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        new_password_hash_escaped = new_password_hash.replace("'", "''")
+        new_password_hash_escaped = new_password_hash.replace("'", "''").replace("\\", "\\\\")
+        
+        print(f'[ChangePassword] Updating password in database')
         
         cursor.execute(
             f"UPDATE users SET password_hash = '{new_password_hash_escaped}', updated_at = CURRENT_TIMESTAMP WHERE id = '{user_id_escaped}'"
         )
         
         conn.commit()
+        
+        print(f'[ChangePassword] Password updated successfully')
         
         return {
             'statusCode': 200,
@@ -138,7 +156,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     except Exception as e:
-        conn.rollback()
+        print(f'[ChangePassword] Error: {type(e).__name__}: {str(e)}')
+        try:
+            conn.rollback()
+        except:
+            pass
         return {
             'statusCode': 500,
             'headers': {
