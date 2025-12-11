@@ -264,6 +264,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                         if save_response.status_code == 200:
                                             save_data = save_response.json()
                                             processed_image_url = save_data.get('url', processed_url)
+                                            
+                                            # Delete old image from S3 if it's different
+                                            if image_url != processed_image_url and image_url.startswith('https://cdn.poehali.dev/'):
+                                                try:
+                                                    delete_response = requests.post(
+                                                        'https://functions.poehali.dev/bfa8cc4d-a0e7-44dd-b97a-0bd15e9f9b27',
+                                                        json={'image_url': image_url},
+                                                        timeout=10
+                                                    )
+                                                except:
+                                                    pass
                                         else:
                                             processed_image_url = processed_url
                                     except:
@@ -428,6 +439,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing id or image_url'})
                 }
             
+            # Get current image URL to delete old version
+            cursor.execute('SELECT image_url FROM clothing_catalog WHERE id = %s', (clothing_id,))
+            current_item = cursor.fetchone()
+            old_image_url = current_item['image_url'] if current_item else None
+            
             # Save image to S3 if it's base64 or external URL
             saved_image_url = image_url
             if image_url.startswith(('http://', 'https://', 'data:')):
@@ -446,6 +462,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         if save_response.status_code == 200:
                             save_data = save_response.json()
                             saved_image_url = save_data.get('url', image_url)
+                            
+                            # Delete old image from S3 if it's different and exists
+                            if old_image_url and old_image_url != saved_image_url and old_image_url.startswith('https://cdn.poehali.dev/'):
+                                try:
+                                    delete_response = requests.post(
+                                        'https://functions.poehali.dev/bfa8cc4d-a0e7-44dd-b97a-0bd15e9f9b27',
+                                        json={'image_url': old_image_url},
+                                        timeout=10
+                                    )
+                                except:
+                                    pass
                     except:
                         pass
             
