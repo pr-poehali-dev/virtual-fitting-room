@@ -91,7 +91,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Password must be at least 6 characters'})
             }
         
-        cursor.execute("SELECT password_hash FROM users WHERE id = %s", (user_id,))
+        user_id_escaped = user_id.replace("'", "''")
+        
+        cursor.execute(f"SELECT password_hash FROM users WHERE id = '{user_id_escaped}'")
         user = cursor.fetchone()
         
         if not user:
@@ -117,10 +119,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         new_password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        new_password_hash_escaped = new_password_hash.replace("'", "''")
         
         cursor.execute(
-            "UPDATE users SET password_hash = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
-            (new_password_hash, user_id)
+            f"UPDATE users SET password_hash = '{new_password_hash_escaped}', updated_at = CURRENT_TIMESTAMP WHERE id = '{user_id_escaped}'"
         )
         
         conn.commit()
