@@ -258,34 +258,69 @@ export default function ProfileLookbooks() {
       yPos += 20;
       
       const loadImage = async (url: string): Promise<string> => {
+        console.log('[PDF] Loading image:', url);
         try {
-          const response = await fetch(url);
+          // Если это уже base64, возвращаем как есть
+          if (url.startsWith('data:')) {
+            console.log('[PDF] Image is already base64');
+            return url;
+          }
+
+          // Загружаем через fetch
+          const response = await fetch(url, { mode: 'cors' });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          
           const blob = await response.blob();
+          console.log('[PDF] Blob loaded, size:', blob.size, 'type:', blob.type);
           
           return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => {
+              console.log('[PDF] FileReader completed');
+              const base64data = reader.result as string;
+              
+              // Проверяем, что это валидный data URL
+              if (!base64data || !base64data.startsWith('data:')) {
+                reject(new Error('Invalid base64 data'));
+                return;
+              }
+              
+              // Проверяем изображение через Image объект
               const img = new Image();
               img.onload = () => {
+                console.log('[PDF] Image validated, dimensions:', img.width, 'x', img.height);
+                
+                // Создаем canvas для конвертации в JPEG
                 const canvas = document.createElement('canvas');
                 canvas.width = img.width;
                 canvas.height = img.height;
                 const ctx = canvas.getContext('2d');
+                
                 if (ctx) {
                   ctx.drawImage(img, 0, 0);
-                  resolve(canvas.toDataURL('image/jpeg', 0.8));
+                  const jpegData = canvas.toDataURL('image/jpeg', 0.9);
+                  console.log('[PDF] Converted to JPEG, size:', jpegData.length);
+                  resolve(jpegData);
                 } else {
                   reject(new Error('Failed to get canvas context'));
                 }
               };
-              img.onerror = () => reject(new Error('Failed to load image'));
-              img.src = reader.result as string;
+              img.onerror = (e) => {
+                console.error('[PDF] Image validation failed:', e);
+                reject(new Error('Failed to validate image'));
+              };
+              img.src = base64data;
             };
-            reader.onerror = () => reject(new Error('Failed to read blob'));
+            reader.onerror = (e) => {
+              console.error('[PDF] FileReader error:', e);
+              reject(new Error('Failed to read blob'));
+            };
             reader.readAsDataURL(blob);
           });
         } catch (error) {
-          console.error('Error fetching image:', error);
+          console.error('[PDF] Error loading image:', url, error);
           throw error;
         }
       };
