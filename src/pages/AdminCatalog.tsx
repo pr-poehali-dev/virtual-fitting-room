@@ -111,7 +111,9 @@ export default function AdminCatalog() {
   };
 
   const handleRemoveBackground = async () => {
-    if (!newClothing.image_url) {
+    const imageUrl = editingClothing ? editingClothing.image_url : newClothing.image_url;
+    
+    if (!imageUrl) {
       toast.error('Сначала загрузите изображение');
       return;
     }
@@ -121,13 +123,19 @@ export default function AdminCatalog() {
       const response = await fetch(IMAGE_PREPROCESSING_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_url: newClothing.image_url })
+        body: JSON.stringify({ image_url: imageUrl })
       });
 
       if (!response.ok) throw new Error('Failed to remove background');
       
       const data = await response.json();
-      setNewClothing(prev => ({ ...prev, image_url: data.processed_image }));
+      
+      if (editingClothing) {
+        setEditingClothing({ ...editingClothing, image_url: data.processed_image });
+      } else {
+        setNewClothing(prev => ({ ...prev, image_url: data.processed_image }));
+      }
+      
       toast.success('Фон удалён');
     } catch (error) {
       toast.error('Ошибка удаления фона');
@@ -140,7 +148,7 @@ export default function AdminCatalog() {
     if (cropMode === 'new') {
       setNewClothing(prev => ({ ...prev, image_url: croppedImage }));
     } else if (cropMode === 'edit' && editingClothing) {
-      setEditingClothing({ ...editingClothing, image_url: croppedImage });
+      setEditingClothing(prev => prev ? { ...prev, image_url: croppedImage } : null);
     }
     setShowCropper(false);
     setImageToCrop('');
@@ -675,49 +683,29 @@ export default function AdminCatalog() {
                         </div>
 
                         <div className="flex gap-2">
-                          {!editingClothing && (
-                            <>
-                              <Button
-                                onClick={handleRemoveBackground}
-                                disabled={isProcessingImage || !newClothing.image_url}
-                                variant="outline"
-                              >
-                                {isProcessingImage ? 'Обработка...' : 'Удалить фон'}
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  if (newClothing.image_url) {
-                                    setImageToCrop(newClothing.image_url);
-                                    setCropMode('new');
-                                    setShowCropper(true);
-                                  } else {
-                                    toast.error('Сначала добавьте изображение');
-                                  }
-                                }}
-                                variant="outline"
-                              >
-                                <Icon name="Crop" className="w-4 h-4 mr-2" />
-                                Обрезать
-                              </Button>
-                            </>
-                          )}
-                          {editingClothing && (
-                            <Button
-                              onClick={() => {
-                                if (editingClothing.image_url) {
-                                  setImageToCrop(editingClothing.image_url);
-                                  setCropMode('edit');
-                                  setShowCropper(true);
-                                } else {
-                                  toast.error('Сначала добавьте изображение');
-                                }
-                              }}
-                              variant="outline"
-                            >
-                              <Icon name="Crop" className="w-4 h-4 mr-2" />
-                              Обрезать
-                            </Button>
-                          )}
+                          <Button
+                            onClick={handleRemoveBackground}
+                            disabled={isProcessingImage || (!editingClothing?.image_url && !newClothing.image_url)}
+                            variant="outline"
+                          >
+                            {isProcessingImage ? 'Обработка...' : 'Удалить фон'}
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              const imageUrl = editingClothing ? editingClothing.image_url : newClothing.image_url;
+                              if (imageUrl) {
+                                setImageToCrop(imageUrl);
+                                setCropMode(editingClothing ? 'edit' : 'new');
+                                setShowCropper(true);
+                              } else {
+                                toast.error('Сначала добавьте изображение');
+                              }
+                            }}
+                            variant="outline"
+                          >
+                            <Icon name="Crop" className="w-4 h-4 mr-2" />
+                            Обрезать
+                          </Button>
                         </div>
 
                         <div className="flex gap-2">
