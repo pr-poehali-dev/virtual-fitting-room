@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ export default function VerifyEmail() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { updateUser } = useAuth();
+  const hasVerified = useRef(false);
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -26,14 +27,14 @@ export default function VerifyEmail() {
       return;
     }
 
-    let isCancelled = false;
+    // Предотвращаем повторные вызовы
+    if (hasVerified.current) return;
+    hasVerified.current = true;
 
     const verifyEmail = async () => {
       try {
         const response = await fetch(`${VERIFY_API}?token=${token}`);
         const data = await response.json();
-
-        if (isCancelled) return;
 
         if (!response.ok) {
           // Если email уже подтвержден, показываем специальное сообщение
@@ -54,27 +55,17 @@ export default function VerifyEmail() {
         toast.success('Email успешно подтвержден!');
 
         setTimeout(() => {
-          if (!isCancelled) {
-            navigate('/profile');
-          }
+          navigate('/profile');
         }, 2000);
       } catch (err) {
-        if (!isCancelled) {
-          setError('Ошибка подтверждения email');
-          toast.error('Ошибка подтверждения');
-        }
+        setError('Ошибка подтверждения email');
+        toast.error('Ошибка подтверждения');
       } finally {
-        if (!isCancelled) {
-          setIsVerifying(false);
-        }
+        setIsVerifying(false);
       }
     };
 
     verifyEmail();
-
-    return () => {
-      isCancelled = true;
-    };
   }, [searchParams, navigate, updateUser]);
 
   return (
