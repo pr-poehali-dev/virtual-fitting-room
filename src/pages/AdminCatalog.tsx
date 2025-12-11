@@ -424,28 +424,22 @@ export default function AdminCatalog() {
                             <Input
                               type="file"
                               accept="image/*"
-                              onChange={async (e) => {
+                              onChange={(e) => {
                                 const file = e.target.files?.[0];
-                                if (file) {
-                                  const reader = new FileReader();
-                                  reader.onloadend = () => {
-                                    const base64String = reader.result as string;
-                                    setImageToCrop(base64String);
-                                    setCropMode(editingClothing ? 'edit' : 'new');
-                                    setShowCropper(true);
-                                  };
-                                  reader.readAsDataURL(file);
-                                }
+                                if (!file) return;
+
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  const base64Image = reader.result as string;
+                                  if (editingClothing) {
+                                    setEditingClothing({ ...editingClothing, image_url: base64Image });
+                                  } else {
+                                    setNewClothing(prev => ({ ...prev, image_url: base64Image }));
+                                  }
+                                };
+                                reader.readAsDataURL(file);
                               }}
                             />
-                            {(editingClothing?.image_url || newClothing.image_url) && (
-                              <div className="mt-2">
-                                <p className="text-xs text-green-600 flex items-center gap-1">
-                                  <Icon name="Check" size={14} />
-                                  Файл загружен и обрезан
-                                </p>
-                              </div>
-                            )}
                           </div>
                         )}
 
@@ -836,13 +830,16 @@ export default function AdminCatalog() {
         </div>
       </div>
 
-      {showCropper && imageToCrop && (
-        <ImageCropper
-          imageUrl={imageToCrop}
-          onCropComplete={handleCropComplete}
-          onCancel={() => setShowCropper(false)}
-        />
-      )}
+      <ImageCropper
+        image={imageToCrop}
+        open={showCropper}
+        onClose={() => {
+          setShowCropper(false);
+          setImageToCrop('');
+        }}
+        onCropComplete={handleCropComplete}
+        aspectRatio={3 / 4}
+      />
     </Layout>
   );
 }
