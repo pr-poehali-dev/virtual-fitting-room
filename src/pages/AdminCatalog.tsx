@@ -61,7 +61,6 @@ export default function AdminCatalog() {
   });
   const [showCropper, setShowCropper] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string>('');
-  const [cropMode, setCropMode] = useState<'new' | 'edit'>('new');
   const [uploadSource, setUploadSource] = useState<'url' | 'file'>('url');
 
   useEffect(() => {
@@ -111,9 +110,7 @@ export default function AdminCatalog() {
   };
 
   const handleRemoveBackground = async () => {
-    const imageUrl = editingClothing ? editingClothing.image_url : newClothing.image_url;
-    
-    if (!imageUrl) {
+    if (!newClothing.image_url) {
       toast.error('Сначала загрузите изображение');
       return;
     }
@@ -123,18 +120,13 @@ export default function AdminCatalog() {
       const response = await fetch(IMAGE_PREPROCESSING_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_url: imageUrl })
+        body: JSON.stringify({ image_url: newClothing.image_url })
       });
 
       if (!response.ok) throw new Error('Failed to remove background');
       
       const data = await response.json();
-      
-      if (editingClothing) {
-        setEditingClothing({ ...editingClothing, image_url: data.processed_image });
-      } else {
-        setNewClothing(prev => ({ ...prev, image_url: data.processed_image }));
-      }
+      setNewClothing(prev => ({ ...prev, image_url: data.processed_image }));
       
       toast.success('Фон удалён');
     } catch (error) {
@@ -145,11 +137,7 @@ export default function AdminCatalog() {
   };
 
   const handleCropComplete = (croppedImage: string) => {
-    if (cropMode === 'new') {
-      setNewClothing(prev => ({ ...prev, image_url: croppedImage }));
-    } else if (cropMode === 'edit' && editingClothing) {
-      setEditingClothing(prev => prev ? { ...prev, image_url: croppedImage } : null);
-    }
+    setNewClothing(prev => ({ ...prev, image_url: croppedImage }));
     setShowCropper(false);
     setImageToCrop('');
     toast.success('Изображение обрезано');
@@ -682,31 +670,31 @@ export default function AdminCatalog() {
                           </select>
                         </div>
 
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={handleRemoveBackground}
-                            disabled={isProcessingImage || (!editingClothing?.image_url && !newClothing.image_url)}
-                            variant="outline"
-                          >
-                            {isProcessingImage ? 'Обработка...' : 'Удалить фон'}
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              const imageUrl = editingClothing ? editingClothing.image_url : newClothing.image_url;
-                              if (imageUrl) {
-                                setImageToCrop(imageUrl);
-                                setCropMode(editingClothing ? 'edit' : 'new');
-                                setShowCropper(true);
-                              } else {
-                                toast.error('Сначала добавьте изображение');
-                              }
-                            }}
-                            variant="outline"
-                          >
-                            <Icon name="Crop" className="w-4 h-4 mr-2" />
-                            Обрезать
-                          </Button>
-                        </div>
+                        {!editingClothing && (
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={handleRemoveBackground}
+                              disabled={isProcessingImage || !newClothing.image_url}
+                              variant="outline"
+                            >
+                              {isProcessingImage ? 'Обработка...' : 'Удалить фон'}
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                if (newClothing.image_url) {
+                                  setImageToCrop(newClothing.image_url);
+                                  setShowCropper(true);
+                                } else {
+                                  toast.error('Сначала добавьте изображение');
+                                }
+                              }}
+                              variant="outline"
+                            >
+                              <Icon name="Crop" className="w-4 h-4 mr-2" />
+                              Обрезать
+                            </Button>
+                          </div>
+                        )}
 
                         <div className="flex gap-2">
                           <Button onClick={editingClothing ? handleUpdateClothing : handleAddClothing}>
