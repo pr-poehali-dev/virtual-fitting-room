@@ -6,35 +6,19 @@ import ImageViewer from '@/components/ImageViewer';
 interface ReplicateResultPanelProps {
   isGenerating: boolean;
   generatedImage: string | null;
-  intermediateResult: string | null;
-  waitingContinue: boolean;
-  currentStep: number;
-  totalSteps: number;
-  activeFittingRoom?: 'replicate' | 'seedream';
 
   handleDownloadImage: () => void;
   setShowSaveDialog: (show: boolean) => void;
   handleReset: () => void;
-  handleContinueGeneration: () => void;
-  checkStatusManually: () => void;
 }
 
 export default function ReplicateResultPanel({
   isGenerating,
   generatedImage,
-  intermediateResult,
-  waitingContinue,
-  currentStep,
-  totalSteps,
-  activeFittingRoom = 'replicate',
-
   handleDownloadImage,
   setShowSaveDialog,
-  handleReset,
-  handleContinueGeneration,
-  checkStatusManually
+  handleReset
 }: ReplicateResultPanelProps) {
-  const displayStep = `Шаг ${currentStep} из ${totalSteps}`;
   return (
     <Card className="animate-scale-in">
       <CardHeader>
@@ -49,74 +33,14 @@ export default function ReplicateResultPanel({
             <Icon name="Loader2" className="animate-spin text-primary" size={64} />
             <p className="text-lg font-medium">Создаём образ...</p>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
-              AI анализирует выбранные вещи и создаёт реалистичный образ. Подождите, это может занять 1-3 минуты
+              AI анализирует выбранные вещи и создаёт реалистичный образ. Подождите ~30 секунд
             </p>
-            {currentStep > 0 && (
-              <>
-                <p className="text-sm font-medium text-primary">
-                  {displayStep}
-                </p>
-                {currentStep === 1 && totalSteps > 1 && (
-                  <p className="text-xs text-muted-foreground text-center max-w-md">
-                    После первого шага вы сможете посмотреть промежуточный результат и продолжить
-                  </p>
-                )}
-              </>
-            )}
-            {activeFittingRoom === 'replicate' && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={checkStatusManually}
-              >
-                <Icon name="RefreshCw" className="mr-2" size={16} />
-                Проверить статус
-              </Button>
-            )}
-          </div>
-        ) : waitingContinue && intermediateResult ? (
-          <div className="space-y-4">
-            <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg mb-4">
-              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                ✅ {displayStep} готов!
-              </p>
-              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                Проверьте результат и нажмите "Продолжить" для следующей вещи
-              </p>
-            </div>
-            <div className="flex justify-center">
-              <div className="relative w-full max-w-md" style={{ aspectRatio: '3/4' }}>
-                <ImageViewer
-                  src={intermediateResult}
-                  alt="Промежуточный результат"
-                  className="rounded-lg w-full h-full object-cover"
-                />
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              {currentStep < totalSteps && (
-                <Button onClick={handleContinueGeneration} size="lg" className="w-full">
-                  <Icon name="ArrowRight" className="mr-2" size={20} />
-                  Продолжить (шаг {currentStep + 1}/{totalSteps})
-                </Button>
-              )}
-              <div className="flex gap-2">
-                <Button onClick={handleDownloadImage} variant="outline" className="flex-1">
-                  <Icon name="Download" className="mr-2" size={16} />
-                  Скачать текущий
-                </Button>
-                <Button variant="outline" onClick={handleReset} className="flex-1">
-                  <Icon name="RotateCcw" className="mr-2" size={16} />
-                  Начать заново
-                </Button>
-              </div>
-            </div>
           </div>
         ) : generatedImage ? (
           <div className="space-y-4">
             <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg mb-4">
               <p className="text-sm font-medium text-green-900 dark:text-green-100">
-                🎉 Все шаги завершены!
+                🎉 Образ готов!
               </p>
               <p className="text-xs text-green-700 dark:text-green-300 mt-1">
                 Не забудьте сохранить фото, если результат работы нейросети Вам нравится!

@@ -8,10 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 import { Link } from 'react-router-dom';
-import TryOnHeader from '@/components/replicate/TryOnHeader';
-import TryOnImageUploadSection from '@/components/replicate/TryOnImageUploadSection';
-import TryOnClothingSection from '@/components/replicate/TryOnClothingSection';
-import TryOnControlsSection from '@/components/replicate/TryOnControlsSection';
 import ReplicateImageUpload from '@/components/replicate/ReplicateImageUpload';
 import ReplicateClothingSelector from '@/components/replicate/ReplicateClothingSelector';
 import ReplicateResultPanel from '@/components/replicate/ReplicateResultPanel';
@@ -58,10 +54,6 @@ interface SelectedClothing {
 }
 
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
-const REPLICATE_START_API = 'https://functions.poehali.dev/c1cb3f04-f40a-4044-87fd-568d0271e1fe';
-const REPLICATE_STATUS_API = 'https://functions.poehali.dev/cde034e8-99be-4910-9ea6-f06cc94a6377';
-const SEEDREAM_START_API = 'https://functions.poehali.dev/4bb70873-fda7-4a2d-a0a8-ee558a3b50e7';
-const SEEDREAM_STATUS_API = 'https://functions.poehali.dev/ffebd367-227e-4e12-a5f1-64db84bddc81';
 const NANOBANANAPRO_START_API = 'https://functions.poehali.dev/aac1d5d8-c9bd-43c6-822e-857c18f3c1f8';
 const NANOBANANAPRO_STATUS_API = 'https://functions.poehali.dev/6d603f3d-bbe3-450d-863a-63d513ad5ba7';
 const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
@@ -90,8 +82,6 @@ const proxyFalImage = async (falUrl: string): Promise<string> => {
   }
 };
 
-
-
 export default function ReplicateTryOn() {
   const { user } = useAuth();
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -114,14 +104,8 @@ export default function ReplicateTryOn() {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
   const [generationStatus, setGenerationStatus] = useState<string>('');
-  const [intermediateResult, setIntermediateResult] = useState<string | null>(null);
-  const [currentStep, setCurrentStep] = useState<number>(0);
-  const [totalSteps, setTotalSteps] = useState<number>(0);
-  const [waitingContinue, setWaitingContinue] = useState<boolean>(false);
-  const [checkerInterval, setCheckerInterval] = useState<NodeJS.Timeout | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageForCrop, setTempImageForCrop] = useState<string | null>(null);
-  const [activeFittingRoom, setActiveFittingRoom] = useState<'replicate' | 'seedream' | 'nanobananapro'>('replicate');
   const [customPrompt, setCustomPrompt] = useState<string>('');
   const [showCategoryError, setShowCategoryError] = useState(false);
   const isNanoBananaRequestInProgress = useRef(false);
@@ -143,11 +127,8 @@ export default function ReplicateTryOn() {
       if (pollingInterval) {
         clearInterval(pollingInterval);
       }
-      if (checkerInterval) {
-        clearInterval(checkerInterval);
-      }
     };
-  }, [pollingInterval, checkerInterval]);
+  }, [pollingInterval]);
 
   const fetchFilters = async () => {
     try {
@@ -253,7 +234,6 @@ export default function ReplicateTryOn() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Валидация файла
     const validation = validateImageFile(file);
     if (!validation.isValid) {
       toast.error(validation.error || 'Неверный файл');
@@ -315,7 +295,6 @@ export default function ReplicateTryOn() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // Валидация всех файлов
     const invalidFiles: string[] = [];
     Array.from(files).forEach(file => {
       const validation = validateImageFile(file);
@@ -325,7 +304,7 @@ export default function ReplicateTryOn() {
     });
 
     if (invalidFiles.length > 0) {
-      toast.error(invalidFiles[0]); // Показываем первую ошибку
+      toast.error(invalidFiles[0]);
       e.target.value = '';
       return;
     }
@@ -432,108 +411,7 @@ export default function ReplicateTryOn() {
     );
   };
 
-  const handleGenerateSeeDream = async () => {
-    if (!uploadedImage) {
-      toast.error('Загрузите фото модели');
-      return;
-    }
-
-    if (selectedClothingItems.length === 0) {
-      toast.error('Выберите хотя бы одну вещь');
-      return;
-    }
-
-    if (selectedClothingItems.length > 2) {
-      toast.error('Максимум 2 вещи можно выбрать');
-      return;
-    }
-
-    if (!user) {
-      toast.error('Требуется авторизация');
-      return;
-    }
-
-    const itemsWithoutCategory = selectedClothingItems.filter(item => !item.category);
-    if (itemsWithoutCategory.length > 0) {
-      setShowCategoryError(true);
-      toast.error('Укажите категорию для всех выбранных вещей');
-      return;
-    }
-    setShowCategoryError(false);
-
-    if (selectedClothingItems.length === 2) {
-      const categories = selectedClothingItems.map(item => item.category);
-      const hasUpper = categories.includes('upper_body');
-      const hasLower = categories.includes('lower_body');
-      
-      if (!hasUpper || !hasLower) {
-        toast.error('При выборе 2 вещей нужно выбрать одну для верха и одну для низа');
-        return;
-      }
-    }
-
-    const balanceCheck = await checkReplicateBalance(user, selectedClothingItems.length);
-    if (!balanceCheck.canGenerate) {
-      return;
-    }
-
-    const balanceDeducted = await deductReplicateBalance(user, selectedClothingItems.length);
-    if (!balanceDeducted) {
-      return;
-    }
-
-    setIsGenerating(true);
-    setGeneratedImage(null);
-    setIntermediateResult(null);
-    setWaitingContinue(false);
-    setGenerationStatus('Запускаем генерацию...');
-
-    toast.info('Генерация займёт ~30 секунд. Не закрывайте страницу!', {
-      duration: 6000
-    });
-
-    try {
-      const response = await fetch(SEEDREAM_START_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id,
-        },
-        body: JSON.stringify({
-          person_image: uploadedImage,
-          garments: selectedClothingItems.map((item) => ({
-            image: item.image,
-            category: item.category || 'upper_body',
-          })),
-          custom_prompt: customPrompt,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Ошибка запуска генерации');
-      }
-
-      const data = await response.json();
-      setTaskId(data.task_id);
-      setGenerationStatus('В очереди...');
-      toast.success('Задача создана! Ожидайте результат...');
-      
-      startSeeDreamPolling(data.task_id);
-    } catch (error: any) {
-      console.error('Generation error:', error);
-      toast.error(error.message || 'Ошибка запуска генерации');
-      setIsGenerating(false);
-      setGenerationStatus('');
-      
-      if (user) {
-        await refundReplicateBalance(user, selectedClothingItems.length);
-        console.log('[SeeDream] Balance refunded due to start error');
-      }
-    }
-  };
-
-  const handleGenerateNanoBananaPro = async () => {
+  const handleGenerate = async () => {
     const callId = Math.random().toString(36).substring(7);
     console.log(`[NanoBananaPro-CALL-START] Function called, ID: ${callId}, isGenerating: ${isGenerating}, inProgress: ${isNanoBananaRequestInProgress.current}`);
     
@@ -596,8 +474,6 @@ export default function ReplicateTryOn() {
 
       setIsGenerating(true);
       setGeneratedImage(null);
-      setIntermediateResult(null);
-      setWaitingContinue(false);
       setGenerationStatus('Запускаем генерацию...');
 
       toast.info('Генерация займёт ~30 секунд. Не закрывайте страницу!', {
@@ -631,7 +507,7 @@ export default function ReplicateTryOn() {
       setGenerationStatus('В очереди...');
       toast.success('Задача создана! Ожидайте результат...');
       
-      startNanoBananaProPolling(data.task_id);
+      startPolling(data.task_id);
     } catch (error: any) {
       console.error('Generation error:', error);
       toast.error(error.message || 'Ошибка запуска генерации');
@@ -648,7 +524,7 @@ export default function ReplicateTryOn() {
     }
   };
 
-  const startNanoBananaProPolling = (taskId: string) => {
+  const startPolling = (taskId: string) => {
     console.log('[NanoBananaPro] Starting polling for task:', taskId);
     let checkCount = 0;
     const startTime = Date.now();
@@ -719,380 +595,18 @@ export default function ReplicateTryOn() {
     setPollingInterval(interval);
   };
 
-  const startSeeDreamPolling = (taskId: string) => {
-    console.log('[SeeDream] Starting polling for task:', taskId);
-    let checkCount = 0;
-    const startTime = Date.now();
-    const TIMEOUT_MS = 300000;
-    
-    const interval = setInterval(async () => {
-      try {
-        checkCount++;
-        const forceCheck = checkCount % 3 === 0;
-        
-        const elapsedTime = Date.now() - startTime;
-        if (elapsedTime > TIMEOUT_MS) {
-          console.error('[SeeDream] Timeout after 300 seconds');
-          setIsGenerating(false);
-          setGenerationStatus('');
-          toast.error('Генерация заняла слишком много времени. Попробуйте обновить страницу и создать образ заново');
-          clearInterval(interval);
-          setPollingInterval(null);
-          
-          if (user) {
-            await refundReplicateBalance(user, selectedClothingItems.length);
-            console.log('[SeeDream] Balance refunded due to timeout');
-          }
-          return;
-        }
-        
-        const response = await fetch(`${SEEDREAM_STATUS_API}?task_id=${taskId}&force_check=${forceCheck}`);
-        if (!response.ok) {
-          throw new Error('Ошибка проверки статуса');
-        }
-
-        const data = await response.json();
-        console.log('[SeeDream] Status check result:', data, forceCheck ? '(force checked)' : '');
-        
-        if (data.status === 'pending') {
-          setGenerationStatus('В очереди...');
-        } else if (data.status === 'processing') {
-          setGenerationStatus('Обрабатывается...');
-        } else if (data.status === 'completed') {
-          console.log('[SeeDream] COMPLETED! Result URL:', data.result_url);
-          const proxiedUrl = await proxyFalImage(data.result_url);
-          setGeneratedImage(proxiedUrl);
-          setIsGenerating(false);
-          setGenerationStatus('');
-          clearInterval(interval);
-          setPollingInterval(null);
-          toast.success('Образ готов!');
-        } else if (data.status === 'failed') {
-          console.error('[SeeDream] FAILED:', data.error_message);
-          setIsGenerating(false);
-          setGenerationStatus('');
-          toast.error(data.error_message || 'Ошибка генерации');
-          clearInterval(interval);
-          setPollingInterval(null);
-          
-          if (user) {
-            await refundReplicateBalance(user, selectedClothingItems.length);
-            console.log('[SeeDream] Balance refunded due to API error');
-          }
-        } else {
-          console.log('[SeeDream] Unknown status:', data.status);
-        }
-      } catch (error: any) {
-        console.error('[SeeDream] Polling error:', error);
-      }
-    }, 3000);
-
-    setPollingInterval(interval);
-  };
-
-  const handleGenerate = async () => {
-    if (!uploadedImage) {
-      toast.error('Загрузите фото модели');
-      return;
-    }
-
-    if (selectedClothingItems.length === 0) {
-      toast.error('Выберите хотя бы одну вещь');
-      return;
-    }
-
-    if (selectedClothingItems.length > 2) {
-      toast.error('Максимум 2 вещи можно выбрать');
-      return;
-    }
-
-    if (!user) {
-      toast.error('Требуется авторизация');
-      return;
-    }
-
-    const itemsWithoutCategory = selectedClothingItems.filter(item => !item.category);
-    if (itemsWithoutCategory.length > 0) {
-      setShowCategoryError(true);
-      toast.error('Укажите категорию для всех выбранных вещей');
-      return;
-    }
-    setShowCategoryError(false);
-
-    if (selectedClothingItems.length === 2) {
-      const categories = selectedClothingItems.map(item => item.category);
-      const hasUpper = categories.includes('upper_body');
-      const hasLower = categories.includes('lower_body');
-      
-      if (!hasUpper || !hasLower) {
-        toast.error('При выборе 2 вещей нужно выбрать одну для верха и одну для низа');
-        return;
-      }
-    }
-
-    const balanceCheck = await checkReplicateBalance(user, selectedClothingItems.length);
-    if (!balanceCheck.canGenerate) {
-      return;
-    }
-
-    const balanceDeducted = await deductReplicateBalance(user, selectedClothingItems.length);
-    if (!balanceDeducted) {
-      return;
-    }
-
-    setIsGenerating(true);
-    setGeneratedImage(null);
-    setGenerationStatus('Запускаем генерацию...');
-
-
-    const estimatedTime = selectedClothingItems.length * 20;
-    toast.info(`Генерация займёт ~${estimatedTime}-${estimatedTime + 30} секунд. Не закрывайте страницу!`, {
-      duration: 6000
-    });
-
-    try {
-      const response = await fetch(REPLICATE_START_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id,
-        },
-        body: JSON.stringify({
-          person_image: uploadedImage,
-          garments: selectedClothingItems
-            .sort((a, b) => {
-              const order = { 'upper_body': 0, 'lower_body': 1, 'dresses': 2 };
-              return (order[a.category as keyof typeof order] || 99) - (order[b.category as keyof typeof order] || 99);
-            })
-            .map((item) => ({
-              image: item.image,
-              category: item.category || 'upper_body',
-            })),
-          prompt_hints: '',
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Ошибка запуска генерации');
-      }
-
-      const data = await response.json();
-      setTaskId(data.task_id);
-      setGenerationStatus('В очереди...');
-      toast.success('Задача создана! Ожидайте результат...');
-      
-      startPolling(data.task_id);
-    } catch (error: any) {
-      console.error('Generation error:', error);
-      toast.error(error.message || 'Ошибка запуска генерации');
-      setIsGenerating(false);
-      setGenerationStatus('');
-    }
-  };
-
-
-
-  const checkStatusManually = async () => {
-    if (!taskId) return;
-    
-    try {
-      toast.info('Проверяем статус на Replicate...');
-      
-      // Используем force_check=true для принудительной проверки Replicate API
-      const response = await fetch(`${REPLICATE_STATUS_API}?task_id=${taskId}&force_check=true`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.status === 'waiting_continue') {
-          setIntermediateResult(data.intermediate_result);
-          setIsGenerating(false);
-          setWaitingContinue(true);
-          setGenerationStatus('');
-          setCurrentStep(data.current_step || 1);
-          setTotalSteps(data.total_steps || selectedClothingItems.length);
-          toast.success(`Шаг ${data.current_step} готов!`);
-          if (pollingInterval) {
-            clearInterval(pollingInterval);
-            setPollingInterval(null);
-          }
-          if (checkerInterval) {
-            clearInterval(checkerInterval);
-            setCheckerInterval(null);
-          }
-        } else if (data.status === 'completed') {
-          setGeneratedImage(data.result_url);
-          setIsGenerating(false);
-          setWaitingContinue(false);
-          setGenerationStatus('');
-          if (pollingInterval) {
-            clearInterval(pollingInterval);
-            setPollingInterval(null);
-          }
-          if (checkerInterval) {
-            clearInterval(checkerInterval);
-            setCheckerInterval(null);
-          }
-          
-          if (user && uploadedImage && data.result_url) {
-            try {
-              await fetch(HISTORY_API, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-User-Id': user.id
-                },
-                body: JSON.stringify({
-                  person_image: uploadedImage,
-                  garments: selectedClothingItems.map(item => ({ image: item.image, category: item.category })),
-                  result_image: data.result_url
-                })
-              });
-            } catch (error) {
-              console.error('Failed to save history:', error);
-            }
-          }
-        } else if (data.status === 'failed') {
-          setIsGenerating(false);
-          setWaitingContinue(false);
-          setGenerationStatus('');
-          toast.error(data.error_message || 'Ошибка генерации');
-          if (pollingInterval) {
-            clearInterval(pollingInterval);
-            setPollingInterval(null);
-          }
-          if (checkerInterval) {
-            clearInterval(checkerInterval);
-            setCheckerInterval(null);
-          }
-        } else {
-          toast.info(`Статус: ${data.status}. Продолжаем ожидание...`);
-        }
-      }
-    } catch (error) {
-      console.error('Manual check error:', error);
-      toast.error('Ошибка проверки статуса');
-    }
-  };
-
-  const startPolling = (taskId: string) => {
-    const checker = setInterval(async () => {
-      try {
-        await fetch(`${REPLICATE_STATUS_API}?task_id=${taskId}&force_check=true`);
-      } catch (error) {
-        console.error('Auto check error:', error);
-      }
-    }, 10000);
-    setCheckerInterval(checker);
-    
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(`${REPLICATE_STATUS_API}?task_id=${taskId}`);
-        if (!response.ok) {
-          throw new Error('Ошибка проверки статуса');
-        }
-
-        const data = await response.json();
-        setCurrentStep(data.current_step || 0);
-        setTotalSteps(data.total_steps || 0);
-        
-        if (data.status === 'pending') {
-          setGenerationStatus('В очереди...');
-        } else if (data.status === 'processing') {
-          setGenerationStatus(`Обрабатывается... Шаг ${data.current_step}/${data.total_steps}`);
-        } else if (data.status === 'waiting_continue') {
-          setIntermediateResult(data.intermediate_result);
-          setIsGenerating(false);
-          setWaitingContinue(true);
-          setGenerationStatus('');
-          toast.success(`Шаг ${data.current_step}/${data.total_steps} готов!`);
-          clearInterval(interval);
-          clearInterval(checker);
-          setPollingInterval(null);
-          setCheckerInterval(null);
-        } else if (data.status === 'completed') {
-          setGeneratedImage(data.result_url);
-          setIsGenerating(false);
-          setWaitingContinue(false);
-          setGenerationStatus('');
-          clearInterval(interval);
-          clearInterval(checker);
-          setPollingInterval(null);
-          setCheckerInterval(null);
-          
-          // History is saved automatically by backend (replicate-prediction-checker)
-        } else if (data.status === 'failed') {
-          setIsGenerating(false);
-          setWaitingContinue(false);
-          setGenerationStatus('');
-          toast.error(data.error_message || 'Ошибка генерации');
-          clearInterval(interval);
-          clearInterval(checker);
-          setPollingInterval(null);
-          setCheckerInterval(null);
-        }
-      } catch (error: any) {
-        console.error('Polling error:', error);
-      }
-    }, 3000);
-
-    setPollingInterval(interval);
-  };
-
-  const handleContinueGeneration = async () => {
-    if (!taskId) return;
-
-    setWaitingContinue(false);
-    setIsGenerating(true);
-    setGenerationStatus('Запуск следующего шага...');
-
-    try {
-      const response = await fetch('https://functions.poehali.dev/fdb150a0-d5ba-47ec-9d9a-e13595cd92d1', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ task_id: taskId }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Ошибка продолжения генерации');
-      }
-
-      toast.success('Следующий шаг запущен!');
-      startPolling(taskId);
-    } catch (error: any) {
-      console.error('Continue error:', error);
-      toast.error(error.message || 'Ошибка продолжения генерации');
-      setIsGenerating(false);
-      setWaitingContinue(true);
-      setGenerationStatus('');
-    }
-  };
-
   const handleReset = () => {
     if (pollingInterval) {
       clearInterval(pollingInterval);
       setPollingInterval(null);
     }
-    if (checkerInterval) {
-      clearInterval(checkerInterval);
-      setCheckerInterval(null);
-    }
     setUploadedImage(null);
     setSelectedClothingItems([]);
     setGeneratedImage(null);
-    setIntermediateResult(null);
     setCustomPrompt('');
     setTaskId(null);
     setIsGenerating(false);
-    setWaitingContinue(false);
     setGenerationStatus('');
-    setCurrentStep(0);
-    setTotalSteps(0);
-
   };
 
   const handleSaveToExistingLookbook = async () => {
@@ -1166,19 +680,29 @@ export default function ReplicateTryOn() {
   };
 
   const handleDownloadImage = () => {
-    const imageUrl = generatedImage || intermediateResult;
-    if (!imageUrl) return;
+    if (!generatedImage) return;
 
     try {
-      const proxyUrl = `https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90?url=${encodeURIComponent(imageUrl)}&download=true`;
-      
-      const link = document.createElement('a');
-      link.href = proxyUrl;
-      link.download = `fitting-room-${Date.now()}.jpg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success('Изображение скачано!');
+      // If it's a base64 data URL, download directly
+      if (generatedImage.startsWith('data:')) {
+        const link = document.createElement('a');
+        link.href = generatedImage;
+        link.download = `fitting-room-${Date.now()}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Изображение скачано!');
+      } else {
+        // Otherwise proxy it
+        const proxyUrl = `${IMAGE_PROXY_API}?url=${encodeURIComponent(generatedImage)}`;
+        const link = document.createElement('a');
+        link.href = proxyUrl;
+        link.download = `fitting-room-${Date.now()}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Изображение скачано!');
+      }
     } catch (error) {
       toast.error('Ошибка скачивания');
     }
@@ -1193,7 +717,7 @@ export default function ReplicateTryOn() {
               Онлайн примерочная
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
-              Примерьте одежду онлайн с помощью AI. Три разных примерочные для лучшего результата
+              Примерьте одежду онлайн с помощью AI
             </p>
           </div>
 
@@ -1255,87 +779,22 @@ export default function ReplicateTryOn() {
                     showCategoryError={showCategoryError}
                   />
 
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">
-                        3
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold">Выберите примерочную</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Попробуйте разные примерочные - они работают по-разному
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap justify-center gap-3">
-                      <Button
-                        variant={activeFittingRoom === 'replicate' ? 'default' : 'outline'}
-                        onClick={() => setActiveFittingRoom('replicate')}
-                        size="lg"
-                      >
-                        Примерочная 1
-                      </Button>
-                      <Button
-                        variant={activeFittingRoom === 'seedream' ? 'default' : 'outline'}
-                        onClick={() => setActiveFittingRoom('seedream')}
-                        size="lg"
-                      >
-                        Примерочная 2
-                      </Button>
-                      <Button
-                        variant={activeFittingRoom === 'nanobananapro' ? 'default' : 'outline'}
-                        onClick={() => setActiveFittingRoom('nanobananapro')}
-                        size="lg"
-                      >
-                        Примерочная 3
-                      </Button>
-                    </div>
-
-                    {activeFittingRoom === 'replicate' && (
-                      <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
-                        <p className="text-sm text-blue-900 dark:text-blue-100">
-                          <Icon name="Info" className="inline mr-1" size={14} />
-                          В Примерочной 1, если выбрано 2 вещи, генерация будет в 2 этапа. Для лучшего результата фото модели лучше подбирать в похожей одежде на ту, которую будете примерять: верх и низ или полный образ
-                        </p>
-                      </div>
-                    )}
-                    {activeFittingRoom === 'seedream' && (
-                      <div className="p-3 bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 rounded-lg">
-                        <p className="text-sm text-purple-900 dark:text-purple-100">
-                          <Icon name="Info" className="inline mr-1" size={14} />
-                          В Примерочной 2 генерация быстрее (~30 секунд), можно изменять фон и добавлять дополнительные пожелания для стиля
-                        </p>
-                      </div>
-                    )}
-                    {activeFittingRoom === 'nanobananapro' && (
-                      <div className="p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
-                        <p className="text-sm text-green-900 dark:text-green-100">
-                          <Icon name="Info" className="inline mr-1" size={14} />
-                          В Примерочной 3 более реалистичный результат, можно изменять фон и добавлять дополнительные пожелания
-                        </p>
-                      </div>
-                    )}
+                  <div className="space-y-2">
+                    <Label htmlFor="custom-prompt">Дополнительные пожелания (опционально)</Label>
+                    <Textarea
+                      id="custom-prompt"
+                      placeholder="Например: студийное освещение или на фоне природы или на фоне городского пейзажа"
+                      value={customPrompt}
+                      onChange={(e) => setCustomPrompt(e.target.value)}
+                      rows={3}
+                      disabled={isGenerating}
+                      className="resize-none"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      <Icon name="AlertCircle" className="inline mr-1" size={12} />
+                      Если промпт будет слишком большой, есть вероятность, что нейросеть не сгенерирует фото
+                    </p>
                   </div>
-
-                  {(activeFittingRoom === 'seedream' || activeFittingRoom === 'nanobananapro') && (
-                    <div className="space-y-2">
-                      <Label htmlFor="custom-prompt">Дополнительные пожелания (опционально)</Label>
-                      <Textarea
-                        id="custom-prompt"
-                        placeholder="Например: студийное освещение или на фоне природы или на фоне городского пейзажа"
-                        value={customPrompt}
-                        onChange={(e) => setCustomPrompt(e.target.value)}
-                        rows={3}
-                        disabled={isGenerating}
-                        className="resize-none"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        <Icon name="AlertCircle" className="inline mr-1" size={12} />
-                        Если промпт будет слишком большой, есть вероятность, что нейросеть не сгенерирует фото
-                      </p>
-                    </div>
-                  )}
 
                   {generationStatus && (
                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -1347,25 +806,12 @@ export default function ReplicateTryOn() {
                             Не закрывайте страницу до завершения генерации
                           </p>
                         </div>
-                        {activeFittingRoom === 'replicate' && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={checkStatusManually}
-                          >
-                            Проверить статус
-                          </Button>
-                        )}
                       </div>
                     </div>
                   )}
 
                   <Button
-                    onClick={
-                      activeFittingRoom === 'replicate' ? handleGenerate :
-                      activeFittingRoom === 'seedream' ? handleGenerateSeeDream :
-                      handleGenerateNanoBananaPro
-                    }
+                    onClick={handleGenerate}
                     disabled={
                       !uploadedImage ||
                       selectedClothingItems.length === 0 ||
@@ -1394,17 +840,9 @@ export default function ReplicateTryOn() {
             <ReplicateResultPanel
               isGenerating={isGenerating}
               generatedImage={generatedImage}
-              intermediateResult={intermediateResult}
-              waitingContinue={waitingContinue}
-              currentStep={currentStep}
-              totalSteps={totalSteps}
-              activeFittingRoom={activeFittingRoom}
-
               handleDownloadImage={handleDownloadImage}
               setShowSaveDialog={setShowSaveDialog}
               handleReset={handleReset}
-              handleContinueGeneration={handleContinueGeneration}
-              checkStatusManually={checkStatusManually}
             />
           </div>
 
@@ -1433,9 +871,9 @@ export default function ReplicateTryOn() {
                 <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
                   <Icon name="Sparkles" className="text-purple-600" size={32} />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">3. Выберите примерочную и получите результат</h3>
+                <h3 className="text-xl font-semibold mb-2">3. Получите результат</h3>
                 <p className="text-muted-foreground">
-                  AI создаст реалистичное изображение в выбранном стиле
+                  AI создаст реалистичное изображение с учётом ваших пожеланий
                 </p>
               </div>
             </div>
@@ -1464,9 +902,9 @@ export default function ReplicateTryOn() {
                   <AccordionItem value="item-3">
                     <AccordionTrigger>Как работает технология?</AccordionTrigger>
                     <AccordionContent>
-                      Мы используем три разных AI модели. Примерочная 1 (IDM-VTON) работает в 2 этапа при выборе 2 вещей. 
-                      Примерочные 2 и 3 (SeeDream, NanoBanana) позволяют добавлять промпты для изменения фона и стиля. 
-                      Все модели анализируют фото человека и одежды, затем создают реалистичное изображение с учётом позы, освещения и формы тела.
+                      Мы используем AI модель NanoBanana, которая анализирует фото человека и одежды, 
+                      затем создаёт реалистичное изображение с учётом позы, освещения и формы тела. 
+                      Вы можете добавлять промпты для изменения фона и стиля.
                     </AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="item-4">
@@ -1487,8 +925,7 @@ export default function ReplicateTryOn() {
                   <AccordionItem value="item-6">
                     <AccordionTrigger>Сколько времени занимает генерация?</AccordionTrigger>
                     <AccordionContent>
-                      Примерочная 1: 20-30 секунд для одной вещи, 40-60 секунд для двух (поэтапно, с промежуточным результатом). 
-                      Примерочные 2 и 3: ~30 секунд независимо от количества вещей. 
+                      Генерация занимает примерно 30 секунд независимо от количества вещей. 
                       Время может увеличиться в зависимости от нагрузки на серверы.
                     </AccordionContent>
                   </AccordionItem>
@@ -1498,28 +935,9 @@ export default function ReplicateTryOn() {
           </div>
           
           <div className="text-center mt-8 pb-4">
-            {activeFittingRoom === 'replicate' ? (
-              <p className="text-xs text-muted-foreground">
-                Powered by{' '}
-                <a 
-                  href="https://replicate.com/cuuupid/idm-vton" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="underline hover:text-primary transition-colors"
-                >
-                  IDM-VTON
-                </a>
-                {' '}(CC BY 4.0)
-              </p>
-            ) : activeFittingRoom === 'seedream' ? (
-              <p className="text-xs text-muted-foreground">
-                Powered by SeeDream 4
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                Powered by NanoBanana
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground">
+              Powered by NanoBanana
+            </p>
           </div>
         </div>
       </div>
