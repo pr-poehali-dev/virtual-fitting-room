@@ -22,6 +22,10 @@ def verify_admin_password(provided_password: str, ip_address: str, cursor, conn)
     '''
     admin_password = os.environ.get('ADMIN_PASSWORD')
     
+    print(f'[DEBUG] Provided password: "{provided_password}" (len={len(provided_password) if provided_password else 0})')
+    print(f'[DEBUG] Expected password from env: exists={admin_password is not None}, len={len(admin_password) if admin_password else 0}')
+    print(f'[DEBUG] Match result: {provided_password == admin_password}')
+    
     # Check rate limiting - max 5 failed attempts per IP in 15 minutes
     cursor.execute(
         """
