@@ -185,6 +185,9 @@ export default function Admin() {
     }
 
     try {
+      console.log('[Admin Login] Attempting login with password length:', password.length);
+      console.log('[Admin Login] API URL:', ADMIN_AUTH_API);
+      
       const response = await fetch(ADMIN_AUTH_API, {
         method: 'POST',
         headers: {
@@ -193,8 +196,11 @@ export default function Admin() {
         body: JSON.stringify({ password })
       });
 
+      console.log('[Admin Login] Response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('[Admin Login] Success! Token received');
         localStorage.setItem('admin_jwt', data.token);
         localStorage.setItem('admin_jwt_expiry', data.expires_at);
         setIsAuthenticated(true);
@@ -202,9 +208,11 @@ export default function Admin() {
         fetchData();
       } else {
         const error = await response.json();
+        console.error('[Admin Login] Error response:', error);
         toast.error(error.error || 'Неверный пароль');
       }
     } catch (error) {
+      console.error('[Admin Login] Exception:', error);
       toast.error('Ошибка входа');
     }
   };
