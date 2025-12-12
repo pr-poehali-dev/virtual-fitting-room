@@ -767,6 +767,7 @@ export default function Profile() {
                   </Dialog>
                 </div>
 
+                {console.log('Lookbooks count:', lookbooks.length, 'Current page:', currentLookbookPage)}
                 {lookbooks.length === 0 ? (
                   <Card>
                     <CardContent className="p-12 text-center">
