@@ -247,8 +247,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         elif action == 'lookbooks':
+            limit = query_params.get('limit', '1000')
+            offset = query_params.get('offset', '0')
+            
+            try:
+                limit = int(limit)
+                offset = int(offset)
+            except ValueError:
+                limit = 1000
+                offset = 0
+            
+            cursor.execute("SELECT COUNT(*) as total FROM lookbooks")
+            total = cursor.fetchone()['total']
+            
             cursor.execute(
-                "SELECT id, user_id, name, person_name, photos, created_at FROM lookbooks ORDER BY created_at DESC"
+                "SELECT id, user_id, name, person_name, photos, created_at FROM lookbooks ORDER BY created_at DESC LIMIT %s OFFSET %s",
+                (limit, offset)
             )
             lookbooks = cursor.fetchall()
             
@@ -281,7 +295,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'Access-Control-Allow-Origin': '*'
                 },
                 'isBase64Encoded': False,
-                'body': json.dumps(result)
+                'body': json.dumps({
+                    'lookbooks': result,
+                    'total': total
+                })
             }
         
         elif action == 'history':

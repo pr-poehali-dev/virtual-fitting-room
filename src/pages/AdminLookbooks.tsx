@@ -31,6 +31,9 @@ export default function AdminLookbooks() {
   const [filteredLookbooks, setFilteredLookbooks] = useState<Lookbook[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalLookbooks, setTotalLookbooks] = useState(0);
+  const lookbooksPerPage = 50;
 
   useEffect(() => {
     const adminAuth = sessionStorage.getItem('admin_auth');
@@ -39,7 +42,7 @@ export default function AdminLookbooks() {
       return;
     }
     fetchData();
-  }, [navigate]);
+  }, [navigate, currentPage]);
 
   useEffect(() => {
     if (selectedUserId === 'all') {
@@ -54,11 +57,12 @@ export default function AdminLookbooks() {
     setIsLoading(true);
 
     try {
+      const offset = (currentPage - 1) * lookbooksPerPage;
       const [usersRes, lookbooksRes] = await Promise.all([
-        fetch(`${ADMIN_API}?action=users`, {
+        fetch(`${ADMIN_API}?action=users&limit=1000&offset=0`, {
           headers: { 'X-Admin-Password': adminPassword || '' }
         }),
-        fetch(`${ADMIN_API}?action=lookbooks`, {
+        fetch(`${ADMIN_API}?action=lookbooks&limit=${lookbooksPerPage}&offset=${offset}`, {
           headers: { 'X-Admin-Password': adminPassword || '' }
         })
       ]);
@@ -71,8 +75,10 @@ export default function AdminLookbooks() {
       ]);
 
       setUsers(usersData.users || usersData);
-      setLookbooks(lookbooksData);
-      setFilteredLookbooks(lookbooksData);
+      const lookbooksArray = lookbooksData.lookbooks || lookbooksData;
+      setLookbooks(lookbooksArray);
+      setFilteredLookbooks(lookbooksArray);
+      setTotalLookbooks(lookbooksData.total || lookbooksArray.length);
     } catch (error) {
       toast.error('Ошибка загрузки данных');
     } finally {
@@ -101,7 +107,7 @@ export default function AdminLookbooks() {
           <div className="flex-1">
             <div className="mb-8">
               <h1 className="text-3xl font-bold mb-2">Лукбуки</h1>
-              <p className="text-muted-foreground">Всего лукбуков: {filteredLookbooks.length}</p>
+              <p className="text-muted-foreground">Всего лукбуков: {totalLookbooks}</p>
             </div>
 
             <Card className="mb-6">
@@ -158,6 +164,32 @@ export default function AdminLookbooks() {
                 </div>
               </CardContent>
             </Card>
+
+            {totalLookbooks > lookbooksPerPage && (
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <Icon name="ChevronLeft" size={16} />
+                  Назад
+                </Button>
+                <span className="text-sm text-muted-foreground px-4">
+                  Страница {currentPage} из {Math.ceil(totalLookbooks / lookbooksPerPage)}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalLookbooks / lookbooksPerPage), p + 1))}
+                  disabled={currentPage >= Math.ceil(totalLookbooks / lookbooksPerPage)}
+                >
+                  Вперёд
+                  <Icon name="ChevronRight" size={16} />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

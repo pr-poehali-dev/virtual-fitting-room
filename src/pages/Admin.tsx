@@ -277,8 +277,9 @@ export default function Admin() {
 
       setStats(statsData);
       setUsers(usersData.users || usersData);
-      setLookbooks(lookbooksData);
-      setFilteredLookbooks(lookbooksData);
+      const lookbooksArray = lookbooksData.lookbooks || lookbooksData;
+      setLookbooks(lookbooksArray);
+      setFilteredLookbooks(lookbooksArray);
       setFilters(filtersData);
       setClothingItems(catalogData);
       setPayments(paymentsData);
