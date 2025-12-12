@@ -291,10 +291,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     ''', (error_msg, datetime.utcnow(), task_id))
                     conn.commit()
         
+        # Check both 'processing' and 'completed' tasks that need S3 upload
+        # (completed tasks with fal.ai URLs need to be uploaded to S3)
         cursor.execute('''
-            SELECT id, fal_response_url, first_result_at, user_id, saved_to_history
+            SELECT id, fal_response_url, first_result_at, user_id, saved_to_history, status, result_url
             FROM nanobananapro_tasks
-            WHERE status = 'processing' AND fal_response_url IS NOT NULL
+            WHERE (
+                (status = 'processing' AND fal_response_url IS NOT NULL)
+                OR (status = 'completed' AND result_url LIKE '%fal.%')
+            )
             ORDER BY created_at ASC
             LIMIT 5
         ''')
@@ -302,8 +307,32 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         processing_rows = cursor.fetchall()
         
         results = []
-        for task_id, response_url, first_result_at, user_id, saved_to_history in processing_rows:
+        for task_id, response_url, first_result_at, user_id, saved_to_history, current_status, result_url in processing_rows:
             try:
+                # If already completed with fal.ai URL, just upload to S3
+                if current_status == 'completed' and result_url and ('fal.media' in result_url or 'fal.ai' in result_url):
+                    print(f'[NanoBanana] Task {task_id} already completed with fal.ai URL, uploading to S3...')
+                    
+                    try:
+                        cdn_url = upload_to_s3(result_url, user_id)
+                        print(f'[NanoBanana] Task {task_id} uploaded to S3: {cdn_url}')
+                        
+                        # Update DB with CDN URL
+                        cursor.execute('''
+                            UPDATE nanobananapro_tasks
+                            SET result_url = %s, updated_at = %s
+                            WHERE id = %s
+                        ''', (cdn_url, datetime.utcnow(), task_id))
+                        conn.commit()
+                        print(f'[NanoBanana] Task {task_id} DB updated with CDN URL')
+                        
+                        results.append({'task_id': task_id, 'status': 's3_uploaded'})
+                    except Exception as s3_error:
+                        print(f'[NanoBanana] S3 upload failed for task {task_id}: {s3_error}')
+                    
+                    continue
+                
+                # For processing tasks, check fal.ai status
                 status_data = check_fal_status(response_url)
                 
                 task_status = status_data.get('status', status_data.get('state', 'UNKNOWN'))
@@ -473,7 +502,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Check if we have unfinished tasks before closing
         cursor.execute('''
             SELECT COUNT(*) FROM nanobananapro_tasks 
-            WHERE status = 'processing' AND fal_response_url IS NOT NULL
+            WHERE (
+                (status = 'processing' AND fal_response_url IS NOT NULL)
+                OR (status = 'completed' AND result_url LIKE '%fal.%')
+            )
         ''')
         processing_count = cursor.fetchone()[0]
         
