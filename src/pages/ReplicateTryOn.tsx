@@ -1114,21 +1114,19 @@ export default function ReplicateTryOn() {
     }
   };
 
-  const handleDownloadImage = async () => {
+  const handleDownloadImage = () => {
     const imageUrl = generatedImage || intermediateResult;
     if (!imageUrl) return;
 
     try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
-      link.download = `replicate-tryon-${Date.now()}.jpg`;
+      link.href = imageUrl;
+      link.download = `fitting-room-${Date.now()}.jpg`;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
       toast.success('Изображение скачано!');
     } catch (error) {
       toast.error('Ошибка скачивания');
