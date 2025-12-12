@@ -15,17 +15,13 @@ import ReplicateClothingSelector from '@/components/replicate/ReplicateClothingS
 import ReplicateResultPanel from '@/components/replicate/ReplicateResultPanel';
 import ReplicateSaveDialog from '@/components/replicate/ReplicateSaveDialog';
 import ImageCropper from '@/components/ImageCropper';
-import ReplicateGenerationControls from '@/components/replicate/ReplicateGenerationControls';
-import ReplicateBalanceCheck from '@/components/replicate/ReplicateBalanceCheck';
+import { checkReplicateBalance, deductReplicateBalance, refundReplicateBalance } from '@/utils/replicateBalanceUtils';
 import {
-  startGeneration,
-  continueGeneration,
-  cancelGeneration,
-  mapCategoryFromCatalog,
-  checkCategoryCompatibility
-} from '@/components/replicate/ReplicateGenerationManager';
-import { checkReplicateBalance } from '@/utils/replicateBalanceUtils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 interface ClothingItem {
   id: string;
