@@ -99,18 +99,20 @@ export default function AdminDashboard() {
               <CardTitle>Админ-панель</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Input
-                  type="password"
-                  placeholder="Введите пароль"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                />
-              </div>
-              <Button onClick={handleLogin} className="w-full">
-                Войти
-              </Button>
+              <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+                <div>
+                  <Input
+                    type="password"
+                    placeholder="Введите пароль"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                  />
+                </div>
+                <Button type="submit" className="w-full mt-4">
+                  Войти
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </div>

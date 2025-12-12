@@ -667,18 +667,18 @@ export default function Admin() {
               <CardTitle className="text-2xl text-center">Админ-панель</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="space-y-4">
                 <Input
                   type="password"
                   placeholder="Пароль администратора"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                  autoComplete="current-password"
                 />
-                <Button onClick={handleLogin} className="w-full">
+                <Button type="submit" className="w-full">
                   Войти
                 </Button>
-              </div>
+              </form>
             </CardContent>
           </Card>
         </div>
