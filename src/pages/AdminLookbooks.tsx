@@ -70,7 +70,7 @@ export default function AdminLookbooks() {
         lookbooksRes.json()
       ]);
 
-      setUsers(usersData);
+      setUsers(usersData.users || usersData);
       setLookbooks(lookbooksData);
       setFilteredLookbooks(lookbooksData);
     } catch (error) {

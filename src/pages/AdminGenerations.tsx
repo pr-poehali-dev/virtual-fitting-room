@@ -61,7 +61,7 @@ export default function AdminGenerations() {
 
       if (!response.ok) throw new Error('Failed to fetch users');
       const data = await response.json();
-      setUsers(data);
+      setUsers(data.users || data);
     } catch (error) {
       toast.error('Ошибка загрузки пользователей');
     }

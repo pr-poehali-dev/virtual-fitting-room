@@ -276,7 +276,7 @@ export default function Admin() {
       ]);
 
       setStats(statsData);
-      setUsers(usersData);
+      setUsers(usersData.users || usersData);
       setLookbooks(lookbooksData);
       setFilteredLookbooks(lookbooksData);
       setFilters(filtersData);
