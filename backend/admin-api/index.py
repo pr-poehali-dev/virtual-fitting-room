@@ -118,6 +118,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     Args: event - dict with httpMethod, queryStringParameters, headers
           context - object with attributes: request_id, function_name
     Returns: HTTP response with admin data
+    Updated: 2025-12-12 - redeploy to pick up new ADMIN_PASSWORD
     '''
     method: str = event.get('httpMethod', 'GET')
     
