@@ -2,17 +2,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
-import ImageViewer from '@/components/ImageViewer';
-import ImageCropper from '@/components/ImageCropper';
 import ProfileMenu from '@/components/ProfileMenu';
-import { jsPDF } from 'jspdf';
+import LookbookCard from '@/components/lookbooks/LookbookCard';
+import LookbookViewerDialog from '@/components/lookbooks/LookbookViewerDialog';
+import LookbookFormDialog from '@/components/lookbooks/LookbookFormDialog';
 
 interface Lookbook {
   id: string;
@@ -27,7 +25,6 @@ interface Lookbook {
 }
 
 const LOOKBOOKS_API = 'https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b';
-const IMAGE_PREPROCESSING_API = 'https://functions.poehali.dev/3fe8c892-ab5f-4d26-a2c5-ae4166276334';
 const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
 
 export default function ProfileLookbooks() {
@@ -42,12 +39,7 @@ export default function ProfileLookbooks() {
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [colorPalette, setColorPalette] = useState<string[]>(['#FF6B6B', '#4ECDC4', '#45B7D1']);
   const [isLoading, setIsLoading] = useState(true);
-  const [showCropper, setShowCropper] = useState(false);
-  const [imageToCrop, setImageToCrop] = useState<string>('');
-  const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number | null>(null);
-  const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [viewingLookbook, setViewingLookbook] = useState<Lookbook | null>(null);
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [selectedPhotoIndexes, setSelectedPhotoIndexes] = useState<number[]>([]);
   const [targetLookbookId, setTargetLookbookId] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -217,124 +209,16 @@ export default function ProfileLookbooks() {
     }
   };
 
-  const handleDownloadPDF = async () => {
-    if (!viewingLookbook) return;
+  const handleTransferPhotos = async () => {
+    if (!targetLookbookId || selectedPhotoIndexes.length === 0) return;
     
-    setIsGeneratingPDF(true);
     try {
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 15;
-      const usableWidth = pageWidth - 2 * margin;
-      
-      const encodeText = (text: string) => {
-        const chars: { [key: string]: string } = {
-          'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo', 'Ж': 'Zh',
-          'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N', 'О': 'O',
-          'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U', 'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts',
-          'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Shch', 'Ъ': '', 'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
-          'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
-          'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
-          'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts',
-          'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
-        };
-        return text.split('').map(char => chars[char] || char).join('');
-      };
-      
-      pdf.setFontSize(24);
-      pdf.text(encodeText(viewingLookbook.name), margin, margin + 10);
-      
-      pdf.setFontSize(14);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text(`For: ${encodeText(viewingLookbook.person_name)}`, margin, margin + 20);
-      
-      let yPos = margin + 35;
-      
-      const colorSize = 8;
-      viewingLookbook.color_palette.forEach((color, i) => {
-        pdf.setFillColor(parseInt(color.slice(1, 3), 16), parseInt(color.slice(3, 5), 16), parseInt(color.slice(5, 7), 16));
-        pdf.rect(margin + i * (colorSize + 2), yPos, colorSize, colorSize, 'F');
-      });
-      
-      yPos += 20;
-      
-      const loadImage = async (url: string): Promise<string> => {
-        console.log('[PDF] Loading image:', url);
-        try {
-          if (url.startsWith('data:')) {
-            console.log('[PDF] Image is already base64');
-            return url;
-          }
+      const targetLookbook = lookbooks.find(lb => lb.id === targetLookbookId);
+      if (!targetLookbook) return;
 
-          console.log('[PDF] Using image proxy for:', url);
-          const proxyUrl = `${IMAGE_PROXY_API}?url=${encodeURIComponent(url)}`;
-          const response = await fetch(proxyUrl);
-          
-          if (!response.ok) {
-            throw new Error(`Proxy failed: HTTP ${response.status}`);
-          }
-          
-          const data = await response.json();
-          console.log('[PDF] Image loaded via proxy, size:', data.data_url.length);
-          
-          return data.data_url;
-        } catch (error) {
-          console.error('[PDF] Error loading image:', url, error);
-          throw error;
-        }
-      };
-      
-      const photos = viewingLookbook.photos;
-      const cellWidth = usableWidth / 3;
-      const gap = 3;
-      const imageWidth = cellWidth - gap;
-      const imageHeight = imageWidth * 1.4;
-      
-      let currentX = margin;
-      let currentY = yPos;
-      let photosInRow = 0;
-      
-      for (let i = 0; i < photos.length; i++) {
-        if (currentY + imageHeight > pageHeight - margin) {
-          pdf.addPage();
-          currentY = margin;
-          currentX = margin;
-          photosInRow = 0;
-        }
-        
-        try {
-          const imgData = await loadImage(photos[i]);
-          pdf.addImage(imgData, 'JPEG', currentX, currentY, imageWidth, imageHeight, undefined, 'FAST');
-        } catch (e) {
-          console.error('Failed to load image:', e);
-        }
-        
-        photosInRow++;
-        
-        if (photosInRow === 3) {
-          currentX = margin;
-          currentY += imageHeight + gap;
-          photosInRow = 0;
-        } else {
-          currentX += cellWidth;
-        }
-      }
-      
-      pdf.save(`${encodeText(viewingLookbook.name)}.pdf`);
-      toast.success('PDF скачан!');
-    } catch (error) {
-      console.error('PDF generation error:', error);
-      toast.error('Ошибка создания PDF');
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  };
+      const photosToMove = selectedPhotoIndexes.map(idx => selectedPhotos[idx]);
+      const updatedPhotos = [...targetLookbook.photos, ...photosToMove];
 
-  const handleShareToggle = async (lookbook: Lookbook) => {
-    try {
-      const newPublicState = !lookbook.is_public;
-      
       const response = await fetch(LOOKBOOKS_API, {
         method: 'PUT',
         headers: {
@@ -342,33 +226,33 @@ export default function ProfileLookbooks() {
           'X-User-Id': user.id
         },
         body: JSON.stringify({
-          id: lookbook.id,
-          is_public: newPublicState
+          id: targetLookbookId,
+          photos: updatedPhotos
         })
       });
 
-      if (!response.ok) throw new Error('Failed to update lookbook');
-      
-      const updatedLookbook = await response.json();
-      
-      setLookbooks(prev => prev.map(lb => 
-        lb.id === lookbook.id ? updatedLookbook : lb
-      ));
+      if (!response.ok) throw new Error('Failed to move photos');
 
-      if (newPublicState) {
-        toast.success('Лукбук стал публичным');
-      } else {
-        toast.success('Лукбук стал приватным');
-      }
+      const remainingPhotos = selectedPhotos.filter((_, idx) => !selectedPhotoIndexes.includes(idx));
+      setSelectedPhotos(remainingPhotos);
+      setSelectedPhotoIndexes([]);
+      setTargetLookbookId('');
+      await fetchLookbooks();
+      toast.success('Фото перенесены!');
     } catch (error) {
-      toast.error('Ошибка изменения доступа');
+      toast.error('Ошибка переноса фото');
     }
   };
 
-  const copyShareLink = (token: string) => {
-    const shareUrl = `${window.location.origin}/lookbook/${token}`;
-    navigator.clipboard.writeText(shareUrl);
-    toast.success('Ссылка скопирована');
+  const handleCloseEditDialog = () => {
+    setIsEditingLookbook(false);
+    setEditingLookbookId(null);
+    setNewLookbookName('');
+    setNewPersonName('');
+    setSelectedPhotos([]);
+    setColorPalette(['#FF6B6B', '#4ECDC4', '#45B7D1']);
+    setSelectedPhotoIndexes([]);
+    setTargetLookbookId('');
   };
 
   return (
@@ -397,50 +281,22 @@ export default function ProfileLookbooks() {
                     Создать лукбук
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Создать новый лукбук</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium">Название лукбука</label>
-                      <Input 
-                        value={newLookbookName}
-                        onChange={(e) => setNewLookbookName(e.target.value)}
-                        placeholder="Например: Весна 2024"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Для кого</label>
-                      <Input 
-                        value={newPersonName}
-                        onChange={(e) => setNewPersonName(e.target.value)}
-                        placeholder="Имя"
-                      />
-                    </div>
-                    {selectedPhotos.length > 0 && (
-                      <div className="grid grid-cols-3 gap-2">
-                        {selectedPhotos.map((photo, index) => (
-                          <div key={index} className="relative group">
-                            <img 
-                              src={photo} 
-                              alt={`Photo ${index + 1}`}
-                              className="w-full h-32 object-cover rounded"
-                            />
-                            <button
-                              onClick={() => setSelectedPhotos(prev => prev.filter((_, i) => i !== index))}
-                              className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Icon name="X" size={16} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <Button onClick={handleCreateLookbook} className="w-full">
-                      Создать
-                    </Button>
-                  </div>
+                <DialogContent>
+                  <LookbookFormDialog
+                    mode="create"
+                    open={isCreatingLookbook}
+                    onClose={() => setIsCreatingLookbook(false)}
+                    lookbookName={newLookbookName}
+                    setLookbookName={setNewLookbookName}
+                    personName={newPersonName}
+                    setPersonName={setNewPersonName}
+                    selectedPhotos={selectedPhotos}
+                    setSelectedPhotos={setSelectedPhotos}
+                    colorPalette={colorPalette}
+                    setColorPalette={setColorPalette}
+                    onSubmit={handleCreateLookbook}
+                    onPhotoUpload={handlePhotoUpload}
+                  />
                 </DialogContent>
               </Dialog>
             </div>
@@ -465,59 +321,13 @@ export default function ProfileLookbooks() {
               <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {lookbooks.slice((currentPage - 1) * 15, currentPage * 15).map((lookbook) => (
-                  <Card key={lookbook.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    <div 
-                      className="relative h-48 bg-gray-100 cursor-pointer"
-                      onClick={() => setViewingLookbook(lookbook)}
-                    >
-                      {lookbook.photos.length > 0 ? (
-                        <img 
-                          src={lookbook.photos[0]} 
-                          alt={lookbook.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <Icon name="Image" size={48} className="text-gray-300" />
-                        </div>
-                      )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                        <h3 className="text-white font-semibold">{lookbook.name}</h3>
-                        <p className="text-white/80 text-sm">Для: {lookbook.person_name}</p>
-                      </div>
-                    </div>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
-                        <span>{lookbook.photos.length} фото</span>
-                        <span>{new Date(lookbook.created_at).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => setViewingLookbook(lookbook)}
-                        >
-                          <Icon name="Eye" size={16} className="mr-1" />
-                          Открыть
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleEditLookbook(lookbook)}
-                        >
-                          <Icon name="Edit" size={16} />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleDeleteLookbook(lookbook.id)}
-                        >
-                          <Icon name="Trash" size={16} />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <LookbookCard
+                    key={lookbook.id}
+                    lookbook={lookbook}
+                    onView={setViewingLookbook}
+                    onEdit={handleEditLookbook}
+                    onDelete={handleDeleteLookbook}
+                  />
                 ))}
               </div>
               
@@ -571,268 +381,34 @@ export default function ProfileLookbooks() {
         </div>
       </div>
 
-      <Dialog open={!!viewingLookbook} onOpenChange={(open) => !open && setViewingLookbook(null)}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-light">{viewingLookbook?.name}</h2>
-                <p className="text-sm text-muted-foreground mt-1">Для: {viewingLookbook?.person_name}</p>
-              </div>
-              <Button 
-                onClick={handleDownloadPDF} 
-                disabled={isGeneratingPDF}
-                size="sm"
-                className="mr-5"
-              >
-                {isGeneratingPDF ? (
-                  <>
-                    <Icon name="Loader2" className="mr-2 animate-spin" size={16} />
-                    Создание PDF...
-                  </>
-                ) : (
-                  <>
-                    <Icon name="Download" className="mr-2" size={16} />
-                    Скачать PDF
-                  </>
-                )}
-              </Button>
-            </DialogTitle>
-          </DialogHeader>
-          
-          {viewingLookbook && (
-            <div className="space-y-6 py-4">
-              <div>
-                <h3 className="text-sm font-medium mb-3">Цветовая палитра</h3>
-                <div className="flex gap-3 flex-wrap">
-                  {viewingLookbook.color_palette.map((color, index) => (
-                    <div
-                      key={index}
-                      className="w-14 h-14 rounded-lg shadow-md"
-                      style={{ backgroundColor: color }}
-                      title={color}
-                    />
-                  ))}
-                </div>
-              </div>
+      <LookbookViewerDialog
+        lookbook={viewingLookbook}
+        onClose={() => setViewingLookbook(null)}
+        imageProxyApi={IMAGE_PROXY_API}
+      />
 
-              {viewingLookbook.photos.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-medium mb-3">Результаты примерок</h3>
-                  <div className="grid grid-cols-3 gap-3">
-                    {viewingLookbook.photos.map((photo, index) => (
-                      <div key={index} className="relative rounded-lg overflow-hidden bg-muted aspect-[5/7]">
-                        <ImageViewer 
-                          src={photo} 
-                          alt={`Photo ${index + 1}`}
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isEditingLookbook} onOpenChange={(open) => {
-        if (!open) {
-          setIsEditingLookbook(false);
-          setEditingLookbookId(null);
-          setNewLookbookName('');
-          setNewPersonName('');
-          setSelectedPhotos([]);
-          setColorPalette(['#FF6B6B', '#4ECDC4', '#45B7D1']);
-          setSelectedPhotoIndexes([]);
-          setTargetLookbookId('');
-        }
-      }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Редактировать лукбук</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6 py-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Название лукбука</label>
-              <Input
-                value={newLookbookName}
-                onChange={(e) => setNewLookbookName(e.target.value)}
-                placeholder="Например: Весна 2025"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Для кого</label>
-              <Input
-                value={newPersonName}
-                onChange={(e) => setNewPersonName(e.target.value)}
-                placeholder="Имя человека"
-              />
-            </div>
-
-            {selectedPhotos.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium mb-2">Результаты примерок</label>
-                <div className="grid grid-cols-3 gap-3 mb-4">
-                  {selectedPhotos.map((photo, index) => (
-                    <div key={index} className="relative group border rounded-lg overflow-hidden bg-muted aspect-[5/7]">
-                      <ImageViewer src={photo} alt="" className="w-full h-full object-contain" />
-                      <div className="absolute bottom-2 left-2" title="Выберите фото для переноса в другой лукбук">
-                        <input
-                          type="checkbox"
-                          checked={selectedPhotoIndexes.includes(index)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedPhotoIndexes([...selectedPhotoIndexes, index]);
-                            } else {
-                              setSelectedPhotoIndexes(selectedPhotoIndexes.filter(i => i !== index));
-                            }
-                          }}
-                          className="w-5 h-5 cursor-pointer"
-                          title="Выберите фото для переноса в другой лукбук"
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="destructive"
-                        className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => {
-                          if (confirm('Удалить фото из лукбука?')) {
-                            setSelectedPhotos(selectedPhotos.filter((_, i) => i !== index));
-                          }
-                        }}
-                        title="Удалить фото"
-                      >
-                        <Icon name="X" size={14} />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                {selectedPhotoIndexes.length > 0 && (
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
-                    <label className="block text-sm font-medium">Перенос фото в другой лукбук</label>
-                    <div className="flex gap-2">
-                      <Select value={targetLookbookId} onValueChange={setTargetLookbookId}>
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Выберите лукбук" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {lookbooks
-                            .filter(lb => lb.id !== editingLookbookId)
-                            .map(lb => (
-                              <SelectItem key={lb.id} value={lb.id}>
-                                {lb.name}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="outline"
-                        onClick={async () => {
-                          if (!targetLookbookId || selectedPhotoIndexes.length === 0) return;
-                          
-                          try {
-                            const targetLookbook = lookbooks.find(lb => lb.id === targetLookbookId);
-                            if (!targetLookbook) return;
-
-                            const photosToMove = selectedPhotoIndexes.map(idx => selectedPhotos[idx]);
-                            const updatedPhotos = [...targetLookbook.photos, ...photosToMove];
-
-                            const response = await fetch(LOOKBOOKS_API, {
-                              method: 'PUT',
-                              headers: {
-                                'Content-Type': 'application/json',
-                                'X-User-Id': user.id
-                              },
-                              body: JSON.stringify({
-                                id: targetLookbookId,
-                                photos: updatedPhotos
-                              })
-                            });
-
-                            if (!response.ok) throw new Error('Failed to move photos');
-
-                            const remainingPhotos = selectedPhotos.filter((_, idx) => !selectedPhotoIndexes.includes(idx));
-                            setSelectedPhotos(remainingPhotos);
-                            setSelectedPhotoIndexes([]);
-                            setTargetLookbookId('');
-                            await fetchLookbooks();
-                            toast.success('Фото перенесены!');
-                          } catch (error) {
-                            toast.error('Ошибка переноса фото');
-                          }
-                        }}
-                        disabled={!targetLookbookId || selectedPhotoIndexes.length === 0}
-                      >
-                        Перенести
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Цветовая палитра</label>
-              <div className="flex gap-2 flex-wrap mb-3">
-                {colorPalette.map((color, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={color}
-                      onChange={(e) => {
-                        const newPalette = [...colorPalette];
-                        newPalette[index] = e.target.value;
-                        setColorPalette(newPalette);
-                      }}
-                      className="w-10 h-10 rounded cursor-pointer"
-                    />
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setColorPalette(colorPalette.filter((_, i) => i !== index))}
-                    >
-                      <Icon name="X" size={14} />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setColorPalette([...colorPalette, '#000000'])}
-              >
-                <Icon name="Plus" className="mr-2" size={14} />
-                Добавить цвет
-              </Button>
-            </div>
-
-            <div className="flex gap-2 pt-4">
-              <Button onClick={handleUpdateLookbook} className="flex-1">
-                Сохранить изменения
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setIsEditingLookbook(false);
-                  setEditingLookbookId(null);
-                  setNewLookbookName('');
-                  setNewPersonName('');
-                  setSelectedPhotos([]);
-                  setColorPalette(['#FF6B6B', '#4ECDC4', '#45B7D1']);
-                  setSelectedPhotoIndexes([]);
-                  setTargetLookbookId('');
-                }}
-              >
-                Отмена
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <LookbookFormDialog
+        mode="edit"
+        open={isEditingLookbook}
+        onClose={handleCloseEditDialog}
+        lookbookName={newLookbookName}
+        setLookbookName={setNewLookbookName}
+        personName={newPersonName}
+        setPersonName={setNewPersonName}
+        selectedPhotos={selectedPhotos}
+        setSelectedPhotos={setSelectedPhotos}
+        colorPalette={colorPalette}
+        setColorPalette={setColorPalette}
+        onSubmit={handleUpdateLookbook}
+        editingLookbookId={editingLookbookId}
+        lookbooks={lookbooks}
+        selectedPhotoIndexes={selectedPhotoIndexes}
+        setSelectedPhotoIndexes={setSelectedPhotoIndexes}
+        targetLookbookId={targetLookbookId}
+        setTargetLookbookId={setTargetLookbookId}
+        onTransferPhotos={handleTransferPhotos}
+        userId={user.id}
+      />
     </Layout>
   );
 }
