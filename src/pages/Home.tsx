@@ -125,8 +125,11 @@ const Home = () => {
               <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4">
                 Fashion-платформа StyleSelect
               </h1>
-              <p className="text-gray-300 text-lg">
+              <p className="text-gray-300 text-lg mb-3">
                 Создайте Ваш идеальный стиль с технологиями ИИ
+              </p>
+              <p className="text-red-500 font-semibold text-lg">
+                Сайт в разработке! Совсем скоро начнём работу
               </p>
             </div>
 
