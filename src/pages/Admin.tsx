@@ -97,6 +97,7 @@ interface Filters {
 }
 
 const ADMIN_API = 'https://functions.poehali.dev/6667a30b-a520-41d8-b23a-e240a9aefb15';
+const ADMIN_AUTH_API = 'https://functions.poehali.dev/156d6db7-8fea-4da2-b896-f4e597df9bc3';
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
 const IMAGE_PREPROCESSING_API = 'https://functions.poehali.dev/3fe8c892-ab5f-4d26-a2c5-ae4166276334';
 const ADMIN_MANAGE_ACCESS_API = 'https://functions.poehali.dev/15f28986-cce9-4e25-a05b-0860b1cf9cf7';
@@ -150,10 +151,18 @@ export default function Admin() {
 
 
   useEffect(() => {
-    const adminAuth = sessionStorage.getItem('admin_auth');
-    if (adminAuth) {
-      setIsAuthenticated(true);
-      fetchData();
+    const adminToken = localStorage.getItem('admin_jwt');
+    const tokenExpiry = localStorage.getItem('admin_jwt_expiry');
+    
+    if (adminToken && tokenExpiry) {
+      const expiryTime = new Date(tokenExpiry).getTime();
+      if (Date.now() < expiryTime) {
+        setIsAuthenticated(true);
+        fetchData();
+      } else {
+        localStorage.removeItem('admin_jwt');
+        localStorage.removeItem('admin_jwt_expiry');
+      }
     }
   }, []);
 
@@ -176,21 +185,24 @@ export default function Admin() {
     }
 
     try {
-      const response = await fetch(`${ADMIN_API}?action=login`, {
+      const response = await fetch(ADMIN_AUTH_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Password': password
-        }
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password })
       });
 
       if (response.ok) {
-        sessionStorage.setItem('admin_auth', password);
+        const data = await response.json();
+        localStorage.setItem('admin_jwt', data.token);
+        localStorage.setItem('admin_jwt_expiry', data.expires_at);
         setIsAuthenticated(true);
         toast.success('Вход выполнен');
         fetchData();
       } else {
-        toast.error('Неверный пароль');
+        const error = await response.json();
+        toast.error(error.error || 'Неверный пароль');
       }
     } catch (error) {
       toast.error('Ошибка входа');
@@ -198,7 +210,8 @@ export default function Admin() {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem('admin_auth');
+    localStorage.removeItem('admin_jwt');
+    localStorage.removeItem('admin_jwt_expiry');
     setIsAuthenticated(false);
     setPassword('');
   };
@@ -242,23 +255,23 @@ export default function Admin() {
 
   const fetchData = async () => {
     setIsLoading(true);
-    const adminPassword = sessionStorage.getItem('admin_auth');
+    const adminToken = localStorage.getItem('admin_jwt');
 
     try {
       const [statsRes, usersRes, lookbooksRes, filtersRes, catalogRes, paymentsRes] = await Promise.all([
         fetch(`${ADMIN_API}?action=stats`, {
-          headers: { 'X-Admin-Password': adminPassword || '' }
+          headers: { 'X-Admin-Token': adminToken || '' }
         }),
         fetch(`${ADMIN_API}?action=users`, {
-          headers: { 'X-Admin-Password': adminPassword || '' }
+          headers: { 'X-Admin-Token': adminToken || '' }
         }),
         fetch(`${ADMIN_API}?action=lookbooks`, {
-          headers: { 'X-Admin-Password': adminPassword || '' }
+          headers: { 'X-Admin-Token': adminToken || '' }
         }),
         fetch(`${CATALOG_API}?action=filters`),
         fetch(`${CATALOG_API}?action=list`),
         fetch(`${ADMIN_API}?action=payments`, {
-          headers: { 'X-Admin-Password': adminPassword || '' }
+          headers: { 'X-Admin-Token': adminToken || '' }
         })
       ]);
 
@@ -1587,7 +1600,7 @@ export default function Admin() {
                             try {
                               const response = await fetch(`${ADMIN_API}?action=clear_generation_history`, {
                                 method: 'DELETE',
-                                headers: { 'X-Admin-Password': adminPassword || '' }
+                                headers: { 'X-Admin-Token': adminToken || '' }
                               });
                               
                               if (response.ok) {
@@ -1595,7 +1608,7 @@ export default function Admin() {
                                 fetchGenerationHistory();
                                 
                                 const statsRes = await fetch(`${ADMIN_API}?action=stats`, {
-                                  headers: { 'X-Admin-Password': adminPassword || '' }
+                                  headers: { 'X-Admin-Token': adminToken || '' }
                                 });
                                 if (statsRes.ok) {
                                   const statsData = await statsRes.json();

@@ -66,8 +66,18 @@ export default function AdminCatalog() {
   const [uploadSource, setUploadSource] = useState<'url' | 'file'>('url');
 
   useEffect(() => {
-    const adminAuth = sessionStorage.getItem('admin_auth');
-    if (!adminAuth) {
+    const adminToken = localStorage.getItem('admin_jwt');
+    const tokenExpiry = localStorage.getItem('admin_jwt_expiry');
+
+    if (!adminToken || !tokenExpiry) {
+      navigate('/admin');
+      return;
+    }
+
+    const expiryTime = new Date(tokenExpiry).getTime();
+    if (Date.now() >= expiryTime) {
+      localStorage.removeItem('admin_jwt');
+      localStorage.removeItem('admin_jwt_expiry');
       navigate('/admin');
       return;
     }
@@ -152,7 +162,7 @@ export default function AdminCatalog() {
       return;
     }
 
-    const adminPassword = sessionStorage.getItem('admin_auth');
+    const adminToken = localStorage.getItem('admin_jwt');
 
     try {
       const response = await fetch(CATALOG_API, {
@@ -194,7 +204,7 @@ export default function AdminCatalog() {
   const handleUpdateClothing = async () => {
     if (!editingClothing) return;
 
-    const adminPassword = sessionStorage.getItem('admin_auth');
+    const adminToken = localStorage.getItem('admin_jwt');
 
     try {
       const categoryIds = filters?.categories
@@ -213,7 +223,7 @@ export default function AdminCatalog() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-Admin-Password': adminPassword || ''
+          'X-Admin-Token': adminToken || ''
         },
         body: JSON.stringify({
           id: editingClothing.id,
@@ -243,12 +253,12 @@ export default function AdminCatalog() {
   const handleDeleteClothing = async (id: string) => {
     if (!confirm('Удалить эту позицию из каталога?')) return;
 
-    const adminPassword = sessionStorage.getItem('admin_auth');
+    const adminToken = localStorage.getItem('admin_jwt');
 
     try {
       const response = await fetch(`${CATALOG_API}?action=delete&id=${id}`, {
         method: 'DELETE',
-        headers: { 'X-Admin-Password': adminPassword || '' }
+        headers: { 'X-Admin-Token': adminToken || '' }
       });
 
       if (response.ok) {

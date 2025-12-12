@@ -31,8 +31,18 @@ export default function AdminPayments() {
   const paymentsPerPage = 50;
 
   useEffect(() => {
-    const adminAuth = sessionStorage.getItem('admin_auth');
-    if (!adminAuth) {
+    const adminToken = localStorage.getItem('admin_jwt');
+    const tokenExpiry = localStorage.getItem('admin_jwt_expiry');
+
+    if (!adminToken || !tokenExpiry) {
+      navigate('/admin');
+      return;
+    }
+
+    const expiryTime = new Date(tokenExpiry).getTime();
+    if (Date.now() >= expiryTime) {
+      localStorage.removeItem('admin_jwt');
+      localStorage.removeItem('admin_jwt_expiry');
       navigate('/admin');
       return;
     }
@@ -40,13 +50,13 @@ export default function AdminPayments() {
   }, [navigate, currentPage]);
 
   const fetchPayments = async () => {
-    const adminPassword = sessionStorage.getItem('admin_auth');
+    const adminToken = localStorage.getItem('admin_jwt');
     setIsLoading(true);
 
     try {
       const offset = (currentPage - 1) * paymentsPerPage;
       const response = await fetch(`${ADMIN_API}?action=payments&limit=${paymentsPerPage}&offset=${offset}`, {
-        headers: { 'X-Admin-Password': adminPassword || '' }
+        headers: { 'X-Admin-Token': adminToken || '' }
       });
 
       if (!response.ok) throw new Error('Failed to fetch payments');

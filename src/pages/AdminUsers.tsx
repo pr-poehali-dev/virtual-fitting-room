@@ -30,8 +30,18 @@ export default function AdminUsers() {
   const usersPerPage = 50;
 
   useEffect(() => {
-    const adminAuth = sessionStorage.getItem('admin_auth');
-    if (!adminAuth) {
+    const adminToken = localStorage.getItem('admin_jwt');
+    const tokenExpiry = localStorage.getItem('admin_jwt_expiry');
+
+    if (!adminToken || !tokenExpiry) {
+      navigate('/admin');
+      return;
+    }
+
+    const expiryTime = new Date(tokenExpiry).getTime();
+    if (Date.now() >= expiryTime) {
+      localStorage.removeItem('admin_jwt');
+      localStorage.removeItem('admin_jwt_expiry');
       navigate('/admin');
       return;
     }
@@ -39,13 +49,13 @@ export default function AdminUsers() {
   }, [navigate, currentPage]);
 
   const fetchUsers = async () => {
-    const adminPassword = sessionStorage.getItem('admin_auth');
+    const adminToken = localStorage.getItem('admin_jwt');
     setIsLoading(true);
 
     try {
       const offset = (currentPage - 1) * usersPerPage;
       const response = await fetch(`${ADMIN_API}?action=users&limit=${usersPerPage}&offset=${offset}`, {
-        headers: { 'X-Admin-Password': adminPassword || '' }
+        headers: { 'X-Admin-Token': adminToken || '' }
       });
 
       if (!response.ok) throw new Error('Failed to fetch users');
@@ -60,7 +70,7 @@ export default function AdminUsers() {
   };
 
   const handleToggleUnlimitedAccess = async (userEmail: string, currentAccess: boolean) => {
-    const adminPassword = sessionStorage.getItem('admin_auth');
+    const adminToken = localStorage.getItem('admin_jwt');
     const newAccess = !currentAccess;
 
     try {
@@ -68,7 +78,7 @@ export default function AdminUsers() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Admin-Password': adminPassword || ''
+          'X-Admin-Token': adminToken || ''
         },
         body: JSON.stringify({
           user_email: userEmail,

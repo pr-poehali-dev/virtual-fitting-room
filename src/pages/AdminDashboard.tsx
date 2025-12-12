@@ -29,10 +29,18 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const adminAuth = sessionStorage.getItem('admin_auth');
-    if (adminAuth) {
-      setIsAuthenticated(true);
-      fetchStats();
+    const adminToken = localStorage.getItem('admin_jwt');
+    const tokenExpiry = localStorage.getItem('admin_jwt_expiry');
+
+    if (adminToken && tokenExpiry) {
+      const expiryTime = new Date(tokenExpiry).getTime();
+      if (Date.now() < expiryTime) {
+        setIsAuthenticated(true);
+        fetchStats();
+      } else {
+        localStorage.removeItem('admin_jwt');
+        localStorage.removeItem('admin_jwt_expiry');
+      }
     }
   }, []);
 
@@ -65,7 +73,8 @@ export default function AdminDashboard() {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem('admin_auth');
+    localStorage.removeItem('admin_jwt');
+    localStorage.removeItem('admin_jwt_expiry');
     setIsAuthenticated(false);
     setPassword('');
     navigate('/');
@@ -73,11 +82,11 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     setIsLoading(true);
-    const adminPassword = sessionStorage.getItem('admin_auth');
+    const adminToken = localStorage.getItem('admin_jwt');
 
     try {
       const response = await fetch(`${ADMIN_API}?action=stats`, {
-        headers: { 'X-Admin-Password': adminPassword || '' }
+        headers: { 'X-Admin-Token': adminToken || '' }
       });
 
       if (!response.ok) throw new Error('Failed to fetch stats');

@@ -6,6 +6,7 @@ from psycopg2.extras import RealDictCursor
 from datetime import datetime, timedelta
 import boto3
 from botocore.config import Config
+import jwt
 
 def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')
@@ -14,6 +15,29 @@ def get_db_connection():
     else:
         dsn += '?options=-c%20search_path%3Dt_p29007832_virtual_fitting_room'
     return psycopg2.connect(dsn)
+
+def verify_admin_jwt(provided_token: str) -> tuple[bool, str]:
+    '''
+    Verify JWT token for admin authentication
+    Returns: (is_valid, error_message)
+    '''
+    if not provided_token:
+        return (False, 'Token required')
+    
+    try:
+        secret_key = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
+        payload = jwt.decode(provided_token, secret_key, algorithms=['HS256'])
+        
+        if not payload.get('admin'):
+            return (False, 'Invalid token')
+        
+        return (True, '')
+    except jwt.ExpiredSignatureError:
+        return (False, 'Token expired')
+    except jwt.InvalidTokenError:
+        return (False, 'Invalid token')
+    except Exception as e:
+        return (False, f'Token verification failed: {str(e)}')
 
 def verify_admin_password(provided_password: str, ip_address: str, cursor, conn) -> tuple[bool, str]:
     '''
@@ -128,24 +152,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Access-Control-Allow-Origin': 'https://fitting-room.ru',
                 'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Password',
+                'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Token',
                 'Access-Control-Max-Age': '86400'
             },
             'body': ''
         }
     
     headers = event.get('headers', {})
-    admin_password = headers.get('x-admin-password') or headers.get('X-Admin-Password')
+    admin_token = headers.get('x-admin-token') or headers.get('X-Admin-Token')
     
-    # Get IP address for rate limiting
-    request_context = event.get('requestContext', {})
-    identity = request_context.get('identity', {})
-    ip_address = identity.get('sourceIp', 'unknown')
-    
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-    
-    if not admin_password:
+    if not admin_token:
         return {
             'statusCode': 401,
             'headers': {
@@ -153,14 +169,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': 'https://fitting-room.ru'
             },
             'isBase64Encoded': False,
-            'body': json.dumps({'error': 'Unauthorized'})
+            'body': json.dumps({'error': 'Unauthorized: Token required'})
         }
     
-    is_valid, error_message = verify_admin_password(admin_password, ip_address, cursor, conn)
+    is_valid, error_message = verify_admin_jwt(admin_token)
     if not is_valid:
-        status_code = 429 if 'Too many' in error_message else 401
         return {
-            'statusCode': status_code,
+            'statusCode': 401,
             'headers': {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': 'https://fitting-room.ru'
@@ -168,6 +183,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False,
             'body': json.dumps({'error': error_message})
         }
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
     
     try:
         query_params = event.get('queryStringParameters') or {}

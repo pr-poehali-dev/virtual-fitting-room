@@ -1,4 +1,5 @@
 {
+  "admin-auth": "https://functions.poehali.dev/156d6db7-8fea-4da2-b896-f4e597df9bc3",
   "image-proxy": "https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90",
   "nanobananapro-async-status": "https://functions.poehali.dev/6d603f3d-bbe3-450d-863a-63d513ad5ba7",
   "nanobananapro-async-worker": "https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d",

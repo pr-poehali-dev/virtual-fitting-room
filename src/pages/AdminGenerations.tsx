@@ -39,8 +39,18 @@ export default function AdminGenerations() {
   const itemsPerPage = 20;
 
   useEffect(() => {
-    const adminAuth = sessionStorage.getItem('admin_auth');
-    if (!adminAuth) {
+    const adminToken = localStorage.getItem('admin_jwt');
+    const tokenExpiry = localStorage.getItem('admin_jwt_expiry');
+
+    if (!adminToken || !tokenExpiry) {
+      navigate('/admin');
+      return;
+    }
+
+    const expiryTime = new Date(tokenExpiry).getTime();
+    if (Date.now() >= expiryTime) {
+      localStorage.removeItem('admin_jwt');
+      localStorage.removeItem('admin_jwt_expiry');
       navigate('/admin');
       return;
     }
@@ -54,11 +64,11 @@ export default function AdminGenerations() {
   }, [genUserFilter, genModelFilter, users]);
 
   const fetchUsers = async () => {
-    const adminPassword = sessionStorage.getItem('admin_auth');
+    const adminToken = localStorage.getItem('admin_jwt');
 
     try {
       const response = await fetch(`${ADMIN_API}?action=users`, {
-        headers: { 'X-Admin-Password': adminPassword || '' }
+        headers: { 'X-Admin-Token': adminToken || '' }
       });
 
       if (!response.ok) throw new Error('Failed to fetch users');
@@ -70,7 +80,7 @@ export default function AdminGenerations() {
   };
 
   const fetchGenerationHistory = async () => {
-    const adminPassword = sessionStorage.getItem('admin_auth');
+    const adminToken = localStorage.getItem('admin_jwt');
     const params = new URLSearchParams({ action: 'generation_history' });
     
     if (genUserFilter && genUserFilter !== 'all') params.append('user_id', genUserFilter);
@@ -80,7 +90,7 @@ export default function AdminGenerations() {
 
     try {
       const response = await fetch(`${ADMIN_API}?${params.toString()}`, {
-        headers: { 'X-Admin-Password': adminPassword || '' }
+        headers: { 'X-Admin-Token': adminToken || '' }
       });
 
       if (response.ok) {

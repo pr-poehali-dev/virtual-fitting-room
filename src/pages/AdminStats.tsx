@@ -29,8 +29,18 @@ export default function AdminStats() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const adminAuth = sessionStorage.getItem('admin_auth');
-    if (!adminAuth) {
+    const adminToken = localStorage.getItem('admin_jwt');
+    const tokenExpiry = localStorage.getItem('admin_jwt_expiry');
+
+    if (!adminToken || !tokenExpiry) {
+      navigate('/admin');
+      return;
+    }
+
+    const expiryTime = new Date(tokenExpiry).getTime();
+    if (Date.now() >= expiryTime) {
+      localStorage.removeItem('admin_jwt');
+      localStorage.removeItem('admin_jwt_expiry');
       navigate('/admin');
       return;
     }
@@ -38,12 +48,12 @@ export default function AdminStats() {
   }, [navigate]);
 
   const fetchStats = async () => {
-    const adminPassword = sessionStorage.getItem('admin_auth');
+    const adminToken = localStorage.getItem('admin_jwt');
     setIsLoading(true);
 
     try {
       const response = await fetch(`${ADMIN_API}?action=stats`, {
-        headers: { 'X-Admin-Password': adminPassword || '' }
+        headers: { 'X-Admin-Token': adminToken || '' }
       });
 
       if (!response.ok) throw new Error('Failed to fetch stats');
