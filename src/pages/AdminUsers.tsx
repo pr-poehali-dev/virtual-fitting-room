@@ -25,6 +25,9 @@ export default function AdminUsers() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const usersPerPage = 50;
 
   useEffect(() => {
     const adminAuth = sessionStorage.getItem('admin_auth');
@@ -33,20 +36,22 @@ export default function AdminUsers() {
       return;
     }
     fetchUsers();
-  }, [navigate]);
+  }, [navigate, currentPage]);
 
   const fetchUsers = async () => {
     const adminPassword = sessionStorage.getItem('admin_auth');
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${ADMIN_API}?action=users`, {
+      const offset = (currentPage - 1) * usersPerPage;
+      const response = await fetch(`${ADMIN_API}?action=users&limit=${usersPerPage}&offset=${offset}`, {
         headers: { 'X-Admin-Password': adminPassword || '' }
       });
 
       if (!response.ok) throw new Error('Failed to fetch users');
       const data = await response.json();
-      setUsers(data);
+      setUsers(data.users);
+      setTotalUsers(data.total);
     } catch (error) {
       toast.error('Ошибка загрузки пользователей');
     } finally {
@@ -103,7 +108,7 @@ export default function AdminUsers() {
           <div className="flex-1">
             <div className="mb-8">
               <h1 className="text-3xl font-bold mb-2">Пользователи</h1>
-              <p className="text-muted-foreground">Всего пользователей: {users.length}</p>
+              <p className="text-muted-foreground">Всего пользователей: {totalUsers}</p>
             </div>
 
             <Card>
@@ -157,6 +162,32 @@ export default function AdminUsers() {
                 </div>
               </CardContent>
             </Card>
+
+            {totalUsers > usersPerPage && (
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <Icon name="ChevronLeft" size={16} />
+                  Назад
+                </Button>
+                <span className="text-sm text-muted-foreground px-4">
+                  Страница {currentPage} из {Math.ceil(totalUsers / usersPerPage)}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalUsers / usersPerPage), p + 1))}
+                  disabled={currentPage >= Math.ceil(totalUsers / usersPerPage)}
+                >
+                  Вперёд
+                  <Icon name="ChevronRight" size={16} />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

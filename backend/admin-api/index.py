@@ -206,8 +206,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         elif action == 'users':
+            limit = query_params.get('limit', '1000')
+            offset = query_params.get('offset', '0')
+            
+            try:
+                limit = int(limit)
+                offset = int(offset)
+            except ValueError:
+                limit = 1000
+                offset = 0
+            
+            cursor.execute("SELECT COUNT(*) as total FROM users")
+            total = cursor.fetchone()['total']
+            
             cursor.execute(
-                "SELECT id, email, name, balance, free_tries_used, unlimited_access, created_at FROM users ORDER BY created_at DESC"
+                "SELECT id, email, name, balance, free_tries_used, unlimited_access, created_at FROM users ORDER BY created_at DESC LIMIT %s OFFSET %s",
+                (limit, offset)
             )
             users = cursor.fetchall()
             
@@ -218,15 +232,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'Access-Control-Allow-Origin': '*'
                 },
                 'isBase64Encoded': False,
-                'body': json.dumps([{
-                    'id': u['id'],
-                    'email': u['email'],
-                    'name': u['name'],
-                    'balance': float(u['balance']) if u['balance'] else 0,
-                    'free_tries_used': u['free_tries_used'] or 0,
-                    'unlimited_access': u['unlimited_access'] or False,
-                    'created_at': u['created_at'].isoformat()
-                } for u in users])
+                'body': json.dumps({
+                    'users': [{
+                        'id': u['id'],
+                        'email': u['email'],
+                        'name': u['name'],
+                        'balance': float(u['balance']) if u['balance'] else 0,
+                        'free_tries_used': u['free_tries_used'] or 0,
+                        'unlimited_access': u['unlimited_access'] or False,
+                        'created_at': u['created_at'].isoformat()
+                    } for u in users],
+                    'total': total
+                })
             }
         
         elif action == 'lookbooks':
