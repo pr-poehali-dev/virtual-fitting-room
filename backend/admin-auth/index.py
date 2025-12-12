@@ -43,6 +43,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         body_data = json.loads(event.get('body', '{}'))
         password = body_data.get('password', '')
         
+        print(f'[DEBUG] Received password length: {len(password) if password else 0}')
+        print(f'[DEBUG] Expected password exists: {ADMIN_PASSWORD is not None}')
+        print(f'[DEBUG] Expected password length: {len(ADMIN_PASSWORD) if ADMIN_PASSWORD else 0}')
+        print(f'[DEBUG] Passwords match: {password == ADMIN_PASSWORD}')
+        
         if not password:
             return {
                 'statusCode': 400,
