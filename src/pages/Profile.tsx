@@ -63,6 +63,7 @@ export default function Profile() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [selectedPhotoIndexes, setSelectedPhotoIndexes] = useState<number[]>([]);
   const [targetLookbookId, setTargetLookbookId] = useState<string>('');
+  const [currentLookbookPage, setCurrentLookbookPage] = useState(1);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -775,8 +776,9 @@ export default function Profile() {
                     </CardContent>
                   </Card>
                 ) : (
+                  <>
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {lookbooks.map((lookbook) => (
+                    {lookbooks.slice((currentLookbookPage - 1) * 15, currentLookbookPage * 15).map((lookbook) => (
                       <Card key={lookbook.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                         <CardHeader>
                           <div className="flex justify-between items-start">
@@ -833,6 +835,52 @@ export default function Profile() {
                       </Card>
                     ))}
                   </div>
+                  
+                  {lookbooks.length > 15 && (
+                    <div className="flex justify-center items-center gap-2 mt-6">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setCurrentLookbookPage(prev => prev - 1);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        disabled={currentLookbookPage === 1}
+                      >
+                        <Icon name="ChevronLeft" size={16} />
+                      </Button>
+                      
+                      <div className="flex gap-1">
+                        {Array.from({ length: Math.ceil(lookbooks.length / 15) }, (_, i) => i + 1).map(page => (
+                          <Button
+                            key={page}
+                            variant={currentLookbookPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => {
+                              setCurrentLookbookPage(page);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className="min-w-[40px]"
+                          >
+                            {page}
+                          </Button>
+                        ))}
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setCurrentLookbookPage(prev => prev + 1);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        disabled={currentLookbookPage === Math.ceil(lookbooks.length / 15)}
+                      >
+                        <Icon name="ChevronRight" size={16} />
+                      </Button>
+                    </div>
+                  )}
+                  </>
                 )}
               </div>
             </TabsContent>
