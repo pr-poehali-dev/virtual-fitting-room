@@ -689,7 +689,8 @@ export default function ReplicateTryOn() {
           setGenerationStatus('Обрабатывается...');
         } else if (data.status === 'completed') {
           console.log('[NanoBananaPro] COMPLETED! Result URL:', data.result_url);
-          setGeneratedImage(data.result_url);
+          const proxiedUrl = await proxyFalImage(data.result_url);
+          setGeneratedImage(proxiedUrl);
           setIsGenerating(false);
           setGenerationStatus('');
           clearInterval(interval);
