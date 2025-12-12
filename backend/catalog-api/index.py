@@ -69,54 +69,62 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 """
                 
                 conditions = []
+                params = []
                 
                 # Filter by categories
                 category_ids = query_params.get('categories', '').split(',') if query_params.get('categories') else []
                 if category_ids and category_ids[0]:
-                    category_ids_str = ','.join([str(int(cid)) for cid in category_ids if cid.strip()])
-                    if category_ids_str:
+                    category_ids_int = [int(cid) for cid in category_ids if cid.strip()]
+                    if category_ids_int:
+                        placeholders = ','.join(['%s'] * len(category_ids_int))
                         conditions.append(f"""
                             EXISTS (
                                 SELECT 1 FROM clothing_category_links ccl
-                                WHERE ccl.clothing_id = clothing_catalog.id AND ccl.category_id IN ({category_ids_str})
+                                WHERE ccl.clothing_id = clothing_catalog.id AND ccl.category_id IN ({placeholders})
                             )
                         """)
+                        params.extend(category_ids_int)
                 
                 # Filter by colors
                 color_ids = query_params.get('colors', '').split(',') if query_params.get('colors') else []
                 if color_ids and color_ids[0]:
-                    color_ids_str = ','.join([str(int(cid)) for cid in color_ids if cid.strip()])
-                    if color_ids_str:
+                    color_ids_int = [int(cid) for cid in color_ids if cid.strip()]
+                    if color_ids_int:
+                        placeholders = ','.join(['%s'] * len(color_ids_int))
                         conditions.append(f"""
                             EXISTS (
                                 SELECT 1 FROM clothing_color_links cl
-                                WHERE cl.clothing_id = clothing_catalog.id AND cl.color_group_id IN ({color_ids_str})
+                                WHERE cl.clothing_id = clothing_catalog.id AND cl.color_group_id IN ({placeholders})
                             )
                         """)
+                        params.extend(color_ids_int)
                 
                 # Filter by archetypes
                 archetype_ids = query_params.get('archetypes', '').split(',') if query_params.get('archetypes') else []
                 if archetype_ids and archetype_ids[0]:
-                    archetype_ids_str = ','.join([str(int(aid)) for aid in archetype_ids if aid.strip()])
-                    if archetype_ids_str:
+                    archetype_ids_int = [int(aid) for aid in archetype_ids if aid.strip()]
+                    if archetype_ids_int:
+                        placeholders = ','.join(['%s'] * len(archetype_ids_int))
                         conditions.append(f"""
                             EXISTS (
                                 SELECT 1 FROM clothing_archetype_links cal
-                                WHERE cal.clothing_id = clothing_catalog.id AND cal.archetype_id IN ({archetype_ids_str})
+                                WHERE cal.clothing_id = clothing_catalog.id AND cal.archetype_id IN ({placeholders})
                             )
                         """)
+                        params.extend(archetype_ids_int)
                 
                 # Filter by gender
                 gender = query_params.get('gender', '').strip()
                 if gender and gender in ['male', 'female', 'unisex']:
-                    conditions.append(f"clothing_catalog.gender = '{gender}'")
+                    conditions.append("clothing_catalog.gender = %s")
+                    params.append(gender)
                 
                 if conditions:
                     base_query += ' AND ' + ' AND '.join(conditions)
                 
                 base_query += ' ORDER BY created_at DESC'
                 
-                cursor.execute(base_query)
+                cursor.execute(base_query, params)
                 items = cursor.fetchall()
                 
                 # Enrich each item with categories, colors, and archetypes

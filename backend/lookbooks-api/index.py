@@ -37,9 +37,9 @@ def save_photo_to_s3(photo_url: str, user_id: str, cursor, s3_enabled: bool, s3_
     model_used = 'replicate'  # default
     try:
         # Try exact URL match first
-        escaped_url = photo_url.replace(chr(39), chr(39)+chr(39))
         cursor.execute(
-            f"SELECT model_used FROM try_on_history WHERE user_id = '{user_id}' AND result_image = '{escaped_url}' LIMIT 1"
+            "SELECT model_used FROM try_on_history WHERE user_id = %s AND result_image = %s LIMIT 1",
+            (user_id, photo_url)
         )
         history_row = cursor.fetchone()
         
@@ -59,7 +59,8 @@ def save_photo_to_s3(photo_url: str, user_id: str, cursor, s3_enabled: bool, s3_
                     print(f'Searching by FAL request pattern: {request_part[:30]}...')
                     
                     cursor.execute(
-                        f"SELECT model_used FROM try_on_history WHERE user_id = '{user_id}' AND result_image LIKE '%{request_part[:30]}%' ORDER BY created_at DESC LIMIT 1"
+                        "SELECT model_used FROM try_on_history WHERE user_id = %s AND result_image LIKE %s ORDER BY created_at DESC LIMIT 1",
+                        (user_id, f"%{request_part[:30]}%")
                     )
                     pattern_row = cursor.fetchone()
                     
@@ -69,7 +70,8 @@ def save_photo_to_s3(photo_url: str, user_id: str, cursor, s3_enabled: bool, s3_
                     else:
                         # Last resort: use most recent FAL generation
                         cursor.execute(
-                            f"SELECT model_used FROM try_on_history WHERE user_id = '{user_id}' AND model_used IN ('seedream', 'nanobananapro') ORDER BY created_at DESC LIMIT 1"
+                            "SELECT model_used FROM try_on_history WHERE user_id = %s AND model_used IN ('seedream', 'nanobananapro') ORDER BY created_at DESC LIMIT 1",
+                            (user_id,)
                         )
                         recent_row = cursor.fetchone()
                         if recent_row and recent_row.get('model_used'):
@@ -321,7 +323,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             for photo_url in saved_photos:
                 try:
                     cursor.execute(
-                        f"UPDATE try_on_history SET saved_to_lookbook = true WHERE user_id = '{user_id}' AND result_image = '{photo_url.replace(chr(39), chr(39)+chr(39))}'"
+                        "UPDATE try_on_history SET saved_to_lookbook = true WHERE user_id = %s AND result_image = %s",
+                        (user_id, photo_url)
                     )
                 except Exception as e:
                     print(f'Failed to update history for photo {photo_url}: {e}')
@@ -450,7 +453,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     if photo_url not in old_photos:
                         try:
                             cursor.execute(
-                                f"UPDATE try_on_history SET saved_to_lookbook = true WHERE user_id = '{user_id}' AND result_image = '{photo_url.replace(chr(39), chr(39)+chr(39))}'"
+                                "UPDATE try_on_history SET saved_to_lookbook = true WHERE user_id = %s AND result_image = %s",
+                                (user_id, photo_url)
                             )
                         except Exception as e:
                             print(f'Failed to update history for photo {photo_url}: {e}')
@@ -465,15 +469,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     if not photo_url.startswith(s3_url_prefix):
                         continue
                     
-                    # Check if in history
+                    # Check if in history (PUT method)
                     cursor.execute(
-                        f"SELECT COUNT(*) as count FROM try_on_history WHERE user_id = '{user_id}' AND result_image = '{photo_url.replace(chr(39), chr(39)+chr(39))}'"
+                        "SELECT COUNT(*) as count FROM try_on_history WHERE user_id = %s AND result_image = %s",
+                        (user_id, photo_url)
                     )
                     history_count = cursor.fetchone()['count']
                     
-                    # Check if in other lookbooks
+                    # Check if in other lookbooks (PUT method)
                     cursor.execute(
-                        f"SELECT COUNT(*) as count FROM lookbooks WHERE user_id = '{user_id}' AND id != '{lookbook_id}' AND '{photo_url.replace(chr(39), chr(39)+chr(39))}' = ANY(photos)"
+                        "SELECT COUNT(*) as count FROM lookbooks WHERE user_id = %s AND id != %s AND %s = ANY(photos)",
+                        (user_id, lookbook_id, photo_url)
                     )
                     other_lookbooks_count = cursor.fetchone()['count']
                     
@@ -594,15 +600,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     if not photo_url.startswith(s3_url_prefix):
                         continue
                     
-                    # Check if in history
+                    # Check if in history (DELETE method)
                     cursor.execute(
-                        f"SELECT COUNT(*) as count FROM try_on_history WHERE user_id = '{user_id}' AND result_image = '{photo_url.replace(chr(39), chr(39)+chr(39))}'"
+                        "SELECT COUNT(*) as count FROM try_on_history WHERE user_id = %s AND result_image = %s",
+                        (user_id, photo_url)
                     )
                     history_count = cursor.fetchone()['count']
                     
-                    # Check if in other lookbooks
+                    # Check if in other lookbooks (DELETE method)
                     cursor.execute(
-                        f"SELECT COUNT(*) as count FROM lookbooks WHERE user_id = '{user_id}' AND id != '{lookbook_id}' AND '{photo_url.replace(chr(39), chr(39)+chr(39))}' = ANY(photos)"
+                        "SELECT COUNT(*) as count FROM lookbooks WHERE user_id = %s AND id != %s AND %s = ANY(photos)",
+                        (user_id, lookbook_id, photo_url)
                     )
                     other_lookbooks_count = cursor.fetchone()['count']
                     

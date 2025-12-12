@@ -55,7 +55,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if method == 'GET':
             print(f'[HistoryAPI] GET request for user {user_id}')
             cursor.execute(
-                f"SELECT id, result_image, created_at, model_used, saved_to_lookbook, cost FROM try_on_history WHERE user_id = '{user_id}' ORDER BY created_at DESC LIMIT 300"
+                "SELECT id, result_image, created_at, model_used, saved_to_lookbook, cost FROM try_on_history WHERE user_id = %s ORDER BY created_at DESC LIMIT 300",
+                (user_id,)
             )
             history = cursor.fetchall()
             print(f'[HistoryAPI] Found {len(history)} records')
@@ -100,13 +101,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             # Debug logging - log every POST request
             try:
                 result_preview = result_image[:60] if result_image else ''
-                result_preview_escaped = result_preview.replace("'", "''")
-                model_used_log = model_used.replace("'", "''")
-                raw_body_escaped = body_str[:500].replace("'", "''")
                 
                 cursor.execute(
-                    f"""INSERT INTO history_api_debug_log (user_id, model_used, result_image_preview, raw_body) 
-                    VALUES ('{user_id}', '{model_used_log}', '{result_preview_escaped}', '{raw_body_escaped}')"""
+                    """INSERT INTO history_api_debug_log (user_id, model_used, result_image_preview, raw_body) 
+                    VALUES (%s, %s, %s, %s)""",
+                    (user_id, model_used, result_preview, body_str[:500])
                 )
                 conn.commit()
             except Exception as log_error:
@@ -123,25 +122,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing required fields'})
                 }
             
-            person_image_escaped = person_image.replace("'", "''")
-            result_image_escaped = result_image.replace("'", "''")
-            model_used_escaped = model_used.replace("'", "''")
-            
             if garments and isinstance(garments, list):
-                garments_json = json.dumps(garments).replace("'", "''")
-                garment_image_escaped = garments[0]['image'] if len(garments) > 0 else ''
-                garment_image_escaped = garment_image_escaped.replace("'", "''")
+                garments_json = json.dumps(garments)
+                garment_image = garments[0]['image'] if len(garments) > 0 else ''
             else:
                 garment_image = body_data.get('garment_image', '')
-                garment_image_escaped = garment_image.replace("'", "''")
-                garments_json = json.dumps([{'image': garment_image}]).replace("'", "''")
+                garments_json = json.dumps([{'image': garment_image}])
             
             cursor.execute(
-                f"""
-                INSERT INTO try_on_history (person_image, garment_image, result_image, user_id, garments, model_used, cost, saved_to_lookbook)
-                VALUES ('{person_image_escaped}', '{garment_image_escaped}', '{result_image_escaped}', '{user_id}', '{garments_json}', '{model_used_escaped}', {cost}, false)
-                RETURNING id, person_image, garment_image, result_image, created_at, model_used, cost, saved_to_lookbook
                 """
+                INSERT INTO try_on_history (person_image, garment_image, result_image, user_id, garments, model_used, cost, saved_to_lookbook)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, false)
+                RETURNING id, person_image, garment_image, result_image, created_at, model_used, cost, saved_to_lookbook
+                """,
+                (person_image, garment_image, result_image, user_id, garments_json, model_used, cost)
             )
             
             history_item = cursor.fetchone()
@@ -183,7 +177,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             # Get result_image before deletion to check if it should be deleted from storage
             cursor.execute(
-                f"SELECT result_image FROM try_on_history WHERE id = '{history_id}' AND user_id = '{user_id}'"
+                "SELECT result_image FROM try_on_history WHERE id = %s AND user_id = %s",
+                (history_id, user_id)
             )
             history_item = cursor.fetchone()
             
@@ -202,14 +197,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             # Check if this photo exists in any lookbook
             cursor.execute(
-                f"""SELECT COUNT(*) as count FROM lookbooks 
-                WHERE user_id = '{user_id}' AND '{result_image_url}' = ANY(photos)"""
+                "SELECT COUNT(*) as count FROM lookbooks WHERE user_id = %s AND %s = ANY(photos)",
+                (user_id, result_image_url)
             )
             lookbook_count = cursor.fetchone()['count']
             
             # Delete from history
             cursor.execute(
-                f"DELETE FROM try_on_history WHERE id = '{history_id}' AND user_id = '{user_id}' RETURNING id"
+                "DELETE FROM try_on_history WHERE id = %s AND user_id = %s RETURNING id",
+                (history_id, user_id)
             )
             
             deleted = cursor.fetchone()

@@ -21,7 +21,7 @@ def get_db_connection():
     return psycopg2.connect(dsn)
 
 def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def generate_session_token() -> str:
     return secrets.token_urlsafe(32)

@@ -15,9 +15,46 @@ def get_db_connection():
         dsn += '?options=-c%20search_path%3Dt_p29007832_virtual_fitting_room'
     return psycopg2.connect(dsn)
 
-def verify_admin_password(provided_password: str) -> bool:
+def verify_admin_password(provided_password: str, ip_address: str, cursor, conn) -> tuple[bool, str]:
+    '''
+    Verify admin password with rate limiting
+    Returns: (is_valid, error_message)
+    '''
     admin_password = os.environ.get('ADMIN_PASSWORD')
-    return provided_password == admin_password
+    
+    # Check rate limiting - max 5 failed attempts per IP in 15 minutes
+    cursor.execute(
+        """
+        SELECT COUNT(*) as attempt_count
+        FROM admin_login_attempts
+        WHERE ip_address = %s
+        AND attempt_time > NOW() - INTERVAL '15 minutes'
+        AND success = false
+        """,
+        (ip_address,)
+    )
+    result = cursor.fetchone()
+    failed_attempts = result['attempt_count'] if result else 0
+    
+    if failed_attempts >= 5:
+        return (False, 'Too many failed login attempts. Please try again in 15 minutes.')
+    
+    is_valid = provided_password == admin_password
+    
+    # Log the attempt
+    cursor.execute(
+        """
+        INSERT INTO admin_login_attempts (ip_address, success, attempt_time)
+        VALUES (%s, %s, NOW())
+        """,
+        (ip_address, is_valid)
+    )
+    conn.commit()
+    
+    if not is_valid:
+        return (False, 'Invalid admin password')
+    
+    return (True, '')
 
 def delete_user_folder_from_s3(user_id: str) -> int:
     '''
@@ -95,7 +132,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     headers = event.get('headers', {})
     admin_password = headers.get('x-admin-password') or headers.get('X-Admin-Password')
     
-    if not admin_password or not verify_admin_password(admin_password):
+    # Get IP address for rate limiting
+    request_context = event.get('requestContext', {})
+    identity = request_context.get('identity', {})
+    ip_address = identity.get('sourceIp', 'unknown')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    
+    if not admin_password:
         return {
             'statusCode': 401,
             'headers': {
@@ -106,8 +151,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Unauthorized'})
         }
     
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    is_valid, error_message = verify_admin_password(admin_password, ip_address, cursor, conn)
+    if not is_valid:
+        status_code = 429 if 'Too many' in error_message else 401
+        return {
+            'statusCode': status_code,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'isBase64Encoded': False,
+            'body': json.dumps({'error': error_message})
+        }
     
     try:
         query_params = event.get('queryStringParameters') or {}
