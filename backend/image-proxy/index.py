@@ -35,7 +35,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 405,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                'Access-Control-Allow-Origin': get_cors_origin(event)
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'Method not allowed'})
@@ -51,7 +51,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 400,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                    'Access-Control-Allow-Origin': get_cors_origin(event)
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'error': 'Missing url parameter'})
@@ -100,7 +100,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 502,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                'Access-Control-Allow-Origin': get_cors_origin(event)
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': f'Failed to fetch image: HTTP {e.code}'})
@@ -112,7 +112,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                'Access-Control-Allow-Origin': get_cors_origin(event)
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': str(e)})

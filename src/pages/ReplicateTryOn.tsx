@@ -64,6 +64,31 @@ const SEEDREAM_START_API = 'https://functions.poehali.dev/4bb70873-fda7-4a2d-a0a
 const SEEDREAM_STATUS_API = 'https://functions.poehali.dev/ffebd367-227e-4e12-a5f1-64db84bddc81';
 const NANOBANANAPRO_START_API = 'https://functions.poehali.dev/aac1d5d8-c9bd-43c6-822e-857c18f3c1f8';
 const NANOBANANAPRO_STATUS_API = 'https://functions.poehali.dev/6d603f3d-bbe3-450d-863a-63d513ad5ba7';
+const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
+
+// Helper function to proxy fal.ai images through our backend
+const proxyFalImage = async (falUrl: string): Promise<string> => {
+  try {
+    if (!falUrl.includes('fal.media') && !falUrl.includes('fal.ai')) {
+      return falUrl; // Not a fal.ai image, return as-is
+    }
+    
+    console.log('[ImageProxy] Proxying fal.ai image:', falUrl);
+    const response = await fetch(`${IMAGE_PROXY_API}?url=${encodeURIComponent(falUrl)}`);
+    
+    if (!response.ok) {
+      console.error('[ImageProxy] Failed to proxy image:', response.status);
+      return falUrl; // Fallback to original URL
+    }
+    
+    const data = await response.json();
+    console.log('[ImageProxy] Successfully proxied image');
+    return data.data_url; // Returns data:image/jpeg;base64,...
+  } catch (error) {
+    console.error('[ImageProxy] Error proxying image:', error);
+    return falUrl; // Fallback to original URL
+  }
+};
 
 
 
@@ -734,7 +759,8 @@ export default function ReplicateTryOn() {
           setGenerationStatus('Обрабатывается...');
         } else if (data.status === 'completed') {
           console.log('[SeeDream] COMPLETED! Result URL:', data.result_url);
-          setGeneratedImage(data.result_url);
+          const proxiedUrl = await proxyFalImage(data.result_url);
+          setGeneratedImage(proxiedUrl);
           setIsGenerating(false);
           setGenerationStatus('');
           clearInterval(interval);
