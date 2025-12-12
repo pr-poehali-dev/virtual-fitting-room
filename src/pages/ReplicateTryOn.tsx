@@ -262,12 +262,7 @@ export default function ReplicateTryOn() {
 
   const handleCropComplete = async (croppedImage: string) => {
     try {
-      const response = await fetch(croppedImage);
-      const blob = await response.blob();
-      const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
-      
-      const resized = await resizeImage(file, 1024, 1024);
-      setUploadedImage(resized);
+      setUploadedImage(croppedImage);
       setShowCropper(false);
       setTempImageForCrop(null);
       toast.success('Фото обрезано и загружено');
