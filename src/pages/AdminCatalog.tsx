@@ -41,6 +41,8 @@ export default function AdminCatalog() {
   const navigate = useNavigate();
   
   const [clothingItems, setClothingItems] = useState<ClothingItem[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
   const [filters, setFilters] = useState<Filters | null>(null);
   const [showAddClothing, setShowAddClothing] = useState(false);
   const [selectedCatalogCategories, setSelectedCatalogCategories] = useState<number[]>([]);
@@ -104,6 +106,7 @@ export default function AdminCatalog() {
 
       setFilters(filtersData);
       setClothingItems(catalogData);
+      setCurrentPage(1);
     } catch (error) {
       toast.error('Ошибка загрузки каталога');
     }
@@ -725,8 +728,37 @@ export default function AdminCatalog() {
                     </Card>
                   )}
 
+                  <div className="mb-6 flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      Показано {Math.min((currentPage - 1) * itemsPerPage + 1, clothingItems.length)}-{Math.min(currentPage * itemsPerPage, clothingItems.length)} из {clothingItems.length}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        <Icon name="ChevronLeft" size={16} />
+                        Назад
+                      </Button>
+                      <span className="text-sm">
+                        Страница {currentPage} из {Math.ceil(clothingItems.length / itemsPerPage)}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(Math.ceil(clothingItems.length / itemsPerPage), prev + 1))}
+                        disabled={currentPage >= Math.ceil(clothingItems.length / itemsPerPage)}
+                      >
+                        Вперёд
+                        <Icon name="ChevronRight" size={16} />
+                      </Button>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {clothingItems.map((item) => (
+                    {clothingItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item) => (
                       <Card key={item.id} className="overflow-hidden">
                         <div className="aspect-square relative">
                           <img
