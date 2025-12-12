@@ -252,6 +252,28 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             )
             lookbooks = cursor.fetchall()
             
+            result = []
+            for lb in lookbooks:
+                photos_value = lb['photos']
+                if isinstance(photos_value, str):
+                    try:
+                        photos_array = json.loads(photos_value)
+                    except:
+                        photos_array = []
+                elif photos_value is None:
+                    photos_array = []
+                else:
+                    photos_array = photos_value
+                
+                result.append({
+                    'id': str(lb['id']),
+                    'user_id': lb['user_id'],
+                    'name': lb['name'],
+                    'person_name': lb['person_name'],
+                    'photos': photos_array,
+                    'created_at': lb['created_at'].isoformat()
+                })
+            
             return {
                 'statusCode': 200,
                 'headers': {
@@ -259,14 +281,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'Access-Control-Allow-Origin': '*'
                 },
                 'isBase64Encoded': False,
-                'body': json.dumps([{
-                    'id': str(lb['id']),
-                    'user_id': lb['user_id'],
-                    'name': lb['name'],
-                    'person_name': lb['person_name'],
-                    'photos': lb['photos'] or [],
-                    'created_at': lb['created_at'].isoformat()
-                } for lb in lookbooks])
+                'body': json.dumps(result)
             }
         
         elif action == 'history':
