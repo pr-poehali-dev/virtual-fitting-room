@@ -14,6 +14,11 @@ from typing import Dict, Any
 SBERBANK_API = 'https://securepayments.sberbank.ru/payment/rest'
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    def get_cors_origin(event: Dict[str, Any]) -> str:
+        origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin', '')
+        allowed_origins = ['https://fitting-room.ru', 'https://preview--virtual-fitting-room.poehali.dev']
+        return origin if origin in allowed_origins else 'https://fitting-room.ru'
+    
     method: str = event.get('httpMethod', 'GET')
     
     if method == 'OPTIONS':
@@ -40,7 +45,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if not user_id or not amount:
                 return {
                     'statusCode': 400,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                     'body': json.dumps({'error': 'Требуется user_id и amount'})
                 }
             
@@ -82,7 +87,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if 'formUrl' in result:
                     return {
                         'statusCode': 200,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                         'body': json.dumps({
                             'payment_url': result['formUrl'],
                             'order_id': order_id,
@@ -92,7 +97,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 else:
                     return {
                         'statusCode': 500,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                         'body': json.dumps({
                             'error': 'Ошибка создания платежа',
                             'details': result
@@ -102,7 +107,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             except Exception as e:
                 return {
                     'statusCode': 500,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                     'body': json.dumps({'error': f'Ошибка API Сбербанка: {str(e)}'})
                 }
         
@@ -153,7 +158,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             
                             return {
                                 'statusCode': 200,
-                                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                                 'body': json.dumps({
                                     'status': 'completed',
                                     'amount': float(amount)
@@ -162,7 +167,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     
                     return {
                         'statusCode': 200,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                         'body': json.dumps({
                             'status': 'pending',
                             'order_status': result.get('orderStatus')
@@ -172,7 +177,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 except Exception as e:
                     return {
                         'statusCode': 500,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                         'body': json.dumps({'error': f'Ошибка проверки статуса: {str(e)}'})
                     }
             

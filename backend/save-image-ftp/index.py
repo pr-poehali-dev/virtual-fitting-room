@@ -17,13 +17,18 @@ from botocore.config import Config
 
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    def get_cors_origin(event: Dict[str, Any]) -> str:
+        origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin', '')
+        allowed_origins = ['https://fitting-room.ru', 'https://preview--virtual-fitting-room.poehali.dev']
+        return origin if origin in allowed_origins else 'https://fitting-room.ru'
+    
     method: str = event.get('httpMethod', 'GET')
     
     if method == 'OPTIONS':
         return {
             'statusCode': 200,
             'headers': {
-                'Access-Control-Allow-Origin': 'https://fitting-room.ru',
+                'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-User-Id, X-Auth-Token, X-Admin-Password',
                 'Access-Control-Max-Age': '86400'
@@ -36,7 +41,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 405,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                'Access-Control-Allow-Origin': get_cors_origin(event)
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'Method not allowed'})
@@ -55,7 +60,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 400,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                'Access-Control-Allow-Origin': get_cors_origin(event)
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'Missing image_url'})
@@ -74,7 +79,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                'Access-Control-Allow-Origin': get_cors_origin(event)
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'S3 not configured'})
@@ -121,7 +126,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 400,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                    'Access-Control-Allow-Origin': get_cors_origin(event)
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'error': 'Failed to download image'})
@@ -172,7 +177,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                'Access-Control-Allow-Origin': get_cors_origin(event)
             },
             'isBase64Encoded': False,
             'body': json.dumps({'url': public_url, 'filename': filename})
@@ -184,7 +189,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                'Access-Control-Allow-Origin': get_cors_origin(event)
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': f'S3 upload failed: {str(e)}'})

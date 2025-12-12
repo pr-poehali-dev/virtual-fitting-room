@@ -34,6 +34,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
           context - object with request_id attribute
     Returns: HTTP response with task status and result_url if completed
     '''
+    def get_cors_origin(event: Dict[str, Any]) -> str:
+        origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin', '')
+        allowed_origins = ['https://fitting-room.ru', 'https://preview--virtual-fitting-room.poehali.dev']
+        return origin if origin in allowed_origins else 'https://fitting-room.ru'
+    
     method: str = event.get('httpMethod', 'GET')
     
     if method == 'OPTIONS':
@@ -51,7 +56,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if method != 'GET':
         return {
             'statusCode': 405,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'Method not allowed'})
         }
@@ -60,7 +65,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if not database_url:
         return {
             'statusCode': 500,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'DATABASE_URL not configured'})
         }
@@ -74,7 +79,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if not task_id:
         return {
             'statusCode': 400,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'task_id is required'})
         }
@@ -96,7 +101,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.close()
             return {
                 'statusCode': 404,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                 'isBase64Encoded': False,
                 'body': json.dumps({'error': 'Task not found'})
             }
@@ -161,7 +166,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
             'isBase64Encoded': False,
             'body': json.dumps(response_data)
         }
@@ -169,7 +174,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     except Exception as e:
         return {
             'statusCode': 500,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
             'isBase64Encoded': False,
             'body': json.dumps({'error': f'Database error: {str(e)}'})
         }

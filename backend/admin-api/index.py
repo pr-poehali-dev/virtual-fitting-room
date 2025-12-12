@@ -144,13 +144,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     Returns: HTTP response with admin data
     Updated: 2025-12-12 - redeploy to pick up new ADMIN_PASSWORD
     '''
+    def get_cors_origin(event: Dict[str, Any]) -> str:
+        origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin', '')
+        allowed_origins = ['https://fitting-room.ru', 'https://preview--virtual-fitting-room.poehali.dev']
+        return origin if origin in allowed_origins else 'https://fitting-room.ru'
+    
     method: str = event.get('httpMethod', 'GET')
     
     if method == 'OPTIONS':
         return {
             'statusCode': 200,
             'headers': {
-                'Access-Control-Allow-Origin': 'https://fitting-room.ru',
+                'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Token',
                 'Access-Control-Max-Age': '86400'
@@ -166,7 +171,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 401,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                'Access-Control-Allow-Origin': get_cors_origin(event)
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'Unauthorized: Token required'})
@@ -178,7 +183,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 401,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                'Access-Control-Allow-Origin': get_cors_origin(event)
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': error_message})
@@ -196,7 +201,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                    'Access-Control-Allow-Origin': get_cors_origin(event)
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'success': True})
@@ -264,7 +269,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                    'Access-Control-Allow-Origin': get_cors_origin(event)
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({
@@ -307,7 +312,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                    'Access-Control-Allow-Origin': get_cors_origin(event)
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({
@@ -370,7 +375,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                    'Access-Control-Allow-Origin': get_cors_origin(event)
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({
@@ -389,7 +394,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                    'Access-Control-Allow-Origin': get_cors_origin(event)
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps([{
@@ -463,7 +468,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                    'Access-Control-Allow-Origin': get_cors_origin(event)
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps([{
@@ -558,7 +563,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                    'Access-Control-Allow-Origin': get_cors_origin(event)
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({
@@ -586,7 +591,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                        'Access-Control-Allow-Origin': get_cors_origin(event)
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing user_id'})
@@ -613,7 +618,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                    'Access-Control-Allow-Origin': get_cors_origin(event)
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'success': True})
@@ -627,7 +632,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                        'Access-Control-Allow-Origin': get_cors_origin(event)
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing lookbook_id'})
@@ -640,7 +645,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                    'Access-Control-Allow-Origin': get_cors_origin(event)
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'success': True})
@@ -655,7 +660,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                    'Access-Control-Allow-Origin': get_cors_origin(event)
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'success': True, 'deleted': deleted_count})
@@ -666,7 +671,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 400,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                    'Access-Control-Allow-Origin': get_cors_origin(event)
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'error': 'Invalid action'})
@@ -678,7 +683,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                'Access-Control-Allow-Origin': get_cors_origin(event)
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': str(e)})
