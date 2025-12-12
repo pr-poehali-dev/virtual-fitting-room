@@ -137,7 +137,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 200,
             'headers': {
-                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': 'https://fitting-room.ru',
                 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
                 'Access-Control-Max-Age': '86400'
@@ -169,7 +169,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'statusCode': 404,
                         'headers': {
                             'Content-Type': 'application/json',
-                            'Access-Control-Allow-Origin': '*'
+                            'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                         },
                         'isBase64Encoded': False,
                         'body': json.dumps({'error': 'Lookbook not found or not public'})
@@ -179,7 +179,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
+                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({
@@ -198,7 +198,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 401,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
+                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Unauthorized - User ID required'})
@@ -216,7 +216,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'statusCode': 404,
                         'headers': {
                             'Content-Type': 'application/json',
-                            'Access-Control-Allow-Origin': '*'
+                            'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                         },
                         'isBase64Encoded': False,
                         'body': json.dumps({'error': 'Lookbook not found'})
@@ -226,7 +226,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
+                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({
@@ -252,7 +252,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
+                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps([{
@@ -274,7 +274,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 401,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
+                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Unauthorized - User ID required'})
@@ -296,7 +296,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
+                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': f'Validation error: {str(e)}'})
@@ -312,7 +312,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
+                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing name or person_name'})
@@ -355,7 +355,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 201,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
+                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({
@@ -375,7 +375,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 401,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
+                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Unauthorized - User ID required'})
@@ -397,7 +397,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
+                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing id'})
@@ -461,7 +461,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 404,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
+                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Lookbook not found'})
@@ -531,7 +531,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
+                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({
@@ -551,7 +551,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 401,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
+                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Unauthorized - User ID required'})
@@ -565,7 +565,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
+                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing id'})
@@ -583,7 +583,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 404,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
+                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Lookbook not found'})
@@ -604,7 +604,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 404,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
+                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Lookbook not found'})
@@ -662,7 +662,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
+                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'message': 'Lookbook deleted successfully'})
@@ -673,7 +673,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 405,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
+                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'error': 'Method not allowed'})
@@ -685,7 +685,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+                'Access-Control-Allow-Origin': 'https://fitting-room.ru'
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': str(e)})
