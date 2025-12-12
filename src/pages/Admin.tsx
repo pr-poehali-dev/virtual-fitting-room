@@ -203,9 +203,8 @@ export default function Admin() {
         console.log('[Admin Login] Success! Token received');
         localStorage.setItem('admin_jwt', data.token);
         localStorage.setItem('admin_jwt_expiry', data.expires_at);
-        setIsAuthenticated(true);
         toast.success('Вход выполнен');
-        fetchData();
+        window.location.href = '/admin/dashboard';
       } else {
         const error = await response.json();
         console.error('[Admin Login] Error response:', error);

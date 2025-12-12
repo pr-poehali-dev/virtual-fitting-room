@@ -81,14 +81,14 @@ const App = () => (
             <Route path="/profile-old" element={<Profile />} />
             
             {/* Admin Routes */}
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/stats" element={<AdminStats />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/lookbooks" element={<AdminLookbooks />} />
             <Route path="/admin/payments" element={<AdminPayments />} />
             <Route path="/admin/catalog" element={<AdminCatalog />} />
             <Route path="/admin/generations" element={<AdminGenerations />} />
-            <Route path="/admin-old" element={<Admin />} />
             
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

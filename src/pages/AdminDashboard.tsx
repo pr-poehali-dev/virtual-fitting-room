@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
@@ -23,8 +22,6 @@ interface Stats {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState('');
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -35,49 +32,21 @@ export default function AdminDashboard() {
     if (adminToken && tokenExpiry) {
       const expiryTime = new Date(tokenExpiry).getTime();
       if (Date.now() < expiryTime) {
-        setIsAuthenticated(true);
         fetchStats();
       } else {
         localStorage.removeItem('admin_jwt');
         localStorage.removeItem('admin_jwt_expiry');
+        navigate('/admin');
       }
+    } else {
+      navigate('/admin');
     }
-  }, []);
-
-  const handleLogin = async () => {
-    if (!password) {
-      toast.error('Введите пароль');
-      return;
-    }
-
-    try {
-      const response = await fetch(`${ADMIN_API}?action=login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Password': password
-        }
-      });
-
-      if (response.ok) {
-        sessionStorage.setItem('admin_auth', password);
-        setIsAuthenticated(true);
-        toast.success('Вход выполнен');
-        fetchStats();
-      } else {
-        toast.error('Неверный пароль');
-      }
-    } catch (error) {
-      toast.error('Ошибка входа');
-    }
-  };
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('admin_jwt');
     localStorage.removeItem('admin_jwt_expiry');
-    setIsAuthenticated(false);
-    setPassword('');
-    navigate('/');
+    navigate('/admin');
   };
 
   const fetchStats = async () => {
@@ -99,35 +68,7 @@ export default function AdminDashboard() {
     }
   };
 
-  if (!isAuthenticated) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-16 max-w-md">
-          <Card>
-            <CardHeader>
-              <CardTitle>Админ-панель</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
-                <div>
-                  <Input
-                    type="password"
-                    placeholder="Введите пароль"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                  />
-                </div>
-                <Button type="submit" className="w-full mt-4">
-                  Войти
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </Layout>
-    );
-  }
+
 
   const dashboardCards = [
     {
