@@ -1119,11 +1119,11 @@ export default function ReplicateTryOn() {
     if (!imageUrl) return;
 
     try {
+      const proxyUrl = `https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90?url=${encodeURIComponent(imageUrl)}&download=true`;
+      
       const link = document.createElement('a');
-      link.href = imageUrl;
+      link.href = proxyUrl;
       link.download = `fitting-room-${Date.now()}.jpg`;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

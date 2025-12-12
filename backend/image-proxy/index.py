@@ -39,6 +39,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     try:
         query_params = event.get('queryStringParameters') or {}
         image_url = query_params.get('url')
+        download = query_params.get('download', 'false').lower() == 'true'
         
         if not image_url:
             return {
@@ -51,7 +52,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Missing url parameter'})
             }
         
-        print(f'[ImageProxy] Fetching image: {image_url}')
+        print(f'[ImageProxy] Fetching image: {image_url}, download={download}')
         
         req = urllib.request.Request(image_url)
         req.add_header('User-Agent', 'Mozilla/5.0')
@@ -62,19 +63,31 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             print(f'[ImageProxy] Loaded {len(image_data)} bytes, type: {content_type}')
             
-            base64_data = base64.b64encode(image_data).decode('utf-8')
-            
-            data_url = f'data:{content_type};base64,{base64_data}'
-            
-            return {
-                'statusCode': 200,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://fitting-room.ru'
-                },
-                'isBase64Encoded': False,
-                'body': json.dumps({'data_url': data_url})
-            }
+            if download:
+                base64_image = base64.b64encode(image_data).decode('utf-8')
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': content_type,
+                        'Content-Disposition': f'attachment; filename="fitting-room-{context.request_id}.jpg"',
+                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                    },
+                    'isBase64Encoded': True,
+                    'body': base64_image
+                }
+            else:
+                base64_data = base64.b64encode(image_data).decode('utf-8')
+                data_url = f'data:{content_type};base64,{base64_data}'
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': 'https://fitting-room.ru'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'data_url': data_url})
+                }
     
     except urllib.error.HTTPError as e:
         print(f'[ImageProxy] HTTP Error: {e.code}')
