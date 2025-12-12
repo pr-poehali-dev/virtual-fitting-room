@@ -30,6 +30,8 @@ interface HistoryTabProps {
 const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
 const LOOKBOOKS_API = 'https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b';
 
+const ITEMS_PER_PAGE = 30;
+
 export default function HistoryTab({ userId }: HistoryTabProps) {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [lookbooks, setLookbooks] = useState<Lookbook[]>([]);
@@ -37,6 +39,7 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectedLookbookId, setSelectedLookbookId] = useState<string>('');
   const [isAdding, setIsAdding] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     console.log('[HistoryTab] userId received:', userId);
@@ -98,11 +101,21 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
   };
 
   const selectAll = () => {
-    if (selectedItems.length === history.length) {
+    if (selectedItems.length === displayedHistory.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(history.map(item => item.id));
+      setSelectedItems(displayedHistory.map(item => item.id));
     }
+  };
+
+  const totalPages = Math.ceil(history.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const displayedHistory = history.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleAddToLookbook = async () => {
@@ -314,7 +327,7 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
           size="sm"
           onClick={selectAll}
         >
-          {selectedItems.length === history.length ? 'Снять выделение' : 'Выбрать все'}
+          {selectedItems.length === displayedHistory.length ? 'Снять выделение' : 'Выбрать все'}
         </Button>
         <p className="text-sm text-muted-foreground">
           Всего: {history.length}
@@ -322,7 +335,7 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {history.map((item) => (
+        {displayedHistory.map((item) => (
           <Card 
             key={item.id} 
             className={`relative overflow-hidden transition-all ${
@@ -385,6 +398,42 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
           </Card>
         ))}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <Icon name="ChevronLeft" size={16} />
+          </Button>
+          
+          <div className="flex gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                size="sm"
+                onClick={() => goToPage(page)}
+                className="min-w-[40px]"
+              >
+                {page}
+              </Button>
+            ))}
+          </div>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            <Icon name="ChevronRight" size={16} />
+          </Button>
+        </div>
+      )}
 
       <Card className="bg-yellow-50 border-yellow-200">
         <CardContent className="p-4">
