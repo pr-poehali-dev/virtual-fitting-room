@@ -25,17 +25,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = sessionStorage.getItem('user');
-    const tokenExpiry = sessionStorage.getItem('token_expiry');
+    const storedUser = localStorage.getItem('user');
+    const tokenExpiry = localStorage.getItem('token_expiry');
     
     if (storedUser && tokenExpiry) {
       const expiryTime = parseInt(tokenExpiry, 10);
       if (Date.now() < expiryTime) {
         setUser(JSON.parse(storedUser));
       } else {
-        sessionStorage.removeItem('user');
-        sessionStorage.removeItem('session_token');
-        sessionStorage.removeItem('token_expiry');
+        localStorage.removeItem('user');
+        localStorage.removeItem('session_token');
+        localStorage.removeItem('token_expiry');
       }
     }
     setIsLoading(false);
@@ -55,9 +55,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const expiryTime = Date.now() + (24 * 60 * 60 * 1000);
-    sessionStorage.setItem('user', JSON.stringify(data.user));
-    sessionStorage.setItem('session_token', data.session_token);
-    sessionStorage.setItem('token_expiry', expiryTime.toString());
+    localStorage.setItem('user', JSON.stringify(data.user));
+    localStorage.setItem('session_token', data.session_token);
+    localStorage.setItem('token_expiry', expiryTime.toString());
     setUser(data.user);
   };
 
@@ -76,22 +76,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (data.user && data.session_token) {
       const expiryTime = Date.now() + (24 * 60 * 60 * 1000);
-      sessionStorage.setItem('user', JSON.stringify(data.user));
-      sessionStorage.setItem('session_token', data.session_token);
-      sessionStorage.setItem('token_expiry', expiryTime.toString());
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('session_token', data.session_token);
+      localStorage.setItem('token_expiry', expiryTime.toString());
       setUser(data.user);
     }
   };
 
   const logout = () => {
-    sessionStorage.removeItem('user');
-    sessionStorage.removeItem('session_token');
-    sessionStorage.removeItem('token_expiry');
+    localStorage.removeItem('user');
+    localStorage.removeItem('session_token');
+    localStorage.removeItem('token_expiry');
     setUser(null);
   };
 
   const updateUser = (userData: User) => {
-    sessionStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
   };
 
