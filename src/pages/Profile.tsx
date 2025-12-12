@@ -72,7 +72,7 @@ export default function Profile() {
     }
     
     if (user) {
-      const storedUser = localStorage.getItem('user');
+      const storedUser = sessionStorage.getItem('user');
       if (storedUser) {
         const userData = JSON.parse(storedUser);
         if (!userData.email_verified) {

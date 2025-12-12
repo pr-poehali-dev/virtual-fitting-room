@@ -48,6 +48,7 @@ const VersionManager = () => {
     
     if (storedVersion !== APP_VERSION) {
       console.log(`Обновление приложения: ${storedVersion || 'старая версия'} → ${APP_VERSION}`);
+      sessionStorage.clear();
       localStorage.clear();
       localStorage.setItem("app_version", APP_VERSION);
       window.location.reload();

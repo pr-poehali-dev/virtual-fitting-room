@@ -47,8 +47,10 @@ export default function VerifyEmail() {
           return;
         }
 
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('session_token', data.session_token);
+        const expiryTime = Date.now() + (24 * 60 * 60 * 1000);
+        sessionStorage.setItem('user', JSON.stringify(data.user));
+        sessionStorage.setItem('session_token', data.session_token);
+        sessionStorage.setItem('token_expiry', expiryTime.toString());
         updateUser(data.user);
 
         setIsSuccess(true);

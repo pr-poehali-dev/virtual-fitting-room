@@ -1,10 +1,11 @@
 import json
 import os
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import boto3
 from botocore.config import Config
+from pydantic import BaseModel, Field, field_validator
 
 def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')
@@ -92,11 +93,38 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             body_str = event.get('body', '{}')
             body_data = json.loads(body_str)
             
-            person_image = body_data.get('person_image')
-            garments = body_data.get('garments')
-            result_image = body_data.get('result_image')
-            model_used = body_data.get('model_used', 'unknown')
-            cost = body_data.get('cost', 0)
+            class TryOnHistoryCreate(BaseModel):
+                person_image: str = Field(..., min_length=1)
+                result_image: str = Field(..., min_length=1)
+                garments: Optional[List[Dict[str, Any]]] = None
+                garment_image: Optional[str] = None
+                model_used: str = Field(default='unknown')
+                cost: float = Field(default=0, ge=0)
+                
+                @field_validator('person_image', 'result_image')
+                def validate_image_url(cls, v):
+                    if not v.startswith(('http://', 'https://', 'data:')):
+                        raise ValueError('Must be a valid URL or data URI')
+                    return v
+            
+            try:
+                validated = TryOnHistoryCreate(**body_data)
+            except Exception as e:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': f'Validation error: {str(e)}'})
+                }
+            
+            person_image = validated.person_image
+            garments = validated.garments
+            result_image = validated.result_image
+            model_used = validated.model_used
+            cost = validated.cost
             
             # Debug logging - log every POST request
             try:

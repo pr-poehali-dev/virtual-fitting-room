@@ -1,11 +1,12 @@
 import json
 import os
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import requests
 import boto3
 from botocore.config import Config
+from pydantic import BaseModel, Field, field_validator
 
 def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')
@@ -282,10 +283,29 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             body_str = event.get('body', '{}')
             body_data = json.loads(body_str)
             
-            name = body_data.get('name')
-            person_name = body_data.get('person_name')
-            photos = body_data.get('photos', [])
-            color_palette = body_data.get('color_palette', [])
+            class LookbookCreate(BaseModel):
+                name: str = Field(..., min_length=1, max_length=100)
+                person_name: str = Field(..., min_length=1, max_length=100)
+                photos: List[str] = Field(default_factory=list)
+                color_palette: List[str] = Field(default_factory=list, max_length=10)
+            
+            try:
+                validated = LookbookCreate(**body_data)
+            except Exception as e:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': f'Validation error: {str(e)}'})
+                }
+            
+            name = validated.name
+            person_name = validated.person_name
+            photos = validated.photos
+            color_palette = validated.color_palette
             
             if not name or not person_name:
                 return {

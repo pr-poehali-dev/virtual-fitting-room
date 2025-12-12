@@ -25,9 +25,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const storedUser = sessionStorage.getItem('user');
+    const tokenExpiry = sessionStorage.getItem('token_expiry');
+    
+    if (storedUser && tokenExpiry) {
+      const expiryTime = parseInt(tokenExpiry, 10);
+      if (Date.now() < expiryTime) {
+        setUser(JSON.parse(storedUser));
+      } else {
+        sessionStorage.removeItem('user');
+        sessionStorage.removeItem('session_token');
+        sessionStorage.removeItem('token_expiry');
+      }
     }
     setIsLoading(false);
   }, []);
@@ -45,8 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(data.error || 'Login failed');
     }
 
-    localStorage.setItem('user', JSON.stringify(data.user));
-    localStorage.setItem('session_token', data.session_token);
+    const expiryTime = Date.now() + (24 * 60 * 60 * 1000);
+    sessionStorage.setItem('user', JSON.stringify(data.user));
+    sessionStorage.setItem('session_token', data.session_token);
+    sessionStorage.setItem('token_expiry', expiryTime.toString());
     setUser(data.user);
   };
 
@@ -63,19 +74,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(data.error || 'Registration failed');
     }
 
-    localStorage.setItem('user', JSON.stringify(data.user));
-    localStorage.setItem('session_token', data.session_token);
-    setUser(data.user);
+    if (data.user && data.session_token) {
+      const expiryTime = Date.now() + (24 * 60 * 60 * 1000);
+      sessionStorage.setItem('user', JSON.stringify(data.user));
+      sessionStorage.setItem('session_token', data.session_token);
+      sessionStorage.setItem('token_expiry', expiryTime.toString());
+      setUser(data.user);
+    }
   };
 
   const logout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('session_token');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('session_token');
+    sessionStorage.removeItem('token_expiry');
     setUser(null);
   };
 
   const updateUser = (userData: User) => {
-    localStorage.setItem('user', JSON.stringify(userData));
+    sessionStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
   };
 
