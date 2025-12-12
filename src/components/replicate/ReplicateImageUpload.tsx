@@ -37,7 +37,7 @@ export default function ReplicateImageUpload({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
           onChange={handleFileChange}
           className="hidden"
           id="model-upload"

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
+import { validateImageFile } from '@/utils/fileValidation';
 
 const colorTypes = {
   'warm_spring': {
@@ -75,14 +76,22 @@ export default function ColorType() {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUploadedImage(reader.result as string);
-        setColorTypeResult(null);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Валидация файла
+    const validation = validateImageFile(file);
+    if (!validation.isValid) {
+      toast.error(validation.error || 'Неверный файл');
+      e.target.value = '';
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setUploadedImage(reader.result as string);
+      setColorTypeResult(null);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleAnalyze = async () => {
@@ -145,7 +154,7 @@ export default function ColorType() {
                     <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
                         onChange={handleImageUpload}
                         className="hidden"
                         id="portrait-upload"

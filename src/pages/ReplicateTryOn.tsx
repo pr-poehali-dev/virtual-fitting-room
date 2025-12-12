@@ -18,6 +18,7 @@ import ReplicateResultPanel from '@/components/replicate/ReplicateResultPanel';
 import ReplicateSaveDialog from '@/components/replicate/ReplicateSaveDialog';
 import ImageCropper from '@/components/ImageCropper';
 import { checkReplicateBalance, deductReplicateBalance, refundReplicateBalance } from '@/utils/replicateBalanceUtils';
+import { validateImageFile } from '@/utils/fileValidation';
 import {
   Accordion,
   AccordionContent,
@@ -225,38 +226,46 @@ export default function ReplicateTryOn() {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      try {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const img = new Image();
-          img.onload = () => {
-            const aspectRatio = img.width / img.height;
-            const targetRatio = 3 / 4;
-            const tolerance = 0.05;
-            
-            const isCorrectAspectRatio = Math.abs(aspectRatio - targetRatio) < tolerance;
-            
-            if (isCorrectAspectRatio) {
-              resizeImage(file, 1024, 1024).then(resized => {
-                setUploadedImage(resized);
-                toast.success('Фото загружено');
-              }).catch(error => {
-                console.error('Image resize error:', error);
-                toast.error('Ошибка обработки изображения');
-              });
-            } else {
-              setTempImageForCrop(event.target?.result as string);
-              setShowCropper(true);
-            }
-          };
-          img.src = event.target?.result as string;
+    if (!file) return;
+
+    // Валидация файла
+    const validation = validateImageFile(file);
+    if (!validation.isValid) {
+      toast.error(validation.error || 'Неверный файл');
+      e.target.value = '';
+      return;
+    }
+
+    try {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const aspectRatio = img.width / img.height;
+          const targetRatio = 3 / 4;
+          const tolerance = 0.05;
+          
+          const isCorrectAspectRatio = Math.abs(aspectRatio - targetRatio) < tolerance;
+          
+          if (isCorrectAspectRatio) {
+            resizeImage(file, 1024, 1024).then(resized => {
+              setUploadedImage(resized);
+              toast.success('Фото загружено');
+            }).catch(error => {
+              console.error('Image resize error:', error);
+              toast.error('Ошибка обработки изображения');
+            });
+          } else {
+            setTempImageForCrop(event.target?.result as string);
+            setShowCropper(true);
+          }
         };
-        reader.readAsDataURL(file);
-      } catch (error) {
-        console.error('Image upload error:', error);
-        toast.error('Ошибка загрузки изображения');
-      }
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Image upload error:', error);
+      toast.error('Ошибка загрузки изображения');
     }
   };
 
@@ -280,6 +289,21 @@ export default function ReplicateTryOn() {
   const handleCustomClothingUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+
+    // Валидация всех файлов
+    const invalidFiles: string[] = [];
+    Array.from(files).forEach(file => {
+      const validation = validateImageFile(file);
+      if (!validation.isValid) {
+        invalidFiles.push(`${file.name}: ${validation.error}`);
+      }
+    });
+
+    if (invalidFiles.length > 0) {
+      toast.error(invalidFiles[0]); // Показываем первую ошибку
+      e.target.value = '';
+      return;
+    }
 
     if (selectedClothingItems.length >= 1 && selectedClothingItems[0].category === 'dresses') {
       toast.error('Уже выбран полный образ. Удалите его, если хотите загрузить другую вещь');

@@ -11,6 +11,7 @@ import ProfileMenu from '@/components/ProfileMenu';
 import LookbookCard from '@/components/lookbooks/LookbookCard';
 import LookbookViewerDialog from '@/components/lookbooks/LookbookViewerDialog';
 import LookbookFormDialog from '@/components/lookbooks/LookbookFormDialog';
+import { validateImageFile } from '@/utils/fileValidation';
 
 interface Lookbook {
   id: string;
@@ -88,15 +89,24 @@ export default function ProfileLookbooks() {
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setSelectedPhotos(prev => [...prev, reader.result as string]);
-        };
-        reader.readAsDataURL(file);
-      });
-    }
+    if (!files) return;
+
+    Array.from(files).forEach(file => {
+      // Валидация файла
+      const validation = validateImageFile(file);
+      if (!validation.isValid) {
+        toast.error(`${file.name}: ${validation.error}`);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedPhotos(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    e.target.value = '';
   };
 
   const handleCreateLookbook = async () => {

@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
+import { validateImageFile } from '@/utils/fileValidation';
 
 interface ClothingItem {
   id: string;
@@ -118,10 +119,18 @@ export default function CatalogItemForm({
             <label className="text-sm font-medium mb-2 block">Загрузить изображение</label>
             <Input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
+
+                // Валидация файла
+                const validation = validateImageFile(file);
+                if (!validation.isValid) {
+                  toast.error(validation.error || 'Неверный файл');
+                  e.target.value = '';
+                  return;
+                }
 
                 const reader = new FileReader();
                 reader.onloadend = () => {
@@ -135,6 +144,9 @@ export default function CatalogItemForm({
                 reader.readAsDataURL(file);
               }}
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Форматы: JPG, PNG, WebP, GIF. Максимум: 10MB
+            </p>
           </div>
         )}
 

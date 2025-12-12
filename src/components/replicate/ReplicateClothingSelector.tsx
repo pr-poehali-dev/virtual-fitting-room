@@ -270,7 +270,7 @@ export default function ReplicateClothingSelector({
         <div>
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
             multiple
             onChange={handleCustomClothingUpload}
             className="hidden"
