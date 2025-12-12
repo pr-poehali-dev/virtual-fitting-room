@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
@@ -25,6 +26,9 @@ export default function AdminPayments() {
   const navigate = useNavigate();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPayments, setTotalPayments] = useState(0);
+  const paymentsPerPage = 50;
 
   useEffect(() => {
     const adminAuth = sessionStorage.getItem('admin_auth');
@@ -33,20 +37,22 @@ export default function AdminPayments() {
       return;
     }
     fetchPayments();
-  }, [navigate]);
+  }, [navigate, currentPage]);
 
   const fetchPayments = async () => {
     const adminPassword = sessionStorage.getItem('admin_auth');
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${ADMIN_API}?action=payments`, {
+      const offset = (currentPage - 1) * paymentsPerPage;
+      const response = await fetch(`${ADMIN_API}?action=payments&limit=${paymentsPerPage}&offset=${offset}`, {
         headers: { 'X-Admin-Password': adminPassword || '' }
       });
 
       if (!response.ok) throw new Error('Failed to fetch payments');
       const data = await response.json();
-      setPayments(data);
+      setPayments(data.payments || data);
+      setTotalPayments(data.total || (data.payments ? data.payments.length : data.length));
     } catch (error) {
       toast.error('Ошибка загрузки платежей');
     } finally {
@@ -80,7 +86,7 @@ export default function AdminPayments() {
             <div className="mb-8">
               <h1 className="text-3xl font-bold mb-2">Платежи</h1>
               <p className="text-muted-foreground">
-                Всего платежей: {payments.length} | Сумма: {totalAmount.toFixed(2)} ₽
+                Всего платежей: {totalPayments} | Сумма: {totalAmount.toFixed(2)} ₽
               </p>
             </div>
 
@@ -129,6 +135,32 @@ export default function AdminPayments() {
                 </div>
               </CardContent>
             </Card>
+
+            {totalPayments > paymentsPerPage && (
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <Icon name="ChevronLeft" size={16} />
+                  Назад
+                </Button>
+                <span className="text-sm text-muted-foreground px-4">
+                  Страница {currentPage} из {Math.ceil(totalPayments / paymentsPerPage)}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalPayments / paymentsPerPage), p + 1))}
+                  disabled={currentPage >= Math.ceil(totalPayments / paymentsPerPage)}
+                >
+                  Вперёд
+                  <Icon name="ChevronRight" size={16} />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

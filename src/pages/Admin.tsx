@@ -282,7 +282,7 @@ export default function Admin() {
       setFilteredLookbooks(lookbooksArray);
       setFilters(filtersData);
       setClothingItems(catalogData);
-      setPayments(paymentsData);
+      setPayments(paymentsData.payments || paymentsData);
     } catch (error) {
       toast.error('Ошибка загрузки данных');
       handleLogout();

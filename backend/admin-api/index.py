@@ -403,10 +403,43 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         elif action == 'payments':
+            limit = query_params.get('limit', '1000')
+            offset = query_params.get('offset', '0')
             status_filter = query_params.get('status')
             date_from = query_params.get('date_from')
             date_to = query_params.get('date_to')
             
+            try:
+                limit = int(limit)
+                offset = int(offset)
+            except ValueError:
+                limit = 1000
+                offset = 0
+            
+            # Count total payments
+            count_query = '''
+                SELECT COUNT(*) as total
+                FROM payment_transactions pt
+                WHERE 1=1
+            '''
+            count_params = []
+            
+            if status_filter:
+                count_query += " AND pt.status = %s"
+                count_params.append(status_filter)
+            
+            if date_from:
+                count_query += " AND pt.created_at >= %s"
+                count_params.append(date_from)
+            
+            if date_to:
+                count_query += " AND pt.created_at <= %s"
+                count_params.append(date_to)
+            
+            cursor.execute(count_query, count_params)
+            total = cursor.fetchone()['total']
+            
+            # Get payments with pagination
             query = '''
                 SELECT 
                     pt.id,
@@ -437,7 +470,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 query += " AND pt.created_at <= %s"
                 params.append(date_to)
             
-            query += " ORDER BY pt.created_at DESC"
+            query += " ORDER BY pt.created_at DESC LIMIT %s OFFSET %s"
+            params.extend([limit, offset])
             
             cursor.execute(query, params)
             payments = cursor.fetchall()
@@ -449,18 +483,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'Access-Control-Allow-Origin': '*'
                 },
                 'isBase64Encoded': False,
-                'body': json.dumps([{
-                    'id': str(p['id']),
-                    'user_id': p['user_id'],
-                    'user_email': p['email'],
-                    'user_name': p['name'],
-                    'amount': float(p['amount']),
-                    'payment_method': p['payment_method'],
-                    'status': p['status'],
-                    'order_id': p['order_id'],
-                    'created_at': p['created_at'].isoformat(),
-                    'updated_at': p['updated_at'].isoformat() if p['updated_at'] else None
-                } for p in payments])
+                'body': json.dumps({
+                    'payments': [{
+                        'id': str(p['id']),
+                        'user_id': p['user_id'],
+                        'user_email': p['email'],
+                        'user_name': p['name'],
+                        'amount': float(p['amount']),
+                        'payment_method': p['payment_method'],
+                        'status': p['status'],
+                        'order_id': p['order_id'],
+                        'created_at': p['created_at'].isoformat(),
+                        'updated_at': p['updated_at'].isoformat() if p['updated_at'] else None
+                    } for p in payments],
+                    'total': total
+                })
             }
         
         elif action == 'delete_user' and method == 'DELETE':
