@@ -53,7 +53,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             balance, free_tries_used, unlimited_access = result
-            free_tries_remaining = max(0, 3 - free_tries_used) if not unlimited_access else 999
+            free_tries_remaining = 0
             paid_tries_available = int(balance / 30) if balance >= 30 else 0
             
             return {
@@ -101,25 +101,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             'success': True,
                             'unlimited': True,
                             'message': 'Безлимитный доступ',
-                            'steps': steps
-                        })
-                    }
-                
-                if free_tries_used < 3:
-                    cur.execute('''
-                        UPDATE t_p29007832_virtual_fitting_room.users 
-                        SET free_tries_used = free_tries_used + 1, updated_at = CURRENT_TIMESTAMP
-                        WHERE id = %s
-                    ''', (user_id,))
-                    conn.commit()
-                    
-                    return {
-                        'statusCode': 200,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
-                        'body': json.dumps({
-                            'success': True,
-                            'free_try': True,
-                            'remaining_free': 2 - free_tries_used,
                             'steps': steps
                         })
                     }
@@ -184,25 +165,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             'success': True,
                             'unlimited': True,
                             'message': 'Безлимитный пользователь - возврат не требуется'
-                        })
-                    }
-                
-                if free_tries_used > 0 and free_tries_used <= 3:
-                    cur.execute('''
-                        UPDATE t_p29007832_virtual_fitting_room.users 
-                        SET free_tries_used = free_tries_used - 1, updated_at = CURRENT_TIMESTAMP
-                        WHERE id = %s AND free_tries_used > 0
-                    ''', (user_id,))
-                    conn.commit()
-                    
-                    return {
-                        'statusCode': 200,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
-                        'body': json.dumps({
-                            'success': True,
-                            'refunded': True,
-                            'refund_type': 'free_try',
-                            'new_free_tries': 3 - (free_tries_used - 1)
                         })
                     }
                 
