@@ -567,22 +567,22 @@ export default function ReplicateTryOn() {
         } else if (data.status === 'completed') {
           console.log('[NanoBananaPro] COMPLETED! Result URL:', data.result_url);
           
-          // Check if it's CDN URL (S3 upload completed)
-          if (data.result_url.includes('cdn.poehali.dev')) {
-            console.log('[NanoBananaPro] CDN URL detected, S3 upload complete!');
-            setGeneratedImage(data.result_url);
-            setIsGenerating(false);
-            setIsSavingToS3(false);
-            setGenerationStatus('');
-            clearInterval(interval);
-            setPollingInterval(null);
-            toast.success('Образ готов!');
+          // Proxy fal.ai images, use CDN URLs directly
+          let displayUrl = data.result_url;
+          if (data.result_url.includes('fal.media') || data.result_url.includes('fal.ai')) {
+            console.log('[NanoBananaPro] FAL URL detected, proxying...');
+            displayUrl = await proxyFalImage(data.result_url);
           } else {
-            // Still uploading to S3, continue polling
-            console.log('[NanoBananaPro] FAL URL detected, waiting for S3 upload...');
-            setGenerationStatus('Сохраняем изображение...');
-            setIsSavingToS3(true);
+            console.log('[NanoBananaPro] CDN URL detected, using directly');
           }
+          
+          setGeneratedImage(displayUrl);
+          setIsGenerating(false);
+          setIsSavingToS3(false);
+          setGenerationStatus('');
+          clearInterval(interval);
+          setPollingInterval(null);
+          toast.success('Образ готов!');
         } else if (data.status === 'failed') {
           console.error('[NanoBananaPro] FAILED:', data.error_message);
           setIsGenerating(false);
