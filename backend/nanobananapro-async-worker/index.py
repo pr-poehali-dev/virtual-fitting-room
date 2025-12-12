@@ -5,6 +5,9 @@ from typing import Dict, Any, Optional
 import requests
 from datetime import datetime
 from googletrans import Translator
+import boto3
+import time
+import uuid
 
 def normalize_image_format(image: str) -> str:
     '''Convert image to data URI format if needed'''
@@ -138,6 +141,52 @@ def check_fal_status(response_url: str) -> Optional[dict]:
     
     raise Exception(f'Failed to check status: {response.status_code} - {response.text}')
 
+def upload_to_s3(image_url: str, user_id: str) -> str:
+    '''Download image from fal.ai and upload to S3, return CDN URL'''
+    aws_access_key = os.environ.get('AWS_ACCESS_KEY_ID')
+    aws_secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    
+    if not aws_access_key or not aws_secret_key:
+        raise Exception('AWS credentials not configured')
+    
+    # Download image from fal.ai
+    print(f'[S3] Downloading image from fal.ai: {image_url[:50]}...')
+    img_response = requests.get(image_url, timeout=30)
+    if img_response.status_code != 200:
+        raise Exception(f'Failed to download image: {img_response.status_code}')
+    
+    image_data = img_response.content
+    print(f'[S3] Downloaded {len(image_data)} bytes')
+    
+    # Generate filename
+    timestamp = time.strftime('%Y%m%d_%H%M%S')
+    milliseconds = int(time.time() * 1000) % 1000000
+    random_suffix = uuid.uuid4().hex[:8]
+    filename = f'fitting_{timestamp}_{milliseconds}_{user_id}_{random_suffix}.jpg'
+    s3_key = f'lookbooks/{user_id}/{filename}'
+    
+    print(f'[S3] Uploading to S3: {s3_key}')
+    
+    # Upload to S3
+    s3 = boto3.client('s3',
+        endpoint_url='https://bucket.poehali.dev',
+        aws_access_key_id=aws_access_key,
+        aws_secret_access_key=aws_secret_key
+    )
+    
+    s3.put_object(
+        Bucket='files',
+        Key=s3_key,
+        Body=image_data,
+        ContentType='image/jpeg'
+    )
+    
+    # Build CDN URL
+    cdn_url = f'https://cdn.poehali.dev/projects/{aws_access_key}/bucket/{s3_key}'
+    print(f'[S3] Upload complete! CDN URL: {cdn_url}')
+    
+    return cdn_url
+
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -261,27 +310,36 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
                 if task_status == 'COMPLETED' or 'images' in status_data or 'image' in status_data:
                     if 'images' in status_data and len(status_data['images']) > 0:
-                        result_url = status_data['images'][0]['url']
+                        fal_result_url = status_data['images'][0]['url']
                     elif 'image' in status_data:
                         if isinstance(status_data['image'], dict):
-                            result_url = status_data['image']['url']
+                            fal_result_url = status_data['image']['url']
                         else:
-                            result_url = status_data['image']
+                            fal_result_url = status_data['image']
                     else:
                         raise Exception('No image in response')
                     
-                    print(f'[NanoBanana] Task {task_id} completed! Result URL: {result_url}')
+                    print(f'[NanoBanana] Task {task_id} completed! FAL URL: {fal_result_url}')
                     
-                    # Keep original FAL URL (no S3 save here)
+                    # Upload to S3 and get CDN URL
+                    try:
+                        cdn_url = upload_to_s3(fal_result_url, user_id)
+                        print(f'[NanoBanana] Task {task_id} uploaded to S3: {cdn_url}')
+                    except Exception as s3_error:
+                        print(f'[NanoBanana] S3 upload failed for task {task_id}: {s3_error}')
+                        # Fallback to FAL URL if S3 fails
+                        cdn_url = fal_result_url
+                    
+                    # Save CDN URL to DB
                     cursor.execute('''
                         UPDATE nanobananapro_tasks
                         SET status = 'completed',
                             result_url = %s,
                             updated_at = %s
                         WHERE id = %s
-                    ''', (result_url, datetime.utcnow(), task_id))
+                    ''', (cdn_url, datetime.utcnow(), task_id))
                     conn.commit()
-                    print(f'[NanoBanana] Task {task_id} saved to DB as completed')
+                    print(f'[NanoBanana] Task {task_id} saved to DB as completed with CDN URL')
                     
                     # ATOMIC: Mark as "being saved" FIRST to prevent race condition
                     cursor.execute('''

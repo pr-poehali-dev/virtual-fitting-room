@@ -6,7 +6,7 @@ import ImageViewer from '@/components/ImageViewer';
 interface ReplicateResultPanelProps {
   isGenerating: boolean;
   generatedImage: string | null;
-
+  isSavingToS3: boolean;
   handleDownloadImage: () => void;
   setShowSaveDialog: (show: boolean) => void;
   handleReset: () => void;
@@ -15,6 +15,7 @@ interface ReplicateResultPanelProps {
 export default function ReplicateResultPanel({
   isGenerating,
   generatedImage,
+  isSavingToS3,
   handleDownloadImage,
   setShowSaveDialog,
   handleReset
@@ -55,22 +56,36 @@ export default function ReplicateResultPanel({
                 />
               </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <Button onClick={handleDownloadImage} className="flex-1">
-                  <Icon name="Download" className="mr-2" size={16} />
-                  Скачать
-                </Button>
-                <Button variant="outline" onClick={() => setShowSaveDialog(true)} className="flex-1">
-                  <Icon name="BookOpen" className="mr-2" size={16} />
-                  В лукбук
+            {isSavingToS3 ? (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Icon name="Loader2" className="animate-spin text-blue-600" size={20} />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-blue-900">Сохраняем изображение...</p>
+                    <p className="text-xs text-blue-700 mt-1">
+                      Подождите несколько секунд
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <Button onClick={handleDownloadImage} className="flex-1">
+                    <Icon name="Download" className="mr-2" size={16} />
+                    Скачать
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowSaveDialog(true)} className="flex-1">
+                    <Icon name="BookOpen" className="mr-2" size={16} />
+                    В лукбук
+                  </Button>
+                </div>
+                <Button variant="ghost" onClick={handleReset} className="w-full">
+                  <Icon name="RotateCcw" className="mr-2" size={16} />
+                  Новая примерка
                 </Button>
               </div>
-              <Button variant="ghost" onClick={handleReset} className="w-full">
-                <Icon name="RotateCcw" className="mr-2" size={16} />
-                Новая примерка
-              </Button>
-            </div>
+            )}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-[500px] text-center space-y-4">

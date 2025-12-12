@@ -109,6 +109,7 @@ export default function ReplicateTryOn() {
   const [customPrompt, setCustomPrompt] = useState<string>('');
   const [showCategoryError, setShowCategoryError] = useState(false);
   const isNanoBananaRequestInProgress = useRef(false);
+  const [isSavingToS3, setIsSavingToS3] = useState(false);
 
 
   useEffect(() => {
@@ -565,13 +566,23 @@ export default function ReplicateTryOn() {
           setGenerationStatus('Обрабатывается...');
         } else if (data.status === 'completed') {
           console.log('[NanoBananaPro] COMPLETED! Result URL:', data.result_url);
-          const proxiedUrl = await proxyFalImage(data.result_url);
-          setGeneratedImage(proxiedUrl);
-          setIsGenerating(false);
-          setGenerationStatus('');
-          clearInterval(interval);
-          setPollingInterval(null);
-          toast.success('Образ готов!');
+          
+          // Check if it's CDN URL (S3 upload completed)
+          if (data.result_url.includes('cdn.poehali.dev')) {
+            console.log('[NanoBananaPro] CDN URL detected, S3 upload complete!');
+            setGeneratedImage(data.result_url);
+            setIsGenerating(false);
+            setIsSavingToS3(false);
+            setGenerationStatus('');
+            clearInterval(interval);
+            setPollingInterval(null);
+            toast.success('Образ готов!');
+          } else {
+            // Still uploading to S3, continue polling
+            console.log('[NanoBananaPro] FAL URL detected, waiting for S3 upload...');
+            setGenerationStatus('Сохраняем изображение...');
+            setIsSavingToS3(true);
+          }
         } else if (data.status === 'failed') {
           console.error('[NanoBananaPro] FAILED:', data.error_message);
           setIsGenerating(false);
@@ -607,6 +618,7 @@ export default function ReplicateTryOn() {
     setTaskId(null);
     setIsGenerating(false);
     setGenerationStatus('');
+    setIsSavingToS3(false);
   };
 
   const handleSaveToExistingLookbook = async () => {
@@ -840,6 +852,7 @@ export default function ReplicateTryOn() {
             <ReplicateResultPanel
               isGenerating={isGenerating}
               generatedImage={generatedImage}
+              isSavingToS3={isSavingToS3}
               handleDownloadImage={handleDownloadImage}
               setShowSaveDialog={setShowSaveDialog}
               handleReset={handleReset}
