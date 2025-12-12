@@ -380,8 +380,15 @@ export default function ProfileLookbooks() {
           <div className="flex-1">
             <div className="flex justify-between items-center mb-8">
               <div>
-                <h1 className="text-3xl font-bold mb-2">Лукбуки</h1>
-                <p className="text-muted-foreground">Управляйте своими лукбуками</p>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl font-bold">Лукбуки</h1>
+                  {!isLoading && lookbooks.length > 0 && (
+                    <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                      {lookbooks.length}
+                    </span>
+                  )}
+                </div>
+                <p className="text-muted-foreground mt-2">Управляйте своими лукбуками</p>
               </div>
               <Dialog open={isCreatingLookbook} onOpenChange={setIsCreatingLookbook}>
                 <DialogTrigger asChild>
