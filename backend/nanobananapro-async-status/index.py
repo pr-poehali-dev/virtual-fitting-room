@@ -117,26 +117,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 print(f'[Status] fal.ai status: {fal_status}')
                 
                 if fal_status == 'COMPLETED' or 'images' in fal_data or 'image' in fal_data:
-                    if 'images' in fal_data and len(fal_data['images']) > 0:
-                        new_result_url = fal_data['images'][0]['url']
-                    elif 'image' in fal_data:
-                        if isinstance(fal_data['image'], dict):
-                            new_result_url = fal_data['image']['url']
-                        else:
-                            new_result_url = fal_data['image']
-                    else:
-                        raise Exception('No image in response')
-                    
-                    print(f'[Status] Task completed! Updating DB with result: {new_result_url}')
-                    cursor.execute('''
-                        UPDATE nanobananapro_tasks
-                        SET status = 'completed', result_url = %s, updated_at = %s
-                        WHERE id = %s
-                    ''', (new_result_url, datetime.utcnow(), task_id))
-                    conn.commit()
-                    
-                    status = 'completed'
-                    result_url = new_result_url
+                    # DON'T update DB here - let worker do S3 upload and update
+                    # Just return current status from DB (worker will update soon)
+                    print(f'[Status] Task completed on fal.ai, worker will handle S3 upload')
+                    # Status stays 'processing' until worker updates with CDN URL
                     
                 elif fal_status in ['FAILED', 'EXPIRED']:
                     error_msg = fal_data.get('error', 'Generation failed')
