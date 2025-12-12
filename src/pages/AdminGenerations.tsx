@@ -35,6 +35,8 @@ export default function AdminGenerations() {
   const [genUserFilter, setGenUserFilter] = useState<string>('all');
   const [genModelFilter, setGenModelFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     const adminAuth = sessionStorage.getItem('admin_auth');
@@ -84,6 +86,7 @@ export default function AdminGenerations() {
       if (response.ok) {
         const data = await response.json();
         setGenerationHistory(data);
+        setCurrentPage(1);
       } else {
         toast.error('Ошибка загрузки истории генераций');
       }
@@ -159,6 +162,33 @@ export default function AdminGenerations() {
               </CardContent>
             </Card>
 
+            <div className="mb-6 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Показано {Math.min((currentPage - 1) * itemsPerPage + 1, generationHistory.length)}-{Math.min(currentPage * itemsPerPage, generationHistory.length)} из {generationHistory.length}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100"
+                >
+                  <Icon name="ChevronLeft" size={16} className="inline" />
+                  Назад
+                </button>
+                <span className="text-sm">
+                  Страница {currentPage} из {Math.ceil(generationHistory.length / itemsPerPage)}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(generationHistory.length / itemsPerPage), prev + 1))}
+                  disabled={currentPage >= Math.ceil(generationHistory.length / itemsPerPage)}
+                  className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100"
+                >
+                  Вперёд
+                  <Icon name="ChevronRight" size={16} className="inline" />
+                </button>
+              </div>
+            </div>
+
             <Card>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
@@ -175,7 +205,7 @@ export default function AdminGenerations() {
                       </tr>
                     </thead>
                     <tbody>
-                      {generationHistory.map((gen) => (
+                      {generationHistory.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((gen) => (
                         <tr key={gen.id} className="border-b hover:bg-gray-50">
                           <td className="px-4 py-3">
                             <img 
