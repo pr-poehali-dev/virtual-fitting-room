@@ -393,7 +393,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             
                             if task_data:
                                 garments_list = json.loads(task_data[1]) if isinstance(task_data[1], str) else task_data[1]
-                                print(f'[NanoBanana] Calling history API with user_id={user_id}, cdn_url={cdn_url[:50]}...')
+                                print(f'[NanoBanana] Calling history API with user_id={user_id}, result_url={result_url[:50]}...')
                                 
                                 history_response = requests.post(
                                     'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd',
@@ -401,7 +401,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                     json={
                                         'person_image': task_data[0],
                                         'garments': garments_list,
-                                        'result_image': cdn_url,
+                                        'result_image': result_url,
                                         'model_used': 'nanobananapro',
                                         'cost': 0
                                     },
