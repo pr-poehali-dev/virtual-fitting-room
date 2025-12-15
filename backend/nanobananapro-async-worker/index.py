@@ -399,13 +399,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 else:
                     print(f'[NanoBanana] Error checking task {task_id}: {error_str}')
         
-        # Check if we have unfinished tasks before closing
+        # Check if we have RECENT unfinished tasks (not older than 10 minutes)
         cursor.execute('''
             SELECT COUNT(*) FROM nanobananapro_tasks 
             WHERE (
                 (status = 'processing' AND fal_response_url IS NOT NULL)
                 OR (status = 'completed' AND result_url LIKE '%fal.%')
             )
+            AND created_at > NOW() - INTERVAL '10 minutes'
         ''')
         processing_count = cursor.fetchone()[0]
         
@@ -413,7 +414,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn.close()
         
         if processing_count > 0:
-            print(f'[NanoBanana] Still have {processing_count} processing tasks, triggering next check')
+            print(f'[NanoBanana] Still have {processing_count} RECENT processing tasks (< 10 min), triggering next check')
             try:
                 import urllib.request
                 worker_url = 'https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d'
@@ -421,6 +422,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 urllib.request.urlopen(req, timeout=1)
             except:
                 pass
+        else:
+            print(f'[NanoBanana] No recent processing tasks, worker cycle stopped')
         
         return {
             'statusCode': 200,
