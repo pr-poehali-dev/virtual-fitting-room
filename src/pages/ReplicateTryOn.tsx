@@ -604,7 +604,7 @@ export default function ReplicateTryOn() {
       } catch (error: any) {
         console.error('[NanoBananaPro] Polling error:', error);
       }
-    }, 3000);
+    }, 30000);
 
     setPollingInterval(interval);
   };
