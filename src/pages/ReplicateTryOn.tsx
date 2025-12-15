@@ -758,32 +758,38 @@ export default function ReplicateTryOn() {
     }
   };
 
-  const handleDownloadImage = () => {
+  const handleDownloadImage = async () => {
     if (!generatedImage) return;
 
     try {
-      // If it's a base64 data URL, download directly
+      let blob: Blob;
+      
+      // If it's a base64 data URL, convert to blob
       if (generatedImage.startsWith('data:')) {
-        const link = document.createElement('a');
-        link.href = generatedImage;
-        link.download = `fitting-room-${Date.now()}.jpg`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('Изображение скачано!');
+        const response = await fetch(generatedImage);
+        blob = await response.blob();
       } else {
-        // Otherwise proxy it
-        const proxyUrl = `${IMAGE_PROXY_API}?url=${encodeURIComponent(generatedImage)}`;
-        const link = document.createElement('a');
-        link.href = proxyUrl;
-        link.download = `fitting-room-${Date.now()}.jpg`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('Изображение скачано!');
+        // For CDN URLs, fetch directly (CORS should work for our CDN)
+        const response = await fetch(generatedImage);
+        blob = await response.blob();
       }
+      
+      // Create download link with blob URL
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `fitting-room-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up blob URL
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      
+      toast.success('Изображение скачано!');
     } catch (error) {
-      toast.error('Ошибка скачивания');
+      console.error('Download error:', error);
+      toast.error('Ошибка скачивания. Попробуйте ещё раз');
     }
   };
 
