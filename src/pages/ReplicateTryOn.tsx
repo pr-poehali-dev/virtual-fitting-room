@@ -57,6 +57,8 @@ const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc05
 const NANOBANANAPRO_START_API = 'https://functions.poehali.dev/aac1d5d8-c9bd-43c6-822e-857c18f3c1f8';
 const NANOBANANAPRO_STATUS_API = 'https://functions.poehali.dev/6d603f3d-bbe3-450d-863a-63d513ad5ba7';
 const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
+const SAVE_IMAGE_FTP_API = 'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8';
+const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
 
 // Helper function to proxy fal.ai images through our backend
 const proxyFalImage = async (falUrl: string): Promise<string> => {
@@ -578,11 +580,12 @@ export default function ReplicateTryOn() {
           
           setGeneratedImage(displayUrl);
           setIsGenerating(false);
-          setIsSavingToS3(false);
           setGenerationStatus('');
           clearInterval(interval);
           setPollingInterval(null);
           toast.success('Образ готов!');
+          
+          saveToS3AndHistory(displayUrl);
         } else if (data.status === 'failed') {
           console.error('[NanoBananaPro] FAILED:', data.error_message);
           setIsGenerating(false);
@@ -604,6 +607,70 @@ export default function ReplicateTryOn() {
     }, 3000);
 
     setPollingInterval(interval);
+  };
+
+  const saveToS3AndHistory = async (displayUrl: string) => {
+    if (!user || !uploadedImage) {
+      console.error('[SaveToS3] Missing user or uploadedImage');
+      return;
+    }
+
+    try {
+      setIsSavingToS3(true);
+      console.log('[SaveToS3] Starting save to S3...');
+
+      const s3Response = await fetch(SAVE_IMAGE_FTP_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image_url: displayUrl,
+          folder: 'lookbooks',
+          user_id: user.id,
+          prefix: 'fitting'
+        })
+      });
+
+      if (!s3Response.ok) {
+        throw new Error('Failed to save to S3');
+      }
+
+      const s3Data = await s3Response.json();
+      const cdnUrl = s3Data.url;
+      console.log('[SaveToS3] Saved to S3, CDN URL:', cdnUrl);
+
+      const historyResponse = await fetch(HISTORY_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.id
+        },
+        body: JSON.stringify({
+          person_image: uploadedImage,
+          result_image: cdnUrl,
+          garments: selectedClothingItems.map(item => ({
+            image: item.image,
+            category: item.category,
+            name: item.name
+          })),
+          model_used: 'nanobananapro',
+          cost: selectedClothingItems.length
+        })
+      });
+
+      if (!historyResponse.ok) {
+        throw new Error('Failed to save to history');
+      }
+
+      console.log('[SaveToS3] Saved to history successfully');
+      setIsSavingToS3(false);
+      toast.success('Образ сохранён в историю!');
+    } catch (error: any) {
+      console.error('[SaveToS3] Error:', error);
+      toast.error('Ошибка сохранения в историю');
+      setIsSavingToS3(false);
+    }
   };
 
   const handleReset = () => {
