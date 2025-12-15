@@ -413,17 +413,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor.close()
         conn.close()
         
-        if processing_count > 0:
-            print(f'[NanoBanana] Still have {processing_count} RECENT processing tasks (< 5 min), triggering next check')
-            try:
-                import urllib.request
-                worker_url = 'https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d'
-                req = urllib.request.Request(worker_url, method='GET')
-                urllib.request.urlopen(req, timeout=1)
-            except:
-                pass
-        else:
-            print(f'[NanoBanana] No recent processing tasks, worker cycle stopped')
+        # Worker no longer triggers itself - frontend polling handles it
+        # This prevents excessive worker calls (was 17+ per generation, now will be ~3)
+        print(f'[NanoBanana] Worker cycle completed. Processing tasks: {processing_count}. Frontend will continue polling.')
         
         return {
             'statusCode': 200,
