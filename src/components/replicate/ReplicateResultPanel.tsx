@@ -6,7 +6,6 @@ import ImageViewer from '@/components/ImageViewer';
 interface ReplicateResultPanelProps {
   isGenerating: boolean;
   generatedImage: string | null;
-  isSavingToS3: boolean;
   handleDownloadImage: () => void;
   setShowSaveDialog: (show: boolean) => void;
   handleReset: () => void;
@@ -15,7 +14,6 @@ interface ReplicateResultPanelProps {
 export default function ReplicateResultPanel({
   isGenerating,
   generatedImage,
-  isSavingToS3,
   handleDownloadImage,
   setShowSaveDialog,
   handleReset
@@ -60,14 +58,6 @@ export default function ReplicateResultPanel({
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              {isSavingToS3 && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Icon name="Loader2" className="animate-spin text-blue-600" size={16} />
-                    <p className="text-sm font-medium text-blue-900">Сохраняем в историю...</p>
-                  </div>
-                </div>
-              )}
               <div className="flex gap-2">
                 <Button onClick={handleDownloadImage} className="flex-1">
                   <Icon name="Download" className="mr-2" size={16} />
@@ -77,7 +67,6 @@ export default function ReplicateResultPanel({
                   variant="outline" 
                   onClick={() => setShowSaveDialog(true)} 
                   className="flex-1"
-                  disabled={isSavingToS3}
                 >
                   <Icon name="BookOpen" className="mr-2" size={16} />
                   В лукбук
@@ -87,7 +76,6 @@ export default function ReplicateResultPanel({
                 variant="ghost" 
                 onClick={handleReset} 
                 className="w-full"
-                disabled={isSavingToS3}
               >
                 <Icon name="RotateCcw" className="mr-2" size={16} />
                 Новая примерка

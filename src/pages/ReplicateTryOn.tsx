@@ -113,8 +113,6 @@ export default function ReplicateTryOn() {
   const [customPrompt, setCustomPrompt] = useState<string>('');
   const [showCategoryError, setShowCategoryError] = useState(false);
   const isNanoBananaRequestInProgress = useRef(false);
-  const [isSavingToS3, setIsSavingToS3] = useState(false);
-  const [savedHistoryCdnUrl, setSavedHistoryCdnUrl] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -653,78 +651,7 @@ export default function ReplicateTryOn() {
     setPollingInterval(interval);
   };
 
-  const saveToS3AndHistory = async (displayUrl: string) => {
-    if (!user || !uploadedImage) {
-      console.error('[SaveToS3] Missing user or uploadedImage');
-      return;
-    }
-
-    try {
-      setIsSavingToS3(true);
-      console.log('[SaveToS3] Starting save to S3...');
-
-      const s3Response = await fetch(SAVE_IMAGE_FTP_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          image_url: displayUrl,
-          folder: 'lookbooks',
-          user_id: user.id,
-          prefix: 'fitting'
-        })
-      });
-
-      if (!s3Response.ok) {
-        throw new Error('Failed to save to S3');
-      }
-
-      const s3Data = await s3Response.json();
-      const cdnUrl = s3Data.url;
-      console.log('[SaveToS3] Saved to S3, CDN URL:', cdnUrl);
-
-      const historyResponse = await fetch(DB_QUERY_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
-        },
-        body: JSON.stringify({
-          table: 'try_on_history',
-          action: 'insert',
-          data: {
-            user_id: user.id,
-            person_image: uploadedImage,
-            garment_image: selectedClothingItems[0]?.image || '',
-            result_image: cdnUrl,
-            garments: JSON.stringify(selectedClothingItems.map(item => ({
-              image: item.image,
-              category: item.category,
-              name: item.name
-            }))),
-            model_used: 'nanobananapro',
-            cost: selectedClothingItems.length,
-            saved_to_lookbook: false
-          }
-        })
-      });
-
-      if (!historyResponse.ok) {
-        throw new Error('Failed to save to history');
-      }
-
-      const historyData = await historyResponse.json();
-      console.log('[SaveToS3] Saved to history successfully, CDN URL:', cdnUrl);
-      setSavedHistoryCdnUrl(cdnUrl);
-      setIsSavingToS3(false);
-      toast.success('Образ сохранён в историю!');
-    } catch (error: any) {
-      console.error('[SaveToS3] Error:', error);
-      toast.error('Ошибка сохранения в историю');
-      setIsSavingToS3(false);
-    }
-  };
+  // Worker сам сохраняет в S3 и историю - эта функция больше не нужна
 
   const handleReset = () => {
     if (pollingInterval) {
@@ -738,22 +665,21 @@ export default function ReplicateTryOn() {
     setTaskId(null);
     setIsGenerating(false);
     setGenerationStatus('');
-    setIsSavingToS3(false);
-    setSavedHistoryCdnUrl(null);
   };
 
   const handleSaveToExistingLookbook = async () => {
     if (!selectedLookbookId || !user) return;
 
-    if (!savedHistoryCdnUrl) {
-      toast.error('Дождитесь сохранения в историю');
+    // Worker уже сохранил в историю, можно сразу добавлять в лукбук
+    if (!generatedImage) {
+      toast.error('Нет изображения для сохранения');
       return;
     }
 
     setIsSaving(true);
     try {
       const lookbook = lookbooks.find(lb => lb.id === selectedLookbookId);
-      const updatedPhotos = [...(lookbook?.photos || []), savedHistoryCdnUrl];
+      const updatedPhotos = [...(lookbook?.photos || []), generatedImage];
 
       const response = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
         method: 'PUT',
@@ -785,8 +711,9 @@ export default function ReplicateTryOn() {
   const handleSaveToNewLookbook = async () => {
     if (!newLookbookName || !newLookbookPersonName || !user) return;
 
-    if (!savedHistoryCdnUrl) {
-      toast.error('Дождитесь сохранения в историю');
+    // Worker уже сохранил в историю, можно сразу добавлять в лукбук
+    if (!generatedImage) {
+      toast.error('Нет изображения для сохранения');
       return;
     }
 
@@ -801,7 +728,7 @@ export default function ReplicateTryOn() {
         body: JSON.stringify({
           name: newLookbookName,
           person_name: newLookbookPersonName,
-          photos: [savedHistoryCdnUrl],
+          photos: [generatedImage],
           color_palette: []
         })
       });
@@ -1000,7 +927,6 @@ export default function ReplicateTryOn() {
             <ReplicateResultPanel
               isGenerating={isGenerating}
               generatedImage={generatedImage}
-              isSavingToS3={isSavingToS3}
               handleDownloadImage={handleDownloadImage}
               setShowSaveDialog={setShowSaveDialog}
               handleReset={handleReset}
