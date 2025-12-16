@@ -544,7 +544,8 @@ export default function ReplicateTryOn() {
     const interval = setInterval(async () => {
       try {
         checkCount++;
-        const forceCheck = checkCount % 2 === 0;
+        // Вызываем воркер каждый раз (т.к. интервал теперь 45 секунд)
+        const triggerWorker = true;
         
         const elapsedTime = Date.now() - startTime;
         if (elapsedTime > TIMEOUT_MS) {
@@ -585,10 +586,10 @@ export default function ReplicateTryOn() {
           console.error('[NanoBananaPro] Task not found in DB');
           return;
         }
-        console.log('[NanoBananaPro] Status check result:', data, forceCheck ? '(force checked)' : '');
+        console.log('[NanoBananaPro] Status check result:', data);
         
-        // Вызываем воркер каждый второй раз для проверки fal.ai
-        if (data.status === 'processing' && forceCheck) {
+        // Вызываем воркер каждый раз для проверки fal.ai (интервал 45 секунд)
+        if (data.status === 'processing' && triggerWorker) {
           console.log('[NanoBananaPro] Triggering worker to check fal.ai status');
           fetch(NANOBANANAPRO_WORKER_API).catch(err => {
             console.log('[NanoBananaPro] Worker trigger failed (non-critical):', err);
@@ -638,7 +639,7 @@ export default function ReplicateTryOn() {
       } catch (error: any) {
         console.error('[NanoBananaPro] Polling error:', error);
       }
-    }, 30000);
+    }, 45000); // Проверяем каждые 45 секунд
 
     setPollingInterval(interval);
   };
@@ -816,8 +817,19 @@ export default function ReplicateTryOn() {
         const response = await fetch(generatedImage);
         blob = await response.blob();
       } else {
-        // For CDN URLs, fetch directly (CORS should work for our CDN)
-        const response = await fetch(generatedImage);
+        // For Yandex Cloud URLs, use image proxy to bypass CORS
+        console.log('[Download] Using image proxy for Yandex Cloud URL');
+        const proxyResponse = await fetch(`${IMAGE_PROXY_API}?url=${encodeURIComponent(generatedImage)}`);
+        
+        if (!proxyResponse.ok) {
+          throw new Error('Failed to proxy image for download');
+        }
+        
+        const proxyData = await proxyResponse.json();
+        const dataUrl = proxyData.data_url;
+        
+        // Convert base64 data URL to blob
+        const response = await fetch(dataUrl);
         blob = await response.blob();
       }
       
