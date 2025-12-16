@@ -587,6 +587,14 @@ export default function ReplicateTryOn() {
         }
         console.log('[NanoBananaPro] Status check result:', data, forceCheck ? '(force checked)' : '');
         
+        // Вызываем воркер каждый второй раз для проверки fal.ai
+        if (data.status === 'processing' && forceCheck) {
+          console.log('[NanoBananaPro] Triggering worker to check fal.ai status');
+          fetch(NANOBANANAPRO_WORKER_API).catch(err => {
+            console.log('[NanoBananaPro] Worker trigger failed (non-critical):', err);
+          });
+        }
+        
         if (data.status === 'pending') {
           setGenerationStatus('В очереди...');
         } else if (data.status === 'processing') {

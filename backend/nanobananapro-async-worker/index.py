@@ -201,7 +201,7 @@ def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garment
         }
         
         cursor.execute('''
-            INSERT INTO try_on_history 
+            INSERT INTO t_p29007832_virtual_fitting_room.try_on_history 
             (user_id, result_url, try_on_data, created_at)
             VALUES (%s, %s, %s, %s)
         ''', (
