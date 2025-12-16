@@ -27,8 +27,7 @@ interface HistoryTabProps {
   userId: string;
 }
 
-const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
-const LOOKBOOKS_API = 'https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b';
+const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
 
 const ITEMS_PER_PAGE = 30;
 
@@ -50,18 +49,27 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
   const fetchHistory = async () => {
     try {
       console.log('[HistoryTab] Fetching history with userId:', userId);
-      const response = await fetch(HISTORY_API, {
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'X-User-Id': userId
-        }
+        },
+        body: JSON.stringify({
+          table: 'try_on_history',
+          action: 'select',
+          where: { user_id: userId },
+          order_by: 'created_at DESC',
+          limit: 300
+        })
       });
       
       console.log('[HistoryTab] Response status:', response.status);
       
       if (response.ok) {
-        const data = await response.json();
-        console.log('[HistoryTab] Received data:', data);
-        setHistory(Array.isArray(data) ? data : []);
+        const result = await response.json();
+        console.log('[HistoryTab] Received data:', result);
+        setHistory(result.success && Array.isArray(result.data) ? result.data : []);
       } else {
         const errorData = await response.json();
         console.error('[HistoryTab] Error response:', errorData);
@@ -77,15 +85,24 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
 
   const fetchLookbooks = async () => {
     try {
-      const response = await fetch(LOOKBOOKS_API, {
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'X-User-Id': userId
-        }
+        },
+        body: JSON.stringify({
+          table: 'lookbooks',
+          action: 'select',
+          where: { user_id: userId },
+          order_by: 'created_at DESC',
+          limit: 100
+        })
       });
       
       if (response.ok) {
-        const data = await response.json();
-        setLookbooks(Array.isArray(data) ? data : []);
+        const result = await response.json();
+        setLookbooks(result.success && Array.isArray(result.data) ? result.data : []);
       }
     } catch (error) {
       console.error('Failed to fetch lookbooks:', error);
@@ -140,15 +157,17 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
 
       const updatedPhotos = [...lookbook.photos, ...selectedPhotos];
 
-      const response = await fetch(LOOKBOOKS_API, {
-        method: 'PUT',
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-User-Id': userId
         },
         body: JSON.stringify({
-          id: selectedLookbookId,
-          photos: updatedPhotos
+          table: 'lookbooks',
+          action: 'update',
+          where: { id: selectedLookbookId },
+          data: { photos: updatedPhotos }
         })
       });
 
@@ -172,11 +191,17 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
     if (!confirm('Удалить это фото из истории?')) return;
 
     try {
-      const response = await fetch(`${HISTORY_API}?id=${id}`, {
-        method: 'DELETE',
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'X-User-Id': userId
-        }
+        },
+        body: JSON.stringify({
+          table: 'try_on_history',
+          action: 'delete',
+          where: { id }
+        })
       });
 
       if (response.ok) {
@@ -199,11 +224,17 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
 
     try {
       const deletePromises = selectedItems.map(id => 
-        fetch(`${HISTORY_API}?id=${id}`, {
-          method: 'DELETE',
+        fetch(DB_QUERY_API, {
+          method: 'POST',
           headers: {
+            'Content-Type': 'application/json',
             'X-User-Id': userId
-          }
+          },
+          body: JSON.stringify({
+            table: 'try_on_history',
+            action: 'delete',
+            where: { id }
+          })
         })
       );
 

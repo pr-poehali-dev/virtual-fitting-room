@@ -25,7 +25,7 @@ interface Lookbook {
   updated_at: string;
 }
 
-const LOOKBOOKS_API = 'https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b';
+const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
 const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
 
 export default function ProfileLookbooks() {
@@ -72,12 +72,22 @@ export default function ProfileLookbooks() {
 
   const fetchLookbooks = async () => {
     try {
-      const response = await fetch(LOOKBOOKS_API, {
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'X-User-Id': user?.id || ''
-        }
+        },
+        body: JSON.stringify({
+          table: 'lookbooks',
+          action: 'select',
+          where: { user_id: user?.id || '' },
+          order_by: 'created_at DESC',
+          limit: 100
+        })
       });
-      const data = await response.json();
+      const result = await response.json();
+      const data = result.success && Array.isArray(result.data) ? result.data : [];
       setLookbooks(Array.isArray(data) ? data : []);
     } catch (error) {
       toast.error('Ошибка загрузки лукбуков');
@@ -116,17 +126,22 @@ export default function ProfileLookbooks() {
     }
 
     try {
-      const response = await fetch(LOOKBOOKS_API, {
+      const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-User-Id': user.id
         },
         body: JSON.stringify({
-          name: newLookbookName,
-          person_name: newPersonName,
-          photos: selectedPhotos,
-          color_palette: colorPalette
+          table: 'lookbooks',
+          action: 'insert',
+          data: {
+            user_id: user.id,
+            name: newLookbookName,
+            person_name: newPersonName,
+            photos: selectedPhotos,
+            color_palette: colorPalette
+          }
         })
       });
 
@@ -160,18 +175,22 @@ export default function ProfileLookbooks() {
     if (!editingLookbookId) return;
 
     try {
-      const response = await fetch(LOOKBOOKS_API, {
-        method: 'PUT',
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-User-Id': user.id
         },
         body: JSON.stringify({
-          id: editingLookbookId,
-          name: newLookbookName,
-          person_name: newPersonName,
-          photos: selectedPhotos,
-          color_palette: colorPalette
+          table: 'lookbooks',
+          action: 'update',
+          where: { id: editingLookbookId },
+          data: {
+            name: newLookbookName,
+            person_name: newPersonName,
+            photos: selectedPhotos,
+            color_palette: colorPalette
+          }
         })
       });
 
@@ -203,11 +222,17 @@ export default function ProfileLookbooks() {
     if (!confirm('Удалить лукбук?\n\nВсе фото из лукбука также будут удалены из хранилища.')) return;
 
     try {
-      const response = await fetch(`${LOOKBOOKS_API}?id=${id}`, {
-        method: 'DELETE',
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'X-User-Id': user.id
-        }
+        },
+        body: JSON.stringify({
+          table: 'lookbooks',
+          action: 'delete',
+          where: { id }
+        })
       });
 
       if (!response.ok) throw new Error('Failed to delete lookbook');
@@ -229,15 +254,17 @@ export default function ProfileLookbooks() {
       const photosToMove = selectedPhotoIndexes.map(idx => selectedPhotos[idx]);
       const updatedPhotos = [...targetLookbook.photos, ...photosToMove];
 
-      const response = await fetch(LOOKBOOKS_API, {
-        method: 'PUT',
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-User-Id': user.id
         },
         body: JSON.stringify({
-          id: targetLookbookId,
-          photos: updatedPhotos
+          table: 'lookbooks',
+          action: 'update',
+          where: { id: targetLookbookId },
+          data: { photos: updatedPhotos }
         })
       });
 

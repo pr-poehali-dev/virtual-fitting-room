@@ -60,7 +60,7 @@ const NANOBANANAPRO_WORKER_API = 'https://functions.poehali.dev/1f4c772e-0425-4f
 const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
 const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
 const SAVE_IMAGE_FTP_API = 'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8';
-const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
+
 
 // Helper function to proxy fal.ai images through our backend
 const proxyFalImage = async (falUrl: string): Promise<string> => {
@@ -187,15 +187,24 @@ export default function ReplicateTryOn() {
     if (!user) return;
     
     try {
-      const response = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'X-User-Id': user.id
-        }
+        },
+        body: JSON.stringify({
+          table: 'lookbooks',
+          action: 'select',
+          where: { user_id: user.id },
+          order_by: 'created_at DESC',
+          limit: 100
+        })
       });
       
       if (response.ok) {
-        const data = await response.json();
-        setLookbooks(data);
+        const result = await response.json();
+        setLookbooks(result.success && Array.isArray(result.data) ? result.data : []);
       }
     } catch (error) {
       console.error('Failed to fetch lookbooks:', error);
@@ -675,22 +684,29 @@ export default function ReplicateTryOn() {
       const cdnUrl = s3Data.url;
       console.log('[SaveToS3] Saved to S3, CDN URL:', cdnUrl);
 
-      const historyResponse = await fetch(HISTORY_API, {
+      const historyResponse = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-User-Id': user.id
         },
         body: JSON.stringify({
-          person_image: uploadedImage,
-          result_image: cdnUrl,
-          garments: selectedClothingItems.map(item => ({
-            image: item.image,
-            category: item.category,
-            name: item.name
-          })),
-          model_used: 'nanobananapro',
-          cost: selectedClothingItems.length
+          table: 'try_on_history',
+          action: 'insert',
+          data: {
+            user_id: user.id,
+            person_image: uploadedImage,
+            garment_image: selectedClothingItems[0]?.image || '',
+            result_image: cdnUrl,
+            garments: JSON.stringify(selectedClothingItems.map(item => ({
+              image: item.image,
+              category: item.category,
+              name: item.name
+            }))),
+            model_used: 'nanobananapro',
+            cost: selectedClothingItems.length,
+            saved_to_lookbook: false
+          }
         })
       });
 

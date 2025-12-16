@@ -30,8 +30,7 @@ interface Lookbook {
 
 
 
-const LOOKBOOKS_API = 'https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b';
-const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
+const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
 const CHANGE_PASSWORD_API = 'https://functions.poehali.dev/98400760-4d03-4ca8-88ab-753fde19ef83';
 const UPDATE_PROFILE_API = 'https://functions.poehali.dev/efb92b0f-c34a-4b12-ad41-744260d1173a';
 const DELETE_ACCOUNT_API = 'https://functions.poehali.dev/d8626da4-6372-40c1-abba-d4ffdc89c7c4';
@@ -103,13 +102,22 @@ export default function Profile() {
 
   const fetchLookbooks = async () => {
     try {
-      const response = await fetch(LOOKBOOKS_API, {
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'X-User-Id': user?.id || ''
-        }
+        },
+        body: JSON.stringify({
+          table: 'lookbooks',
+          action: 'select',
+          where: { user_id: user?.id || '' },
+          order_by: 'created_at DESC',
+          limit: 100
+        })
       });
-      const data = await response.json();
-      setLookbooks(Array.isArray(data) ? data : []);
+      const result = await response.json();
+      setLookbooks(result.success && Array.isArray(result.data) ? result.data : []);
     } catch (error) {
       toast.error('Ошибка загрузки лукбуков');
       setLookbooks([]);
@@ -140,17 +148,22 @@ export default function Profile() {
     }
 
     try {
-      const response = await fetch(LOOKBOOKS_API, {
+      const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-User-Id': user.id
         },
         body: JSON.stringify({
-          name: newLookbookName,
-          person_name: newPersonName,
-          photos: selectedPhotos,
-          color_palette: colorPalette
+          table: 'lookbooks',
+          action: 'insert',
+          data: {
+            user_id: user.id,
+            name: newLookbookName,
+            person_name: newPersonName,
+            photos: selectedPhotos,
+            color_palette: colorPalette
+          }
         })
       });
 
@@ -188,18 +201,22 @@ export default function Profile() {
     if (!editingLookbookId) return;
 
     try {
-      const response = await fetch(LOOKBOOKS_API, {
-        method: 'PUT',
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-User-Id': user.id
         },
         body: JSON.stringify({
-          id: editingLookbookId,
-          name: newLookbookName,
-          person_name: newPersonName,
-          photos: selectedPhotos,
-          color_palette: colorPalette
+          table: 'lookbooks',
+          action: 'update',
+          where: { id: editingLookbookId },
+          data: {
+            name: newLookbookName,
+            person_name: newPersonName,
+            photos: selectedPhotos,
+            color_palette: colorPalette
+          }
         })
       });
 
@@ -233,11 +250,17 @@ export default function Profile() {
     if (!confirm('Удалить лукбук?\n\nВсе фото из лукбука также будут удалены из хранилища.')) return;
 
     try {
-      const response = await fetch(`${LOOKBOOKS_API}?id=${id}`, {
-        method: 'DELETE',
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'X-User-Id': user.id
-        }
+        },
+        body: JSON.stringify({
+          table: 'lookbooks',
+          action: 'delete',
+          where: { id }
+        })
       });
 
       if (!response.ok) throw new Error('Failed to delete lookbook');

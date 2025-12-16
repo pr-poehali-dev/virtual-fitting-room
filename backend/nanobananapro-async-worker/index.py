@@ -199,13 +199,17 @@ def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garment
         # Calculate cost based on number of garments
         cost = len(garments)
         
+        # Extract first garment image for garment_image column
+        garment_image = garments[0]['image'] if garments and len(garments) > 0 else ''
+        
         cursor.execute('''
             INSERT INTO t_p29007832_virtual_fitting_room.try_on_history 
-            (user_id, person_image, result_image, garments, model_used, cost, created_at, saved_to_lookbook)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            (user_id, person_image, garment_image, result_image, garments, model_used, cost, created_at, saved_to_lookbook)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', (
             user_id,
             person_image,
+            garment_image,
             cdn_url,
             garments_json,
             'nanobananapro',
