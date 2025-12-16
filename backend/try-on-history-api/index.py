@@ -257,8 +257,37 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             conn.commit()
             
-            # No S3 deletion - images from Replicate/FAL are kept on their servers
-            # Only images saved to lookbooks will be in S3
+            # Delete from S3 if photo is NOT in any lookbook
+            # (If it's in at least one lookbook, keep it in S3)
+            if lookbook_count == 0:
+                s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
+                s3_url_prefix = f'https://{s3_bucket_name}.storage.yandexcloud.net/'
+                
+                # Only delete if it's our Yandex.Cloud URL
+                if result_image_url.startswith(s3_url_prefix):
+                    try:
+                        s3_key = result_image_url.replace(s3_url_prefix, '')
+                        
+                        s3_client = boto3.client(
+                            's3',
+                            endpoint_url='https://storage.yandexcloud.net',
+                            aws_access_key_id=os.environ.get('S3_ACCESS_KEY'),
+                            aws_secret_access_key=os.environ.get('S3_SECRET_KEY'),
+                            region_name='ru-central1',
+                            config=Config(signature_version='s3v4')
+                        )
+                        
+                        s3_client.delete_object(
+                            Bucket=s3_bucket_name,
+                            Key=s3_key
+                        )
+                        print(f'[HistoryDelete] Deleted from S3 (not in any lookbook): {s3_key}')
+                    except Exception as e:
+                        print(f'[HistoryDelete] Failed to delete from S3: {e}')
+                else:
+                    print(f'[HistoryDelete] Skipping S3 delete - not a Yandex.Cloud URL: {result_image_url[:100]}')
+            else:
+                print(f'[HistoryDelete] Skipping S3 delete - photo exists in {lookbook_count} lookbook(s)')
             
             return {
                 'statusCode': 200,

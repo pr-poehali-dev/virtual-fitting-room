@@ -6,7 +6,7 @@
       "path": "/",
       "expectedStatus": 200,
       "expectedHeaders": {
-        "Access-Control-Allow-Origin": "*"
+        "Access-Control-Allow-Origin": "https://fitting-room.ru"
       }
     },
     {
