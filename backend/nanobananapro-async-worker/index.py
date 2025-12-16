@@ -167,23 +167,23 @@ def upload_to_s3(image_url: str, user_id: str) -> str:
     
     print(f'[S3] Uploading to S3: {s3_key}')
     
-    # Upload to S3
+    # Upload to Yandex Object Storage
     s3 = boto3.client('s3',
-        endpoint_url='https://bucket.poehali.dev',
+        endpoint_url='https://storage.yandexcloud.net',
         aws_access_key_id=aws_access_key,
         aws_secret_access_key=aws_secret_key
     )
     
     s3.put_object(
-        Bucket='files',
+        Bucket='fitting-room-images',
         Key=s3_key,
         Body=image_data,
         ContentType='image/jpeg'
     )
     
-    # Build CDN URL
-    cdn_url = f'https://cdn.poehali.dev/projects/{aws_access_key}/bucket/{s3_key}'
-    print(f'[S3] Upload complete! CDN URL: {cdn_url}')
+    # Build Yandex Cloud Storage URL
+    cdn_url = f'https://storage.yandexcloud.net/fitting-room-images/{s3_key}'
+    print(f'[S3] Upload complete! Yandex Cloud URL: {cdn_url}')
     
     return cdn_url
 
