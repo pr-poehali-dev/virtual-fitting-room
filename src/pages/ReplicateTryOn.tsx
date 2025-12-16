@@ -56,6 +56,7 @@ interface SelectedClothing {
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
 const NANOBANANAPRO_START_API = 'https://functions.poehali.dev/aac1d5d8-c9bd-43c6-822e-857c18f3c1f8';
 const NANOBANANAPRO_STATUS_API = 'https://functions.poehali.dev/6d603f3d-bbe3-450d-863a-63d513ad5ba7';
+const NANOBANANAPRO_WORKER_API = 'https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d';
 const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
 const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
 const SAVE_IMAGE_FTP_API = 'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8';
@@ -511,6 +512,11 @@ export default function ReplicateTryOn() {
       setTaskId(data.task_id);
       setGenerationStatus('В очереди...');
       toast.success('Задача создана! Ожидайте результат...');
+      
+      // Вызываем worker для обработки задачи
+      fetch(NANOBANANAPRO_WORKER_API).catch(err => {
+        console.log('[NanoBananaPro] Worker trigger failed (non-critical):', err);
+      });
       
       startPolling(data.task_id);
     } catch (error: any) {
