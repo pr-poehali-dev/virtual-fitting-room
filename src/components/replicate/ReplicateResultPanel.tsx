@@ -34,8 +34,9 @@ export default function ReplicateResultPanel({
             <Icon name="Loader2" className="animate-spin text-primary" size={64} />
             <p className="text-lg font-medium">Создаём образ...</p>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
-              AI анализирует выбранные вещи и создаёт реалистичный образ. Подождите ~30 секунд
-            </p>
+              AI анализирует выбранные вещи и создаёт реалистичный образ. Подождите  от 30 секунд до 2 минут
+            </p className="text-xs  text-center max-w-sm mt-1">Не закрывайте страницу до завершения генерации
+            <p>
           </div>
         ) : generatedImage ? (
           <div className="space-y-4">
