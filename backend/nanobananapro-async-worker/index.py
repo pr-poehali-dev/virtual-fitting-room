@@ -163,7 +163,7 @@ def upload_to_s3(image_url: str, user_id: str) -> str:
     milliseconds = int(time.time() * 1000) % 1000000
     random_suffix = uuid.uuid4().hex[:8]
     filename = f'fitting_{timestamp}_{milliseconds}_{user_id}_{random_suffix}.jpg'
-    s3_key = f'lookbooks/{user_id}/{filename}'
+    s3_key = f'images/lookbooks/{user_id}/{filename}'
     
     print(f'[S3] Uploading to S3: {s3_key}')
     
