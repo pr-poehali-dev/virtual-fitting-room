@@ -93,6 +93,7 @@ export default function ReplicateTryOn() {
   const [clothingCatalog, setClothingCatalog] = useState<ClothingItem[]>([]);
 
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [cdnImageUrl, setCdnImageUrl] = useState<string | null>(null); // Yandex Cloud URL для сохранения в лукбук
   const [isGenerating, setIsGenerating] = useState(false);
   const [lookbooks, setLookbooks] = useState<any[]>([]);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -610,6 +611,9 @@ export default function ReplicateTryOn() {
         } else if (data.status === 'completed') {
           console.log('[NanoBananaPro] COMPLETED! Result URL:', data.result_url);
           
+          // Сохраняем оригинальный CDN URL для лукбуков (без дублирования)
+          setCdnImageUrl(data.result_url);
+          
           // Proxy fal.ai images, use CDN URLs directly
           let displayUrl = data.result_url;
           if (data.result_url.includes('fal.media') || data.result_url.includes('fal.ai')) {
@@ -661,6 +665,7 @@ export default function ReplicateTryOn() {
     setUploadedImage(null);
     setSelectedClothingItems([]);
     setGeneratedImage(null);
+    setCdnImageUrl(null);
     setCustomPrompt('');
     setTaskId(null);
     setIsGenerating(false);
@@ -670,16 +675,16 @@ export default function ReplicateTryOn() {
   const handleSaveToExistingLookbook = async () => {
     if (!selectedLookbookId || !user) return;
 
-    // Worker уже сохранил в историю, можно сразу добавлять в лукбук
-    if (!generatedImage) {
-      toast.error('Нет изображения для сохранения');
+    // Worker уже сохранил в S3 и историю, используем CDN URL
+    if (!cdnImageUrl) {
+      toast.error('Изображение ещё сохраняется, подождите...');
       return;
     }
 
     setIsSaving(true);
     try {
       const lookbook = lookbooks.find(lb => lb.id === selectedLookbookId);
-      const updatedPhotos = [...(lookbook?.photos || []), generatedImage];
+      const updatedPhotos = [...(lookbook?.photos || []), cdnImageUrl];
 
       const response = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
         method: 'PUT',
@@ -711,9 +716,9 @@ export default function ReplicateTryOn() {
   const handleSaveToNewLookbook = async () => {
     if (!newLookbookName || !newLookbookPersonName || !user) return;
 
-    // Worker уже сохранил в историю, можно сразу добавлять в лукбук
-    if (!generatedImage) {
-      toast.error('Нет изображения для сохранения');
+    // Worker уже сохранил в S3 и историю, используем CDN URL
+    if (!cdnImageUrl) {
+      toast.error('Изображение ещё сохраняется, подождите...');
       return;
     }
 
@@ -728,7 +733,7 @@ export default function ReplicateTryOn() {
         body: JSON.stringify({
           name: newLookbookName,
           person_name: newLookbookPersonName,
-          photos: [generatedImage],
+          photos: [cdnImageUrl],
           color_palette: []
         })
       });
