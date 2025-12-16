@@ -142,12 +142,13 @@ def check_fal_status(response_url: str) -> Optional[dict]:
     raise Exception(f'Failed to check status: {response.status_code} - {response.text}')
 
 def upload_to_s3(image_url: str, user_id: str) -> str:
-    '''Download image from fal.ai and upload to S3, return CDN URL'''
-    aws_access_key = os.environ.get('AWS_ACCESS_KEY_ID')
-    aws_secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    '''Download image from fal.ai and upload to Yandex Object Storage, return CDN URL'''
+    s3_access_key = os.environ.get('S3_ACCESS_KEY')
+    s3_secret_key = os.environ.get('S3_SECRET_KEY')
+    s3_bucket = os.environ.get('S3_BUCKET_NAME', 'fitting-room-images')
     
-    if not aws_access_key or not aws_secret_key:
-        raise Exception('AWS credentials not configured')
+    if not s3_access_key or not s3_secret_key:
+        raise Exception('S3 credentials not configured (S3_ACCESS_KEY, S3_SECRET_KEY)')
     
     # Download image from fal.ai
     print(f'[S3] Downloading image from fal.ai: {image_url[:50]}...')
@@ -170,19 +171,19 @@ def upload_to_s3(image_url: str, user_id: str) -> str:
     # Upload to Yandex Object Storage
     s3 = boto3.client('s3',
         endpoint_url='https://storage.yandexcloud.net',
-        aws_access_key_id=aws_access_key,
-        aws_secret_access_key=aws_secret_key
+        aws_access_key_id=s3_access_key,
+        aws_secret_access_key=s3_secret_key
     )
     
     s3.put_object(
-        Bucket='fitting-room-images',
+        Bucket=s3_bucket,
         Key=s3_key,
         Body=image_data,
         ContentType='image/jpeg'
     )
     
     # Build Yandex Cloud Storage URL
-    cdn_url = f'https://storage.yandexcloud.net/fitting-room-images/{s3_key}'
+    cdn_url = f'https://storage.yandexcloud.net/{s3_bucket}/{s3_key}'
     print(f'[S3] Upload complete! Yandex Cloud URL: {cdn_url}')
     
     return cdn_url
