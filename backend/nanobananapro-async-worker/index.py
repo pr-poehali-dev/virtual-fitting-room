@@ -263,7 +263,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         cursor.execute('''
             SELECT id, person_image, garments, prompt_hints, fal_request_id, fal_response_url, user_id
-            FROM nanobananapro_tasks
+            FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
             WHERE status = 'pending'
             ORDER BY created_at ASC
             LIMIT 1
@@ -280,7 +280,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 # ATOMIC: Mark as processing FIRST to prevent race condition
                 print(f'[NanoBanana] Task {task_id}: ATOMIC UPDATE to prevent duplicate submission')
                 cursor.execute('''
-                    UPDATE nanobananapro_tasks
+                    UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
                     SET status = 'processing', updated_at = %s
                     WHERE id = %s AND status = 'pending'
                     RETURNING id
@@ -304,7 +304,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     print(f'[NanoBanana] Task {task_id} submitted to fal.ai: request_id={request_id}')
                     
                     cursor.execute('''
-                        UPDATE nanobananapro_tasks
+                        UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
                         SET fal_request_id = %s,
                             fal_response_url = %s,
                             updated_at = %s
@@ -328,7 +328,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Check processing tasks
         cursor.execute('''
             SELECT id, fal_response_url, first_result_at, user_id, saved_to_history, status, result_url
-            FROM nanobananapro_tasks
+            FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
             WHERE status = 'processing' AND fal_response_url IS NOT NULL
             ORDER BY created_at ASC
             LIMIT 5
@@ -366,7 +366,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         # Get task details for history
                         cursor.execute('''
                             SELECT person_image, garments, prompt_hints
-                            FROM nanobananapro_tasks
+                            FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
                             WHERE id = %s
                         ''', (task_id,))
                         task_details = cursor.fetchone()
@@ -379,7 +379,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         
                         # Update task with CDN URL
                         cursor.execute('''
-                            UPDATE nanobananapro_tasks
+                            UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
                             SET status = 'completed',
                                 result_url = %s,
                                 saved_to_history = true,
@@ -394,7 +394,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         print(f'[NanoBanana] Failed to upload to S3: {str(save_error)}')
                         print(f'[NanoBanana] Saving FAL URL as fallback')
                         cursor.execute('''
-                            UPDATE nanobananapro_tasks
+                            UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
                             SET status = 'completed',
                                 result_url = %s,
                                 updated_at = %s,
@@ -411,7 +411,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     
                     print(f'[NanoBanana] Task {task_id} failed: {error_raw}')
                     cursor.execute('''
-                        UPDATE nanobananapro_tasks
+                        UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
                         SET status = 'failed',
                             error_message = %s,
                             updated_at = %s
@@ -433,7 +433,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # Check if we have RECENT unfinished tasks (not older than 5 minutes - matches frontend timeout)
         cursor.execute('''
-            SELECT COUNT(*) FROM nanobananapro_tasks 
+            SELECT COUNT(*) FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks 
             WHERE status = 'processing' AND fal_response_url IS NOT NULL
             AND created_at > NOW() - INTERVAL '5 minutes'
         ''')
