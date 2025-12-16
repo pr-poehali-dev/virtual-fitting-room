@@ -686,15 +686,18 @@ export default function ReplicateTryOn() {
       const lookbook = lookbooks.find(lb => lb.id === selectedLookbookId);
       const updatedPhotos = [...(lookbook?.photos || []), cdnImageUrl];
 
-      const response = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
-        method: 'PUT',
+      // Используем db-query вместо lookbooks-api чтобы не создавать дубликаты
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-User-Id': user.id
         },
         body: JSON.stringify({
-          id: selectedLookbookId,
-          photos: updatedPhotos
+          table: 'lookbooks',
+          action: 'update',
+          where: { id: selectedLookbookId },
+          data: { photos: updatedPhotos }
         })
       });
 
@@ -724,17 +727,23 @@ export default function ReplicateTryOn() {
 
     setIsSaving(true);
     try {
-      const response = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
+      // Используем db-query вместо lookbooks-api чтобы не создавать дубликаты
+      const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-User-Id': user.id
         },
         body: JSON.stringify({
-          name: newLookbookName,
-          person_name: newLookbookPersonName,
-          photos: [cdnImageUrl],
-          color_palette: []
+          table: 'lookbooks',
+          action: 'insert',
+          data: {
+            user_id: user.id,
+            name: newLookbookName,
+            person_name: newLookbookPersonName,
+            photos: [cdnImageUrl],
+            color_palette: []
+          }
         })
       });
 
