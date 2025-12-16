@@ -112,6 +112,7 @@ export default function ReplicateTryOn() {
   const [showCategoryError, setShowCategoryError] = useState(false);
   const isNanoBananaRequestInProgress = useRef(false);
   const [isSavingToS3, setIsSavingToS3] = useState(false);
+  const [savedHistoryCdnUrl, setSavedHistoryCdnUrl] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -663,7 +664,9 @@ export default function ReplicateTryOn() {
         throw new Error('Failed to save to history');
       }
 
-      console.log('[SaveToS3] Saved to history successfully');
+      const historyData = await historyResponse.json();
+      console.log('[SaveToS3] Saved to history successfully, CDN URL:', cdnUrl);
+      setSavedHistoryCdnUrl(cdnUrl);
       setIsSavingToS3(false);
       toast.success('Образ сохранён в историю!');
     } catch (error: any) {
@@ -686,15 +689,21 @@ export default function ReplicateTryOn() {
     setIsGenerating(false);
     setGenerationStatus('');
     setIsSavingToS3(false);
+    setSavedHistoryCdnUrl(null);
   };
 
   const handleSaveToExistingLookbook = async () => {
-    if (!selectedLookbookId || !generatedImage || !user) return;
+    if (!selectedLookbookId || !user) return;
+
+    if (!savedHistoryCdnUrl) {
+      toast.error('Дождитесь сохранения в историю');
+      return;
+    }
 
     setIsSaving(true);
     try {
       const lookbook = lookbooks.find(lb => lb.id === selectedLookbookId);
-      const updatedPhotos = [...(lookbook?.photos || []), generatedImage];
+      const updatedPhotos = [...(lookbook?.photos || []), savedHistoryCdnUrl];
 
       const response = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
         method: 'PUT',
@@ -724,7 +733,12 @@ export default function ReplicateTryOn() {
   };
 
   const handleSaveToNewLookbook = async () => {
-    if (!newLookbookName || !newLookbookPersonName || !generatedImage || !user) return;
+    if (!newLookbookName || !newLookbookPersonName || !user) return;
+
+    if (!savedHistoryCdnUrl) {
+      toast.error('Дождитесь сохранения в историю');
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -737,7 +751,7 @@ export default function ReplicateTryOn() {
         body: JSON.stringify({
           name: newLookbookName,
           person_name: newLookbookPersonName,
-          photos: [generatedImage],
+          photos: [savedHistoryCdnUrl],
           color_palette: []
         })
       });
