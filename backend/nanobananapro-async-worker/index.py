@@ -193,22 +193,25 @@ def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garment
     try:
         cursor = conn.cursor()
         
-        # Build try_on_data JSON
-        try_on_data = {
-            'personImage': person_image,
-            'garments': garments,
-            'prompt': prompt
-        }
+        # Build garments JSON (matching table structure)
+        garments_json = json.dumps(garments)
+        
+        # Calculate cost based on number of garments
+        cost = len(garments)
         
         cursor.execute('''
             INSERT INTO t_p29007832_virtual_fitting_room.try_on_history 
-            (user_id, result_url, try_on_data, created_at)
-            VALUES (%s, %s, %s, %s)
+            (user_id, person_image, result_image, garments, model_used, cost, created_at, saved_to_lookbook)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         ''', (
             user_id,
+            person_image,
             cdn_url,
-            json.dumps(try_on_data),
-            datetime.utcnow()
+            garments_json,
+            'nanobananapro',
+            cost,
+            datetime.utcnow(),
+            False
         ))
         
         conn.commit()
