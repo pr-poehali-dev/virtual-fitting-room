@@ -1,0 +1,32 @@
+{
+  "tests": [
+    {
+      "name": "Test SELECT query on nanobananapro_tasks",
+      "method": "POST",
+      "body": {
+        "table": "nanobananapro_tasks",
+        "action": "select",
+        "limit": 5
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "data": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test invalid table access",
+      "method": "POST",
+      "body": {
+        "table": "invalid_table",
+        "action": "select"
+      },
+      "expectedStatus": 403,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

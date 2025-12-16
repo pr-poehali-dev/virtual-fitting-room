@@ -56,6 +56,7 @@ interface SelectedClothing {
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
 const NANOBANANAPRO_START_API = 'https://functions.poehali.dev/aac1d5d8-c9bd-43c6-822e-857c18f3c1f8';
 const NANOBANANAPRO_STATUS_API = 'https://functions.poehali.dev/6d603f3d-bbe3-450d-863a-63d513ad5ba7';
+const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
 const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
 const SAVE_IMAGE_FTP_API = 'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8';
 const HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
@@ -480,8 +481,8 @@ export default function ReplicateTryOn() {
       setGeneratedImage(null);
       setGenerationStatus('Запускаем генерацию...');
 
-      toast.info('Генерация займёт ~30 секунд. Не закрывайте страницу!', {
-        duration: 6000
+      toast.info('Генерация может занять до 10 минут. Не закрывайте страницу!', {
+        duration: 8000
       });
 
       console.log(`[NanoBananaPro-CALL-${callId}] About to send fetch request...`);
@@ -532,7 +533,7 @@ export default function ReplicateTryOn() {
     console.log('[NanoBananaPro] Starting polling for task:', taskId);
     let checkCount = 0;
     const startTime = Date.now();
-    const TIMEOUT_MS = 300000;
+    const TIMEOUT_MS = 900000; // 15 минут (900 секунд)
     
     const interval = setInterval(async () => {
       try {
@@ -541,26 +542,43 @@ export default function ReplicateTryOn() {
         
         const elapsedTime = Date.now() - startTime;
         if (elapsedTime > TIMEOUT_MS) {
-          console.error('[NanoBananaPro] Timeout after 300 seconds');
+          console.error('[NanoBananaPro] Timeout after 15 minutes');
           setIsGenerating(false);
           setGenerationStatus('');
-          toast.error('Генерация заняла слишком много времени. Попробуйте обновить страницу и создать образ заново');
+          toast.error('Генерация заняла слишком много времени. Результат может появиться позже в истории');
           clearInterval(interval);
           setPollingInterval(null);
           
-          if (user) {
-            await refundReplicateBalance(user, selectedClothingItems.length);
-            console.log('[NanoBananaPro] Balance refunded due to timeout');
-          }
+          // Не возвращаем баланс - worker продолжает работать и сохранит результат
+          console.log('[NanoBananaPro] Timeout reached but worker continues processing');
           return;
         }
         
-        const response = await fetch(`${NANOBANANAPRO_STATUS_API}?task_id=${taskId}&force_check=${forceCheck}`);
+        // Используем db-query вместо status API для экономии вызовов
+        const response = await fetch(DB_QUERY_API, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            table: 'nanobananapro_tasks',
+            action: 'select',
+            where: { id: taskId },
+            limit: 1
+          })
+        });
+        
         if (!response.ok) {
           throw new Error('Ошибка проверки статуса');
         }
 
-        const data = await response.json();
+        const dbResult = await response.json();
+        const data = dbResult.success && dbResult.data && dbResult.data.length > 0 ? dbResult.data[0] : null;
+        
+        if (!data) {
+          console.error('[NanoBananaPro] Task not found in DB');
+          return;
+        }
         console.log('[NanoBananaPro] Status check result:', data, forceCheck ? '(force checked)' : '');
         
         if (data.status === 'pending') {
@@ -586,7 +604,8 @@ export default function ReplicateTryOn() {
           setPollingInterval(null);
           toast.success('Образ готов!');
           
-          saveToS3AndHistory(displayUrl);
+          // Worker уже сохранил результат в S3 и историю - не нужно дублировать
+          console.log('[NanoBananaPro] Worker already saved to S3 and history');
         } else if (data.status === 'failed') {
           console.error('[NanoBananaPro] FAILED:', data.error_message);
           setIsGenerating(false);

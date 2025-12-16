@@ -187,6 +187,36 @@ def upload_to_s3(image_url: str, user_id: str) -> str:
     
     return cdn_url
 
+def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garments: list, prompt: str) -> None:
+    '''Save result to try_on_history table'''
+    try:
+        cursor = conn.cursor()
+        
+        # Build try_on_data JSON
+        try_on_data = {
+            'personImage': person_image,
+            'garments': garments,
+            'prompt': prompt
+        }
+        
+        cursor.execute('''
+            INSERT INTO try_on_history 
+            (user_id, result_url, try_on_data, created_at)
+            VALUES (%s, %s, %s, %s)
+        ''', (
+            user_id,
+            cdn_url,
+            json.dumps(try_on_data),
+            datetime.utcnow()
+        ))
+        
+        conn.commit()
+        cursor.close()
+        print(f'[History] Saved to try_on_history for user {user_id}')
+    
+    except Exception as e:
+        print(f'[History] Failed to save: {str(e)}')
+
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -323,20 +353,51 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     
                     print(f'[NanoBanana] Task {task_id} completed! FAL URL: {fal_result_url}')
                     
-                    # Save FAL URL directly to DB (frontend will handle conversion and upload to Yandex.Cloud)
-                    cdn_url = fal_result_url
-                    
-                    # Save FAL URL to DB
-                    cursor.execute('''
-                        UPDATE nanobananapro_tasks
-                        SET status = 'completed',
-                            result_url = %s,
-                            updated_at = %s
-                        WHERE id = %s
-                    ''', (cdn_url, datetime.utcnow(), task_id))
-                    conn.commit()
-                    print(f'[NanoBanana] Task {task_id} saved to DB with FAL URL')
-                    print(f'[NanoBanana] Frontend will proxy FAL URL to base64 and upload to Yandex.Cloud')
+                    # Worker now does FULL save: download from FAL → upload to S3 → save to history
+                    try:
+                        # Upload to Yandex.Cloud S3
+                        cdn_url = upload_to_s3(fal_result_url, user_id)
+                        print(f'[NanoBanana] Task {task_id} uploaded to S3: {cdn_url}')
+                        
+                        # Get task details for history
+                        cursor.execute('''
+                            SELECT person_image, garments, prompt_hints
+                            FROM nanobananapro_tasks
+                            WHERE id = %s
+                        ''', (task_id,))
+                        task_details = cursor.fetchone()
+                        if task_details:
+                            person_img, garments_json, prompt = task_details
+                            garments = json.loads(garments_json)
+                            
+                            # Save to history
+                            save_to_history(conn, user_id, cdn_url, person_img, garments, prompt or '')
+                        
+                        # Update task with CDN URL
+                        cursor.execute('''
+                            UPDATE nanobananapro_tasks
+                            SET status = 'completed',
+                                result_url = %s,
+                                saved_to_history = true,
+                                updated_at = %s
+                            WHERE id = %s
+                        ''', (cdn_url, datetime.utcnow(), task_id))
+                        conn.commit()
+                        print(f'[NanoBanana] Task {task_id} FULLY saved: S3 + history + DB')
+                        
+                    except Exception as save_error:
+                        # If S3/history save fails, still save FAL URL so user doesn't lose result
+                        print(f'[NanoBanana] Failed to upload to S3: {str(save_error)}')
+                        print(f'[NanoBanana] Saving FAL URL as fallback')
+                        cursor.execute('''
+                            UPDATE nanobananapro_tasks
+                            SET status = 'completed',
+                                result_url = %s,
+                                updated_at = %s,
+                                error_message = %s
+                            WHERE id = %s
+                        ''', (fal_result_url, datetime.utcnow(), f'S3 upload failed: {str(save_error)}', task_id))
+                        conn.commit()
                     
                     results.append({'task_id': task_id, 'status': 'completed'})
                 
