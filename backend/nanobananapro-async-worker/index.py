@@ -279,9 +279,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
         
-        # Get specific task by task_id with updated_at
+        # Get specific task by task_id
         cursor.execute('''
-            SELECT id, person_image, garments, prompt_hints, fal_request_id, fal_response_url, user_id, status, saved_to_history, updated_at
+            SELECT id, person_image, garments, prompt_hints, fal_request_id, fal_response_url, user_id, status, saved_to_history
             FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
             WHERE id = %s
         ''', (task_id,))
@@ -299,35 +299,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Task not found'})
             }
         
-        task_id, person_image, garments_json, prompt_hints, fal_request_id, fal_response_url, user_id, task_status, saved_to_history, updated_at = pending_row
+        task_id, person_image, garments_json, prompt_hints, fal_request_id, fal_response_url, user_id, task_status, saved_to_history = pending_row
         garments = json.loads(garments_json)
-        
-        # Check if we should skip this check (last update was less than 45 seconds ago)
-        if updated_at and task_status == 'processing':
-            from datetime import timedelta
-            time_since_update = datetime.utcnow() - updated_at
-            if time_since_update < timedelta(seconds=45):
-                seconds_to_wait = 45 - int(time_since_update.total_seconds())
-                print(f'[NanoBanana] Task {task_id} was checked {int(time_since_update.total_seconds())}s ago, skipping (wait {seconds_to_wait}s more)')
-                cursor.close()
-                conn.close()
-                
-                # Trigger worker again after remaining time
-                try:
-                    import urllib.request
-                    worker_url = f'https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d?task_id={task_id}'
-                    req = urllib.request.Request(worker_url, method='GET')
-                    urllib.request.urlopen(req, timeout=2)
-                    print(f'[NanoBanana] Worker re-triggered immediately (will check time again)')
-                except Exception as e:
-                    print(f'[NanoBanana] Worker re-trigger failed: {e}')
-                
-                return {
-                    'statusCode': 200,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
-                    'isBase64Encoded': False,
-                    'body': json.dumps({'status': 'rate_limited', 'retry_after': seconds_to_wait})
-                }
         
         # Check if already processed
         if saved_to_history:
@@ -487,20 +460,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn.close()
         
         print(f'[NanoBanana] Worker completed processing task {task_id}')
-        
-        # Если задача ещё не завершена, перезапускаем воркер сразу (rate limiting внутри)
-        if task_status == 'processing':
-            print(f'[NanoBanana] Task {task_id} still processing, triggering worker again')
-            try:
-                import urllib.request
-                worker_url = f'https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d?task_id={task_id}'
-                req = urllib.request.Request(worker_url, method='GET')
-                urllib.request.urlopen(req, timeout=2)
-                print(f'[NanoBanana] Worker re-triggered for task {task_id}')
-            except Exception as e:
-                print(f'[NanoBanana] Worker re-trigger failed (non-critical): {e}')
-        else:
-            print(f'[NanoBanana] Task {task_id} finished with status={task_status}, no re-trigger needed')
         
         return {
             'statusCode': 200,
