@@ -1,13 +1,37 @@
 '''
 Business: Admin endpoint to grant unlimited access to users
-Args: event with httpMethod, headers (X-Admin-Password), body (user_email, unlimited_access)
+Args: event with httpMethod, headers (X-Admin-Token JWT), body (user_email, unlimited_access)
 Returns: Success confirmation or error
 '''
 
 import json
 import os
 import psycopg2
+import jwt
 from typing import Dict, Any
+
+def verify_admin_jwt(provided_token: str) -> tuple[bool, str]:
+    '''
+    Verify JWT token for admin authentication
+    Returns: (is_valid, error_message)
+    '''
+    if not provided_token:
+        return (False, 'Token required')
+    
+    try:
+        secret_key = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
+        payload = jwt.decode(provided_token, secret_key, algorithms=['HS256'])
+        
+        if not payload.get('admin'):
+            return (False, 'Invalid token')
+        
+        return (True, '')
+    except jwt.ExpiredSignatureError:
+        return (False, 'Token expired')
+    except jwt.InvalidTokenError:
+        return (False, 'Invalid token')
+    except Exception as e:
+        return (False, f'Token verification failed: {str(e)}')
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     def get_cors_origin(event: Dict[str, Any]) -> str:
@@ -23,19 +47,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Password',
+                'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Token',
                 'Access-Control-Max-Age': '86400'
             },
-            'body': ''
+            'body': '',
+            'isBase64Encoded': False
         }
     
-    admin_password = event.get('headers', {}).get('X-Admin-Password') or event.get('headers', {}).get('x-admin-password')
+    admin_token = event.get('headers', {}).get('X-Admin-Token') or event.get('headers', {}).get('x-admin-token')
+    is_valid, error_msg = verify_admin_jwt(admin_token)
     
-    if admin_password != os.environ.get('ADMIN_PASSWORD'):
+    if not is_valid:
         return {
             'statusCode': 403,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
-            'body': json.dumps({'error': 'Неверный пароль администратора'})
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+            'isBase64Encoded': False,
+            'body': json.dumps({'error': error_msg})
         }
     
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
@@ -62,7 +89,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             return {
                 'statusCode': 200,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                'isBase64Encoded': False,
                 'body': json.dumps({'users': users})
             }
         
@@ -74,7 +102,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if not user_email:
                 return {
                     'statusCode': 400,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                    'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Требуется user_email'})
                 }
             
@@ -90,7 +119,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if not result:
                 return {
                     'statusCode': 404,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                    'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Пользователь не найден'})
                 }
             
@@ -98,7 +128,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             return {
                 'statusCode': 200,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                'isBase64Encoded': False,
                 'body': json.dumps({
                     'success': True,
                     'user_id': str(result[0]),
@@ -110,7 +141,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         return {
             'statusCode': 405,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+            'isBase64Encoded': False,
             'body': json.dumps({'error': 'Метод не поддерживается'})
         }
     
