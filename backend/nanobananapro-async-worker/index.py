@@ -461,6 +461,32 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         print(f'[NanoBanana] Worker completed processing task {task_id}')
         
+        # Если задача ещё не завершена, перезапускаем воркер через 45 секунд
+        if task_status == 'processing':
+            print(f'[NanoBanana] Task {task_id} still processing, scheduling next check in 45 seconds')
+            try:
+                import urllib.request
+                import threading
+                import time
+                
+                def trigger_worker_after_delay():
+                    time.sleep(45)
+                    try:
+                        worker_url = f'https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d?task_id={task_id}'
+                        req = urllib.request.Request(worker_url, method='GET')
+                        urllib.request.urlopen(req, timeout=2)
+                        print(f'[NanoBanana] Worker re-triggered for task {task_id}')
+                    except Exception as e:
+                        print(f'[NanoBanana] Worker re-trigger failed (non-critical): {e}')
+                
+                thread = threading.Thread(target=trigger_worker_after_delay, daemon=True)
+                thread.start()
+                print(f'[NanoBanana] Worker re-trigger scheduled in background thread')
+            except Exception as e:
+                print(f'[NanoBanana] Failed to schedule worker re-trigger: {e}')
+        else:
+            print(f'[NanoBanana] Task {task_id} finished with status={task_status}, no re-trigger needed')
+        
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
