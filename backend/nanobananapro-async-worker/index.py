@@ -448,11 +448,49 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
                 else:
                     print(f'[NanoBanana] Task {task_id} still processing, status={fal_status}')
+                    # Task still processing - trigger worker again after 3 seconds
+                    cursor.close()
+                    conn.close()
+                    
+                    try:
+                        import urllib.request
+                        worker_url = f'https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d?task_id={task_id}'
+                        req = urllib.request.Request(worker_url, method='GET')
+                        urllib.request.urlopen(req, timeout=2)
+                        print(f'[NanoBanana] Triggered worker again for task {task_id}')
+                    except Exception as trigger_error:
+                        print(f'[NanoBanana] Failed to trigger worker (non-critical): {trigger_error}')
+                    
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'status': 'task_still_processing', 'task_id': task_id})
+                    }
             
             except Exception as e:
                 error_str = str(e)
                 if 'still in progress' in error_str.lower():
                     print(f'[NanoBanana] Task {task_id} still processing (in progress)')
+                    # Task still processing - trigger worker again
+                    cursor.close()
+                    conn.close()
+                    
+                    try:
+                        import urllib.request
+                        worker_url = f'https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d?task_id={task_id}'
+                        req = urllib.request.Request(worker_url, method='GET')
+                        urllib.request.urlopen(req, timeout=2)
+                        print(f'[NanoBanana] Triggered worker again for task {task_id}')
+                    except Exception as trigger_error:
+                        print(f'[NanoBanana] Failed to trigger worker (non-critical): {trigger_error}')
+                    
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'status': 'task_still_processing', 'task_id': task_id})
+                    }
                 else:
                     print(f'[NanoBanana] Error checking task {task_id}: {error_str}')
         
