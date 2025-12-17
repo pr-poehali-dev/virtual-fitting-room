@@ -329,19 +329,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     ''', (error_msg, datetime.utcnow(), task_id))
                     conn.commit()
         
-        # Check processing tasks
+        # Check processing tasks with row-level locking to prevent duplicate processing
         cursor.execute('''
             SELECT id, fal_response_url, first_result_at, user_id, saved_to_history, status, result_url
             FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
             WHERE status = 'processing' AND fal_response_url IS NOT NULL
             ORDER BY created_at ASC
             LIMIT 5
+            FOR UPDATE SKIP LOCKED
         ''')
         
         processing_rows = cursor.fetchall()
         
         results = []
         for task_id, response_url, first_result_at, user_id, saved_to_history, current_status, result_url in processing_rows:
+            # Skip if already saved to prevent duplicate processing
+            if saved_to_history:
+                print(f'[NanoBanana] Task {task_id} already saved to history, skipping')
+                continue
+            
             try:
                 # Check fal.ai status
                 status_data = check_fal_status(response_url)
@@ -434,6 +440,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     print(f'[NanoBanana] Task {task_id} still processing (in progress)')
                 else:
                     print(f'[NanoBanana] Error checking task {task_id}: {error_str}')
+        
+        # Clean up old stuck tasks (older than 30 minutes in processing state)
+        cursor.execute('''
+            UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+            SET status = 'failed',
+                error_message = 'Task timed out - stuck in processing for over 30 minutes',
+                updated_at = %s
+            WHERE status = 'processing'
+                AND created_at < NOW() - INTERVAL '30 minutes'
+            RETURNING id
+        ''', (datetime.utcnow(),))
+        
+        cleaned_tasks = cursor.fetchall()
+        if cleaned_tasks:
+            conn.commit()
+            print(f'[NanoBanana] Cleaned up {len(cleaned_tasks)} stuck tasks: {[str(t[0]) for t in cleaned_tasks]}')
         
         # Check if we have RECENT unfinished tasks (not older than 5 minutes - matches frontend timeout)
         cursor.execute('''
