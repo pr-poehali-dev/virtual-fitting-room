@@ -159,10 +159,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         try:
             import urllib.request
-            worker_url = 'https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d'
+            worker_url = f'https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d?task_id={task_id}'
             req = urllib.request.Request(worker_url, method='GET')
             urllib.request.urlopen(req, timeout=2)
-            print(f'[START-{request_id}] Worker triggered successfully')
+            print(f'[START-{request_id}] Worker triggered for task {task_id}')
         except Exception as e:
             print(f'[START-{request_id}] Worker trigger failed (non-critical): {e}')
         

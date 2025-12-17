@@ -228,8 +228,8 @@ def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garment
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Process pending NanoBanana tasks from database
-    Args: event - dict with httpMethod
+    Business: Process specific NanoBanana task by task_id
+    Args: event - dict with httpMethod, queryStringParameters (task_id)
           context - object with request_id attribute
     Returns: HTTP response with processing status
     '''
@@ -252,6 +252,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': ''
         }
     
+    # Get task_id from query parameters
+    query_params = event.get('queryStringParameters') or {}
+    task_id = query_params.get('task_id')
+    
+    if not task_id:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+            'isBase64Encoded': False,
+            'body': json.dumps({'error': 'task_id parameter is required'})
+        }
+    
+    print(f'[NanoBanana] Worker triggered for specific task: {task_id}')
+    
     database_url = os.environ.get('DATABASE_URL')
     if not database_url:
         return {
@@ -265,21 +279,43 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
         
+        # Get specific task by task_id
         cursor.execute('''
-            SELECT id, person_image, garments, prompt_hints, fal_request_id, fal_response_url, user_id
+            SELECT id, person_image, garments, prompt_hints, fal_request_id, fal_response_url, user_id, status, saved_to_history
             FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
-            WHERE status = 'pending'
-            ORDER BY created_at ASC
-            LIMIT 1
-            FOR UPDATE SKIP LOCKED
-        ''')
+            WHERE id = %s
+        ''', (task_id,))
         
         pending_row = cursor.fetchone()
         
-        if pending_row:
-            task_id, person_image, garments_json, prompt_hints, fal_request_id, fal_response_url, user_id = pending_row
-            garments = json.loads(garments_json)
-            
+        if not pending_row:
+            print(f'[NanoBanana] Task {task_id} not found')
+            cursor.close()
+            conn.close()
+            return {
+                'statusCode': 404,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                'isBase64Encoded': False,
+                'body': json.dumps({'error': 'Task not found'})
+            }
+        
+        task_id, person_image, garments_json, prompt_hints, fal_request_id, fal_response_url, user_id, task_status, saved_to_history = pending_row
+        garments = json.loads(garments_json)
+        
+        # Check if already processed
+        if saved_to_history:
+            print(f'[NanoBanana] Task {task_id} already saved to history, skipping')
+            cursor.close()
+            conn.close()
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                'isBase64Encoded': False,
+                'body': json.dumps({'status': 'already_processed'})
+            }
+        
+        # Process pending task
+        if task_status == 'pending':
             if not fal_request_id:
                 # ATOMIC: Mark as processing FIRST to prevent race condition
                 print(f'[NanoBanana] Task {task_id}: ATOMIC UPDATE to prevent duplicate submission')
@@ -329,22 +365,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     ''', (error_msg, datetime.utcnow(), task_id))
                     conn.commit()
         
-        # Check processing tasks
-        cursor.execute('''
-            SELECT id, fal_response_url, first_result_at, user_id, saved_to_history, status, result_url
-            FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
-            WHERE status = 'processing' AND fal_response_url IS NOT NULL
-            ORDER BY created_at ASC
-            LIMIT 5
-        ''')
-        
-        processing_rows = cursor.fetchall()
-        
-        results = []
-        for task_id, response_url, first_result_at, user_id, saved_to_history, current_status, result_url in processing_rows:
+        # Check if task is now processing
+        if task_status == 'processing' and fal_response_url:
             try:
                 # Check fal.ai status
-                status_data = check_fal_status(response_url)
+                status_data = check_fal_status(fal_response_url)
                 
                 task_status = status_data.get('status', status_data.get('state', 'UNKNOWN'))
                 
@@ -406,10 +431,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             WHERE id = %s
                         ''', (fal_result_url, datetime.utcnow(), f'S3 upload failed: {str(save_error)}', task_id))
                         conn.commit()
-                    
-                    results.append({'task_id': task_id, 'status': 'completed'})
                 
-                elif task_status in ['FAILED', 'EXPIRED']:
+                elif fal_status in ['FAILED', 'EXPIRED']:
                     error_raw = status_data.get('error', 'Generation failed')
                     error_msg = f'Ошибка генерации: {str(error_raw)[:100]}'
                     
@@ -422,11 +445,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         WHERE id = %s
                     ''', (error_msg, datetime.utcnow(), task_id))
                     conn.commit()
-                    results.append({'task_id': task_id, 'status': 'failed', 'reason': 'fal_api_error'})
                 
                 else:
-                    print(f'[NanoBanana] Task {task_id} still processing, status={task_status}')
-                    results.append({'task_id': task_id, 'status': 'still_processing', 'fal_status': task_status})
+                    print(f'[NanoBanana] Task {task_id} still processing, status={fal_status}')
             
             except Exception as e:
                 error_str = str(e)
@@ -435,26 +456,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 else:
                     print(f'[NanoBanana] Error checking task {task_id}: {error_str}')
         
-        # Check if we have RECENT unfinished tasks (not older than 5 minutes - matches frontend timeout)
-        cursor.execute('''
-            SELECT COUNT(*) FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks 
-            WHERE status = 'processing' AND fal_response_url IS NOT NULL
-            AND created_at > NOW() - INTERVAL '5 minutes'
-        ''')
-        processing_count = cursor.fetchone()[0]
-        
         cursor.close()
         conn.close()
         
-        # Worker no longer triggers itself - frontend polling handles it
-        # This prevents excessive worker calls (was 17+ per generation, now will be ~3)
-        print(f'[NanoBanana] Worker cycle completed. Processing tasks: {processing_count}. Frontend will continue polling.')
+        print(f'[NanoBanana] Worker completed processing task {task_id}')
         
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
             'isBase64Encoded': False,
-            'body': json.dumps({'status': 'worker_completed', 'processing_tasks': processing_count})
+            'body': json.dumps({'status': 'task_processed', 'task_id': task_id})
         }
         
     except Exception as e:
