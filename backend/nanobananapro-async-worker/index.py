@@ -332,18 +332,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Check processing tasks - process one by one with locking to prevent duplicates
         results = []
         for _ in range(5):  # Process up to 5 tasks per worker run
+            # ATOMIC: Select AND mark as being processed in one step
             cursor.execute('''
-                SELECT id, fal_response_url, first_result_at, user_id, saved_to_history, status, result_url
-                FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
-                WHERE status = 'processing' 
-                  AND fal_response_url IS NOT NULL
-                  AND (saved_to_history = false OR saved_to_history IS NULL)
-                ORDER BY created_at ASC
-                LIMIT 1
-                FOR UPDATE SKIP LOCKED
-            ''')
+                UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                SET updated_at = %s
+                WHERE id = (
+                    SELECT id 
+                    FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                    WHERE status = 'processing' 
+                      AND fal_response_url IS NOT NULL
+                      AND (saved_to_history = false OR saved_to_history IS NULL)
+                    ORDER BY created_at ASC
+                    LIMIT 1
+                    FOR UPDATE SKIP LOCKED
+                )
+                RETURNING id, fal_response_url, first_result_at, user_id, saved_to_history, status, result_url
+            ''', (datetime.utcnow(),))
             
             task_row = cursor.fetchone()
+            conn.commit()  # Commit immediately to release lock
             
             if not task_row:
                 break
