@@ -329,13 +329,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     ''', (error_msg, datetime.utcnow(), task_id))
                     conn.commit()
         
-        # Check processing tasks (only those not yet saved to prevent duplicates)
+        # Check processing tasks
         cursor.execute('''
             SELECT id, fal_response_url, first_result_at, user_id, saved_to_history, status, result_url
             FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
-            WHERE status = 'processing' 
-                AND fal_response_url IS NOT NULL
-                AND (saved_to_history = false OR saved_to_history IS NULL)
+            WHERE status = 'processing' AND fal_response_url IS NOT NULL
             ORDER BY created_at ASC
             LIMIT 5
         ''')
