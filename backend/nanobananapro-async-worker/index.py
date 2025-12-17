@@ -456,8 +456,26 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 else:
                     print(f'[NanoBanana] Error checking task {task_id}: {error_str}')
         
+        # Check if task is still processing - if yes, trigger worker again
+        cursor.execute('''
+            SELECT status FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
+            WHERE id = %s
+        ''', (task_id,))
+        final_status = cursor.fetchone()
+        
         cursor.close()
         conn.close()
+        
+        if final_status and final_status[0] == 'processing':
+            print(f'[NanoBanana] Task {task_id} still processing, triggering worker again')
+            try:
+                import urllib.request
+                worker_url = f'https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d?task_id={task_id}'
+                req = urllib.request.Request(worker_url, method='GET')
+                urllib.request.urlopen(req, timeout=2)
+                print(f'[NanoBanana] Worker re-triggered for task {task_id}')
+            except Exception as trigger_err:
+                print(f'[NanoBanana] Failed to re-trigger worker: {trigger_err}')
         
         print(f'[NanoBanana] Worker completed processing task {task_id}')
         
