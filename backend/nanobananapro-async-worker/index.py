@@ -329,19 +329,27 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     ''', (error_msg, datetime.utcnow(), task_id))
                     conn.commit()
         
-        # Check processing tasks
-        cursor.execute('''
-            SELECT id, fal_response_url, first_result_at, user_id, saved_to_history, status, result_url
-            FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
-            WHERE status = 'processing' AND fal_response_url IS NOT NULL
-            ORDER BY created_at ASC
-            LIMIT 5
-        ''')
-        
-        processing_rows = cursor.fetchall()
-        
+        # Check processing tasks - process one by one with locking to prevent duplicates
         results = []
-        for task_id, response_url, first_result_at, user_id, saved_to_history, current_status, result_url in processing_rows:
+        for _ in range(5):  # Process up to 5 tasks per worker run
+            cursor.execute('''
+                SELECT id, fal_response_url, first_result_at, user_id, saved_to_history, status, result_url
+                FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                WHERE status = 'processing' 
+                  AND fal_response_url IS NOT NULL
+                  AND (saved_to_history = false OR saved_to_history IS NULL)
+                ORDER BY created_at ASC
+                LIMIT 1
+                FOR UPDATE SKIP LOCKED
+            ''')
+            
+            task_row = cursor.fetchone()
+            
+            if not task_row:
+                break
+            
+            task_id, response_url, first_result_at, user_id, saved_to_history, current_status, result_url = task_row
+            
             try:
                 # Check fal.ai status
                 status_data = check_fal_status(response_url)
