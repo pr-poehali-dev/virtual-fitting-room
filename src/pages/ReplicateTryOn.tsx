@@ -522,7 +522,7 @@ export default function ReplicateTryOn() {
       toast.success('Задача создана! Ожидайте результат...');
       
       // Вызываем worker для обработки задачи
-      fetch(NANOBANANAPRO_WORKER_API).catch(err => {
+      fetch(`${NANOBANANAPRO_WORKER_API}?task_id=${data.task_id}`).catch(err => {
         console.log('[NanoBananaPro] Worker trigger failed (non-critical):', err);
       });
       
@@ -599,7 +599,7 @@ export default function ReplicateTryOn() {
         // Вызываем воркер каждый раз для проверки fal.ai (интервал 45 секунд)
         if (data.status === 'processing' && triggerWorker) {
           console.log('[NanoBananaPro] Triggering worker to check fal.ai status');
-          fetch(NANOBANANAPRO_WORKER_API).catch(err => {
+          fetch(`${NANOBANANAPRO_WORKER_API}?task_id=${taskId}`).catch(err => {
             console.log('[NanoBananaPro] Worker trigger failed (non-critical):', err);
           });
         }
