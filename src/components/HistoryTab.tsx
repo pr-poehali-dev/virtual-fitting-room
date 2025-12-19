@@ -191,15 +191,17 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
     if (!confirm('Удалить это фото из истории?')) return;
 
     try {
-      // Use try-on-history-api which handles S3 deletion with lookbook checks
-      const TRY_ON_HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
-      
-      const response = await fetch(`${TRY_ON_HISTORY_API}?id=${id}`, {
-        method: 'DELETE',
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-User-Id': userId
-        }
+        },
+        body: JSON.stringify({
+          table: 'try_on_history',
+          action: 'delete',
+          where: { id }
+        })
       });
 
       if (response.ok) {
@@ -221,16 +223,18 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
     if (!confirm(`Удалить выбранные фото?\n\nВы собираетесь удалить ${count} ${photoWord} из истории примерок.\nЭто действие нельзя отменить.`)) return;
 
     try {
-      // Use try-on-history-api which handles S3 deletion with lookbook checks
-      const TRY_ON_HISTORY_API = 'https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd';
-      
       const deletePromises = selectedItems.map(id => 
-        fetch(`${TRY_ON_HISTORY_API}?id=${id}`, {
-          method: 'DELETE',
+        fetch(DB_QUERY_API, {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-User-Id': userId
-          }
+          },
+          body: JSON.stringify({
+            table: 'try_on_history',
+            action: 'delete',
+            where: { id }
+          })
         })
       );
 
