@@ -1,7 +1,56 @@
 import json
 import os
 import psycopg2
+import boto3
+from botocore.config import Config
 from typing import Dict, Any, List, Optional
+
+def delete_from_s3_if_orphaned(photo_url: str, user_id: str, cursor, schema: str) -> None:
+    '''
+    Удаляет фото из S3, если оно не используется в других местах
+    '''
+    s3_bucket_name = os.environ.get('S3_BUCKET_NAME', 'fitting-room-images')
+    s3_url_prefix = f'https://storage.yandexcloud.net/{s3_bucket_name}/'
+    
+    # Проверяем, что это наше хранилище
+    if not photo_url or not photo_url.startswith(s3_url_prefix):
+        return
+    
+    # Проверяем наличие в try_on_history
+    cursor.execute(
+        f"SELECT COUNT(*) as count FROM {schema}.try_on_history WHERE user_id = %s AND result_image = %s",
+        (user_id, photo_url)
+    )
+    history_count = cursor.fetchone()[0]
+    
+    # Проверяем наличие в lookbooks
+    cursor.execute(
+        f"SELECT COUNT(*) as count FROM {schema}.lookbooks WHERE user_id = %s AND %s = ANY(photos)",
+        (user_id, photo_url)
+    )
+    lookbooks_count = cursor.fetchone()[0]
+    
+    # Если фото нигде не используется - удаляем из S3
+    if history_count == 0 and lookbooks_count == 0:
+        try:
+            s3_key = photo_url.replace(s3_url_prefix, '')
+            
+            s3_client = boto3.client(
+                's3',
+                endpoint_url='https://storage.yandexcloud.net',
+                aws_access_key_id=os.environ.get('S3_ACCESS_KEY'),
+                aws_secret_access_key=os.environ.get('S3_SECRET_KEY'),
+                region_name='ru-central1',
+                config=Config(signature_version='s3v4')
+            )
+            
+            s3_client.delete_object(
+                Bucket=s3_bucket_name,
+                Key=s3_key
+            )
+            print(f'[S3] Deleted orphaned photo: {s3_key}')
+        except Exception as e:
+            print(f'[S3] Failed to delete {photo_url}: {e}')
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -146,6 +195,28 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if not where or not data:
                 raise Exception('Missing where or data for update')
             
+            # Получаем user_id из headers
+            headers = event.get('headers', {})
+            user_id = headers.get('x-user-id') or headers.get('X-User-Id')
+            
+            # Для lookbooks - проверяем удалённые фото
+            removed_photos = []
+            if table == 'lookbooks' and 'photos' in data and user_id:
+                where_parts = []
+                params = []
+                for key, value in where.items():
+                    where_parts.append(f'{key} = %s')
+                    params.append(value)
+                
+                select_query = f'SELECT photos FROM {full_table} WHERE {" AND ".join(where_parts)}'
+                cursor.execute(select_query, params)
+                row = cursor.fetchone()
+                if row and row[0]:
+                    old_photos = set(row[0])
+                    new_photos = set(data['photos'])
+                    removed_photos = list(old_photos - new_photos)
+            
+            # Выполняем UPDATE
             set_parts = []
             params = []
             for key, value in data.items():
@@ -165,6 +236,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             result_data = [dict(zip(columns, row)) for row in rows]
             
             conn.commit()
+            
+            # Проверяем и удаляем фото из S3
+            if user_id and removed_photos:
+                for photo_url in removed_photos:
+                    delete_from_s3_if_orphaned(photo_url, user_id, cursor, schema)
         
         elif action == 'delete':
             # DELETE query
@@ -172,6 +248,40 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if not where:
                 raise Exception('Missing where for delete')
             
+            # Получаем user_id из headers
+            headers = event.get('headers', {})
+            user_id = headers.get('x-user-id') or headers.get('X-User-Id')
+            
+            # Для try_on_history - сохраняем result_image перед удалением
+            photos_to_check = []
+            if table == 'try_on_history' and user_id:
+                where_parts = []
+                params = []
+                for key, value in where.items():
+                    where_parts.append(f'{key} = %s')
+                    params.append(value)
+                
+                select_query = f'SELECT result_image FROM {full_table} WHERE {" AND ".join(where_parts)}'
+                cursor.execute(select_query, params)
+                row = cursor.fetchone()
+                if row and row[0]:
+                    photos_to_check.append(row[0])
+            
+            # Для lookbooks - сохраняем photos перед удалением
+            elif table == 'lookbooks' and user_id:
+                where_parts = []
+                params = []
+                for key, value in where.items():
+                    where_parts.append(f'{key} = %s')
+                    params.append(value)
+                
+                select_query = f'SELECT photos FROM {full_table} WHERE {" AND ".join(where_parts)}'
+                cursor.execute(select_query, params)
+                row = cursor.fetchone()
+                if row and row[0]:
+                    photos_to_check.extend(row[0])
+            
+            # Выполняем DELETE
             where_parts = []
             params = []
             for key, value in where.items():
@@ -186,6 +296,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             result_data = [dict(zip(columns, row)) for row in rows]
             
             conn.commit()
+            
+            # Проверяем и удаляем фото из S3
+            if user_id and photos_to_check:
+                for photo_url in photos_to_check:
+                    delete_from_s3_if_orphaned(photo_url, user_id, cursor, schema)
         
         else:
             raise Exception(f'Unknown action: {action}')
