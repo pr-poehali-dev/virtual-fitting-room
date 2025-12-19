@@ -46,6 +46,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         table = body.get('table')
         action = body.get('action')
         
+        # Log basic request info (without sensitive data)
+        print(f'[DB-Query] table={table}, action={action}')
+        
         if not table or not action:
             return {
                 'statusCode': 400,
