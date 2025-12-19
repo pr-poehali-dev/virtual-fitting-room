@@ -147,8 +147,9 @@ export default function ProfileLookbooks() {
 
       if (!response.ok) throw new Error('Failed to create lookbook');
       
-      const newLookbook = await response.json();
-      setLookbooks(prev => [newLookbook, ...prev]);
+      const result = await response.json();
+      if (!result.success) throw new Error(result.error || 'Failed to create lookbook');
+      
       await fetchLookbooks();
       
       setNewLookbookName('');
