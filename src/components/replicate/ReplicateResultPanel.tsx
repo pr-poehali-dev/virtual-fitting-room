@@ -48,14 +48,6 @@ export default function ReplicateResultPanel({
                   Если изображение не будет сгенерировано — обратитесь в поддержку.
                 </p>
               </div>
-              <Button 
-                variant="outline" 
-                onClick={handleReset} 
-                className="mt-4"
-              >
-                <Icon name="RotateCcw" className="mr-2" size={16} />
-                Новая примерка
-              </Button>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-[500px] space-y-4">
