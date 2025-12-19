@@ -253,9 +253,11 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
     try {
       let blob: Blob;
       
-      // Check if image needs proxying (from fal.ai/fal.media)
-      if (imageUrl.includes('fal.media') || imageUrl.includes('fal.ai')) {
-        console.log('[HistoryTab] FAL URL detected, proxying for download...');
+      // Use proxy for all external images (not from cdn.poehali.dev)
+      const needsProxy = !imageUrl.includes('cdn.poehali.dev');
+      
+      if (needsProxy) {
+        console.log('[HistoryTab] External URL detected, proxying for download...');
         const IMAGE_PROXY_API = 'https://functions.poehali.dev/ecce1c16-1c2f-41da-9a98-7ba7b5f7cee9';
         
         const proxyResponse = await fetch(IMAGE_PROXY_API, {
@@ -275,8 +277,8 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
         const response = await fetch(dataUrl);
         blob = await response.blob();
       } else {
-        // CDN URL - direct fetch
-        console.log('[HistoryTab] CDN URL detected, downloading directly');
+        // cdn.poehali.dev URL - direct fetch
+        console.log('[HistoryTab] Own CDN URL detected, downloading directly');
         const response = await fetch(imageUrl);
         blob = await response.blob();
       }
