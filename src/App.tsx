@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { DataProvider } from "./context/DataContext";
 import { useEffect } from "react";
 
 import Home from "./pages/Home";
@@ -62,15 +63,16 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <VersionManager />
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/virtualfitting" element={<ReplicateTryOn />} />
-            <Route path="/replicate" element={<Navigate to="/virtualfitting" replace />} />
-            <Route path="/colortype" element={<ColorType />} />
+      <DataProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/virtualfitting" element={<ReplicateTryOn />} />
+              <Route path="/replicate" element={<Navigate to="/virtualfitting" replace />} />
+              <Route path="/colortype" element={<ColorType />} />
             
             {/* Profile Routes */}
             <Route path="/profile" element={<ProfileDashboard />} />
@@ -107,6 +109,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </DataProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

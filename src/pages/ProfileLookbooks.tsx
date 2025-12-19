@@ -7,6 +7,7 @@ import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
+import { useData } from '@/context/DataContext';
 import ProfileMenu from '@/components/ProfileMenu';
 import LookbookCard from '@/components/lookbooks/LookbookCard';
 import LookbookViewerDialog from '@/components/lookbooks/LookbookViewerDialog';
@@ -30,8 +31,8 @@ const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3
 
 export default function ProfileLookbooks() {
   const { user, isLoading: authLoading } = useAuth();
+  const { lookbooks, isLoading: dataLoading, refetchLookbooks } = useData();
   const navigate = useNavigate();
-  const [lookbooks, setLookbooks] = useState<Lookbook[]>([]);
   const [isCreatingLookbook, setIsCreatingLookbook] = useState(false);
   const [isEditingLookbook, setIsEditingLookbook] = useState(false);
   const [editingLookbookId, setEditingLookbookId] = useState<string | null>(null);
@@ -39,7 +40,6 @@ export default function ProfileLookbooks() {
   const [newPersonName, setNewPersonName] = useState('');
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [colorPalette, setColorPalette] = useState<string[]>(['#FF6B6B', '#4ECDC4', '#45B7D1']);
-  const [isLoading, setIsLoading] = useState(true);
   const [viewingLookbook, setViewingLookbook] = useState<Lookbook | null>(null);
   const [selectedPhotoIndexes, setSelectedPhotoIndexes] = useState<number[]>([]);
   const [targetLookbookId, setTargetLookbookId] = useState<string>('');
@@ -50,13 +50,9 @@ export default function ProfileLookbooks() {
       navigate('/login');
       return;
     }
-    
-    if (user) {
-      fetchLookbooks();
-    }
   }, [user, authLoading, navigate]);
 
-  if (authLoading) {
+  if (authLoading || dataLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
@@ -70,32 +66,7 @@ export default function ProfileLookbooks() {
     return null;
   }
 
-  const fetchLookbooks = async () => {
-    try {
-      const response = await fetch(DB_QUERY_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user?.id || ''
-        },
-        body: JSON.stringify({
-          table: 'lookbooks',
-          action: 'select',
-          where: { user_id: user?.id || '' },
-          order_by: 'created_at DESC',
-          limit: 100
-        })
-      });
-      const result = await response.json();
-      const data = result.success && Array.isArray(result.data) ? result.data : [];
-      setLookbooks(Array.isArray(data) ? data : []);
-    } catch (error) {
-      toast.error('Ошибка загрузки лукбуков');
-      setLookbooks([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -150,7 +121,7 @@ export default function ProfileLookbooks() {
       const result = await response.json();
       if (!result.success) throw new Error(result.error || 'Failed to create lookbook');
       
-      await fetchLookbooks();
+      await refetchLookbooks();
       
       setNewLookbookName('');
       setNewPersonName('');
@@ -197,13 +168,7 @@ export default function ProfileLookbooks() {
 
       if (!response.ok) throw new Error('Failed to update lookbook');
       
-      setLookbooks(prev => prev.map(lb => 
-        lb.id === editingLookbookId 
-          ? { ...lb, name: newLookbookName, person_name: newPersonName, photos: selectedPhotos, color_palette: colorPalette, updated_at: new Date().toISOString() }
-          : lb
-      ));
-      
-      await fetchLookbooks();
+      await refetchLookbooks();
       
       setNewLookbookName('');
       setNewPersonName('');
@@ -238,7 +203,7 @@ export default function ProfileLookbooks() {
 
       if (!response.ok) throw new Error('Failed to delete lookbook');
 
-      setLookbooks(prev => prev.filter(lb => lb.id !== id));
+      await refetchLookbooks();
       toast.success('Лукбук удалён');
     } catch (error) {
       toast.error('Ошибка удаления лукбука');
@@ -275,7 +240,7 @@ export default function ProfileLookbooks() {
       setSelectedPhotos(remainingPhotos);
       setSelectedPhotoIndexes([]);
       setTargetLookbookId('');
-      await fetchLookbooks();
+      await refetchLookbooks();
       toast.success('Фото перенесены!');
     } catch (error) {
       toast.error('Ошибка переноса фото');

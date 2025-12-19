@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
+import { useData } from '@/context/DataContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -88,6 +89,7 @@ const proxyFalImage = async (falUrl: string): Promise<string> => {
 
 export default function ReplicateTryOn() {
   const { user } = useAuth();
+  const { lookbooks, refetchLookbooks } = useData();
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedClothingItems, setSelectedClothingItems] = useState<SelectedClothing[]>([]);
   const [clothingCatalog, setClothingCatalog] = useState<ClothingItem[]>([]);
@@ -95,7 +97,6 @@ export default function ReplicateTryOn() {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [cdnImageUrl, setCdnImageUrl] = useState<string | null>(null); // Yandex Cloud URL для сохранения в лукбук
   const [isGenerating, setIsGenerating] = useState(false);
-  const [lookbooks, setLookbooks] = useState<any[]>([]);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [newLookbookName, setNewLookbookName] = useState('');
   const [newLookbookPersonName, setNewLookbookPersonName] = useState('');
@@ -118,9 +119,6 @@ export default function ReplicateTryOn() {
 
   useEffect(() => {
     fetchFilters();
-    if (user) {
-      fetchLookbooks();
-    }
   }, [user]);
 
   useEffect(() => {
@@ -182,33 +180,7 @@ export default function ReplicateTryOn() {
     }
   };
 
-  const fetchLookbooks = async () => {
-    if (!user) return;
-    
-    try {
-      const response = await fetch(DB_QUERY_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
-        },
-        body: JSON.stringify({
-          table: 'lookbooks',
-          action: 'select',
-          where: { user_id: user.id },
-          order_by: 'created_at DESC',
-          limit: 100
-        })
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        setLookbooks(result.success && Array.isArray(result.data) ? result.data : []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch lookbooks:', error);
-    }
-  };
+
 
   const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -705,7 +677,7 @@ export default function ReplicateTryOn() {
         toast.success('Фото добавлено в лукбук!');
         setShowSaveDialog(false);
         setSelectedLookbookId('');
-        await fetchLookbooks();
+        await refetchLookbooks();
       } else {
         throw new Error('Failed to save');
       }
@@ -752,7 +724,7 @@ export default function ReplicateTryOn() {
         setShowSaveDialog(false);
         setNewLookbookName('');
         setNewLookbookPersonName('');
-        await fetchLookbooks();
+        await refetchLookbooks();
       } else {
         throw new Error('Failed to create lookbook');
       }

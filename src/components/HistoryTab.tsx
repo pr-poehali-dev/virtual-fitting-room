@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Icon from '@/components/ui/icon';
 import ImageViewer from '@/components/ImageViewer';
 import { toast } from 'sonner';
+import { useData } from '@/context/DataContext';
 
 interface HistoryItem {
   id: string;
@@ -32,9 +33,8 @@ const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-8844
 const ITEMS_PER_PAGE = 30;
 
 export default function HistoryTab({ userId }: HistoryTabProps) {
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [lookbooks, setLookbooks] = useState<Lookbook[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { history, lookbooks, refetchHistory, refetchLookbooks } = useData();
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectedLookbookId, setSelectedLookbookId] = useState<string>('');
   const [isAdding, setIsAdding] = useState(false);
@@ -42,72 +42,10 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
 
   useEffect(() => {
     console.log('[HistoryTab] userId received:', userId);
-    fetchHistory();
-    fetchLookbooks();
+    setIsLoading(false);
   }, [userId]);
 
-  const fetchHistory = async () => {
-    try {
-      console.log('[HistoryTab] Fetching history with userId:', userId);
-      const response = await fetch(DB_QUERY_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': userId
-        },
-        body: JSON.stringify({
-          table: 'try_on_history',
-          action: 'select',
-          where: { user_id: userId },
-          order_by: 'created_at DESC',
-          limit: 300
-        })
-      });
-      
-      console.log('[HistoryTab] Response status:', response.status);
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log('[HistoryTab] Received data:', result);
-        setHistory(result.success && Array.isArray(result.data) ? result.data : []);
-      } else {
-        const errorData = await response.json();
-        console.error('[HistoryTab] Error response:', errorData);
-        toast.error('Ошибка загрузки истории');
-      }
-    } catch (error) {
-      console.error('Failed to fetch history:', error);
-      toast.error('Ошибка загрузки истории');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const fetchLookbooks = async () => {
-    try {
-      const response = await fetch(DB_QUERY_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': userId
-        },
-        body: JSON.stringify({
-          table: 'lookbooks',
-          action: 'select',
-          where: { user_id: userId },
-          order_by: 'created_at DESC',
-          limit: 100
-        })
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        setLookbooks(result.success && Array.isArray(result.data) ? result.data : []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch lookbooks:', error);
-    }
-  };
 
   const toggleSelection = (id: string) => {
     setSelectedItems(prev => 
@@ -175,7 +113,7 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
         toast.success(`Добавлено ${selectedPhotos.length} фото в лукбук`);
         setSelectedItems([]);
         setSelectedLookbookId('');
-        await fetchLookbooks();
+        await refetchLookbooks();
       } else {
         throw new Error('Failed to update lookbook');
       }
@@ -206,7 +144,7 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
 
       if (response.ok) {
         toast.success('Фото удалено из истории');
-        await fetchHistory();
+        await refetchHistory();
       } else {
         throw new Error('Failed to delete');
       }
@@ -242,7 +180,7 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
       
       toast.success(`Удалено ${count} ${photoWord}`);
       setSelectedItems([]);
-      await fetchHistory();
+      await refetchHistory();
     } catch (error) {
       console.error('Failed to delete selected:', error);
       toast.error('Ошибка удаления');

@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
+import { useData } from '@/context/DataContext';
 import ProfileMenu from '@/components/ProfileMenu';
 import HistoryTab from '@/components/HistoryTab';
 
 export default function ProfileHistory() {
   const { user, isLoading: authLoading } = useAuth();
+  const { isLoading: dataLoading } = useData();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,7 +18,7 @@ export default function ProfileHistory() {
     }
   }, [user, authLoading, navigate]);
 
-  if (authLoading) {
+  if (authLoading || dataLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
