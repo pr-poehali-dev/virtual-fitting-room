@@ -458,14 +458,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         print(f'[NanoBanana] Worker completed processing task {task_id}')
         
-        # Check for stuck tasks (older than 15 minutes in 'processing' status)
-        print(f'[NanoBanana] Checking for stuck tasks older than 15 minutes...')
+        # Check for stuck tasks (older than 3 minutes in 'processing' status)
+        print(f'[NanoBanana] Checking for stuck tasks older than 3 minutes...')
         cursor.execute('''
             SELECT id, fal_response_url, user_id, created_at
             FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
             WHERE status = 'processing' 
               AND fal_response_url IS NOT NULL
-              AND created_at < NOW() - INTERVAL '15 minutes'
+              AND created_at < NOW() - INTERVAL '3 minutes'
               AND id != %s
             ORDER BY created_at ASC
             LIMIT 5

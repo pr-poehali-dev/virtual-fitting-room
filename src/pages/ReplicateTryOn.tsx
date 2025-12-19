@@ -490,7 +490,7 @@ export default function ReplicateTryOn() {
 
       const data = await response.json();
       setTaskId(data.task_id);
-      setGenerationStatus('В очереди...');
+      setGenerationStatus('В очереди... Обычно генерация занимает 30-90 секунд');
       toast.success('Задача создана! Ожидайте результат...');
       
       // Вызываем worker для обработки задачи
@@ -519,7 +519,7 @@ export default function ReplicateTryOn() {
     console.log('[NanoBananaPro] Starting polling for task:', taskId);
     let checkCount = 0;
     const startTime = Date.now();
-    const TIMEOUT_MS = 900000; // 15 минут (900 секунд)
+    const TIMEOUT_MS = 180000; // 3 минуты (180 секунд)
     
     const interval = setInterval(async () => {
       try {
@@ -529,10 +529,10 @@ export default function ReplicateTryOn() {
         
         const elapsedTime = Date.now() - startTime;
         if (elapsedTime > TIMEOUT_MS) {
-          console.error('[NanoBananaPro] Timeout after 15 minutes');
+          console.error('[NanoBananaPro] Timeout after 3 minutes');
           setIsGenerating(false);
           setGenerationStatus('');
-          toast.error('Генерация заняла слишком много времени. Результат может появиться позже в истории');
+          toast.info('Генерация занимает больше времени. Вы можете закрыть страницу — результат появится в Истории личного кабинета. Скорее всего нейросеть перегружена, результат может получиться чуть хуже. Лучше не запускать новые генерации сразу. Если изображение не будет сгенерировано — обратитесь в поддержку.', { duration: 10000 });
           clearInterval(interval);
           setPollingInterval(null);
           
@@ -623,7 +623,7 @@ export default function ReplicateTryOn() {
       } catch (error: any) {
         console.error('[NanoBananaPro] Polling error:', error);
       }
-    }, 45000); // Проверяем каждые 45 секунд
+    }, 30000); // Проверяем каждые 30 секунд
 
     setPollingInterval(interval);
   };
