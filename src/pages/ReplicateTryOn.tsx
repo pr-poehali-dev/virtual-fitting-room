@@ -89,7 +89,7 @@ const proxyFalImage = async (falUrl: string): Promise<string> => {
 
 export default function ReplicateTryOn() {
   const { user } = useAuth();
-  const { lookbooks, refetchLookbooks } = useData();
+  const { lookbooks, refetchLookbooks, refetchHistory } = useData();
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedClothingItems, setSelectedClothingItems] = useState<SelectedClothing[]>([]);
   const [clothingCatalog, setClothingCatalog] = useState<ClothingItem[]>([]);
@@ -602,8 +602,9 @@ export default function ReplicateTryOn() {
           setPollingInterval(null);
           toast.success('Образ готов!');
           
-          // Worker уже сохранил результат в S3 и историю - не нужно дублировать
+          // Worker уже сохранил результат в S3 и историю - обновляем данные в Context
           console.log('[NanoBananaPro] Worker already saved to S3 and history');
+          await refetchHistory();
         } else if (data.status === 'failed') {
           console.error('[NanoBananaPro] FAILED:', data.error_message);
           setIsGenerating(false);
