@@ -110,6 +110,7 @@ export default function ReplicateTryOn() {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
   const [generationStatus, setGenerationStatus] = useState<string>('');
+  const [hasTimedOut, setHasTimedOut] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageForCrop, setTempImageForCrop] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState<string>('');
@@ -461,8 +462,9 @@ export default function ReplicateTryOn() {
       setIsGenerating(true);
       setGeneratedImage(null);
       setGenerationStatus('Запускаем генерацию...');
+      setHasTimedOut(false);
 
-      toast.info('Генерация может занять до 10 минут. Не закрывайте страницу!', {
+      toast.info('Обычно генерация занимает 30-90 секунд. Не закрывайте страницу!', {
         duration: 8000
       });
 
@@ -530,7 +532,7 @@ export default function ReplicateTryOn() {
         const elapsedTime = Date.now() - startTime;
         if (elapsedTime > TIMEOUT_MS) {
           console.error('[NanoBananaPro] Timeout after 3 minutes');
-          setIsGenerating(false);
+          setHasTimedOut(true);
           setGenerationStatus('');
           toast.info('Генерация занимает больше времени. Вы можете закрыть страницу — результат появится в Истории личного кабинета. Скорее всего нейросеть перегружена, результат может получиться чуть хуже. Лучше не запускать новые генерации сразу. Если изображение не будет сгенерировано — обратитесь в поддержку.', { duration: 10000 });
           clearInterval(interval);
@@ -598,6 +600,7 @@ export default function ReplicateTryOn() {
           setGeneratedImage(displayUrl);
           setIsGenerating(false);
           setGenerationStatus('');
+          setHasTimedOut(false);
           clearInterval(interval);
           setPollingInterval(null);
           toast.success('Образ готов!');
@@ -609,6 +612,7 @@ export default function ReplicateTryOn() {
           console.error('[NanoBananaPro] FAILED:', data.error_message);
           setIsGenerating(false);
           setGenerationStatus('');
+          setHasTimedOut(false);
           toast.error(data.error_message || 'Ошибка генерации');
           clearInterval(interval);
           setPollingInterval(null);
@@ -643,6 +647,7 @@ export default function ReplicateTryOn() {
     setTaskId(null);
     setIsGenerating(false);
     setGenerationStatus('');
+    setHasTimedOut(false);
   };
 
   const handleSaveToExistingLookbook = async () => {
@@ -917,6 +922,7 @@ export default function ReplicateTryOn() {
               handleDownloadImage={handleDownloadImage}
               setShowSaveDialog={setShowSaveDialog}
               handleReset={handleReset}
+              hasTimedOut={hasTimedOut}
             />
           </div>
 

@@ -9,6 +9,7 @@ interface ReplicateResultPanelProps {
   handleDownloadImage: () => void;
   setShowSaveDialog: (show: boolean) => void;
   handleReset: () => void;
+  hasTimedOut: boolean;
 }
 
 export default function ReplicateResultPanel({
@@ -16,7 +17,8 @@ export default function ReplicateResultPanel({
   generatedImage,
   handleDownloadImage,
   setShowSaveDialog,
-  handleReset
+  handleReset,
+  hasTimedOut
 }: ReplicateResultPanelProps) {
   return (
     <Card className="animate-scale-in">
@@ -28,16 +30,45 @@ export default function ReplicateResultPanel({
       </CardHeader>
       <CardContent className="p-8">
         {isGenerating ? (
-          <div className="flex flex-col items-center justify-center h-[500px] space-y-4">
-            <Icon name="Loader2" className="animate-spin text-primary" size={64} />
-            <p className="text-lg font-medium">Создаём образ...</p>
-            <p className="text-sm text-muted-foreground text-center max-w-sm">
-              AI анализирует выбранные вещи и создаёт реалистичный образ. Подождите от 30 секунд до 2 минут
-            </p>
-            <p className="text-xs text-center max-w-sm mt-1">
-              Не закрывайте страницу до завершения генерации
-            </p>
-          </div>
+          hasTimedOut ? (
+            <div className="flex flex-col items-center justify-center h-[500px] space-y-4 p-6">
+              <Icon name="Clock" className="text-orange-500" size={64} />
+              <p className="text-lg font-medium text-center">Генерация занимает больше времени</p>
+              <div className="text-sm text-muted-foreground text-center max-w-lg space-y-3">
+                <p>
+                  Вы можете закрыть страницу — результат появится в <strong>Истории личного кабинета</strong>.
+                </p>
+                <p className="text-orange-600 dark:text-orange-400">
+                  Скорее всего нейросеть перегружена задачами, результат может получиться чуть хуже обычного.
+                </p>
+                <p>
+                  <strong>Лучше не запускать новые генерации сразу</strong>, подождите некоторое время.
+                </p>
+                <p className="text-xs">
+                  Если изображение не будет сгенерировано — обратитесь в поддержку.
+                </p>
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={handleReset} 
+                className="mt-4"
+              >
+                <Icon name="RotateCcw" className="mr-2" size={16} />
+                Новая примерка
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-[500px] space-y-4">
+              <Icon name="Loader2" className="animate-spin text-primary" size={64} />
+              <p className="text-lg font-medium">Создаём образ...</p>
+              <p className="text-sm text-muted-foreground text-center max-w-sm">
+                AI анализирует выбранные вещи и создаёт реалистичный образ. Подождите от 30 секунд до 3 минут
+              </p>
+              <p className="text-xs text-center max-w-sm mt-1">
+                Не закрывайте страницу до завершения генерации
+              </p>
+            </div>
+          )
         ) : generatedImage ? (
           <div className="space-y-4">
             <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg mb-4">
