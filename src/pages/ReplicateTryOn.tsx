@@ -862,17 +862,23 @@ export default function ReplicateTryOn() {
                     <Label htmlFor="custom-prompt">Дополнительные пожелания (опционально)</Label>
                     <Textarea
                       id="custom-prompt"
-                      placeholder="Например: студийное освещение или на фоне природы или на фоне городского пейзажа"
+                      placeholder="Например: студийное освещение или на фоне природы или на фоне городского пейзажа, цвет волос: (описание), прическа: (описание), обувь: (описание), аксессуары: (описание)"
                       value={customPrompt}
                       onChange={(e) => setCustomPrompt(e.target.value)}
+                      maxLength={300}
                       rows={3}
                       disabled={isGenerating}
                       className="resize-none"
                     />
-                    <p className="text-xs text-muted-foreground">
-                      <Icon name="AlertCircle" className="inline mr-1" size={12} />
-                      Если промпт будет слишком большой, есть вероятность, что нейросеть не сгенерирует фото
-                    </p>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <div>
+                        <Icon name="AlertCircle" className="inline mr-1" size={12} />
+                        Если промпт будет слишком большой, есть вероятность, что нейросеть не сгенерирует фото
+                      </div>
+                      <div className={customPrompt.length > 250 ? 'text-orange-500' : ''}>
+                        {customPrompt.length} / 300
+                      </div>
+                    </div>
                   </div>
 
                   {generationStatus && (
