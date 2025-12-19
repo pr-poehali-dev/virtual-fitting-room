@@ -251,16 +251,48 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
 
   const handleDownloadImage = async (imageUrl: string, historyId: string) => {
     try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      let blob: Blob;
+      
+      // Check if image needs proxying (from fal.ai/fal.media)
+      if (imageUrl.includes('fal.media') || imageUrl.includes('fal.ai')) {
+        console.log('[HistoryTab] FAL URL detected, proxying for download...');
+        const IMAGE_PROXY_API = 'https://functions.poehali.dev/ecce1c16-1c2f-41da-9a98-7ba7b5f7cee9';
+        
+        const proxyResponse = await fetch(IMAGE_PROXY_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image_url: imageUrl })
+        });
+        
+        if (!proxyResponse.ok) {
+          throw new Error('Failed to proxy image for download');
+        }
+        
+        const proxyData = await proxyResponse.json();
+        const dataUrl = proxyData.data_url;
+        
+        // Convert base64 data URL to blob
+        const response = await fetch(dataUrl);
+        blob = await response.blob();
+      } else {
+        // CDN URL - direct fetch
+        console.log('[HistoryTab] CDN URL detected, downloading directly');
+        const response = await fetch(imageUrl);
+        blob = await response.blob();
+      }
+      
+      // Create download link with blob URL
+      const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
+      link.href = blobUrl;
       link.download = `fitting-room-${historyId}.jpg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      
+      // Clean up blob URL
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      
       toast.success('Фото скачано');
     } catch (error) {
       console.error('Failed to download image:', error);
