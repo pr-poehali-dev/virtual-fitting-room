@@ -50,14 +50,14 @@ export default function ReplicateResultPanel({
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-[500px] space-y-4">
+            <div className="flex flex-col items-center justify-center h-[500px] space-y-4 px-6">
               <Icon name="Loader2" className="animate-spin text-primary" size={64} />
               <p className="text-lg font-medium">Создаём образ...</p>
-              <p className="text-sm text-muted-foreground text-center max-w-sm">
+              <p className="text-sm text-muted-foreground text-center max-w-md">
                 AI анализирует выбранные вещи и создаёт реалистичный образ. Подождите от 30 секунд до 3 минут
               </p>
-              <p className="text-xs text-center max-w-sm mt-1">
-                Не закрывайте страницу до завершения генерации
+              <p className="text-xs text-muted-foreground text-center max-w-md mt-1">
+                Не закрывайте страницу до завершения генерации. Если интернет отключится или вы случайно перезагрузите страницу — результат сохранится в Истории личного кабинета, но появится чуть позже.
               </p>
             </div>
           )
