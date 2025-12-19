@@ -269,7 +269,7 @@ export default function ProfileLookbooks() {
               <div>
                 <div className="flex items-center gap-3">
                   <h1 className="text-3xl font-bold">Лукбуки</h1>
-                  {!isLoading && lookbooks.length > 0 && (
+                  {!dataLoading && lookbooks.length > 0 && (
                     <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
                       {lookbooks.length}
                     </span>
@@ -304,7 +304,7 @@ export default function ProfileLookbooks() {
               </Dialog>
             </div>
 
-            {isLoading ? (
+            {dataLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Icon name="Loader2" className="animate-spin" size={48} />
               </div>
