@@ -258,7 +258,7 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
       
       if (needsProxy) {
         console.log('[HistoryTab] External URL detected, proxying for download...');
-        const IMAGE_PROXY_API = 'https://functions.poehali.dev/ecce1c16-1c2f-41da-9a98-7ba7b5f7cee9';
+        const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
         
         const proxyResponse = await fetch(IMAGE_PROXY_API, {
           method: 'POST',

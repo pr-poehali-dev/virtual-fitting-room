@@ -23,14 +23,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': get_cors_origin(event),
-                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
                 'Access-Control-Max-Age': '86400'
             },
             'body': ''
         }
     
-    if method != 'GET':
+    if method not in ['GET', 'POST']:
         return {
             'statusCode': 405,
             'headers': {
@@ -42,9 +42,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
-        query_params = event.get('queryStringParameters') or {}
-        image_url = query_params.get('url')
-        download = query_params.get('download', 'false').lower() == 'true'
+        # Support both GET with query params and POST with JSON body
+        if method == 'POST':
+            body_data = json.loads(event.get('body', '{}'))
+            image_url = body_data.get('image_url')
+            download = body_data.get('download', False)
+        else:
+            query_params = event.get('queryStringParameters') or {}
+            image_url = query_params.get('url')
+            download = query_params.get('download', 'false').lower() == 'true'
         
         if not image_url:
             return {
