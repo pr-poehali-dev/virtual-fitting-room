@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
@@ -22,6 +22,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { useCatalogFilters, useCatalog } from '@/hooks/useCatalog';
 
 interface ClothingItem {
   id: string;
@@ -92,17 +93,15 @@ export default function ReplicateTryOn() {
   const { lookbooks, refetchLookbooks, refetchHistory } = useData();
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedClothingItems, setSelectedClothingItems] = useState<SelectedClothing[]>([]);
-  const [clothingCatalog, setClothingCatalog] = useState<ClothingItem[]>([]);
 
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [cdnImageUrl, setCdnImageUrl] = useState<string | null>(null); // Yandex Cloud URL для сохранения в лукбук
+  const [cdnImageUrl, setCdnImageUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [newLookbookName, setNewLookbookName] = useState('');
   const [newLookbookPersonName, setNewLookbookPersonName] = useState('');
   const [selectedLookbookId, setSelectedLookbookId] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
-  const [filters, setFilters] = useState<Filters | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [selectedColors, setSelectedColors] = useState<number[]>([]);
   const [selectedArchetypes, setSelectedArchetypes] = useState<number[]>([]);
@@ -117,14 +116,14 @@ export default function ReplicateTryOn() {
   const [showCategoryError, setShowCategoryError] = useState(false);
   const isNanoBananaRequestInProgress = useRef(false);
 
-
-  useEffect(() => {
-    fetchFilters();
-  }, [user]);
-
-  useEffect(() => {
-    fetchCatalog();
-  }, [selectedCategories, selectedColors, selectedArchetypes, selectedGender]);
+  const { data: filters } = useCatalogFilters(['Обувь', 'Аксессуары', 'Головные уборы']);
+  const { data: clothingCatalog } = useCatalog({
+    categoryIds: selectedCategories.length > 0 ? selectedCategories : undefined,
+    colorIds: selectedColors.length > 0 ? selectedColors : undefined,
+    archetypeIds: selectedArchetypes.length > 0 ? selectedArchetypes : undefined,
+    gender: selectedGender || undefined,
+    includeReplicateCategories: ['upper_body', 'lower_body', 'dresses'],
+  });
 
   useEffect(() => {
     return () => {
@@ -133,53 +132,6 @@ export default function ReplicateTryOn() {
       }
     };
   }, [pollingInterval]);
-
-  const fetchFilters = async () => {
-    try {
-      const response = await fetch(`${CATALOG_API}?action=filters`);
-      if (response.ok) {
-        const data = await response.json();
-        const filteredCategories = data.categories.filter((cat: FilterOption) => 
-          !['Обувь', 'Аксессуары', 'Головные уборы'].includes(cat.name)
-        );
-        setFilters({
-          ...data,
-          categories: filteredCategories
-        });
-      }
-    } catch (error) {
-      console.error('Failed to fetch filters:', error);
-    }
-  };
-
-  const fetchCatalog = async () => {
-    try {
-      const params = new URLSearchParams({ action: 'list' });
-      if (selectedCategories.length > 0) {
-        params.append('categories', selectedCategories.join(','));
-      }
-      if (selectedColors.length > 0) {
-        params.append('colors', selectedColors.join(','));
-      }
-      if (selectedArchetypes.length > 0) {
-        params.append('archetypes', selectedArchetypes.join(','));
-      }
-      if (selectedGender) {
-        params.append('gender', selectedGender);
-      }
-      const response = await fetch(`${CATALOG_API}?${params.toString()}`);
-      if (response.ok) {
-        const data = await response.json();
-        const filteredData = data.filter((item: ClothingItem) => {
-          const category = mapCategoryFromCatalog(item);
-          return category === 'upper_body' || category === 'lower_body' || category === 'dresses';
-        });
-        setClothingCatalog(filteredData);
-      }
-    } catch (error) {
-      console.error('Failed to fetch catalog:', error);
-    }
-  };
 
 
 

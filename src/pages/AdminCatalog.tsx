@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import AdminMenu from '@/components/AdminMenu';
 import ImageCropper from '@/components/ImageCropper';
+import { useCatalogFilters, useCatalog } from '@/hooks/useCatalog';
 
 interface ClothingItem {
   id: string;
@@ -40,15 +41,21 @@ const IMAGE_PREPROCESSING_API = 'https://functions.poehali.dev/3fe8c892-ab5f-4d2
 export default function AdminCatalog() {
   const navigate = useNavigate();
   
-  const [clothingItems, setClothingItems] = useState<ClothingItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
-  const [filters, setFilters] = useState<Filters | null>(null);
   const [showAddClothing, setShowAddClothing] = useState(false);
   const [selectedCatalogCategories, setSelectedCatalogCategories] = useState<number[]>([]);
   const [selectedCatalogColors, setSelectedCatalogColors] = useState<number[]>([]);
   const [selectedCatalogArchetypes, setSelectedCatalogArchetypes] = useState<number[]>([]);
   const [selectedCatalogGender, setSelectedCatalogGender] = useState<string>('');
+
+  const { data: filters } = useCatalogFilters();
+  const { data: clothingItems, refetchCatalog } = useCatalog({
+    categoryIds: selectedCatalogCategories.length > 0 ? selectedCatalogCategories : undefined,
+    colorIds: selectedCatalogColors.length > 0 ? selectedCatalogColors : undefined,
+    archetypeIds: selectedCatalogArchetypes.length > 0 ? selectedCatalogArchetypes : undefined,
+    gender: selectedCatalogGender || undefined,
+  });
   const [editingClothing, setEditingClothing] = useState<ClothingItem | null>(null);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [newClothing, setNewClothing] = useState({
@@ -81,46 +88,13 @@ export default function AdminCatalog() {
       navigate('/admin');
       return;
     }
-    fetchCatalogData();
-  }, [selectedCatalogCategories, selectedCatalogColors, selectedCatalogArchetypes, selectedCatalogGender, navigate]);
+  }, [navigate]);
 
-  const fetchCatalogData = async () => {
-    try {
-      const params = new URLSearchParams({ action: 'list' });
-      if (selectedCatalogCategories.length > 0) {
-        params.append('categories', selectedCatalogCategories.join(','));
-      }
-      if (selectedCatalogColors.length > 0) {
-        params.append('colors', selectedCatalogColors.join(','));
-      }
-      if (selectedCatalogArchetypes.length > 0) {
-        params.append('archetypes', selectedCatalogArchetypes.join(','));
-      }
-      if (selectedCatalogGender) {
-        params.append('gender', selectedCatalogGender);
-      }
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCatalogCategories, selectedCatalogColors, selectedCatalogArchetypes, selectedCatalogGender]);
 
-      const [filtersRes, catalogRes] = await Promise.all([
-        fetch(`${CATALOG_API}?action=filters`),
-        fetch(`${CATALOG_API}?${params.toString()}`)
-      ]);
 
-      if (!filtersRes.ok || !catalogRes.ok) {
-        throw new Error('Ошибка загрузки каталога');
-      }
-
-      const [filtersData, catalogData] = await Promise.all([
-        filtersRes.json(),
-        catalogRes.json()
-      ]);
-
-      setFilters(filtersData);
-      setClothingItems(catalogData);
-      setCurrentPage(1);
-    } catch (error) {
-      toast.error('Ошибка загрузки каталога');
-    }
-  };
 
   const handleRemoveBackground = async () => {
     if (!newClothing.image_url) {
@@ -169,7 +143,7 @@ export default function AdminCatalog() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Admin-Password': adminPassword || ''
+          'X-Admin-Token': adminToken || ''
         },
         body: JSON.stringify(newClothing)
       });
@@ -188,7 +162,7 @@ export default function AdminCatalog() {
           gender: 'unisex'
         });
         setUploadSource('url');
-        fetchCatalogData();
+        refetchCatalog();
       } else {
         toast.error('Ошибка добавления');
       }
@@ -241,7 +215,7 @@ export default function AdminCatalog() {
       if (response.ok) {
         toast.success('Одежда обновлена');
         setEditingClothing(null);
-        fetchCatalogData();
+        refetchCatalog();
       } else {
         toast.error('Ошибка обновления');
       }
@@ -263,7 +237,7 @@ export default function AdminCatalog() {
 
       if (response.ok) {
         toast.success('Позиция удалена');
-        fetchCatalogData();
+        refetchCatalog();
       } else {
         toast.error('Ошибка удаления');
       }
