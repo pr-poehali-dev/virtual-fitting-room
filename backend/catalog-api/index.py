@@ -454,14 +454,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Missing id or image_url'})
                 }
             
-            # Get current image URL to delete old version
+            # Get current image URL
             cursor.execute('SELECT image_url FROM clothing_catalog WHERE id = %s', (clothing_id,))
             current_item = cursor.fetchone()
             old_image_url = current_item['image_url'] if current_item else None
             
-            # Save image to S3 if it's base64 or external URL
+            # Only save to S3 if image URL has changed
             saved_image_url = image_url
-            if image_url.startswith(('http://', 'https://', 'data:')):
+            if old_image_url != image_url and image_url.startswith(('http://', 'https://', 'data:')):
                 s3_enabled = os.environ.get('S3_ACCESS_KEY')
                 if s3_enabled:
                     try:
@@ -478,8 +478,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             save_data = save_response.json()
                             saved_image_url = save_data.get('url', image_url)
                             
-                            # Delete old image from S3 if it's different and exists
-                            if old_image_url and old_image_url != saved_image_url and old_image_url.startswith('https://cdn.poehali.dev/'):
+                            # Delete old image from S3 if it exists
+                            if old_image_url and old_image_url.startswith('https://cdn.poehali.dev/'):
                                 try:
                                     delete_response = requests.post(
                                         'https://functions.poehali.dev/bfa8cc4d-a0e7-44dd-b97a-0bd15e9f9b27',
