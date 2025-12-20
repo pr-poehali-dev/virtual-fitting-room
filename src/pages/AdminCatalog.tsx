@@ -352,6 +352,22 @@ export default function AdminCatalog() {
                     </div>
                   )}
 
+                  {(selectedCatalogCategories.length > 0 || selectedCatalogColors.length > 0 || selectedCatalogArchetypes.length > 0 || selectedCatalogGender) && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedCatalogCategories([]);
+                        setSelectedCatalogColors([]);
+                        setSelectedCatalogArchetypes([]);
+                        setSelectedCatalogGender('');
+                      }}
+                    >
+                      <Icon name="X" className="w-4 h-4 mr-2" />
+                      Сбросить фильтр
+                    </Button>
+                  )}
+
                   <Button onClick={() => { setShowAddClothing(true); setEditingClothing(null); }}>
                     <Icon name="Plus" className="w-4 h-4 mr-2" />
                     Добавить одежду

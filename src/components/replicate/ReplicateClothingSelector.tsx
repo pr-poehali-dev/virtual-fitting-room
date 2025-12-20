@@ -394,6 +394,26 @@ export default function ReplicateClothingSelector({
                     </select>
                   </div>
                 </div>
+                
+                {(selectedCategories.length > 0 || selectedColors.length > 0 || selectedArchetypes.length > 0 || selectedGender) && (
+                  <div className="pt-3 border-t mt-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedCategories([]);
+                        setSelectedColors([]);
+                        setSelectedArchetypes([]);
+                        setSelectedGender('');
+                      }}
+                      className="w-full"
+                    >
+                      <Icon name="X" className="mr-2" size={16} />
+                      Сбросить фильтр
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
