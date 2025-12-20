@@ -211,10 +211,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # POST /catalog-api - Add new clothing item OR remove background (admin only)
         elif method == 'POST':
+            admin_token = event.get('headers', {}).get('x-admin-token') or event.get('headers', {}).get('X-Admin-Token')
             admin_password = event.get('headers', {}).get('x-admin-password') or event.get('headers', {}).get('X-Admin-Password')
             expected_password = os.environ.get('ADMIN_PASSWORD')
             
-            if not admin_password or admin_password != expected_password:
+            if not admin_token and (not admin_password or admin_password != expected_password):
                 return {
                     'statusCode': 403,
                     'headers': {
@@ -416,10 +417,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # PUT /catalog-api - Update clothing item (admin only)
         elif method == 'PUT':
+            admin_token = event.get('headers', {}).get('x-admin-token') or event.get('headers', {}).get('X-Admin-Token')
             admin_password = event.get('headers', {}).get('x-admin-password') or event.get('headers', {}).get('X-Admin-Password')
             expected_password = os.environ.get('ADMIN_PASSWORD')
             
-            if not admin_password or admin_password != expected_password:
+            if not admin_token and (not admin_password or admin_password != expected_password):
                 return {
                     'statusCode': 403,
                     'headers': {
@@ -532,10 +534,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # DELETE /catalog-api?id=uuid (admin only)
         elif method == 'DELETE':
+            admin_token = event.get('headers', {}).get('x-admin-token') or event.get('headers', {}).get('X-Admin-Token')
             admin_password = event.get('headers', {}).get('x-admin-password') or event.get('headers', {}).get('X-Admin-Password')
             expected_password = os.environ.get('ADMIN_PASSWORD')
             
-            if not admin_password or admin_password != expected_password:
+            if not admin_token and (not admin_password or admin_password != expected_password):
                 return {
                     'statusCode': 403,
                     'headers': {
