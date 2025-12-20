@@ -161,6 +161,7 @@ export default function ImageCropper({
                 alt="Crop preview"
                 className="max-w-full h-auto"
                 onLoad={handleImageLoad}
+                crossOrigin="anonymous"
               />
             </ReactCrop>
           </div>

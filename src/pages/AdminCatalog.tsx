@@ -362,79 +362,85 @@ export default function AdminCatalog() {
                       <h3 className="font-semibold mb-4">{editingClothing ? 'Редактировать одежду' : 'Добавить новую одежду'}</h3>
                       
                       <div className="space-y-4">
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">Источник изображения</label>
-                          <div className="flex gap-4">
-                            <label className="flex items-center space-x-2 cursor-pointer">
-                              <input
-                                type="radio"
-                                checked={uploadSource === 'url'}
-                                onChange={() => setUploadSource('url')}
-                                className="rounded"
-                              />
-                              <span className="text-sm">URL</span>
-                            </label>
-                            <label className="flex items-center space-x-2 cursor-pointer">
-                              <input
-                                type="radio"
-                                checked={uploadSource === 'file'}
-                                onChange={() => setUploadSource('file')}
-                                className="rounded"
-                              />
-                              <span className="text-sm">Файл</span>
-                            </label>
-                          </div>
-                        </div>
-
-                        {uploadSource === 'url' ? (
+                        {editingClothing ? (
                           <div>
-                            <label className="text-sm font-medium mb-2 block">URL изображения</label>
-                            <Input
-                              placeholder="https://example.com/image.jpg"
-                              value={editingClothing ? editingClothing.image_url : newClothing.image_url}
-                              onChange={(e) => {
-                                if (editingClothing) {
-                                  setEditingClothing({ ...editingClothing, image_url: e.target.value });
-                                } else {
-                                  setNewClothing({ ...newClothing, image_url: e.target.value });
-                                }
-                              }}
-                            />
-                          </div>
-                        ) : (
-                          <div>
-                            <label className="text-sm font-medium mb-2 block">Загрузить изображение</label>
-                            <Input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (!file) return;
-
-                                const reader = new FileReader();
-                                reader.onloadend = () => {
-                                  const base64Image = reader.result as string;
-                                  if (editingClothing) {
-                                    setEditingClothing({ ...editingClothing, image_url: base64Image });
-                                  } else {
-                                    setNewClothing(prev => ({ ...prev, image_url: base64Image }));
-                                  }
-                                };
-                                reader.readAsDataURL(file);
-                              }}
-                            />
-                          </div>
-                        )}
-
-                        {(editingClothing?.image_url || newClothing.image_url) && (
-                          <div>
-                            <label className="text-sm font-medium mb-2 block">Превью</label>
+                            <label className="text-sm font-medium mb-2 block">Изображение</label>
                             <img 
-                              src={editingClothing ? editingClothing.image_url : newClothing.image_url} 
+                              src={editingClothing.image_url} 
                               alt="Preview" 
                               className="w-32 h-32 object-cover rounded border"
                             />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Для изменения фото удалите позицию и создайте новую
+                            </p>
                           </div>
+                        ) : (
+                          <>
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Источник изображения</label>
+                              <div className="flex gap-4">
+                                <label className="flex items-center space-x-2 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    checked={uploadSource === 'url'}
+                                    onChange={() => setUploadSource('url')}
+                                    className="rounded"
+                                  />
+                                  <span className="text-sm">URL</span>
+                                </label>
+                                <label className="flex items-center space-x-2 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    checked={uploadSource === 'file'}
+                                    onChange={() => setUploadSource('file')}
+                                    className="rounded"
+                                  />
+                                  <span className="text-sm">Файл</span>
+                                </label>
+                              </div>
+                            </div>
+
+                            {uploadSource === 'url' ? (
+                              <div>
+                                <label className="text-sm font-medium mb-2 block">URL изображения</label>
+                                <Input
+                                  placeholder="https://example.com/image.jpg"
+                                  value={newClothing.image_url}
+                                  onChange={(e) => setNewClothing({ ...newClothing, image_url: e.target.value })}
+                                />
+                              </div>
+                            ) : (
+                              <div>
+                                <label className="text-sm font-medium mb-2 block">Загрузить изображение</label>
+                                <Input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                      const base64Image = reader.result as string;
+                                      setNewClothing(prev => ({ ...prev, image_url: base64Image }));
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }}
+                                />
+                              </div>
+                            )}
+
+                            {newClothing.image_url && (
+                              <div>
+                                <label className="text-sm font-medium mb-2 block">Превью</label>
+                                <img 
+                                  src={newClothing.image_url} 
+                                  alt="Preview" 
+                                  className="w-32 h-32 object-cover rounded border"
+                                />
+                              </div>
+                            )}
+                          </>
                         )}
 
                         <div>
