@@ -37,38 +37,19 @@ interface CatalogFilters {
 }
 
 const fetchFilters = async (): Promise<Filters> => {
-  try {
-    const response = await fetch(`${CATALOG_API}?action=filters`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch filters');
-    }
-    const data = await response.json();
-    // Ensure all arrays exist
-    return {
-      categories: data.categories || [],
-      colors: data.colors || [],
-      archetypes: data.archetypes || [],
-      genders: data.genders || [],
-    };
-  } catch (error) {
-    console.error('Filters fetch error:', error);
-    // Return empty filters on error
-    return { categories: [], colors: [], archetypes: [], genders: [] };
+  const response = await fetch(`${CATALOG_API}?action=filters`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch filters');
   }
+  return response.json();
 };
 
 const fetchAllClothingItems = async (): Promise<ClothingItem[]> => {
-  try {
-    const response = await fetch(`${CATALOG_API}?action=list`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch catalog');
-    }
-    const data = await response.json();
-    return Array.isArray(data) ? data : [];
-  } catch (error) {
-    console.error('Catalog fetch error:', error);
-    return [];
+  const response = await fetch(`${CATALOG_API}?action=list`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch catalog');
   }
+  return response.json();
 };
 
 const filterClothingItems = (
@@ -77,36 +58,36 @@ const filterClothingItems = (
   availableFilters?: Filters
 ): ClothingItem[] => {
   return items.filter((item) => {
-    if (filters.categoryIds && filters.categoryIds.length > 0 && availableFilters?.categories && availableFilters.categories.length > 0) {
+    if (filters.categoryIds && filters.categoryIds.length > 0 && availableFilters) {
       const selectedCategoryNames = availableFilters.categories
         .filter(cat => filters.categoryIds!.includes(Number(cat.id)))
         .map(cat => cat.name);
       
-      const hasCategory = item.categories?.some(cat => 
+      const hasCategory = item.categories.some(cat => 
         selectedCategoryNames.includes(cat)
-      ) ?? false;
+      );
       if (!hasCategory) return false;
     }
 
-    if (filters.colorIds && filters.colorIds.length > 0 && availableFilters?.colors && availableFilters.colors.length > 0) {
+    if (filters.colorIds && filters.colorIds.length > 0 && availableFilters) {
       const selectedColorNames = availableFilters.colors
         .filter(col => filters.colorIds!.includes(Number(col.id)))
         .map(col => col.name);
       
-      const hasColor = item.colors?.some(col => 
+      const hasColor = item.colors.some(col => 
         selectedColorNames.includes(col)
-      ) ?? false;
+      );
       if (!hasColor) return false;
     }
 
-    if (filters.archetypeIds && filters.archetypeIds.length > 0 && availableFilters?.archetypes && availableFilters.archetypes.length > 0) {
+    if (filters.archetypeIds && filters.archetypeIds.length > 0 && availableFilters) {
       const selectedArchetypeNames = availableFilters.archetypes
         .filter(arch => filters.archetypeIds!.includes(Number(arch.id)))
         .map(arch => arch.name);
       
-      const hasArchetype = item.archetypes?.some(arch => 
+      const hasArchetype = item.archetypes.some(arch => 
         selectedArchetypeNames.includes(arch)
-      ) ?? false;
+      );
       if (!hasArchetype) return false;
     }
 
@@ -117,9 +98,9 @@ const filterClothingItems = (
     }
 
     if (filters.excludeCategories && filters.excludeCategories.length > 0) {
-      const hasExcludedCategory = item.categories?.some(cat => 
+      const hasExcludedCategory = item.categories.some(cat => 
         filters.excludeCategories!.includes(cat)
-      ) ?? false;
+      );
       if (hasExcludedCategory) return false;
     }
 
@@ -138,21 +119,12 @@ export const useCatalogFilters = (excludeCategories?: string[]) => {
     queryKey: ['catalog-filters'],
     queryFn: async () => {
       const filters = await fetchFilters();
-      
-      // Ensure all arrays exist with defaults
-      const safeFilters: Filters = {
-        categories: filters.categories || [],
-        colors: filters.colors || [],
-        archetypes: filters.archetypes || [],
-        genders: filters.genders || [],
-      };
-      
       if (excludeCategories && excludeCategories.length > 0) {
-        safeFilters.categories = safeFilters.categories.filter(
+        filters.categories = filters.categories.filter(
           (cat) => !excludeCategories.includes(cat.name)
         );
       }
-      return safeFilters;
+      return filters;
     },
     staleTime: Infinity,
     gcTime: Infinity,

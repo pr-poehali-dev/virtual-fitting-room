@@ -139,16 +139,16 @@ export async function updateClothing(
 
   try {
     const categoryIds = filters?.categories
-      ?.filter(cat => editingClothing.categories.includes(cat.name))
-      ?.map(cat => cat.id) || [];
+      .filter(cat => editingClothing.categories.includes(cat.name))
+      .map(cat => cat.id) || [];
     
     const colorIds = filters?.colors
-      ?.filter(col => editingClothing.colors.includes(col.name))
-      ?.map(col => col.id) || [];
+      .filter(col => editingClothing.colors.includes(col.name))
+      .map(col => col.id) || [];
     
     const archetypeIds = filters?.archetypes
-      ?.filter(arch => editingClothing.archetypes.includes(arch.name))
-      ?.map(arch => arch.id) || [];
+      .filter(arch => editingClothing.archetypes.includes(arch.name))
+      .map(arch => arch.id) || [];
 
     const response = await fetch(CATALOG_API, {
       method: 'PUT',
