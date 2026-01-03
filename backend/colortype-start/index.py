@@ -92,7 +92,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'User not found'})
             }
         
-        balance = balance_row[0]
+        balance = float(balance_row[0])
         cost = 30
         
         if balance < cost:
