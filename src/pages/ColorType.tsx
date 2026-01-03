@@ -142,7 +142,6 @@ export default function ColorType() {
     setAnalysisStatus('Удаление фона...');
     
     try {
-      // First upload to get URL
       const uploadResponse = await fetch(IMAGE_PREPROCESSING_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -154,8 +153,15 @@ export default function ColorType() {
       }
 
       const data = await uploadResponse.json();
-      setProcessedImage(data.processed_image);
-      toast.success('Фон удалён, изображение готово');
+      console.log('[ColorType] Background removal response:', data);
+      
+      const processedUrl = data.processed_image;
+      if (processedUrl) {
+        setProcessedImage(processedUrl);
+        toast.success('Фон удалён, изображение готово');
+      } else {
+        throw new Error('No processed_image in response');
+      }
     } catch (error) {
       console.error('Background removal error:', error);
       toast.error('Ошибка удаления фона, но можно продолжить');
