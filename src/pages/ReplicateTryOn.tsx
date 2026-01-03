@@ -40,8 +40,8 @@ export default function ReplicateTryOn() {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [cdnImageUrl, setCdnImageUrl] = useState<string | null>(null);
 
-  const { data: filters } = useCatalogFilters(['Обувь', 'Аксессуары', 'Головные уборы']);
-  const { data: clothingCatalog } = useCatalog({
+  const { data: filters, isLoading: filtersLoading } = useCatalogFilters(['Обувь', 'Аксессуары', 'Головные уборы']);
+  const { data: clothingCatalog, isLoading: catalogLoading } = useCatalog({
     categoryIds: selectedCategories.length > 0 ? selectedCategories : undefined,
     colorIds: selectedColors.length > 0 ? selectedColors : undefined,
     archetypeIds: selectedArchetypes.length > 0 ? selectedArchetypes : undefined,
@@ -216,39 +216,48 @@ export default function ReplicateTryOn() {
           </Link>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          <div className="space-y-6">
-            <ReplicateTryOnImageUpload
-              uploadedImage={uploadedImage}
-              onImageChange={setUploadedImage}
-            />
-
-            <ReplicateTryOnClothingSelector
-              selectedClothingItems={selectedClothingItems}
-              onClothingItemsChange={setSelectedClothingItems}
-              filters={filters}
-              clothingCatalog={clothingCatalog}
-              selectedCategories={selectedCategories}
-              onSelectedCategoriesChange={setSelectedCategories}
-              selectedColors={selectedColors}
-              onSelectedColorsChange={setSelectedColors}
-              selectedArchetypes={selectedArchetypes}
-              onSelectedArchetypesChange={setSelectedArchetypes}
-              selectedGender={selectedGender}
-              onSelectedGenderChange={setSelectedGender}
-              showCategoryError={showCategoryError}
-            />
+        {filtersLoading || catalogLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Загрузка каталога...</p>
+            </div>
           </div>
+        ) : (
+          <div className="grid lg:grid-cols-2 gap-6">
+            <div className="space-y-6">
+              <ReplicateTryOnImageUpload
+                uploadedImage={uploadedImage}
+                onImageChange={setUploadedImage}
+              />
 
-          <div>
-            <ReplicateTryOnGenerator
-              user={user}
-              uploadedImage={uploadedImage}
-              selectedClothingItems={selectedClothingItems}
-              onRefetchHistory={refetchHistory}
-            />
+              <ReplicateTryOnClothingSelector
+                selectedClothingItems={selectedClothingItems}
+                onClothingItemsChange={setSelectedClothingItems}
+                filters={filters}
+                clothingCatalog={clothingCatalog}
+                selectedCategories={selectedCategories}
+                onSelectedCategoriesChange={setSelectedCategories}
+                selectedColors={selectedColors}
+                onSelectedColorsChange={setSelectedColors}
+                selectedArchetypes={selectedArchetypes}
+                onSelectedArchetypesChange={setSelectedArchetypes}
+                selectedGender={selectedGender}
+                onSelectedGenderChange={setSelectedGender}
+                showCategoryError={showCategoryError}
+              />
+            </div>
+
+            <div>
+              <ReplicateTryOnGenerator
+                user={user}
+                uploadedImage={uploadedImage}
+                selectedClothingItems={selectedClothingItems}
+                onRefetchHistory={refetchHistory}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <ReplicateSaveDialog
