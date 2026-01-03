@@ -114,6 +114,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         else:
             print(f'[COLORTYPE-START-{request_id}] User has unlimited access, skipping payment')
         
+        # Save old processing tasks to history before creating new one
+        cursor.execute('''
+            UPDATE color_type_history
+            SET saved_to_history = true
+            WHERE user_id = %s AND status IN ('pending', 'processing') AND saved_to_history = false
+        ''', (user_id,))
+        print(f'[COLORTYPE-START-{request_id}] Saved old tasks to history')
+        
         # Create task
         task_id = str(uuid.uuid4())
         print(f'[COLORTYPE-START-{request_id}] Creating task {task_id}')
