@@ -27,6 +27,22 @@ def check_replicate_status(prediction_id: str) -> dict:
     
     raise Exception(f'Failed to check status: {response.status_code}')
 
+def extract_color_type(result_text: str) -> str:
+    '''Extract color type name from result text'''
+    color_types = [
+        'SOFT WINTER', 'BRIGHT WINTER', 'VIVID WINTER',
+        'SOFT SUMMER', 'DUSTY SUMMER', 'VIVID SUMMER',
+        'GENTLE AUTUMN', 'FIERY AUTUMN', 'VIVID AUTUMN',
+        'GENTLE SPRING', 'BRIGHT SPRING', 'VIBRANT SPRING'
+    ]
+    
+    result_upper = result_text.upper()
+    for color_type in color_types:
+        if color_type in result_upper:
+            return color_type
+    
+    return None
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
     Проверка статуса анализа цветотипа с опциональной принудительной проверкой
@@ -142,16 +158,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         result_text_value = str(output)
                     
                     if result_text_value:
-                        print(f'[ColorType-Status] Task completed! Result: {result_text_value[:100]}...')
+                        # Extract color type from text
+                        extracted_color_type = extract_color_type(result_text_value)
+                        print(f'[ColorType-Status] Task completed! Color type: {extracted_color_type}')
+                        print(f'[ColorType-Status] Result preview: {result_text_value[:100]}...')
+                        
                         cursor.execute('''
                             UPDATE color_type_history
-                            SET status = 'completed', result_text = %s, updated_at = %s
+                            SET status = 'completed', result_text = %s, color_type = %s, updated_at = %s
                             WHERE id = %s
-                        ''', (result_text_value, datetime.utcnow(), task_id))
+                        ''', (result_text_value, extracted_color_type, datetime.utcnow(), task_id))
                         conn.commit()
                         
                         status = 'completed'
                         result_text = result_text_value
+                        color_type = extracted_color_type
                         print(f'[ColorType-Status] DB updated successfully')
                     
                 elif replicate_status == 'failed':
