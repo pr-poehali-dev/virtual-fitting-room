@@ -364,6 +364,57 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'status': 'still_processing'})
                 }
         
+        # Check for stuck tasks (older than 3 minutes in 'processing' status)
+        print(f'[ColorType-Worker] Checking for stuck tasks older than 3 minutes...')
+        cursor.execute('''
+            SELECT id, replicate_prediction_id, user_id, created_at
+            FROM color_type_history
+            WHERE status = 'processing' 
+              AND replicate_prediction_id IS NOT NULL
+              AND created_at < NOW() - INTERVAL '3 minutes'
+              AND id != %s
+            ORDER BY created_at ASC
+            LIMIT 5
+        ''', (task_id,))
+        
+        stuck_tasks = cursor.fetchall()
+        print(f'[ColorType-Worker] Found {len(stuck_tasks)} stuck tasks')
+        
+        for stuck_task in stuck_tasks:
+            stuck_id, stuck_prediction_id, stuck_user_id, stuck_created = stuck_task
+            print(f'[ColorType-Worker] Processing stuck task {stuck_id} (created {stuck_created})')
+            
+            try:
+                replicate_data = check_replicate_status(stuck_prediction_id)
+                replicate_status = replicate_data.get('status', 'unknown')
+                
+                if replicate_status == 'succeeded':
+                    output = replicate_data.get('output', '')
+                    if output:
+                        color_type = extract_color_type(output)
+                        print(f'[ColorType-Worker] Stuck task {stuck_id} completed! Color type: {color_type}')
+                        
+                        cursor.execute('''
+                            UPDATE color_type_history
+                            SET status = 'completed', result_text = %s, color_type = %s, saved_to_history = true, updated_at = %s
+                            WHERE id = %s
+                        ''', (output, color_type, datetime.utcnow(), stuck_id))
+                        conn.commit()
+                        print(f'[ColorType-Worker] Stuck task {stuck_id} SAVED!')
+                
+                elif replicate_status == 'failed':
+                    error_msg = replicate_data.get('error', 'Analysis failed')
+                    print(f'[ColorType-Worker] Stuck task {stuck_id} failed: {error_msg}')
+                    cursor.execute('''
+                        UPDATE color_type_history
+                        SET status = 'failed', result_text = %s, updated_at = %s
+                        WHERE id = %s
+                    ''', (error_msg, datetime.utcnow(), stuck_id))
+                    conn.commit()
+                
+            except Exception as e:
+                print(f'[ColorType-Worker] Error processing stuck task {stuck_id}: {str(e)}')
+        
         cursor.close()
         conn.close()
         return {
