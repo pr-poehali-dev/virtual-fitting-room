@@ -1,0 +1,22 @@
+{
+  "tests": [
+    {
+      "name": "Start color type analysis",
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "X-User-Id": "test-user-123"
+      },
+      "body": {
+        "person_image": "data:image/jpeg;base64,/9j/4AAQSkZJRg..."
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "task_id": "string",
+        "status": "pending",
+        "estimated_time_seconds": 60
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
