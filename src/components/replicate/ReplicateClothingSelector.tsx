@@ -84,21 +84,22 @@ export default function ReplicateClothingSelector({
   const [filtersExpanded, setFiltersExpanded] = React.useState(false);
 
   const toggleFilter = (array: number[], value: number) => {
+    if (!array) return [value];
     return array.includes(value)
       ? array.filter(v => v !== value)
       : [...array, value];
   };
 
   const getCategoryHint = (itemId: string, currentCategory: string | undefined) => {
-    if (selectedClothingItems.length === 1) {
+    if ((selectedClothingItems?.length || 0) === 1) {
       if (currentCategory === 'dresses') {
         return 'Это фото полного образа';
       }
       return 'Любая категория';
     }
     
-    if (selectedClothingItems.length === 2) {
-      const otherItem = selectedClothingItems.find(item => item.id !== itemId);
+    if ((selectedClothingItems?.length || 0) === 2) {
+      const otherItem = selectedClothingItems?.find(item => item.id !== itemId);
       if (!otherItem || !otherItem.category) {
         return 'Выберите категорию';
       }
@@ -142,13 +143,13 @@ export default function ReplicateClothingSelector({
         </p>
       </div>
 
-      {selectedClothingItems.length > 0 && (
+      {(selectedClothingItems?.length || 0) > 0 && (
         <div className="mb-4 space-y-3">
           <p className="text-sm text-muted-foreground">
-            Выбрано: {selectedClothingItems.length}
+            Выбрано: {selectedClothingItems?.length || 0}
           </p>
           <div className="space-y-3">
-            {selectedClothingItems.map((item) => (
+            {selectedClothingItems?.map((item) => (
               <div key={item.id} className="flex gap-3 p-3 border rounded-lg bg-card">
                 <div className="relative flex-shrink-0 w-20 h-20">
                   <ImageViewer
@@ -182,7 +183,7 @@ export default function ReplicateClothingSelector({
                   <Select
                     value={item.category || ''}
                     onValueChange={(value) => updateClothingCategory(item.id, value)}
-                    disabled={item.isFromCatalog || isGenerating || (selectedClothingItems.length === 2 && item.category && selectedClothingItems.find(i => i.id !== item.id && i.category && i.category !== item.category && ['upper_body', 'lower_body'].includes(i.category)) !== undefined)}
+                    disabled={item.isFromCatalog || isGenerating || ((selectedClothingItems?.length || 0) === 2 && item.category && selectedClothingItems?.find(i => i.id !== item.id && i.category && i.category !== item.category && ['upper_body', 'lower_body'].includes(i.category)) !== undefined)}
                   >
                     <SelectTrigger className={`h-8 text-xs ${showCategoryError && !item.category ? 'border-red-500 border-2' : ''}`}>
                       <SelectValue placeholder="Выберите категорию" className={showCategoryError && !item.category ? 'text-red-500' : ''} />
@@ -194,7 +195,7 @@ export default function ReplicateClothingSelector({
                       <SelectItem value="lower_body" className="text-xs">
                         Низ (Брюки, Юбки, Шорты)
                       </SelectItem>
-                      {selectedClothingItems.length === 1 && (
+                      {(selectedClothingItems?.length || 0) === 1 && (
                         <SelectItem value="dresses" className="text-xs">
                           Весь образ, платья, верх и низ вместе
                         </SelectItem>
@@ -213,7 +214,7 @@ export default function ReplicateClothingSelector({
         </div>
       )}
 
-      {selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses' && (
+      {(selectedClothingItems?.length || 0) > 0 && selectedClothingItems?.[0]?.category === 'dresses' && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
           <p className="text-sm text-green-900">
             <Icon name="CheckCircle2" className="inline mr-1" size={16} />
@@ -222,10 +223,10 @@ export default function ReplicateClothingSelector({
         </div>
       )}
 
-      {selectedClothingItems.length === 2 && 
-       selectedClothingItems.every(item => item.category) &&
-       selectedClothingItems.some(item => item.category === 'upper_body') &&
-       selectedClothingItems.some(item => item.category === 'lower_body') && (
+      {(selectedClothingItems?.length || 0) === 2 && 
+       selectedClothingItems?.every(item => item.category) &&
+       selectedClothingItems?.some(item => item.category === 'upper_body') &&
+       selectedClothingItems?.some(item => item.category === 'lower_body') && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
           <p className="text-sm text-green-900">
             <Icon name="CheckCircle2" className="inline mr-1" size={16} />
@@ -234,9 +235,9 @@ export default function ReplicateClothingSelector({
         </div>
       )}
 
-      {selectedClothingItems.length === 2 && 
-       selectedClothingItems.every(item => item.category) &&
-       selectedClothingItems.filter(item => item.category === 'upper_body').length === 2 && (
+      {(selectedClothingItems?.length || 0) === 2 && 
+       selectedClothingItems?.every(item => item.category) &&
+       (selectedClothingItems?.filter(item => item.category === 'upper_body')?.length || 0) === 2 && (
         <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
           <p className="text-sm text-amber-900">
             <Icon name="AlertCircle" className="inline mr-1" size={16} />
@@ -245,9 +246,9 @@ export default function ReplicateClothingSelector({
         </div>
       )}
 
-      {selectedClothingItems.length === 2 && 
-       selectedClothingItems.every(item => item.category) &&
-       selectedClothingItems.filter(item => item.category === 'lower_body').length === 2 && (
+      {(selectedClothingItems?.length || 0) === 2 && 
+       selectedClothingItems?.every(item => item.category) &&
+       (selectedClothingItems?.filter(item => item.category === 'lower_body')?.length || 0) === 2 && (
         <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
           <p className="text-sm text-amber-900">
             <Icon name="AlertCircle" className="inline mr-1" size={16} />
@@ -256,8 +257,8 @@ export default function ReplicateClothingSelector({
         </div>
       )}
 
-      {selectedClothingItems.length === 2 && 
-       selectedClothingItems.some(item => item.category === 'dresses') && (
+      {(selectedClothingItems?.length || 0) === 2 && 
+       selectedClothingItems?.some(item => item.category === 'dresses') && (
         <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
           <p className="text-sm text-amber-900">
             <Icon name="AlertCircle" className="inline mr-1" size={16} />
@@ -275,14 +276,14 @@ export default function ReplicateClothingSelector({
             onChange={handleCustomClothingUpload}
             className="hidden"
             id="clothing-upload"
-            disabled={isGenerating || selectedClothingItems.length >= 2 || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses')}
+            disabled={isGenerating || (selectedClothingItems?.length || 0) >= 2 || ((selectedClothingItems?.length || 0) > 0 && selectedClothingItems?.[0]?.category === 'dresses')}
           />
           <label htmlFor="clothing-upload">
             <Button
               type="button"
               variant="outline"
-              className={`w-full ${(isGenerating || selectedClothingItems.length >= 2 || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses')) ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={isGenerating || selectedClothingItems.length >= 2 || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses')}
+              className={`w-full ${(isGenerating || (selectedClothingItems?.length || 0) >= 2 || ((selectedClothingItems?.length || 0) > 0 && selectedClothingItems?.[0]?.category === 'dresses')) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isGenerating || (selectedClothingItems?.length || 0) >= 2 || ((selectedClothingItems?.length || 0) > 0 && selectedClothingItems?.[0]?.category === 'dresses')}
               asChild
             >
               <span>
@@ -314,7 +315,7 @@ export default function ReplicateClothingSelector({
                   <div>
                     <p className="text-sm font-medium mb-2">Категории</p>
                     <div className="space-y-1 max-h-32 overflow-y-auto border rounded p-2 bg-background">
-                      {filters.categories.map((category) => (
+                      {filters.categories?.map((category) => (
                         <label key={category.id} className="flex items-center space-x-2 cursor-pointer">
                           <input
                             type="checkbox"
@@ -337,7 +338,7 @@ export default function ReplicateClothingSelector({
                   <div>
                     <p className="text-sm font-medium mb-2">Цвета</p>
                     <div className="space-y-1 max-h-32 overflow-y-auto border rounded p-2 bg-background">
-                      {filters.colors.map((color) => (
+                      {filters.colors?.map((color) => (
                         <label key={color.id} className="flex items-center space-x-2 cursor-pointer">
                           <input
                             type="checkbox"
@@ -360,7 +361,7 @@ export default function ReplicateClothingSelector({
                   <div>
                     <p className="text-sm font-medium mb-2">Архетипы</p>
                     <div className="space-y-1 max-h-32 overflow-y-auto border rounded p-2 bg-background">
-                      {filters.archetypes.map((arch) => (
+                      {filters.archetypes?.map((arch) => (
                         <label key={arch.id} className="flex items-center space-x-2 cursor-pointer">
                           <input
                             type="checkbox"
@@ -388,7 +389,7 @@ export default function ReplicateClothingSelector({
                       className="w-full p-2 border rounded text-sm bg-background"
                     >
                       <option value="">Все</option>
-                      {filters.genders.map((gender) => (
+                      {filters.genders?.map((gender) => (
                         <option key={gender.id} value={gender.id}>{gender.name}</option>
                       ))}
                     </select>
@@ -420,15 +421,15 @@ export default function ReplicateClothingSelector({
         )}
 
         <div className="max-h-64 overflow-y-auto border rounded-lg p-4">
-          {clothingCatalog.length > 0 ? (
+          {(clothingCatalog?.length || 0) > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {clothingCatalog.map((item) => {
-                const isSelected = selectedClothingItems.some(
+              {clothingCatalog?.map((item) => {
+                const isSelected = selectedClothingItems?.some(
                   (i) => i.id === item.id
-                );
+                ) ?? false;
                 const isDisabled = isGenerating || 
-                  (selectedClothingItems.length >= 2 && !isSelected) || 
-                  (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses' && !isSelected);
+                  ((selectedClothingItems?.length || 0) >= 2 && !isSelected) || 
+                  ((selectedClothingItems?.length || 0) > 0 && selectedClothingItems?.[0]?.category === 'dresses' && !isSelected);
                 return (
                   <div
                     key={item.id}

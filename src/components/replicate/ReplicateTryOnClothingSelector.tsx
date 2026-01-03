@@ -129,13 +129,13 @@ export default function ReplicateTryOnClothingSelector({
       return;
     }
 
-    if (selectedClothingItems.length >= 1 && selectedClothingItems[0].category === 'dresses') {
+    if (selectedClothingItems?.length >= 1 && selectedClothingItems[0]?.category === 'dresses') {
       toast.error('Уже выбран полный образ. Удалите его, если хотите загрузить другую вещь');
       e.target.value = '';
       return;
     }
 
-    const remainingSlots = 2 - selectedClothingItems.length;
+    const remainingSlots = 2 - (selectedClothingItems?.length || 0);
     if (remainingSlots <= 0) {
       toast.error('Максимум 2 вещи можно выбрать');
       e.target.value = '';
@@ -175,7 +175,7 @@ export default function ReplicateTryOnClothingSelector({
       return item.replicate_category;
     }
     
-    const firstCategory = item.categories[0]?.toLowerCase() || '';
+    const firstCategory = item.categories?.[0]?.toLowerCase() || '';
     
     if (firstCategory.includes('платье') || firstCategory.includes('сарафан')) {
       return 'dresses';
@@ -188,22 +188,22 @@ export default function ReplicateTryOnClothingSelector({
   };
 
   const toggleClothingSelection = (item: ClothingItem) => {
-    const exists = selectedClothingItems.find((i) => i.id === item.id);
+    const exists = selectedClothingItems?.find((i) => i.id === item.id);
     if (exists) {
-      onClothingItemsChange(selectedClothingItems.filter((i) => i.id !== item.id));
+      onClothingItemsChange(selectedClothingItems?.filter((i) => i.id !== item.id) || []);
     } else {
-      if (selectedClothingItems.length >= 1 && selectedClothingItems[0].category === 'dresses') {
+      if (selectedClothingItems?.length >= 1 && selectedClothingItems[0]?.category === 'dresses') {
         toast.error('Уже выбран полный образ. Удалите его, если хотите выбрать другую вещь');
         return;
       }
       
-      if (selectedClothingItems.length >= 2) {
+      if ((selectedClothingItems?.length || 0) >= 2) {
         toast.error('Максимум 2 вещи можно выбрать');
         return;
       }
       
       const newCategory = mapCategoryFromCatalog(item);
-      if (newCategory === 'dresses' && selectedClothingItems.length > 0) {
+      if (newCategory === 'dresses' && (selectedClothingItems?.length || 0) > 0) {
         toast.error('Полный образ нельзя комбинировать с другими вещами. Удалите уже выбранные вещи');
         return;
       }
@@ -250,7 +250,7 @@ export default function ReplicateTryOnClothingSelector({
                   <div>
                     <p className="text-sm font-medium mb-2">Категория</p>
                     <div className="flex flex-wrap gap-2">
-                      {filters?.categories.map((cat) => (
+                      {filters?.categories?.map((cat) => (
                         <Button
                           key={cat.id}
                           variant={selectedCategories.includes(Number(cat.id)) ? 'default' : 'outline'}
@@ -274,7 +274,7 @@ export default function ReplicateTryOnClothingSelector({
                   <div>
                     <p className="text-sm font-medium mb-2">Цвет</p>
                     <div className="flex flex-wrap gap-2">
-                      {filters?.colors.map((color) => (
+                      {filters?.colors?.map((color) => (
                         <Button
                           key={color.id}
                           variant={selectedColors.includes(Number(color.id)) ? 'default' : 'outline'}
@@ -298,7 +298,7 @@ export default function ReplicateTryOnClothingSelector({
                   <div>
                     <p className="text-sm font-medium mb-2">Архетип</p>
                     <div className="flex flex-wrap gap-2">
-                      {filters?.archetypes.map((arch) => (
+                      {filters?.archetypes?.map((arch) => (
                         <Button
                           key={arch.id}
                           variant={selectedArchetypes.includes(Number(arch.id)) ? 'default' : 'outline'}
@@ -322,7 +322,7 @@ export default function ReplicateTryOnClothingSelector({
                   <div>
                     <p className="text-sm font-medium mb-2">Пол</p>
                     <div className="flex flex-wrap gap-2">
-                      {filters?.genders.map((gender) => (
+                      {filters?.genders?.map((gender) => (
                         <Button
                           key={gender.id}
                           variant={selectedGender === gender.id ? 'default' : 'outline'}
