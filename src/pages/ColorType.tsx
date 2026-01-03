@@ -222,8 +222,8 @@ export default function ColorType() {
       return;
     }
 
-    // Check balance
-    if (user.balance < COST) {
+    // Check balance (skip if unlimited access)
+    if (!user.unlimited_access && (user.balance || 0) < COST) {
       toast.error(`Недостаточно средств. Требуется ${COST} руб`);
       navigate('/profile/wallet');
       return;

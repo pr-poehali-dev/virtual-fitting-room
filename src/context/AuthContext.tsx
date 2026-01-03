@@ -5,6 +5,8 @@ interface User {
   email: string;
   name: string;
   email_verified?: boolean;
+  balance?: number;
+  unlimited_access?: boolean;
 }
 
 interface AuthContextType {

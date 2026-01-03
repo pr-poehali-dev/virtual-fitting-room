@@ -78,11 +78,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
         
-        # Check user balance
-        cursor.execute('SELECT balance FROM users WHERE id = %s', (user_id,))
-        balance_row = cursor.fetchone()
+        # Check user balance and unlimited access
+        cursor.execute('SELECT balance, unlimited_access FROM users WHERE id = %s', (user_id,))
+        user_row = cursor.fetchone()
         
-        if not balance_row:
+        if not user_row:
             cursor.close()
             conn.close()
             return {
@@ -92,22 +92,27 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'User not found'})
             }
         
-        balance = float(balance_row[0])
+        balance = float(user_row[0])
+        unlimited_access = user_row[1]
         cost = 30
         
-        if balance < cost:
-            cursor.close()
-            conn.close()
-            return {
-                'statusCode': 402,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
-                'isBase64Encoded': False,
-                'body': json.dumps({'error': 'Insufficient balance', 'required': cost, 'current': balance})
-            }
-        
-        # Deduct balance
-        cursor.execute('UPDATE users SET balance = balance - %s WHERE id = %s', (cost, user_id))
-        print(f'[COLORTYPE-START-{request_id}] Deducted {cost} rubles from user {user_id}')
+        # Check balance only if not unlimited
+        if not unlimited_access:
+            if balance < cost:
+                cursor.close()
+                conn.close()
+                return {
+                    'statusCode': 402,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Insufficient balance', 'required': cost, 'current': balance})
+                }
+            
+            # Deduct balance
+            cursor.execute('UPDATE users SET balance = balance - %s WHERE id = %s', (cost, user_id))
+            print(f'[COLORTYPE-START-{request_id}] Deducted {cost} rubles from user {user_id}')
+        else:
+            print(f'[COLORTYPE-START-{request_id}] User has unlimited access, skipping payment')
         
         # Create task
         task_id = str(uuid.uuid4())
