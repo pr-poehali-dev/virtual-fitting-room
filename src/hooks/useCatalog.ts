@@ -37,19 +37,38 @@ interface CatalogFilters {
 }
 
 const fetchFilters = async (): Promise<Filters> => {
-  const response = await fetch(`${CATALOG_API}?action=filters`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch filters');
+  try {
+    const response = await fetch(`${CATALOG_API}?action=filters`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch filters');
+    }
+    const data = await response.json();
+    // Ensure all arrays exist
+    return {
+      categories: data.categories || [],
+      colors: data.colors || [],
+      archetypes: data.archetypes || [],
+      genders: data.genders || [],
+    };
+  } catch (error) {
+    console.error('Filters fetch error:', error);
+    // Return empty filters on error
+    return { categories: [], colors: [], archetypes: [], genders: [] };
   }
-  return response.json();
 };
 
 const fetchAllClothingItems = async (): Promise<ClothingItem[]> => {
-  const response = await fetch(`${CATALOG_API}?action=list`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch catalog');
+  try {
+    const response = await fetch(`${CATALOG_API}?action=list`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch catalog');
+    }
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('Catalog fetch error:', error);
+    return [];
   }
-  return response.json();
 };
 
 const filterClothingItems = (
@@ -58,7 +77,7 @@ const filterClothingItems = (
   availableFilters?: Filters
 ): ClothingItem[] => {
   return items.filter((item) => {
-    if (filters.categoryIds && filters.categoryIds.length > 0 && availableFilters?.categories) {
+    if (filters.categoryIds && filters.categoryIds.length > 0 && availableFilters?.categories && availableFilters.categories.length > 0) {
       const selectedCategoryNames = availableFilters.categories
         .filter(cat => filters.categoryIds!.includes(Number(cat.id)))
         .map(cat => cat.name);
@@ -69,7 +88,7 @@ const filterClothingItems = (
       if (!hasCategory) return false;
     }
 
-    if (filters.colorIds && filters.colorIds.length > 0 && availableFilters?.colors) {
+    if (filters.colorIds && filters.colorIds.length > 0 && availableFilters?.colors && availableFilters.colors.length > 0) {
       const selectedColorNames = availableFilters.colors
         .filter(col => filters.colorIds!.includes(Number(col.id)))
         .map(col => col.name);
@@ -80,7 +99,7 @@ const filterClothingItems = (
       if (!hasColor) return false;
     }
 
-    if (filters.archetypeIds && filters.archetypeIds.length > 0 && availableFilters?.archetypes) {
+    if (filters.archetypeIds && filters.archetypeIds.length > 0 && availableFilters?.archetypes && availableFilters.archetypes.length > 0) {
       const selectedArchetypeNames = availableFilters.archetypes
         .filter(arch => filters.archetypeIds!.includes(Number(arch.id)))
         .map(arch => arch.name);
@@ -119,12 +138,21 @@ export const useCatalogFilters = (excludeCategories?: string[]) => {
     queryKey: ['catalog-filters'],
     queryFn: async () => {
       const filters = await fetchFilters();
+      
+      // Ensure all arrays exist with defaults
+      const safeFilters: Filters = {
+        categories: filters.categories || [],
+        colors: filters.colors || [],
+        archetypes: filters.archetypes || [],
+        genders: filters.genders || [],
+      };
+      
       if (excludeCategories && excludeCategories.length > 0) {
-        filters.categories = filters.categories.filter(
+        safeFilters.categories = safeFilters.categories.filter(
           (cat) => !excludeCategories.includes(cat.name)
         );
       }
-      return filters;
+      return safeFilters;
     },
     staleTime: Infinity,
     gcTime: Infinity,
