@@ -58,7 +58,7 @@ const filterClothingItems = (
   availableFilters?: Filters
 ): ClothingItem[] => {
   return items.filter((item) => {
-    if (filters.categoryIds && filters.categoryIds.length > 0 && availableFilters) {
+    if (filters.categoryIds && filters.categoryIds.length > 0 && availableFilters?.categories) {
       const selectedCategoryNames = availableFilters.categories
         .filter(cat => filters.categoryIds!.includes(Number(cat.id)))
         .map(cat => cat.name);
@@ -69,7 +69,7 @@ const filterClothingItems = (
       if (!hasCategory) return false;
     }
 
-    if (filters.colorIds && filters.colorIds.length > 0 && availableFilters) {
+    if (filters.colorIds && filters.colorIds.length > 0 && availableFilters?.colors) {
       const selectedColorNames = availableFilters.colors
         .filter(col => filters.colorIds!.includes(Number(col.id)))
         .map(col => col.name);
@@ -80,7 +80,7 @@ const filterClothingItems = (
       if (!hasColor) return false;
     }
 
-    if (filters.archetypeIds && filters.archetypeIds.length > 0 && availableFilters) {
+    if (filters.archetypeIds && filters.archetypeIds.length > 0 && availableFilters?.archetypes) {
       const selectedArchetypeNames = availableFilters.archetypes
         .filter(arch => filters.archetypeIds!.includes(Number(arch.id)))
         .map(arch => arch.name);
