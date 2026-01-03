@@ -132,7 +132,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Trigger worker
         try:
             import urllib.request
-            worker_url = f'https://functions.poehali.dev/{{WORKER_FUNCTION_ID}}?task_id={task_id}'
+            worker_url = f'https://functions.poehali.dev/c13ce63e-ae23-419d-84f1-b6958e4ea586?task_id={task_id}'
             req = urllib.request.Request(worker_url, method='GET')
             urllib.request.urlopen(req, timeout=2)
             print(f'[COLORTYPE-START-{request_id}] Worker triggered for task {task_id}')
