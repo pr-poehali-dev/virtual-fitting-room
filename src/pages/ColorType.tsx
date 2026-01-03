@@ -12,10 +12,35 @@ import { useNavigate } from 'react-router-dom';
 const COLORTYPE_START_API = 'https://functions.poehali.dev/f5ab39bd-a682-44d8-ac47-d7b9d035013b';
 const COLORTYPE_STATUS_API = 'https://functions.poehali.dev/7f1395ac-bddc-45ec-b997-b39497110680';
 const IMAGE_PREPROCESSING_API = 'https://functions.poehali.dev/3fe8c892-ab5f-4d26-a2c5-ae4166276334';
+const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
 
 const COST = 30;
 const POLLING_INTERVAL = 30000; // 30 seconds
 const TIMEOUT_DURATION = 180000; // 3 minutes
+
+// Helper function to proxy fal.ai images through our backend
+const proxyFalImage = async (falUrl: string): Promise<string> => {
+  try {
+    if (!falUrl.includes('fal.media') && !falUrl.includes('fal.ai')) {
+      return falUrl;
+    }
+    
+    console.log('[ImageProxy] Proxying fal.ai image:', falUrl);
+    const response = await fetch(`${IMAGE_PROXY_API}?url=${encodeURIComponent(falUrl)}`);
+    
+    if (!response.ok) {
+      console.error('[ImageProxy] Failed to proxy image:', response.status);
+      return falUrl;
+    }
+    
+    const data = await response.json();
+    console.log('[ImageProxy] Successfully proxied image');
+    return data.data_url;
+  } catch (error) {
+    console.error('[ImageProxy] Error proxying image:', error);
+    return falUrl;
+  }
+};
 
 // Mapping English color types to Russian
 const colorTypeNames: Record<string, string> = {
@@ -157,7 +182,9 @@ export default function ColorType() {
       
       const processedUrl = data.processed_image;
       if (processedUrl) {
-        setProcessedImage(processedUrl);
+        // Proxy fal.ai image to prevent expiration
+        const proxiedUrl = await proxyFalImage(processedUrl);
+        setProcessedImage(proxiedUrl);
         toast.success('Фон удалён, изображение готово');
       } else {
         throw new Error('No processed_image in response');
