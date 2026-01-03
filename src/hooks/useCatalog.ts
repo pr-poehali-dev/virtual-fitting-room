@@ -82,9 +82,9 @@ const filterClothingItems = (
         .filter(cat => filters.categoryIds!.includes(Number(cat.id)))
         .map(cat => cat.name);
       
-      const hasCategory = item.categories.some(cat => 
+      const hasCategory = item.categories?.some(cat => 
         selectedCategoryNames.includes(cat)
-      );
+      ) ?? false;
       if (!hasCategory) return false;
     }
 
@@ -93,9 +93,9 @@ const filterClothingItems = (
         .filter(col => filters.colorIds!.includes(Number(col.id)))
         .map(col => col.name);
       
-      const hasColor = item.colors.some(col => 
+      const hasColor = item.colors?.some(col => 
         selectedColorNames.includes(col)
-      );
+      ) ?? false;
       if (!hasColor) return false;
     }
 
@@ -104,9 +104,9 @@ const filterClothingItems = (
         .filter(arch => filters.archetypeIds!.includes(Number(arch.id)))
         .map(arch => arch.name);
       
-      const hasArchetype = item.archetypes.some(arch => 
+      const hasArchetype = item.archetypes?.some(arch => 
         selectedArchetypeNames.includes(arch)
-      );
+      ) ?? false;
       if (!hasArchetype) return false;
     }
 
@@ -117,9 +117,9 @@ const filterClothingItems = (
     }
 
     if (filters.excludeCategories && filters.excludeCategories.length > 0) {
-      const hasExcludedCategory = item.categories.some(cat => 
+      const hasExcludedCategory = item.categories?.some(cat => 
         filters.excludeCategories!.includes(cat)
-      );
+      ) ?? false;
       if (hasExcludedCategory) return false;
     }
 
