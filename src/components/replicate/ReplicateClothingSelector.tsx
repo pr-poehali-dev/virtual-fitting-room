@@ -84,21 +84,22 @@ export default function ReplicateClothingSelector({
   const [filtersExpanded, setFiltersExpanded] = React.useState(false);
 
   const toggleFilter = (array: number[], value: number) => {
+    if (!array) return [value];
     return array.includes(value)
       ? array.filter(v => v !== value)
       : [...array, value];
   };
 
   const getCategoryHint = (itemId: string, currentCategory: string | undefined) => {
-    if (selectedClothingItems.length === 1) {
+    if ((selectedClothingItems?.length || 0) === 1) {
       if (currentCategory === 'dresses') {
         return 'Это фото полного образа';
       }
       return 'Любая категория';
     }
     
-    if (selectedClothingItems.length === 2) {
-      const otherItem = selectedClothingItems.find(item => item.id !== itemId);
+    if ((selectedClothingItems?.length || 0) === 2) {
+      const otherItem = selectedClothingItems?.find(item => item.id !== itemId);
       if (!otherItem || !otherItem.category) {
         return 'Выберите категорию';
       }
@@ -142,13 +143,13 @@ export default function ReplicateClothingSelector({
         </p>
       </div>
 
-      {selectedClothingItems.length > 0 && (
+      {(selectedClothingItems?.length || 0) > 0 && (
         <div className="mb-4 space-y-3">
           <p className="text-sm text-muted-foreground">
-            Выбрано: {selectedClothingItems.length}
+            Выбрано: {selectedClothingItems?.length || 0}
           </p>
           <div className="space-y-3">
-            {selectedClothingItems.map((item) => (
+            {selectedClothingItems?.map((item) => (
               <div key={item.id} className="flex gap-3 p-3 border rounded-lg bg-card">
                 <div className="relative flex-shrink-0 w-20 h-20">
                   <ImageViewer
@@ -213,7 +214,7 @@ export default function ReplicateClothingSelector({
         </div>
       )}
 
-      {selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses' && (
+      {(selectedClothingItems?.length || 0) > 0 && selectedClothingItems?.[0]?.category === 'dresses' && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
           <p className="text-sm text-green-900">
             <Icon name="CheckCircle2" className="inline mr-1" size={16} />
@@ -222,10 +223,10 @@ export default function ReplicateClothingSelector({
         </div>
       )}
 
-      {selectedClothingItems.length === 2 && 
-       selectedClothingItems.every(item => item.category) &&
-       selectedClothingItems.some(item => item.category === 'upper_body') &&
-       selectedClothingItems.some(item => item.category === 'lower_body') && (
+      {(selectedClothingItems?.length || 0) === 2 && 
+       selectedClothingItems?.every(item => item.category) &&
+       selectedClothingItems?.some(item => item.category === 'upper_body') &&
+       selectedClothingItems?.some(item => item.category === 'lower_body') && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
           <p className="text-sm text-green-900">
             <Icon name="CheckCircle2" className="inline mr-1" size={16} />
@@ -234,9 +235,9 @@ export default function ReplicateClothingSelector({
         </div>
       )}
 
-      {selectedClothingItems.length === 2 && 
-       selectedClothingItems.every(item => item.category) &&
-       selectedClothingItems.filter(item => item.category === 'upper_body').length === 2 && (
+      {(selectedClothingItems?.length || 0) === 2 && 
+       selectedClothingItems?.every(item => item.category) &&
+       (selectedClothingItems?.filter(item => item.category === 'upper_body')?.length || 0) === 2 && (
         <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
           <p className="text-sm text-amber-900">
             <Icon name="AlertCircle" className="inline mr-1" size={16} />
@@ -245,9 +246,9 @@ export default function ReplicateClothingSelector({
         </div>
       )}
 
-      {selectedClothingItems.length === 2 && 
-       selectedClothingItems.every(item => item.category) &&
-       selectedClothingItems.filter(item => item.category === 'lower_body').length === 2 && (
+      {(selectedClothingItems?.length || 0) === 2 && 
+       selectedClothingItems?.every(item => item.category) &&
+       (selectedClothingItems?.filter(item => item.category === 'lower_body')?.length || 0) === 2 && (
         <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
           <p className="text-sm text-amber-900">
             <Icon name="AlertCircle" className="inline mr-1" size={16} />
@@ -256,8 +257,8 @@ export default function ReplicateClothingSelector({
         </div>
       )}
 
-      {selectedClothingItems.length === 2 && 
-       selectedClothingItems.some(item => item.category === 'dresses') && (
+      {(selectedClothingItems?.length || 0) === 2 && 
+       selectedClothingItems?.some(item => item.category === 'dresses') && (
         <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
           <p className="text-sm text-amber-900">
             <Icon name="AlertCircle" className="inline mr-1" size={16} />
@@ -275,14 +276,14 @@ export default function ReplicateClothingSelector({
             onChange={handleCustomClothingUpload}
             className="hidden"
             id="clothing-upload"
-            disabled={isGenerating || selectedClothingItems.length >= 2 || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses')}
+            disabled={isGenerating || (selectedClothingItems?.length || 0) >= 2 || ((selectedClothingItems?.length || 0) > 0 && selectedClothingItems?.[0]?.category === 'dresses')}
           />
           <label htmlFor="clothing-upload">
             <Button
               type="button"
               variant="outline"
-              className={`w-full ${(isGenerating || selectedClothingItems.length >= 2 || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses')) ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={isGenerating || selectedClothingItems.length >= 2 || (selectedClothingItems.length > 0 && selectedClothingItems[0].category === 'dresses')}
+              className={`w-full ${(isGenerating || (selectedClothingItems?.length || 0) >= 2 || ((selectedClothingItems?.length || 0) > 0 && selectedClothingItems?.[0]?.category === 'dresses')) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isGenerating || (selectedClothingItems?.length || 0) >= 2 || ((selectedClothingItems?.length || 0) > 0 && selectedClothingItems?.[0]?.category === 'dresses')}
               asChild
             >
               <span>

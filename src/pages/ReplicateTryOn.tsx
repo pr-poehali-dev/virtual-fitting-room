@@ -42,9 +42,9 @@ export default function ReplicateTryOn() {
 
   const { data: filters, isLoading: filtersLoading } = useCatalogFilters(['Обувь', 'Аксессуары', 'Головные уборы']);
   const { data: clothingCatalog, isLoading: catalogLoading } = useCatalog({
-    categoryIds: selectedCategories.length > 0 ? selectedCategories : undefined,
-    colorIds: selectedColors.length > 0 ? selectedColors : undefined,
-    archetypeIds: selectedArchetypes.length > 0 ? selectedArchetypes : undefined,
+    categoryIds: selectedCategories?.length > 0 ? selectedCategories : undefined,
+    colorIds: selectedColors?.length > 0 ? selectedColors : undefined,
+    archetypeIds: selectedArchetypes?.length > 0 ? selectedArchetypes : undefined,
     gender: selectedGender || undefined,
     includeReplicateCategories: ['upper_body', 'lower_body', 'dresses'],
   });
@@ -59,7 +59,7 @@ export default function ReplicateTryOn() {
 
     setIsSaving(true);
     try {
-      const lookbook = lookbooks.find(lb => lb.id === selectedLookbookId);
+      const lookbook = lookbooks?.find(lb => lb.id === selectedLookbookId);
       const updatedPhotos = [...(lookbook?.photos || []), cdnImageUrl];
 
       const response = await fetch(DB_QUERY_API, {
