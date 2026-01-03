@@ -99,7 +99,7 @@ def submit_to_replicate(image_url: str) -> str:
     }
     
     payload = {
-        'version': 'bytedance/bagel:latest',
+        'version': '7dd8def79e503990740db4704fa81af995d440fefe714958531d7044d2757c9c',
         'input': {
             'image_url': image_url,
             'prompt': PROMPT
