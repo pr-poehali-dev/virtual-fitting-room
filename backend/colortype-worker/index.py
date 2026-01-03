@@ -237,15 +237,27 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
                 if replicate_status == 'succeeded':
                     output = replicate_data.get('output', '')
-                    if output:
-                        color_type = extract_color_type(output)
-                        print(f'[ColorType-Worker] Stuck task {stuck_id} is completed! Saving to history. Color type: {color_type}')
+                    
+                    # Extract text from output (Replicate BAGEL returns dict or list)
+                    if isinstance(output, dict):
+                        result_text_value = output.get('text', str(output))
+                    elif isinstance(output, list) and len(output) > 0:
+                        result_text_value = output[0] if isinstance(output[0], str) else str(output[0])
+                    elif isinstance(output, str):
+                        result_text_value = output
+                    else:
+                        result_text_value = str(output)
+                    
+                    if result_text_value:
+                        color_type = extract_color_type(result_text_value)
+                        print(f'[ColorType-Worker] Stuck task {stuck_id} is completed! Color type: {color_type}')
+                        print(f'[ColorType-Worker] Result preview: {result_text_value[:100]}...')
                         
                         cursor.execute('''
                             UPDATE color_type_history
                             SET status = 'completed', result_text = %s, color_type = %s, saved_to_history = true, updated_at = %s
                             WHERE id = %s
-                        ''', (output, color_type, datetime.utcnow(), stuck_id))
+                        ''', (result_text_value, color_type, datetime.utcnow(), stuck_id))
                         conn.commit()
                         print(f'[ColorType-Worker] Stuck task {stuck_id} SAVED to history!')
                 
@@ -363,15 +375,26 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if replicate_status == 'succeeded':
                 output = replicate_data.get('output', '')
                 
-                if output:
-                    color_type = extract_color_type(output)
+                # Extract text from output (Replicate BAGEL returns dict or list)
+                if isinstance(output, dict):
+                    result_text_value = output.get('text', str(output))
+                elif isinstance(output, list) and len(output) > 0:
+                    result_text_value = output[0] if isinstance(output[0], str) else str(output[0])
+                elif isinstance(output, str):
+                    result_text_value = output
+                else:
+                    result_text_value = str(output)
+                
+                if result_text_value:
+                    color_type = extract_color_type(result_text_value)
                     print(f'[ColorType-Worker] Analysis complete! Color type: {color_type}')
+                    print(f'[ColorType-Worker] Result preview: {result_text_value[:100]}...')
                     
                     cursor.execute('''
                         UPDATE color_type_history
                         SET status = 'completed', result_text = %s, color_type = %s, saved_to_history = true, updated_at = %s
                         WHERE id = %s
-                    ''', (output, color_type, datetime.utcnow(), task_id))
+                    ''', (result_text_value, color_type, datetime.utcnow(), task_id))
                     conn.commit()
                     
                     print(f'[ColorType-Worker] Task {task_id} completed and saved to history')
