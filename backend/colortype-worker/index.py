@@ -88,9 +88,9 @@ def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str
 
 def submit_to_replicate(image_url: str) -> str:
     '''Submit task to Replicate BAGEL API and return prediction_id'''
-    replicate_api_key = os.environ.get('REPLICATE_API_KEY')
+    replicate_api_key = os.environ.get('REPLICATE_API_TOKEN')
     if not replicate_api_key:
-        raise Exception('REPLICATE_API_KEY not configured')
+        raise Exception('REPLICATE_API_TOKEN not configured')
     
     headers = {
         'Authorization': f'Bearer {replicate_api_key}',
@@ -124,9 +124,9 @@ def submit_to_replicate(image_url: str) -> str:
 
 def check_replicate_status(prediction_id: str) -> Optional[dict]:
     '''Check status of Replicate prediction'''
-    replicate_api_key = os.environ.get('REPLICATE_API_KEY')
+    replicate_api_key = os.environ.get('REPLICATE_API_TOKEN')
     if not replicate_api_key:
-        raise Exception('REPLICATE_API_KEY not configured')
+        raise Exception('REPLICATE_API_TOKEN not configured')
     
     headers = {
         'Authorization': f'Bearer {replicate_api_key}',
