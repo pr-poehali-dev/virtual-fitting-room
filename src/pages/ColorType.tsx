@@ -14,7 +14,7 @@ const COLORTYPE_STATUS_API = 'https://functions.poehali.dev/7f1395ac-bddc-45ec-b
 const IMAGE_PREPROCESSING_API = 'https://functions.poehali.dev/3fe8c892-ab5f-4d26-a2c5-ae4166276334';
 
 const COST = 30;
-const POLLING_INTERVAL = 3000;
+const POLLING_INTERVAL = 30000; // 30 seconds
 const TIMEOUT_DURATION = 180000; // 3 minutes
 
 // Mapping English color types to Russian
