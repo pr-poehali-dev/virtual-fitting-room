@@ -250,7 +250,7 @@ export default function ReplicateTryOnClothingSelector({
                   <div>
                     <p className="text-sm font-medium mb-2">Категория</p>
                     <div className="flex flex-wrap gap-2">
-                      {filters?.categories.map((cat) => (
+                      {filters?.categories?.map((cat) => (
                         <Button
                           key={cat.id}
                           variant={selectedCategories.includes(Number(cat.id)) ? 'default' : 'outline'}
@@ -274,7 +274,7 @@ export default function ReplicateTryOnClothingSelector({
                   <div>
                     <p className="text-sm font-medium mb-2">Цвет</p>
                     <div className="flex flex-wrap gap-2">
-                      {filters?.colors.map((color) => (
+                      {filters?.colors?.map((color) => (
                         <Button
                           key={color.id}
                           variant={selectedColors.includes(Number(color.id)) ? 'default' : 'outline'}
@@ -298,7 +298,7 @@ export default function ReplicateTryOnClothingSelector({
                   <div>
                     <p className="text-sm font-medium mb-2">Архетип</p>
                     <div className="flex flex-wrap gap-2">
-                      {filters?.archetypes.map((arch) => (
+                      {filters?.archetypes?.map((arch) => (
                         <Button
                           key={arch.id}
                           variant={selectedArchetypes.includes(Number(arch.id)) ? 'default' : 'outline'}
@@ -322,7 +322,7 @@ export default function ReplicateTryOnClothingSelector({
                   <div>
                     <p className="text-sm font-medium mb-2">Пол</p>
                     <div className="flex flex-wrap gap-2">
-                      {filters?.genders.map((gender) => (
+                      {filters?.genders?.map((gender) => (
                         <Button
                           key={gender.id}
                           variant={selectedGender === gender.id ? 'default' : 'outline'}

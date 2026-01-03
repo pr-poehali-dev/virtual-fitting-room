@@ -308,13 +308,13 @@ export default function ReplicateClothingSelector({
               />
             </button>
             
-            {filtersExpanded && (
+            {filtersExpanded && filters && (
               <div className="p-3 pt-0 border-t">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <div>
                     <p className="text-sm font-medium mb-2">Категории</p>
                     <div className="space-y-1 max-h-32 overflow-y-auto border rounded p-2 bg-background">
-                      {filters.categories.map((category) => (
+                      {filters.categories?.map((category) => (
                         <label key={category.id} className="flex items-center space-x-2 cursor-pointer">
                           <input
                             type="checkbox"
@@ -337,7 +337,7 @@ export default function ReplicateClothingSelector({
                   <div>
                     <p className="text-sm font-medium mb-2">Цвета</p>
                     <div className="space-y-1 max-h-32 overflow-y-auto border rounded p-2 bg-background">
-                      {filters.colors.map((color) => (
+                      {filters.colors?.map((color) => (
                         <label key={color.id} className="flex items-center space-x-2 cursor-pointer">
                           <input
                             type="checkbox"
@@ -360,7 +360,7 @@ export default function ReplicateClothingSelector({
                   <div>
                     <p className="text-sm font-medium mb-2">Архетипы</p>
                     <div className="space-y-1 max-h-32 overflow-y-auto border rounded p-2 bg-background">
-                      {filters.archetypes.map((arch) => (
+                      {filters.archetypes?.map((arch) => (
                         <label key={arch.id} className="flex items-center space-x-2 cursor-pointer">
                           <input
                             type="checkbox"
@@ -388,7 +388,7 @@ export default function ReplicateClothingSelector({
                       className="w-full p-2 border rounded text-sm bg-background"
                     >
                       <option value="">Все</option>
-                      {filters.genders.map((gender) => (
+                      {filters.genders?.map((gender) => (
                         <option key={gender.id} value={gender.id}>{gender.name}</option>
                       ))}
                     </select>
@@ -420,7 +420,7 @@ export default function ReplicateClothingSelector({
         )}
 
         <div className="max-h-64 overflow-y-auto border rounded-lg p-4">
-          {clothingCatalog.length > 0 ? (
+          {clothingCatalog && clothingCatalog.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {clothingCatalog.map((item) => {
                 const isSelected = selectedClothingItems.some(

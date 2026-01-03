@@ -76,7 +76,7 @@ export default function ReplicateFilters({
         <AccordionTrigger>Категории</AccordionTrigger>
         <AccordionContent>
           <div className="space-y-2">
-            {filters?.categories.map((category) => (
+            {filters?.categories?.map((category) => (
               <div key={category.id} className="flex items-center space-x-2">
                 <Checkbox
                   id={`category-${category.id}`}
@@ -96,7 +96,7 @@ export default function ReplicateFilters({
         <AccordionTrigger>Цвета</AccordionTrigger>
         <AccordionContent>
           <div className="space-y-2">
-            {filters?.colors.map((color) => (
+            {filters?.colors?.map((color) => (
               <div key={color.id} className="flex items-center space-x-2">
                 <Checkbox
                   id={`color-${color.id}`}
@@ -116,7 +116,7 @@ export default function ReplicateFilters({
         <AccordionTrigger>Архетипы</AccordionTrigger>
         <AccordionContent>
           <div className="space-y-2">
-            {filters?.archetypes.map((archetype) => (
+            {filters?.archetypes?.map((archetype) => (
               <div key={archetype.id} className="flex items-center space-x-2">
                 <Checkbox
                   id={`archetype-${archetype.id}`}
@@ -136,7 +136,7 @@ export default function ReplicateFilters({
         <AccordionTrigger>Пол</AccordionTrigger>
         <AccordionContent>
           <div className="space-y-2">
-            {filters?.genders.map((gender) => (
+            {filters?.genders?.map((gender) => (
               <div key={gender.id} className="flex items-center space-x-2">
                 <Checkbox
                   id={`gender-${gender.id}`}
