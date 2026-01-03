@@ -249,13 +249,6 @@ export default function ColorType() {
       return;
     }
 
-    // Check balance (skip if unlimited access)
-    if (!user.unlimited_access && (user.balance || 0) < COST) {
-      toast.error(`Недостаточно средств. Требуется ${COST} руб`);
-      navigate('/profile/wallet');
-      return;
-    }
-
     setIsAnalyzing(true);
     setAnalysisStatus('Запуск анализа...');
     setHasTimedOut(false);
@@ -276,6 +269,11 @@ export default function ColorType() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 402) {
+          toast.error(`Недостаточно средств. Требуется ${COST} руб`);
+          navigate('/profile/wallet');
+          return;
+        }
         throw new Error(data.error || 'Failed to start analysis');
       }
 
