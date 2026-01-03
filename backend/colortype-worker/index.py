@@ -94,8 +94,7 @@ def submit_to_replicate(image_url: str) -> str:
     
     headers = {
         'Authorization': f'Bearer {replicate_api_key}',
-        'Content-Type': 'application/json',
-        'Prefer': 'wait'
+        'Content-Type': 'application/json'
     }
     
     payload = {
