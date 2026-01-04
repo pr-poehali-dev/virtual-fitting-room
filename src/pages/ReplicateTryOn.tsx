@@ -850,6 +850,12 @@ export default function ReplicateTryOn() {
                       </>
                     )}
                   </Button>
+
+                  {!user?.unlimited_access && !isGenerating && (
+                    <p className="text-sm text-muted-foreground text-center">
+                      Стоимость генерации: 30₽
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
