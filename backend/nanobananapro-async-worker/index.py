@@ -239,8 +239,13 @@ def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garment
         # Build garments JSON (matching table structure)
         garments_json = json.dumps(garments)
         
-        # Fixed cost: 30 rubles per generation (regardless of garments count)
-        cost = 30
+        # Check if user has unlimited access
+        cursor.execute('SELECT unlimited_access FROM users WHERE id = %s', (user_id,))
+        user_row = cursor.fetchone()
+        unlimited_access = user_row[0] if user_row else False
+        
+        # Cost: 0 for unlimited users, 30 for others
+        cost = 0 if unlimited_access else 30
         
         # Extract first garment image for garment_image column
         garment_image = garments[0]['image'] if garments and len(garments) > 0 else ''

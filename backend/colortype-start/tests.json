@@ -1,20 +1,15 @@
 {
   "tests": [
     {
-      "name": "Start color type analysis",
+      "name": "Start without user ID returns 401",
       "method": "POST",
       "path": "/",
-      "headers": {
-        "X-User-Id": "test-user-123"
-      },
       "body": {
         "person_image": "data:image/jpeg;base64,/9j/4AAQSkZJRg..."
       },
-      "expectedStatus": 200,
+      "expectedStatus": 401,
       "expectedBody": {
-        "task_id": "string",
-        "status": "pending",
-        "estimated_time_seconds": 60
+        "error": "User ID required"
       },
       "bodyMatcher": "partial"
     }

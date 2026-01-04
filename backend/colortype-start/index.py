@@ -94,7 +94,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         balance = float(user_row[0])
         unlimited_access = user_row[1]
-        cost = 30
+        
+        # Cost: 0 for unlimited users, 30 for others
+        cost = 0 if unlimited_access else 30
         
         # Check balance only if not unlimited
         if not unlimited_access:
@@ -154,13 +156,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print(f'[COLORTYPE-START-{request_id}] ✓ NEW TASK! Creating task {task_id}')
         
         cursor.execute('''
-            INSERT INTO color_type_history (id, user_id, status, person_image, created_at)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO color_type_history (id, user_id, status, person_image, cost, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s)
         ''', (
             task_id,
             user_id,
             'pending',
             person_image,
+            cost,
             datetime.utcnow()
         ))
         
