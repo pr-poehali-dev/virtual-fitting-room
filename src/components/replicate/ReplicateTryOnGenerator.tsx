@@ -185,10 +185,8 @@ export default function ReplicateTryOnGenerator({
       setIsGenerating(false);
       setGenerationStatus('');
       
-      if (user) {
-        await refundReplicateBalance(user, selectedClothingItems.length);
-        console.log('[NanoBananaPro] Balance refunded due to start error');
-      }
+      // Refund is now handled by backend worker automatically
+      console.log('[NanoBananaPro] Backend will handle refund if needed');
     } finally {
       isNanoBananaRequestInProgress.current = false;
       console.log(`[NanoBananaPro-CALL-${callId}] Lock released`);
@@ -290,10 +288,8 @@ export default function ReplicateTryOnGenerator({
           clearInterval(interval);
           setPollingInterval(null);
           
-          if (user) {
-            await refundReplicateBalance(user, selectedClothingItems.length);
-            console.log('[NanoBananaPro] Balance refunded due to API error');
-          }
+          // Refund is now handled by backend worker automatically
+          console.log('[NanoBananaPro] Backend already handled refund')
         } else {
           console.log('[NanoBananaPro] Unknown status:', data.status);
         }

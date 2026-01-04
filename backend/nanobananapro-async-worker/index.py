@@ -188,6 +188,49 @@ def upload_to_s3(image_url: str, user_id: str) -> str:
     
     return cdn_url
 
+def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
+    '''Refund 30 rubles to user balance if not unlimited and not already refunded'''
+    try:
+        cursor = conn.cursor()
+        
+        # Check if already refunded
+        cursor.execute('SELECT refunded FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks WHERE id = %s', (task_id,))
+        refund_row = cursor.fetchone()
+        
+        if refund_row and refund_row[0]:
+            print(f'[Refund] Task {task_id} already refunded, skipping')
+            cursor.close()
+            return
+        
+        # Check if user has unlimited access
+        cursor.execute('SELECT unlimited_access FROM users WHERE id = %s', (user_id,))
+        user_row = cursor.fetchone()
+        
+        if not user_row:
+            print(f'[Refund] User {user_id} not found')
+            cursor.close()
+            return
+        
+        unlimited_access = user_row[0]
+        
+        if unlimited_access:
+            print(f'[Refund] User {user_id} has unlimited access, no refund needed')
+            cursor.execute('UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks SET refunded = true WHERE id = %s', (task_id,))
+            conn.commit()
+            cursor.close()
+            return
+        
+        # Refund 30 rubles
+        cursor.execute('UPDATE users SET balance = balance + 30 WHERE id = %s', (user_id,))
+        cursor.execute('UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks SET refunded = true WHERE id = %s', (task_id,))
+        conn.commit()
+        
+        print(f'[Refund] Refunded 30 rubles to user {user_id} for task {task_id}')
+        cursor.close()
+        
+    except Exception as e:
+        print(f'[Refund] Error refunding balance: {str(e)}')
+
 def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garments: list, prompt: str) -> None:
     '''Save result to try_on_history table'''
     try:
@@ -357,13 +400,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     print(f'[NanoBanana] Failed to submit task {task_id}: {error_msg}')
                     
                     cursor.execute('''
-                        UPDATE nanobananapro_tasks
+                        UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
                         SET status = 'failed',
                             error_message = %s,
                             updated_at = %s
                         WHERE id = %s
                     ''', (error_msg, datetime.utcnow(), task_id))
                     conn.commit()
+                    
+                    # Refund balance for failed submission
+                    refund_balance_if_needed(conn, user_id, task_id)
         
         # Check if task is now processing
         if task_status == 'processing' and fal_response_url:
@@ -445,6 +491,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         WHERE id = %s
                     ''', (error_msg, datetime.utcnow(), task_id))
                     conn.commit()
+                    
+                    # Refund balance for failed task
+                    refund_balance_if_needed(conn, user_id, task_id)
                 
                 else:
                     print(f'[NanoBanana] Task {task_id} still processing, status={fal_status}')
