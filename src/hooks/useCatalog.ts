@@ -147,15 +147,7 @@ export const useCatalog = (filters?: CatalogFilters) => {
     refetchOnReconnect: false,
   });
 
-  const { data: availableFilters } = useQuery({
-    queryKey: ['catalog-filters'],
-    queryFn: fetchFilters,
-    staleTime: Infinity,
-    gcTime: Infinity,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
+  const availableFilters = queryClient.getQueryData<Filters>(['catalog-filters']);
 
   const filteredItems = query.data && filters 
     ? filterClothingItems(query.data, filters, availableFilters)
