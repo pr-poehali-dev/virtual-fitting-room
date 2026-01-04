@@ -7,6 +7,7 @@ import Layout from '@/components/Layout';
 import ImageCropper from '@/components/ImageCropper';
 import { validateImageFile } from '@/utils/fileValidation';
 import { useAuth } from '@/context/AuthContext';
+import { useData } from '@/context/DataContext';
 import { useNavigate } from 'react-router-dom';
 
 const COLORTYPE_START_API = 'https://functions.poehali.dev/f5ab39bd-a682-44d8-ac47-d7b9d035013b';
@@ -60,6 +61,7 @@ const colorTypeNames: Record<string, string> = {
 
 export default function ColorType() {
   const { user } = useAuth();
+  const { refetchColorTypeHistory } = useData();
   const navigate = useNavigate();
   
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -219,6 +221,7 @@ export default function ColorType() {
         setIsAnalyzing(false);
         setAnalysisStatus('');
         toast.success('Цветотип определён!');
+        refetchColorTypeHistory();
       } else if (data.status === 'failed') {
         if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
         if (timeoutRef.current) clearTimeout(timeoutRef.current);

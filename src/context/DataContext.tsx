@@ -22,12 +22,23 @@ interface HistoryItem {
   cost?: number;
 }
 
+interface ColorTypeHistory {
+  id: string;
+  person_image: string;
+  color_type: string;
+  result_text: string;
+  created_at: string;
+  status: string;
+}
+
 interface DataContextType {
   lookbooks: Lookbook[];
   history: HistoryItem[];
+  colorTypeHistory: ColorTypeHistory[];
   isLoading: boolean;
   refetchLookbooks: () => Promise<void>;
   refetchHistory: () => Promise<void>;
+  refetchColorTypeHistory: () => Promise<void>;
   refetchAll: () => Promise<void>;
 }
 
@@ -39,9 +50,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [lookbooks, setLookbooks] = useState<Lookbook[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [colorTypeHistory, setColorTypeHistory] = useState<ColorTypeHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasFetchedLookbooks, setHasFetchedLookbooks] = useState(false);
   const [hasFetchedHistory, setHasFetchedHistory] = useState(false);
+  const [hasFetchedColorTypeHistory, setHasFetchedColorTypeHistory] = useState(false);
 
   const fetchLookbooks = async () => {
     if (!user?.id) {
@@ -109,23 +122,58 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await fetchLookbooks();
   };
 
+  const fetchColorTypeHistory = async () => {
+    if (!user?.id) {
+      setColorTypeHistory([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.id
+        },
+        body: JSON.stringify({
+          table: 'color_type_history',
+          action: 'select',
+          where: { user_id: user.id, status: 'completed' },
+          order_by: 'created_at DESC',
+          limit: 100
+        })
+      });
+      const result = await response.json();
+      const data = result.success && Array.isArray(result.data) ? result.data : [];
+      setColorTypeHistory(Array.isArray(data) ? data : []);
+      setHasFetchedColorTypeHistory(true);
+    } catch (error) {
+      console.error('Error fetching color type history:', error);
+      setColorTypeHistory([]);
+    }
+  };
+
   const refetchHistory = async () => {
     await fetchHistory();
   };
 
+  const refetchColorTypeHistory = async () => {
+    await fetchColorTypeHistory();
+  };
+
   const refetchAll = async () => {
-    await Promise.all([fetchLookbooks(), fetchHistory()]);
+    await Promise.all([fetchLookbooks(), fetchHistory(), fetchColorTypeHistory()]);
   };
 
   useEffect(() => {
     if (user) {
       const loadInitialData = async () => {
         setIsLoading(true);
-        await Promise.all([fetchLookbooks(), fetchHistory()]);
+        await Promise.all([fetchLookbooks(), fetchHistory(), fetchColorTypeHistory()]);
         setIsLoading(false);
       };
       
-      if (!hasFetchedLookbooks || !hasFetchedHistory) {
+      if (!hasFetchedLookbooks || !hasFetchedHistory || !hasFetchedColorTypeHistory) {
         loadInitialData();
       } else {
         setIsLoading(false);
@@ -133,8 +181,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     } else {
       setLookbooks([]);
       setHistory([]);
+      setColorTypeHistory([]);
       setHasFetchedLookbooks(false);
       setHasFetchedHistory(false);
+      setHasFetchedColorTypeHistory(false);
       setIsLoading(false);
     }
   }, [user?.id]);
@@ -144,9 +194,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       value={{
         lookbooks,
         history,
+        colorTypeHistory,
         isLoading,
         refetchLookbooks,
         refetchHistory,
+        refetchColorTypeHistory,
         refetchAll
       }}
     >
