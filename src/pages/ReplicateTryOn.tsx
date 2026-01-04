@@ -90,10 +90,6 @@ const proxyFalImage = async (falUrl: string): Promise<string> => {
 export default function ReplicateTryOn() {
   const { user } = useAuth();
   const { lookbooks, refetchLookbooks, refetchHistory } = useData();
-  
-  // Debug: проверка unlimited_access
-  console.log('[ReplicateTryOn] User object:', user);
-  console.log('[ReplicateTryOn] unlimited_access value:', user?.unlimited_access);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedClothingItems, setSelectedClothingItems] = useState<SelectedClothing[]>([]);
 

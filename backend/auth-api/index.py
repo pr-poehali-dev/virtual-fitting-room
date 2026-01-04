@@ -271,7 +271,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             # Get user with password hash
             cursor.execute(
-                "SELECT id, email, name, created_at, email_verified, password_hash FROM users WHERE email = %s",
+                "SELECT id, email, name, created_at, email_verified, password_hash, balance, unlimited_access FROM users WHERE email = %s",
                 (email,)
             )
             
@@ -363,7 +363,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'email': user['email'],
                         'name': user['name'],
                         'created_at': user['created_at'].isoformat(),
-                        'email_verified': user['email_verified']
+                        'email_verified': user['email_verified'],
+                        'balance': float(user['balance']) if user.get('balance') else 0.0,
+                        'unlimited_access': bool(user.get('unlimited_access', False))
                     },
                     'session_token': session_token
                 })
