@@ -144,6 +144,49 @@ def check_replicate_status(prediction_id: str) -> Optional[dict]:
     
     raise Exception(f'Failed to check status: {response.status_code} - {response.text}')
 
+def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
+    '''Refund 30 rubles to user balance if not unlimited and not already refunded'''
+    try:
+        cursor = conn.cursor()
+        
+        # Check if already refunded
+        cursor.execute('SELECT refunded FROM color_type_history WHERE id = %s', (task_id,))
+        refund_row = cursor.fetchone()
+        
+        if refund_row and refund_row[0]:
+            print(f'[Refund] Task {task_id} already refunded, skipping')
+            cursor.close()
+            return
+        
+        # Check if user has unlimited access
+        cursor.execute('SELECT unlimited_access FROM users WHERE id = %s', (user_id,))
+        user_row = cursor.fetchone()
+        
+        if not user_row:
+            print(f'[Refund] User {user_id} not found')
+            cursor.close()
+            return
+        
+        unlimited_access = user_row[0]
+        
+        if unlimited_access:
+            print(f'[Refund] User {user_id} has unlimited access, no refund needed')
+            cursor.execute('UPDATE color_type_history SET refunded = true WHERE id = %s', (task_id,))
+            conn.commit()
+            cursor.close()
+            return
+        
+        # Refund 30 rubles
+        cursor.execute('UPDATE users SET balance = balance + 30 WHERE id = %s', (user_id,))
+        cursor.execute('UPDATE color_type_history SET refunded = true WHERE id = %s', (task_id,))
+        conn.commit()
+        
+        print(f'[Refund] Refunded 30 rubles to user {user_id} for task {task_id}')
+        cursor.close()
+        
+    except Exception as e:
+        print(f'[Refund] Error refunding balance: {str(e)}')
+
 def extract_color_type(result_text: str) -> Optional[str]:
     '''Extract color type name from result text'''
     color_types = [
@@ -270,6 +313,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         WHERE id = %s
                     ''', (error_msg, datetime.utcnow(), stuck_id))
                     conn.commit()
+                    
+                    # Refund balance for failed task
+                    refund_balance_if_needed(conn, stuck_user_id, stuck_id)
                 else:
                     print(f'[ColorType-Worker] Stuck task {stuck_id} still processing on Replicate (status: {replicate_status})')
                 
@@ -418,6 +464,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     WHERE id = %s
                 ''', (error_msg, datetime.utcnow(), task_id))
                 conn.commit()
+                
+                # Refund balance for failed task
+                refund_balance_if_needed(conn, user_id, task_id)
                 
                 cursor.close()
                 conn.close()

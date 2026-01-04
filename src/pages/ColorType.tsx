@@ -378,10 +378,16 @@ export default function ColorType() {
                     ) : (
                       <>
                         <Icon name="Palette" className="mr-2" size={20} />
-                        Определить цветотип ({COST} руб)
+                        Определить цветотип
                       </>
                     )}
                   </Button>
+
+                  {!user?.unlimited_access && !isAnalyzing && (
+                    <p className="text-sm text-muted-foreground text-center">
+                      Стоимость генерации: {COST}₽
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -359,6 +359,12 @@ export default function ReplicateTryOnGenerator({
               )}
             </Button>
 
+            {!user?.unlimited_access && !isGenerating && (
+              <p className="text-sm text-muted-foreground text-center">
+                Стоимость генерации: 30₽
+              </p>
+            )}
+
             {generationStatus && (
               <p className="text-sm text-muted-foreground text-center">
                 {generationStatus}

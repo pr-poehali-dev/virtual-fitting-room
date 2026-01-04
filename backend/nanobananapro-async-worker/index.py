@@ -196,8 +196,8 @@ def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garment
         # Build garments JSON (matching table structure)
         garments_json = json.dumps(garments)
         
-        # Calculate cost based on number of garments
-        cost = len(garments)
+        # Fixed cost: 30 rubles per generation (regardless of garments count)
+        cost = 30
         
         # Extract first garment image for garment_image column
         garment_image = garments[0]['image'] if garments and len(garments) > 0 else ''
