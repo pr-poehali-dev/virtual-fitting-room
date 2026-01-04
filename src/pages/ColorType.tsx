@@ -64,6 +64,10 @@ export default function ColorType() {
   const { refetchColorTypeHistory } = useData();
   const navigate = useNavigate();
   
+  // Debug: проверка unlimited_access
+  console.log('[ColorType] User object:', user);
+  console.log('[ColorType] unlimited_access value:', user?.unlimited_access);
+  
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
