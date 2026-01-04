@@ -124,18 +124,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         status, result_text, color_type, replicate_prediction_id = row
         
-        # Trigger worker on force_check to process task
-        if force_check and status in ['pending', 'processing']:
-            print(f'[ColorType-Status] Triggering worker for task {task_id}')
-            try:
-                import urllib.request
-                worker_url = f'https://functions.poehali.dev/c13ce63e-ae23-419d-84f1-b6958e4ea586?task_id={task_id}'
-                req = urllib.request.Request(worker_url, method='GET')
-                urllib.request.urlopen(req, timeout=2)
-                print(f'[ColorType-Status] Worker triggered')
-            except Exception as e:
-                print(f'[ColorType-Status] Worker trigger failed (non-critical): {e}')
-        
+        # Direct API check (no worker trigger, like nanobananapro-async-status)
         if force_check and status == 'processing' and replicate_prediction_id:
             print(f'[ColorType-Status] Force checking task {task_id} on Replicate')
             try:

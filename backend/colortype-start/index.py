@@ -114,9 +114,44 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         else:
             print(f'[COLORTYPE-START-{request_id}] User has unlimited access, skipping payment')
         
+        # Deduplication: check for identical request in last 10ms (0.01 sec)
+        person_prefix = person_image[:100] if len(person_image) > 100 else person_image
+        
+        print(f'[COLORTYPE-START-{request_id}] Checking for duplicates in last 10ms...')
+        cursor.execute('''
+            SELECT id, created_at FROM color_type_history
+            WHERE user_id = %s
+              AND status IN ('pending', 'processing')
+              AND LEFT(person_image, 100) = %s
+              AND created_at > NOW() - INTERVAL '0.01 seconds'
+            ORDER BY created_at DESC
+            LIMIT 1
+        ''', (user_id, person_prefix))
+        
+        existing = cursor.fetchone()
+        print(f'[COLORTYPE-START-{request_id}] Duplicate check result: {"FOUND" if existing else "NOT FOUND"}')
+        
+        if existing:
+            existing_task_id, existing_created = existing
+            print(f'[COLORTYPE-START-{request_id}] ✓ DEDUPLICATED! Returning existing task {existing_task_id} (created {existing_created})')
+            print(f'[COLORTYPE-START-{request_id}] ========== REQUEST COMPLETED (DEDUPLICATED) ==========')
+            cursor.close()
+            conn.close()
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                'isBase64Encoded': False,
+                'body': json.dumps({
+                    'task_id': existing_task_id,
+                    'status': 'pending',
+                    'estimated_time_seconds': 60,
+                    'deduplicated': True
+                })
+            }
+        
         # Create task
         task_id = str(uuid.uuid4())
-        print(f'[COLORTYPE-START-{request_id}] Creating task {task_id}')
+        print(f'[COLORTYPE-START-{request_id}] ✓ NEW TASK! Creating task {task_id}')
         
         cursor.execute('''
             INSERT INTO color_type_history (id, user_id, status, person_image, created_at)
