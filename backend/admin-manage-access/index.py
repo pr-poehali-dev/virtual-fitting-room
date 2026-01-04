@@ -97,7 +97,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         elif method == 'POST':
             body_data = json.loads(event.get('body', '{}'))
             user_email = body_data.get('user_email')
-            unlimited_access = body_data.get('unlimited_access', False)
+            unlimited_access = body_data.get('unlimited_access')
+            balance = body_data.get('balance')
             
             if not user_email:
                 return {
@@ -107,12 +108,37 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Требуется user_email'})
                 }
             
-            cur.execute('''
+            # Build dynamic UPDATE query
+            update_fields = []
+            params = []
+            
+            if unlimited_access is not None:
+                update_fields.append('unlimited_access = %s')
+                params.append(unlimited_access)
+            
+            if balance is not None:
+                update_fields.append('balance = %s')
+                params.append(float(balance))
+            
+            if not update_fields:
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Требуется хотя бы одно поле для обновления (unlimited_access или balance)'})
+                }
+            
+            update_fields.append('updated_at = CURRENT_TIMESTAMP')
+            params.append(user_email)
+            
+            query = f'''
                 UPDATE t_p29007832_virtual_fitting_room.users 
-                SET unlimited_access = %s, updated_at = CURRENT_TIMESTAMP 
+                SET {', '.join(update_fields)}
                 WHERE email = %s
-                RETURNING id, email, name
-            ''', (unlimited_access, user_email))
+                RETURNING id, email, name, balance, unlimited_access
+            '''
+            
+            cur.execute(query, params)
             
             result = cur.fetchone()
             
@@ -135,7 +161,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'user_id': str(result[0]),
                     'email': result[1],
                     'name': result[2],
-                    'unlimited_access': unlimited_access
+                    'balance': float(result[3]) if result[3] else 0,
+                    'unlimited_access': result[4] or False
                 })
             }
         
