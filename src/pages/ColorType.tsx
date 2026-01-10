@@ -62,7 +62,7 @@ export default function ColorType() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageForCrop, setTempImageForCrop] = useState<string | null>(null);
-  const [eyeColor, setEyeColor] = useState<string>('brown');
+  const [eyeColor, setEyeColor] = useState<string>('');
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisStatus, setAnalysisStatus] = useState<string>('');
@@ -209,6 +209,11 @@ export default function ColorType() {
       return;
     }
 
+    if (!eyeColor) {
+      toast.error('Выберите цвет глаз');
+      return;
+    }
+
     setIsAnalyzing(true);
     setAnalysisStatus('Запуск анализа...');
     setHasTimedOut(false);
@@ -324,11 +329,13 @@ export default function ColorType() {
                       </label>
                       <select
                         id="eye-color"
-                        value={Object.keys(eyeColors).find(key => eyeColors[key] === eyeColor) || 'Карие'}
-                        onChange={(e) => setEyeColor(eyeColors[e.target.value])}
+                        value={eyeColor ? (Object.keys(eyeColors).find(key => eyeColors[key] === eyeColor) || '') : ''}
+                        onChange={(e) => setEyeColor(e.target.value ? eyeColors[e.target.value] : '')}
                         className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                         disabled={isAnalyzing}
+                        required
                       >
+                        <option value="">Выберите цвет глаз</option>
                         {Object.keys(eyeColors).map((colorRu) => (
                           <option key={colorRu} value={colorRu}>
                             {colorRu}
@@ -340,7 +347,7 @@ export default function ColorType() {
 
                   <Button 
                     onClick={handleAnalyze} 
-                    disabled={isAnalyzing || !uploadedImage}
+                    disabled={isAnalyzing || !uploadedImage || !eyeColor}
                     className="w-full h-12 text-base"
                     size="lg"
                   >
