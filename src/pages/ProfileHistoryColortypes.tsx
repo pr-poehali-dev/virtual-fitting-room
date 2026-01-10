@@ -24,7 +24,7 @@ const colorTypeNames: Record<string, string> = {
 
 interface ColorTypeHistory {
   id: string;
-  person_image: string;
+  person_image?: string;
   color_type: string;
   result_text: string;
   created_at: string;
@@ -89,16 +89,9 @@ export default function ProfileHistoryColortypes() {
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {colorTypeHistory.map((item) => (
                   <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="aspect-[3/4] relative overflow-hidden bg-muted">
-                      <img
-                        src={item.person_image}
-                        alt="Portrait"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <CardContent className="p-4">
-                      <div className="mb-2">
-                        <h3 className="font-semibold text-lg">
+                    <CardContent className="p-6">
+                      <div className="mb-4">
+                        <h3 className="font-semibold text-xl mb-2">
                           {item.color_type ? (colorTypeNames[item.color_type] || item.color_type) : 'Цветотип'}
                         </h3>
                         <p className="text-xs text-muted-foreground">
@@ -112,7 +105,7 @@ export default function ProfileHistoryColortypes() {
                         </p>
                       </div>
                       {item.result_text && (
-                        <p className="text-sm text-muted-foreground line-clamp-3">
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                           {item.result_text}
                         </p>
                       )}

@@ -24,7 +24,7 @@ interface HistoryItem {
 
 interface ColorTypeHistory {
   id: string;
-  person_image: string;
+  person_image?: string;
   color_type: string;
   result_text: string;
   created_at: string;
@@ -138,7 +138,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({
           table: 'color_type_history',
           action: 'select',
-          columns: ['id', 'person_image', 'color_type', 'result_text', 'created_at', 'status'],
+          columns: ['id', 'color_type', 'result_text', 'created_at', 'status'],
           where: { user_id: user.id, status: 'completed' },
           order_by: 'created_at DESC',
           limit: 100
