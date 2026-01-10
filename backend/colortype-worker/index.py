@@ -36,10 +36,13 @@ CRITICAL RULE: If hair has ANY red/golden/copper tones = AUTOMATICALLY WARM = MU
 
 For WARM undertones (red/golden/auburn hair):
 - DARKEST hair (dark chestnut, espresso brown - very deep) → Choose from: GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN
-- GOLDEN BLONDE hair (light to medium blonde with GOLDEN tones, NO red) → Choose from: GENTLE SPRING, BRIGHT SPRING
+- LIGHT GOLDEN BLONDE (pale, soft golden tones, low contrast) → GENTLE SPRING
+- MEDIUM GOLDEN BLONDE (richer honey/caramel, MORE YELLOW, high contrast) → BRIGHT SPRING
 - FIERY RED/AUBURN/COPPER hair (clearly RED or COPPER, NOT just golden) → Choose from: VIBRANT SPRING (if light skin) or FIERY AUTUMN (if warm/darker skin)
 
-CRITICAL: Golden blonde ≠ Auburn! Golden = yellow-warm, Auburn = red-orange-copper!
+CRITICAL: 
+- Golden blonde ≠ Auburn! Golden = yellow-warm, Auburn = red-orange-copper!
+- GENTLE Spring = lighter/softer hair, BRIGHT Spring = richer/more yellow hair!
 
 For COOL undertones (ash/cool black hair):
 - DARK hair (black, dark cool brown) → Choose from: VIVID WINTER, SOFT WINTER, BRIGHT WINTER
@@ -55,8 +58,8 @@ WARM + DARK hair → Autumn types:
 - VIVID AUTUMN: DARKEST warm hair (dark chestnut/espresso brown - NO auburn!), brown/brown-green eyes, pale to medium warm beige or darker skin
 
 WARM + LIGHT/BRIGHT hair → Spring types:
-- GENTLE SPRING: Light golden blonde/light honey blonde (NO red tones!), blue/blue-green eyes, ivory/light warm beige skin, soft gentle appearance
-- BRIGHT SPRING: Medium golden blonde/honey blonde/warm caramel (NO red/auburn!), blue/green/blue-green eyes, ivory/light warm beige skin, bright warm look
+- GENTLE SPRING: LIGHT golden blonde/pale honey blonde (very light, almost platinum warmth), blue/blue-green eyes, ivory/porcelain skin, SOFT LOW-CONTRAST delicate appearance
+- BRIGHT SPRING: MEDIUM golden blonde/rich honey blonde/warm caramel (MORE YELLOW, warmer, richer than Gentle), blue/green/blue-green eyes, ivory/warm beige skin, BRIGHT HIGH-CONTRAST warm appearance
 - VIBRANT SPRING: FIERY AUBURN/COPPER RED hair (NOT blonde! Must be clearly RED/COPPER), blue/gray-blue/green eyes, light skin, HIGH CONTRAST bright appearance!
 
 COOL + DARK hair → Winter types:
@@ -83,8 +86,13 @@ Before answering:
 KEY DISTINCTIONS:
 
 GOLDEN BLONDE types (NO red in hair!):
-- GENTLE SPRING: Light golden blonde + soft gentle appearance + light skin
-- BRIGHT SPRING: Medium golden/honey blonde + bright warm appearance + light skin
+- GENTLE SPRING: LIGHT/PALE golden blonde (almost platinum-warm) + SOFT LOW-CONTRAST delicate look + porcelain/ivory skin
+- BRIGHT SPRING: MEDIUM golden/honey blonde (MORE YELLOW, richer, warmer) + BRIGHT HIGH-CONTRAST warm look + warm beige skin
+
+How to distinguish GENTLE vs BRIGHT Spring:
+- Hair depth: GENTLE = lighter (pale blonde), BRIGHT = medium (richer honey/caramel)
+- Warmth intensity: GENTLE = soft subtle warmth, BRIGHT = strong yellow-golden warmth
+- Overall contrast: GENTLE = low-contrast delicate, BRIGHT = high-contrast vibrant
 
 FIERY RED/AUBURN types (clearly RED/COPPER hair!):
 - VIBRANT SPRING: Fiery auburn/copper + light/pale skin + blue/green eyes + HIGH CONTRAST
