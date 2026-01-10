@@ -11,39 +11,45 @@ import base64
 
 
 
+
 PROMPT_TEMPLATE = """Determine a person's colortype based on the uploaded photo.
 
 IMPORTANT HINTS:
 - This person has {eye_color} eyes
-- Look at the hair color closer to the roots (it's more accurate), but consider the entire length
+- Look at the hair color at the roots (natural mature color before grays)
 - Focus ONLY on skin, hair, and eyes colors - IGNORE clothes and background colors
 
 There are EXACTLY 12 valid color types: VIVID WINTER, SOFT WINTER, BRIGHT WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER, GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
 
-=== STEP 1: WARM OR COOL UNDERTONE ===
+=== STEP 1: WARM OR COOL UNDERTONE (THE BASE) ===
 
-First, determine if skin has WARM (golden/yellow base) or COOL (pink/blue base) undertone.
+CRITICAL: Skin, hair, and eye colors are a UNIT. All are warm OR all are cool. They go together genetically.
 
+Determine if skin has WARM or COOL undertone:
+- COOL (blue/pink base): rosy beige, charcoal brown, ebony, platinum blonde effect
+- WARM (golden/yellow base): yellow beige, mahogany, chestnut brown, golden blonde effect
+
+Hair base confirms undertone:
+- ASH-BASED hair (charcoal brown, cool black) = COOL → Winter or Summer ONLY
+- RED/GOLD-BASED hair (chestnut, auburn, golden tones) = WARM → Autumn or Spring ONLY
+
+Results:
 - COOL undertone → Can ONLY be: VIVID WINTER, SOFT WINTER, BRIGHT WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER
 - WARM undertone → Can ONLY be: GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
 
-CRITICAL RULES:
-- If hair has golden/auburn/red/copper tones → AUTOMATICALLY WARM → Must be Autumn or Spring
-- If hair has ash/cool brown/black tones → AUTOMATICALLY COOL → Must be Winter or Summer
+=== STEP 2: SEASON (TRIAD - CONTRAST TYPE) ===
 
-=== STEP 2: SEASON (CONTRAST AND HAIR DEPTH) ===
-
-Now narrow to 3 types based on hair depth and contrast:
+Now determine your TRIAD type (relationship between skin/hair/eye):
 
 For COOL undertones:
-- DARK hair (black, dark brown) + high contrast → Choose from: VIVID WINTER, SOFT WINTER, BRIGHT WINTER
-- LIGHT hair (blonde, light brown) + soft contrast → Choose from: SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER
+- CLARITY (high contrast between elements): DARK hair + distinct separation between hair/skin/eye → Winter (VIVID WINTER, SOFT WINTER, BRIGHT WINTER)
+- DIMENSION (subtle diffusion between elements): LIGHT hair + soft blend between hair/skin/eye → Summer (SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER)
 
 For WARM undertones:
-- DARK or DEEP hair (chestnut, auburn, espresso) → Choose from: GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN
-- LIGHT or BRIGHT hair (golden blonde, honey, strawberry) → Choose from: GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
+- DIMENSION (rich saturation between elements): DARKER hair (chestnut/auburn/espresso) + rich depth → Autumn (GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN)
+- CLARITY (light/bright contrast between elements): LIGHTER hair (golden blonde/honey/strawberry) + bright separation → Spring (GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING)
 
-IMPORTANT: FIERY AUTUMN can have bright appearance with warm browns and auburn - it's NOT Spring!
+IMPORTANT: FIERY AUTUMN has bright appearance with warm browns/auburn but DARK hair depth - it's NOT Spring!
 
 === STEP 3: EXACT TYPE (MATCH TO DESCRIPTIONS) ===
 
