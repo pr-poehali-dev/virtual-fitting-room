@@ -16,12 +16,17 @@ import base64
 
 
 
+REFERENCE_SCHEMA_URL = "https://cdn.poehali.dev/files/colortypes.jpg"
+
 PROMPT_TEMPLATE = """Determine a person's colortype based on the uploaded photo.
+
+REFERENCE SCHEMA: Compare the person in the photo with reference faces from the color type wheel schema at {schema_url}
 
 IMPORTANT HINTS:
 - This person has {eye_color} eyes
 - Look at the hair color at the roots (natural color)
 - Focus ONLY on skin, hair, and eyes - IGNORE clothes and background
+- Compare this person's features with similar faces on the reference schema
 
 There are EXACTLY 12 valid color types: VIVID WINTER, SOFT WINTER, BRIGHT WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER, GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
 
@@ -175,8 +180,8 @@ def submit_to_replicate(image_url: str, eye_color: str = 'brown') -> str:
         'Content-Type': 'application/json'
     }
     
-    # Format prompt with eye color
-    prompt = PROMPT_TEMPLATE.format(eye_color=eye_color)
+    # Format prompt with eye color and schema URL
+    prompt = PROMPT_TEMPLATE.format(eye_color=eye_color, schema_url=REFERENCE_SCHEMA_URL)
     
     payload = {
         'version': '2facb4a474a0462c15041b78b1ad70952ea46b5ec6ad29583c0b29dbd4249591',
