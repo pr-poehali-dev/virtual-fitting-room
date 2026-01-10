@@ -8,27 +8,23 @@ import boto3
 import time
 import uuid
 import base64
-from PIL import Image
-from io import BytesIO
 
 
 # Updated prompt with THE BASE and TRIAD concepts
 # VIBRANT SPRING now includes warm light brown/golden brown hair with bright eyes
+# Reverted composite image approach - using single photo analysis
 
 
 
 
 REFERENCE_SCHEMA_URL = "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortypes.jpg"
 
-PROMPT_TEMPLATE = """You see a composite image: LEFT side = person to analyze, RIGHT side = color type reference wheel schema with example faces.
-
-Compare the person on the LEFT with similar faces on the RIGHT color wheel to determine their colortype.
+PROMPT_TEMPLATE = """Determine a person's colortype based on the uploaded photo.
 
 IMPORTANT HINTS:
 - This person has {eye_color} eyes
 - Look at the hair color at the roots (natural color)
 - Focus ONLY on skin, hair, and eyes - IGNORE clothes and background
-- Find faces on the reference wheel (RIGHT) that look most similar to the person (LEFT)
 
 There are EXACTLY 12 valid color types: VIVID WINTER, SOFT WINTER, BRIGHT WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER, GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
 
@@ -130,43 +126,6 @@ def normalize_image_format(image: str) -> str:
         return image
     return f'data:image/jpeg;base64,{image}'
 
-def create_composite_image(person_image_data: str) -> bytes:
-    '''Create composite image: person photo (left) + color type schema (right)'''
-    # Download schema
-    print('[Composite] Downloading reference schema...')
-    schema_response = requests.get(REFERENCE_SCHEMA_URL, timeout=10)
-    schema_img = Image.open(BytesIO(schema_response.content))
-    
-    # Decode person image
-    if person_image_data.startswith('data:image'):
-        person_image_data = person_image_data.split(',', 1)[1]
-    person_bytes = base64.b64decode(person_image_data)
-    person_img = Image.open(BytesIO(person_bytes))
-    
-    # Resize person image to fixed height (e.g., 800px)
-    target_height = 800
-    person_aspect = person_img.width / person_img.height
-    person_new_width = int(target_height * person_aspect)
-    person_resized = person_img.resize((person_new_width, target_height), Image.Resampling.LANCZOS)
-    
-    # Resize schema to same height
-    schema_aspect = schema_img.width / schema_img.height
-    schema_new_width = int(target_height * schema_aspect)
-    schema_resized = schema_img.resize((schema_new_width, target_height), Image.Resampling.LANCZOS)
-    
-    # Create composite (side by side)
-    composite_width = person_resized.width + schema_resized.width
-    composite = Image.new('RGB', (composite_width, target_height))
-    composite.paste(person_resized, (0, 0))
-    composite.paste(schema_resized, (person_resized.width, 0))
-    
-    # Convert to JPEG bytes
-    output = BytesIO()
-    composite.save(output, format='JPEG', quality=90)
-    print(f'[Composite] Created composite image: {composite_width}x{target_height}')
-    
-    return output.getvalue()
-
 def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str:
     '''Upload image to Yandex Object Storage, return CDN URL'''
     s3_access_key = os.environ.get('S3_ACCESS_KEY')
@@ -205,39 +164,6 @@ def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str
     # Build Yandex Cloud Storage URL
     cdn_url = f'https://storage.yandexcloud.net/{s3_bucket}/{s3_key}'
     print(f'[Yandex] Upload complete! URL: {cdn_url}')
-    
-    return cdn_url
-
-def upload_composite_to_yandex(composite_bytes: bytes, user_id: str, task_id: str) -> str:
-    '''Upload composite image to Yandex Object Storage, return CDN URL'''
-    s3_access_key = os.environ.get('S3_ACCESS_KEY')
-    s3_secret_key = os.environ.get('S3_SECRET_KEY')
-    s3_bucket = os.environ.get('S3_BUCKET_NAME', 'fitting-room-images')
-    
-    if not s3_access_key or not s3_secret_key:
-        raise Exception('S3 credentials not configured')
-    
-    # Generate filename for composite
-    s3_key = f'images/colortypes/{user_id}/{task_id}_composite.jpg'
-    
-    print(f'[Yandex] Uploading composite to: {s3_key}')
-    
-    # Upload to Yandex Object Storage
-    s3 = boto3.client('s3',
-        endpoint_url='https://storage.yandexcloud.net',
-        aws_access_key_id=s3_access_key,
-        aws_secret_access_key=s3_secret_key
-    )
-    
-    s3.put_object(
-        Bucket=s3_bucket,
-        Key=s3_key,
-        Body=composite_bytes,
-        ContentType='image/jpeg'
-    )
-    
-    cdn_url = f'https://storage.yandexcloud.net/{s3_bucket}/{s3_key}'
-    print(f'[Yandex] Composite upload complete! URL: {cdn_url}')
     
     return cdn_url
 
@@ -541,21 +467,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
                 print(f'[ColorType-Worker] Task {task_id} marked as processing')
                 
-                # Create composite image (person + schema)
-                print(f'[ColorType-Worker] Creating composite image with reference schema')
-                composite_bytes = create_composite_image(person_image)
-                
-                # Upload composite to Yandex Storage
-                print(f'[ColorType-Worker] Uploading composite image to Yandex Storage')
-                composite_cdn_url = upload_composite_to_yandex(composite_bytes, user_id, task_id)
-                
-                # Also upload original image for user display
-                print(f'[ColorType-Worker] Uploading original image to Yandex Storage')
+                # Upload image to Yandex Storage
+                print(f'[ColorType-Worker] Uploading image to Yandex Storage')
                 cdn_url = upload_to_yandex_storage(person_image, user_id, task_id)
                 
-                # Submit composite to Replicate
-                print(f'[ColorType-Worker] Submitting composite to Replicate LLaVA-13b with eye_color: {eye_color}')
-                prediction_id = submit_to_replicate(composite_cdn_url, eye_color)
+                # Submit to Replicate
+                print(f'[ColorType-Worker] Submitting to Replicate LLaVA-13b with eye_color: {eye_color}')
+                prediction_id = submit_to_replicate(cdn_url, eye_color)
                 
                 # Update DB with prediction_id and cdn_url
                 cursor.execute('''
