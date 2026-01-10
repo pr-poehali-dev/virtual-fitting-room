@@ -50,13 +50,13 @@ Match to ONE type from your 3 options:
 
 WARM + DARK hair → Autumn types:
 - GENTLE AUTUMN: Dark honey/gentle auburn, turquoise blue/jade/light brown eyes, light warm beige skin
-- FIERY AUTUMN: Medium-bright AUBURN/warm brown (NOT dark!), turquoise blue/gray-blue/hazel/green/brown eyes, alabaster to café au lait skin
-- VIVID AUTUMN: DARKEST warm hair (dark chestnut/espresso brown - NO bright auburn!), brown/brown-green eyes, pale to medium warm beige or darker skin
+- FIERY AUTUMN: Medium-bright auburn/warm brown, turquoise blue/hazel/green/brown eyes, warm beige/café au lait/russet skin (NOT pale ivory!)
+- VIVID AUTUMN: DARKEST warm hair (dark chestnut/espresso brown - NO auburn!), brown/brown-green eyes, pale to medium warm beige or darker skin
 
-WARM + LIGHT hair → Spring types:
+WARM + LIGHT/BRIGHT hair → Spring types:
 - GENTLE SPRING: Light golden blonde/light strawberry blonde, blue/blue-green eyes, ivory/light warm beige skin
 - BRIGHT SPRING: Medium golden blonde/honey blonde/strawberry blonde/light clear red, blue/green/blue-green eyes, ivory/light warm beige/honey skin
-- VIBRANT SPRING: Bright auburn/medium golden brown (bright appearance!), blue/green/golden brown eyes, ivory to medium golden brown skin
+- VIBRANT SPRING: Bright auburn/medium golden brown + LIGHT SKIN (ivory/light beige), blue/gray-blue/green/golden brown eyes, bright overall look!
 
 COOL + DARK hair → Winter types:
 - SOFT WINTER: Medium-deep to deep cool brown, blue/green/gray eyes, pale porcelain skin
@@ -80,8 +80,10 @@ Before answering:
 4. Is your answer ONE OF THE 12 TYPES above?
 
 KEY DISTINCTION for bright red/auburn hair:
-- If eyes are gray-blue/turquoise blue + medium-bright auburn → FIERY AUTUMN
-- If eyes are clear blue/green + bright auburn + lighter overall → VIBRANT SPRING
+- FIERY AUTUMN: Medium-bright auburn + warm beige/café au lait/russet skin (warmer, richer overall appearance)
+- VIBRANT SPRING: Bright auburn + ivory/light beige skin (lighter, brighter overall appearance with more contrast)
+
+If person has bright auburn hair + light/pale skin + gray-blue or blue-green eyes → Most likely VIBRANT SPRING!
 
 === FINAL ANSWER ===
 
