@@ -136,13 +136,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if replicate_status == 'succeeded':
                     output = replicate_data.get('output', '')
                     
-                    # Extract text from output (Replicate BAGEL returns dict or list)
-                    if isinstance(output, dict):
-                        result_text_value = output.get('text', str(output))
-                    elif isinstance(output, list) and len(output) > 0:
-                        result_text_value = output[0] if isinstance(output[0], str) else str(output[0])
+                    # Extract text from output (LLaVA returns list of strings)
+                    if isinstance(output, list) and len(output) > 0:
+                        result_text_value = ''.join(output) if all(isinstance(x, str) for x in output) else str(output)
                     elif isinstance(output, str):
                         result_text_value = output
+                    elif isinstance(output, dict):
+                        result_text_value = output.get('text', str(output))
                     else:
                         result_text_value = str(output)
                     
