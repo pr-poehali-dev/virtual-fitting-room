@@ -462,12 +462,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 print(f'[ColorType-Worker] Submitting to Replicate BAGEL with eye_color: {eye_color}')
                 prediction_id = submit_to_replicate(cdn_url, eye_color)
                 
-                # Update DB with prediction_id
+                # Update DB with prediction_id and cdn_url
                 cursor.execute('''
                     UPDATE color_type_history
-                    SET replicate_prediction_id = %s, updated_at = %s
+                    SET replicate_prediction_id = %s, cdn_url = %s, updated_at = %s
                     WHERE id = %s
-                ''', (prediction_id, datetime.utcnow(), task_id))
+                ''', (prediction_id, cdn_url, datetime.utcnow(), task_id))
                 conn.commit()
                 
                 print(f'[ColorType-Worker] Task {task_id} submitted to Replicate: {prediction_id}')
