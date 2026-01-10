@@ -148,8 +148,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             where = body.get('where', {})
             limit = body.get('limit', 100)
             order_by = body.get('order_by', 'created_at DESC')
+            columns_to_select = body.get('columns', [])
             
-            query = f'SELECT * FROM {full_table}'
+            # If columns specified, use them; otherwise SELECT *
+            if columns_to_select:
+                columns_str = ', '.join(columns_to_select)
+                query = f'SELECT {columns_str} FROM {full_table}'
+            else:
+                query = f'SELECT * FROM {full_table}'
+            
             params = []
             
             if where:
