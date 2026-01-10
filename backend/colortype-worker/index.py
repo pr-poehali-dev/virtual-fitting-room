@@ -18,17 +18,28 @@ IMPORTANT HINTS:
 
 There are 12 skin tone types: VIVID WINTER, SOFT WINTER, BRIGHT WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER, GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
 
-=== STEP 1: DETERMINE WARM OR COOL UNDERTONE ===
+=== STEP 1: ANALYZE BOTH SKIN UNDERTONE AND HAIR COLOR ===
 
-First, identify if the person has WARM or COOL skin undertone:
-- COOL (blue-based): Pinkish-beige skin, ash/cool hair tones → WINTER or SUMMER types
-- WARM (golden-based): Yellowish-beige/golden skin, red-gold hair tones → AUTUMN or SPRING types
+CRITICAL: You MUST analyze BOTH skin undertone AND hair color at roots together (not separately!).
 
-CRITICAL: After determining warm/cool, you MUST choose from ONLY these options:
+Analyze SKIN UNDERTONE:
+- COOL (pink-based): Pinkish-beige, porcelain, rosy undertones
+- WARM (golden-based): Yellowish-beige, golden, peachy undertones
+
+Analyze HAIR COLOR (at roots):
+- COOL hair: Ash tones, cool brown, platinum, black with blue undertones
+- WARM hair: Golden, red, auburn, copper, honey, warm brown tones
+
+CRITICAL RULE: Skin undertone AND hair color should AGREE with each other:
+- If skin is GOLDEN/WARM AND hair is RED/GOLDEN/WARM → Must choose AUTUMN or SPRING (WARM types)
+- If skin is PINK/COOL AND hair is ASH/COOL → Must choose WINTER or SUMMER (COOL types)
+- If they disagree (e.g., cool skin + warm hair), prioritize HAIR COLOR at roots
+
+After determining warm/cool, you MUST choose from ONLY these options:
 - If COOL → Choose from: VIVID WINTER, SOFT WINTER, BRIGHT WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER
 - If WARM → Choose from: GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
 
-Write your Step 1 conclusion: "COOL undertone - considering only Winter/Summer types" OR "WARM undertone - considering only Autumn/Spring types"
+Write your Step 1 conclusion: "COOL undertone (skin: [describe], hair: [describe]) - considering only Winter/Summer types" OR "WARM undertone (skin: [describe], hair: [describe]) - considering only Autumn/Spring types"
 
 === STEP 2: DETERMINE CONTRAST AND SEASON (use ONLY the 6 types from Step 1) ===
 
@@ -83,11 +94,11 @@ CRITICAL: If the person has brown/light brown/golden brown eyes, you CANNOT choo
 
 Write your answer in this exact format:
 1. First line: Color type name in English (e.g., "BRIGHT WINTER")
-2. Next 2-3 sentences: Explanation in RUSSIAN language describing why this type matches, referencing the specific hair/eye/skin colors you observed.
+2. Next 2-3 sentences: Explanation describing why this type matches, referencing the specific hair/eye/skin colors you observed.
 
 Example format:
 BRIGHT WINTER
-У человека темные холодные волосы, карие глаза и светлая кожа с холодным подтоном. Это соответствует описанию типа Bright Winter."""
+This person has dark cool-toned hair, brown eyes, and light skin with cool undertones. This matches the BRIGHT WINTER description."""
 
 def normalize_image_format(image: str) -> str:
     '''Convert image to data URI format if needed'''
@@ -262,7 +273,7 @@ def extract_color_type(result_text: str) -> Optional[str]:
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Обработка задачи анализа цветотипа по task_id
+    Обработка задачи анализа цветотипа
     Args: event - dict с httpMethod, queryStringParameters (task_id)
           context - object с атрибутом request_id
     Returns: HTTP response со статусом обработки
