@@ -32,11 +32,13 @@ Look at the HAIR COLOR FIRST:
 
 CRITICAL RULE: If hair has ANY red/golden/copper tones = AUTOMATICALLY WARM = MUST be Autumn or Spring!
 
-=== STEP 2: DARK OR LIGHT HAIR? ===
+=== STEP 2: HAIR DEPTH ===
 
 For WARM undertones (red/golden/auburn hair):
-- DARK/DEEP hair (chestnut, dark auburn, espresso) → Choose from: GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN
-- LIGHT/BRIGHT hair (golden blonde, honey, strawberry blonde) → Choose from: GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
+- DARKEST hair (dark chestnut, espresso brown - very deep) → Choose from: GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN
+- LIGHT/MEDIUM/BRIGHT hair (golden blonde, honey, auburn, strawberry blonde) → Choose from: GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
+
+IMPORTANT: Bright auburn (medium-bright red hair) can be FIERY AUTUMN or VIBRANT SPRING - check eyes!
 
 For COOL undertones (ash/cool black hair):
 - DARK hair (black, dark cool brown) → Choose from: VIVID WINTER, SOFT WINTER, BRIGHT WINTER
@@ -48,13 +50,13 @@ Match to ONE type from your 3 options:
 
 WARM + DARK hair → Autumn types:
 - GENTLE AUTUMN: Dark honey/gentle auburn, turquoise blue/jade/light brown eyes, light warm beige skin
-- FIERY AUTUMN: Warm brown/medium-deep auburn, turquoise blue/hazel/green/brown-green/brown eyes, alabaster to café au lait skin
-- VIVID AUTUMN: Dark chestnut/dark auburn/espresso, brown/brown-green eyes, pale to medium warm beige or darker skin
+- FIERY AUTUMN: Medium-bright AUBURN/warm brown (NOT dark!), turquoise blue/gray-blue/hazel/green/brown eyes, alabaster to café au lait skin
+- VIVID AUTUMN: DARKEST warm hair (dark chestnut/espresso brown - NO bright auburn!), brown/brown-green eyes, pale to medium warm beige or darker skin
 
 WARM + LIGHT hair → Spring types:
-- GENTLE SPRING: Golden blonde/light strawberry blonde, blue/blue-green eyes, ivory/light warm beige skin
-- BRIGHT SPRING: Golden/honey blonde/light-medium golden brown/strawberry blonde/light clear red, blue/green/blue-green eyes, ivory/light warm beige/honey skin
-- VIBRANT SPRING: Bright auburn/medium golden brown, blue/green/golden brown eyes, ivory to medium golden brown skin
+- GENTLE SPRING: Light golden blonde/light strawberry blonde, blue/blue-green eyes, ivory/light warm beige skin
+- BRIGHT SPRING: Medium golden blonde/honey blonde/strawberry blonde/light clear red, blue/green/blue-green eyes, ivory/light warm beige/honey skin
+- VIBRANT SPRING: Bright auburn/medium golden brown (bright appearance!), blue/green/golden brown eyes, ivory to medium golden brown skin
 
 COOL + DARK hair → Winter types:
 - SOFT WINTER: Medium-deep to deep cool brown, blue/green/gray eyes, pale porcelain skin
@@ -70,9 +72,16 @@ COOL + LIGHT hair → Summer types:
 
 Before answering:
 1. Does {eye_color} eyes match your chosen type?
-2. Does hair match (warm/cool AND dark/light)?
+2. Hair depth check:
+   - VIVID AUTUMN = DARKEST warm hair (espresso, dark chestnut)
+   - FIERY AUTUMN = Medium-bright auburn/warm brown
+   - VIBRANT SPRING = Bright auburn (can look similar to FIERY AUTUMN but lighter overall appearance)
 3. If hair has red/golden tones → MUST be Autumn or Spring (NOT Winter/Summer)
 4. Is your answer ONE OF THE 12 TYPES above?
+
+KEY DISTINCTION for bright red/auburn hair:
+- If eyes are gray-blue/turquoise blue + medium-bright auburn → FIERY AUTUMN
+- If eyes are clear blue/green + bright auburn + lighter overall → VIBRANT SPRING
 
 === FINAL ANSWER ===
 
