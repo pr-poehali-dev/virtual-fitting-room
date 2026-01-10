@@ -63,11 +63,9 @@ Write down results after step 1, 2 and 3. Important: Study only the color of the
 
 Write your answer in this exact format:
 1. First line: Color type name in English (e.g., "BRIGHT WINTER")
-2. Next 2-3 sentences: Explanation describing why this type matches, referencing the specific hair/eye/skin colors you observed.
+2. Next 2-3 sentences: Explanation describing why this type matches, referencing the specific hair/eye/skin colors you observed (hair color, eye color, skin tone).
 
-Example format:
-BRIGHT WINTER
-This person has dark cool-toned hair, brown eyes, and light skin with cool undertones. This matches the BRIGHT WINTER description."""
+IMPORTANT: You must analyze the REAL colors you see in the photo, not copy from examples. Describe the actual hair, eye, and skin colors of this specific person."""
 
 def normalize_image_format(image: str) -> str:
     '''Convert image to data URI format if needed'''
