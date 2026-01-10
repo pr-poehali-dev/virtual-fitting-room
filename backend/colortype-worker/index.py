@@ -9,6 +9,7 @@ import time
 import uuid
 import base64
 
+
 PROMPT_TEMPLATE = """Determine a person's colortype based on the uploaded photo.
 
 IMPORTANT HINTS:
