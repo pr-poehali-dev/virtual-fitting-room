@@ -5,7 +5,7 @@ import boto3
 from botocore.config import Config
 from typing import Dict, Any, List, Optional
 
-def delete_from_s3_if_orphaned(photo_url: str, user_id: str, cursor, schema: str) -> None:
+def delete_from_s3_if_orphaned(photo_url: str, user_id: str, cursor, schema: str) -> None: 
     '''
     Удаляет фото из S3, если оно не используется в других местах
     '''
@@ -288,6 +288,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 row = cursor.fetchone()
                 if row and row[0]:
                     photos_to_check.extend(row[0])
+            
+            # Для color_type_history - сохраняем cdn_url перед удалением
+            elif table == 'color_type_history' and user_id:
+                where_parts = []
+                params = []
+                for key, value in where.items():
+                    where_parts.append(f'{key} = %s')
+                    params.append(value)
+                
+                select_query = f'SELECT cdn_url FROM {full_table} WHERE {" AND ".join(where_parts)}'
+                cursor.execute(select_query, params)
+                row = cursor.fetchone()
+                if row and row[0]:
+                    photos_to_check.append(row[0])
             
             # Выполняем DELETE
             where_parts = []

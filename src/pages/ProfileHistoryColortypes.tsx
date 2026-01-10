@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import Layout from '@/components/Layout';
@@ -6,6 +6,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useData } from '@/context/DataContext';
 import ProfileMenu from '@/components/ProfileMenu';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const colorTypeNames: Record<string, string> = {
   'SOFT WINTER': 'Мягкая Зима',
@@ -22,6 +24,8 @@ const colorTypeNames: Record<string, string> = {
   'VIBRANT SPRING': 'Яркая Весна'
 };
 
+const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
+
 interface ColorTypeHistory {
   id: string;
   cdn_url?: string;
@@ -33,14 +37,54 @@ interface ColorTypeHistory {
 
 export default function ProfileHistoryColortypes() {
   const { user, isLoading: authLoading } = useAuth();
-  const { colorTypeHistory, isLoading: dataLoading } = useData();
+  const { colorTypeHistory, isLoading: dataLoading, refetchColorTypeHistory } = useData();
   const navigate = useNavigate();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/login');
     }
   }, [user, authLoading, navigate]);
+
+  const handleDelete = async (id: string) => {
+    if (!user) return;
+    
+    if (!confirm('Удалить этот анализ цветотипа? Изображение также будет удалено из хранилища.')) {
+      return;
+    }
+
+    setDeletingId(id);
+
+    try {
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.id
+        },
+        body: JSON.stringify({
+          table: 'color_type_history',
+          action: 'delete',
+          where: { id }
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('Анализ удалён');
+        await refetchColorTypeHistory();
+      } else {
+        toast.error('Ошибка удаления');
+      }
+    } catch (error) {
+      console.error('Error deleting:', error);
+      toast.error('Ошибка удаления');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (authLoading || dataLoading) {
     return (
@@ -90,12 +134,27 @@ export default function ProfileHistoryColortypes() {
                 {colorTypeHistory.map((item) => (
                   <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                     {item.cdn_url && (
-                      <div className="aspect-[3/4] relative overflow-hidden bg-muted">
+                      <div className="aspect-[3/4] relative overflow-hidden bg-muted group">
                         <img
                           src={item.cdn_url}
                           alt="Portrait"
                           className="w-full h-full object-cover"
                         />
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDelete(item.id)}
+                            disabled={deletingId === item.id}
+                            className="shadow-lg"
+                          >
+                            {deletingId === item.id ? (
+                              <Icon name="Loader2" className="animate-spin" size={16} />
+                            ) : (
+                              <Icon name="Trash2" size={16} />
+                            )}
+                          </Button>
+                        </div>
                       </div>
                     )}
                     <CardContent className="p-4">
