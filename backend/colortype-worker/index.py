@@ -19,74 +19,60 @@ PROMPT_TEMPLATE = """Determine a person's colortype based on the uploaded photo.
 
 IMPORTANT HINTS:
 - This person has {eye_color} eyes
-- Look at the hair color at the roots (natural mature color before grays)
-- Focus ONLY on skin, hair, and eyes colors - IGNORE clothes and background colors
+- Look at the hair color at the roots (natural color)
+- Focus ONLY on skin, hair, and eyes - IGNORE clothes and background
 
 There are EXACTLY 12 valid color types: VIVID WINTER, SOFT WINTER, BRIGHT WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER, GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
 
-=== STEP 1: WARM OR COOL UNDERTONE (THE BASE) ===
+=== STEP 1: WARM OR COOL? ===
 
-CRITICAL: Skin, hair, and eye colors are a UNIT. All are warm OR all are cool. They go together genetically.
+Look at the HAIR COLOR FIRST:
+- RED, AUBURN, GOLDEN, COPPER, WARM BROWN hair → WARM undertone → Choose from: GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
+- ASH, COOL BROWN, BLACK, PLATINUM hair → COOL undertone → Choose from: VIVID WINTER, SOFT WINTER, BRIGHT WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER
 
-Determine if skin has WARM or COOL undertone:
-- COOL (blue/pink base): rosy beige, charcoal brown, ebony, platinum blonde effect
-- WARM (golden/yellow base): yellow beige, mahogany, chestnut brown, golden blonde effect
+CRITICAL RULE: If hair has ANY red/golden/copper tones = AUTOMATICALLY WARM = MUST be Autumn or Spring!
 
-Hair base confirms undertone:
-- ASH-BASED hair (charcoal brown, cool black) = COOL → Winter or Summer ONLY
-- RED/GOLD-BASED hair (chestnut, auburn, golden tones) = WARM → Autumn or Spring ONLY
+=== STEP 2: DARK OR LIGHT HAIR? ===
 
-Results:
-- COOL undertone → Can ONLY be: VIVID WINTER, SOFT WINTER, BRIGHT WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER
-- WARM undertone → Can ONLY be: GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
+For WARM undertones (red/golden/auburn hair):
+- DARK/DEEP hair (chestnut, dark auburn, espresso) → Choose from: GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN
+- LIGHT/BRIGHT hair (golden blonde, honey, strawberry blonde) → Choose from: GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
 
-=== STEP 2: SEASON (TRIAD - CONTRAST TYPE) ===
+For COOL undertones (ash/cool black hair):
+- DARK hair (black, dark cool brown) → Choose from: VIVID WINTER, SOFT WINTER, BRIGHT WINTER
+- LIGHT hair (cool blonde, light cool brown) → Choose from: SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER
 
-Now determine your TRIAD type (relationship between skin/hair/eye):
+=== STEP 3: EXACT TYPE ===
 
-For COOL undertones:
-- CLARITY (high contrast between elements): DARK hair + distinct separation between hair/skin/eye → Winter (VIVID WINTER, SOFT WINTER, BRIGHT WINTER)
-- DIMENSION (subtle diffusion between elements): LIGHT hair + soft blend between hair/skin/eye → Summer (SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER)
+Match to ONE type from your 3 options:
 
-For WARM undertones:
-- DIMENSION (rich saturation between elements): DARKER hair (chestnut/auburn/espresso) + rich depth → Autumn (GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN)
-- CLARITY (light/bright contrast between elements): LIGHTER hair (golden blonde/honey/strawberry) + bright separation → Spring (GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING)
+WARM + DARK hair → Autumn types:
+- GENTLE AUTUMN: Dark honey/gentle auburn, turquoise blue/jade/light brown eyes, light warm beige skin
+- FIERY AUTUMN: Warm brown/medium-deep auburn, turquoise blue/hazel/green/brown-green/brown eyes, alabaster to café au lait skin
+- VIVID AUTUMN: Dark chestnut/dark auburn/espresso, brown/brown-green eyes, pale to medium warm beige or darker skin
 
-IMPORTANT: FIERY AUTUMN has bright appearance with warm browns/auburn but DARK hair depth - it's NOT Spring!
+WARM + LIGHT hair → Spring types:
+- GENTLE SPRING: Golden blonde/light strawberry blonde, blue/blue-green eyes, ivory/light warm beige skin
+- BRIGHT SPRING: Golden/honey blonde/light-medium golden brown/strawberry blonde/light clear red, blue/green/blue-green eyes, ivory/light warm beige/honey skin
+- VIBRANT SPRING: Bright auburn/medium golden brown, blue/green/golden brown eyes, ivory to medium golden brown skin
 
-=== STEP 3: EXACT TYPE (MATCH TO DESCRIPTIONS) ===
+COOL + DARK hair → Winter types:
+- SOFT WINTER: Medium-deep to deep cool brown, blue/green/gray eyes, pale porcelain skin
+- BRIGHT WINTER: Dark cool brown/black, brown/blue/brown-green/green/gray eyes, pale to medium beige or olive skin
+- VIVID WINTER: Black/dark cool brown, black-brown/brown/brown-green eyes, medium beige to deep olive or darker skin
 
-Now match to ONE of your 3 types using exact characteristics:
+COOL + LIGHT hair → Summer types:
+- SOFT SUMMER: Pale to medium cool blonde, blue/gray-blue/gray-green eyes, porcelain/light beige skin
+- DUSTY SUMMER: Medium-deep cool blonde or light-medium cool brown, gray-blue/gray-green/blue eyes, light to medium beige skin
+- VIVID SUMMER: Light to deep cool brown, blue-gray/blue-green/gray-green/cocoa eyes, medium beige/cocoa skin
 
-AUTUMN (warm undertone, darker hair):
-- GENTLE AUTUMN: Dark honey/gentle auburn hair, turquoise blue/jade/light brown eyes, light warm beige skin
-- FIERY AUTUMN: Warm browns/medium-deep auburn hair, turquoise blue/hazel/green/brown-green/brown eyes, alabaster to café au lait skin
-- VIVID AUTUMN: Dark chestnut/dark auburn/espresso hair, brown/brown-green eyes, pale to medium warm beige or darker skin
+=== VERIFICATION ===
 
-SPRING (warm undertone, lighter/brighter hair):
-- GENTLE SPRING: Golden blonde/light strawberry blonde hair, blue/blue-green eyes, ivory/light warm beige skin
-- BRIGHT SPRING: Golden/honey blonde/light-medium golden brown/strawberry blonde/light clear red hair, blue/green/blue-green eyes, ivory/light warm beige/honey skin
-- VIBRANT SPRING: Bright auburn/medium golden brown hair, blue/green/golden brown eyes, ivory to medium golden brown skin
-
-WINTER (cool undertone, dark hair):
-- SOFT WINTER: Medium-deep to deep cool brown hair, blue/green/gray eyes, pale porcelain skin
-- BRIGHT WINTER: Dark cool brown/black hair, brown/blue/brown-green/green/gray eyes, pale to medium beige or olive skin
-- VIVID WINTER: Black/dark cool brown hair, black-brown/brown/brown-green eyes, medium beige to deep olive or darker skin
-
-SUMMER (cool undertone, lighter hair):
-- SOFT SUMMER: Pale to medium cool blonde hair, blue/gray-blue/gray-green eyes, porcelain/light beige skin
-- DUSTY SUMMER: Medium-deep cool blonde or light-medium cool brown hair, gray-blue/gray-green/blue eyes, light to medium beige skin
-- VIVID SUMMER: Light to deep cool brown hair, blue-gray/blue-green/gray-green/cocoa eyes, medium beige/cocoa skin
-
-=== VERIFICATION CHECKLIST ===
-
-Before answering, verify:
-1. Does eye color {eye_color} appear in your chosen type's description?
-2. Does hair color match (warm/cool tone AND depth)?
-3. Does skin tone match?
-4. Is your answer ONE OF THE 12 VALID TYPES listed above?
-
-If ANY answer is NO → reconsider your choice!
+Before answering:
+1. Does {eye_color} eyes match your chosen type?
+2. Does hair match (warm/cool AND dark/light)?
+3. If hair has red/golden tones → MUST be Autumn or Spring (NOT Winter/Summer)
+4. Is your answer ONE OF THE 12 TYPES above?
 
 === FINAL ANSWER ===
 
