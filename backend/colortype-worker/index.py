@@ -78,7 +78,7 @@ CRITICAL VERIFICATION BEFORE ANSWERING:
 
 === FINAL ANSWER ===
 
-Respond with ONLY the color type name (e.g., "BRIGHT WINTER") and a brief 2-3 sentence explanation in Russian language that references the specific hair/eye/skin colors you observed."""
+Respond with ONLY the color type name (e.g., "BRIGHT WINTER") and a brief 2-3 sentence explanation in English that references the specific hair/eye/skin colors you observed."""
 
 def normalize_image_format(image: str) -> str:
     '''Convert image to data URI format if needed'''
@@ -192,6 +192,33 @@ def check_replicate_status(prediction_id: str) -> Optional[dict]:
         return response.json()
     
     raise Exception(f'Failed to check status: {response.status_code} - {response.text}')
+
+def translate_to_russian(text: str) -> str:
+    '''Translate English text to Russian using LibreTranslate API'''
+    try:
+        # Using public LibreTranslate instance
+        response = requests.post(
+            'https://libretranslate.com/translate',
+            json={
+                'q': text,
+                'source': 'en',
+                'target': 'ru',
+                'format': 'text'
+            },
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            translated = data.get('translatedText', text)
+            print(f'[Translation] Successfully translated text')
+            return translated
+        else:
+            print(f'[Translation] Failed: {response.status_code} - returning original')
+            return text
+    except Exception as e:
+        print(f'[Translation] Error: {str(e)} - returning original')
+        return text
 
 def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
     '''Refund 30 rubles to user balance if not unlimited and not already refunded'''
@@ -345,11 +372,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         print(f'[ColorType-Worker] Stuck task {stuck_id} is completed! Color type: {color_type}')
                         print(f'[ColorType-Worker] Result preview: {result_text_value[:100]}...')
                         
+                        # Translate result to Russian
+                        print(f'[ColorType-Worker] Translating result to Russian...')
+                        result_text_ru = translate_to_russian(result_text_value)
+                        
                         cursor.execute('''
                             UPDATE color_type_history
                             SET status = 'completed', result_text = %s, color_type = %s, saved_to_history = true, updated_at = %s
                             WHERE id = %s
-                        ''', (result_text_value, color_type, datetime.utcnow(), stuck_id))
+                        ''', (result_text_ru, color_type, datetime.utcnow(), stuck_id))
                         conn.commit()
                         print(f'[ColorType-Worker] Stuck task {stuck_id} SAVED to history!')
                 
@@ -486,11 +517,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     print(f'[ColorType-Worker] Analysis complete! Color type: {color_type}')
                     print(f'[ColorType-Worker] Result preview: {result_text_value[:100]}...')
                     
+                    # Translate result to Russian
+                    print(f'[ColorType-Worker] Translating result to Russian...')
+                    result_text_ru = translate_to_russian(result_text_value)
+                    
                     cursor.execute('''
                         UPDATE color_type_history
                         SET status = 'completed', result_text = %s, color_type = %s, saved_to_history = true, updated_at = %s
                         WHERE id = %s
-                    ''', (result_text_value, color_type, datetime.utcnow(), task_id))
+                    ''', (result_text_ru, color_type, datetime.utcnow(), task_id))
                     conn.commit()
                     
                     print(f'[ColorType-Worker] Task {task_id} completed and saved to history')
