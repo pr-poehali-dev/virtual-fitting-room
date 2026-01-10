@@ -59,6 +59,25 @@ const colorTypeNames: Record<string, string> = {
   'VIBRANT SPRING': 'Сочная Весна'
 };
 
+// Eye colors mapping (Russian → English)
+const eyeColors: Record<string, string> = {
+  'Голубые': 'blue',
+  'Сине-зелёные': 'blue-green',
+  'Серо-голубые': 'gray-blue',
+  'Серо-зелёные': 'gray-green',
+  'Серые': 'gray',
+  'Зелёные': 'green',
+  'Бирюзовые': 'turquoise blue',
+  'Нефритовые': 'jade',
+  'Светло-карие': 'light brown',
+  'Карие': 'brown',
+  'Коричнево-зелёные': 'brown-green',
+  'Чёрно-карие': 'black-brown',
+  'Ореховые (золотистые)': 'hazel (golden)',
+  'Золотисто-карие': 'golden brown',
+  'Шоколадные': 'cocoa'
+};
+
 export default function ColorType() {
   const { user } = useAuth();
   const { refetchColorTypeHistory } = useData();
@@ -69,6 +88,7 @@ export default function ColorType() {
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageForCrop, setTempImageForCrop] = useState<string | null>(null);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [eyeColor, setEyeColor] = useState<string>('brown');
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisStatus, setAnalysisStatus] = useState<string>('');
@@ -265,7 +285,8 @@ export default function ColorType() {
           'X-User-Id': user.id
         },
         body: JSON.stringify({
-          person_image: imageToAnalyze
+          person_image: imageToAnalyze,
+          eye_color: eyeColor
         })
       });
 
@@ -363,6 +384,27 @@ export default function ColorType() {
                       </p>
                     )}
                   </div>
+
+                  {uploadedImage && (
+                    <div className="space-y-2">
+                      <label htmlFor="eye-color" className="block text-sm font-medium text-foreground">
+                        Цвет глаз
+                      </label>
+                      <select
+                        id="eye-color"
+                        value={Object.keys(eyeColors).find(key => eyeColors[key] === eyeColor) || 'Карие'}
+                        onChange={(e) => setEyeColor(eyeColors[e.target.value])}
+                        className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                        disabled={isAnalyzing}
+                      >
+                        {Object.keys(eyeColors).map((colorRu) => (
+                          <option key={colorRu} value={colorRu}>
+                            {colorRu}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   <Button 
                     onClick={handleAnalyze} 

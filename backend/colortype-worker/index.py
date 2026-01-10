@@ -9,31 +9,76 @@ import time
 import uuid
 import base64
 
-PROMPT = """Analyze the person in this photo and determine their seasonal color type from these 12 categories:
+PROMPT_TEMPLATE = """Determine a person's colortype based on the uploaded photo.
 
-WINTER (Cool undertone + High contrast):
-- Soft Winter: Medium-deep cool brown/deep cool brown hair, blue/green/gray eyes, pale porcelain skin
-- Bright Winter: Dark cool brown/black hair, brown/blue/brown-green/green/gray eyes, pale to medium beige/light to medium olive/coffee skin
-- Vivid Winter: Black/dark cool brown hair, black-brown/brown/brown-green eyes, medium beige/medium to deep olive/café noir/ebony skin
+IMPORTANT HINTS:
+- This person has {eye_color} eyes
+- Look at the hair color closer to the roots (it's more accurate), but consider the entire length
+- Focus ONLY on skin, hair, and eyes colors - IGNORE clothes and background colors
 
-SUMMER (Cool undertone + Dimensional/diffused):
-- Soft Summer: Pale to medium cool blond hair, blue/gray-blue/gray-green eyes, porcelain/light beige skin
-- Dusty Summer: Medium to deep cool blond/light to medium-deep cool brown hair, gray-blue/gray-green/blue eyes, light beige/medium beige/almond skin
-- Vivid Summer: Light to deep cool brown/medium dark cool brown hair, blue-gray/blue-green/gray-green/cocoa eyes, medium beige/cocoa skin
+There are 12 skin tone types: VIVID WINTER, SOFT WINTER, BRIGHT WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER, GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
 
-AUTUMN (Warm undertone + Dimensional/saturated):
-- Gentle Autumn: Dark honey/gentle auburn hair, turquoise blue/jade/light brown eyes, light warm beige skin
-- Fiery Autumn: Dark honey/warm browns/medium to deep auburn hair, turquoise blue/hazel/green/brown-green/brown eyes, alabaster/light to medium warm beige/café au lait/russet skin
-- Vivid Autumn: Dark chestnut/dark auburn/espresso hair, brown/brown-green eyes, pale warm beige/medium warm beige/chestnut/mahogany skin
+=== STEP 1: DETERMINE WARM OR COOL UNDERTONE ===
 
-SPRING (Warm undertone + Light/bright contrast):
-- Gentle Spring: Golden blond/light strawberry blond hair, blue/blue-green eyes, ivory/light warm beige skin
-- Bright Spring: Golden blond/honey blond/light to medium golden brown/strawberry blond/light clear red hair, blue/green/blue-green eyes, ivory/light warm beige/honey skin
-- Vibrant Spring: Bright auburn/medium golden brown hair, blue/green/golden brown eyes, ivory/light to medium warm beige/medium golden brown skin
+First, identify if the person has WARM or COOL skin undertone:
+- COOL (blue-based): Pinkish-beige skin, ash/cool hair tones → WINTER or SUMMER types
+- WARM (golden-based): Yellowish-beige/golden skin, red-gold hair tones → AUTUMN or SPRING types
 
-Evaluate: 1) Skin undertone (cool blue-based vs warm golden-based), 2) Hair base color (ash/cool vs red-gold/warm), 3) Eye impression, 4) Contrast level (clarity vs dimension).
+CRITICAL: After determining warm/cool, you MUST choose from ONLY these options:
+- If COOL → Choose from: VIVID WINTER, SOFT WINTER, BRIGHT WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER
+- If WARM → Choose from: GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
 
-Respond with ONLY the color type name (e.g., "BRIGHT WINTER") and a brief 2-3 sentence explanation in English."""
+Write your Step 1 conclusion: "COOL undertone - considering only Winter/Summer types" OR "WARM undertone - considering only Autumn/Spring types"
+
+=== STEP 2: DETERMINE CONTRAST AND SEASON (use ONLY the 6 types from Step 1) ===
+
+Now analyze the TRIAD (hair + skin + eyes relationship):
+
+For COOL undertones (Winter/Summer):
+- WINTER = HIGH CONTRAST/CLARITY between hair, skin, eyes (distinct differences) → dark hair
+- SUMMER = DIMENSIONAL/DIFFUSED (subtle, blended, less contrast) → lighter hair
+
+For WARM undertones (Autumn/Spring):
+- AUTUMN = DIMENSIONAL/SATURATED, darker hair, less vibrant than Spring
+- SPRING = BRIGHT/LIGHT, light and vibrant hair colors
+
+CRITICAL: Narrow down to 3 specific types based on Step 1 + Step 2:
+- Cool + Winter → VIVID WINTER, SOFT WINTER, or BRIGHT WINTER
+- Cool + Summer → SOFT SUMMER, DUSTY SUMMER, or VIVID SUMMER
+- Warm + Autumn → GENTLE AUTUMN, FIERY AUTUMN, or VIVID AUTUMN
+- Warm + Spring → GENTLE SPRING, BRIGHT SPRING, or VIBRANT SPRING
+
+Write your Step 2 conclusion: List the 3 specific types you're considering.
+
+=== STEP 3: MATCH TO EXACT COLORTYPE (choose ONLY from your 3 types above) ===
+
+Now match to ONE of your 3 types using these EXACT characteristics:
+
+GENTLE AUTUMN: HAIR: Dark honey (tawny), gentle auburn | EYES: Turquoise blue, jade, light brown | SKIN: Light warm beige
+FIERY AUTUMN: HAIR: Dark honey, all warm browns (light to deep chestnut), medium to deep auburn | EYES: Turquoise blue, hazel (golden), green, brown-green, brown | SKIN: Alabaster, light to medium warm beige, café au lait, russet
+VIVID AUTUMN: HAIR: Dark chestnut, dark auburn, espresso | EYES: Brown, brown-green | SKIN: Pale warm beige, medium warm beige, chestnut, mahogany
+
+GENTLE SPRING: HAIR: Golden blond, light strawberry blond | EYES: Blue, blue-green | SKIN: Ivory, light warm beige
+BRIGHT SPRING: HAIR: Golden blond, honey blond, light to medium golden brown, strawberry blond, light clear red | EYES: Blue, green, blue-green | SKIN: Ivory, light warm beige, honey
+VIBRANT SPRING: HAIR: Bright auburn, medium golden brown | EYES: Blue, green, golden brown (rare) | SKIN: Ivory, light to medium warm beige, medium golden brown
+
+SOFT WINTER: HAIR: Medium-deep cool brown, deep cool brown | EYES: Blue, green, gray | SKIN: Pale porcelain
+BRIGHT WINTER: HAIR: Dark cool brown, black | EYES: Brown, blue, brown-green, green, gray | SKIN: Pale to medium beige, light to medium olive, coffee
+VIVID WINTER: HAIR: Black, dark cool brown | EYES: Black-brown, brown, brown-green | SKIN: Medium beige, medium to deep olive, café noir, ebony
+
+SOFT SUMMER: HAIR: Pale to medium cool blond | EYES: Blue, gray-blue, gray-green | SKIN: Porcelain, light beige
+DUSTY SUMMER: HAIR: Medium to deep cool blond, light to medium-deep cool brown | EYES: Gray-blue, gray-green, blue | SKIN: Light beige, medium beige, almond
+VIVID SUMMER: HAIR: Light to deep cool brown, medium dark cool brown | EYES: Blue-gray, blue-green, gray-green, cocoa (rare) | SKIN: Medium beige, cocoa
+
+CRITICAL VERIFICATION BEFORE ANSWERING:
+1. Does your chosen type match Step 1 undertone (warm/cool)?
+2. Does your chosen type match Step 2 season?
+3. Does the person's EXACT eye/hair/skin colors appear in the description?
+4. If ANY answer is NO → go back and choose a different type from your Step 2 list
+
+=== FINAL ANSWER ===
+
+Respond with ONLY the color type name (e.g., "BRIGHT WINTER") and a brief 2-3 sentence explanation in English that references the specific hair/eye/skin colors you observed."""
 
 def normalize_image_format(image: str) -> str:
     '''Convert image to data URI format if needed'''
@@ -86,7 +131,7 @@ def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str
     
     return cdn_url
 
-def submit_to_replicate(image_url: str) -> str:
+def submit_to_replicate(image_url: str, eye_color: str = 'brown') -> str:
     '''Submit task to Replicate BAGEL API and return prediction_id'''
     replicate_api_key = os.environ.get('REPLICATE_API_TOKEN')
     if not replicate_api_key:
@@ -97,12 +142,15 @@ def submit_to_replicate(image_url: str) -> str:
         'Content-Type': 'application/json'
     }
     
+    # Format prompt with eye color
+    prompt = PROMPT_TEMPLATE.format(eye_color=eye_color)
+    
     payload = {
         'version': '7dd8def79e503990740db4704fa81af995d440fefe714958531d7044d2757c9c',
         'input': {
             'task': 'image-understanding',
             'image': image_url,
-            'prompt': PROMPT
+            'prompt': prompt
         }
     }
     
@@ -324,7 +372,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # NOW: Get current task
         cursor.execute('''
-            SELECT id, person_image, replicate_prediction_id, user_id, status, saved_to_history
+            SELECT id, person_image, replicate_prediction_id, user_id, status, saved_to_history, eye_color
             FROM color_type_history
             WHERE id = %s
         ''', (task_id,))
@@ -342,7 +390,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Task not found'})
             }
         
-        task_id, person_image, replicate_prediction_id, user_id, task_status, saved_to_history = task_row
+        task_id, person_image, replicate_prediction_id, user_id, task_status, saved_to_history, eye_color = task_row
+        eye_color = eye_color or 'brown'  # Default to brown if None
         
         # Check if already processed
         if saved_to_history:
@@ -388,8 +437,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 cdn_url = upload_to_yandex_storage(person_image, user_id, task_id)
                 
                 # Submit to Replicate
-                print(f'[ColorType-Worker] Submitting to Replicate BAGEL')
-                prediction_id = submit_to_replicate(cdn_url)
+                print(f'[ColorType-Worker] Submitting to Replicate BAGEL with eye_color: {eye_color}')
+                prediction_id = submit_to_replicate(cdn_url, eye_color)
                 
                 # Update DB with prediction_id
                 cursor.execute('''

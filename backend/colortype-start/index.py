@@ -65,6 +65,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     body_data = json.loads(event.get('body', '{}'))
     person_image = body_data.get('person_image')
+    eye_color = body_data.get('eye_color', 'brown')  # Default to brown
     
     if not person_image:
         return {
@@ -156,15 +157,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print(f'[COLORTYPE-START-{request_id}] ✓ NEW TASK! Creating task {task_id}')
         
         cursor.execute('''
-            INSERT INTO color_type_history (id, user_id, status, person_image, cost, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO color_type_history (id, user_id, status, person_image, cost, created_at, eye_color)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         ''', (
             task_id,
             user_id,
             'pending',
             person_image,
             cost,
-            datetime.utcnow()
+            datetime.utcnow(),
+            eye_color
         ))
         
         conn.commit()
