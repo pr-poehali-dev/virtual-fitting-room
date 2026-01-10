@@ -31,9 +31,10 @@ Analyze HAIR COLOR (at roots):
 - WARM hair: Golden, red, auburn, copper, honey, warm brown tones
 
 CRITICAL RULE: Skin undertone AND hair color should AGREE with each other:
-- If skin is GOLDEN/WARM AND hair is RED/GOLDEN/WARM → Must choose AUTUMN or SPRING (WARM types)
-- If skin is PINK/COOL AND hair is ASH/COOL → Must choose WINTER or SUMMER (COOL types)
-- If they disagree (e.g., cool skin + warm hair), prioritize HAIR COLOR at roots
+- If hair is RED/AUBURN/COPPER/GOLDEN/WARM tones → AUTOMATICALLY WARM → Must choose AUTUMN or SPRING (NEVER Winter/Summer!)
+- If hair is ASH/PLATINUM/COOL BROWN/BLACK with blue undertones → AUTOMATICALLY COOL → Must choose WINTER or SUMMER (NEVER Autumn/Spring!)
+- RED/AUBURN/COPPER HAIR = ALWAYS WARM (even if skin looks cool)
+- ASH/PLATINUM HAIR = ALWAYS COOL (even if skin looks warm)
 
 After determining warm/cool, you MUST choose from ONLY these options:
 - If COOL → Choose from: VIVID WINTER, SOFT WINTER, BRIGHT WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER
@@ -273,10 +274,10 @@ def extract_color_type(result_text: str) -> Optional[str]:
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Обработка задачи анализа цветотипа
+    Worker анализа цветотипа
     Args: event - dict с httpMethod, queryStringParameters (task_id)
           context - object с атрибутом request_id
-    Returns: HTTP response со статусом обработки
+    Returns: HTTP response со статусом
     '''
     def get_cors_origin(event: Dict[str, Any]) -> str:
         origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin', '')

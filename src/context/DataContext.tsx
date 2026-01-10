@@ -138,7 +138,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({
           table: 'color_type_history',
           action: 'select',
-          columns: ['id', 'color_type', 'result_text', 'created_at', 'status'],
+          columns: ['id', 'person_image', 'color_type', 'result_text', 'created_at', 'status'],
           where: { user_id: user.id, status: 'completed' },
           order_by: 'created_at DESC',
           limit: 100

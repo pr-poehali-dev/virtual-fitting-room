@@ -10,16 +10,16 @@ import { Card, CardContent } from '@/components/ui/card';
 const colorTypeNames: Record<string, string> = {
   'SOFT WINTER': 'Мягкая Зима',
   'BRIGHT WINTER': 'Яркая Зима',
-  'VIVID WINTER': 'Насыщенная Зима',
-  'SOFT SUMMER': 'Мягкое Лето',
-  'DUSTY SUMMER': 'Пыльное Лето',
-  'VIVID SUMMER': 'Насыщенное Лето',
+  'VIVID WINTER': 'Тёмная Зима',
+  'SOFT SUMMER': 'Светлое Лето',
+  'DUSTY SUMMER': 'Мягкое (Пыльное) Лето',
+  'VIVID SUMMER': 'Яркое Лето',
   'GENTLE AUTUMN': 'Нежная Осень',
   'FIERY AUTUMN': 'Огненная Осень',
-  'VIVID AUTUMN': 'Насыщенная Осень',
+  'VIVID AUTUMN': 'Тёмная Осень',
   'GENTLE SPRING': 'Нежная Весна',
-  'BRIGHT SPRING': 'Яркая Весна',
-  'VIBRANT SPRING': 'Сочная Весна'
+  'BRIGHT SPRING': 'Тёплая Весна',
+  'VIBRANT SPRING': 'Яркая Весна'
 };
 
 interface ColorTypeHistory {
