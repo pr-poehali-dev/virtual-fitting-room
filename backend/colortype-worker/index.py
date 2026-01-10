@@ -78,10 +78,11 @@ CRITICAL VERIFICATION BEFORE ANSWERING:
 
 === FINAL ANSWER ===
 
-Respond with ONLY the color type name (e.g., "BRIGHT WINTER") and a brief 2-3 sentence explanation in English that references the specific hair/eye/skin colors you observed."""
+Respond with ONLY the color type name (e.g., "BRIGHT WINTER") and a brief 2-3 sentence explanation in Russian language that references the specific hair/eye/skin colors you observed."""
 
 def normalize_image_format(image: str) -> str:
     '''Convert image to data URI format if needed'''
+    
     if image.startswith('http://') or image.startswith('https://'):
         return image
     
