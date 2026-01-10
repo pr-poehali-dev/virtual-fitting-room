@@ -121,7 +121,7 @@ def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str
     return cdn_url
 
 def submit_to_replicate(image_url: str, eye_color: str = 'brown') -> str:
-    '''Submit task to Replicate BAGEL API and return prediction_id'''
+    '''Submit task to Replicate LLaVA-13b API and return prediction_id'''
     replicate_api_key = os.environ.get('REPLICATE_API_TOKEN')
     if not replicate_api_key:
         raise Exception('REPLICATE_API_TOKEN not configured')
@@ -135,15 +135,14 @@ def submit_to_replicate(image_url: str, eye_color: str = 'brown') -> str:
     prompt = PROMPT_TEMPLATE.format(eye_color=eye_color)
     
     payload = {
-        'version': '7dd8def79e503990740db4704fa81af995d440fefe714958531d7044d2757c9c',
+        'version': '2facb4a474a0462c15041b78b1ad70952ea46b5ec6ad29583c0b29dbd4249591',
         'input': {
-            'task': 'image-understanding',
             'image': image_url,
             'prompt': prompt
         }
     }
     
-    print(f'[Replicate] Submitting to BAGEL API...')
+    print(f'[Replicate] Submitting to LLaVA-13b API...')
     response = requests.post(
         'https://api.replicate.com/v1/predictions',
         headers=headers,
@@ -318,13 +317,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if replicate_status == 'succeeded':
                     output = replicate_data.get('output', '')
                     
-                    # Extract text from output (Replicate BAGEL returns dict or list)
-                    if isinstance(output, dict):
-                        result_text_value = output.get('text', str(output))
-                    elif isinstance(output, list) and len(output) > 0:
-                        result_text_value = output[0] if isinstance(output[0], str) else str(output[0])
+                    # Extract text from output (LLaVA returns list of strings)
+                    if isinstance(output, list) and len(output) > 0:
+                        result_text_value = ''.join(output) if all(isinstance(x, str) for x in output) else str(output)
                     elif isinstance(output, str):
                         result_text_value = output
+                    elif isinstance(output, dict):
+                        result_text_value = output.get('text', str(output))
                     else:
                         result_text_value = str(output)
                     
@@ -426,7 +425,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 cdn_url = upload_to_yandex_storage(person_image, user_id, task_id)
                 
                 # Submit to Replicate
-                print(f'[ColorType-Worker] Submitting to Replicate BAGEL with eye_color: {eye_color}')
+                print(f'[ColorType-Worker] Submitting to Replicate LLaVA-13b with eye_color: {eye_color}')
                 prediction_id = submit_to_replicate(cdn_url, eye_color)
                 
                 # Update DB with prediction_id and cdn_url
@@ -459,13 +458,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if replicate_status == 'succeeded':
                 output = replicate_data.get('output', '')
                 
-                # Extract text from output (Replicate BAGEL returns dict or list)
-                if isinstance(output, dict):
-                    result_text_value = output.get('text', str(output))
-                elif isinstance(output, list) and len(output) > 0:
-                    result_text_value = output[0] if isinstance(output[0], str) else str(output[0])
+                # Extract text from output (LLaVA returns list of strings)
+                if isinstance(output, list) and len(output) > 0:
+                    result_text_value = ''.join(output) if all(isinstance(x, str) for x in output) else str(output)
                 elif isinstance(output, str):
                     result_text_value = output
+                elif isinstance(output, dict):
+                    result_text_value = output.get('text', str(output))
                 else:
                     result_text_value = str(output)
                 
