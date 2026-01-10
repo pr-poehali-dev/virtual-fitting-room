@@ -10,6 +10,9 @@ import uuid
 import base64
 
 
+# Updated prompt with THE BASE and TRIAD concepts
+
+
 
 
 PROMPT_TEMPLATE = """Determine a person's colortype based on the uploaded photo.
@@ -96,10 +99,8 @@ def normalize_image_format(image: str) -> str:
     '''Convert image to data URI format if needed'''
     if image.startswith('http://') or image.startswith('https://'):
         return image
-    
     if image.startswith('data:'):
         return image
-    
     return f'data:image/jpeg;base64,{image}'
 
 def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str:
