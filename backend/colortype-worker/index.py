@@ -3,7 +3,6 @@ import os
 import psycopg2
 from typing import Dict, Any, Optional
 import requests
-# Updated COLORTYPE_MAP
 from datetime import datetime
 import boto3
 import time
