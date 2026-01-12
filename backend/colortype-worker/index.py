@@ -19,48 +19,48 @@ import base64
 
 REFERENCE_SCHEMA_URL = "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortypes.jpg"
 
-PROMPT_TEMPLATE = '''Analyze the person in the photo and return ONLY a JSON object with their color characteristics.
+PROMPT_TEMPLATE = '''CRITICAL: Analyze THIS SPECIFIC PHOTO carefully. Do not use example values - analyze the REAL colors you see in THIS image.
 
 HINT: This person has {eye_color} eyes.
 
-=== YOUR TASK ===
+=== STEP 1: ANALYZE THE PHOTO ===
 
-Look at the photo and determine:
+Look at THIS photo very carefully and determine:
 
-1. UNDERTONE - is it warm or cool?
-   - WARM-UNDERTONE = golden/red/copper/auburn hair, peachy/yellow skin
-   - COOL-UNDERTONE = ash/cool brown/black hair, pink/blue skin
+1. UNDERTONE - Look at the hair and skin tone:
+   - Choose WARM-UNDERTONE if: golden/yellow/peachy/red tones in hair or skin
+   - Choose COOL-UNDERTONE if: ash/blue/pink tones in hair or skin
 
-2. COLOR INTENSITY - how saturated are the colors?
-   - LIGHT-COLORS = pale, soft, delicate (light blonde hair, light eyes, fair skin)
-   - MUTED-COLORS = dusty, subdued, soft (not vivid, not bright)
-   - BRIGHT-COLORS = clear, vivid, saturated (vibrant eyes, rich color)
-   - DEEP-COLORS = dark, rich (dark hair, deep skin)
+2. COLOR INTENSITY - How saturated are THIS person's colors:
+   - Choose LIGHT-COLORS if: very pale, delicate, soft colors
+   - Choose MUTED-COLORS if: dusty, subdued, not bright
+   - Choose BRIGHT-COLORS if: clear, vivid, saturated
+   - Choose DEEP-COLORS if: dark, rich, deep tones
 
-3. CONTRAST LEVEL - difference between hair, skin, and eyes?
-   - LOW-CONTRAST = small difference (all similar lightness)
-   - MEDIUM-CONTRAST = moderate difference (some contrast)
-   - HIGH-CONTRAST = large difference (very dramatic)
+3. CONTRAST LEVEL - Compare hair, skin, and eyes in THIS photo:
+   - Choose LOW-CONTRAST if: hair, skin, eyes are similar lightness
+   - Choose MEDIUM-CONTRAST if: moderate difference
+   - Choose HIGH-CONTRAST if: very dramatic difference (e.g., dark hair + pale skin)
 
-4. DESCRIBE EXACT COLORS you see:
-   - Hair color: Use descriptive terms like "golden blond", "dark honey", "cool brown", "black", "auburn", etc.
-   - Eye color: "blue", "green", "brown", "hazel", "gray", etc.
-   - Skin color: "ivory", "light warm beige", "porcelain", "medium beige", "olive", etc.
+4. DESCRIBE EXACT COLORS you see in THIS SPECIFIC PHOTO:
+   - Hair: Use specific descriptors like "golden blond", "dark brown", "auburn", "black", "ash blond", "honey brown"
+   - Eyes: Specific color like "blue", "green", "brown", "hazel", "gray-blue"
+   - Skin: Specific tone like "ivory", "porcelain", "light warm beige", "medium beige", "olive", "deep brown"
 
 === OUTPUT FORMAT ===
 
-Return ONLY a valid JSON object (no extra text):
+Return ONLY a valid JSON object with your analysis of THIS SPECIFIC PHOTO:
 
 {{
-  "undertone": "WARM-UNDERTONE" or "COOL-UNDERTONE",
-  "intensity": "LIGHT-COLORS" or "MUTED-COLORS" or "BRIGHT-COLORS" or "DEEP-COLORS",
-  "contrast": "LOW-CONTRAST" or "MEDIUM-CONTRAST" or "HIGH-CONTRAST",
-  "hair_color": "describe exact hair color",
-  "eye_color": "describe exact eye color",
-  "skin_color": "describe exact skin color"
+  "undertone": "[YOUR CHOICE: WARM-UNDERTONE or COOL-UNDERTONE]",
+  "intensity": "[YOUR CHOICE: one of LIGHT-COLORS, MUTED-COLORS, BRIGHT-COLORS, DEEP-COLORS]",
+  "contrast": "[YOUR CHOICE: one of LOW-CONTRAST, MEDIUM-CONTRAST, HIGH-CONTRAST]",
+  "hair_color": "[exact description of hair color YOU SEE]",
+  "eye_color": "[exact description of eye color YOU SEE]",
+  "skin_color": "[exact description of skin tone YOU SEE]"
 }}
 
-IMPORTANT: Return ONLY the JSON object, nothing else.'''
+CRITICAL: Analyze the REAL photo, not the example format. Replace ALL bracketed placeholders with your actual analysis.'''
 
 def normalize_image_format(image: str) -> str:
     '''Convert image to data URI format if needed'''
