@@ -19,13 +19,13 @@ import base64
 
 REFERENCE_SCHEMA_URL = "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortypes.jpg"
 
-PROMPT_TEMPLATE = '''CRITICAL: Analyze THIS SPECIFIC PHOTO carefully. Do not use example values - analyze the REAL colors you see in THIS image.
+PROMPT_TEMPLATE = '''TASK: Analyze the color characteristics in this portrait photo for color season analysis. Focus on objective color analysis of hair, skin, and eyes.
 
-HINT: This person has {eye_color} eyes.
+HINT: Eye color in this image is {eye_color}.
 
-=== STEP 1: ANALYZE THE PHOTO ===
+=== COLOR ANALYSIS INSTRUCTIONS ===
 
-Look at THIS photo very carefully and determine:
+Analyze the colors visible in this image and determine:
 
 1. UNDERTONE - The invisible base that creates visible color (CRITICAL: analyze carefully!)
    PRIORITY: Hair color (55%) → Skin tone (40%) → Eyes (5%)
@@ -120,7 +120,7 @@ Return ONLY a valid JSON object with your analysis of THIS SPECIFIC PHOTO:
   "skin_color": "[exact description of skin tone YOU SEE]"
 }}
 
-CRITICAL: Analyze the REAL photo, not the example format. Replace ALL bracketed placeholders with your actual analysis.'''
+IMPORTANT: This is a color analysis task for fashion/styling purposes. Analyze the actual colors visible in the image and return the JSON with your color observations.'''
 
 def normalize_image_format(image: str) -> str:
     '''Convert image to data URI format if needed'''
