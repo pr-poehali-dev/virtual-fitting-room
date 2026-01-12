@@ -25,64 +25,66 @@ HINT: This person has {eye_color} eyes.
 
 === STEP 1: ANALYZE THREE CHARACTERISTICS ===
 
-Look at the photo and determine:
+Look at the photo and determine THREE separate things:
 
-1. UNDERTONE (warm or cool):
-   - Look at hair: golden/red/copper/auburn tones = WARM, ash/cool brown/black = COOL
-   - Look at skin: peachy/yellow undertones = WARM, pink/blue undertones = COOL
-   - Answer: WARM or COOL
+1. UNDERTONE - is it warm or cool?
+   - WARM = golden/red/copper/auburn hair, peachy/yellow skin
+   - COOL = ash/cool brown/black hair, pink/blue skin
+   - Your answer: WARM or COOL
 
-2. COLOR INTENSITY (light/muted/bright/deep):
-   - LIGHT = pale, soft, delicate colors (light blonde hair, light eyes, fair skin)
-   - MUTED = dusty, subdued, low saturation (medium tones, soft, not vivid)
-   - BRIGHT = clear, vivid, high saturation (vibrant eyes, rich hair color, strong colors)
-   - DEEP = dark, rich, saturated (dark hair, deep skin tone)
-   - Answer: LIGHT, MUTED, BRIGHT, or DEEP
+2. COLOR INTENSITY - how saturated are the colors?
+   - LIGHT = pale, soft, delicate (light blonde hair, light eyes, fair skin)
+   - MUTED = dusty, subdued, soft (not vivid, not bright)
+   - BRIGHT = clear, vivid, saturated (vibrant eyes, rich color)
+   - DEEP = dark, rich (dark hair, deep skin)
+   - Your answer: LIGHT, MUTED, BRIGHT, or DEEP
 
-3. CONTRAST (low/medium/high):
-   - LOW = small difference between hair/skin/eyes (all similar lightness)
-   - MEDIUM = moderate difference (some contrast but not dramatic)
-   - HIGH = large difference between hair/skin/eyes (very dramatic, striking)
-   - Answer: LOW, MEDIUM, or HIGH
+3. CONTRAST LEVEL - difference between hair, skin, and eyes?
+   - LOW-CONTRAST = small difference (all similar lightness)
+   - MEDIUM-CONTRAST = moderate difference (some contrast)
+   - HIGH-CONTRAST = large difference (very dramatic)
+   - Your answer: LOW-CONTRAST, MEDIUM-CONTRAST, or HIGH-CONTRAST
 
 === STEP 2: MATCH TO COLORTYPE ===
 
-CRITICAL RULE: If WARM undertone → ONLY choose: GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
-CRITICAL RULE: If COOL undertone → ONLY choose: SOFT WINTER, BRIGHT WINTER, VIVID WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER
+CRITICAL RULE: If WARM → ONLY choose: GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
+CRITICAL RULE: If COOL → ONLY choose: SOFT WINTER, BRIGHT WINTER, VIVID WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER
 
-Use this table to find exact colortype:
+Find your combination in this table (UNDERTONE + INTENSITY + CONTRAST):
 
-WARM + LIGHT + LOW = GENTLE SPRING
-WARM + LIGHT + MEDIUM = BRIGHT SPRING
-WARM + LIGHT + HIGH = BRIGHT SPRING
+WARM undertone types:
+- WARM + LIGHT + LOW-CONTRAST = GENTLE SPRING
+- WARM + LIGHT + MEDIUM-CONTRAST = BRIGHT SPRING
+- WARM + LIGHT + HIGH-CONTRAST = BRIGHT SPRING
 
-WARM + MUTED + LOW = GENTLE AUTUMN
-WARM + MUTED + MEDIUM = GENTLE AUTUMN
-WARM + MUTED + HIGH = FIERY AUTUMN
+- WARM + MUTED + LOW-CONTRAST = GENTLE AUTUMN
+- WARM + MUTED + MEDIUM-CONTRAST = GENTLE AUTUMN
+- WARM + MUTED + HIGH-CONTRAST = FIERY AUTUMN
 
-WARM + BRIGHT + LOW = BRIGHT SPRING
-WARM + BRIGHT + MEDIUM = BRIGHT SPRING
-WARM + BRIGHT + HIGH = VIBRANT SPRING
+- WARM + BRIGHT + LOW-CONTRAST = BRIGHT SPRING
+- WARM + BRIGHT + MEDIUM-CONTRAST = BRIGHT SPRING
+- WARM + BRIGHT + HIGH-CONTRAST = VIBRANT SPRING
 
-WARM + DEEP + LOW = FIERY AUTUMN
-WARM + DEEP + MEDIUM = VIVID AUTUMN
-WARM + DEEP + HIGH = FIERY AUTUMN
+- WARM + DEEP + LOW-CONTRAST = FIERY AUTUMN
+- WARM + DEEP + MEDIUM-CONTRAST = VIVID AUTUMN
+- WARM + DEEP + HIGH-CONTRAST = FIERY AUTUMN
 
-COOL + LIGHT + LOW = SOFT SUMMER
-COOL + LIGHT + MEDIUM = SOFT SUMMER
-COOL + LIGHT + HIGH = SOFT SUMMER
+COOL undertone types:
+- COOL + LIGHT + LOW-CONTRAST = SOFT SUMMER
+- COOL + LIGHT + MEDIUM-CONTRAST = SOFT SUMMER
+- COOL + LIGHT + HIGH-CONTRAST = SOFT SUMMER
 
-COOL + MUTED + LOW = DUSTY SUMMER
-COOL + MUTED + MEDIUM = VIVID SUMMER
-COOL + MUTED + HIGH = SOFT WINTER
+- COOL + MUTED + LOW-CONTRAST = DUSTY SUMMER
+- COOL + MUTED + MEDIUM-CONTRAST = VIVID SUMMER
+- COOL + MUTED + HIGH-CONTRAST = SOFT WINTER
 
-COOL + BRIGHT + LOW = SOFT WINTER
-COOL + BRIGHT + MEDIUM = SOFT WINTER
-COOL + BRIGHT + HIGH = BRIGHT WINTER
+- COOL + BRIGHT + LOW-CONTRAST = SOFT WINTER
+- COOL + BRIGHT + MEDIUM-CONTRAST = SOFT WINTER
+- COOL + BRIGHT + HIGH-CONTRAST = BRIGHT WINTER
 
-COOL + DEEP + LOW = VIVID SUMMER
-COOL + DEEP + MEDIUM = VIVID WINTER
-COOL + DEEP + HIGH = BRIGHT WINTER
+- COOL + DEEP + LOW-CONTRAST = VIVID SUMMER
+- COOL + DEEP + MEDIUM-CONTRAST = VIVID WINTER
+- COOL + DEEP + HIGH-CONTRAST = BRIGHT WINTER
 
 === STEP 3: VERIFY WITH EXACT CHARACTERISTICS ===
 
@@ -109,7 +111,7 @@ VIVID SUMMER: HAIR: Light to deep cool brown, medium dark cool brown; EYES: Blue
 Write ONLY ONE colortype on the first line:
 VIVID WINTER, SOFT WINTER, BRIGHT WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER, GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, or VIBRANT SPRING
 
-Then write 2-3 sentences explaining: what undertone you see (warm/cool), what color intensity (light/muted/bright/deep), what contrast level (low/medium/high), and describe the actual hair color, eye color, and skin tone in THIS photo."""
+Then write 2-3 sentences explaining: what undertone you see (WARM/COOL), what color intensity (LIGHT/MUTED/BRIGHT/DEEP), what contrast level (LOW-CONTRAST/MEDIUM-CONTRAST/HIGH-CONTRAST), and describe the actual hair color, eye color, and skin tone in THIS photo."""
 
 def normalize_image_format(image: str) -> str:
     '''Convert image to data URI format if needed'''
