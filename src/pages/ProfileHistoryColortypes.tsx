@@ -173,7 +173,7 @@ export default function ProfileHistoryColortypes() {
                         </p>
                       </div>
                       {item.result_text && (
-                        <p className="text-sm text-muted-foreground line-clamp-3">
+                        <p className="text-sm text-muted-foreground">
                           {item.result_text}
                         </p>
                       )}
