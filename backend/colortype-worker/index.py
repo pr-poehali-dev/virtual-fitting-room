@@ -27,22 +27,26 @@ HINT: This person has {eye_color} eyes.
 
 Look at THIS photo very carefully and determine:
 
-1. UNDERTONE - Look at the hair and skin tone:
-   - Choose WARM-UNDERTONE if: golden/yellow/peachy/red tones in hair or skin
-   - Choose COOL-UNDERTONE if: ash/blue/pink tones in hair or skin
+1. UNDERTONE - Look at the hair and skin tone temperature:
+   - Choose WARM-UNDERTONE if: golden/yellow/peachy/red/orange tones in hair or skin (warm base)
+   - Choose COOL-UNDERTONE if: ash/blue/pink/violet tones in hair or skin (cool base)
 
-2. COLOR INTENSITY - How saturated are THIS person's colors:
-   - Choose LIGHT-COLORS if: very pale, delicate, soft colors
-   - Choose MUTED-COLORS if: dusty, subdued, not bright
-   - Choose BRIGHT-COLORS if: clear, vivid, saturated
-   - Choose DEEP-COLORS if: dark, rich, deep tones
+2. LIGHTNESS - How light or dark are the overall colors (hair + skin):
+   - Choose LIGHT-COLORS if: very light hair (blond, light brown) AND light/pale skin
+   - Choose MEDIUM-LIGHTNESS-COLORS if: medium tones - not very light, not very dark (medium brown hair, medium skin)
+   - Choose DEEP-COLORS if: dark hair (dark brown, black) OR deep skin tones
 
-3. CONTRAST LEVEL - Compare hair, skin, and eyes in THIS photo:
-   - Choose LOW-CONTRAST if: hair, skin, eyes are similar lightness
-   - Choose MEDIUM-CONTRAST if: moderate difference
-   - Choose HIGH-CONTRAST if: very dramatic difference (e.g., dark hair + pale skin)
+3. SATURATION - How vivid/muted are the colors (independent from lightness):
+   - Choose MUTED-SATURATION-COLORS if: dusty, subdued, grayish, soft colors (low saturation)
+   - Choose NEUTRAL-SATURATION-COLORS if: moderate saturation, neither muted nor bright
+   - Choose BRIGHT-SATURATION-COLORS if: clear, vivid, pure colors (high saturation)
 
-4. DESCRIBE EXACT COLORS you see in THIS SPECIFIC PHOTO:
+4. CONTRAST LEVEL - Compare hair, skin, and eyes in THIS photo:
+   - Choose LOW-CONTRAST if: hair, skin, eyes are similar lightness (small difference)
+   - Choose MEDIUM-CONTRAST if: moderate difference in lightness between features
+   - Choose HIGH-CONTRAST if: very dramatic difference (e.g., very dark hair + very pale skin, or very light hair + dark skin)
+
+5. DESCRIBE EXACT COLORS you see in THIS SPECIFIC PHOTO:
    - Hair: Use specific descriptors like "golden blond", "dark brown", "auburn", "black", "ash blond", "honey brown"
    - Eyes: Specific color like "blue", "green", "brown", "hazel", "gray-blue"
    - Skin: Specific tone like "ivory", "porcelain", "light warm beige", "medium beige", "olive", "deep brown"
@@ -53,8 +57,9 @@ Return ONLY a valid JSON object with your analysis of THIS SPECIFIC PHOTO:
 
 {{
   "undertone": "[YOUR CHOICE: WARM-UNDERTONE or COOL-UNDERTONE]",
-  "intensity": "[YOUR CHOICE: one of LIGHT-COLORS, MUTED-COLORS, BRIGHT-COLORS, DEEP-COLORS]",
-  "contrast": "[YOUR CHOICE: one of LOW-CONTRAST, MEDIUM-CONTRAST, HIGH-CONTRAST]",
+  "lightness": "[YOUR CHOICE: LIGHT-COLORS, MEDIUM-LIGHTNESS-COLORS, or DEEP-COLORS]",
+  "saturation": "[YOUR CHOICE: MUTED-SATURATION-COLORS, NEUTRAL-SATURATION-COLORS, or BRIGHT-SATURATION-COLORS]",
+  "contrast": "[YOUR CHOICE: LOW-CONTRAST, MEDIUM-CONTRAST, or HIGH-CONTRAST]",
   "hair_color": "[exact description of hair color YOU SEE]",
   "eye_color": "[exact description of eye color YOU SEE]",
   "skin_color": "[exact description of skin tone YOU SEE]"
@@ -278,41 +283,24 @@ COLORTYPE_REFERENCES = {
     }
 }
 
-# Mapping table: (undertone, intensity, contrast) -> colortype
+# Mapping table: (undertone, lightness, saturation, contrast) -> colortype
 COLORTYPE_MAP = {
-    # WARM-UNDERTONE
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'LOW-CONTRAST'): 'GENTLE SPRING',
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'MEDIUM-CONTRAST'): 'BRIGHT SPRING',
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'HIGH-CONTRAST'): 'BRIGHT SPRING',
+    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-CONTRAST'): 'SOFT SUMMER',
+    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-CONTRAST'): 'GENTLE SPRING',
     
-    ('WARM-UNDERTONE', 'MUTED-COLORS', 'LOW-CONTRAST'): 'GENTLE AUTUMN',
-    ('WARM-UNDERTONE', 'MUTED-COLORS', 'MEDIUM-CONTRAST'): 'GENTLE AUTUMN',
-    ('WARM-UNDERTONE', 'MUTED-COLORS', 'HIGH-CONTRAST'): 'FIERY AUTUMN',
+    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-SATURATION-COLORS', 'LOW-CONTRAST'): 'GENTLE AUTUMN',
+    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-SATURATION-COLORS', 'MEDIUM-CONTRAST'): 'DUSTY SUMMER',
     
-    ('WARM-UNDERTONE', 'BRIGHT-COLORS', 'LOW-CONTRAST'): 'BRIGHT SPRING',
-    ('WARM-UNDERTONE', 'BRIGHT-COLORS', 'MEDIUM-CONTRAST'): 'BRIGHT SPRING',
-    ('WARM-UNDERTONE', 'BRIGHT-COLORS', 'HIGH-CONTRAST'): 'VIBRANT SPRING',
+    ('COOL-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-SATURATION-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
+    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIBRANT SPRING',
     
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'LOW-CONTRAST'): 'FIERY AUTUMN',
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'MEDIUM-CONTRAST'): 'VIVID AUTUMN',
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'HIGH-CONTRAST'): 'FIERY AUTUMN',
+    ('WARM-UNDERTONE', 'DEEP-COLORS', 'NEUTRAL-SATURATION-COLORS', 'MEDIUM-CONTRAST'): 'VIVID AUTUMN',
+    ('COOL-UNDERTONE', 'DEEP-COLORS', 'NEUTRAL-SATURATION-COLORS', 'MEDIUM-CONTRAST'): 'VIVID WINTER',
     
-    # COOL-UNDERTONE
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'LOW-CONTRAST'): 'SOFT SUMMER',
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'MEDIUM-CONTRAST'): 'SOFT SUMMER',
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'HIGH-CONTRAST'): 'SOFT SUMMER',
-    
-    ('COOL-UNDERTONE', 'MUTED-COLORS', 'LOW-CONTRAST'): 'DUSTY SUMMER',
-    ('COOL-UNDERTONE', 'MUTED-COLORS', 'MEDIUM-CONTRAST'): 'VIVID SUMMER',
-    ('COOL-UNDERTONE', 'MUTED-COLORS', 'HIGH-CONTRAST'): 'SOFT WINTER',
-    
-    ('COOL-UNDERTONE', 'BRIGHT-COLORS', 'LOW-CONTRAST'): 'SOFT WINTER',
-    ('COOL-UNDERTONE', 'BRIGHT-COLORS', 'MEDIUM-CONTRAST'): 'SOFT WINTER',
-    ('COOL-UNDERTONE', 'BRIGHT-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
-    
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'LOW-CONTRAST'): 'VIVID SUMMER',
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'MEDIUM-CONTRAST'): 'VIVID WINTER',
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
+    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-SATURATION-COLORS', 'LOW-CONTRAST'): 'VIVID SUMMER',
+    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-SATURATION-COLORS', 'HIGH-CONTRAST'): 'SOFT WINTER',
+    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-SATURATION-COLORS', 'MEDIUM-CONTRAST'): 'BRIGHT SPRING',
+    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-SATURATION-COLORS', 'MEDIUM-CONTRAST'): 'FIERY AUTUMN',
 }
 
 def calculate_color_match_score(description: str, keywords: list) -> float:
@@ -326,17 +314,18 @@ def match_colortype(analysis: dict) -> tuple:
     Returns: (colortype, explanation)
     '''
     undertone = analysis.get('undertone', '')
-    intensity = analysis.get('intensity', '')
+    lightness = analysis.get('lightness', '')
+    saturation = analysis.get('saturation', '')
     contrast = analysis.get('contrast', '')
     hair = analysis.get('hair_color', '')
     eyes = analysis.get('eye_color', '')
     skin = analysis.get('skin_color', '')
     
     # Step 1: Get base colortype from mapping table
-    base_colortype = COLORTYPE_MAP.get((undertone, intensity, contrast))
+    base_colortype = COLORTYPE_MAP.get((undertone, lightness, saturation, contrast))
     
     if not base_colortype:
-        return None, f"No mapping found for {undertone} + {intensity} + {contrast}"
+        return None, f"No mapping found for {undertone} + {lightness} + {saturation} + {contrast}"
     
     # Step 2: Calculate match scores for base colortype
     ref = COLORTYPE_REFERENCES[base_colortype]
@@ -344,14 +333,14 @@ def match_colortype(analysis: dict) -> tuple:
     skin_score = calculate_color_match_score(skin, ref['skin'])
     eyes_score = calculate_color_match_score(eyes, ref['eyes'])
     
-    # Weighted score: hair 40%, skin 40%, eyes 20%
-    base_score = (hair_score * 0.4) + (skin_score * 0.4) + (eyes_score * 0.2)
+    # Weighted score: hair 51%, skin 40%, eyes 9%
+    base_score = (hair_score * 0.51) + (skin_score * 0.40) + (eyes_score * 0.09)
     
     print(f'[Match] Base type: {base_colortype}, scores: hair={hair_score:.2f}, skin={skin_score:.2f}, eyes={eyes_score:.2f}, total={base_score:.2f}')
     
     # Step 3: If good match, return base colortype
     if base_score >= 0.4:  # At least 40% match
-        explanation = f"Based on {undertone}, {intensity}, {contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}. Matches {base_colortype} characteristics."
+        explanation = f"Based on {undertone}, {lightness}, {saturation}, {contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}. Matches {base_colortype} characteristics."
         return base_colortype, explanation
     
     # Step 4: Find best match in same season group
@@ -366,7 +355,7 @@ def match_colortype(analysis: dict) -> tuple:
         h_score = calculate_color_match_score(hair, ref['hair'])
         s_score = calculate_color_match_score(skin, ref['skin'])
         e_score = calculate_color_match_score(eyes, ref['eyes'])
-        total_score = (h_score * 0.4) + (s_score * 0.4) + (e_score * 0.2)
+        total_score = (h_score * 0.51) + (s_score * 0.40) + (e_score * 0.09)
         
         print(f'[Match] Checking {colortype}: hair={h_score:.2f}, skin={s_score:.2f}, eyes={e_score:.2f}, total={total_score:.2f}')
         
@@ -374,7 +363,7 @@ def match_colortype(analysis: dict) -> tuple:
             best_score = total_score
             best_colortype = colortype
     
-    explanation = f"Based on {undertone}, {intensity}, {contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}. Best match: {best_colortype} (score: {best_score:.2f})."
+    explanation = f"Based on {undertone}, {lightness}, {saturation}, {contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}. Best match: {best_colortype} (score: {best_score:.2f})."
     return best_colortype, explanation
 
 def extract_color_type(result_text: str) -> Optional[str]:
