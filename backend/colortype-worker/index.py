@@ -19,7 +19,7 @@ import base64
 
 REFERENCE_SCHEMA_URL = "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortypes.jpg"
 
-PROMPT_TEMPLATE = """Analyze the person in the photo and return ONLY a JSON object with their color characteristics.
+PROMPT_TEMPLATE = '''Analyze the person in the photo and return ONLY a JSON object with their color characteristics.
 
 HINT: This person has {eye_color} eyes.
 
@@ -43,24 +43,24 @@ Look at the photo and determine:
    - HIGH-CONTRAST = large difference (very dramatic)
 
 4. DESCRIBE EXACT COLORS you see:
-   - Hair color: Use descriptive terms like \"golden blond\", \"dark honey\", \"cool brown\", \"black\", \"auburn\", etc.
-   - Eye color: \"blue\", \"green\", \"brown\", \"hazel\", \"gray\", etc.
-   - Skin color: \"ivory\", \"light warm beige\", \"porcelain\", \"medium beige\", \"olive\", etc.
+   - Hair color: Use descriptive terms like "golden blond", "dark honey", "cool brown", "black", "auburn", etc.
+   - Eye color: "blue", "green", "brown", "hazel", "gray", etc.
+   - Skin color: "ivory", "light warm beige", "porcelain", "medium beige", "olive", etc.
 
 === OUTPUT FORMAT ===
 
 Return ONLY a valid JSON object (no extra text):
 
-{
-  \"undertone\": \"WARM-UNDERTONE\" or \"COOL-UNDERTONE\",
-  \"intensity\": \"LIGHT-COLORS\" or \"MUTED-COLORS\" or \"BRIGHT-COLORS\" or \"DEEP-COLORS\",
-  \"contrast\": \"LOW-CONTRAST\" or \"MEDIUM-CONTRAST\" or \"HIGH-CONTRAST\",
-  \"hair_color\": \"describe exact hair color\",
-  \"eye_color\": \"describe exact eye color\",
-  \"skin_color\": \"describe exact skin color\"
-}
+{{
+  "undertone": "WARM-UNDERTONE" or "COOL-UNDERTONE",
+  "intensity": "LIGHT-COLORS" or "MUTED-COLORS" or "BRIGHT-COLORS" or "DEEP-COLORS",
+  "contrast": "LOW-CONTRAST" or "MEDIUM-CONTRAST" or "HIGH-CONTRAST",
+  "hair_color": "describe exact hair color",
+  "eye_color": "describe exact eye color",
+  "skin_color": "describe exact skin color"
+}}
 
-IMPORTANT: Return ONLY the JSON object, nothing else."""
+IMPORTANT: Return ONLY the JSON object, nothing else.'''
 
 def normalize_image_format(image: str) -> str:
     '''Convert image to data URI format if needed'''
