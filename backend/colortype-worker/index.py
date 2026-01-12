@@ -172,21 +172,23 @@ def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str
     return cdn_url
 
 def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
-    '''Submit task to OpenAI GPT-4 Vision API and get result immediately (synchronous)'''
-    openai_api_key = os.environ.get('OPENAI_API_KEY')
-    if not openai_api_key:
-        raise Exception('OPENAI_API_KEY not configured')
+    '''Submit task to OpenRouter (GPT-4o Vision) and get result immediately (synchronous)'''
+    openrouter_api_key = os.environ.get('OPENROUTER_API_KEY')
+    if not openrouter_api_key:
+        raise Exception('OPENROUTER_API_KEY not configured')
     
     headers = {
-        'Authorization': f'Bearer {openai_api_key}',
-        'Content-Type': 'application/json'
+        'Authorization': f'Bearer {openrouter_api_key}',
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://fitting-room.ru',
+        'X-Title': 'Virtual Fitting Room - Colortype Analysis'
     }
     
     # Format prompt with eye color
     prompt = PROMPT_TEMPLATE.format(eye_color=eye_color)
     
     payload = {
-        'model': 'gpt-4o',  # Latest and cheapest vision model
+        'model': 'openai/gpt-4o',  # OpenRouter format: provider/model
         'messages': [
             {
                 'role': 'user',
@@ -208,9 +210,9 @@ def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
         'temperature': 0.3  # Lower temperature for more consistent analysis
     }
     
-    print(f'[OpenAI] Submitting to GPT-4o Vision API...')
+    print(f'[OpenRouter] Submitting to GPT-4o Vision via OpenRouter...')
     response = requests.post(
-        'https://api.openai.com/v1/chat/completions',
+        'https://openrouter.ai/api/v1/chat/completions',
         headers=headers,
         json=payload,
         timeout=60
@@ -219,10 +221,10 @@ def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
     if response.status_code == 200:
         result = response.json()
         content = result['choices'][0]['message']['content']
-        print(f'[OpenAI] Got response: {content[:200]}...')
+        print(f'[OpenRouter] Got response: {content[:200]}...')
         return {'status': 'succeeded', 'output': content}
     
-    raise Exception(f'Failed to submit to OpenAI: {response.status_code} - {response.text}')
+    raise Exception(f'Failed to submit to OpenRouter: {response.status_code} - {response.text}')
 
 def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
     '''Refund 30 rubles to user balance if not unlimited and not already refunded'''
