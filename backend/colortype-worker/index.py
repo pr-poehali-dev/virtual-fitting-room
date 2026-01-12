@@ -19,99 +19,48 @@ import base64
 
 REFERENCE_SCHEMA_URL = "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortypes.jpg"
 
-PROMPT_TEMPLATE = """Analyze the person in the photo and determine their colortype.
+PROMPT_TEMPLATE = """Analyze the person in the photo and return ONLY a JSON object with their color characteristics.
 
 HINT: This person has {eye_color} eyes.
 
-=== STEP 1: ANALYZE THREE CHARACTERISTICS ===
+=== YOUR TASK ===
 
-Look at the photo and determine THREE separate things:
+Look at the photo and determine:
 
 1. UNDERTONE - is it warm or cool?
    - WARM-UNDERTONE = golden/red/copper/auburn hair, peachy/yellow skin
    - COOL-UNDERTONE = ash/cool brown/black hair, pink/blue skin
-   - Your answer: WARM-UNDERTONE or COOL-UNDERTONE
 
 2. COLOR INTENSITY - how saturated are the colors?
    - LIGHT-COLORS = pale, soft, delicate (light blonde hair, light eyes, fair skin)
    - MUTED-COLORS = dusty, subdued, soft (not vivid, not bright)
    - BRIGHT-COLORS = clear, vivid, saturated (vibrant eyes, rich color)
    - DEEP-COLORS = dark, rich (dark hair, deep skin)
-   - Your answer: LIGHT-COLORS, MUTED-COLORS, BRIGHT-COLORS, or DEEP-COLORS
 
 3. CONTRAST LEVEL - difference between hair, skin, and eyes?
    - LOW-CONTRAST = small difference (all similar lightness)
    - MEDIUM-CONTRAST = moderate difference (some contrast)
    - HIGH-CONTRAST = large difference (very dramatic)
-   - Your answer: LOW-CONTRAST, MEDIUM-CONTRAST, or HIGH-CONTRAST
 
-=== STEP 2: MATCH TO COLORTYPE ===
+4. DESCRIBE EXACT COLORS you see:
+   - Hair color: Use descriptive terms like \"golden blond\", \"dark honey\", \"cool brown\", \"black\", \"auburn\", etc.
+   - Eye color: \"blue\", \"green\", \"brown\", \"hazel\", \"gray\", etc.
+   - Skin color: \"ivory\", \"light warm beige\", \"porcelain\", \"medium beige\", \"olive\", etc.
 
-CRITICAL RULE: If WARM-UNDERTONE → ONLY choose: GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
-CRITICAL RULE: If COOL-UNDERTONE → ONLY choose: SOFT WINTER, BRIGHT WINTER, VIVID WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER
+=== OUTPUT FORMAT ===
 
-Find your combination in this table:
+Return ONLY a valid JSON object (no extra text):
 
-WARM-UNDERTONE types:
-- WARM-UNDERTONE + LIGHT-COLORS + LOW-CONTRAST = GENTLE SPRING
-- WARM-UNDERTONE + LIGHT-COLORS + MEDIUM-CONTRAST = BRIGHT SPRING
-- WARM-UNDERTONE + LIGHT-COLORS + HIGH-CONTRAST = BRIGHT SPRING
+{
+  \"undertone\": \"WARM-UNDERTONE\" or \"COOL-UNDERTONE\",
+  \"intensity\": \"LIGHT-COLORS\" or \"MUTED-COLORS\" or \"BRIGHT-COLORS\" or \"DEEP-COLORS\",
+  \"contrast\": \"LOW-CONTRAST\" or \"MEDIUM-CONTRAST\" or \"HIGH-CONTRAST\",
+  \"hair_color\": \"describe exact hair color\",
+  \"eye_color\": \"describe exact eye color\",
+  \"skin_color\": \"describe exact skin color\"
+}
 
-- WARM-UNDERTONE + MUTED-COLORS + LOW-CONTRAST = GENTLE AUTUMN
-- WARM-UNDERTONE + MUTED-COLORS + MEDIUM-CONTRAST = GENTLE AUTUMN
-- WARM-UNDERTONE + MUTED-COLORS + HIGH-CONTRAST = FIERY AUTUMN
-
-- WARM-UNDERTONE + BRIGHT-COLORS + LOW-CONTRAST = BRIGHT SPRING
-- WARM-UNDERTONE + BRIGHT-COLORS + MEDIUM-CONTRAST = BRIGHT SPRING
-- WARM-UNDERTONE + BRIGHT-COLORS + HIGH-CONTRAST = VIBRANT SPRING
-
-- WARM-UNDERTONE + DEEP-COLORS + LOW-CONTRAST = FIERY AUTUMN
-- WARM-UNDERTONE + DEEP-COLORS + MEDIUM-CONTRAST = VIVID AUTUMN
-- WARM-UNDERTONE + DEEP-COLORS + HIGH-CONTRAST = FIERY AUTUMN
-
-COOL-UNDERTONE types:
-- COOL-UNDERTONE + LIGHT-COLORS + LOW-CONTRAST = SOFT SUMMER
-- COOL-UNDERTONE + LIGHT-COLORS + MEDIUM-CONTRAST = SOFT SUMMER
-- COOL-UNDERTONE + LIGHT-COLORS + HIGH-CONTRAST = SOFT SUMMER
-
-- COOL-UNDERTONE + MUTED-COLORS + LOW-CONTRAST = DUSTY SUMMER
-- COOL-UNDERTONE + MUTED-COLORS + MEDIUM-CONTRAST = VIVID SUMMER
-- COOL-UNDERTONE + MUTED-COLORS + HIGH-CONTRAST = SOFT WINTER
-
-- COOL-UNDERTONE + BRIGHT-COLORS + LOW-CONTRAST = SOFT WINTER
-- COOL-UNDERTONE + BRIGHT-COLORS + MEDIUM-CONTRAST = SOFT WINTER
-- COOL-UNDERTONE + BRIGHT-COLORS + HIGH-CONTRAST = BRIGHT WINTER
-
-- COOL-UNDERTONE + DEEP-COLORS + LOW-CONTRAST = VIVID SUMMER
-- COOL-UNDERTONE + DEEP-COLORS + MEDIUM-CONTRAST = VIVID WINTER
-- COOL-UNDERTONE + DEEP-COLORS + HIGH-CONTRAST = BRIGHT WINTER
-
-=== STEP 3: VERIFY WITH EXACT CHARACTERISTICS ===
-
-Check if your choice matches these descriptions:
-
-GENTLE AUTUMN: HAIR: Dark honey, gentle auburn; EYES: Turquoise blue, jade, light brown; SKIN: Light warm beige.
-FIERY AUTUMN: HAIR: Dark honey to deep chestnut, medium to deep auburn; EYES: Turquoise blue, hazel, green, brown-green, brown; SKIN: Alabaster to russet.
-VIVID AUTUMN: HAIR: Dark chestnut, dark auburn, espresso; EYES: Brown, brown-green; SKIN: Pale to mahogany warm beige.
-
-GENTLE SPRING: HAIR: Golden blond, light strawberry blond; EYES: Blue, blue-green; SKIN: Ivory, light warm beige.
-BRIGHT SPRING: HAIR: Golden blond to medium golden brown, strawberry blond, light clear red; EYES: Blue, green, blue-green; SKIN: Ivory, light warm beige, honey.
-VIBRANT SPRING: HAIR: Bright auburn, medium golden brown; EYES: Blue, green, golden brown; SKIN: Ivory to medium golden brown.
-
-SOFT WINTER: HAIR: Medium-deep to deep cool brown; EYES: Blue, green, gray; SKIN: Pale porcelain.
-BRIGHT WINTER: HAIR: Dark cool brown, black; EYES: Brown, blue, brown-green, green, gray; SKIN: Pale to coffee.
-VIVID WINTER: HAIR: Black, dark cool brown; EYES: Black-brown, brown, brown-green; SKIN: Medium beige to ebony.
-
-SOFT SUMMER: HAIR: Pale to medium cool blond; EYES: Blue, gray-blue, gray-green; SKIN: Porcelain, light beige.
-DUSTY SUMMER: HAIR: Medium to deep cool blond, light to medium cool brown; EYES: Gray-blue, gray-green, blue; SKIN: Light to almond beige.
-VIVID SUMMER: HAIR: Light to deep cool brown, medium dark cool brown; EYES: Blue-gray, blue-green, gray-green, cocoa; SKIN: Medium beige, cocoa.
-
-=== FINAL ANSWER ===
-
-Write ONLY ONE colortype on the first line:
-VIVID WINTER, SOFT WINTER, BRIGHT WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER, GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, or VIBRANT SPRING
-
-Then write 2-3 sentences explaining: what undertone you see (WARM-UNDERTONE/COOL-UNDERTONE), what color intensity (LIGHT-COLORS/MUTED-COLORS/BRIGHT-COLORS/DEEP-COLORS), what contrast level (LOW-CONTRAST/MEDIUM-CONTRAST/HIGH-CONTRAST), and describe the actual hair color, eye color, and skin tone in THIS photo."""
+IMPORTANT: Return ONLY the JSON object, nothing else."""
 
 def normalize_image_format(image: str) -> str:
     '''Convert image to data URI format if needed'''
@@ -265,6 +214,169 @@ def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
     except Exception as e:
         print(f'[Refund] Error refunding balance: {str(e)}')
 
+# Colortype reference data with keywords
+COLORTYPE_REFERENCES = {
+    'GENTLE AUTUMN': {
+        'hair': ['dark honey', 'tawny', 'gentle auburn', 'honey', 'auburn'],
+        'eyes': ['turquoise blue', 'jade', 'light brown', 'turquoise', 'hazel'],
+        'skin': ['light warm beige', 'warm beige', 'beige']
+    },
+    'FIERY AUTUMN': {
+        'hair': ['dark honey', 'warm brown', 'chestnut', 'auburn', 'deep auburn', 'medium auburn'],
+        'eyes': ['turquoise blue', 'hazel', 'golden', 'green', 'brown-green', 'brown'],
+        'skin': ['alabaster', 'light warm beige', 'warm beige', 'café au lait', 'russet']
+    },
+    'VIVID AUTUMN': {
+        'hair': ['dark chestnut', 'dark auburn', 'espresso', 'deep brown', 'black'],
+        'eyes': ['brown', 'brown-green', 'dark brown'],
+        'skin': ['pale warm beige', 'medium warm beige', 'chestnut', 'mahogany']
+    },
+    'GENTLE SPRING': {
+        'hair': ['golden blond', 'light strawberry blond', 'strawberry', 'light blond', 'golden'],
+        'eyes': ['blue', 'blue-green', 'light blue'],
+        'skin': ['ivory', 'light warm beige', 'pale']
+    },
+    'BRIGHT SPRING': {
+        'hair': ['golden blond', 'honey blond', 'golden brown', 'strawberry blond', 'light clear red', 'medium golden brown'],
+        'eyes': ['blue', 'green', 'blue-green', 'bright blue'],
+        'skin': ['ivory', 'light warm beige', 'honey', 'warm beige']
+    },
+    'VIBRANT SPRING': {
+        'hair': ['bright auburn', 'medium golden brown', 'auburn', 'golden brown'],
+        'eyes': ['blue', 'green', 'golden brown', 'bright'],
+        'skin': ['ivory', 'light warm beige', 'medium warm beige', 'medium golden brown']
+    },
+    'SOFT WINTER': {
+        'hair': ['medium-deep cool brown', 'deep cool brown', 'cool brown', 'ashy brown'],
+        'eyes': ['blue', 'green', 'gray', 'cool'],
+        'skin': ['pale porcelain', 'porcelain', 'pale']
+    },
+    'BRIGHT WINTER': {
+        'hair': ['dark cool brown', 'black', 'cool black', 'deep brown'],
+        'eyes': ['brown', 'blue', 'brown-green', 'green', 'gray', 'dark'],
+        'skin': ['pale beige', 'medium beige', 'light olive', 'medium olive', 'coffee']
+    },
+    'VIVID WINTER': {
+        'hair': ['black', 'dark cool brown', 'cool black', 'jet black'],
+        'eyes': ['black-brown', 'brown', 'brown-green', 'dark brown', 'black'],
+        'skin': ['medium beige', 'deep olive', 'café noir', 'ebony', 'dark']
+    },
+    'SOFT SUMMER': {
+        'hair': ['pale cool blond', 'medium cool blond', 'cool blond', 'ash blond', 'light ash'],
+        'eyes': ['blue', 'gray-blue', 'gray-green', 'soft blue'],
+        'skin': ['porcelain', 'light beige', 'pale']
+    },
+    'DUSTY SUMMER': {
+        'hair': ['medium cool blond', 'deep cool blond', 'light cool brown', 'medium cool brown', 'ash brown'],
+        'eyes': ['gray-blue', 'gray-green', 'blue', 'muted'],
+        'skin': ['light beige', 'medium beige', 'almond']
+    },
+    'VIVID SUMMER': {
+        'hair': ['light cool brown', 'deep cool brown', 'medium dark cool brown', 'cool brown'],
+        'eyes': ['blue-gray', 'blue-green', 'gray-green', 'cocoa'],
+        'skin': ['medium beige', 'cocoa', 'brown']
+    }
+}
+
+# Mapping table: (undertone, intensity, contrast) -> colortype
+COLORTYPE_MAP = {
+    # WARM-UNDERTONE
+    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'LOW-CONTRAST'): 'GENTLE SPRING',
+    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'MEDIUM-CONTRAST'): 'BRIGHT SPRING',
+    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'HIGH-CONTRAST'): 'BRIGHT SPRING',
+    
+    ('WARM-UNDERTONE', 'MUTED-COLORS', 'LOW-CONTRAST'): 'GENTLE AUTUMN',
+    ('WARM-UNDERTONE', 'MUTED-COLORS', 'MEDIUM-CONTRAST'): 'GENTLE AUTUMN',
+    ('WARM-UNDERTONE', 'MUTED-COLORS', 'HIGH-CONTRAST'): 'FIERY AUTUMN',
+    
+    ('WARM-UNDERTONE', 'BRIGHT-COLORS', 'LOW-CONTRAST'): 'BRIGHT SPRING',
+    ('WARM-UNDERTONE', 'BRIGHT-COLORS', 'MEDIUM-CONTRAST'): 'BRIGHT SPRING',
+    ('WARM-UNDERTONE', 'BRIGHT-COLORS', 'HIGH-CONTRAST'): 'VIBRANT SPRING',
+    
+    ('WARM-UNDERTONE', 'DEEP-COLORS', 'LOW-CONTRAST'): 'FIERY AUTUMN',
+    ('WARM-UNDERTONE', 'DEEP-COLORS', 'MEDIUM-CONTRAST'): 'VIVID AUTUMN',
+    ('WARM-UNDERTONE', 'DEEP-COLORS', 'HIGH-CONTRAST'): 'FIERY AUTUMN',
+    
+    # COOL-UNDERTONE
+    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'LOW-CONTRAST'): 'SOFT SUMMER',
+    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'MEDIUM-CONTRAST'): 'SOFT SUMMER',
+    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'HIGH-CONTRAST'): 'SOFT SUMMER',
+    
+    ('COOL-UNDERTONE', 'MUTED-COLORS', 'LOW-CONTRAST'): 'DUSTY SUMMER',
+    ('COOL-UNDERTONE', 'MUTED-COLORS', 'MEDIUM-CONTRAST'): 'VIVID SUMMER',
+    ('COOL-UNDERTONE', 'MUTED-COLORS', 'HIGH-CONTRAST'): 'SOFT WINTER',
+    
+    ('COOL-UNDERTONE', 'BRIGHT-COLORS', 'LOW-CONTRAST'): 'SOFT WINTER',
+    ('COOL-UNDERTONE', 'BRIGHT-COLORS', 'MEDIUM-CONTRAST'): 'SOFT WINTER',
+    ('COOL-UNDERTONE', 'BRIGHT-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
+    
+    ('COOL-UNDERTONE', 'DEEP-COLORS', 'LOW-CONTRAST'): 'VIVID SUMMER',
+    ('COOL-UNDERTONE', 'DEEP-COLORS', 'MEDIUM-CONTRAST'): 'VIVID WINTER',
+    ('COOL-UNDERTONE', 'DEEP-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
+}
+
+def calculate_color_match_score(description: str, keywords: list) -> float:
+    '''Calculate how well a color description matches reference keywords'''
+    description_lower = description.lower()
+    matches = sum(1 for keyword in keywords if keyword.lower() in description_lower)
+    return matches / len(keywords) if keywords else 0.0
+
+def match_colortype(analysis: dict) -> tuple:
+    '''Match analysis to colortype using table + reference validation
+    Returns: (colortype, explanation)
+    '''
+    undertone = analysis.get('undertone', '')
+    intensity = analysis.get('intensity', '')
+    contrast = analysis.get('contrast', '')
+    hair = analysis.get('hair_color', '')
+    eyes = analysis.get('eye_color', '')
+    skin = analysis.get('skin_color', '')
+    
+    # Step 1: Get base colortype from mapping table
+    base_colortype = COLORTYPE_MAP.get((undertone, intensity, contrast))
+    
+    if not base_colortype:
+        return None, f"No mapping found for {undertone} + {intensity} + {contrast}"
+    
+    # Step 2: Calculate match scores for base colortype
+    ref = COLORTYPE_REFERENCES[base_colortype]
+    hair_score = calculate_color_match_score(hair, ref['hair'])
+    skin_score = calculate_color_match_score(skin, ref['skin'])
+    eyes_score = calculate_color_match_score(eyes, ref['eyes'])
+    
+    # Weighted score: hair 40%, skin 40%, eyes 20%
+    base_score = (hair_score * 0.4) + (skin_score * 0.4) + (eyes_score * 0.2)
+    
+    print(f'[Match] Base type: {base_colortype}, scores: hair={hair_score:.2f}, skin={skin_score:.2f}, eyes={eyes_score:.2f}, total={base_score:.2f}')
+    
+    # Step 3: If good match, return base colortype
+    if base_score >= 0.4:  # At least 40% match
+        explanation = f"Based on {undertone}, {intensity}, {contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}. Matches {base_colortype} characteristics."
+        return base_colortype, explanation
+    
+    # Step 4: Find best match in same season group
+    season_group = base_colortype.split()[-1]  # AUTUMN, SPRING, WINTER, SUMMER
+    same_season_types = [ct for ct in COLORTYPE_REFERENCES.keys() if season_group in ct]
+    
+    best_colortype = base_colortype
+    best_score = base_score
+    
+    for colortype in same_season_types:
+        ref = COLORTYPE_REFERENCES[colortype]
+        h_score = calculate_color_match_score(hair, ref['hair'])
+        s_score = calculate_color_match_score(skin, ref['skin'])
+        e_score = calculate_color_match_score(eyes, ref['eyes'])
+        total_score = (h_score * 0.4) + (s_score * 0.4) + (e_score * 0.2)
+        
+        print(f'[Match] Checking {colortype}: hair={h_score:.2f}, skin={s_score:.2f}, eyes={e_score:.2f}, total={total_score:.2f}')
+        
+        if total_score > best_score:
+            best_score = total_score
+            best_colortype = colortype
+    
+    explanation = f"Based on {undertone}, {intensity}, {contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}. Best match: {best_colortype} (score: {best_score:.2f})."
+    return best_colortype, explanation
+
 def extract_color_type(result_text: str) -> Optional[str]:
     '''Extract color type name from result text'''
     color_types = [
@@ -361,18 +473,38 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     
                     # Extract text from output (LLaVA returns list of strings)
                     if isinstance(output, list) and len(output) > 0:
-                        result_text_value = ''.join(output) if all(isinstance(x, str) for x in output) else str(output)
+                        raw_result = ''.join(output) if all(isinstance(x, str) for x in output) else str(output)
                     elif isinstance(output, str):
-                        result_text_value = output
+                        raw_result = output
                     elif isinstance(output, dict):
-                        result_text_value = output.get('text', str(output))
+                        raw_result = output.get('text', str(output))
                     else:
-                        result_text_value = str(output)
+                        raw_result = str(output)
                     
-                    if result_text_value:
-                        color_type = extract_color_type(result_text_value)
-                        print(f'[ColorType-Worker] Stuck task {stuck_id} is completed! Color type: {color_type}')
-                        print(f'[ColorType-Worker] Result preview: {result_text_value[:100]}...')
+                    if raw_result:
+                        print(f'[ColorType-Worker] Stuck task {stuck_id} raw result: {raw_result[:200]}...')
+                        
+                        # Try to parse JSON from AI response
+                        try:
+                            # Extract JSON from markdown code blocks if present
+                            json_str = raw_result
+                            if '```json' in raw_result:
+                                json_str = raw_result.split('```json')[1].split('```')[0].strip()
+                            elif '```' in raw_result:
+                                json_str = raw_result.split('```')[1].split('```')[0].strip()
+                            
+                            analysis = json.loads(json_str)
+                            color_type, explanation = match_colortype(analysis)
+                            result_text_value = explanation
+                            
+                            print(f'[ColorType-Worker] Stuck task {stuck_id} matched to: {color_type}')
+                            print(f'[ColorType-Worker] Explanation: {explanation}')
+                            
+                        except (json.JSONDecodeError, KeyError, TypeError) as e:
+                            print(f'[ColorType-Worker] Failed to parse JSON for stuck task {stuck_id}: {e}')
+                            print(f'[ColorType-Worker] Falling back to text extraction')
+                            color_type = extract_color_type(raw_result)
+                            result_text_value = raw_result
                         
                         cursor.execute('''
                             UPDATE color_type_history
@@ -502,18 +634,38 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
                 # Extract text from output (LLaVA returns list of strings)
                 if isinstance(output, list) and len(output) > 0:
-                    result_text_value = ''.join(output) if all(isinstance(x, str) for x in output) else str(output)
+                    raw_result = ''.join(output) if all(isinstance(x, str) for x in output) else str(output)
                 elif isinstance(output, str):
-                    result_text_value = output
+                    raw_result = output
                 elif isinstance(output, dict):
-                    result_text_value = output.get('text', str(output))
+                    raw_result = output.get('text', str(output))
                 else:
-                    result_text_value = str(output)
+                    raw_result = str(output)
                 
-                if result_text_value:
-                    color_type = extract_color_type(result_text_value)
-                    print(f'[ColorType-Worker] Analysis complete! Color type: {color_type}')
-                    print(f'[ColorType-Worker] Result preview: {result_text_value[:100]}...')
+                if raw_result:
+                    print(f'[ColorType-Worker] Task {task_id} raw result: {raw_result[:200]}...')
+                    
+                    # Try to parse JSON from AI response
+                    try:
+                        # Extract JSON from markdown code blocks if present
+                        json_str = raw_result
+                        if '```json' in raw_result:
+                            json_str = raw_result.split('```json')[1].split('```')[0].strip()
+                        elif '```' in raw_result:
+                            json_str = raw_result.split('```')[1].split('```')[0].strip()
+                        
+                        analysis = json.loads(json_str)
+                        color_type, explanation = match_colortype(analysis)
+                        result_text_value = explanation
+                        
+                        print(f'[ColorType-Worker] Task {task_id} matched to: {color_type}')
+                        print(f'[ColorType-Worker] Explanation: {explanation}')
+                        
+                    except (json.JSONDecodeError, KeyError, TypeError) as e:
+                        print(f'[ColorType-Worker] Failed to parse JSON for task {task_id}: {e}')
+                        print(f'[ColorType-Worker] Falling back to text extraction')
+                        color_type = extract_color_type(raw_result)
+                        result_text_value = raw_result
                     
                     cursor.execute('''
                         UPDATE color_type_history
