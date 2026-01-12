@@ -132,7 +132,27 @@ def match_colortype(analysis: dict) -> tuple:
     base_colortype = COLORTYPE_MAP.get((undertone, lightness, saturation, contrast))
     
     if not base_colortype:
-        return None, f"No mapping found for {undertone} + {lightness} + {saturation} + {contrast}"
+        # FALLBACK: If exact combination not found, search ALL 12 colortypes by color match
+        print(f'[Match] No exact mapping for {undertone}/{lightness}/{saturation}/{contrast}, searching by color similarity...')
+        
+        best_colortype = None
+        best_score = 0.0
+        
+        for colortype in COLORTYPE_REFERENCES.keys():
+            ref = COLORTYPE_REFERENCES[colortype]
+            h_score = calculate_color_match_score(hair, ref['hair'])
+            s_score = calculate_color_match_score(skin, ref['skin'])
+            e_score = calculate_color_match_score(eyes, ref['eyes'])
+            total_score = (h_score * 0.51) + (s_score * 0.40) + (e_score * 0.09)
+            
+            print(f'[Match] Checking {colortype}: hair={h_score:.2f}, skin={s_score:.2f}, eyes={e_score:.2f}, total={total_score:.2f}')
+            
+            if total_score > best_score:
+                best_score = total_score
+                best_colortype = colortype
+        
+        explanation = f"No exact mapping for {undertone}/{lightness}/{saturation}/{contrast}. Best color match: {best_colortype} (score: {best_score:.2f}). Hair: {hair}, Skin: {skin}, Eyes: {eyes}."
+        return best_colortype, explanation
     
     ref = COLORTYPE_REFERENCES[base_colortype]
     hair_score = calculate_color_match_score(hair, ref['hair'])
