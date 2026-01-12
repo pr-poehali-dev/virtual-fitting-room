@@ -323,6 +323,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             elif '```' in result_text_value:
                                 json_str = result_text_value.split('```')[1].split('```')[0].strip()
                             
+                            # Fix escaped underscores from LLaVA (hair\_color -> hair_color)
+                            json_str = json_str.replace('\\_', '_')
+                            
                             analysis = json.loads(json_str)
                             extracted_color_type, explanation = match_colortype(analysis)
                             
