@@ -27,16 +27,32 @@ HINT: This person has {eye_color} eyes.
 
 Look at THIS photo very carefully and determine:
 
-1. UNDERTONE - Temperature of colors (focus on HAIR first, then skin):
+1. UNDERTONE - Temperature of colors (CRITICAL: focus on HAIR first, then skin):
    PRIORITY: Hair color (55%) → Skin tone (40%) → Eyes (5%)
    
-   - Choose WARM-UNDERTONE if: 
-     * Hair has golden/yellow/red/orange/copper tones (honey, auburn, golden blond, warm brown)
-     * Skin has peachy/yellow/golden undertones
+   ⚠️ WARM vs COOL is about COLOR TEMPERATURE, not darkness!
    
-   - Choose COOL-UNDERTONE if:
-     * Hair has ash/blue/violet tones (ash blond, cool brown, black with blue tint)
-     * Skin has pink/blue/rosy undertones
+   - Choose WARM-UNDERTONE if hair/skin has WARM tones:
+     WARM HAIR examples:
+     * Golden blond (yellow/golden tones)
+     * Honey blond (golden/warm tones)
+     * Auburn (red/copper tones)
+     * Warm brown (chocolate/golden brown)
+     * Copper, ginger, strawberry
+     
+     WARM SKIN: peachy, golden, yellow undertones
+   
+   - Choose COOL-UNDERTONE if hair/skin has COOL tones:
+     COOL HAIR examples:
+     * Jet black (pure black, no golden reflection)
+     * Cool brown (ash brown, no golden tones)
+     * Ash blond (platinum, silver, no yellow)
+     * Dark cool brown (espresso, cool chocolate)
+     
+     COOL SKIN: pink, blue, rosy undertones
+   
+   🔍 KEY TEST: Does the hair have golden/yellow/red tones? → WARM
+                Does the hair look ash/neutral/black? → COOL
 
 2. LIGHTNESS - Overall darkness level (focus on HAIR):
    PRIORITY: Hair color (70%) → Skin tone (20%) → Eyes (10%)
