@@ -28,15 +28,15 @@ HINT: This person has {eye_color} eyes.
 Look at the photo and determine:
 
 1. UNDERTONE (warm or cool):
-   - Look at hair: golden/red/copper tones = WARM, ash/cool tones = COOL
+   - Look at hair: golden/red/copper/auburn tones = WARM, ash/cool brown/black = COOL
    - Look at skin: peachy/yellow undertones = WARM, pink/blue undertones = COOL
    - Answer: WARM or COOL
 
 2. COLOR INTENSITY (light/muted/bright/deep):
    - LIGHT = pale, soft, delicate colors (light blonde hair, light eyes, fair skin)
-   - MUTED = dusty, subdued, low saturation colors (medium tones, not vivid)
-   - BRIGHT = clear, vivid, high saturation colors (vibrant eyes, rich hair color)
-   - DEEP = dark, rich, saturated colors (dark hair, deep skin tone)
+   - MUTED = dusty, subdued, low saturation (medium tones, soft, not vivid)
+   - BRIGHT = clear, vivid, high saturation (vibrant eyes, rich hair color, strong colors)
+   - DEEP = dark, rich, saturated (dark hair, deep skin tone)
    - Answer: LIGHT, MUTED, BRIGHT, or DEEP
 
 3. CONTRAST (low/medium/high):
@@ -47,24 +47,42 @@ Look at the photo and determine:
 
 === STEP 2: MATCH TO COLORTYPE ===
 
-Use this table to find the colortype:
+CRITICAL RULE: If WARM undertone → ONLY choose: GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING
+CRITICAL RULE: If COOL undertone → ONLY choose: SOFT WINTER, BRIGHT WINTER, VIVID WINTER, SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER
 
-COOL + LIGHT + LOW = SOFT SUMMER
+Use this table to find exact colortype:
+
 WARM + LIGHT + LOW = GENTLE SPRING
+WARM + LIGHT + MEDIUM = BRIGHT SPRING
+WARM + LIGHT + HIGH = BRIGHT SPRING
 
 WARM + MUTED + LOW = GENTLE AUTUMN
-COOL + MUTED + LOW = DUSTY SUMMER
+WARM + MUTED + MEDIUM = GENTLE AUTUMN
+WARM + MUTED + HIGH = FIERY AUTUMN
 
-COOL + BRIGHT + HIGH = BRIGHT WINTER
+WARM + BRIGHT + LOW = BRIGHT SPRING
+WARM + BRIGHT + MEDIUM = BRIGHT SPRING
 WARM + BRIGHT + HIGH = VIBRANT SPRING
 
+WARM + DEEP + LOW = FIERY AUTUMN
 WARM + DEEP + MEDIUM = VIVID AUTUMN
-COOL + DEEP + MEDIUM = VIVID WINTER
+WARM + DEEP + HIGH = FIERY AUTUMN
 
-COOL + MEDIUM + LOW = VIVID SUMMER
-COOL + MEDIUM + HIGH = SOFT WINTER
-WARM + BRIGHT + MEDIUM-HIGH = BRIGHT SPRING
-WARM + BRIGHT-DEEP + MEDIUM-HIGH = FIERY AUTUMN
+COOL + LIGHT + LOW = SOFT SUMMER
+COOL + LIGHT + MEDIUM = SOFT SUMMER
+COOL + LIGHT + HIGH = SOFT SUMMER
+
+COOL + MUTED + LOW = DUSTY SUMMER
+COOL + MUTED + MEDIUM = VIVID SUMMER
+COOL + MUTED + HIGH = SOFT WINTER
+
+COOL + BRIGHT + LOW = SOFT WINTER
+COOL + BRIGHT + MEDIUM = SOFT WINTER
+COOL + BRIGHT + HIGH = BRIGHT WINTER
+
+COOL + DEEP + LOW = VIVID SUMMER
+COOL + DEEP + MEDIUM = VIVID WINTER
+COOL + DEEP + HIGH = BRIGHT WINTER
 
 === STEP 3: VERIFY WITH EXACT CHARACTERISTICS ===
 
