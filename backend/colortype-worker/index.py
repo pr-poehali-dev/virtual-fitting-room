@@ -577,8 +577,42 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
         
-        # FIRST: Check for stuck tasks older than 3 minutes and save completed ones to history
-        print(f'[ColorType-Worker] Checking for stuck completed tasks older than 3 minutes...')
+        # FIRST: Check for stuck OpenAI/OpenRouter tasks older than 2 minutes (timeout = request never reached API, refund money)
+        print(f'[ColorType-Worker] Checking for stuck OpenAI tasks older than 2 minutes...')
+        cursor.execute('''
+            SELECT id, user_id, created_at
+            FROM color_type_history
+            WHERE status = 'processing' 
+              AND replicate_prediction_id IS NULL
+              AND created_at < NOW() - INTERVAL '2 minutes'
+            ORDER BY created_at ASC
+            LIMIT 10
+        ''')
+        
+        stuck_openai_tasks = cursor.fetchall()
+        print(f'[ColorType-Worker] Found {len(stuck_openai_tasks)} stuck OpenAI tasks')
+        
+        for stuck_task in stuck_openai_tasks:
+            stuck_id, stuck_user_id, stuck_created = stuck_task
+            print(f'[ColorType-Worker] Marking stuck OpenAI task {stuck_id} as failed (timeout)')
+            
+            try:
+                cursor.execute('''
+                    UPDATE color_type_history
+                    SET status = 'failed', result_text = %s, updated_at = %s
+                    WHERE id = %s
+                ''', ('Request timeout - please try again. No charges applied.', datetime.utcnow(), stuck_id))
+                conn.commit()
+                
+                # Refund balance (request never reached OpenRouter, no charges)
+                refund_balance_if_needed(conn, stuck_user_id, stuck_id)
+                print(f'[ColorType-Worker] Stuck OpenAI task {stuck_id} marked as failed and refunded')
+                
+            except Exception as e:
+                print(f'[ColorType-Worker] Error handling stuck OpenAI task {stuck_id}: {str(e)}')
+        
+        # SECOND: Check for stuck Replicate tasks older than 3 minutes and save completed ones to history
+        print(f'[ColorType-Worker] Checking for stuck Replicate tasks older than 3 minutes...')
         cursor.execute('''
             SELECT id, replicate_prediction_id, user_id, created_at
             FROM color_type_history
@@ -590,7 +624,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         ''')
         
         stuck_tasks = cursor.fetchall()
-        print(f'[ColorType-Worker] Found {len(stuck_tasks)} stuck tasks to check')
+        print(f'[ColorType-Worker] Found {len(stuck_tasks)} stuck Replicate tasks to check')
         
         for stuck_task in stuck_tasks:
             stuck_id, stuck_prediction_id, stuck_user_id, stuck_created = stuck_task
