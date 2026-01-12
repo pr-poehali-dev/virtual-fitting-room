@@ -118,8 +118,36 @@ def calculate_color_match_score(description: str, keywords: list) -> float:
     matches = sum(1 for keyword in keywords if keyword.lower() in description_lower)
     return matches / len(keywords) if keywords else 0.0
 
+def get_colortype_expected_params(colortype: str) -> dict:
+    '''Get expected parameters for a colortype from COLORTYPE_MAP'''
+    for (undertone, lightness, saturation, contrast), ct in COLORTYPE_MAP.items():
+        if ct == colortype:
+            return {
+                'undertone': undertone,
+                'lightness': lightness,
+                'saturation': saturation,
+                'contrast': contrast
+            }
+    return None
+
+def calculate_param_match_score(analysis_value: str, expected_value: str) -> float:
+    '''Check if parameter matches expected value (1.0 if match, 0.0 if not)'''
+    return 1.0 if analysis_value == expected_value else 0.0
+
 def match_colortype(analysis: dict) -> tuple:
-    '''Match analysis to colortype using table + reference validation
+    '''Match analysis to best colortype using weighted 7-parameter scoring
+    
+    Scoring:
+    - Undertone: 50%
+    - Lightness: 15%
+    - Saturation: 15%
+    - Contrast: 20%
+    - Hair color: 51%
+    - Skin color: 40%
+    - Eye color: 9%
+    
+    Total score = (param_score * 0.5) + (color_score * 0.5)
+    
     Returns: (colortype, explanation)
     '''
     undertone = analysis.get('undertone', '')
@@ -130,64 +158,54 @@ def match_colortype(analysis: dict) -> tuple:
     eyes = analysis.get('eye_color', '')
     skin = analysis.get('skin_color', '')
     
-    base_colortype = COLORTYPE_MAP.get((undertone, lightness, saturation, contrast))
+    print(f'[Match] Analyzing: {undertone}/{lightness}/{saturation}/{contrast}')
+    print(f'[Match] Colors: hair="{hair}", skin="{skin}", eyes="{eyes}"')
     
-    if not base_colortype:
-        # FALLBACK: If exact combination not found, search ALL 12 colortypes by color match
-        print(f'[Match] No exact mapping for {undertone}/{lightness}/{saturation}/{contrast}, searching by color similarity...')
+    best_colortype = None
+    best_total_score = 0.0
+    best_param_score = 0.0
+    best_color_score = 0.0
+    
+    # Check ALL 12 colortypes
+    for colortype in COLORTYPE_REFERENCES.keys():
+        # Get expected parameters for this colortype
+        expected_params = get_colortype_expected_params(colortype)
         
-        best_colortype = None
-        best_score = 0.0
-        
-        for colortype in COLORTYPE_REFERENCES.keys():
-            ref = COLORTYPE_REFERENCES[colortype]
-            h_score = calculate_color_match_score(hair, ref['hair'])
-            s_score = calculate_color_match_score(skin, ref['skin'])
-            e_score = calculate_color_match_score(eyes, ref['eyes'])
-            total_score = (h_score * 0.51) + (s_score * 0.40) + (e_score * 0.09)
+        if expected_params:
+            # Calculate parameter match score (undertone 50%, lightness 15%, saturation 15%, contrast 20%)
+            undertone_match = calculate_param_match_score(undertone, expected_params['undertone'])
+            lightness_match = calculate_param_match_score(lightness, expected_params['lightness'])
+            saturation_match = calculate_param_match_score(saturation, expected_params['saturation'])
+            contrast_match = calculate_param_match_score(contrast, expected_params['contrast'])
             
-            print(f'[Match] Checking {colortype}: hair={h_score:.2f}, skin={s_score:.2f}, eyes={e_score:.2f}, total={total_score:.2f}')
-            
-            if total_score > best_score:
-                best_score = total_score
-                best_colortype = colortype
+            param_score = (undertone_match * 0.50) + (lightness_match * 0.15) + (saturation_match * 0.15) + (contrast_match * 0.20)
+        else:
+            # No expected params found, param score = 0
+            param_score = 0.0
         
-        explanation = f"No exact mapping for {undertone}/{lightness}/{saturation}/{contrast}. Best color match: {best_colortype} (score: {best_score:.2f}). Hair: {hair}, Skin: {skin}, Eyes: {eyes}."
-        return best_colortype, explanation
-    
-    ref = COLORTYPE_REFERENCES[base_colortype]
-    hair_score = calculate_color_match_score(hair, ref['hair'])
-    skin_score = calculate_color_match_score(skin, ref['skin'])
-    eyes_score = calculate_color_match_score(eyes, ref['eyes'])
-    
-    base_score = (hair_score * 0.51) + (skin_score * 0.40) + (eyes_score * 0.09)
-    
-    print(f'[Match] Base type: {base_colortype}, scores: hair={hair_score:.2f}, skin={skin_score:.2f}, eyes={eyes_score:.2f}, total={base_score:.2f}')
-    
-    if base_score >= 0.4:
-        explanation = f"Based on {undertone}, {lightness}, {saturation}, {contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}. Matches {base_colortype} characteristics."
-        return base_colortype, explanation
-    
-    season_group = base_colortype.split()[-1]
-    same_season_types = [ct for ct in COLORTYPE_REFERENCES.keys() if season_group in ct]
-    
-    best_colortype = base_colortype
-    best_score = base_score
-    
-    for colortype in same_season_types:
+        # Calculate color match score (hair 51%, skin 40%, eyes 9%)
         ref = COLORTYPE_REFERENCES[colortype]
-        h_score = calculate_color_match_score(hair, ref['hair'])
-        s_score = calculate_color_match_score(skin, ref['skin'])
-        e_score = calculate_color_match_score(eyes, ref['eyes'])
-        total_score = (h_score * 0.51) + (s_score * 0.40) + (e_score * 0.09)
+        hair_score = calculate_color_match_score(hair, ref['hair'])
+        skin_score = calculate_color_match_score(skin, ref['skin'])
+        eyes_score = calculate_color_match_score(eyes, ref['eyes'])
         
-        print(f'[Match] Checking {colortype}: hair={h_score:.2f}, skin={s_score:.2f}, eyes={e_score:.2f}, total={total_score:.2f}')
+        color_score = (hair_score * 0.51) + (skin_score * 0.40) + (eyes_score * 0.09)
         
-        if total_score > best_score:
-            best_score = total_score
+        # Total score: 50% parameters + 50% colors
+        total_score = (param_score * 0.5) + (color_score * 0.5)
+        
+        print(f'[Match] {colortype}: param={param_score:.2f} (U:{undertone_match:.0f} L:{lightness_match:.0f} S:{saturation_match:.0f} C:{contrast_match:.0f}), color={color_score:.2f} (h:{hair_score:.2f} s:{skin_score:.2f} e:{eyes_score:.2f}), total={total_score:.2f}')
+        
+        if total_score > best_total_score:
+            best_total_score = total_score
             best_colortype = colortype
+            best_param_score = param_score
+            best_color_score = color_score
     
-    explanation = f"Based on {undertone}, {lightness}, {saturation}, {contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}. Best match: {best_colortype} (score: {best_score:.2f})."
+    explanation = f"Best match: {best_colortype} (total: {best_total_score:.2f}, params: {best_param_score:.2f}, colors: {best_color_score:.2f}). Analysis: {undertone}/{lightness}/{saturation}/{contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}."
+    
+    print(f'[Match] FINAL: {best_colortype} with score {best_total_score:.2f}')
+    
     return best_colortype, explanation
 
 def extract_color_type(result_text: str) -> str:
