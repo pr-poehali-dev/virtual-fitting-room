@@ -171,14 +171,14 @@ def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str
     
     return cdn_url
 
-def submit_to_replicate(image_url: str, eye_color: str = 'brown') -> str:
-    '''Submit task to Replicate LLaVA-13b API and return prediction_id'''
-    replicate_api_key = os.environ.get('REPLICATE_API_TOKEN')
-    if not replicate_api_key:
-        raise Exception('REPLICATE_API_TOKEN not configured')
+def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
+    '''Submit task to OpenAI GPT-4 Vision API and get result immediately (synchronous)'''
+    openai_api_key = os.environ.get('OPENAI_API_KEY')
+    if not openai_api_key:
+        raise Exception('OPENAI_API_KEY not configured')
     
     headers = {
-        'Authorization': f'Bearer {replicate_api_key}',
+        'Authorization': f'Bearer {openai_api_key}',
         'Content-Type': 'application/json'
     }
     
@@ -186,50 +186,43 @@ def submit_to_replicate(image_url: str, eye_color: str = 'brown') -> str:
     prompt = PROMPT_TEMPLATE.format(eye_color=eye_color)
     
     payload = {
-        'version': '2facb4a474a0462c15041b78b1ad70952ea46b5ec6ad29583c0b29dbd4249591',
-        'input': {
-            'image': image_url,
-            'prompt': prompt
-        }
+        'model': 'gpt-4o',  # Latest and cheapest vision model
+        'messages': [
+            {
+                'role': 'user',
+                'content': [
+                    {
+                        'type': 'text',
+                        'text': prompt
+                    },
+                    {
+                        'type': 'image_url',
+                        'image_url': {
+                            'url': image_url
+                        }
+                    }
+                ]
+            }
+        ],
+        'max_tokens': 500,
+        'temperature': 0.3  # Lower temperature for more consistent analysis
     }
     
-    print(f'[Replicate] Submitting to LLaVA-13b API...')
+    print(f'[OpenAI] Submitting to GPT-4o Vision API...')
     response = requests.post(
-        'https://api.replicate.com/v1/predictions',
+        'https://api.openai.com/v1/chat/completions',
         headers=headers,
         json=payload,
-        timeout=30
-    )
-    
-    if response.status_code in [200, 201]:
-        result = response.json()
-        prediction_id = result.get('id')
-        print(f'[Replicate] Prediction created: {prediction_id}')
-        return prediction_id
-    
-    raise Exception(f'Failed to submit to Replicate: {response.status_code} - {response.text}')
-
-def check_replicate_status(prediction_id: str) -> Optional[dict]:
-    '''Check status of Replicate prediction'''
-    replicate_api_key = os.environ.get('REPLICATE_API_TOKEN')
-    if not replicate_api_key:
-        raise Exception('REPLICATE_API_TOKEN not configured')
-    
-    headers = {
-        'Authorization': f'Bearer {replicate_api_key}',
-        'Content-Type': 'application/json'
-    }
-    
-    response = requests.get(
-        f'https://api.replicate.com/v1/predictions/{prediction_id}',
-        headers=headers,
-        timeout=10
+        timeout=60
     )
     
     if response.status_code == 200:
-        return response.json()
+        result = response.json()
+        content = result['choices'][0]['message']['content']
+        print(f'[OpenAI] Got response: {content[:200]}...')
+        return {'status': 'succeeded', 'output': content}
     
-    raise Exception(f'Failed to check status: {response.status_code} - {response.text}')
+    raise Exception(f'Failed to submit to OpenAI: {response.status_code} - {response.text}')
 
 def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
     '''Refund 30 rubles to user balance if not unlimited and not already refunded'''
@@ -744,30 +737,91 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 print(f'[ColorType-Worker] Uploading image to Yandex Storage')
                 cdn_url = upload_to_yandex_storage(person_image, user_id, task_id)
                 
-                # Submit to Replicate
-                print(f'[ColorType-Worker] Submitting to Replicate LLaVA-13b with eye_color: {eye_color}')
-                prediction_id = submit_to_replicate(cdn_url, eye_color)
-                
-                # Update DB with prediction_id and cdn_url
-                cursor.execute('''
-                    UPDATE color_type_history
-                    SET replicate_prediction_id = %s, cdn_url = %s, updated_at = %s
-                    WHERE id = %s
-                ''', (prediction_id, cdn_url, datetime.utcnow(), task_id))
-                conn.commit()
-                
-                print(f'[ColorType-Worker] Task {task_id} submitted to Replicate: {prediction_id}')
-                
-                cursor.close()
-                conn.close()
-                return {
-                    'statusCode': 200,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
-                    'isBase64Encoded': False,
-                    'body': json.dumps({'status': 'submitted', 'prediction_id': prediction_id})
-                }
+                # Submit to OpenAI GPT-4 Vision (synchronous - returns immediately)
+                print(f'[ColorType-Worker] Submitting to OpenAI GPT-4o Vision with eye_color: {eye_color}')
+                try:
+                    openai_result = submit_to_openai(cdn_url, eye_color)
+                    raw_result = openai_result.get('output', '')
+                    
+                    print(f'[ColorType-Worker] OpenAI response: {raw_result[:200]}...')
+                    
+                    # Parse JSON from response
+                    try:
+                        # Extract JSON from markdown code blocks if present
+                        json_str = raw_result
+                        if '```json' in raw_result:
+                            json_str = raw_result.split('```json')[1].split('```')[0].strip()
+                        elif '```' in raw_result:
+                            json_str = raw_result.split('```')[1].split('```')[0].strip()
+                        
+                        # Fix escaped underscores
+                        json_str = json_str.replace('\\\\_', '_')
+                        json_str = json_str.replace('\\_', '_')
+                        
+                        print(f'[ColorType-Worker] Cleaned JSON: {json_str[:300]}...')
+                        
+                        analysis = json.loads(json_str)
+                        
+                        # CRITICAL: Force eye_color from hint
+                        analysis['eye_color'] = eye_color
+                        print(f'[ColorType-Worker] Forced eye_color to hint: {eye_color}')
+                        
+                        print(f'[ColorType-Worker] Parsed analysis: {analysis}')
+                        
+                        color_type, explanation = match_colortype(analysis)
+                        result_text_value = explanation
+                        
+                        print(f'[ColorType-Worker] Matched to: {color_type}')
+                        print(f'[ColorType-Worker] Explanation: {explanation}')
+                        
+                    except (json.JSONDecodeError, KeyError, TypeError) as e:
+                        print(f'[ColorType-Worker] Failed to parse JSON: {e}')
+                        color_type = None
+                        result_text_value = raw_result
+                    
+                    # Save result to DB
+                    cursor.execute('''
+                        UPDATE color_type_history
+                        SET status = 'completed', result_text = %s, color_type = %s, 
+                            cdn_url = %s, saved_to_history = true, updated_at = %s
+                        WHERE id = %s
+                    ''', (result_text_value, color_type, cdn_url, datetime.utcnow(), task_id))
+                    conn.commit()
+                    
+                    print(f'[ColorType-Worker] Task {task_id} completed successfully')
+                    
+                    cursor.close()
+                    conn.close()
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'status': 'completed', 'color_type': color_type})
+                    }
+                    
+                except Exception as e:
+                    print(f'[ColorType-Worker] OpenAI API error: {str(e)}')
+                    
+                    cursor.execute('''
+                        UPDATE color_type_history
+                        SET status = 'failed', result_text = %s, updated_at = %s
+                        WHERE id = %s
+                    ''', (f'OpenAI API error: {str(e)}', datetime.utcnow(), task_id))
+                    conn.commit()
+                    
+                    # Refund balance
+                    refund_balance_if_needed(conn, user_id, task_id)
+                    
+                    cursor.close()
+                    conn.close()
+                    return {
+                        'statusCode': 500,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'status': 'failed', 'error': str(e)})
+                    }
         
-        # Process processing task
+        # Legacy: Process old Replicate tasks that are still in 'processing' status
         if task_status == 'processing' and replicate_prediction_id:
             print(f'[ColorType-Worker] Checking Replicate status for {replicate_prediction_id}')
             replicate_data = check_replicate_status(replicate_prediction_id)
