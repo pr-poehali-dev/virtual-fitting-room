@@ -28,7 +28,7 @@ HINT: Eye color in this image is {eye_color}.
 Analyze the colors visible in this image and determine:
 
 1. UNDERTONE - The invisible base that creates visible color (CRITICAL: analyze carefully!)
-   PRIORITY: Hair color (55%) → Skin tone (40%) → Eyes (5%)
+   PRIORITY: Hair color (51%) → Skin tone (44%) → Eyes (5%)
    
    ⚠️ UNDERTONE is the BASE (golden or blue) that you DON'T see directly, but it CREATES what you DO see!
    
@@ -81,14 +81,14 @@ Analyze the colors visible in this image and determine:
    - Focus on the TONE (golden vs ash), not the DARKNESS!
 
 2. LIGHTNESS - Overall darkness level (focus on HAIR):
-   PRIORITY: Hair color (70%) → Skin tone (20%) → Eyes (10%)
+   PRIORITY: Hair color (51%) → Skin tone (29%) → Eyes (20%)
    
    - Choose LIGHT-COLORS if: very light hair (platinum, light blond, very light brown)
    - Choose MEDIUM-LIGHTNESS-COLORS if: medium hair (medium brown, dark blond)
    - Choose DEEP-COLORS if: dark hair (dark brown, black, deep auburn)
 
 3. SATURATION - Color vibrancy (focus on HAIR and EYES):
-   PRIORITY: Hair color (70%) → Eye color (30%)
+   PRIORITY: Hair color (65%) → Eye color (35%)
    
    - Choose MUTED-SATURATION-COLORS if: dusty, grayish, soft, subdued colors
    - Choose NEUTRAL-SATURATION-COLORS if: moderate saturation
