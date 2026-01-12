@@ -630,10 +630,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             elif '```' in raw_result:
                                 json_str = raw_result.split('```')[1].split('```')[0].strip()
                             
-                            # Fix escaped underscores from LLaVA (hair\_color -> hair_color)
-                            json_str = json_str.replace('\\_', '_')
+                            # Fix escaped underscores from LLaVA
+                            # Handle both \_ and \\\_
+                            json_str = json_str.replace('\\\\_', '_')  # Double-escaped
+                            json_str = json_str.replace('\\_', '_')      # Single-escaped
+                            
+                            print(f'[ColorType-Worker] Cleaned JSON: {json_str[:300]}...')
                             
                             analysis = json.loads(json_str)
+                            print(f'[ColorType-Worker] Parsed analysis: {analysis}')
+                            
                             color_type, explanation = match_colortype(analysis)
                             result_text_value = explanation
                             
@@ -794,10 +800,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         elif '```' in raw_result:
                             json_str = raw_result.split('```')[1].split('```')[0].strip()
                         
-                        # Fix escaped underscores from LLaVA (hair\_color -> hair_color)
-                        json_str = json_str.replace('\\_', '_')
+                        # Fix escaped underscores from LLaVA
+                        # Handle both \_ and \\\_
+                        json_str = json_str.replace('\\\\_', '_')  # Double-escaped
+                        json_str = json_str.replace('\\_', '_')      # Single-escaped
+                        
+                        print(f'[ColorType-Worker] Cleaned JSON: {json_str[:300]}...')
                         
                         analysis = json.loads(json_str)
+                        print(f'[ColorType-Worker] Parsed analysis: {analysis}')
+                        
                         color_type, explanation = match_colortype(analysis)
                         result_text_value = explanation
                         
