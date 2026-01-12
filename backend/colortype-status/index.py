@@ -112,11 +112,70 @@ COLORTYPE_MAP = {
     ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'NEUTRAL-SATURATION-COLORS', 'MEDIUM-CONTRAST'): 'FIERY AUTUMN',
 }
 
+COLOR_SYNONYMS = {
+    # Hair colors
+    'black': ['jet black', 'dark', 'ebony', 'raven', 'coal black'],
+    'dark brown': ['espresso', 'dark', 'deep brown', 'chocolate', 'dark cool brown', 'dark warm brown'],
+    'medium brown': ['brown', 'medium', 'chestnut brown'],
+    'light brown': ['light', 'caramel', 'light warm brown'],
+    'auburn': ['red', 'copper', 'reddish', 'red-brown', 'mahogany'],
+    'blond': ['blonde', 'light', 'fair'],
+    'golden blond': ['golden', 'honey', 'warm blond', 'sunny'],
+    'ash blond': ['ash', 'cool blond', 'platinum', 'silver'],
+    'honey': ['golden', 'warm', 'honey blond'],
+    
+    # Skin tones
+    'porcelain': ['pale', 'fair', 'very light', 'ivory', 'alabaster'],
+    'ivory': ['light', 'pale', 'fair', 'cream'],
+    'beige': ['light beige', 'medium beige', 'neutral'],
+    'warm beige': ['peachy', 'golden beige', 'warm'],
+    'cool beige': ['pink beige', 'rosy beige', 'cool'],
+    'olive': ['green undertone', 'medium olive', 'light olive'],
+    'deep': ['dark', 'rich', 'deep brown'],
+    
+    # Eye colors
+    'blue': ['light blue', 'bright blue', 'azure', 'sky blue'],
+    'green': ['jade', 'emerald', 'hazel-green'],
+    'brown': ['dark brown', 'light brown', 'amber', 'chestnut'],
+    'hazel': ['brown-green', 'golden brown', 'amber'],
+    'gray': ['grey', 'gray-blue', 'gray-green', 'silver']
+}
+
 def calculate_color_match_score(description: str, keywords: list) -> float:
-    '''Calculate how well a color description matches reference keywords'''
+    '''Calculate how well a color description matches reference keywords (with synonym support)'''
+    if not keywords:
+        return 0.0
+    
     description_lower = description.lower()
-    matches = sum(1 for keyword in keywords if keyword.lower() in description_lower)
-    return matches / len(keywords) if keywords else 0.0
+    matches = 0
+    
+    for keyword in keywords:
+        keyword_lower = keyword.lower()
+        
+        # Direct match
+        if keyword_lower in description_lower:
+            matches += 1
+            continue
+        
+        # Synonym match
+        found_synonym = False
+        for base_word, synonyms in COLOR_SYNONYMS.items():
+            if base_word in keyword_lower:
+                # Check if any synonym appears in description
+                if any(syn in description_lower for syn in synonyms):
+                    matches += 0.8  # Synonym match = 80% score
+                    found_synonym = True
+                    break
+        
+        if found_synonym:
+            continue
+        
+        # Partial word match (e.g., "dark" in "dark brown")
+        keyword_words = keyword_lower.split()
+        if any(word in description_lower for word in keyword_words if len(word) > 3):
+            matches += 0.5  # Partial match = 50% score
+    
+    return matches / len(keywords)
 
 def get_colortype_expected_params(colortype: str) -> dict:
     '''Get expected parameters for a colortype from COLORTYPE_MAP'''

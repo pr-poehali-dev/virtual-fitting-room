@@ -27,29 +27,42 @@ HINT: This person has {eye_color} eyes.
 
 Look at THIS photo very carefully and determine:
 
-1. UNDERTONE - Look at the hair and skin tone temperature:
-   - Choose WARM-UNDERTONE if: golden/yellow/peachy/red/orange tones in hair or skin (warm base)
-   - Choose COOL-UNDERTONE if: ash/blue/pink/violet tones in hair or skin (cool base)
+1. UNDERTONE - Temperature of colors (focus on HAIR first, then skin):
+   PRIORITY: Hair color (55%) → Skin tone (40%) → Eyes (5%)
+   
+   - Choose WARM-UNDERTONE if: 
+     * Hair has golden/yellow/red/orange/copper tones (honey, auburn, golden blond, warm brown)
+     * Skin has peachy/yellow/golden undertones
+   
+   - Choose COOL-UNDERTONE if:
+     * Hair has ash/blue/violet tones (ash blond, cool brown, black with blue tint)
+     * Skin has pink/blue/rosy undertones
 
-2. LIGHTNESS - How light or dark are the overall colors (hair + skin):
-   - Choose LIGHT-COLORS if: very light hair (blond, light brown) AND light/pale skin
-   - Choose MEDIUM-LIGHTNESS-COLORS if: medium tones - not very light, not very dark (medium brown hair, medium skin)
-   - Choose DEEP-COLORS if: dark hair (dark brown, black) OR deep skin tones
+2. LIGHTNESS - Overall darkness level (focus on HAIR):
+   PRIORITY: Hair color (70%) → Skin tone (20%) → Eyes (10%)
+   
+   - Choose LIGHT-COLORS if: very light hair (platinum, light blond, very light brown)
+   - Choose MEDIUM-LIGHTNESS-COLORS if: medium hair (medium brown, dark blond)
+   - Choose DEEP-COLORS if: dark hair (dark brown, black, deep auburn)
 
-3. SATURATION - How vivid/muted are the colors (independent from lightness):
-   - Choose MUTED-SATURATION-COLORS if: dusty, subdued, grayish, soft colors (low saturation)
-   - Choose NEUTRAL-SATURATION-COLORS if: moderate saturation, neither muted nor bright
-   - Choose BRIGHT-SATURATION-COLORS if: clear, vivid, pure colors (high saturation)
+3. SATURATION - Color vibrancy (focus on HAIR and EYES):
+   PRIORITY: Hair color (70%) → Eye color (30%)
+   
+   - Choose MUTED-SATURATION-COLORS if: dusty, grayish, soft, subdued colors
+   - Choose NEUTRAL-SATURATION-COLORS if: moderate saturation
+   - Choose BRIGHT-SATURATION-COLORS if: clear, vivid, pure, bright colors
 
-4. CONTRAST LEVEL - Compare hair, skin, and eyes in THIS photo:
-   - Choose LOW-CONTRAST if: hair, skin, eyes are similar lightness (small difference)
-   - Choose MEDIUM-CONTRAST if: moderate difference in lightness between features
-   - Choose HIGH-CONTRAST if: very dramatic difference (e.g., very dark hair + very pale skin, or very light hair + dark skin)
+4. CONTRAST LEVEL - Lightness difference between features:
+   PRIORITY: Hair vs Skin (50%) + Skin vs Eyes (50%)
+   
+   - Choose LOW-CONTRAST if: all features similar lightness (e.g., light hair + light skin + light eyes)
+   - Choose MEDIUM-CONTRAST if: moderate difference
+   - Choose HIGH-CONTRAST if: dramatic difference (e.g., very dark hair + very pale skin, OR very light hair + very dark skin)
 
-5. DESCRIBE EXACT COLORS you see in THIS SPECIFIC PHOTO:
-   - Hair: Use specific descriptors like "golden blond", "dark brown", "auburn", "black", "ash blond", "honey brown"
-   - Eyes: Specific color like "blue", "green", "brown", "hazel", "gray-blue"
-   - Skin: Specific tone like "ivory", "porcelain", "light warm beige", "medium beige", "olive", "deep brown"
+5. DESCRIBE EXACT COLORS you see (use synonyms and precise descriptors):
+   - Hair: Be specific - "jet black", "ash brown", "golden blond", "auburn", "dark cool brown", "honey blond", "platinum", "espresso"
+   - Eyes: Use color names - "deep brown", "bright blue", "hazel", "gray-blue", "green", "amber", "dark gray"
+   - Skin: Use tone descriptors - "porcelain", "ivory", "light warm beige", "olive", "medium beige", "fair", "pale cool beige", "deep brown"
 
 === OUTPUT FORMAT ===
 
@@ -304,11 +317,70 @@ COLORTYPE_MAP = {
     ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'NEUTRAL-SATURATION-COLORS', 'MEDIUM-CONTRAST'): 'FIERY AUTUMN', 
 }
 
+COLOR_SYNONYMS = {
+    # Hair colors
+    'black': ['jet black', 'dark', 'ebony', 'raven', 'coal black'],
+    'dark brown': ['espresso', 'dark', 'deep brown', 'chocolate', 'dark cool brown', 'dark warm brown'],
+    'medium brown': ['brown', 'medium', 'chestnut brown'],
+    'light brown': ['light', 'caramel', 'light warm brown'],
+    'auburn': ['red', 'copper', 'reddish', 'red-brown', 'mahogany'],
+    'blond': ['blonde', 'light', 'fair'],
+    'golden blond': ['golden', 'honey', 'warm blond', 'sunny'],
+    'ash blond': ['ash', 'cool blond', 'platinum', 'silver'],
+    'honey': ['golden', 'warm', 'honey blond'],
+    
+    # Skin tones
+    'porcelain': ['pale', 'fair', 'very light', 'ivory', 'alabaster'],
+    'ivory': ['light', 'pale', 'fair', 'cream'],
+    'beige': ['light beige', 'medium beige', 'neutral'],
+    'warm beige': ['peachy', 'golden beige', 'warm'],
+    'cool beige': ['pink beige', 'rosy beige', 'cool'],
+    'olive': ['green undertone', 'medium olive', 'light olive'],
+    'deep': ['dark', 'rich', 'deep brown'],
+    
+    # Eye colors
+    'blue': ['light blue', 'bright blue', 'azure', 'sky blue'],
+    'green': ['jade', 'emerald', 'hazel-green'],
+    'brown': ['dark brown', 'light brown', 'amber', 'chestnut'],
+    'hazel': ['brown-green', 'golden brown', 'amber'],
+    'gray': ['grey', 'gray-blue', 'gray-green', 'silver']
+}
+
 def calculate_color_match_score(description: str, keywords: list) -> float:
-    '''Calculate how well a color description matches reference keywords'''
+    '''Calculate how well a color description matches reference keywords (with synonym support)'''
+    if not keywords:
+        return 0.0
+    
     description_lower = description.lower()
-    matches = sum(1 for keyword in keywords if keyword.lower() in description_lower)
-    return matches / len(keywords) if keywords else 0.0
+    matches = 0
+    
+    for keyword in keywords:
+        keyword_lower = keyword.lower()
+        
+        # Direct match
+        if keyword_lower in description_lower:
+            matches += 1
+            continue
+        
+        # Synonym match
+        found_synonym = False
+        for base_word, synonyms in COLOR_SYNONYMS.items():
+            if base_word in keyword_lower:
+                # Check if any synonym appears in description
+                if any(syn in description_lower for syn in synonyms):
+                    matches += 0.8  # Synonym match = 80% score
+                    found_synonym = True
+                    break
+        
+        if found_synonym:
+            continue
+        
+        # Partial word match (e.g., "dark" in "dark brown")
+        keyword_words = keyword_lower.split()
+        if any(word in description_lower for word in keyword_words if len(word) > 3):
+            matches += 0.5  # Partial match = 50% score
+    
+    return matches / len(keywords)
 
 def get_colortype_expected_params(colortype: str) -> dict:
     '''Get expected parameters for a colortype from COLORTYPE_MAP''' 
