@@ -27,32 +27,58 @@ HINT: This person has {eye_color} eyes.
 
 Look at THIS photo very carefully and determine:
 
-1. UNDERTONE - Temperature of colors (CRITICAL: focus on HAIR first, then skin):
+1. UNDERTONE - The invisible base that creates visible color (CRITICAL: analyze carefully!)
    PRIORITY: Hair color (55%) → Skin tone (40%) → Eyes (5%)
    
-   ⚠️ WARM vs COOL is about COLOR TEMPERATURE, not darkness!
+   ⚠️ UNDERTONE is the BASE (golden or blue) that you DON'T see directly, but it CREATES what you DO see!
    
-   - Choose WARM-UNDERTONE if hair/skin has WARM tones:
-     WARM HAIR examples:
-     * Golden blond (yellow/golden tones)
-     * Honey blond (golden/warm tones)
-     * Auburn (red/copper tones)
-     * Warm brown (chocolate/golden brown)
-     * Copper, ginger, strawberry
+   THEORY: Everyone has either a GOLDEN base (warm) or BLUE base (cool).
+   - Skin/hair/eyes are GENETICALLY LINKED - all three are either warm OR cool together
+   - You won't see literal gold or blue, but you'll see what they CREATE
+   
+   🔍 ANALYZE THE BASE:
+   
+   - Choose WARM-UNDERTONE if the BASE is GOLDEN (creates warm versions):
      
-     WARM SKIN: peachy, golden, yellow undertones
-   
-   - Choose COOL-UNDERTONE if hair/skin has COOL tones:
-     COOL HAIR examples:
-     * Jet black (pure black, no golden reflection)
-     * Cool brown (ash brown, no golden tones)
-     * Ash blond (platinum, silver, no yellow)
-     * Dark cool brown (espresso, cool chocolate)
+     WARM HAIR (red/gold based):
+     * Yellow blonde, golden blonde, honey blonde
+     * Chestnut brown (warm brown with golden tones)
+     * Auburn, copper, ginger, red tones
+     * Mahogany (warm deep brown)
+     * ANY hair with golden/yellow/red reflection
      
-     COOL SKIN: pink, blue, rosy undertones
+     WARM SKIN (golden based):
+     * Yellow beige (not rosy beige)
+     * Peachy, golden, yellow undertones
+     * Mahogany (for deep skin)
+     
+     WARM EYES: Jade green, golden brown, amber, warm hazel
    
-   🔍 KEY TEST: Does the hair have golden/yellow/red tones? → WARM
-                Does the hair look ash/neutral/black? → COOL
+   - Choose COOL-UNDERTONE if the BASE is BLUE (creates cool versions):
+     
+     COOL HAIR (ash based):
+     * Platinum blonde (no yellow tones)
+     * Ash blonde, ash brown
+     * Charcoal brown (cool dark brown, no golden tones)
+     * Jet black, blue-black (pure black)
+     * ANY hair WITHOUT golden/red reflection
+     
+     COOL SKIN (blue based):
+     * Rosy beige (not yellow beige)
+     * Pink, blue, rosy undertones
+     * Ebony (for deep skin)
+     
+     COOL EYES: Gray-green, icy blue, gray, cool hazel
+   
+   🎯 CRITICAL DECISION RULE:
+   Step 1: Look at HAIR - does it have ANY golden/yellow/red tones? → WARM
+   Step 2: If hair looks ash/gray/pure black (NO golden tones) → COOL
+   Step 3: Confirm with SKIN - golden/peachy base = WARM, pink/rosy base = COOL
+   
+   ⚠️ COMMON MISTAKES TO AVOID:
+   - Dark hair ≠ automatically cool (dark brown can be warm chestnut!)
+   - Light hair ≠ automatically warm (platinum blonde is cool!)
+   - Focus on the TONE (golden vs ash), not the DARKNESS!
 
 2. LIGHTNESS - Overall darkness level (focus on HAIR):
    PRIORITY: Hair color (70%) → Skin tone (20%) → Eyes (10%)
