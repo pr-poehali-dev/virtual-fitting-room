@@ -35,24 +35,7 @@ const colorTypeNames: Record<string, string> = {
   'VIBRANT SPRING': 'Яркая Весна'
 };
 
-// Eye colors mapping (Russian → English)
-const eyeColors: Record<string, string> = {
-  'Голубые': 'blue',
-  'Сине-зелёные': 'blue-green',
-  'Серо-голубые': 'gray-blue',
-  'Серо-зелёные': 'gray-green',
-  'Серые': 'gray',
-  'Зелёные': 'green',
-  'Бирюзовые': 'turquoise blue',
-  'Нефритовые': 'jade',
-  'Светло-карие': 'light brown',
-  'Карие': 'brown',
-  'Коричнево-зелёные': 'brown-green',
-  'Чёрно-карие': 'black-brown',
-  'Ореховые (золотистые)': 'hazel (golden)',
-  'Золотисто-карие': 'golden brown',
-  'Шоколадные': 'cocoa'
-};
+
 
 export default function ColorType() {
   const { user } = useAuth();
@@ -62,7 +45,6 @@ export default function ColorType() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageForCrop, setTempImageForCrop] = useState<string | null>(null);
-  const [eyeColor, setEyeColor] = useState<string>('');
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisStatus, setAnalysisStatus] = useState<string>('');
@@ -209,11 +191,6 @@ export default function ColorType() {
       return;
     }
 
-    if (!eyeColor) {
-      toast.error('Выберите цвет глаз');
-      return;
-    }
-
     setIsAnalyzing(true);
     setAnalysisStatus('Запуск анализа...');
     setHasTimedOut(false);
@@ -227,8 +204,7 @@ export default function ColorType() {
           'X-User-Id': user.id
         },
         body: JSON.stringify({
-          person_image: imageToAnalyze,
-          eye_color: eyeColor
+          person_image: imageToAnalyze
         })
       });
 
@@ -322,32 +298,11 @@ export default function ColorType() {
 
                   </div>
 
-                  {uploadedImage && (
-                    <div className="space-y-2">
-                      <label htmlFor="eye-color" className="block text-sm font-medium text-foreground">
-                        Цвет глаз
-                      </label>
-                      <select
-                        id="eye-color"
-                        value={eyeColor ? (Object.keys(eyeColors).find(key => eyeColors[key] === eyeColor) || '') : ''}
-                        onChange={(e) => setEyeColor(e.target.value ? eyeColors[e.target.value] : '')}
-                        className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-                        disabled={isAnalyzing}
-                        required
-                      >
-                        <option value="">Выберите цвет глаз</option>
-                        {Object.keys(eyeColors).map((colorRu) => (
-                          <option key={colorRu} value={colorRu}>
-                            {colorRu}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
+
 
                   <Button 
                     onClick={handleAnalyze} 
-                    disabled={isAnalyzing || !uploadedImage || !eyeColor}
+                    disabled={isAnalyzing || !uploadedImage}
                     className="w-full h-12 text-base"
                     size="lg"
                   >
