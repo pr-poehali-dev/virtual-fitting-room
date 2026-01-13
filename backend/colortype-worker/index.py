@@ -487,13 +487,14 @@ def match_colortype(analysis: dict) -> tuple:
         expected_params = get_colortype_expected_params(colortype)
         
         if expected_params:
-            # Calculate parameter match score (undertone 100%, lightness 33%, saturation 33%, contrast 34%)
+            # Calculate parameter match score (undertone 50%, lightness 16.5%, saturation 16.5%, contrast 17%)
+            # Normalized so total = 1.0 when all match
             undertone_match = calculate_param_match_score(undertone, expected_params['undertone'])
             lightness_match = calculate_param_match_score(lightness, expected_params['lightness'])
             saturation_match = calculate_param_match_score(saturation, expected_params['saturation'])
             contrast_match = calculate_param_match_score(contrast, expected_params['contrast'])
             
-            param_score = (undertone_match * 1.00) + (lightness_match * 0.33) + (saturation_match * 0.33) + (contrast_match * 0.34)
+            param_score = (undertone_match * 0.50) + (lightness_match * 0.165) + (saturation_match * 0.165) + (contrast_match * 0.17)
         else:
             # No expected params found, param score = 0
             param_score = 0.0
