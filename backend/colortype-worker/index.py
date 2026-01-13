@@ -707,7 +707,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # NOW: Get current task
         cursor.execute('''
-            SELECT id, person_image, replicate_prediction_id, user_id, status, saved_to_history
+            SELECT id, person_image, replicate_prediction_id, user_id, status, saved_to_history, eye_color
             FROM color_type_history
             WHERE id = %s
         ''', (task_id,))
@@ -725,7 +725,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Task not found'})
             }
         
-        task_id, person_image, replicate_prediction_id, user_id, task_status, saved_to_history = task_row
+        task_id, person_image, replicate_prediction_id, user_id, task_status, saved_to_history, eye_color = task_row
+        eye_color = eye_color or 'brown'  # Default if not provided
         
         # Check if already processed
         if saved_to_history:
@@ -771,7 +772,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 cdn_url = upload_to_yandex_storage(person_image, user_id, task_id)
                 
                 # Submit to OpenAI GPT-4 Vision (synchronous - returns immediately)
-                print(f'[ColorType-Worker] Submitting to OpenAI GPT-4o Vision (auto-detect eye color)')
+                print(f'[ColorType-Worker] Submitting to OpenAI GPT-4o Vision with user hint: {eye_color}')
                 try:
                     openai_result = submit_to_openai(cdn_url)
                     raw_result = openai_result.get('output', '')
@@ -794,6 +795,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         print(f'[ColorType-Worker] Cleaned JSON: {json_str[:300]}...')
                         
                         analysis = json.loads(json_str)
+                        
+                        # Override eye_color with user's choice
+                        analysis['eye_color'] = eye_color
+                        print(f'[ColorType-Worker] Overridden eye_color with user hint: {eye_color}')
                         
                         print(f'[ColorType-Worker] Parsed analysis: {analysis}')
                         
