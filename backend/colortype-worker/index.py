@@ -79,7 +79,7 @@ Analyze the colors visible in this image and determine:
    - Focus on the TONE (golden vs ash), not the DARKNESS!
 
 2. LIGHTNESS - Overall darkness level (focus on HAIR):
-   PRIORITY: Hair color (51%) → Skin tone (29%) → Eyes (20%)
+   PRIORITY: Hair color (40%) → Skin tone (40%) → Eyes (20%)
    
    - Choose LIGHT-COLORS if: very light hair (platinum, light blond, very light brown)
    - Choose MEDIUM-LIGHTNESS-COLORS if: medium hair (medium brown, dark blond)
