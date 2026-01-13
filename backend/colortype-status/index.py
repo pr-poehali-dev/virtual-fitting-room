@@ -242,8 +242,8 @@ def match_colortype(analysis: dict) -> tuple:
     - Lightness: 33%
     - Saturation: 33%
     - Contrast: 34%
-    - Hair color: 33%
-    - Skin color: 32%
+    - Hair color: 35%
+    - Skin color: 30%
     - Eye color: 35%
     
     Total score = (param_score * 0.5) + (color_score * 0.5)
@@ -281,7 +281,7 @@ def match_colortype(analysis: dict) -> tuple:
             skin_score = calculate_color_match_score(skin, ref['skin'])
             eyes_score = calculate_color_match_score(eyes, ref['eyes'])
             
-            color_score = (hair_score * 0.33) + (skin_score * 0.32) + (eyes_score * 0.35)
+            color_score = (hair_score * 0.35) + (skin_score * 0.30) + (eyes_score * 0.35)
             
             print(f'[Match] {colortype}: color={color_score:.2f} (h:{hair_score:.2f} s:{skin_score:.2f} e:{eyes_score:.2f})')
             
@@ -334,13 +334,13 @@ def match_colortype(analysis: dict) -> tuple:
         saturation_match = best_match_info['S'] if best_match_info else 0
         contrast_match = best_match_info['C'] if best_match_info else 0
         
-        # Calculate color match score (hair 33%, skin 32%, eyes 35%)
+        # Calculate color match score (hair 35%, skin 30%, eyes 35%)
         ref = COLORTYPE_REFERENCES[colortype]
         hair_score = calculate_color_match_score(hair, ref['hair'])
         skin_score = calculate_color_match_score(skin, ref['skin'])
         eyes_score = calculate_color_match_score(eyes, ref['eyes'])
         
-        color_score = (hair_score * 0.33) + (skin_score * 0.32) + (eyes_score * 0.35)
+        color_score = (hair_score * 0.35) + (skin_score * 0.30) + (eyes_score * 0.35)
         
         # Total score: 50% parameters + 50% colors
         total_score = (param_score * 0.5) + (color_score * 0.5)
