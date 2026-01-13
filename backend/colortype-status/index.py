@@ -31,7 +31,7 @@ def check_replicate_status(prediction_id: str) -> dict:
 COLORTYPE_REFERENCES = {
     'GENTLE AUTUMN': {
         'hair': ['dark honey', 'tawny', 'gentle auburn', 'honey', 'auburn', 'dark honey blond', 'dark golden blond'],
-        'eyes': ['turquoise blue', 'jade', 'light brown', 'turquoise', 'hazel', 'gray-green'],
+        'eyes': ['turquoise blue', 'jade', 'light brown', 'turquoise', 'hazel'],
         'skin': ['light warm beige', 'warm beige', 'beige']
     },
     'FIERY AUTUMN': {
