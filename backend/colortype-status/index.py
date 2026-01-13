@@ -220,10 +220,10 @@ def match_colortype(analysis: dict) -> tuple:
     '''Match analysis to best colortype using weighted 7-parameter scoring
     
     Scoring:
-    - Undertone: 50%
-    - Lightness: 15%
-    - Saturation: 15%
-    - Contrast: 20%
+    - Undertone: 100%
+    - Lightness: 33%
+    - Saturation: 33%
+    - Contrast: 34%
     - Hair color: 33%
     - Skin color: 33%
     - Eye color: 34%
@@ -254,24 +254,24 @@ def match_colortype(analysis: dict) -> tuple:
         expected_params = get_colortype_expected_params(colortype)
         
         if expected_params:
-            # Calculate parameter match score (undertone 50%, lightness 15%, saturation 15%, contrast 20%)
+            # Calculate parameter match score (undertone 100%, lightness 33%, saturation 33%, contrast 34%)
             undertone_match = calculate_param_match_score(undertone, expected_params['undertone'])
             lightness_match = calculate_param_match_score(lightness, expected_params['lightness'])
             saturation_match = calculate_param_match_score(saturation, expected_params['saturation'])
             contrast_match = calculate_param_match_score(contrast, expected_params['contrast'])
             
-            param_score = (undertone_match * 0.50) + (lightness_match * 0.15) + (saturation_match * 0.15) + (contrast_match * 0.20)
+            param_score = (undertone_match * 1.00) + (lightness_match * 0.33) + (saturation_match * 0.33) + (contrast_match * 0.34)
         else:
             # No expected params found, param score = 0
             param_score = 0.0
         
-        # Calculate color match score (hair 51%, skin 40%, eyes 9%)
+        # Calculate color match score (hair 33%, skin 33%, eyes 34%)
         ref = COLORTYPE_REFERENCES[colortype]
         hair_score = calculate_color_match_score(hair, ref['hair'])
         skin_score = calculate_color_match_score(skin, ref['skin'])
         eyes_score = calculate_color_match_score(eyes, ref['eyes'])
         
-        color_score = (hair_score * 0.51) + (skin_score * 0.40) + (eyes_score * 0.09)
+        color_score = (hair_score * 0.33) + (skin_score * 0.33) + (eyes_score * 0.34)
         
         # Total score: 50% parameters + 50% colors
         total_score = (param_score * 0.5) + (color_score * 0.5)
