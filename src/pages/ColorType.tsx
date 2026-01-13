@@ -395,7 +395,11 @@ export default function ColorType() {
                     )}
                   </Button>
 
-
+                  {!user?.unlimited_access && !isAnalyzing && (
+                    <p className="text-sm text-muted-foreground text-center">
+                      Стоимость генерации: {COST}₽
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
