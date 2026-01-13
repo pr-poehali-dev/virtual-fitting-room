@@ -21,8 +21,6 @@ REFERENCE_SCHEMA_URL = "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7
 
 PROMPT_TEMPLATE = '''TASK: Analyze the color characteristics in this portrait photo for color season analysis. Focus on objective color analysis of hair, skin, and eyes.
 
-HINT: Eye color in this image is {eye_color}.
-
 === COLOR ANALYSIS INSTRUCTIONS ===
 
 Analyze the colors visible in this image and determine:
@@ -171,7 +169,7 @@ def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str
     
     return cdn_url
 
-def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
+def submit_to_openai(image_url: str) -> dict:
     '''Submit task to OpenRouter (GPT-4o Vision) and get result immediately (synchronous)'''
     openrouter_api_key = os.environ.get('OPENROUTER_API_KEY')
     if not openrouter_api_key:
@@ -184,8 +182,8 @@ def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
         'X-Title': 'Virtual Fitting Room - Colortype Analysis'
     }
     
-    # Format prompt with eye color
-    prompt = PROMPT_TEMPLATE.format(eye_color=eye_color)
+    # Use prompt (GPT-4o will auto-detect eye color)
+    prompt = PROMPT_TEMPLATE
     
     payload = {
         'model': 'openai/gpt-4o',  # OpenRouter format: provider/model
@@ -709,7 +707,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # NOW: Get current task
         cursor.execute('''
-            SELECT id, person_image, replicate_prediction_id, user_id, status, saved_to_history, eye_color
+            SELECT id, person_image, replicate_prediction_id, user_id, status, saved_to_history
             FROM color_type_history
             WHERE id = %s
         ''', (task_id,))
@@ -727,8 +725,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Task not found'})
             }
         
-        task_id, person_image, replicate_prediction_id, user_id, task_status, saved_to_history, eye_color = task_row
-        eye_color = eye_color or 'brown'  # Default to brown if None
+        task_id, person_image, replicate_prediction_id, user_id, task_status, saved_to_history = task_row
         
         # Check if already processed
         if saved_to_history:
@@ -774,9 +771,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 cdn_url = upload_to_yandex_storage(person_image, user_id, task_id)
                 
                 # Submit to OpenAI GPT-4 Vision (synchronous - returns immediately)
-                print(f'[ColorType-Worker] Submitting to OpenAI GPT-4o Vision with eye_color: {eye_color}')
+                print(f'[ColorType-Worker] Submitting to OpenAI GPT-4o Vision (auto-detect eye color)')
                 try:
-                    openai_result = submit_to_openai(cdn_url, eye_color)
+                    openai_result = submit_to_openai(cdn_url)
                     raw_result = openai_result.get('output', '')
                     
                     print(f'[ColorType-Worker] OpenAI response: {raw_result[:200]}...')
@@ -797,10 +794,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         print(f'[ColorType-Worker] Cleaned JSON: {json_str[:300]}...')
                         
                         analysis = json.loads(json_str)
-                        
-                        # CRITICAL: Force eye_color from hint
-                        analysis['eye_color'] = eye_color
-                        print(f'[ColorType-Worker] Forced eye_color to hint: {eye_color}')
                         
                         print(f'[ColorType-Worker] Parsed analysis: {analysis}')
                         
