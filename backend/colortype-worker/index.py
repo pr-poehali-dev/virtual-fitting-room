@@ -433,17 +433,21 @@ def calculate_color_match_score(description: str, keywords: list) -> float:
     
     return matches / len(keywords)
 
-def get_colortype_expected_params(colortype: str) -> dict:
-    '''Get expected parameters for a colortype from COLORTYPE_MAP''' 
+def get_all_colortype_params(colortype: str) -> list:
+    '''Get ALL parameter combinations for a colortype from COLORTYPE_MAP
+    
+    Returns: List of dicts with all possible parameter combinations for this colortype
+    '''
+    params_list = []
     for (undertone, lightness, saturation, contrast), ct in COLORTYPE_MAP.items():
         if ct == colortype:
-            return {
+            params_list.append({
                 'undertone': undertone,
                 'lightness': lightness,
                 'saturation': saturation,
                 'contrast': contrast
-            }
-    return None
+            })
+    return params_list
 
 def calculate_param_match_score(analysis_value: str, expected_value: str) -> float:
     '''Check if parameter matches expected value (1.0 if match, 0.0 if not)'''
@@ -483,21 +487,38 @@ def match_colortype(analysis: dict) -> tuple:
     
     # Check ALL 12 colortypes
     for colortype in COLORTYPE_REFERENCES.keys():
-        # Get expected parameters for this colortype
-        expected_params = get_colortype_expected_params(colortype)
+        # Get ALL parameter combinations for this colortype
+        all_params = get_all_colortype_params(colortype)
         
-        if expected_params:
-            # Calculate parameter match score (undertone 50%, lightness 16.5%, saturation 16.5%, contrast 17%)
-            # Normalized so total = 1.0 when all match
-            undertone_match = calculate_param_match_score(undertone, expected_params['undertone'])
-            lightness_match = calculate_param_match_score(lightness, expected_params['lightness'])
-            saturation_match = calculate_param_match_score(saturation, expected_params['saturation'])
-            contrast_match = calculate_param_match_score(contrast, expected_params['contrast'])
-            
-            param_score = (undertone_match * 0.50) + (lightness_match * 0.165) + (saturation_match * 0.165) + (contrast_match * 0.17)
-        else:
-            # No expected params found, param score = 0
-            param_score = 0.0
+        # Find BEST matching parameter combination for this colortype
+        best_param_score = 0.0
+        best_match_info = None
+        
+        if all_params:
+            for expected_params in all_params:
+                # Calculate parameter match score (undertone 50%, lightness 16.5%, saturation 16.5%, contrast 17%)
+                # Normalized so total = 1.0 when all match
+                undertone_match = calculate_param_match_score(undertone, expected_params['undertone'])
+                lightness_match = calculate_param_match_score(lightness, expected_params['lightness'])
+                saturation_match = calculate_param_match_score(saturation, expected_params['saturation'])
+                contrast_match = calculate_param_match_score(contrast, expected_params['contrast'])
+                
+                param_score_candidate = (undertone_match * 0.50) + (lightness_match * 0.165) + (saturation_match * 0.165) + (contrast_match * 0.17)
+                
+                if param_score_candidate > best_param_score:
+                    best_param_score = param_score_candidate
+                    best_match_info = {
+                        'U': undertone_match,
+                        'L': lightness_match,
+                        'S': saturation_match,
+                        'C': contrast_match
+                    }
+        
+        param_score = best_param_score
+        undertone_match = best_match_info['U'] if best_match_info else 0
+        lightness_match = best_match_info['L'] if best_match_info else 0
+        saturation_match = best_match_info['S'] if best_match_info else 0
+        contrast_match = best_match_info['C'] if best_match_info else 0
         
         # Calculate color match score (hair 33%, skin 33%, eyes 34%)
         ref = COLORTYPE_REFERENCES[colortype]
