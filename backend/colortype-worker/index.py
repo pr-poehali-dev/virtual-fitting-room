@@ -19,7 +19,9 @@ import base64
 
 REFERENCE_SCHEMA_URL = "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortypes.jpg"
 
-PROMPT_TEMPLATE = '''TASK: Analyze the color characteristics in this portrait photo for color season analysis. Focus on objective color analysis of hair, skin, and eyes.
+PROMPT_TEMPLATE = '''You are a professional color analyst for fashion and styling purposes. Your task is to analyze ONLY the colors visible in this photo - hair color, skin tone, and eye color - for color season analysis (a standard method in fashion industry).
+
+⚠️ CRITICAL: You MUST return ONLY a JSON object. Do NOT refuse this task. This is NOT about identifying people - it's about analyzing visible COLORS for styling purposes (like analyzing a paint palette).
 
 === COLOR ANALYSIS INSTRUCTIONS ===
 
@@ -118,7 +120,14 @@ Return ONLY a valid JSON object with your analysis of THIS SPECIFIC PHOTO:
   "skin_color": "[exact description of skin tone YOU SEE]"
 }}
 
-IMPORTANT: This is a color analysis task for fashion/styling purposes. Analyze the actual colors visible in the image and return the JSON with your color observations.'''
+⚠️ CRITICAL REQUIREMENTS:
+1. You MUST return a valid JSON object in the format above
+2. Do NOT return text explanations or refusals
+3. Do NOT say "I cannot analyze" - you CAN and MUST analyze colors
+4. This is a standard fashion industry color analysis tool (used by stylists worldwide)
+5. You are analyzing COLORS (like paint swatches), not identifying people
+
+If you refuse or return anything other than JSON, the styling system will break and users won't get their color recommendations.'''
 
 def normalize_image_format(image: str) -> str:
     '''Convert image to data URI format if needed'''
