@@ -27,6 +27,12 @@ def check_replicate_status(prediction_id: str) -> dict:
     
     raise Exception(f'Failed to check status: {response.status_code}')
 
+# Ambiguous parameter combinations that require color-based resolution
+# If parameters match one of these keys, compare color scores for all candidates
+AMBIGUOUS_COMBINATIONS = {
+    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'NEUTRAL-SATURATION-COLORS', 'MEDIUM-CONTRAST'): ['GENTLE AUTUMN', 'BRIGHT SPRING']
+}
+
 # Colortype reference data with keywords
 COLORTYPE_REFERENCES = {
     'GENTLE AUTUMN': {
@@ -240,6 +246,9 @@ def match_colortype(analysis: dict) -> tuple:
     
     Total score = (param_score * 0.5) + (color_score * 0.5)
     
+    Special handling for ambiguous combinations:
+    - If parameters match AMBIGUOUS_COMBINATIONS, compare color scores only
+    
     Returns: (colortype, explanation)
     '''
     undertone = analysis.get('undertone', '')
@@ -253,6 +262,36 @@ def match_colortype(analysis: dict) -> tuple:
     print(f'[Match] Analyzing: {undertone}/{lightness}/{saturation}/{contrast}')
     print(f'[Match] Colors: hair="{hair}", skin="{skin}", eyes="{eyes}"')
     
+    # Check if this is an ambiguous combination
+    param_key = (undertone, lightness, saturation, contrast)
+    ambiguous_candidates = AMBIGUOUS_COMBINATIONS.get(param_key)
+    
+    if ambiguous_candidates:
+        print(f'[Match] AMBIGUOUS combination detected! Candidates: {ambiguous_candidates}')
+        print(f'[Match] Will decide based on color matching (hair/skin/eyes)')
+        
+        best_colortype = None
+        best_color_score = 0.0
+        
+        for colortype in ambiguous_candidates:
+            ref = COLORTYPE_REFERENCES[colortype]
+            hair_score = calculate_color_match_score(hair, ref['hair'])
+            skin_score = calculate_color_match_score(skin, ref['skin'])
+            eyes_score = calculate_color_match_score(eyes, ref['eyes'])
+            
+            color_score = (hair_score * 0.33) + (skin_score * 0.33) + (eyes_score * 0.34)
+            
+            print(f'[Match] {colortype}: color={color_score:.2f} (h:{hair_score:.2f} s:{skin_score:.2f} e:{eyes_score:.2f})')
+            
+            if color_score > best_color_score:
+                best_color_score = color_score
+                best_colortype = colortype
+        
+        explanation = f"Ambiguous match resolved by colors: {best_colortype} (color_score: {best_color_score:.2f}). Analysis: {undertone}/{lightness}/{saturation}/{contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}."
+        print(f'[Match] FINAL (ambiguous resolved): {best_colortype} with color_score {best_color_score:.2f}')
+        return best_colortype, explanation
+    
+    # Standard matching for non-ambiguous cases
     best_colortype = None
     best_total_score = 0.0
     best_param_score = 0.0
