@@ -279,8 +279,37 @@ export default function ColorType() {
               Определение цветотипа
             </h2>
             <p className="text-muted-foreground text-lg">
-              Узнайте свой цветотип внешности с помощью AI • {COST} руб
+              Узнайте свой цветотип внешности с помощью AI
             </p>
+          </div>
+
+          {/* Recommendations */}
+          <div className="max-w-3xl mx-auto mb-12">
+            <Card className="bg-muted/50 border-primary/20">
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Icon name="Info" className="text-primary mt-0.5 flex-shrink-0" size={20} />
+                    <div className="space-y-2 text-sm">
+                      <p className="font-medium">Рекомендации для точного результата:</p>
+                      <ul className="space-y-1.5 text-muted-foreground">
+                        <li>• Хорошее качество фото при дневном освещении</li>
+                        <li>• Естественный цвет волос (без окрашивания)</li>
+                        <li>• Без макияжа или с минимальным макияжем</li>
+                        <li>• Волосы и глаза хорошо видны</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 pt-2 border-t border-border/50">
+                    <Icon name="Lightbulb" className="text-primary mt-0.5 flex-shrink-0" size={20} />
+                    <div className="text-sm text-muted-foreground">
+                      <p className="mb-2"><span className="font-medium text-foreground">Совет:</span> Проверьте результат на 2-3 разных фото, чтобы сравнить и выбрать наиболее подходящий цветотип.</p>
+                      <p>Если результаты различаются, возможно, вам подходят цвета из обоих цветотипов, но в разной степени.</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 items-start">
@@ -366,11 +395,7 @@ export default function ColorType() {
                     )}
                   </Button>
 
-                  {!user?.unlimited_access && !isAnalyzing && (
-                    <p className="text-sm text-muted-foreground text-center">
-                      Стоимость генерации: {COST}₽
-                    </p>
-                  )}
+
                 </div>
               </CardContent>
             </Card>
