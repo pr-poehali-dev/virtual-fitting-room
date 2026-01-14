@@ -10,7 +10,7 @@ import uuid
 import base64
 
 
-# Updated prompt with THE BASE and TRIAD concepts
+# Updated with exclusion rules for hair, eyes, and skin combinations
 # VIBRANT SPRING now includes warm light brown/golden brown hair with bright eyes
 # Reverted composite image approach - using single photo analysis
 
