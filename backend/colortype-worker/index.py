@@ -135,6 +135,7 @@ Analyze the colors visible in this image and determine:
    - LIGHT hair + LIGHT skin → LOW
      Example: "light blond" + "pale skin" = LOW
    - MEDIUM hair + MEDIUM skin → LOW  
+     Example: "chestnut brown" + "medium warm beige" = LOW ⚠️
      Example: "medium brown" + "medium beige" = LOW
    - DARK hair + DARK skin → LOW
      Example: "black" + "deep brown skin" = LOW
@@ -143,7 +144,7 @@ Analyze the colors visible in this image and determine:
    - LIGHT hair + MEDIUM skin → MEDIUM
      Example: "light blond" + "medium beige" = MEDIUM
    - MEDIUM hair + LIGHT skin → MEDIUM
-     Example: "chestnut brown" + "light warm beige" = MEDIUM ⚠️
+     Example: "chestnut brown" + "light beige" = MEDIUM
      Example: "medium brown" + "ivory" = MEDIUM
    - DARK hair + MEDIUM skin → MEDIUM
      Example: "dark brown" + "medium beige" = MEDIUM
