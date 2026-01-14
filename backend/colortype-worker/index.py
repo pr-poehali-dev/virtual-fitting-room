@@ -570,8 +570,10 @@ def match_colortype(analysis: dict) -> tuple:
     print(f'[Match] Analyzing: {undertone}/{lightness}/{saturation}/{contrast}')
     print(f'[Match] Colors: hair="{hair}", skin="{skin}", eyes="{eyes}"')
     
-    # Determine eye-based exclusions
+    # Determine exclusions based on eyes, hair, and skin
     eyes_lower = eyes.lower()
+    hair_lower = hair.lower()
+    skin_lower = skin.lower()
     excluded_types = set()
     
     # Rule 1: Brown eyes → exclude all SPRING
@@ -583,6 +585,18 @@ def match_colortype(analysis: dict) -> tuple:
     if any(keyword in eyes_lower for keyword in ['blue', 'gray', 'grey', 'gray-green', 'gray-blue', 'grey-green', 'grey-blue', 'blue-gray', 'blue-grey']):
         excluded_types.update(['VIVID AUTUMN', 'VIVID WINTER'])
         print(f'[Match] Cool light eyes detected → excluding VIVID AUTUMN and VIVID WINTER')
+    
+    # Rule 3: Chestnut brown hair → exclude BRIGHT SPRING
+    if any(keyword in hair_lower for keyword in ['chestnut brown', 'chestnut', 'medium brown', 'warm brown']):
+        excluded_types.add('BRIGHT SPRING')
+        print(f'[Match] Chestnut brown hair detected → excluding BRIGHT SPRING')
+    
+    # Rule 4: Light skin + blue/grey-blue eyes → exclude GENTLE AUTUMN
+    light_skin = any(keyword in skin_lower for keyword in ['light', 'pale', 'ivory', 'porcelain', 'fair', 'alabaster'])
+    cool_eyes = any(keyword in eyes_lower for keyword in ['blue', 'gray-blue', 'grey-blue', 'blue-gray', 'blue-grey'])
+    if light_skin and cool_eyes:
+        excluded_types.add('GENTLE AUTUMN')
+        print(f'[Match] Light skin + cool blue eyes detected → excluding GENTLE AUTUMN')
     
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')

@@ -269,6 +269,37 @@ def match_colortype(analysis: dict) -> tuple:
     print(f'[Match] Analyzing: {undertone}/{lightness}/{saturation}/{contrast}')
     print(f'[Match] Colors: hair="{hair}", skin="{skin}", eyes="{eyes}"')
     
+    # Determine exclusions based on eyes, hair, and skin
+    eyes_lower = eyes.lower()
+    hair_lower = hair.lower()
+    skin_lower = skin.lower()
+    excluded_types = set()
+    
+    # Rule 1: Brown eyes → exclude all SPRING
+    if any(keyword in eyes_lower for keyword in ['brown', 'dark brown', 'deep brown', 'chestnut', 'chocolate', 'amber']):
+        excluded_types.update(['GENTLE SPRING', 'BRIGHT SPRING', 'VIBRANT SPRING'])
+        print(f'[Match] Brown eyes detected → excluding all SPRING types')
+    
+    # Rule 2: Cool light eyes → exclude VIVID AUTUMN and VIVID WINTER
+    if any(keyword in eyes_lower for keyword in ['blue', 'gray', 'grey', 'gray-green', 'gray-blue', 'grey-green', 'grey-blue', 'blue-gray', 'blue-grey']):
+        excluded_types.update(['VIVID AUTUMN', 'VIVID WINTER'])
+        print(f'[Match] Cool light eyes detected → excluding VIVID AUTUMN and VIVID WINTER')
+    
+    # Rule 3: Chestnut brown hair → exclude BRIGHT SPRING
+    if any(keyword in hair_lower for keyword in ['chestnut brown', 'chestnut', 'medium brown', 'warm brown']):
+        excluded_types.add('BRIGHT SPRING')
+        print(f'[Match] Chestnut brown hair detected → excluding BRIGHT SPRING')
+    
+    # Rule 4: Light skin + blue/grey-blue eyes → exclude GENTLE AUTUMN
+    light_skin = any(keyword in skin_lower for keyword in ['light', 'pale', 'ivory', 'porcelain', 'fair', 'alabaster'])
+    cool_eyes = any(keyword in eyes_lower for keyword in ['blue', 'gray-blue', 'grey-blue', 'blue-gray', 'blue-grey'])
+    if light_skin and cool_eyes:
+        excluded_types.add('GENTLE AUTUMN')
+        print(f'[Match] Light skin + cool blue eyes detected → excluding GENTLE AUTUMN')
+    
+    if excluded_types:
+        print(f'[Match] Excluded types: {excluded_types}')
+    
     # Check if this is an ambiguous combination
     param_key = (undertone, lightness, saturation, contrast)
     ambiguous_candidates = AMBIGUOUS_COMBINATIONS.get(param_key)
@@ -277,26 +308,31 @@ def match_colortype(analysis: dict) -> tuple:
         print(f'[Match] AMBIGUOUS combination detected! Candidates: {ambiguous_candidates}')
         print(f'[Match] Will decide based on color matching (hair/skin/eyes)')
         
-        best_colortype = None
-        best_color_score = 0.0
-        
-        for colortype in ambiguous_candidates:
-            ref = COLORTYPE_REFERENCES[colortype]
-            hair_score = calculate_color_match_score(hair, ref['hair'])
-            skin_score = calculate_color_match_score(skin, ref['skin'])
-            eyes_score = calculate_color_match_score(eyes, ref['eyes'])
+        # Filter out excluded types
+        valid_candidates = [ct for ct in ambiguous_candidates if ct not in excluded_types]
+        if not valid_candidates:
+            print(f'[Match] WARNING: All ambiguous candidates were excluded! Falling back to standard matching')
+        else:
+            best_colortype = None
+            best_color_score = 0.0
             
-            color_score = (hair_score * 0.35) + (skin_score * 0.29) + (eyes_score * 0.36)
+            for colortype in valid_candidates:
+                ref = COLORTYPE_REFERENCES[colortype]
+                hair_score = calculate_color_match_score(hair, ref['hair'])
+                skin_score = calculate_color_match_score(skin, ref['skin'])
+                eyes_score = calculate_color_match_score(eyes, ref['eyes'])
+                
+                color_score = (hair_score * 0.35) + (skin_score * 0.29) + (eyes_score * 0.36)
+                
+                print(f'[Match] {colortype}: color={color_score:.2f} (h:{hair_score:.2f} s:{skin_score:.2f} e:{eyes_score:.2f})')
+                
+                if color_score > best_color_score:
+                    best_color_score = color_score
+                    best_colortype = colortype
             
-            print(f'[Match] {colortype}: color={color_score:.2f} (h:{hair_score:.2f} s:{skin_score:.2f} e:{eyes_score:.2f})')
-            
-            if color_score > best_color_score:
-                best_color_score = color_score
-                best_colortype = colortype
-        
-        explanation = f"Ambiguous match resolved by colors: {best_colortype} (color_score: {best_color_score:.2f}). Analysis: {undertone}/{lightness}/{saturation}/{contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}."
-        print(f'[Match] FINAL (ambiguous resolved): {best_colortype} with color_score {best_color_score:.2f}')
-        return best_colortype, explanation
+            explanation = f"Ambiguous match resolved by colors: {best_colortype} (color_score: {best_color_score:.2f}). Analysis: {undertone}/{lightness}/{saturation}/{contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}."
+            print(f'[Match] FINAL (ambiguous resolved): {best_colortype} with color_score {best_color_score:.2f}')
+            return best_colortype, explanation
     
     # Standard matching for non-ambiguous cases
     best_colortype = None
@@ -304,8 +340,12 @@ def match_colortype(analysis: dict) -> tuple:
     best_param_score = 0.0
     best_color_score = 0.0
     
-    # Check ALL 12 colortypes
+    # Check ALL 12 colortypes (excluding eye-based exclusions)
     for colortype in COLORTYPE_REFERENCES.keys():
+        # Skip excluded types
+        if colortype in excluded_types:
+            print(f'[Match] Skipping {colortype} (excluded by color rule)')
+            continue
         # Get ALL parameter combinations for this colortype
         all_params = get_all_colortype_params(colortype)
         
