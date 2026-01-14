@@ -239,11 +239,11 @@ def match_colortype(analysis: dict) -> tuple:
     
     Scoring:
     - Undertone: 100%
-    - Lightness: 33%
-    - Saturation: 33%
-    - Contrast: 34%
-    - Hair color: 35%
-    - Skin color: 29%
+    - Lightness: 32%
+    - Saturation: 32%
+    - Contrast: 36%
+    - Hair color: 32%
+    - Skin color: 32%
     - Eye color: 36%
     
     Total score = (param_score * 0.5) + (color_score * 0.5)

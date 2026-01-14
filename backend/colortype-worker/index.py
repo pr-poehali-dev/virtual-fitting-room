@@ -81,21 +81,21 @@ Analyze the colors visible in this image and determine:
    - Focus on the TONE (golden vs ash), not the DARKNESS!
 
 2. LIGHTNESS - Overall darkness level (focus on HAIR):
-   PRIORITY: Hair color (40%) → Skin tone (40%) → Eyes (20%)
+   PRIORITY: Hair color (45%) → Skin tone (40%) → Eyes (15%)
    
    - Choose LIGHT-COLORS if: very light hair (platinum, light blond, very light brown)
    - Choose MEDIUM-LIGHTNESS-COLORS if: medium hair (medium brown, dark blond)
    - Choose DEEP-COLORS if: dark hair (dark brown, black, deep auburn)
 
 3. SATURATION - Color vibrancy (focus on HAIR, EYES, and SKIN):
-   PRIORITY: Hair color (55%) → Eye color (25%) → Skin color (20%)
+   PRIORITY: Hair color (50%) → Eye color (30%) → Skin color (20%)
    
    - Choose MUTED-SATURATION-COLORS if: dusty, grayish, soft, subdued colors
    - Choose NEUTRAL-SATURATION-COLORS if: moderate saturation
    - Choose BRIGHT-SATURATION-COLORS if: clear, vivid, pure, bright colors
 
 4. CONTRAST LEVEL - Lightness difference between features:
-   PRIORITY: Hair vs Skin (50%) + Skin vs Eyes (50%)
+   PRIORITY: Hair vs Skin (60%) + Skin vs Eyes (40%)
    
    - Choose LOW-CONTRAST if: all features similar lightness (e.g., light hair + light skin + light eyes)
    - Choose MEDIUM-CONTRAST if: moderate difference
@@ -480,11 +480,11 @@ def match_colortype(analysis: dict) -> tuple:
     
     Scoring:
     - Undertone: 100%
-    - Lightness: 33%
-    - Saturation: 33%
-    - Contrast: 34%
-    - Hair color: 35%
-    - Skin color: 29%
+    - Lightness: 32%
+    - Saturation: 32%
+    - Contrast: 36%
+    - Hair color: 32%
+    - Skin color: 32%
     - Eye color: 36%
     
     Total score = (param_score * 0.5) + (color_score * 0.5)
