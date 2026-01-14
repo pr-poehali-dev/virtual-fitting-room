@@ -97,21 +97,34 @@ Analyze the colors visible in this image and determine:
 4. CONTRAST LEVEL - Lightness difference between features:
    PRIORITY: Hair vs Skin (60%) + Skin vs Eyes (40%)
    
-   ⚠️ CRITICAL: Be MORE GENEROUS with HIGH-CONTRAST! Many people have high contrast.
+   ⚠️ CRITICAL: Contrast is about LIGHTNESS DIFFERENCE between hair and skin!
    
-   - Choose HIGH-CONTRAST if:
-     * Dark hair (medium brown, dark brown, black, chestnut, auburn) + Fair/Light skin → HIGH
-     * Very light hair (platinum, light blond) + Medium/Dark skin → HIGH
-     * Hair and skin differ by 3+ shades on lightness scale → HIGH
-     * EXAMPLE: Medium brown hair + light beige skin = HIGH (not medium!)
+   Step 1: Classify hair lightness:
+   - LIGHT hair: platinum, light blond, very light brown
+   - MEDIUM hair: medium brown, chestnut, dark blond, light auburn
+   - DARK hair: dark brown, black, deep auburn
    
-   - Choose MEDIUM-CONTRAST if:
-     * Hair and skin differ by 1-2 shades
-     * EXAMPLE: Light brown hair + medium beige skin = MEDIUM
+   Step 2: Classify skin lightness:
+   - LIGHT skin: porcelain, ivory, pale, light beige
+   - MEDIUM skin: medium beige, warm beige, olive
+   - DARK skin: deep brown, dark beige, mahogany
    
-   - Choose LOW-CONTRAST if:
-     * All features are nearly identical lightness
-     * EXAMPLE: Light blond hair + pale skin + light eyes = LOW
+   Step 3: Determine contrast:
+   
+   - Choose LOW-CONTRAST if hair and skin are SAME lightness level:
+     * LIGHT hair + LIGHT skin → LOW (e.g., light blond + pale skin)
+     * MEDIUM hair + MEDIUM skin → LOW (e.g., medium brown + medium beige)
+     * DARK hair + DARK skin → LOW (e.g., black hair + deep brown skin)
+   
+   - Choose MEDIUM-CONTRAST if hair and skin differ by ONE level:
+     * LIGHT hair + MEDIUM skin → MEDIUM (e.g., light blond + medium beige)
+     * MEDIUM hair + LIGHT skin → MEDIUM (e.g., medium brown + ivory)
+     * DARK hair + MEDIUM skin → MEDIUM (e.g., dark brown + medium beige)
+   
+   - Choose HIGH-CONTRAST if hair and skin differ by TWO levels:
+     * DARK hair + LIGHT skin → HIGH (e.g., dark brown/black + pale/ivory)
+     * MEDIUM hair + VERY LIGHT skin → HIGH (e.g., chestnut brown + porcelain)
+     * LIGHT hair + DARK skin → HIGH (e.g., platinum + deep brown)
 
 5. DESCRIBE EXACT COLORS you see (use synonyms and precise descriptors):
    - Hair: Be specific - "jet black", "ash brown", "golden blond", "auburn", "dark cool brown", "honey blond", "platinum", "espresso"
