@@ -10,7 +10,9 @@ import uuid
 import base64
 
 
-# Updated with exclusion rules for hair, eyes, and skin combinations
+# Updated with 4 exclusion rules for accurate color type matching
+# Rules: brown eyes exclude SPRING, cool eyes exclude VIVID AUTUMN/WINTER,
+# chestnut hair excludes BRIGHT SPRING, light skin + cool eyes excludes GENTLE AUTUMN
 # VIBRANT SPRING now includes warm light brown/golden brown hair with bright eyes
 # Reverted composite image approach - using single photo analysis
 
