@@ -30,7 +30,7 @@ def check_replicate_status(prediction_id: str) -> dict:
 # Ambiguous parameter combinations that require color-based resolution
 # If parameters match one of these keys, compare color scores for all candidates
 AMBIGUOUS_COMBINATIONS = {
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'NEUTRAL-SATURATION-COLORS', 'MEDIUM-CONTRAST'): ['GENTLE AUTUMN', 'BRIGHT SPRING'], 
+    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'NEUTRAL-SATURATION-COLORS', 'MEDIUM-CONTRAST'): ['GENTLE AUTUMN', 'BRIGHT SPRING', 'VIBRANT SPRING'], 
     ('COOL-UNDERTONE', 'DEEP-COLORS', 'NEUTRAL-SATURATION-COLORS', 'MEDIUM-CONTRAST'): ['VIVID SUMMER', 'VIVID WINTER'],
 }
 

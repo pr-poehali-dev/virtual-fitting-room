@@ -279,7 +279,7 @@ def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
 # Ambiguous parameter combinations that require color-based resolution
 # If parameters match one of these keys, compare color scores for all candidates
 AMBIGUOUS_COMBINATIONS = {
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'NEUTRAL-SATURATION-COLORS', 'MEDIUM-CONTRAST'): ['GENTLE AUTUMN', 'BRIGHT SPRING'], 
+    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'NEUTRAL-SATURATION-COLORS', 'MEDIUM-CONTRAST'): ['GENTLE AUTUMN', 'BRIGHT SPRING', 'VIBRANT SPRING'], 
     ('COOL-UNDERTONE', 'DEEP-COLORS', 'NEUTRAL-SATURATION-COLORS', 'MEDIUM-CONTRAST'): ['VIVID SUMMER', 'VIVID WINTER'],
 }
 
