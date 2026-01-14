@@ -97,9 +97,21 @@ Analyze the colors visible in this image and determine:
 4. CONTRAST LEVEL - Lightness difference between features:
    PRIORITY: Hair vs Skin (60%) + Skin vs Eyes (40%)
    
-   - Choose LOW-CONTRAST if: all features similar lightness (e.g., light hair + light skin + light eyes)
-   - Choose MEDIUM-CONTRAST if: moderate difference
-   - Choose HIGH-CONTRAST if: dramatic difference (e.g., very dark hair + very pale skin, OR very light hair + very dark skin)
+   ⚠️ CRITICAL: Be MORE GENEROUS with HIGH-CONTRAST! Many people have high contrast.
+   
+   - Choose HIGH-CONTRAST if:
+     * Dark hair (medium brown, dark brown, black, chestnut, auburn) + Fair/Light skin → HIGH
+     * Very light hair (platinum, light blond) + Medium/Dark skin → HIGH
+     * Hair and skin differ by 3+ shades on lightness scale → HIGH
+     * EXAMPLE: Medium brown hair + light beige skin = HIGH (not medium!)
+   
+   - Choose MEDIUM-CONTRAST if:
+     * Hair and skin differ by 1-2 shades
+     * EXAMPLE: Light brown hair + medium beige skin = MEDIUM
+   
+   - Choose LOW-CONTRAST if:
+     * All features are nearly identical lightness
+     * EXAMPLE: Light blond hair + pale skin + light eyes = LOW
 
 5. DESCRIBE EXACT COLORS you see (use synonyms and precise descriptors):
    - Hair: Be specific - "jet black", "ash brown", "golden blond", "auburn", "dark cool brown", "honey blond", "platinum", "espresso"
@@ -311,8 +323,8 @@ COLORTYPE_REFERENCES = {
         'skin': ['ivory', 'light warm beige', 'honey', 'warm beige']
     },
     'VIBRANT SPRING': {
-        'hair': ['bright auburn', 'medium golden brown', 'auburn', 'golden brown'],
-        'eyes': ['blue', 'green', 'golden brown', 'bright'],
+        'hair': ['bright auburn', 'medium golden brown', 'auburn', 'golden brown', 'chestnut brown', 'chestnut'],
+        'eyes': ['blue', 'green', 'golden brown', 'bright', 'blue-green'],
         'skin': ['ivory', 'light warm beige', 'medium warm beige', 'medium golden brown']
     },
     'SOFT WINTER': {
