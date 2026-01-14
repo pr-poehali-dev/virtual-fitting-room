@@ -366,7 +366,7 @@ COLORTYPE_REFERENCES = {
     },
     'VIBRANT SPRING': {
         'hair': ['bright auburn', 'medium golden brown', 'auburn', 'golden brown', 'chestnut brown', 'chestnut'],
-        'eyes': ['blue', 'green', 'golden brown', 'bright', 'blue-green'],
+        'eyes': ['blue-green', 'blue', 'green', 'golden brown', 'bright'],
         'skin': ['ivory', 'light warm beige', 'medium warm beige', 'medium golden brown']
     },
     'SOFT WINTER': {
