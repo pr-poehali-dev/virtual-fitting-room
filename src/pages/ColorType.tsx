@@ -174,9 +174,17 @@ export default function ColorType() {
           clearInterval(pollingIntervalRef.current);
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-        const colorTypeName = data.color_type
-          ? colorTypeNames[data.color_type] || data.color_type
-          : "Неизвестно";
+        // Check if GPT couldn't determine color type (bad photo)
+        if (!data.color_type) {
+          setIsAnalyzing(false);
+          setAnalysisStatus("");
+          toast.error(
+            "Не удалось определить цветотип по этому фото. Попробуйте другое фото с хорошим освещением и чёткими чертами лица. Деньги не возвращаются, т.к. анализ был выполнен.",
+          );
+          return;
+        }
+
+        const colorTypeName = colorTypeNames[data.color_type] || data.color_type;
 
         setResult({
           colorType: colorTypeName,
@@ -194,7 +202,7 @@ export default function ColorType() {
         setIsAnalyzing(false);
         setAnalysisStatus("");
         toast.error(
-          "Ошибка анализа: " + (data.result_text || "Неизвестная ошибка"),
+          data.result_text || "Ошибка анализа. Деньги возвращены на баланс.",
         );
       } else if (data.status === "processing") {
         setAnalysisStatus("Анализ изображения на нейросети...");
