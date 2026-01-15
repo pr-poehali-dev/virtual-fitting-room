@@ -105,15 +105,28 @@ Analyze the colors visible in this image and determine:
    
    LIGHT hair includes:
    - platinum, light blond, golden blond, honey blond, strawberry blond
-   - very light brown, light golden brown
-   
+   - light strawberry blond, strawberry, golden, pale beige, light olive
+   - pale cool blond, medium cool blond, cool blond, ash blond, light ash
+    
    MEDIUM hair includes:
-   - medium brown, chestnut brown, chestnut, golden brown
+   - medium brown, chestnut brown, chestnut, golden brown, light brown
    - dark blond, light auburn, auburn, copper
+   - dark honey, tawny, gentle auburn, honey
+   - warm brown, deep auburn, medium auburn
+   - golden brown, light clear red, medium golden brown
+   - bright auburn
+   - medium-deep cool brown
+   - deep cool blond, light cool brown, medium cool brown, ash brown
+   - medium dark cool brown
+   - medium beige, medium olive
    
    DARK hair includes:
    - dark brown, dark cool brown, espresso, black, jet black
-   - deep auburn, dark auburn, mahogany
+   - deep auburn, mahogany
+   - dark chestnut, dark auburn, espresso, deep brown
+   - cool brown, ashy brown, coffee
+   - cool black, jet black, deep cool brown
+
    
    === STEP 2: Classify SKIN lightness ===
    Ask yourself: "How LIGHT or DARK is this skin tone?"
@@ -121,14 +134,20 @@ Analyze the colors visible in this image and determine:
    LIGHT skin includes:
    - porcelain, ivory, alabaster, pale
    - light beige, light warm beige, fair, cream
+   - light warm beige, pale warm beige
+   - pale porcelain
    
    MEDIUM skin includes:
    - medium beige, warm beige, medium warm beige
-   - olive, light olive, almond, beige
+   - olive, light olive, almond, beige, café au lait, honey
+   - medium golden brown
    
    DARK skin includes:
    - deep brown, dark beige, mahogany, ebony
-   - café noir, chestnut, coffee, cocoa
+   - café noir, chestnut, coffee, cocoa, brown
+   - russet
+   - deep olive, café noir, ebony, dark
+
    
    === STEP 3: Determine CONTRAST (compare Step 1 and Step 2) ===
    
@@ -336,7 +355,8 @@ def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
 # If parameters match one of these keys, compare color scores for all candidates
 AMBIGUOUS_COMBINATIONS = {
     ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'NEUTRAL-SATURATION-COLORS', 'MEDIUM-CONTRAST'): ['GENTLE AUTUMN', 'BRIGHT SPRING', 'FIERY AUTUMN', 'VIBRANT SPRING'],  
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'NEUTRAL-SATURATION-COLORS', 'MEDIUM-CONTRAST'): ['VIVID SUMMER', 'VIVID WINTER'],
+    ('COOL-UNDERTONE', 'DEEP-COLORS', 'NEUTRAL-SATURATION-COLORS', 'MEDIUM-CONTRAST'): ['VIVID SUMMER', 'VIVID WINTER', 'BRIGHT WINTER'],
+    ('COOL-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-SATURATION-COLORS', 'MEDIUM-CONTRAST'): ['VIVID WINTER', 'BRIGHT WINTER'],
     ('WARM-UNDERTONE', 'DEEP-COLORS', 'NEUTRAL-SATURATION-COLORS', 'MEDIUM-CONTRAST'): ['FIERY AUTUMN', 'VIVID AUTUMN'],
     ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-SATURATION-COLORS', 'MEDIUM-CONTRAST'): ['VIBRANT SPRING', 'BRIGHT SPRING', 'FIERY AUTUMN'],
     ('COOL-UNDERTONE', 'LIGHT-COLORS', 'MUTED-SATURATION-COLORS', 'MEDIUM-CONTRAST'): ['DUSTY SUMMER', 'SOFT SUMMER'],
@@ -433,7 +453,6 @@ COLORTYPE_MAP = {
 
     ('COOL-UNDERTONE', 'DEEP-COLORS', 'NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'VIVID WINTER',
     ('COOL-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-CONTRAST'): 'VIVID WINTER',
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-SATURATION-COLORS', 'MEDIUM-CONTRAST'): 'VIVID WINTER',
     ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'SOFT WINTER',
     ('COOL-UNDERTONE', 'DEEP-COLORS', 'MUTED-SATURATION-COLORS', 'MEDIUM-CONTRAST'): 'SOFT WINTER',  
     ('COOL-UNDERTONE', 'DEEP-COLORS', 'MUTED-SATURATION-COLORS', 'HIGH-CONTRAST'): 'SOFT WINTER',
@@ -449,6 +468,7 @@ COLORTYPE_MAP = {
     ('WARM-UNDERTONE', 'LIGHT-COLORS', 'NEUTRAL-SATURATION-COLORS', 'MEDIUM-CONTRAST'): 'BRIGHT SPRING',
     ('WARM-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-CONTRAST'): 'GENTLE SPRING',
     ('WARM-UNDERTONE', 'LIGHT-COLORS', 'NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'GENTLE SPRING',
+
     
 }
 
