@@ -117,13 +117,13 @@ Analyze the colors visible in this image and determine:
    Ask yourself: "How LIGHT or DARK is this hair color at the ROOTS?"
    
    LIGHT hair includes:
-   - platinum, light blond, golden blond, honey blond, strawberry blond
-   - light strawberry blond, strawberry, golden, pale beige, light olive
-   - pale cool blond, medium cool blond, cool blond, ash blond, light ash
+   - platinum, light blond, light golden blond, light honey blond
+   - light strawberry blond, golden, pale beige, light olive
+   - pale cool blond, cool blond, ash blond, light ash
     
    MEDIUM hair includes:
-   - medium brown, chestnut brown, chestnut, golden brown, light brown
-   - dark blond, light auburn, auburn, copper
+   - medium brown, chestnut brown, chestnut, golden brown, light brown, strawberry, medium cool blond
+   - dark blond, light auburn, auburn, copper, medium blond, medium golden blond
    - dark honey, tawny, gentle auburn, honey
    - warm brown, deep auburn, medium auburn
    - golden brown, light clear red, medium golden brown
