@@ -112,12 +112,12 @@ Analyze the colors visible in this image and determine:
    - Choose BRIGHT-SATURATION-COLORS if: colors are clear, vivid, pure, bright, vibrant (no gray mixed in, pure pigments)
 
 4. CONTRAST LEVEL - Lightness difference between features:
-   PRIORITY: Hair vs Skin (60%) + Skin vs Eyes (40%)
+   PRIORITY: Hair vs Skin (60%) + Eyes vs Skin (40%)
    
    ⚠️ HAIR ANALYSIS: Look at ROOTS first (60% weight), then length (40% weight)
    * Compare ROOTS darkness to skin - natural root color shows true contrast
    
-   ⚠️ CRITICAL: Follow this EXACT 3-step process to determine contrast!
+   ⚠️ CRITICAL: Follow this EXACT 2-step process to classify hair and skin lightness!
    
    === STEP 1: Classify HAIR lightness ===
    Ask yourself: "How LIGHT or DARK is this hair color at the ROOTS?"
@@ -126,23 +126,28 @@ Analyze the colors visible in this image and determine:
    - platinum, light blond, light golden blond, light honey blond
    - light strawberry blond, golden, pale beige, light olive
    - pale cool blond, cool blond, ash blond, light ash
-    
-   MEDIUM hair includes:
-   - medium brown, chestnut brown, chestnut, golden brown, light brown, strawberry, medium cool blond
-   - dark blond, light auburn, auburn, copper, medium blond, medium golden blond
-   - dark honey, tawny, gentle auburn, honey
-   - warm brown, deep auburn, medium auburn
-   - golden brown, light clear red, medium golden brown
-   - bright auburn
+   
+   LIGHT-MEDIUM hair includes (closer to light):
+   - medium blond, medium golden blond, dark blond
+   - light brown, golden brown, strawberry
+   - honey, dark honey, tawny
+   - medium cool blond, deep cool blond
+   - light auburn, gentle auburn
+   
+   DARK-MEDIUM hair includes (closer to dark):
+   - medium brown, chestnut brown, chestnut
+   - warm brown, auburn, copper
+   - medium auburn, deep auburn, bright auburn
+   - light clear red, medium golden brown
    - medium-deep cool brown
-   - deep cool blond, light cool brown, medium cool brown, ash brown
+   - light cool brown, medium cool brown, ash brown
    - medium dark cool brown
    - medium beige, medium olive
    
    DARK hair includes:
    - dark brown, dark cool brown, espresso, black, jet black
    - deep auburn, mahogany
-   - dark chestnut, dark auburn, espresso, deep brown
+   - dark chestnut, dark auburn, deep brown
    - cool brown, ashy brown, coffee
    - cool black, jet black, deep cool brown
 
@@ -153,47 +158,24 @@ Analyze the colors visible in this image and determine:
    LIGHT skin includes:
    - porcelain, ivory, alabaster, pale
    - light beige, light warm beige, fair, cream
-   - light warm beige, pale warm beige
+   - pale warm beige
    - pale porcelain
    
-   MEDIUM skin includes:
-   - medium beige, warm beige, medium warm beige
-   - olive, light olive, almond, beige, café au lait, honey
+   LIGHT-MEDIUM skin includes (closer to light):
+   - beige, medium beige (lighter shade)
+   - warm beige, almond
+   - light olive
+   
+   DARK-MEDIUM skin includes (closer to dark):
+   - medium beige (darker shade), medium warm beige
+   - olive, café au lait, honey
    - medium golden brown
    
    DARK skin includes:
    - deep brown, dark beige, mahogany, ebony
    - café noir, chestnut, coffee, cocoa, brown
    - russet
-   - deep olive, café noir, ebony, dark
-
-   
-   === STEP 3: Determine CONTRAST (compare Step 1 and Step 2) ===
-   
-   ✅ Choose LOW-CONTRAST if hair and skin are SAME level:
-   - LIGHT hair + LIGHT skin → LOW
-     Example: "light blond" + "pale skin" = LOW
-   - MEDIUM hair + MEDIUM skin → LOW  
-     Example: "chestnut brown" + "medium warm beige" = LOW ⚠️
-     Example: "medium brown" + "medium beige" = LOW
-   - DARK hair + DARK skin → LOW
-     Example: "black" + "deep brown skin" = LOW
-   
-   ✅ Choose MEDIUM-CONTRAST if hair and skin differ by ONE level:
-   - LIGHT hair + MEDIUM skin → MEDIUM
-     Example: "light blond" + "medium brown" = MEDIUM
-   - MEDIUM hair + LIGHT skin → MEDIUM
-     Example: "chestnut brown" + "light beige" = MEDIUM
-     Example: "medium brown" + "ivory" = MEDIUM
-   - DARK hair + MEDIUM skin → MEDIUM
-     Example: "dark brown" + "medium beige" = MEDIUM
-   
-   ✅ Choose HIGH-CONTRAST if hair and skin differ by TWO levels:
-   - DARK hair + LIGHT skin → HIGH
-     Example: "black" + "pale" = HIGH
-     Example: "dark brown" + "ivory" = HIGH
-   - LIGHT hair + DARK skin → HIGH
-     Example: "platinum" + "deep brown" = HIGH
+   - deep olive, dark
 
 5. DESCRIBE EXACT COLORS you see (use synonyms and precise descriptors):
    - Hair: ⚠️ CRITICAL - Analyze hair color at ROOTS (near face) FIRST! 
@@ -213,8 +195,10 @@ Return ONLY a valid JSON object with your analysis of THIS SPECIFIC PHOTO:
   "undertone": "[YOUR CHOICE: WARM-UNDERTONE or COOL-UNDERTONE]",
   "lightness": "[YOUR CHOICE: LIGHT-COLORS, MEDIUM-LIGHTNESS-COLORS, or DEEP-COLORS]",
   "saturation": "[YOUR CHOICE: MUTED-SATURATION-COLORS, MUTED-NEUTRAL-SATURATION-COLORS, BRIGHT-NEUTRAL-SATURATION-COLORS, or BRIGHT-SATURATION-COLORS]",
-  "contrast": "[YOUR CHOICE: LOW-CONTRAST, MEDIUM-CONTRAST, or HIGH-CONTRAST]",
+  "contrast": "[YOUR CHOICE: LOW-CONTRAST, LOW-MEDIUM-CONTRAST, HIGH-MEDIUM-CONTRAST, or HIGH-CONTRAST]",
   "hair_color": "[exact description of hair color YOU SEE]",
+  "hair_lightness": "[YOUR CHOICE: LIGHT, LIGHT-MEDIUM, DARK-MEDIUM, or DARK]",
+  "skin_lightness": "[YOUR CHOICE: LIGHT, LIGHT-MEDIUM, DARK-MEDIUM, or DARK]",
   "eye_color": "[exact description of eye color YOU SEE]",
   "skin_color": "[exact description of skin tone YOU SEE]"
 }}
@@ -771,6 +755,46 @@ def extract_color_type(result_text: str) -> Optional[str]:
     
     return None
 
+def calculate_contrast(hair_lightness: str, skin_lightness: str, eye_lightness: str) -> str:
+    '''Calculate contrast level based on 4-level lightness scale
+    
+    Uses weighted formula: Hair vs Skin (60%) + Eyes vs Skin (40%)
+    
+    Lightness levels (0-3): LIGHT=0, LIGHT-MEDIUM=1, DARK-MEDIUM=2, DARK=3
+    
+    Returns: LOW-CONTRAST (sum=0), LOW-MEDIUM-CONTRAST (sum=1), 
+             HIGH-MEDIUM-CONTRAST (sum=2), HIGH-CONTRAST (sum=3+)
+    '''
+    LIGHTNESS_TO_LEVEL = {
+        'LIGHT': 0,
+        'LIGHT-MEDIUM': 1,
+        'DARK-MEDIUM': 2,
+        'DARK': 3
+    }
+    
+    hair_level = LIGHTNESS_TO_LEVEL.get(hair_lightness, 2)
+    skin_level = LIGHTNESS_TO_LEVEL.get(skin_lightness, 1)
+    eye_level = LIGHTNESS_TO_LEVEL.get(eye_lightness, 2)
+    
+    # Calculate differences
+    hair_skin_diff = abs(hair_level - skin_level)
+    eye_skin_diff = abs(eye_level - skin_level)
+    
+    # Sum both differences (max = 6, but realistically max = 4-5)
+    total_diff = hair_skin_diff + eye_skin_diff
+    
+    print(f'[Contrast] hair={hair_lightness}({hair_level}), skin={skin_lightness}({skin_level}), eyes={eye_lightness}({eye_level})')
+    print(f'[Contrast] hair-skin={hair_skin_diff}, eye-skin={eye_skin_diff}, total={total_diff}')
+    
+    if total_diff == 0:
+        return 'LOW-CONTRAST'
+    elif total_diff == 1:
+        return 'LOW-MEDIUM-CONTRAST'
+    elif total_diff == 2:
+        return 'HIGH-MEDIUM-CONTRAST'
+    else:  # total_diff >= 3
+        return 'HIGH-CONTRAST'
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
     Worker анализа цветотипа
@@ -951,6 +975,30 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         # Override eye_color with user's choice
                         analysis['eye_color'] = eye_color
                         print(f'[ColorType-Worker] Overridden eye_color with user hint: {eye_color}')
+                        
+                        # Map user's eye color to lightness level for contrast calculation
+                        EYE_COLOR_TO_LIGHTNESS = {
+                            'blue': 'LIGHT',              # Blue = light
+                            'gray': 'LIGHT-MEDIUM',       # Gray = light-medium
+                            'grey': 'LIGHT-MEDIUM',       # Grey = light-medium
+                            'green': 'LIGHT-MEDIUM',      # Green = light-medium
+                            'hazel': 'DARK-MEDIUM',       # Hazel = dark-medium
+                            'brown': 'DARK-MEDIUM',       # Brown = dark-medium
+                            'black': 'DARK'               # Black = dark
+                        }
+                        
+                        eye_lightness = EYE_COLOR_TO_LIGHTNESS.get(eye_color.lower(), 'DARK-MEDIUM')
+                        analysis['eye_lightness'] = eye_lightness
+                        print(f'[ColorType-Worker] Mapped eye_color "{eye_color}" to eye_lightness: {eye_lightness}')
+                        
+                        # Calculate contrast based on hair_lightness, skin_lightness, eye_lightness
+                        contrast = calculate_contrast(
+                            analysis.get('hair_lightness', ''),
+                            analysis.get('skin_lightness', ''),
+                            eye_lightness
+                        )
+                        analysis['contrast'] = contrast
+                        print(f'[ColorType-Worker] Calculated contrast: {contrast}')
                         
                         print(f'[ColorType-Worker] Parsed analysis: {analysis}')
                         
