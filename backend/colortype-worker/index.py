@@ -31,6 +31,10 @@ Analyze the colors visible in this image and determine:
 1. UNDERTONE - The invisible base that creates visible color (CRITICAL: analyze carefully!)
    PRIORITY: Hair color (51%) → Skin tone (44%) → Eyes (5%)
    
+   ⚠️ HAIR ANALYSIS: Look at ROOTS first (60% weight), then length (40% weight)
+   * Focus on hair at SCALP/ROOTS (near forehead, temples) - this shows true undertone
+   * Natural root color reveals real warm/cool base (dyed ends may differ)
+   
    ⚠️ UNDERTONE is the BASE (golden or blue) that you DON'T see directly, but it CREATES what you DO see!
    
    THEORY: Everyone has either a GOLDEN base (warm) or BLUE base (cool).
@@ -84,12 +88,18 @@ Analyze the colors visible in this image and determine:
 2. LIGHTNESS - Overall darkness level (focus on HAIR):
    PRIORITY: Hair color (45%) → Skin tone (40%) → Eyes (15%)
    
+   ⚠️ HAIR ANALYSIS: Look at ROOTS first (60% weight), then length (40% weight)
+   * Assess darkness at SCALP/ROOTS - natural color shows true lightness level
+   
    - Choose LIGHT-COLORS if: very light hair (platinum, light blond, golden blond) and very light skin (porcelain, ivory, alabaster, pale)
    - Choose MEDIUM-LIGHTNESS-COLORS if: medium hair (medium brown, dark blond) and light or medium skin (medium beige, warm beige, medium warm beige, porcelain, ivory, alabaster, pale)
    - Choose DEEP-COLORS if: dark hair (dark brown, black, deep auburn, dark chestnut, dark auburn, espresso, deep brown)
 
 3. SATURATION - Color vibrancy (focus on HAIR, EYES, and SKIN):
    PRIORITY: Hair color (50%) → Eye color (30%) → Skin color (20%)
+   
+   ⚠️ HAIR ANALYSIS: Look at ROOTS first (60% weight), then length (40% weight)
+   * Assess vibrancy at SCALP/ROOTS - natural color shows true saturation
    
    - Choose MUTED-SATURATION-COLORS if: dusty, grayish, soft, subdued colors
    - Choose NEUTRAL-SATURATION-COLORS if: moderate saturation
@@ -98,10 +108,13 @@ Analyze the colors visible in this image and determine:
 4. CONTRAST LEVEL - Lightness difference between features:
    PRIORITY: Hair vs Skin (60%) + Skin vs Eyes (40%)
    
+   ⚠️ HAIR ANALYSIS: Look at ROOTS first (60% weight), then length (40% weight)
+   * Compare ROOTS darkness to skin - natural root color shows true contrast
+   
    ⚠️ CRITICAL: Follow this EXACT 3-step process to determine contrast!
    
    === STEP 1: Classify HAIR lightness ===
-   Ask yourself: "How LIGHT or DARK is this hair color?"
+   Ask yourself: "How LIGHT or DARK is this hair color at the ROOTS?"
    
    LIGHT hair includes:
    - platinum, light blond, golden blond, honey blond, strawberry blond
