@@ -986,7 +986,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             'gray': 'LIGHT-MEDIUM',       # Gray = light-medium
                             'grey': 'LIGHT-MEDIUM',       # Grey = light-medium
                             'green': 'LIGHT-MEDIUM',      # Green = light-medium
-                            'hazel': 'DARK-MEDIUM',       # Hazel = dark-medium
+                            'hazel': 'LIGHT-MEDIUM',       # Hazel = light-medium
                             'brown': 'DARK-MEDIUM',       # Brown = dark-medium
                             'black': 'DARK'               # Black = dark
                         }
