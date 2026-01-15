@@ -31,7 +31,7 @@ Analyze the colors visible in this image and determine:
 1. UNDERTONE - The invisible base that creates visible color (CRITICAL: analyze carefully!)
    PRIORITY: Hair color (51%) → Skin tone (44%) → Eyes (5%)
    
-   ⚠️ HAIR ANALYSIS: Look at ROOTS first (60% weight), then length (40% weight)
+   ⚠️ HAIR ANALYSIS: Look at ROOTS first (55% weight), then length (45% weight)
    * Focus on hair at SCALP/ROOTS (near forehead, temples) - this shows true undertone
    * Natural root color reveals real warm/cool base (dyed ends may differ)
    
@@ -88,7 +88,7 @@ Analyze the colors visible in this image and determine:
 2. LIGHTNESS - Overall darkness level (focus on HAIR):
    PRIORITY: Hair color (45%) → Skin tone (40%) → Eyes (15%)
    
-   ⚠️ HAIR ANALYSIS: Look at ROOTS first (60% weight), then length (40% weight)
+   ⚠️ HAIR ANALYSIS: Look at ROOTS first (50% weight), then length (50% weight)
    * Assess darkness at SCALP/ROOTS - natural color shows true lightness level
    
    - Choose LIGHT-COLORS if: very light hair (platinum, light blond, golden blond) and very light skin (porcelain, ivory, alabaster, pale)
@@ -114,7 +114,7 @@ Analyze the colors visible in this image and determine:
 4. CONTRAST LEVEL - Lightness difference between features:
    PRIORITY: Hair vs Skin (60%) + Eyes vs Skin (40%)
    
-   ⚠️ HAIR ANALYSIS: Look at ROOTS first (60% weight), then length (40% weight)
+   ⚠️ HAIR ANALYSIS: Look at ROOTS first (55% weight), then length (45% weight)
    * Compare ROOTS darkness to skin - natural root color shows true contrast
    
    ⚠️ CRITICAL: Follow this EXACT 2-step process to classify hair and skin lightness!
