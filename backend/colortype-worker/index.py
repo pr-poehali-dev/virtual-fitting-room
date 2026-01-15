@@ -177,7 +177,12 @@ Analyze the colors visible in this image and determine:
      Example: "platinum" + "deep brown" = HIGH
 
 5. DESCRIBE EXACT COLORS you see (use synonyms and precise descriptors):
-   - Hair: Be specific - "jet black", "ash brown", "golden blond", "auburn", "dark cool brown", "honey blond", "platinum", "espresso"
+   - Hair: ⚠️ CRITICAL - Analyze hair color at ROOTS (near face) FIRST! 
+     * 60% weight: Hair at ROOTS/SCALP (closest to face, near forehead/temples)
+     * 40% weight: Hair along LENGTH (mid-lengths and ends)
+     * Why: Natural root color shows true undertone (dyed ends may differ)
+     * Focus on the hair color where it grows from the scalp - this is the REAL color
+     * Be specific - "jet black", "ash brown", "golden blond", "auburn", "dark cool brown", "honey blond", "platinum", "espresso"
    - Eyes: Use color names - "deep brown", "bright blue", "hazel", "gray-blue", "green", "amber", "dark gray"
    - Skin: Use tone descriptors - "porcelain", "ivory", "light warm beige", "olive", "medium beige", "fair", "pale cool beige", "deep brown"
 
