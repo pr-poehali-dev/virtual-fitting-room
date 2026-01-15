@@ -101,9 +101,11 @@ Analyze the colors visible in this image and determine:
    ⚠️ HAIR ANALYSIS: Look at ROOTS first (60% weight), then length (40% weight)
    * Assess vibrancy at SCALP/ROOTS - natural color shows true saturation
    
-   - Choose MUTED-SATURATION-COLORS if: dusty, grayish, soft, subdued colors
-   - Choose NEUTRAL-SATURATION-COLORS if: moderate saturation
-   - Choose BRIGHT-SATURATION-COLORS if: clear, vivid, pure, bright colors or moderate saturation but with a addition of vibrant, bright, pure colors
+   Ask yourself: "Do the colors look CLEAR and PURE, or DUSTY and SOFT?"
+   
+   - Choose MUTED-SATURATION-COLORS if: colors look dusty, grayish, soft, like they have a gray veil
+   - Choose NEUTRAL-SATURATION-COLORS if: colors are moderately clear, not dusty but not super vivid
+   - Choose BRIGHT-SATURATION-COLORS if: colors look clear, pure, vivid, no gray mixed in
 
 4. CONTRAST LEVEL - Lightness difference between features:
    PRIORITY: Hair vs Skin (60%) + Skin vs Eyes (40%)
