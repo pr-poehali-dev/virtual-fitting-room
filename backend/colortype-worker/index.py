@@ -103,9 +103,13 @@ Analyze the colors visible in this image and determine:
    
    Ask yourself: "Do the colors look CLEAR and PURE, or DUSTY and SOFT?"
    
-   - Choose MUTED-SATURATION-COLORS if: colors look dusty, grayish, soft, like they have a gray veil
-   - Choose NEUTRAL-SATURATION-COLORS if: colors are moderately clear, not dusty but not super vivid
-   - Choose BRIGHT-SATURATION-COLORS if: colors look clear, pure, vivid, no gray mixed in
+   - Choose MUTED-SATURATION-COLORS if: colors are dusty, grayish, soft, subdued (like gray veil over colors)
+   
+   - Choose MUTED-NEUTRAL-SATURATION-COLORS if: colors are moderately saturated but lean toward soft, slightly muted, gentle (closer to MUTED than BRIGHT)
+   
+   - Choose BRIGHT-NEUTRAL-SATURATION-COLORS if: colors are moderately saturated but lean toward clear, somewhat vivid, fresh (closer to BRIGHT than MUTED)
+   
+   - Choose BRIGHT-SATURATION-COLORS if: colors are clear, vivid, pure, bright, vibrant (no gray mixed in, pure pigments)
 
 4. CONTRAST LEVEL - Lightness difference between features:
    PRIORITY: Hair vs Skin (60%) + Skin vs Eyes (40%)
@@ -208,7 +212,7 @@ Return ONLY a valid JSON object with your analysis of THIS SPECIFIC PHOTO:
 {{
   "undertone": "[YOUR CHOICE: WARM-UNDERTONE or COOL-UNDERTONE]",
   "lightness": "[YOUR CHOICE: LIGHT-COLORS, MEDIUM-LIGHTNESS-COLORS, or DEEP-COLORS]",
-  "saturation": "[YOUR CHOICE: MUTED-SATURATION-COLORS, NEUTRAL-SATURATION-COLORS, or BRIGHT-SATURATION-COLORS]",
+  "saturation": "[YOUR CHOICE: MUTED-SATURATION-COLORS, MUTED-NEUTRAL-SATURATION-COLORS, BRIGHT-NEUTRAL-SATURATION-COLORS, or BRIGHT-SATURATION-COLORS]",
   "contrast": "[YOUR CHOICE: LOW-CONTRAST, MEDIUM-CONTRAST, or HIGH-CONTRAST]",
   "hair_color": "[exact description of hair color YOU SEE]",
   "eye_color": "[exact description of eye color YOU SEE]",
