@@ -98,7 +98,7 @@ Analyze the colors visible in this image and determine:
 3. SATURATION - Color vibrancy (focus on HAIR, EYES, and SKIN):
    PRIORITY: Hair color (50%) → Eye color (30%) → Skin color (20%)
    
-   ⚠️ HAIR ANALYSIS: Look at ROOTS first (60% weight), then length (40% weight)
+   ⚠️ HAIR ANALYSIS: Look at ROOTS first (55% weight), then length (45% weight)
    * Assess vibrancy at SCALP/ROOTS - natural color shows true saturation
    
    Ask yourself: "Do the colors look CLEAR and PURE, or DUSTY and SOFT?"
