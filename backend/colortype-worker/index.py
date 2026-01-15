@@ -982,13 +982,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         
                         # Map user's eye color to lightness level for contrast calculation
                         EYE_COLOR_TO_LIGHTNESS = {
-                            'blue': 'LIGHT',              # Blue = light
-                            'gray': 'LIGHT-MEDIUM',       # Gray = light-medium
-                            'grey': 'LIGHT-MEDIUM',       # Grey = light-medium
-                            'green': 'LIGHT-MEDIUM',      # Green = light-medium
-                            'hazel': 'LIGHT-MEDIUM',       # Hazel = light-medium
-                            'brown': 'DARK-MEDIUM',       # Brown = dark-medium
-                            'black': 'DARK'               # Black = dark
+                            'blue': 'LIGHT',                    # Голубые
+                            'blue-green': 'LIGHT-MEDIUM',       # Сине-зелёные
+                            'gray-blue': 'LIGHT',               # Серо-голубые
+                            'gray-green': 'LIGHT-MEDIUM',       # Серо-зелёные
+                            'gray': 'LIGHT-MEDIUM',             # Серые
+                            'grey': 'LIGHT-MEDIUM',             # Серые (альт)
+                            'green': 'LIGHT-MEDIUM',            # Зелёные
+                            'turquoise': 'LIGHT-MEDIUM',        # Бирюзовые
+                            'jade': 'LIGHT-MEDIUM',             # Нефритовые
+                            'light brown': 'DARK-MEDIUM',       # Светло-карие
+                            'brown': 'DARK-MEDIUM',             # Карие
+                            'brown-green': 'DARK-MEDIUM',       # Коричнево-зелёные
+                            'black-brown': 'DARK',              # Чёрно-карие
+                            'hazel': 'DARK-MEDIUM',             # Ореховые (золотистые)
+                            'golden brown': 'DARK-MEDIUM',      # Золотисто-карие
+                            'chocolate': 'DARK'                 # Шоколадные
                         }
                         
                         eye_lightness = EYE_COLOR_TO_LIGHTNESS.get(eye_color.lower(), 'DARK-MEDIUM')

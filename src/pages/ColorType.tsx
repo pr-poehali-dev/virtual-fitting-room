@@ -27,7 +27,7 @@ const eyeColors: Record<string, string> = {
   "Серо-зелёные": "gray-green",
   Серые: "gray",
   Зелёные: "green",
-  Бирюзовые: "turquoise blue",
+  Бирюзовые: "turquoise",
   Нефритовые: "jade",
   "Светло-карие": "light brown",
   Карие: "brown",
@@ -35,7 +35,7 @@ const eyeColors: Record<string, string> = {
   "Чёрно-карие": "black-brown",
   "Ореховые (золотистые)": "hazel",
   "Золотисто-карие": "golden brown",
-  Шоколадные: "cocoa",
+  Шоколадные: "chocolate",
 };
 
 // Mapping English color types to Russian
