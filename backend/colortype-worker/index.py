@@ -162,7 +162,7 @@ Analyze the colors visible in this image and determine:
    
    ✅ Choose MEDIUM-CONTRAST if hair and skin differ by ONE level:
    - LIGHT hair + MEDIUM skin → MEDIUM
-     Example: "light blond" + "medium beige" = MEDIUM
+     Example: "light blond" + "medium brown" = MEDIUM
    - MEDIUM hair + LIGHT skin → MEDIUM
      Example: "chestnut brown" + "light beige" = MEDIUM
      Example: "medium brown" + "ivory" = MEDIUM
