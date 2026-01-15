@@ -795,14 +795,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
         
-        # FIRST: Check for stuck OpenAI/OpenRouter tasks older than 1 minute (timeout = request never reached API, refund money)
-        print(f'[ColorType-Worker] Checking for stuck OpenAI tasks older than 1 minute...')
+        # FIRST: Check for stuck OpenAI/OpenRouter tasks older than 3 minutes (timeout = request never reached API, refund money)
+        print(f'[ColorType-Worker] Checking for stuck OpenAI tasks older than 3 minutes...')
         cursor.execute('''
             SELECT id, user_id, created_at
             FROM color_type_history
             WHERE status = 'processing' 
               AND replicate_prediction_id IS NULL
-              AND created_at < NOW() - INTERVAL '1 minute'
+              AND created_at < NOW() - INTERVAL '3 minutes'
             ORDER BY created_at ASC
             LIMIT 10
         ''')
