@@ -983,20 +983,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         # Map user's eye color to lightness level for contrast calculation
                         EYE_COLOR_TO_LIGHTNESS = {
                             'blue': 'LIGHT',                    # Голубые
-                            'blue-green': 'LIGHT-MEDIUM',       # Сине-зелёные
-                            'gray-blue': 'LIGHT',               # Серо-голубые
-                            'gray-green': 'LIGHT-MEDIUM',       # Серо-зелёные
-                            'gray': 'LIGHT-MEDIUM',             # Серые
-                            'grey': 'LIGHT-MEDIUM',             # Серые (альт)
+                            'blue-green': 'LIGHT',              # Сине-зелёные
                             'green': 'LIGHT-MEDIUM',            # Зелёные
+                            'gray-blue': 'LIGHT-MEDIUM',        # Серо-голубые
                             'turquoise': 'LIGHT-MEDIUM',        # Бирюзовые
                             'jade': 'LIGHT-MEDIUM',             # Нефритовые
+                            'hazel': 'LIGHT-MEDIUM',             # Ореховые (золотистые)
+                            'gray-green': 'DARK-MEDIUM',        # Серо-зелёные
+                            'gray': 'DARK-MEDIUM',              # Серые
+                            'grey': 'DARK-MEDIUM',              # Серые (альт)
                             'light brown': 'DARK-MEDIUM',       # Светло-карие
                             'brown': 'DARK-MEDIUM',             # Карие
                             'brown-green': 'DARK-MEDIUM',       # Коричнево-зелёные
-                            'black-brown': 'DARK',              # Чёрно-карие
-                            'hazel': 'DARK-MEDIUM',             # Ореховые (золотистые)
                             'golden brown': 'DARK-MEDIUM',      # Золотисто-карие
+                            'black-brown': 'DARK',              # Чёрно-карие
                             'chocolate': 'DARK'                 # Шоколадные
                         }
                         
