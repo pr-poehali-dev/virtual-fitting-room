@@ -84,16 +84,16 @@ Analyze the colors visible in this image and determine:
 2. LIGHTNESS - Overall darkness level (focus on HAIR):
    PRIORITY: Hair color (45%) → Skin tone (40%) → Eyes (15%)
    
-   - Choose LIGHT-COLORS if: very light hair (platinum, light blond, very light brown)
-   - Choose MEDIUM-LIGHTNESS-COLORS if: medium hair (medium brown, dark blond)
-   - Choose DEEP-COLORS if: dark hair (dark brown, black, deep auburn)
+   - Choose LIGHT-COLORS if: very light hair (platinum, light blond, golden blond) and very light skin (porcelain, ivory, alabaster, pale)
+   - Choose MEDIUM-LIGHTNESS-COLORS if: medium hair (medium brown, dark blond) and light or medium skin (medium beige, warm beige, medium warm beige, porcelain, ivory, alabaster, pale)
+   - Choose DEEP-COLORS if: dark hair (dark brown, black, deep auburn, dark chestnut, dark auburn, espresso, deep brown)
 
 3. SATURATION - Color vibrancy (focus on HAIR, EYES, and SKIN):
    PRIORITY: Hair color (50%) → Eye color (30%) → Skin color (20%)
    
    - Choose MUTED-SATURATION-COLORS if: dusty, grayish, soft, subdued colors
    - Choose NEUTRAL-SATURATION-COLORS if: moderate saturation
-   - Choose BRIGHT-SATURATION-COLORS if: clear, vivid, pure, bright colors
+   - Choose BRIGHT-SATURATION-COLORS if: clear, vivid, pure, bright colors or moderate saturation but with a addition of vibrant, bright, pure colors
 
 4. CONTRAST LEVEL - Lightness difference between features:
    PRIORITY: Hair vs Skin (60%) + Skin vs Eyes (40%)
