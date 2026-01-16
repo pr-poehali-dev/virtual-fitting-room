@@ -372,6 +372,21 @@ def match_colortype(analysis: dict) -> tuple:
         excluded_types.update(['FIERY AUTUMN', 'VIVID AUTUMN'])
         print(f'[Match] Golden blonde/blonde hair detected → excluding FIERY AUTUMN and VIVID AUTUMN')
     
+    # Rule 6: Pure gray eyes (not gray-blue) → exclude all SPRING
+    if any(keyword in eyes_lower for keyword in ['gray', 'grey']) and not any(keyword in eyes_lower for keyword in ['gray-blue', 'grey-blue', 'blue-gray', 'blue-grey']):
+        excluded_types.update(['GENTLE SPRING', 'BRIGHT SPRING', 'VIBRANT SPRING'])
+        print(f'[Match] Pure gray eyes detected → excluding all SPRING')
+    
+    # Rule 7: Light skin → exclude VIVID AUTUMN, VIVID WINTER, and VIVID SUMMER
+    if light_skin:
+        excluded_types.update(['VIVID AUTUMN', 'VIVID WINTER', 'VIVID SUMMER'])
+        print(f'[Match] Light skin detected → excluding VIVID AUTUMN, VIVID WINTER, and VIVID SUMMER')
+    
+    # Rule 8: Blond hair → exclude SOFT WINTER and VIBRANT SPRING
+    if any(keyword in hair_lower for keyword in ['blonde', 'blond', 'light blond', 'light blonde']):
+        excluded_types.update(['SOFT WINTER', 'VIBRANT SPRING'])
+        print(f'[Match] Blond hair detected → excluding SOFT WINTER and VIBRANT SPRING')
+    
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
     
