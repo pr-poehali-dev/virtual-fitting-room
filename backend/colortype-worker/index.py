@@ -701,6 +701,11 @@ def match_colortype(analysis: dict) -> tuple:
         excluded_types.add('GENTLE AUTUMN')
         print(f'[Match] Light skin + cool blue eyes detected → excluding GENTLE AUTUMN')
     
+    # Rule 5: Golden blonde or blonde hair → exclude FIERY AUTUMN and VIVID AUTUMN
+    if any(keyword in hair_lower for keyword in ['golden blond', 'golden blonde', 'blonde', 'blond', 'light blond', 'light blonde', 'honey blond', 'honey blonde']):
+        excluded_types.update(['FIERY AUTUMN', 'VIVID AUTUMN'])
+        print(f'[Match] Golden blonde/blonde hair detected → excluding FIERY AUTUMN and VIVID AUTUMN')
+    
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
     
