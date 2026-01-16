@@ -16,7 +16,46 @@ import base64
 # VIBRANT SPRING now includes warm light brown/golden brown hair with bright eyes
 # Reverted composite image approach - using single photo analysis
 
+# Russian translations for user-facing messages
+COLORTYPE_NAMES_RU = {
+    'GENTLE AUTUMN': 'Нежная (мягкая) осень',
+    'FIERY AUTUMN': 'Огненная осень',
+    'VIVID AUTUMN': 'Тёмная осень',
+    'GENTLE SPRING': 'Нежная (мягкая) весна',
+    'BRIGHT SPRING': 'Тёплая весна',
+    'VIBRANT SPRING': 'Яркая весна',
+    'SOFT WINTER': 'Мягкая зима',
+    'BRIGHT WINTER': 'Яркая зима',
+    'VIVID WINTER': 'Тёмная зима',
+    'SOFT SUMMER': 'Светлое (мягкое) лето',
+    'DUSTY SUMMER': 'Пыльное (мягкое) лето',
+    'VIVID SUMMER': 'Яркое (холодное) лето'
+}
 
+UNDERTONE_RU = {
+    'WARM-UNDERTONE': 'тёплый',
+    'COOL-UNDERTONE': 'холодный'
+}
+
+LIGHTNESS_RU = {
+    'LIGHT-COLORS': 'светлые цвета',
+    'MEDIUM-LIGHTNESS-COLORS': 'средне-светлые цвета',
+    'DEEP-COLORS': 'глубокие насыщенные цвета'
+}
+
+SATURATION_RU = {
+    'MUTED-SATURATION-COLORS': 'приглушённая',
+    'MUTED-NEUTRAL-SATURATION-COLORS': 'приглушённо-нейтральная',
+    'BRIGHT-NEUTRAL-SATURATION-COLORS': 'ярко-нейтральная',
+    'BRIGHT-SATURATION-COLORS': 'яркая'
+}
+
+CONTRAST_RU = {
+    'LOW-CONTRAST': 'низкий',
+    'LOW-MEDIUM-CONTRAST': 'средне-низкий',
+    'HIGH-MEDIUM-CONTRAST': 'средне-высокий',
+    'HIGH-CONTRAST': 'высокий'
+}
 
 REFERENCE_SCHEMA_URL = "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortypes.jpg"
 
@@ -210,6 +249,40 @@ Return ONLY a valid JSON object with your analysis of THIS SPECIFIC PHOTO:
 5. You are analyzing COLORS (like paint swatches), not identifying people
 
 If you refuse or return anything other than JSON, the styling system will break and users won't get their color recommendations.'''
+
+def format_result(colortype: str, hair: str, skin: str, eyes: str, 
+                  undertone: str, lightness: str, saturation: str, contrast: str,
+                  fallback_type: str = 'standard') -> str:
+    '''Format user-friendly result message in Russian'''
+    colortype_ru = COLORTYPE_NAMES_RU.get(colortype, colortype)
+    undertone_ru = UNDERTONE_RU.get(undertone, undertone)
+    lightness_ru = LIGHTNESS_RU.get(lightness, lightness)
+    saturation_ru = SATURATION_RU.get(saturation, saturation)
+    contrast_ru = CONTRAST_RU.get(contrast, contrast)
+    
+    base_message = f"""# {colortype_ru}
+
+Ваш цветотип — {colortype}.
+
+Ваши цвета:
+• Волосы: {hair}
+• Кожа: {skin}
+• Глаза: {eyes}
+
+Характеристики:
+• Подтон: {undertone_ru}
+• Глубина: {lightness_ru}
+• Насыщенность: {saturation_ru}
+• Контраст: {contrast_ru}"""
+
+    if fallback_type == 'standard':
+        return base_message + "\n\nАнализ показал уверенное совпадение по всем параметрам."
+    elif fallback_type == 'fallback1':
+        return base_message + "\n\nПри анализе тон показал неоднозначные результаты, но общая картина внешности чётко указывает на этот тип. Обратите внимание: освещение на фото или окрашенные волосы могли повлиять на точность определения."
+    elif fallback_type == 'fallback2':
+        return base_message + "\n\nВаша внешность уникальна — она сочетает черты нескольких типов, но этот цветотип подходит вам больше всего. Обратите внимание: освещение на фото или окрашенные волосы могли повлиять на точность определения."
+    
+    return base_message
 
 def normalize_image_format(image: str) -> str:
     '''Convert image to data URI format if needed'''
@@ -804,7 +877,7 @@ def match_colortype(analysis: dict) -> tuple:
                     best_color_score = color_score
                     best_colortype = colortype
             
-            explanation = f"Ambiguous match resolved by colors: {best_colortype} (color_score: {best_color_score:.2f}). Analysis: {undertone}/{lightness}/{saturation}/{contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}."
+            explanation = format_result(best_colortype, hair, skin, eyes, undertone, lightness, saturation, contrast, 'standard')
             print(f'[Match] FINAL (ambiguous resolved): {best_colortype} with color_score {best_color_score:.2f}')
             return best_colortype, explanation
     
@@ -925,6 +998,11 @@ def match_colortype(analysis: dict) -> tuple:
                     best_colortype = colortype
                     best_param_score = param_score
                     best_color_score = color_score
+        
+        if best_colortype:
+            explanation = format_result(best_colortype, hair, skin, eyes, undertone, lightness, saturation, contrast, 'fallback1')
+            print(f'[Match] FALLBACK 1 SUCCESS: {best_colortype} with score {best_total_score:.2f}')
+            return best_colortype, explanation
     
     # FALLBACK 2: If still no match, choose colortype with fewest rule violations
     if best_colortype is None:
@@ -969,10 +1047,10 @@ def match_colortype(analysis: dict) -> tuple:
         best_colortype = fallback_colortype
         best_total_score = fallback_score
         print(f'[Match] FALLBACK 2 SELECTED: {best_colortype} with {min_violations} violations, score {best_total_score:.2f}')
-        explanation = f"Fallback match (least violations): {best_colortype} ({min_violations} rule violations, score: {best_total_score:.2f}). Analysis: {undertone}/{lightness}/{saturation}/{contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}."
+        explanation = format_result(best_colortype, hair, skin, eyes, undertone, lightness, saturation, contrast, 'fallback2')
         return best_colortype, explanation
     
-    explanation = f"Best match: {best_colortype} (total: {best_total_score:.2f}, params: {best_param_score:.2f}, colors: {best_color_score:.2f}). Analysis: {undertone}/{lightness}/{saturation}/{contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}."
+    explanation = format_result(best_colortype, hair, skin, eyes, undertone, lightness, saturation, contrast, 'standard')
     
     print(f'[Match] FINAL: {best_colortype} with score {best_total_score:.2f}')
     
