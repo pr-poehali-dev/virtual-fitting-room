@@ -308,6 +308,56 @@ def calculate_param_match_score(analysis_value: str, expected_value: str) -> flo
     '''Check if parameter matches expected value (1.0 if match, 0.0 if not)'''
     return 1.0 if analysis_value == expected_value else 0.0
 
+def count_rule_violations(colortype: str, eyes_lower: str, hair_lower: str, skin_lower: str) -> int:
+    '''Count how many exclusion rules this colortype violates
+    Returns: number of violated rules (0 = no violations, 8 = all rules violated)
+    '''
+    violations = 0
+    light_skin = any(keyword in skin_lower for keyword in ['light', 'pale', 'ivory', 'porcelain', 'fair', 'alabaster'])
+    cool_eyes = any(keyword in eyes_lower for keyword in ['blue', 'gray-blue', 'grey-blue', 'blue-gray', 'blue-grey'])
+    
+    # Rule 1: Brown eyes → exclude all SPRING, all SUMMER, and SOFT WINTER
+    if any(keyword in eyes_lower for keyword in ['black-brown', 'brown', 'brown-green', 'dark brown', 'deep brown', 'chestnut', 'chocolate', 'amber']):
+        if colortype in ['GENTLE SPRING', 'BRIGHT SPRING', 'VIBRANT SPRING', 'SOFT SUMMER', 'DUSTY SUMMER', 'VIVID SUMMER', 'SOFT WINTER']:
+            violations += 1
+    
+    # Rule 2: Cool light eyes → exclude VIVID AUTUMN and VIVID WINTER
+    if any(keyword in eyes_lower for keyword in ['blue', 'gray', 'grey', 'gray-green', 'gray-blue', 'grey-green', 'grey-blue', 'blue-gray', 'blue-grey']):
+        if colortype in ['VIVID AUTUMN', 'VIVID WINTER']:
+            violations += 1
+    
+    # Rule 3: Chestnut brown hair → exclude BRIGHT SPRING
+    if any(keyword in hair_lower for keyword in ['chestnut brown', 'chestnut', 'medium brown', 'warm brown']):
+        if colortype == 'BRIGHT SPRING':
+            violations += 1
+    
+    # Rule 4: Light skin + blue/grey-blue eyes → exclude GENTLE AUTUMN
+    if light_skin and cool_eyes:
+        if colortype == 'GENTLE AUTUMN':
+            violations += 1
+    
+    # Rule 5: Golden blonde or blonde hair → exclude FIERY AUTUMN and VIVID AUTUMN
+    if any(keyword in hair_lower for keyword in ['golden blond', 'golden blonde', 'blonde', 'blond', 'light blond', 'light blonde', 'honey blond', 'honey blonde']):
+        if colortype in ['FIERY AUTUMN', 'VIVID AUTUMN']:
+            violations += 1
+    
+    # Rule 6: Pure gray eyes (not gray-blue) → exclude all SPRING
+    if any(keyword in eyes_lower for keyword in ['gray', 'grey']) and not any(keyword in eyes_lower for keyword in ['gray-blue', 'grey-blue', 'blue-gray', 'blue-grey']):
+        if colortype in ['GENTLE SPRING', 'BRIGHT SPRING', 'VIBRANT SPRING']:
+            violations += 1
+    
+    # Rule 7: Light skin → exclude VIVID AUTUMN, VIVID WINTER, and VIVID SUMMER
+    if light_skin:
+        if colortype in ['VIVID AUTUMN', 'VIVID WINTER', 'VIVID SUMMER']:
+            violations += 1
+    
+    # Rule 8: Blond hair → exclude SOFT WINTER and VIBRANT SPRING
+    if any(keyword in hair_lower for keyword in ['blonde', 'blond', 'light blond', 'light blonde']):
+        if colortype in ['SOFT WINTER', 'VIBRANT SPRING']:
+            violations += 1
+    
+    return violations
+
 def match_colortype(analysis: dict) -> tuple:
     '''Match analysis to best colortype using weighted 7-parameter scoring
     
@@ -486,6 +536,106 @@ def match_colortype(analysis: dict) -> tuple:
             best_colortype = colortype
             best_param_score = param_score
             best_color_score = color_score
+    
+    # FALLBACK 1: If no colortype found (all excluded), try inverted undertone
+    if best_colortype is None:
+        print(f'[Match] FALLBACK 1: All colortypes excluded! Inverting undertone...')
+        inverted_undertone = 'COOL-UNDERTONE' if undertone == 'WARM-UNDERTONE' else 'WARM-UNDERTONE'
+        print(f'[Match] Original undertone: {undertone} → Inverted: {inverted_undertone}')
+        
+        for colortype in COLORTYPE_REFERENCES.keys():
+            if colortype in excluded_types:
+                continue
+            
+            all_params = get_all_colortype_params(colortype)
+            best_param_score_inv = 0.0
+            best_match_info_inv = None
+            
+            if all_params:
+                for expected_params in all_params:
+                    if expected_params['undertone'] != inverted_undertone:
+                        continue
+                    
+                    undertone_match = 1.0
+                    lightness_match = calculate_param_match_score(lightness, expected_params['lightness'])
+                    saturation_match = calculate_param_match_score(saturation, expected_params['saturation'])
+                    contrast_match = calculate_param_match_score(contrast, expected_params['contrast'])
+                    
+                    param_score_candidate = (undertone_match * 0.50) + (lightness_match * 0.165) + (saturation_match * 0.165) + (contrast_match * 0.17)
+                    
+                    if param_score_candidate > best_param_score_inv:
+                        best_param_score_inv = param_score_candidate
+                        best_match_info_inv = {
+                            'U': undertone_match,
+                            'L': lightness_match,
+                            'S': saturation_match,
+                            'C': contrast_match
+                        }
+            
+            if best_match_info_inv:
+                param_score = best_param_score_inv
+                
+                ref = COLORTYPE_REFERENCES[colortype]
+                hair_score = calculate_color_match_score(hair, ref['hair'])
+                skin_score = calculate_color_match_score(skin, ref['skin'])
+                eyes_score = calculate_color_match_score(eyes, ref['eyes'])
+                
+                color_score = (hair_score * 0.35) + (skin_score * 0.29) + (eyes_score * 0.36)
+                total_score = (param_score * 0.5) + (color_score * 0.5)
+                
+                print(f'[Match] {colortype}: param={param_score:.2f}, color={color_score:.2f}, total={total_score:.2f}')
+                
+                if total_score > best_total_score:
+                    best_total_score = total_score
+                    best_colortype = colortype
+                    best_param_score = param_score
+                    best_color_score = color_score
+    
+    # FALLBACK 2: If still no match, choose colortype with fewest rule violations
+    if best_colortype is None:
+        print(f'[Match] FALLBACK 2: No match even with inverted undertone! Choosing least-violating colortype...')
+        min_violations = 999
+        fallback_colortype = None
+        fallback_score = 0.0
+        
+        for colortype in COLORTYPE_REFERENCES.keys():
+            violations = count_rule_violations(colortype, eyes_lower, hair_lower, skin_lower)
+            
+            all_params = get_all_colortype_params(colortype)
+            max_score = 0.0
+            
+            if all_params:
+                for expected_params in all_params:
+                    undertone_match = calculate_param_match_score(undertone, expected_params['undertone'])
+                    lightness_match = calculate_param_match_score(lightness, expected_params['lightness'])
+                    saturation_match = calculate_param_match_score(saturation, expected_params['saturation'])
+                    contrast_match = calculate_param_match_score(contrast, expected_params['contrast'])
+                    
+                    param_score = (undertone_match * 0.50) + (lightness_match * 0.165) + (saturation_match * 0.165) + (contrast_match * 0.17)
+                    
+                    ref = COLORTYPE_REFERENCES[colortype]
+                    hair_score = calculate_color_match_score(hair, ref['hair'])
+                    skin_score = calculate_color_match_score(skin, ref['skin'])
+                    eyes_score = calculate_color_match_score(eyes, ref['eyes'])
+                    
+                    color_score = (hair_score * 0.35) + (skin_score * 0.29) + (eyes_score * 0.36)
+                    total_score = (param_score * 0.5) + (color_score * 0.5)
+                    
+                    if total_score > max_score:
+                        max_score = total_score
+            
+            print(f'[Match] {colortype}: violations={violations}, score={max_score:.2f}')
+            
+            if violations < min_violations or (violations == min_violations and max_score > fallback_score):
+                min_violations = violations
+                fallback_colortype = colortype
+                fallback_score = max_score
+        
+        best_colortype = fallback_colortype
+        best_total_score = fallback_score
+        print(f'[Match] FALLBACK 2 SELECTED: {best_colortype} with {min_violations} violations, score {best_total_score:.2f}')
+        explanation = f"Fallback match (least violations): {best_colortype} ({min_violations} rule violations, score: {best_total_score:.2f}). Analysis: {undertone}/{lightness}/{saturation}/{contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}."
+        return best_colortype, explanation
     
     explanation = f"Best match: {best_colortype} (total: {best_total_score:.2f}, params: {best_param_score:.2f}, colors: {best_color_score:.2f}). Analysis: {undertone}/{lightness}/{saturation}/{contrast}. Hair: {hair}, Skin: {skin}, Eyes: {eyes}."
     
