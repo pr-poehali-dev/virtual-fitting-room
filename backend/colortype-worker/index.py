@@ -114,6 +114,7 @@ Analyze the colors visible in this image and determine:
      COOL SKIN (blue based):
      * Rosy beige (not yellow beige)
      * Pink, blue, rosy undertones
+     * Very light and pale, unsaturated neutral tones
      * Ebony (for deep skin)
      
      COOL EYES (supportive, not decisive): Gray-green, icy blue, gray, cool hazel
