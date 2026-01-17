@@ -365,6 +365,8 @@ def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str
 
 def submit_to_openai(image_url: str) -> dict:
     '''Submit task to OpenRouter (GPT-4o Vision) and get result immediately (synchronous)'''
+    from urllib.parse import quote
+    
     openrouter_api_key = os.environ.get('OPENROUTER_API_KEY')
     if not openrouter_api_key:
         raise Exception('OPENROUTER_API_KEY not configured')
@@ -380,6 +382,19 @@ def submit_to_openai(image_url: str) -> dict:
     from colortype_data import COLORTYPE_REFERENCES_DATA
     colortype_refs = COLORTYPE_REFERENCES_DATA
     print(f'[OpenRouter] Loaded {len(colortype_refs)} colortype references')
+    
+    # Helper function to encode URL (replace spaces with %20)
+    def encode_url(url: str) -> str:
+        '''Encode URL by replacing spaces and special characters'''
+        # Split URL into base and path
+        if '://' in url:
+            protocol, rest = url.split('://', 1)
+            if '/' in rest:
+                domain, path = rest.split('/', 1)
+                # Encode only the path part (after domain)
+                encoded_path = quote(path, safe='/:')
+                return f'{protocol}://{domain}/{encoded_path}'
+        return url
     
     # Build content array: prompt + analyzed photo + reference schemes + 2 examples per type
     content = [
@@ -400,13 +415,14 @@ def submit_to_openai(image_url: str) -> dict:
     # Add reference schemes with 2-3 example photos each (ALL 12 types REQUIRED)
     for colortype_name, ref_data in colortype_refs.items():
         # Always add scheme for each colortype
+        scheme_url = encode_url(ref_data['scheme_url'])
         content.append({
             'type': 'text',
             'text': f'\n{colortype_name} scheme:'
         })
         content.append({
             'type': 'image_url',
-            'image_url': {'url': ref_data['scheme_url']}
+            'image_url': {'url': scheme_url}
         })
         
         # Add maximum 3 examples for each type
@@ -417,9 +433,10 @@ def submit_to_openai(image_url: str) -> dict:
                 'text': f'{colortype_name} examples:'
             })
             for example_url in examples:
+                encoded_url = encode_url(example_url)
                 content.append({
                     'type': 'image_url',
-                    'image_url': {'url': example_url}
+                    'image_url': {'url': encoded_url}
                 })
     
     # Add analysis instructions
