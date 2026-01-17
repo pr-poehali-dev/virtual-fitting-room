@@ -354,8 +354,7 @@ def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str
         Bucket=s3_bucket,
         Key=s3_key,
         Body=image_bytes,
-        ContentType='image/jpeg',
-        ACL='public-read'
+        ContentType='image/jpeg'
     )
     
     # Build Yandex Cloud Storage URL
