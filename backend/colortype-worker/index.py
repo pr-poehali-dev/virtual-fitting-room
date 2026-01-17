@@ -412,7 +412,7 @@ def submit_to_openai(image_url: str) -> dict:
         }
     ]
     
-    # Add reference schemes with 2-3 example photos each (ALL 12 types REQUIRED)
+    # Add reference schemes ONLY (without examples) - 12 schemes total
     for colortype_name, ref_data in colortype_refs.items():
         # Always add scheme for each colortype
         scheme_url = encode_url(ref_data['scheme_url'])
@@ -424,20 +424,6 @@ def submit_to_openai(image_url: str) -> dict:
             'type': 'image_url',
             'image_url': {'url': scheme_url}
         })
-        
-        # Add maximum 3 examples for each type
-        examples = ref_data.get('examples', [])[:3]
-        if examples:
-            content.append({
-                'type': 'text',
-                'text': f'{colortype_name} examples:'
-            })
-            for example_url in examples:
-                encoded_url = encode_url(example_url)
-                content.append({
-                    'type': 'image_url',
-                    'image_url': {'url': encoded_url}
-                })
     
     # Add analysis instructions
     content.append({
