@@ -714,7 +714,7 @@ def calculate_param_match_score(analysis_value: str, expected_value: str) -> flo
 
 def count_rule_violations(colortype: str, eyes_lower: str, hair_lower: str, skin_lower: str) -> int:
     '''Count how many exclusion rules this colortype violates
-    Returns: number of violated rules (0 = no violations, 8 = all rules violated)
+    Returns: number of violated rules (0 = no violations, 7 = all rules violated)
     '''
     violations = 0
     light_skin = any(keyword in skin_lower for keyword in ['light', 'pale', 'ivory', 'porcelain', 'fair', 'alabaster'])
@@ -745,17 +745,12 @@ def count_rule_violations(colortype: str, eyes_lower: str, hair_lower: str, skin
         if colortype in ['FIERY AUTUMN', 'VIVID AUTUMN']:
             violations += 1
     
-    # Rule 6: Pure gray eyes (not gray-blue) → exclude all SPRING
-    if any(keyword in eyes_lower for keyword in ['gray', 'grey']) and not any(keyword in eyes_lower for keyword in ['gray-blue', 'grey-blue', 'blue-gray', 'blue-grey']):
-        if colortype in ['GENTLE SPRING', 'BRIGHT SPRING', 'VIBRANT SPRING']:
-            violations += 1
-    
-    # Rule 7: Light skin → exclude VIVID AUTUMN, VIVID WINTER, and VIVID SUMMER
+    # Rule 6: Light skin → exclude VIVID AUTUMN, VIVID WINTER, and VIVID SUMMER
     if light_skin:
         if colortype in ['VIVID AUTUMN', 'VIVID WINTER', 'VIVID SUMMER']:
             violations += 1
     
-    # Rule 8: Blond hair → exclude SOFT WINTER and VIBRANT SPRING
+    # Rule 7: Blond hair → exclude SOFT WINTER and VIBRANT SPRING
     if any(keyword in hair_lower for keyword in ['blonde', 'blond', 'light blond', 'light blonde']):
         if colortype in ['SOFT WINTER', 'VIBRANT SPRING']:
             violations += 1
