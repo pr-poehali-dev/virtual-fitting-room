@@ -1,4 +1,5 @@
 {
+  "list-s3-files": "https://functions.poehali.dev/3828bbc6-6275-43d3-a447-009f0e363027",
   "create-s3-folders": "https://functions.poehali.dev/0973771f-331d-480d-ac18-af6c60494c35",
   "colortype-worker": "https://functions.poehali.dev/c13ce63e-ae23-419d-84f1-b6958e4ea586",
   "colortype-start": "https://functions.poehali.dev/f5ab39bd-a682-44d8-ac47-d7b9d035013b",

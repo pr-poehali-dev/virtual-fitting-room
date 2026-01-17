@@ -1,0 +1,10 @@
+{
+  "tests": [
+    {
+      "name": "Test S3 list endpoint",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200
+    }
+  ]
+}
