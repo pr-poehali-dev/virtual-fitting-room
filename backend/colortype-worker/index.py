@@ -217,12 +217,14 @@ Analyze the colors visible in this image and determine:
    - deep olive, dark
 
 5. DESCRIBE EXACT COLORS you see (use synonyms and precise descriptors):
-   - Hair: ⚠️ CRITICAL - Analyze hair color at ROOTS (near face) FIRST! 
-     * 60% weight: Hair at ROOTS/SCALP (closest to face, near forehead/temples)
-     * 40% weight: Hair along LENGTH (mid-lengths and ends)
-     * Why: Natural root color shows true undertone (dyed ends may differ)
-     * Focus on the hair color where it grows from the scalp - this is the REAL color
-     * Be specific - "jet black", "ash brown", "golden blond", "auburn", "dark cool brown", "honey blond", "platinum", "espresso"
+   - Hair: ⚠️ CRITICAL - Analyze hair color at ROOTS (near scalp/forehead) - this shows true color!
+     * Use hair dye terminology for precision:
+       "platinum blonde" (level 10), "ash blonde" (level 8-9, cool tone), "golden blonde" (level 7-8, warm), 
+       "light brown" (level 6), "chestnut/medium brown" (level 5), "dark brown" (level 4), 
+       "dark chestnut" (level 3), "black" (level 1-2), "auburn/copper" (red undertone), 
+       "mahogany" (red-violet), "ash" (cool, no warmth)
+     * Specify undertone: "ash" (cool), "golden" (warm), "neutral", "copper" (red)
+     * If roots differ from length: note both, prioritize roots
    - Eyes: Use color names - "deep brown", "bright blue", "hazel", "gray-blue", "green", "amber", "dark gray"
    - Skin: ⚠️ CRITICAL - Analyze skin tone in MULTIPLE facial zones (forehead, cheeks, chin) considering lighting:
      * Step 1: Identify BASE tone from lightest area (usually forehead):
