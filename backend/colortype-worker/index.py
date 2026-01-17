@@ -323,42 +323,43 @@ def normalize_image_format(image: str) -> str:
     return f'data:image/jpeg;base64,{image}'
 
 def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str:
-    '''Upload image to S3-compatible storage (via poehali.dev), return CDN URL'''
-    aws_access_key = os.environ.get('AWS_ACCESS_KEY_ID')
-    aws_secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    '''Upload image to Yandex Object Storage, return CDN URL'''
+    s3_access_key = os.environ.get('S3_ACCESS_KEY')
+    s3_secret_key = os.environ.get('S3_SECRET_KEY')
+    s3_bucket = os.environ.get('S3_BUCKET_NAME', 'fitting-room-images')
     
-    if not aws_access_key or not aws_secret_key:
-        raise Exception('AWS credentials not configured (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)')
+    if not s3_access_key or not s3_secret_key:
+        raise Exception('S3 credentials not configured (S3_ACCESS_KEY, S3_SECRET_KEY)')
     
     # Decode base64 if needed
     if image_data.startswith('data:image'):
         image_data = image_data.split(',', 1)[1]
     
     image_bytes = base64.b64decode(image_data)
-    print(f'[S3] Decoded {len(image_bytes)} bytes')
+    print(f'[Yandex] Decoded {len(image_bytes)} bytes')
     
-    # Generate filename: colortypes/{user_id}/{task_id}.jpg
-    s3_key = f'colortypes/{user_id}/{task_id}.jpg'
+    # Generate filename: images/colortypes/{user_id}/{task_id}.jpg
+    s3_key = f'images/colortypes/{user_id}/{task_id}.jpg'
     
-    print(f'[S3] Uploading to: {s3_key}')
+    print(f'[Yandex] Uploading to: {s3_key}')
     
-    # Upload to S3-compatible storage (bucket.poehali.dev)
+    # Upload to Yandex Object Storage
     s3 = boto3.client('s3',
-        endpoint_url='https://bucket.poehali.dev',
-        aws_access_key_id=aws_access_key,
-        aws_secret_access_key=aws_secret_key
+        endpoint_url='https://storage.yandexcloud.net',
+        aws_access_key_id=s3_access_key,
+        aws_secret_access_key=s3_secret_key
     )
     
     s3.put_object(
-        Bucket='files',
+        Bucket=s3_bucket,
         Key=s3_key,
         Body=image_bytes,
         ContentType='image/jpeg'
     )
     
-    # Build CDN URL (publicly accessible via CDN)
-    cdn_url = f'https://cdn.poehali.dev/projects/{aws_access_key}/bucket/{s3_key}'
-    print(f'[S3] Upload complete! CDN URL: {cdn_url}')
+    # Build Yandex Cloud Storage URL
+    cdn_url = f'https://storage.yandexcloud.net/{s3_bucket}/{s3_key}'
+    print(f'[Yandex] Upload complete! URL: {cdn_url}')
     
     return cdn_url
 
@@ -1370,11 +1371,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 # Upload image to Yandex Storage
                 print(f'[ColorType-Worker] Uploading image to Yandex Storage')
                 cdn_url = upload_to_yandex_storage(person_image, user_id, task_id)
-                
-                # Wait 3 seconds for Yandex Storage to make file publicly available
-                print(f'[ColorType-Worker] Waiting 3 seconds for file to become available...')
-                time.sleep(3)
-                print(f'[ColorType-Worker] File should be available now')
                 
                 # Submit to OpenAI GPT-4 Vision (synchronous - returns immediately)
                 print(f'[ColorType-Worker] Submitting to OpenAI GPT-4o Vision with user hint: {eye_color}')
