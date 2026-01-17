@@ -376,30 +376,10 @@ def submit_to_openai(image_url: str) -> dict:
         'X-Title': 'Virtual Fitting Room - Colortype Analysis'
     }
     
-    # Load reference schemes (try multiple paths for Cloud Functions compatibility)
-    import os as os_module
-    import json as json_module
-    
-    # Try different paths where file might be located in Cloud Functions
-    possible_paths = [
-        'colortype_references.json',  # Current directory
-        os_module.path.join(os_module.path.dirname(__file__), 'colortype_references.json'),  # Same dir as script
-        '/function/code/colortype_references.json',  # Cloud Functions path
-        'backend/colortype-worker/colortype_references.json'  # Relative from root
-    ]
-    
-    colortype_refs = None
-    for path in possible_paths:
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                colortype_refs = json_module.load(f)
-            print(f'[OpenRouter] Loaded references from: {path}')
-            break
-        except FileNotFoundError:
-            continue
-    
-    if not colortype_refs:
-        raise Exception(f'colortype_references.json not found in any of: {possible_paths}')
+    # Load reference schemes from Python module (better for Cloud Functions deployment)
+    from colortype_data import COLORTYPE_REFERENCES_DATA
+    colortype_refs = COLORTYPE_REFERENCES_DATA
+    print(f'[OpenRouter] Loaded {len(colortype_refs)} colortype references')
     
     # Build content array: prompt + analyzed photo + reference schemes + 2 examples per type
     content = [
