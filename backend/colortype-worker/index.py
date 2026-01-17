@@ -1373,6 +1373,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 print(f'[ColorType-Worker] Uploading image to Yandex Storage')
                 cdn_url = upload_to_yandex_storage(person_image, user_id, task_id)
                 
+                # Wait 3 seconds for Yandex Storage to make file publicly available
+                print(f'[ColorType-Worker] Waiting 3 seconds for file to become available...')
+                time.sleep(3)
+                print(f'[ColorType-Worker] File should be available now')
+                
                 # Submit to OpenAI GPT-4 Vision (synchronous - returns immediately)
                 print(f'[ColorType-Worker] Submitting to OpenAI GPT-4o Vision with user hint: {eye_color}')
                 try:
