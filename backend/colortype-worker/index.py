@@ -10,9 +10,11 @@ import uuid
 import base64
 
 
-# Updated with 4 exclusion rules for accurate color type matching
+# Updated with 8 exclusion rules for accurate color type matching
 # Rules: brown eyes exclude SPRING, cool eyes exclude VIVID AUTUMN/WINTER,
-# chestnut hair excludes BRIGHT SPRING, light skin + cool eyes excludes GENTLE AUTUMN
+# chestnut hair excludes BRIGHT SPRING, light skin + cool eyes excludes GENTLE AUTUMN,
+# blonde hair excludes FIERY/VIVID AUTUMN, light skin excludes VIVID types,
+# blond hair excludes SOFT WINTER/VIBRANT SPRING, light brown excludes FIERY/VIVID AUTUMN & SOFT/BRIGHT/VIVID WINTER
 # VIBRANT SPRING now includes warm light brown/golden brown hair with bright eyes
 # Reverted composite image approach - using single photo analysis
 
@@ -744,7 +746,7 @@ def calculate_param_match_score(analysis_value: str, expected_value: str) -> flo
 
 def count_rule_violations(colortype: str, eyes_lower: str, hair_lower: str, skin_lower: str) -> int:
     '''Count how many exclusion rules this colortype violates
-    Returns: number of violated rules (0 = no violations, 7 = all rules violated)
+    Returns: number of violated rules (0 = no violations, 8 = all rules violated)
     '''
     violations = 0
     light_skin = any(keyword in skin_lower for keyword in ['light', 'pale', 'ivory', 'porcelain', 'fair', 'alabaster'])
@@ -783,6 +785,11 @@ def count_rule_violations(colortype: str, eyes_lower: str, hair_lower: str, skin
     # Rule 7: Blond hair → exclude SOFT WINTER and VIBRANT SPRING
     if any(keyword in hair_lower for keyword in ['blonde', 'blond', 'light blond', 'light blonde']):
         if colortype in ['SOFT WINTER', 'VIBRANT SPRING']:
+            violations += 1
+    
+    # Rule 8: Light brown hair → exclude FIERY AUTUMN, VIVID AUTUMN, SOFT WINTER, BRIGHT WINTER, VIVID WINTER
+    if any(keyword in hair_lower for keyword in ['light brown']):
+        if colortype in ['FIERY AUTUMN', 'VIVID AUTUMN', 'SOFT WINTER', 'BRIGHT WINTER', 'VIVID WINTER']:
             violations += 1
     
     return violations
