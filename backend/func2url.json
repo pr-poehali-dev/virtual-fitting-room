@@ -1,6 +1,5 @@
 {
-  "list-s3-files": "https://functions.poehali.dev/3828bbc6-6275-43d3-a447-009f0e363027",
-  "create-s3-folders": "https://functions.poehali.dev/0973771f-331d-480d-ac18-af6c60494c35",
+  "cleanup-placeholders": "https://functions.poehali.dev/aa167a0b-7dbd-4d99-8f3c-fb39f577ba07",
   "colortype-worker": "https://functions.poehali.dev/c13ce63e-ae23-419d-84f1-b6958e4ea586",
   "colortype-start": "https://functions.poehali.dev/f5ab39bd-a682-44d8-ac47-d7b9d035013b",
   "colortype-status": "https://functions.poehali.dev/7f1395ac-bddc-45ec-b997-b39497110680",
