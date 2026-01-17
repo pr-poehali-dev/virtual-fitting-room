@@ -380,13 +380,30 @@ def submit_to_openai(image_url: str) -> dict:
         timeout=60
     )
     
-    if response.status_code == 200:
-        result = response.json()
-        content = result['choices'][0]['message']['content']
-        print(f'[OpenRouter] Got response: {content[:200]}...')
-        return {'status': 'succeeded', 'output': content}
+    print(f'[OpenRouter] Response status: {response.status_code}, Content-Type: {response.headers.get("Content-Type", "unknown")}')
     
-    raise Exception(f'Failed to submit to OpenRouter: {response.status_code} - {response.text}')
+    # Check if response is HTML error page (Cloudflare 500 etc)
+    content_type = response.headers.get('Content-Type', '')
+    if 'text/html' in content_type:
+        error_text = response.text[:500]
+        print(f'[OpenRouter] ERROR: Got HTML instead of JSON. Response: {error_text}')
+        raise Exception(f'OpenRouter returned HTML error page (status {response.status_code}). This is usually a temporary server issue. Please try again.')
+    
+    if response.status_code == 200:
+        try:
+            result = response.json()
+            if 'choices' not in result or not result['choices']:
+                print(f'[OpenRouter] ERROR: Invalid response structure: {result}')
+                raise Exception('OpenRouter response missing "choices" field')
+            
+            content = result['choices'][0]['message']['content']
+            print(f'[OpenRouter] Got response: {content[:200]}...')
+            return {'status': 'succeeded', 'output': content}
+        except (KeyError, IndexError, json.JSONDecodeError) as e:
+            print(f'[OpenRouter] ERROR parsing response: {str(e)}. Response: {response.text[:300]}')
+            raise Exception(f'Failed to parse OpenRouter response: {str(e)}')
+    
+    raise Exception(f'Failed to submit to OpenRouter: {response.status_code} - {response.text[:500]}')
 
 def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
     '''Refund 30 rubles to user balance if not unlimited and not already refunded'''
