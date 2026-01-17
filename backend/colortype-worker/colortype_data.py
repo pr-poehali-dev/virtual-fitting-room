@@ -12,7 +12,7 @@ COLORTYPE_REFERENCES_DATA = {
       "contrast": ["HIGH-MEDIUM", "HIGH"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vibrant-spring/14-01-2026 111950.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vibrant-spring/14-01-2026%20111950.jpg",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vibrant-spring/megan-gale.webp",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vibrant-spring/emma-stone.webp",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vibrant-spring/cat-deeley.webp"
@@ -28,7 +28,7 @@ COLORTYPE_REFERENCES_DATA = {
       "contrast": ["LOW-MEDIUM", "HIGH-MEDIUM"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/bright-spring/13-01-2026 164840.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/bright-spring/13-01-2026%20164840.jpg",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/bright-spring/1b8d28e0ce523689d522dcbb0fcf1620.jpg",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/bright-spring/amy-adams.jpg"
     ]
@@ -43,7 +43,7 @@ COLORTYPE_REFERENCES_DATA = {
       "contrast": ["LOW", "LOW-MEDIUM"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-spring/12-01-2026 224702.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-spring/12-01-2026%20224702.jpg",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-spring/c3c2ed812b1f33986ef23cf56fc6c4f7.jpg",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-spring/anna-sophia-robb.webp",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-spring/amanda-seyfried.webp"
@@ -59,8 +59,8 @@ COLORTYPE_REFERENCES_DATA = {
       "contrast": ["LOW"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-summer/12-01-2026 224343.jpg",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-summer/12-01-2026 224004.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-summer/12-01-2026%20224343.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-summer/12-01-2026%20224004.jpg",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-summer/Toni-Garrn.webp",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-summer/Tanya-Dziahileva.webp",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-summer/January-Jones.webp",
@@ -77,8 +77,8 @@ COLORTYPE_REFERENCES_DATA = {
       "contrast": ["LOW-MEDIUM", "HIGH-MEDIUM"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-summer/17-01-2026 181446.jpg",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-summer/17-01-2026 141606.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-summer/17-01-2026%20181446.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-summer/17-01-2026%20141606.jpg",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-summer/Yael-Shelbia.webp",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-summer/Luna-Bijl.webp",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-summer/Bella-Heathcote.webp",
@@ -98,9 +98,9 @@ COLORTYPE_REFERENCES_DATA = {
     "examples": [
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/Ayca-Aysin-Turan.webp",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/Anna-Mila-Guyenz.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/14-01-2026 132439.jpg",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/12-01-2026 224813.jpg",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/10-01-2026 175105.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/14-01-2026%20132439.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/12-01-2026%20224813.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/10-01-2026%20175105.jpg",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/Lauren-de-Graaf.webp",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/4d88b4f7d7e747c56a146e90b9ff6699.jpg"
     ]
@@ -115,7 +115,7 @@ COLORTYPE_REFERENCES_DATA = {
       "contrast": ["LOW"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-autumn/13-01-2026 131146.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-autumn/13-01-2026%20131146.jpg",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-autumn/Jessica-Biel.webp",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-autumn/Elizabeth-Olsen.webp",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-autumn/Bar-Refaeli.webp"
@@ -131,8 +131,8 @@ COLORTYPE_REFERENCES_DATA = {
       "contrast": ["LOW-MEDIUM", "HIGH-MEDIUM"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/fiery-autumn/14-01-2026 145845.jpg",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/fiery-autumn/14-01-2026 145516.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/fiery-autumn/14-01-2026%20145845.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/fiery-autumn/14-01-2026%20145516.jpg",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/fiery-autumn/jenna-fischer.webp",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/fiery-autumn/evangeline-lilly.webp",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/fiery-autumn/shailene-woodley.webp"
@@ -181,8 +181,8 @@ COLORTYPE_REFERENCES_DATA = {
       "contrast": ["HIGH-MEDIUM", "HIGH"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-winter/17-01-2026 153250.jpg",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-winter/17-01-2026 133759.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-winter/17-01-2026%20153250.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-winter/17-01-2026%20133759.jpg",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-winter/liv-tyler.webp",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-winter/jennifer-connelly.webp",
       "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-winter/hilary-rhoda.webp"
