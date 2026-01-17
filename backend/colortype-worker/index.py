@@ -77,8 +77,9 @@ Analyze the colors visible in this image and determine:
    ⚠️ UNDERTONE is the BASE (golden or blue) that you DON'T see directly, but it CREATES what you DO see!
    
    THEORY: Everyone has either a GOLDEN base (warm) or BLUE base (cool).
-   - Skin/hair/eyes are GENETICALLY LINKED - all three are either warm OR cool together
+   - Undertone is NOT visible directly - it creates the EFFECT you see on surface
    - You won't see literal gold or blue, but you'll see what they CREATE
+   - Skin and hair are linked, but eyes can vary independently
    
    🔍 ANALYZE THE BASE:
    
@@ -96,7 +97,8 @@ Analyze the colors visible in this image and determine:
      * Peachy, golden, yellow undertones
      * Mahogany (for deep skin)
      
-     WARM EYES: Jade green, golden brown, amber, warm hazel
+     WARM EYES (supportive, not decisive): Jade green, golden brown, amber, warm hazel
+     Note: Eyes can vary - don't use as primary undertone indicator
    
    - Choose COOL-UNDERTONE if the BASE is BLUE (creates cool versions):
      
@@ -112,7 +114,8 @@ Analyze the colors visible in this image and determine:
      * Pink, blue, rosy undertones
      * Ebony (for deep skin)
      
-     COOL EYES: Gray-green, icy blue, gray, cool hazel
+     COOL EYES (supportive, not decisive): Gray-green, icy blue, gray, cool hazel
+     Note: Eyes can vary - Spring can have cool blue eyes with warm skin/hair
    
    🎯 CRITICAL DECISION RULE:
    Step 1: Look at HAIR - does it have ANY golden/yellow/red tones? → WARM
