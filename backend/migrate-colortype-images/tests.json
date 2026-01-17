@@ -1,0 +1,10 @@
+{
+  "tests": [
+    {
+      "name": "Test migration endpoint",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    }
+  ]
+}
