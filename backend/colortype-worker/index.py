@@ -15,7 +15,7 @@ import base64
 # chestnut hair excludes BRIGHT SPRING, light skin + cool eyes excludes GENTLE AUTUMN,
 # blonde hair excludes FIERY/VIVID AUTUMN, light skin excludes VIVID types,
 # blond hair excludes SOFT WINTER/VIBRANT SPRING, light brown excludes FIERY/VIVID AUTUMN & SOFT/BRIGHT/VIVID WINTER,
-# beige skin excludes SOFT WINTER, medium brown hair excludes BRIGHT WINTER
+# beige skin excludes SOFT WINTER, medium brown/ash brown hair excludes BRIGHT WINTER
 # VIBRANT SPRING now includes warm light brown/golden brown hair with bright eyes
 # Reverted composite image approach - using single photo analysis
 
@@ -892,10 +892,10 @@ def match_colortype(analysis: dict) -> tuple:
         excluded_types.add('SOFT WINTER')
         print(f'[Match] Beige skin detected → excluding SOFT WINTER')
     
-    # Rule 10: Medium brown hair → exclude BRIGHT WINTER
-    if any(keyword in hair_lower for keyword in ['medium brown']):
+    # Rule 10: Medium brown hair or ash brown → exclude BRIGHT WINTER
+    if any(keyword in hair_lower for keyword in ['medium brown', 'ash brown']):
         excluded_types.add('BRIGHT WINTER')
-        print(f'[Match] Medium brown hair detected → excluding BRIGHT WINTER')
+        print(f'[Match] Medium brown or ash brown hair detected → excluding BRIGHT WINTER')
     
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
