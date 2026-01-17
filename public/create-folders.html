@@ -46,10 +46,10 @@
     </style>
 </head>
 <body>
-    <h1>Создание папок для цветотипов</h1>
-    <p>Эта функция создаст 12 папок в colortype-schemes/ для загрузки примеров.</p>
+    <h1>Загрузка плейсхолдеров для цветотипов</h1>
+    <p>Эта функция загрузит по одному плейсхолдеру в каждую из 12 папок colortype-schemes/.</p>
     
-    <button id="createBtn" onclick="createFolders()">Создать папки</button>
+    <button id="createBtn" onclick="createFolders()">Загрузить плейсхолдеры</button>
     
     <div id="result"></div>
 
@@ -59,7 +59,7 @@
             const resultDiv = document.getElementById('result');
             
             btn.disabled = true;
-            btn.textContent = 'Создаю папки...';
+            btn.textContent = 'Загружаю...';
             resultDiv.innerHTML = '';
             
             try {
@@ -74,7 +74,7 @@
                 
                 if (data.success) {
                     resultDiv.className = 'result success';
-                    resultDiv.textContent = `✅ ${data.message}\n\nСозданные папки:\n${data.folders.join('\n')}`;
+                    resultDiv.textContent = `✅ ${data.message}\n\nЗагружены плейсхолдеры:\n${data.colortypes.join('\n')}`;
                 } else {
                     resultDiv.className = 'result error';
                     resultDiv.textContent = `❌ Ошибка: ${data.error || 'Неизвестная ошибка'}`;
@@ -84,7 +84,7 @@
                 resultDiv.textContent = `❌ Ошибка: ${error.message}`;
             } finally {
                 btn.disabled = false;
-                btn.textContent = 'Создать папки';
+                btn.textContent = 'Загрузить плейсхолдеры';
             }
         }
     </script>

@@ -1,10 +1,12 @@
 import json
 import os
 import boto3
+from io import BytesIO
 from typing import Dict, Any
+from PIL import Image, ImageDraw, ImageFont
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    '''Создание структуры папок для цветотипов в S3'''
+    '''Загрузка плейсхолдеров в папки цветотипов в S3'''
     
     method = event.get('httpMethod', 'POST')
     
@@ -45,45 +47,60 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     )
     
     colortypes = [
-        'vibrant-spring',
-        'bright-spring',
-        'gentle-spring',
-        'soft-summer',
-        'vivid-summer',
-        'dusty-summer',
-        'gentle-autumn',
-        'fiery-autumn',
-        'vivid-autumn',
-        'vivid-winter',
-        'soft-winter',
-        'bright-winter'
+        ('vibrant-spring', '#FFB6C1'),
+        ('bright-spring', '#FFD700'),
+        ('gentle-spring', '#E6F3E6'),
+        ('soft-summer', '#B0C4DE'),
+        ('vivid-summer', '#87CEEB'),
+        ('dusty-summer', '#C8B4C0'),
+        ('gentle-autumn', '#D4A574'),
+        ('fiery-autumn', '#FF6347'),
+        ('vivid-autumn', '#8B4513'),
+        ('vivid-winter', '#1C1C3C'),
+        ('soft-winter', '#B0B0C8'),
+        ('bright-winter', '#E0E0FF')
     ]
     
-    created_folders = []
+    uploaded = []
     
-    for colortype in colortypes:
-        folder_key = f'colortype-schemes/{colortype}/.keep'
+    for colortype, color in colortypes:
+        img = Image.new('RGB', (400, 300), color)
+        draw = ImageDraw.Draw(img)
+        
+        text = f'{colortype}\nplaceholder'
+        bbox = draw.textbbox((0, 0), text)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        x = (400 - text_width) // 2
+        y = (300 - text_height) // 2
+        draw.text((x, y), text, fill='#333333')
+        
+        buffer = BytesIO()
+        img.save(buffer, format='JPEG', quality=85)
+        buffer.seek(0)
+        
+        key = f'colortype-schemes/{colortype}/placeholder.jpg'
         
         try:
             s3.put_object(
                 Bucket=s3_bucket,
-                Key=folder_key,
-                Body=b'',
-                ContentType='text/plain'
+                Key=key,
+                Body=buffer.getvalue(),
+                ContentType='image/jpeg'
             )
-            created_folders.append(colortype)
-            print(f'Created folder: colortype-schemes/{colortype}/')
+            uploaded.append(colortype)
+            print(f'Uploaded placeholder: {key}')
             
         except Exception as e:
-            print(f'Error creating folder {colortype}: {str(e)}')
+            print(f'Error uploading {colortype}: {str(e)}')
     
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
         'body': json.dumps({
             'success': True,
-            'created': len(created_folders),
-            'folders': created_folders,
-            'message': f'Создано {len(created_folders)} папок в colortype-schemes/'
+            'uploaded': len(uploaded),
+            'colortypes': uploaded,
+            'message': f'Загружено {len(uploaded)} плейсхолдеров в colortype-schemes/'
         }, ensure_ascii=False)
     }
