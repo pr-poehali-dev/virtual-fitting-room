@@ -385,7 +385,7 @@ def calculate_param_match_score(analysis_value: str, expected_value: str) -> flo
 
 def count_rule_violations(colortype: str, eyes_lower: str, hair_lower: str, skin_lower: str) -> int:
     '''Count how many exclusion rules this colortype violates
-    Returns: number of violated rules (0 = no violations, 8 = all rules violated)
+    Returns: number of violated rules (0 = no violations, 10 = all rules violated)
     '''
     violations = 0
     light_skin = any(keyword in skin_lower for keyword in ['light', 'pale', 'ivory', 'porcelain', 'fair', 'alabaster'])
@@ -429,6 +429,16 @@ def count_rule_violations(colortype: str, eyes_lower: str, hair_lower: str, skin
     # Rule 8: Light brown hair → exclude FIERY AUTUMN, VIVID AUTUMN, SOFT WINTER, BRIGHT WINTER, VIVID WINTER
     if any(keyword in hair_lower for keyword in ['light brown']):
         if colortype in ['FIERY AUTUMN', 'VIVID AUTUMN', 'SOFT WINTER', 'BRIGHT WINTER', 'VIVID WINTER']:
+            violations += 1
+    
+    # Rule 9: Beige skin → exclude SOFT WINTER
+    if any(keyword in skin_lower for keyword in ['beige']):
+        if colortype == 'SOFT WINTER':
+            violations += 1
+    
+    # Rule 10: Medium brown hair → exclude BRIGHT WINTER
+    if any(keyword in hair_lower for keyword in ['medium brown']):
+        if colortype == 'BRIGHT WINTER':
             violations += 1
     
     return violations
@@ -510,6 +520,16 @@ def match_colortype(analysis: dict) -> tuple:
     if any(keyword in hair_lower for keyword in ['blonde', 'blond', 'light blond', 'light blonde']):
         excluded_types.update(['SOFT WINTER', 'VIBRANT SPRING'])
         print(f'[Match] Blond hair detected → excluding SOFT WINTER and VIBRANT SPRING')
+    
+    # Rule 9: Beige skin → exclude SOFT WINTER
+    if any(keyword in skin_lower for keyword in ['beige']):
+        excluded_types.add('SOFT WINTER')
+        print(f'[Match] Beige skin detected → excluding SOFT WINTER')
+    
+    # Rule 10: Medium brown hair → exclude BRIGHT WINTER
+    if any(keyword in hair_lower for keyword in ['medium brown']):
+        excluded_types.add('BRIGHT WINTER')
+        print(f'[Match] Medium brown hair detected → excluding BRIGHT WINTER')
     
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
