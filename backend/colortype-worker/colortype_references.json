@@ -9,10 +9,10 @@
       "contrast": ["HIGH-MEDIUM", "HIGH"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vibrant-spring1.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vibrant-spring2.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vibrant-spring3.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vibrant-spring4.webp"
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vibrant-spring/14-01-2026 111950.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vibrant-spring/megan-gale.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vibrant-spring/emma-stone.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vibrant-spring/cat-deeley.webp"
     ]
   },
   "BRIGHT SPRING": {
@@ -25,10 +25,9 @@
       "contrast": ["LOW-MEDIUM", "HIGH-MEDIUM"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/bright-spring1.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/bright-spring2.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/bright-spring3.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/bright-spring4.webp"
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/bright-spring/13-01-2026 164840.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/bright-spring/1b8d28e0ce523689d522dcbb0fcf1620.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/bright-spring/amy-adams.jpg"
     ]
   },
   "GENTLE SPRING": {
@@ -41,11 +40,10 @@
       "contrast": ["LOW", "LOW-MEDIUM"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/gentle-spring1.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/gentle-spring2.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/gentle-spring3.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/gentle-spring4.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/gentle-spring5.webp"
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-spring/12-01-2026 224702.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-spring/c3c2ed812b1f33986ef23cf56fc6c4f7.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-spring/anna-sophia-robb.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-spring/amanda-seyfried.webp"
     ]
   },
   "SOFT SUMMER": {
@@ -58,13 +56,12 @@
       "contrast": ["LOW"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/soft-summer1.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/soft-summer2.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/soft-summer3.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/soft-summer4.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/soft-summer5.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/soft-summer6.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/soft-summer7.webp"
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-summer/12-01-2026 224343.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-summer/12-01-2026 224004.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-summer/Toni-Garrn.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-summer/Tanya-Dziahileva.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-summer/January-Jones.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-summer/elsa-hosk.webp"
     ]
   },
   "VIVID SUMMER": {
@@ -77,15 +74,13 @@
       "contrast": ["LOW-MEDIUM", "HIGH-MEDIUM"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-summer1.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-summer2.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-summer3.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-summer4.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-summer5.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-summer6.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-summer7.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-summer8.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-summer9.webp"
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-summer/17-01-2026 181446.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-summer/17-01-2026 141606.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-summer/Yael-Shelbia.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-summer/Luna-Bijl.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-summer/Bella-Heathcote.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-summer/Barbara-Palvin.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-summer/096253c29000b0d17095ab68e897d3f7.jpg"
     ]
   },
   "DUSTY SUMMER": {
@@ -98,15 +93,13 @@
       "contrast": ["LOW", "LOW-MEDIUM"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/dusty-summer1.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/dusty-summer2.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/dusty-summer3.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/dusty-summer4.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/dusty-summer5.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/dusty-summer6.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/dusty-summer7.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/dusty-summer8.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/dusty-summer9.webp"
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/Ayca-Aysin-Turan.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/Anna-Mila-Guyenz.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/14-01-2026 132439.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/12-01-2026 224813.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/10-01-2026 175105.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/Lauren-de-Graaf.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/dusty-summer/4d88b4f7d7e747c56a146e90b9ff6699.jpg"
     ]
   },
   "GENTLE AUTUMN": {
@@ -119,14 +112,10 @@
       "contrast": ["LOW"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/gentle-autumn1.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/gentle-autumn2.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/gentle-autumn3.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/gentle-autumn4.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/gentle-autumn5.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/gentle-autumn6.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/gentle-autumn7.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/gentle-autumn8.webp"
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-autumn/13-01-2026 131146.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-autumn/Jessica-Biel.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-autumn/Elizabeth-Olsen.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/gentle-autumn/Bar-Refaeli.webp"
     ]
   },
   "FIERY AUTUMN": {
@@ -139,13 +128,11 @@
       "contrast": ["LOW-MEDIUM", "HIGH-MEDIUM"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/fiery-autumn1.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/fiery-autumn2.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/fiery-autumn3.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/fiery-autumn4.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/fiery-autumn5.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/fiery-autumn6.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/fiery-autumn7.webp"
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/fiery-autumn/14-01-2026 145845.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/fiery-autumn/14-01-2026 145516.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/fiery-autumn/jenna-fischer.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/fiery-autumn/evangeline-lilly.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/fiery-autumn/shailene-woodley.webp"
     ]
   },
   "VIVID AUTUMN": {
@@ -158,11 +145,11 @@
       "contrast": ["HIGH-MEDIUM", "HIGH"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-autumn1.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-autumn2.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-autumn3.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-autumn4.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-autumn5.webp"
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-autumn/susan-sarandon.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-autumn/penelope-cruz.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-autumn/halle-berry.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-autumn/freida-pinto.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-autumn/eva-mendes.webp"
     ]
   },
   "VIVID WINTER": {
@@ -175,11 +162,10 @@
       "contrast": ["HIGH-MEDIUM", "HIGH"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-winter1.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-winter2.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-winter3.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-winter4.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/vivid-winter5.webp"
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-winter/priyanka-chopra.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-winter/nazanin-boniadi.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-winter/lais-ribeiro.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-winter/archie-panjabi.webp"
     ]
   },
   "SOFT WINTER": {
@@ -192,13 +178,11 @@
       "contrast": ["HIGH-MEDIUM", "HIGH"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/soft-winter1.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/soft-winter2.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/soft-winter3.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/soft-winter4.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/soft-winter5.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/soft-winter6.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/soft-winter7.webp"
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-winter/17-01-2026 153250.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-winter/17-01-2026 133759.jpg",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-winter/liv-tyler.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-winter/jennifer-connelly.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/soft-winter/hilary-rhoda.webp"
     ]
   },
   "BRIGHT WINTER": {
@@ -211,14 +195,9 @@
       "contrast": ["HIGH-MEDIUM", "HIGH"]
     },
     "examples": [
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/bright-winter1.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/bright-winter2.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/bright-winter3.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/bright-winter4.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/bright-winter5.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/bright-winter6.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/bright-winter7.webp",
-      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/bright-winter8.webp"
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/bright-winter/courteney-cox.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/bright-winter/megan-fox.webp",
+      "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/bright-winter/jaimie-alexander.webp"
     ]
   }
 }
