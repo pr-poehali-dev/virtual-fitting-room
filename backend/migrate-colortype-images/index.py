@@ -41,7 +41,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     # Load colortype references
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    refs_path = os.path.join(script_dir, '..', 'colortype-worker', 'colortype_references.json')
+    refs_path = os.path.join(script_dir, 'colortype_references.json')
     
     with open(refs_path, 'r', encoding='utf-8') as f:
         refs = json.load(f)
