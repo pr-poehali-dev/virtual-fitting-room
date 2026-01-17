@@ -224,7 +224,16 @@ Analyze the colors visible in this image and determine:
      * Focus on the hair color where it grows from the scalp - this is the REAL color
      * Be specific - "jet black", "ash brown", "golden blond", "auburn", "dark cool brown", "honey blond", "platinum", "espresso"
    - Eyes: Use color names - "deep brown", "bright blue", "hazel", "gray-blue", "green", "amber", "dark gray"
-   - Skin: Use tone descriptors - "porcelain", "ivory", "light warm beige", "olive", "medium beige", "fair", "pale cool beige", "deep brown"
+   - Skin: ⚠️ CRITICAL - Analyze skin tone in MULTIPLE facial zones (forehead, cheeks, chin) considering lighting:
+     * Step 1: Identify BASE tone from lightest area (usually forehead):
+       "porcelain" (very pale, pink undertone), "ivory" (pale, neutral-cool), "fair" (light, neutral), 
+       "light beige" (light-medium, warm), "beige" (medium, neutral), "olive" (medium, green-yellow undertone),
+       "tan" (medium-dark, warm), "caramel" (medium-dark, golden), "bronze" (dark, warm), 
+       "deep brown" (dark, cool-neutral), "rich ebony" (very dark)
+     * Step 2: Identify UNDERTONE (check neck/jawline): "cool" (pink/red), "warm" (yellow/golden), "neutral" (balanced), "olive" (green-yellow)
+     * Step 3: Combine: "{base_tone} with {undertone} undertone"
+     * Step 4: Note if uneven: "darker around eyes/mouth", "lighter on forehead"
+     * Examples: "light beige with warm undertone", "tan with neutral undertone, slightly darker around jaw"
 
 === OUTPUT FORMAT ===
 
