@@ -323,7 +323,7 @@ def normalize_image_format(image: str) -> str:
     return f'data:image/jpeg;base64,{image}'
 
 def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str:
-    '''Upload image to Yandex Object Storage, return signed URL for temporary access'''
+    '''Upload image to Yandex Object Storage, return CDN URL'''
     s3_access_key = os.environ.get('S3_ACCESS_KEY')
     s3_secret_key = os.environ.get('S3_SECRET_KEY')
     s3_bucket = os.environ.get('S3_BUCKET_NAME', 'fitting-room-images')
@@ -354,13 +354,12 @@ def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str
         Bucket=s3_bucket,
         Key=s3_key,
         Body=image_bytes,
-        ContentType='image/jpeg',
-        ACL='public-read'  # Make image publicly accessible for GPT-4o Vision
+        ContentType='image/jpeg'
     )
     
-    # Build Yandex Cloud Storage URL (public)
+    # Build Yandex Cloud Storage URL
     cdn_url = f'https://storage.yandexcloud.net/{s3_bucket}/{s3_key}'
-    print(f'[Yandex] Upload complete! Public URL: {cdn_url}')
+    print(f'[Yandex] Upload complete! URL: {cdn_url}')
     
     return cdn_url
 
