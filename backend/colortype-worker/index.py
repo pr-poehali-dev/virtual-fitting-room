@@ -243,6 +243,18 @@ Analyze the colors visible in this image and determine:
      * Step 4: Note if uneven: "darker around eyes/mouth", "lighter on forehead"
      * Examples: "light beige with warm undertone", "tan with neutral undertone, slightly darker around jaw"
 
+=== REFERENCE COMPARISON ===
+
+You will be shown reference schemes for all 12 color types. Compare the ANALYZED PHOTO with these references to help determine which color type best matches.
+
+For each reference scheme, observe:
+- Overall color harmony (warm vs cool tones)
+- Lightness levels (light, medium, deep)
+- Saturation patterns (bright, muted)
+- Contrast levels (high, low)
+
+Use these references as VISUAL GUIDES to suggest the most likely color type, but still analyze characteristics independently.
+
 === OUTPUT FORMAT ===
 
 Return ONLY a valid JSON object with your analysis of THIS SPECIFIC PHOTO:
@@ -255,7 +267,8 @@ Return ONLY a valid JSON object with your analysis of THIS SPECIFIC PHOTO:
   "hair_lightness": "[YOUR CHOICE: LIGHT, LIGHT-MEDIUM, DARK-MEDIUM, or DARK]",
   "skin_lightness": "[YOUR CHOICE: LIGHT, LIGHT-MEDIUM, DARK-MEDIUM, or DARK]",
   "eye_color": "[exact description of eye color YOU SEE]",
-  "skin_color": "[exact description of skin tone YOU SEE]"
+  "skin_color": "[exact description of skin tone YOU SEE]",
+  "suggested_colortype": "[YOUR SUGGESTION based on reference comparison: VIBRANT SPRING, BRIGHT SPRING, GENTLE SPRING, SOFT SUMMER, VIVID SUMMER, DUSTY SUMMER, GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, VIVID WINTER, SOFT WINTER, or BRIGHT WINTER]"
 }}
 
 ⚠️ CRITICAL REQUIREMENTS:
@@ -363,29 +376,70 @@ def submit_to_openai(image_url: str) -> dict:
         'X-Title': 'Virtual Fitting Room - Colortype Analysis'
     }
     
-    # Use prompt (GPT-4o will auto-detect eye color)
-    prompt = PROMPT_TEMPLATE
+    # Load reference schemes
+    import os as os_module
+    import json as json_module
+    script_dir = os_module.path.dirname(os_module.path.abspath(__file__))
+    references_path = os_module.path.join(script_dir, 'colortype_references.json')
+    
+    with open(references_path, 'r', encoding='utf-8') as f:
+        colortype_refs = json_module.load(f)
+    
+    # Build content array: prompt + analyzed photo + reference schemes + 2 examples per type
+    content = [
+        {
+            'type': 'text',
+            'text': 'ANALYZED PHOTO (determine color type for THIS person):'
+        },
+        {
+            'type': 'image_url',
+            'image_url': {'url': image_url}
+        },
+        {
+            'type': 'text',
+            'text': '\n=== REFERENCE SCHEMES (compare analyzed photo with these) ===\n'
+        }
+    ]
+    
+    # Add reference schemes with 2 example photos each
+    for colortype_name, ref_data in colortype_refs.items():
+        content.append({
+            'type': 'text',
+            'text': f'\n{colortype_name} scheme:'
+        })
+        content.append({
+            'type': 'image_url',
+            'image_url': {'url': ref_data['scheme_url']}
+        })
+        
+        # Add first 2 examples for each type
+        examples = ref_data.get('examples', [])[:2]
+        if examples:
+            content.append({
+                'type': 'text',
+                'text': f'{colortype_name} examples:'
+            })
+            for example_url in examples:
+                content.append({
+                    'type': 'image_url',
+                    'image_url': {'url': example_url}
+                })
+    
+    # Add analysis instructions
+    content.append({
+        'type': 'text',
+        'text': f'\n\n{PROMPT_TEMPLATE}'
+    })
     
     payload = {
         'model': 'openai/gpt-4o',  # OpenRouter format: provider/model
         'messages': [
             {
                 'role': 'user',
-                'content': [
-                    {
-                        'type': 'text',
-                        'text': prompt
-                    },
-                    {
-                        'type': 'image_url',
-                        'image_url': {
-                            'url': image_url
-                        }
-                    }
-                ]
+                'content': content
             }
         ],
-        'max_tokens': 500,
+        'max_tokens': 600,
         'temperature': 0.3  # Lower temperature for more consistent analysis
     }
     
@@ -1381,11 +1435,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         
                         print(f'[ColorType-Worker] Parsed analysis: {analysis}')
                         
+                        # Extract GPT suggestion
+                        gpt_suggested_type = analysis.get('suggested_colortype', '').strip().upper()
+                        print(f'[ColorType-Worker] GPT suggested colortype: {gpt_suggested_type}')
+                        
+                        # Calculate colortype via formula (primary method)
                         color_type, explanation = match_colortype(analysis)
                         result_text_value = explanation
                         
-                        print(f'[ColorType-Worker] Matched to: {color_type}')
+                        print(f'[ColorType-Worker] Formula calculated: {color_type}')
                         print(f'[ColorType-Worker] Explanation: {explanation}')
+                        
+                        # Compare GPT suggestion with formula result
+                        if gpt_suggested_type and gpt_suggested_type == color_type:
+                            print(f'[ColorType-Worker] ✅ GPT and Formula MATCH: {color_type}')
+                            result_text_value += f'\n\n✅ ИИ-анализ и формула совпадают: {color_type}'
+                        elif gpt_suggested_type:
+                            print(f'[ColorType-Worker] ⚠️ MISMATCH: GPT={gpt_suggested_type}, Formula={color_type}')
+                            colortype_ru_gpt = COLORTYPE_NAMES_RU.get(gpt_suggested_type, gpt_suggested_type)
+                            result_text_value += f'\n\n⚠️ Расхождение: ИИ предположил {colortype_ru_gpt}, формула определила {COLORTYPE_NAMES_RU.get(color_type, color_type)}'
                         
                     except (json.JSONDecodeError, KeyError, TypeError) as e:
                         print(f'[ColorType-Worker] Failed to parse JSON: {e}')
