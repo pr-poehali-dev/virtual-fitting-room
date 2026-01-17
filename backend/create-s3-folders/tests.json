@@ -1,0 +1,10 @@
+{
+  "tests": [
+    {
+      "name": "Test folder creation endpoint",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    }
+  ]
+}
