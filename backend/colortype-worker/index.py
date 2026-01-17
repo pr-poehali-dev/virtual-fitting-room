@@ -441,6 +441,10 @@ def submit_to_openai(image_url: str) -> dict:
         'temperature': 0.3  # Lower temperature for more consistent analysis
     }
     
+    # Debug: count images in request
+    image_count = sum(1 for item in content if item.get('type') == 'image_url')
+    print(f'[OpenRouter] Request contains {image_count} images')
+    print(f'[OpenRouter] User photo URL: {image_url}')
     print(f'[OpenRouter] Submitting to GPT-4o Vision via OpenRouter...')
     response = requests.post(
         'https://openrouter.ai/api/v1/chat/completions',
