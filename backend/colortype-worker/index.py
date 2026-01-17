@@ -1329,6 +1329,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         analysis['eye_lightness'] = eye_lightness
                         print(f'[ColorType-Worker] Mapped eye_color "{eye_color}" to eye_lightness: {eye_lightness}')
                         
+                        # Handle unknown skin_color - replace with default based on skin_lightness
+                        if analysis.get('skin_color', '').lower() in ['unknown', '', 'unclear', 'not visible']:
+                            skin_lightness = analysis.get('skin_lightness', 'LIGHT')
+                            SKIN_DEFAULTS = {
+                                'LIGHT': 'light beige',
+                                'LIGHT-MEDIUM': 'medium beige', 
+                                'DARK-MEDIUM': 'olive',
+                                'DARK': 'deep brown'
+                            }
+                            default_skin = SKIN_DEFAULTS.get(skin_lightness, 'light beige')
+                            analysis['skin_color'] = default_skin
+                            print(f'[ColorType-Worker] Replaced unknown skin_color with default: {default_skin} (based on {skin_lightness})')
+                        
                         # Calculate contrast based on hair_lightness, skin_lightness, eye_lightness
                         contrast = calculate_contrast(
                             analysis.get('hair_lightness', ''),
