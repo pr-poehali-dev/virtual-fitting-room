@@ -227,97 +227,85 @@ Analyze the colors visible in this image and determine:
    
    - Choose BRIGHT-SATURATION-COLORS if: colors are clear, vivid, pure, bright, vibrant (no gray mixed in, pure pigments)
 
-6. CONTRAST LEVEL - Lightness difference between features:
+6. CONTRAST LEVEL - Difference in visual darkness between features:
    PRIORITY: Hair vs Skin (60%) + Eyes vs Skin (40%)
    
+   ⚠️ CRITICAL: Assess VISUAL DARKNESS as if this photo were BLACK-AND-WHITE!
+   Ignore color hue (golden/ash/red) - focus ONLY on how DARK each area appears.
+   
+   🎯 BLACK-AND-WHITE TEST:
+   Imagine converting this photo to grayscale (black and white).
+   - How DARK does the hair area look? (Light gray, medium gray, or dark gray/black?)
+   - How DARK does the skin area look? (Light tone, medium tone, or dark tone?)
+   - How DARK do the eyes look? (Light, medium, or dark?)
+   
    ⚠️ HAIR ANALYSIS: Look at ROOTS first (55% weight), then length (45% weight)
-   * Compare ROOTS darkness to skin - natural root color shows true contrast
+   * Assess visual darkness at ROOTS - natural root color shows true tonal contrast
    
-   ⚠️ CRITICAL: Follow this EXACT 2-step process to classify hair and skin lightness!
+   === STEP 1: Assess VISUAL DARKNESS of each zone ===
    
-   === STEP 1: Classify HAIR lightness ===
-   Ask yourself: "How LIGHT or DARK is this hair color at the ROOTS?"
+   For HAIR (at roots):
+   Ask: "If this were a black-and-white photo, how DARK would the hair appear?"
    
-   ⚠️ CRITICAL: Auburn/copper/bright red hair has HIGH VISUAL WEIGHT (looks dark) even with warm tones!
-   Classify auburn/copper/bright auburn as DARK, NOT medium!
+   - LIGHT tone = Hair looks like LIGHT GRAY or almost white
+     (Very light, pale, bright area - minimal darkness)
    
-   LIGHT hair includes:
-   - platinum, light blond, light golden blond, light honey blond
-   - light strawberry blond, golden, pale beige, light olive
-   - pale cool blond, cool blond, ash blond, light ash
+   - MEDIUM tone = Hair looks like MEDIUM GRAY
+     (Moderate darkness - clearly visible but not very dark)
    
-   LIGHT-MEDIUM hair includes (closer to light):
-   - medium blond, medium golden blond, dark blond
-   - light brown, golden brown, strawberry
-   - honey, dark honey, tawny
-   - medium cool blond, deep cool blond
-   - light auburn, gentle auburn
+   - DARK tone = Hair looks like DARK GRAY or BLACK
+     (High darkness - very dark area, strong visual weight)
    
-   DARK-MEDIUM hair includes (closer to dark):
-   - medium brown, chestnut brown, chestnut
-   - warm brown
-   - medium golden brown
-   - medium-deep cool brown
-   - light cool brown, medium cool brown, ash brown
-   - medium dark cool brown
-   - medium beige, medium olive
+   For SKIN:
+   Ask: "If this were a black-and-white photo, how DARK would the skin appear?"
    
-   DARK hair includes:
-   - dark brown, dark cool brown, espresso, black, jet black
-   - auburn, copper, bright auburn, medium auburn, deep auburn (⚠️ visually dark!)
-   - light clear red (⚠️ vibrant = dark visual weight)
-   - mahogany
-   - dark chestnut, dark auburn, deep brown
-   - cool brown, ashy brown, coffee
-   - cool black, jet black, deep cool brown
-
+   - LIGHT tone = Skin looks like LIGHT GRAY or almost white
+     (Very bright, minimal darkness)
    
-   === STEP 2: Classify SKIN lightness ===
-   Ask yourself: "How LIGHT or DARK is this skin tone?"
+   - MEDIUM tone = Skin looks like MEDIUM GRAY
+     (Moderate darkness level)
    
-   LIGHT skin includes:
-   - porcelain, ivory, alabaster, pale
-   - light beige, light warm beige, fair, cream
-   - pale warm beige
-   - pale porcelain
+   - DARK tone = Skin looks like DARK GRAY
+     (High darkness level)
    
-   LIGHT-MEDIUM skin includes (closer to light):
-   - beige, medium beige (lighter shade)
-   - warm beige, almond
-   - light olive
+   For EYES:
+   Ask: "If this were a black-and-white photo, how DARK would the eyes appear?"
    
-   DARK-MEDIUM skin includes (closer to dark):
-   - medium beige (darker shade), medium warm beige
-   - olive, café au lait, honey
-   - medium golden brown
+   - LIGHT tone = Eyes look like LIGHT GRAY
+     (Bright eyes, low darkness)
    
-   DARK skin includes:
-   - deep brown, dark beige, mahogany, ebony
-   - café noir, chestnut, coffee, cocoa, brown
-   - russet
-   - deep olive, dark
+   - MEDIUM tone = Eyes look like MEDIUM GRAY
+     (Moderate darkness)
    
-   === STEP 3: Determine CONTRAST level ===
-   After classifying hair, skin, and eyes lightness, calculate the contrast:
+   - DARK tone = Eyes look like DARK GRAY or BLACK
+     (Very dark eyes, high darkness)
    
-   Use this simple rule based on lightness differences:
-   * Map LIGHT/LIGHT-MEDIUM → level 0
-   * Map DARK-MEDIUM/MEDIUM → level 1  
-   * Map DARK/DEEP → level 2
+   === STEP 2: Determine CONTRAST level ===
    
-   Then calculate: |hair_level - skin_level| + |eyes_level - skin_level|
+   Now compare the VISUAL DARKNESS between zones:
+   
+   Assign darkness levels:
+   * LIGHT tone → level 0
+   * MEDIUM tone → level 1
+   * DARK tone → level 2
+   
+   Calculate: |hair_level - skin_level| + |eyes_level - skin_level|
    
    - Choose LOW-CONTRAST if: total difference = 0
-     Example: Light hair + Light skin + Light eyes (all same level)
+     (All zones have similar visual darkness)
+     Example: Light hair + Light skin + Light eyes = 0
    
    - Choose LOW-MEDIUM-CONTRAST if: total difference = 1
-     Example: Light hair + Light skin + Medium eyes, OR Medium hair + Light skin + Light eyes
+     (Small difference in visual darkness)
+     Example: Light hair + Light skin + Medium eyes = 1
    
    - Choose HIGH-MEDIUM-CONTRAST if: total difference = 2
-     Example: Dark hair + Medium skin + Light eyes, OR Medium hair + Light skin + Medium eyes
+     (Noticeable difference in visual darkness)
+     Example: Dark hair + Medium skin + Light eyes = |2-1| + |0-1| = 2
    
    - Choose HIGH-CONTRAST if: total difference ≥ 3
-     Example: Dark hair + Light skin + Dark eyes, OR Dark hair + Light skin + Medium eyes
+     (Strong difference - almost white areas next to almost black areas)
+     Example: Dark hair + Light skin + Dark eyes = |2-0| + |2-0| = 4
 
 7. DESCRIBE EXACT COLORS you see (use synonyms and precise descriptors):
    - Hair: Use hair dye terminology for precision:
