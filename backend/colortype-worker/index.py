@@ -130,17 +130,27 @@ Analyze the colors visible in this image and determine:
    - Light hair ≠ automatically warm (platinum blonde is cool!)
    - Focus on the TONE (golden vs ash), not the DARKNESS!
 
-2. LIGHTNESS - Overall darkness level (focus on HAIR):
-   PRIORITY: Hair color (45%) → Skin tone (40%) → Eyes (15%)
-   
+2. HAIR LIGHTNESS - Darkness level of HAIR ONLY:
    ⚠️ HAIR ANALYSIS: Look at ROOTS first (50% weight), then length (50% weight)
    * Assess darkness at SCALP/ROOTS - natural color shows true lightness level
    
-   - Choose LIGHT-COLORS if: very light hair (platinum, light blond, golden blond) and very light skin (porcelain, ivory, alabaster, pale)
-   - Choose MEDIUM-LIGHTNESS-COLORS if: medium hair (medium brown, dark blond) and light or medium skin (medium beige, warm beige, medium warm beige, porcelain, ivory, alabaster, pale)
-   - Choose DEEP-COLORS if: dark hair (dark brown, black, deep auburn, dark chestnut, dark auburn, espresso, deep brown)
+   - Choose LIGHT-HAIR-COLORS if: very light hair (platinum, light blond, golden blond, light strawberry blond)
+   - Choose MEDIUM-HAIR-COLORS if: medium hair (medium brown, dark blond, chestnut, auburn)
+   - Choose DEEP-HAIR-COLORS if: dark hair (dark brown, black, deep auburn, dark chestnut, espresso)
 
-3. SATURATION - Color vibrancy (focus on HAIR, EYES, and SKIN):
+3. SKIN LIGHTNESS - Darkness level of SKIN ONLY:
+   
+   - Choose LIGHT-SKIN-COLORS if: very light skin (porcelain, ivory, alabaster, pale, fair)
+   - Choose MEDIUM-SKIN-COLORS if: medium skin (beige, medium beige, warm beige, olive, café au lait)
+   - Choose DEEP-SKIN-COLORS if: dark skin (deep brown, mahogany, ebony, chestnut)
+
+4. EYES LIGHTNESS - Darkness level of EYES ONLY:
+   
+   - Choose LIGHT-EYES-COLORS if: light eyes (light blue, bright blue, light green, light gray, jade)
+   - Choose MEDIUM-EYES-COLORS if: medium eyes (hazel, green, amber, medium brown, golden brown)
+   - Choose DEEP-EYES-COLORS if: dark eyes (dark brown, black-brown, deep brown, chocolate)
+
+5. SATURATION - Color vibrancy (focus on HAIR, EYES, and SKIN):
    PRIORITY: Hair color (50%) → Eye color (30%) → Skin color (20%)
    
    ⚠️ HAIR ANALYSIS: Look at ROOTS first (55% weight), then length (45% weight)
@@ -156,7 +166,7 @@ Analyze the colors visible in this image and determine:
    
    - Choose BRIGHT-SATURATION-COLORS if: colors are clear, vivid, pure, bright, vibrant (no gray mixed in, pure pigments)
 
-4. CONTRAST LEVEL - Lightness difference between features:
+6. CONTRAST LEVEL - Lightness difference between features:
    PRIORITY: Hair vs Skin (60%) + Eyes vs Skin (40%)
    
    ⚠️ HAIR ANALYSIS: Look at ROOTS first (55% weight), then length (45% weight)
@@ -222,7 +232,7 @@ Analyze the colors visible in this image and determine:
    - russet
    - deep olive, dark
 
-5. DESCRIBE EXACT COLORS you see (use synonyms and precise descriptors):
+7. DESCRIBE EXACT COLORS you see (use synonyms and precise descriptors):
    - Hair: Use hair dye terminology for precision:
      "platinum blonde" (level 10), "ash blonde" (level 8-9, cool tone), "golden blonde" (level 7-8, warm), 
      "light brown" (level 6), "chestnut/medium brown" (level 5), "dark brown" (level 4), 
@@ -260,11 +270,12 @@ Return ONLY a valid JSON object with your analysis of THIS SPECIFIC PHOTO:
 
 {{
   "undertone": "[YOUR CHOICE: WARM-UNDERTONE or COOL-UNDERTONE]",
-  "lightness": "[YOUR CHOICE: LIGHT-COLORS, MEDIUM-LIGHTNESS-COLORS, or DEEP-COLORS]",
+  "hair_lightness": "[YOUR CHOICE: LIGHT-HAIR-COLORS, MEDIUM-HAIR-COLORS, or DEEP-HAIR-COLORS]",
+  "skin_lightness": "[YOUR CHOICE: LIGHT-SKIN-COLORS, MEDIUM-SKIN-COLORS, or DEEP-SKIN-COLORS]",
+  "eyes_lightness": "[YOUR CHOICE: LIGHT-EYES-COLORS, MEDIUM-EYES-COLORS, or DEEP-EYES-COLORS]",
   "saturation": "[YOUR CHOICE: MUTED-SATURATION-COLORS, MUTED-NEUTRAL-SATURATION-COLORS, BRIGHT-NEUTRAL-SATURATION-COLORS, or BRIGHT-SATURATION-COLORS]",
+  "contrast": "[YOUR CHOICE: LOW-CONTRAST, LOW-MEDIUM-CONTRAST, HIGH-MEDIUM-CONTRAST, or HIGH-CONTRAST]",
   "hair_color": "[exact description of hair color YOU SEE]",
-  "hair_lightness": "[YOUR CHOICE: LIGHT, LIGHT-MEDIUM, DARK-MEDIUM, or DARK]",
-  "skin_lightness": "[YOUR CHOICE: LIGHT, LIGHT-MEDIUM, DARK-MEDIUM, or DARK]",
   "eye_color": "[exact description of eye color YOU SEE]",
   "skin_color": "[exact description of skin tone YOU SEE]",
   "suggested_colortype": "[YOUR SUGGESTION based on reference comparison: VIBRANT SPRING, BRIGHT SPRING, GENTLE SPRING, SOFT SUMMER, VIVID SUMMER, DUSTY SUMMER, GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, VIVID WINTER, SOFT WINTER, or BRIGHT WINTER]"
@@ -280,12 +291,11 @@ Return ONLY a valid JSON object with your analysis of THIS SPECIFIC PHOTO:
 If you refuse or return anything other than JSON, the styling system will break and users won't get their color recommendations.'''
 
 def format_result(colortype: str, hair: str, skin: str, eyes: str, 
-                  undertone: str, lightness: str, saturation: str, contrast: str,
+                  undertone: str, saturation: str, contrast: str,
                   fallback_type: str = 'standard') -> str:
     '''Format user-friendly result message in Russian'''
     colortype_ru = COLORTYPE_NAMES_RU.get(colortype, colortype)
     undertone_ru = UNDERTONE_RU.get(undertone, undertone)
-    lightness_ru = LIGHTNESS_RU.get(lightness, lightness)
     saturation_ru = SATURATION_RU.get(saturation, saturation)
     contrast_ru = CONTRAST_RU.get(contrast, contrast)
     
@@ -300,7 +310,6 @@ def format_result(colortype: str, hair: str, skin: str, eyes: str,
 
 Характеристики:
 • Подтон: {undertone_ru}
-• Глубина: {lightness_ru}
 • Насыщенность: {saturation_ru}
 • Контраст: {contrast_ru}"""
 
@@ -863,18 +872,23 @@ def count_rule_violations(colortype: str, eyes_lower: str, hair_lower: str, skin
     return violations
 
 def match_colortype(analysis: dict) -> tuple:
-    '''Match analysis to best colortype using weighted 7-parameter scoring
+    '''Match analysis to best colortype using weighted 9-parameter scoring
     
-    Scoring:
+    NEW SCORING (updated):
+    Parameters (75% weight):
     - Undertone: 100%
-    - Lightness: 32%
-    - Saturation: 32%
-    - Contrast: 36%
+    - HairLightness: 35%
+    - SkinLightness: 34%
+    - EyesLightness: 31%
+    - Saturation: 50%
+    - Contrast: 50%
+    
+    Colors (25% weight):
     - Hair color: 32%
     - Skin color: 32%
     - Eye color: 36%
     
-    Total score = (param_score * 2.0) + (color_score * 1.0)
+    Total score = (param_score * 3.0) + (color_score * 1.0)  [was 2:1, now 3:1]
     
     Special handling for ambiguous combinations:
     - If parameters match AMBIGUOUS_COMBINATIONS, compare color scores only
@@ -886,14 +900,16 @@ def match_colortype(analysis: dict) -> tuple:
     Returns: (colortype, explanation)
     '''
     undertone = analysis.get('undertone', '')
-    lightness = analysis.get('lightness', '')
+    hair_lightness = analysis.get('hair_lightness', '')
+    skin_lightness = analysis.get('skin_lightness', '')
+    eyes_lightness = analysis.get('eyes_lightness', '')
     saturation = analysis.get('saturation', '')
     contrast = analysis.get('contrast', '')
     hair = analysis.get('hair_color', '')
     eyes = analysis.get('eye_color', '')
     skin = analysis.get('skin_color', '')
     
-    print(f'[Match] Analyzing: {undertone}/{lightness}/{saturation}/{contrast}')
+    print(f'[Match] Analyzing: {undertone}/{hair_lightness}/{skin_lightness}/{eyes_lightness}/{saturation}/{contrast}')
     print(f'[Match] Colors: hair="{hair}", skin="{skin}", eyes="{eyes}"')
     
     # Determine exclusions based on eyes, hair, and skin
@@ -987,7 +1003,7 @@ def match_colortype(analysis: dict) -> tuple:
                     best_color_score = color_score
                     best_colortype = colortype
             
-            explanation = format_result(best_colortype, hair, skin, eyes, undertone, lightness, saturation, contrast, 'standard')
+            explanation = format_result(best_colortype, hair, skin, eyes, undertone, saturation, contrast, 'standard')
             print(f'[Match] FINAL (ambiguous resolved): {best_colortype} with color_score {best_color_score:.2f}')
             return best_colortype, explanation
     
@@ -1012,27 +1028,46 @@ def match_colortype(analysis: dict) -> tuple:
         
         if all_params:
             for expected_params in all_params:
-                # Calculate parameter match score (undertone 50%, lightness 16.5%, saturation 16.5%, contrast 17%)
-                # Normalized so total = 1.0 when all match
+                # Calculate parameter match score with NEW WEIGHTS:
+                # - Undertone: 100%
+                # - HairLightness: 35%
+                # - SkinLightness: 34%
+                # - EyesLightness: 31%
+                # - Saturation: 50%
+                # - Contrast: 50%
+                # Total max = 3.0 when all match
                 undertone_match = calculate_param_match_score(undertone, expected_params['undertone'])
-                lightness_match = calculate_param_match_score(lightness, expected_params['lightness'])
+                hair_lightness_match = calculate_param_match_score(hair_lightness, expected_params.get('hair_lightness', 'MEDIUM-HAIR-COLORS'))
+                skin_lightness_match = calculate_param_match_score(skin_lightness, expected_params.get('skin_lightness', 'MEDIUM-SKIN-COLORS'))
+                eyes_lightness_match = calculate_param_match_score(eyes_lightness, expected_params.get('eyes_lightness', 'MEDIUM-EYES-COLORS'))
                 saturation_match = calculate_param_match_score(saturation, expected_params['saturation'])
                 contrast_match = calculate_param_match_score(contrast, expected_params['contrast'])
                 
-                param_score_candidate = (undertone_match * 1.0) + (lightness_match * 0.32) + (saturation_match * 0.32) + (contrast_match * 0.36)
+                param_score_candidate = (
+                    (undertone_match * 1.0) +
+                    (hair_lightness_match * 0.35) +
+                    (skin_lightness_match * 0.34) +
+                    (eyes_lightness_match * 0.31) +
+                    (saturation_match * 0.5) +
+                    (contrast_match * 0.5)
+                )
                 
                 if param_score_candidate > best_param_score:
                     best_param_score = param_score_candidate
                     best_match_info = {
                         'U': undertone_match,
-                        'L': lightness_match,
+                        'HL': hair_lightness_match,
+                        'SL': skin_lightness_match,
+                        'EL': eyes_lightness_match,
                         'S': saturation_match,
                         'C': contrast_match
                     }
         
         param_score = best_param_score
         undertone_match = best_match_info['U'] if best_match_info else 0
-        lightness_match = best_match_info['L'] if best_match_info else 0
+        hair_lightness_match = best_match_info['HL'] if best_match_info else 0
+        skin_lightness_match = best_match_info['SL'] if best_match_info else 0
+        eyes_lightness_match = best_match_info['EL'] if best_match_info else 0
         saturation_match = best_match_info['S'] if best_match_info else 0
         contrast_match = best_match_info['C'] if best_match_info else 0
         
@@ -1044,8 +1079,8 @@ def match_colortype(analysis: dict) -> tuple:
         
         color_score = (hair_score * 0.32) + (skin_score * 0.32) + (eyes_score * 0.36)
         
-        # Total score: 2x parameters + 1x colors
-        total_score = (param_score * 2.0) + (color_score * 1.0)
+        # Total score: 3x parameters + 1x colors (was 2:1, now 3:1)
+        total_score = (param_score * 3.0) + (color_score * 1.0)
         
         print(f'[Match] {colortype}: param={param_score:.2f} (U:{undertone_match:.0f} L:{lightness_match:.0f} S:{saturation_match:.0f} C:{contrast_match:.0f}), color={color_score:.2f} (h:{hair_score:.2f} s:{skin_score:.2f} e:{eyes_score:.2f}), total={total_score:.2f}')
         
@@ -1075,17 +1110,28 @@ def match_colortype(analysis: dict) -> tuple:
                         continue
                     
                     undertone_match = 1.0
-                    lightness_match = calculate_param_match_score(lightness, expected_params['lightness'])
+                    hair_lightness_match = calculate_param_match_score(hair_lightness, expected_params.get('hair_lightness', 'MEDIUM-HAIR-COLORS'))
+                    skin_lightness_match = calculate_param_match_score(skin_lightness, expected_params.get('skin_lightness', 'MEDIUM-SKIN-COLORS'))
+                    eyes_lightness_match = calculate_param_match_score(eyes_lightness, expected_params.get('eyes_lightness', 'MEDIUM-EYES-COLORS'))
                     saturation_match = calculate_param_match_score(saturation, expected_params['saturation'])
                     contrast_match = calculate_param_match_score(contrast, expected_params['contrast'])
                     
-                    param_score_candidate = (undertone_match * 1.0) + (lightness_match * 0.32) + (saturation_match * 0.32) + (contrast_match * 0.36)
+                    param_score_candidate = (
+                        (undertone_match * 1.0) +
+                        (hair_lightness_match * 0.35) +
+                        (skin_lightness_match * 0.34) +
+                        (eyes_lightness_match * 0.31) +
+                        (saturation_match * 0.5) +
+                        (contrast_match * 0.5)
+                    )
                     
                     if param_score_candidate > best_param_score_inv:
                         best_param_score_inv = param_score_candidate
                         best_match_info_inv = {
                             'U': undertone_match,
-                            'L': lightness_match,
+                            'HL': hair_lightness_match,
+                            'SL': skin_lightness_match,
+                            'EL': eyes_lightness_match,
                             'S': saturation_match,
                             'C': contrast_match
                         }
@@ -1099,7 +1145,7 @@ def match_colortype(analysis: dict) -> tuple:
                 eyes_score = calculate_color_match_score(eyes, ref['eyes'])
                 
                 color_score = (hair_score * 0.32) + (skin_score * 0.32) + (eyes_score * 0.36)
-                total_score = (param_score * 2.0) + (color_score * 1.0)
+                total_score = (param_score * 3.0) + (color_score * 1.0)
                 
                 print(f'[Match] {colortype}: param={param_score:.2f}, color={color_score:.2f}, total={total_score:.2f}')
                 
@@ -1110,7 +1156,7 @@ def match_colortype(analysis: dict) -> tuple:
                     best_color_score = color_score
         
         if best_colortype:
-            explanation = format_result(best_colortype, hair, skin, eyes, undertone, lightness, saturation, contrast, 'fallback1')
+            explanation = format_result(best_colortype, hair, skin, eyes, undertone, saturation, contrast, 'fallback1')
             print(f'[Match] FALLBACK 1 SUCCESS: {best_colortype} with score {best_total_score:.2f}')
             return best_colortype, explanation
     
@@ -1130,11 +1176,20 @@ def match_colortype(analysis: dict) -> tuple:
             if all_params:
                 for expected_params in all_params:
                     undertone_match = calculate_param_match_score(undertone, expected_params['undertone'])
-                    lightness_match = calculate_param_match_score(lightness, expected_params['lightness'])
+                    hair_lightness_match = calculate_param_match_score(hair_lightness, expected_params.get('hair_lightness', 'MEDIUM-HAIR-COLORS'))
+                    skin_lightness_match = calculate_param_match_score(skin_lightness, expected_params.get('skin_lightness', 'MEDIUM-SKIN-COLORS'))
+                    eyes_lightness_match = calculate_param_match_score(eyes_lightness, expected_params.get('eyes_lightness', 'MEDIUM-EYES-COLORS'))
                     saturation_match = calculate_param_match_score(saturation, expected_params['saturation'])
                     contrast_match = calculate_param_match_score(contrast, expected_params['contrast'])
                     
-                    param_score = (undertone_match * 1.0) + (lightness_match * 0.32) + (saturation_match * 0.32) + (contrast_match * 0.36)
+                    param_score = (
+                        (undertone_match * 1.0) +
+                        (hair_lightness_match * 0.35) +
+                        (skin_lightness_match * 0.34) +
+                        (eyes_lightness_match * 0.31) +
+                        (saturation_match * 0.5) +
+                        (contrast_match * 0.5)
+                    )
                     
                     ref = COLORTYPE_REFERENCES[colortype]
                     hair_score = calculate_color_match_score(hair, ref['hair'])
@@ -1142,7 +1197,7 @@ def match_colortype(analysis: dict) -> tuple:
                     eyes_score = calculate_color_match_score(eyes, ref['eyes'])
                     
                     color_score = (hair_score * 0.32) + (skin_score * 0.32) + (eyes_score * 0.36)
-                    total_score = (param_score * 2.0) + (color_score * 1.0)
+                    total_score = (param_score * 3.0) + (color_score * 1.0)
                     
                     if total_score > max_score:
                         max_score = total_score
@@ -1157,10 +1212,10 @@ def match_colortype(analysis: dict) -> tuple:
         best_colortype = fallback_colortype
         best_total_score = fallback_score
         print(f'[Match] FALLBACK 2 SELECTED: {best_colortype} with {min_violations} violations, score {best_total_score:.2f}')
-        explanation = format_result(best_colortype, hair, skin, eyes, undertone, lightness, saturation, contrast, 'fallback2')
+        explanation = format_result(best_colortype, hair, skin, eyes, undertone, saturation, contrast, 'fallback2')
         return best_colortype, explanation
     
-    explanation = format_result(best_colortype, hair, skin, eyes, undertone, lightness, saturation, contrast, 'standard')
+    explanation = format_result(best_colortype, hair, skin, eyes, undertone, saturation, contrast, 'standard')
     
     print(f'[Match] FINAL: {best_colortype} with score {best_total_score:.2f}')
     
@@ -1182,36 +1237,44 @@ def extract_color_type(result_text: str) -> Optional[str]:
     
     return None
 
-def calculate_contrast(hair_lightness: str, skin_lightness: str, eye_lightness: str) -> str:
-    '''Calculate contrast level based on 4-level lightness scale
+def calculate_contrast(hair_lightness: str, skin_lightness: str, eyes_lightness: str) -> str:
+    '''Calculate contrast level based on NEW 3-level lightness scale
     
     Uses weighted formula: Hair vs Skin (60%) + Eyes vs Skin (40%)
     
-    Lightness levels (0-3): LIGHT=0, LIGHT-MEDIUM=1, DARK-MEDIUM=2, DARK=3
+    NEW Lightness levels (0-2): 
+    - LIGHT-*-COLORS = 0
+    - MEDIUM-*-COLORS = 1
+    - DEEP-*-COLORS = 2
     
     Returns: LOW-CONTRAST (sum=0), LOW-MEDIUM-CONTRAST (sum=1), 
              HIGH-MEDIUM-CONTRAST (sum=2), HIGH-CONTRAST (sum=3+)
     '''
     LIGHTNESS_TO_LEVEL = {
-        'LIGHT': 0,
-        'LIGHT-MEDIUM': 1,
-        'DARK-MEDIUM': 2,
-        'DARK': 3
+        'LIGHT-HAIR-COLORS': 0,
+        'MEDIUM-HAIR-COLORS': 1,
+        'DEEP-HAIR-COLORS': 2,
+        'LIGHT-SKIN-COLORS': 0,
+        'MEDIUM-SKIN-COLORS': 1,
+        'DEEP-SKIN-COLORS': 2,
+        'LIGHT-EYES-COLORS': 0,
+        'MEDIUM-EYES-COLORS': 1,
+        'DEEP-EYES-COLORS': 2
     }
     
-    hair_level = LIGHTNESS_TO_LEVEL.get(hair_lightness, 2)
+    hair_level = LIGHTNESS_TO_LEVEL.get(hair_lightness, 1)
     skin_level = LIGHTNESS_TO_LEVEL.get(skin_lightness, 1)
-    eye_level = LIGHTNESS_TO_LEVEL.get(eye_lightness, 2)
+    eyes_level = LIGHTNESS_TO_LEVEL.get(eyes_lightness, 1)
     
     # Calculate differences
     hair_skin_diff = abs(hair_level - skin_level)
-    eye_skin_diff = abs(eye_level - skin_level)
+    eyes_skin_diff = abs(eyes_level - skin_level)
     
-    # Sum both differences (max = 6, but realistically max = 4-5)
-    total_diff = hair_skin_diff + eye_skin_diff
+    # Sum both differences (max = 4)
+    total_diff = hair_skin_diff + eyes_skin_diff
     
-    print(f'[Contrast] hair={hair_lightness}({hair_level}), skin={skin_lightness}({skin_level}), eyes={eye_lightness}({eye_level})')
-    print(f'[Contrast] hair-skin={hair_skin_diff}, eye-skin={eye_skin_diff}, total={total_diff}')
+    print(f'[Contrast] hair={hair_lightness}({hair_level}), skin={skin_lightness}({skin_level}), eyes={eyes_lightness}({eyes_level})')
+    print(f'[Contrast] hair-skin={hair_skin_diff}, eyes-skin={eyes_skin_diff}, total={total_diff}')
     
     if total_diff == 0:
         return 'LOW-CONTRAST'
@@ -1403,35 +1466,35 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         analysis['eye_color'] = eye_color
                         print(f'[ColorType-Worker] Overridden eye_color with user hint: {eye_color}')
                         
-                        # Map user's eye color to lightness level for contrast calculation
+                        # Map user's eye color to lightness level (NEW 3-level system: LIGHT/MEDIUM/DEEP)
                         EYE_COLOR_TO_LIGHTNESS = {
-                            'blue': 'LIGHT',                    # Голубые
-                            'blue-green': 'LIGHT',              # Сине-зелёные
-                            'green': 'LIGHT-MEDIUM',            # Зелёные
-                            'gray-blue': 'LIGHT-MEDIUM',        # Серо-голубые
-                            'turquoise': 'LIGHT-MEDIUM',        # Бирюзовые
-                            'jade': 'LIGHT-MEDIUM',             # Нефритовые
-                            'hazel': 'LIGHT-MEDIUM',             # Ореховые (золотистые)
-                            'gray-green': 'DARK-MEDIUM',        # Серо-зелёные
-                            'gray': 'DARK-MEDIUM',              # Серые
-                            'grey': 'DARK-MEDIUM',              # Серые (альт)
-                            'light brown': 'DARK-MEDIUM',       # Светло-карие
-                            'brown': 'DARK-MEDIUM',             # Карие
-                            'brown-green': 'DARK-MEDIUM',       # Коричнево-зелёные
-                            'golden brown': 'DARK-MEDIUM',      # Золотисто-карие
-                            'black-brown': 'DARK',              # Чёрно-карие
-                            'chocolate': 'DARK'                 # Шоколадные
+                            'blue': 'LIGHT-EYES-COLORS',                    # Голубые
+                            'blue-green': 'LIGHT-EYES-COLORS',              # Сине-зелёные
+                            'green': 'LIGHT-EYES-COLORS',                   # Зелёные
+                            'gray-blue': 'LIGHT-EYES-COLORS',               # Серо-голубые
+                            'turquoise': 'LIGHT-EYES-COLORS',               # Бирюзовые
+                            'jade': 'LIGHT-EYES-COLORS',                    # Нефритовые
+                            'hazel': 'MEDIUM-EYES-COLORS',                  # Ореховые (золотистые)
+                            'gray-green': 'MEDIUM-EYES-COLORS',             # Серо-зелёные
+                            'gray': 'MEDIUM-EYES-COLORS',                   # Серые
+                            'grey': 'MEDIUM-EYES-COLORS',                   # Серые (альт)
+                            'light brown': 'MEDIUM-EYES-COLORS',            # Светло-карие
+                            'brown': 'MEDIUM-EYES-COLORS',                  # Карие
+                            'brown-green': 'MEDIUM-EYES-COLORS',            # Коричнево-зелёные
+                            'golden brown': 'MEDIUM-EYES-COLORS',           # Золотисто-карие
+                            'black-brown': 'DEEP-EYES-COLORS',              # Чёрно-карие
+                            'chocolate': 'DEEP-EYES-COLORS'                 # Шоколадные
                         }
                         
-                        eye_lightness = EYE_COLOR_TO_LIGHTNESS.get(eye_color.lower(), 'DARK-MEDIUM')
-                        analysis['eye_lightness'] = eye_lightness
-                        print(f'[ColorType-Worker] Mapped eye_color "{eye_color}" to eye_lightness: {eye_lightness}')
+                        eyes_lightness = EYE_COLOR_TO_LIGHTNESS.get(eye_color.lower(), 'MEDIUM-EYES-COLORS')
+                        analysis['eyes_lightness'] = eyes_lightness
+                        print(f'[ColorType-Worker] Mapped eye_color "{eye_color}" to eyes_lightness: {eyes_lightness}')
                         
-                        # Calculate contrast based on hair_lightness, skin_lightness, eye_lightness
+                        # Calculate contrast based on hair_lightness, skin_lightness, eyes_lightness
                         contrast = calculate_contrast(
-                            analysis.get('hair_lightness', ''),
-                            analysis.get('skin_lightness', ''),
-                            eye_lightness
+                            analysis.get('hair_lightness', 'MEDIUM-HAIR-COLORS'),
+                            analysis.get('skin_lightness', 'MEDIUM-SKIN-COLORS'),
+                            eyes_lightness
                         )
                         analysis['contrast'] = contrast
                         print(f'[ColorType-Worker] Calculated contrast: {contrast}')
