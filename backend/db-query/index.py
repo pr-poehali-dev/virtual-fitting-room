@@ -147,6 +147,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             # SELECT query
             where = body.get('where', {})
             limit = body.get('limit', 100)
+            offset = body.get('offset', 0)
             order_by = body.get('order_by', 'created_at DESC')
             columns_to_select = body.get('columns', [])
             
@@ -166,8 +167,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     params.append(value)
                 query += ' WHERE ' + ' AND '.join(where_parts)
             
-            query += f' ORDER BY {order_by} LIMIT %s'
+            query += f' ORDER BY {order_by} LIMIT %s OFFSET %s'
             params.append(limit)
+            params.append(offset)
             
             cursor.execute(query, params)
             columns = [desc[0] for desc in cursor.description]

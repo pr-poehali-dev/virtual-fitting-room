@@ -36,8 +36,11 @@ interface DataContextType {
   history: HistoryItem[];
   colorTypeHistory: ColorTypeHistory[];
   isLoading: boolean;
+  hasMoreHistory: boolean;
+  isLoadingMoreHistory: boolean;
   refetchLookbooks: () => Promise<void>;
   refetchHistory: () => Promise<void>;
+  loadMoreHistory: () => Promise<void>;
   refetchColorTypeHistory: () => Promise<void>;
   refetchAll: () => Promise<void>;
 }
@@ -45,6 +48,8 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
+
+const HISTORY_PAGE_SIZE = 15;
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -55,6 +60,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [hasFetchedLookbooks, setHasFetchedLookbooks] = useState(false);
   const [hasFetchedHistory, setHasFetchedHistory] = useState(false);
   const [hasFetchedColorTypeHistory, setHasFetchedColorTypeHistory] = useState(false);
+  const [hasMoreHistory, setHasMoreHistory] = useState(true);
+  const [isLoadingMoreHistory, setIsLoadingMoreHistory] = useState(false);
+  const [historyOffset, setHistoryOffset] = useState(0);
 
   const fetchLookbooks = async () => {
     if (!user?.id) {
@@ -87,11 +95,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const fetchHistory = async () => {
+  const fetchHistory = async (reset = false) => {
     if (!user?.id) {
       setHistory([]);
       return;
     }
+
+    const offset = reset ? 0 : historyOffset;
 
     try {
       const response = await fetch(DB_QUERY_API, {
@@ -103,18 +113,34 @@ export function DataProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({
           table: 'try_on_history',
           action: 'select',
+          columns: ['id', 'result_image', 'created_at', 'model_used', 'saved_to_lookbook', 'cost'],
           where: { user_id: user.id },
           order_by: 'created_at DESC',
-          limit: 100
+          limit: HISTORY_PAGE_SIZE + 1,
+          offset: offset
         })
       });
       const result = await response.json();
       const data = result.success && Array.isArray(result.data) ? result.data : [];
-      setHistory(Array.isArray(data) ? data : []);
+      
+      const hasMore = data.length > HISTORY_PAGE_SIZE;
+      const items = hasMore ? data.slice(0, HISTORY_PAGE_SIZE) : data;
+      
+      if (reset) {
+        setHistory(items);
+        setHistoryOffset(HISTORY_PAGE_SIZE);
+      } else {
+        setHistory(prev => [...prev, ...items]);
+        setHistoryOffset(prev => prev + HISTORY_PAGE_SIZE);
+      }
+      
+      setHasMoreHistory(hasMore);
       setHasFetchedHistory(true);
     } catch (error) {
       console.error('Error fetching history:', error);
-      setHistory([]);
+      if (reset) {
+        setHistory([]);
+      }
     }
   };
 
@@ -155,7 +181,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const refetchHistory = async () => {
-    await fetchHistory();
+    await fetchHistory(true);
+  };
+
+  const loadMoreHistory = async () => {
+    if (!hasMoreHistory || isLoadingMoreHistory) return;
+    
+    setIsLoadingMoreHistory(true);
+    await fetchHistory(false);
+    setIsLoadingMoreHistory(false);
   };
 
   const refetchColorTypeHistory = async () => {
@@ -197,8 +231,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
         history,
         colorTypeHistory,
         isLoading,
+        hasMoreHistory,
+        isLoadingMoreHistory,
         refetchLookbooks,
         refetchHistory,
+        loadMoreHistory,
         refetchColorTypeHistory,
         refetchAll
       }}

@@ -30,15 +30,12 @@ interface HistoryTabProps {
 
 const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
 
-const ITEMS_PER_PAGE = 30;
-
 export default function HistoryTab({ userId }: HistoryTabProps) {
-  const { history, lookbooks, refetchHistory, refetchLookbooks } = useData();
+  const { history, lookbooks, hasMoreHistory, isLoadingMoreHistory, refetchHistory, loadMoreHistory, refetchLookbooks } = useData();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectedLookbookId, setSelectedLookbookId] = useState<string>('');
   const [isAdding, setIsAdding] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     console.log('[HistoryTab] userId received:', userId);
@@ -56,21 +53,11 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
   };
 
   const selectAll = () => {
-    if (selectedItems.length === displayedHistory.length) {
+    if (selectedItems.length === history.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(displayedHistory.map(item => item.id));
+      setSelectedItems(history.map(item => item.id));
     }
-  };
-
-  const totalPages = Math.ceil(history.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const displayedHistory = history.slice(startIndex, endIndex);
-
-  const goToPage = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleAddToLookbook = async () => {
@@ -330,15 +317,15 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
           size="sm"
           onClick={selectAll}
         >
-          {selectedItems.length === displayedHistory.length ? 'Снять выделение' : 'Выбрать все'}
+          {selectedItems.length === history.length ? 'Снять выделение' : 'Выбрать все'}
         </Button>
         <p className="text-sm text-muted-foreground">
-          Всего: {history.length}
+          Показано: {history.length}
         </p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {displayedHistory.map((item) => (
+        {history.map((item) => (
           <Card 
             key={item.id} 
             className={`relative overflow-hidden transition-all ${
@@ -402,38 +389,24 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
         ))}
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-6">
+      {hasMoreHistory && (
+        <div className="flex justify-center mt-6">
           <Button
             variant="outline"
-            size="sm"
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage === 1}
+            onClick={loadMoreHistory}
+            disabled={isLoadingMoreHistory}
           >
-            <Icon name="ChevronLeft" size={16} />
-          </Button>
-          
-          <div className="flex gap-1">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <Button
-                key={page}
-                variant={currentPage === page ? "default" : "outline"}
-                size="sm"
-                onClick={() => goToPage(page)}
-                className="min-w-[40px]"
-              >
-                {page}
-              </Button>
-            ))}
-          </div>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            <Icon name="ChevronRight" size={16} />
+            {isLoadingMoreHistory ? (
+              <>
+                <Icon name="Loader2" className="mr-2 animate-spin" size={16} />
+                Загрузка...
+              </>
+            ) : (
+              <>
+                <Icon name="ChevronDown" className="mr-2" size={16} />
+                Загрузить ещё
+              </>
+            )}
           </Button>
         </div>
       )}
