@@ -231,6 +231,28 @@ Analyze the colors visible in this image and determine:
    - café noir, chestnut, coffee, cocoa, brown
    - russet
    - deep olive, dark
+   
+   === STEP 3: Determine CONTRAST level ===
+   After classifying hair, skin, and eyes lightness, calculate the contrast:
+   
+   Use this simple rule based on lightness differences:
+   * Map LIGHT/LIGHT-MEDIUM → level 0
+   * Map DARK-MEDIUM/MEDIUM → level 1  
+   * Map DARK/DEEP → level 2
+   
+   Then calculate: |hair_level - skin_level| + |eyes_level - skin_level|
+   
+   - Choose LOW-CONTRAST if: total difference = 0
+     Example: Light hair + Light skin + Light eyes (all same level)
+   
+   - Choose LOW-MEDIUM-CONTRAST if: total difference = 1
+     Example: Light hair + Light skin + Medium eyes, OR Medium hair + Light skin + Light eyes
+   
+   - Choose HIGH-MEDIUM-CONTRAST if: total difference = 2
+     Example: Dark hair + Medium skin + Light eyes, OR Medium hair + Light skin + Medium eyes
+   
+   - Choose HIGH-CONTRAST if: total difference ≥ 3
+     Example: Dark hair + Light skin + Dark eyes, OR Dark hair + Light skin + Medium eyes
 
 7. DESCRIBE EXACT COLORS you see (use synonyms and precise descriptors):
    - Hair: Use hair dye terminology for precision:
