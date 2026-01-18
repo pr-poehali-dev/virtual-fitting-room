@@ -81,20 +81,25 @@ RIGHT SIDE - Color characteristics:
 - Lower-middle section: Hair color examples most suitable for this color type
 - Bottom section: Contrast level example for this color type (shows typical lightness difference between features)
 
-⚠️ IMPORTANT: Each scheme has TEXT LABELS on it - READ THESE TEXTS carefully! They provide:
-- Color type name (in Russian, but you'll match it to English name)
-- Descriptions of color characteristics
-- Specific color names and tones
+⚠️ IMPORTANT: Each scheme has TEXT LABELS in ENGLISH - READ THESE TEXTS carefully! They provide:
+- Color type name in English (e.g., "Bright Spring", "Cool Summer", "Dark Autumn")
+- Descriptions of color characteristics (undertone, lightness, saturation, contrast)
+- Specific color names for hair, skin, and eyes
+- Russian translation of the color type name (ignore this - use English name for JSON)
 
 TASK FOR STEP 1:
 1. Look at the ANALYZED PHOTO carefully
 2. Compare it with ALL 12 reference schemes
-3. Read the text labels on each scheme to understand the color characteristics
+3. Read the ENGLISH text labels on each scheme to understand:
+   - Which color type it represents
+   - What characteristics define this type (warm/cool, light/deep, muted/bright)
+   - What hair/skin/eye colors are typical for this type
 4. Determine which scheme's COLOR CHARACTERISTICS (right side) best match the analyzed photo
 5. Use the left side example person to assess overall color harmony
 6. Pay attention to the contrast level shown at the bottom right of each scheme
 7. The analyzed person does NOT need to look identical to the example person - focus on matching the COLOR CHARACTERISTICS (right side)
 8. Select the MOST LIKELY color type based on visual comparison
+9. Remember the ENGLISH name from the scheme (you'll use it in JSON output)
 
 Remember your choice - you will use it as `suggested_colortype` in the final JSON.
 
