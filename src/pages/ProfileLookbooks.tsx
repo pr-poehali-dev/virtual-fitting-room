@@ -31,7 +31,7 @@ const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3
 
 export default function ProfileLookbooks() {
   const { user, isLoading: authLoading } = useAuth();
-  const { lookbooks, isLoading: dataLoading, refetchLookbooks } = useData();
+  const { lookbooks, isLoading: dataLoading, hasMoreLookbooks, isLoadingMoreLookbooks, refetchLookbooks, loadMoreLookbooks } = useData();
   const navigate = useNavigate();
   const [isCreatingLookbook, setIsCreatingLookbook] = useState(false);
   const [isEditingLookbook, setIsEditingLookbook] = useState(false);
@@ -43,7 +43,7 @@ export default function ProfileLookbooks() {
   const [viewingLookbook, setViewingLookbook] = useState<Lookbook | null>(null);
   const [selectedPhotoIndexes, setSelectedPhotoIndexes] = useState<number[]>([]);
   const [targetLookbookId, setTargetLookbookId] = useState<string>('');
-  const [currentPage, setCurrentPage] = useState(1);
+
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -322,62 +322,39 @@ export default function ProfileLookbooks() {
               </Card>
             ) : (
               <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {lookbooks.slice((currentPage - 1) * 15, currentPage * 15).map((lookbook) => (
-                  <LookbookCard
-                    key={lookbook.id}
-                    lookbook={lookbook}
-                    onView={setViewingLookbook}
-                    onEdit={handleEditLookbook}
-                    onDelete={handleDeleteLookbook}
-                  />
-                ))}
-              </div>
-              
-              {lookbooks.length > 15 && (
-                <div className="flex justify-center items-center gap-2 mt-8">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setCurrentPage(prev => prev - 1);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    disabled={currentPage === 1}
-                  >
-                    <Icon name="ChevronLeft" size={16} />
-                  </Button>
-                  
-                  <div className="flex gap-1">
-                    {Array.from({ length: Math.ceil(lookbooks.length / 15) }, (_, i) => i + 1).map(page => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => {
-                          setCurrentPage(page);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        className="min-w-[40px]"
-                      >
-                        {page}
-                      </Button>
-                    ))}
-                  </div>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setCurrentPage(prev => prev + 1);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    disabled={currentPage === Math.ceil(lookbooks.length / 15)}
-                  >
-                    <Icon name="ChevronRight" size={16} />
-                  </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {lookbooks.map((lookbook) => (
+                    <LookbookCard
+                      key={lookbook.id}
+                      lookbook={lookbook}
+                      onView={setViewingLookbook}
+                      onEdit={handleEditLookbook}
+                      onDelete={handleDeleteLookbook}
+                    />
+                  ))}
                 </div>
-              )}
+                
+                {hasMoreLookbooks && (
+                  <div className="flex justify-center mt-6">
+                    <Button
+                      variant="outline"
+                      onClick={loadMoreLookbooks}
+                      disabled={isLoadingMoreLookbooks}
+                    >
+                      {isLoadingMoreLookbooks ? (
+                        <>
+                          <Icon name="Loader2" className="mr-2 animate-spin" size={16} />
+                          Загрузка...
+                        </>
+                      ) : (
+                        <>
+                          <Icon name="ChevronDown" className="mr-2" size={16} />
+                          Загрузить ещё
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
               </>
             )}
           </div>

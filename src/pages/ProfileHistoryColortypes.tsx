@@ -37,7 +37,7 @@ interface ColorTypeHistory {
 
 export default function ProfileHistoryColortypes() {
   const { user, isLoading: authLoading } = useAuth();
-  const { colorTypeHistory, isLoading: dataLoading, refetchColorTypeHistory } = useData();
+  const { colorTypeHistory, isLoading: dataLoading, hasMoreColorType, isLoadingMoreColorType, refetchColorTypeHistory, loadMoreColorType } = useData();
   const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -130,8 +130,9 @@ export default function ProfileHistoryColortypes() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {colorTypeHistory.map((item) => (
+              <>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {colorTypeHistory.map((item) => (
                   <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                     {item.cdn_url && (
                       <div className="aspect-[3/4] relative overflow-hidden bg-muted group">
@@ -179,8 +180,31 @@ export default function ProfileHistoryColortypes() {
                       )}
                     </CardContent>
                   </Card>
-                ))}
-              </div>
+                  ))}
+                </div>
+                
+                {hasMoreColorType && (
+                  <div className="flex justify-center mt-6">
+                    <Button
+                      variant="outline"
+                      onClick={loadMoreColorType}
+                      disabled={isLoadingMoreColorType}
+                    >
+                      {isLoadingMoreColorType ? (
+                        <>
+                          <Icon name="Loader2" className="mr-2 animate-spin" size={16} />
+                          Загрузка...
+                        </>
+                      ) : (
+                        <>
+                          <Icon name="ChevronDown" className="mr-2" size={16} />
+                          Загрузить ещё
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

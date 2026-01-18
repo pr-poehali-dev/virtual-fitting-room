@@ -38,9 +38,15 @@ interface DataContextType {
   isLoading: boolean;
   hasMoreHistory: boolean;
   isLoadingMoreHistory: boolean;
+  hasMoreColorType: boolean;
+  isLoadingMoreColorType: boolean;
+  hasMoreLookbooks: boolean;
+  isLoadingMoreLookbooks: boolean;
   refetchLookbooks: () => Promise<void>;
   refetchHistory: () => Promise<void>;
   loadMoreHistory: () => Promise<void>;
+  loadMoreColorType: () => Promise<void>;
+  loadMoreLookbooks: () => Promise<void>;
   refetchColorTypeHistory: () => Promise<void>;
   refetchAll: () => Promise<void>;
 }
@@ -50,6 +56,8 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
 
 const HISTORY_PAGE_SIZE = 15;
+const COLOR_TYPE_PAGE_SIZE = 15;
+const LOOKBOOKS_PAGE_SIZE = 15;
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -63,12 +71,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [hasMoreHistory, setHasMoreHistory] = useState(true);
   const [isLoadingMoreHistory, setIsLoadingMoreHistory] = useState(false);
   const [historyOffset, setHistoryOffset] = useState(0);
+  const [hasMoreColorType, setHasMoreColorType] = useState(true);
+  const [isLoadingMoreColorType, setIsLoadingMoreColorType] = useState(false);
+  const [colorTypeOffset, setColorTypeOffset] = useState(0);
+  const [hasMoreLookbooks, setHasMoreLookbooks] = useState(true);
+  const [isLoadingMoreLookbooks, setIsLoadingMoreLookbooks] = useState(false);
+  const [lookbooksOffset, setLookbooksOffset] = useState(0);
 
-  const fetchLookbooks = async () => {
+  const fetchLookbooks = async (reset = false) => {
     if (!user?.id) {
       setLookbooks([]);
       return;
     }
+
+    const offset = reset ? 0 : lookbooksOffset;
 
     try {
       const response = await fetch(DB_QUERY_API, {
@@ -82,16 +98,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
           action: 'select',
           where: { user_id: user.id },
           order_by: 'created_at DESC',
-          limit: 100
+          limit: LOOKBOOKS_PAGE_SIZE + 1,
+          offset: offset
         })
       });
       const result = await response.json();
       const data = result.success && Array.isArray(result.data) ? result.data : [];
-      setLookbooks(Array.isArray(data) ? data : []);
+      
+      const hasMore = data.length > LOOKBOOKS_PAGE_SIZE;
+      const items = hasMore ? data.slice(0, LOOKBOOKS_PAGE_SIZE) : data;
+      
+      if (reset) {
+        setLookbooks(items);
+        setLookbooksOffset(LOOKBOOKS_PAGE_SIZE);
+      } else {
+        setLookbooks(prev => [...prev, ...items]);
+        setLookbooksOffset(prev => prev + LOOKBOOKS_PAGE_SIZE);
+      }
+      
+      setHasMoreLookbooks(hasMore);
       setHasFetchedLookbooks(true);
     } catch (error) {
       console.error('Error fetching lookbooks:', error);
-      setLookbooks([]);
+      if (reset) {
+        setLookbooks([]);
+      }
     }
   };
 
@@ -145,14 +176,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const refetchLookbooks = async () => {
-    await fetchLookbooks();
+    await fetchLookbooks(true);
   };
 
-  const fetchColorTypeHistory = async () => {
+  const loadMoreLookbooks = async () => {
+    if (!hasMoreLookbooks || isLoadingMoreLookbooks) return;
+    
+    setIsLoadingMoreLookbooks(true);
+    await fetchLookbooks(false);
+    setIsLoadingMoreLookbooks(false);
+  };
+
+  const fetchColorTypeHistory = async (reset = false) => {
     if (!user?.id) {
       setColorTypeHistory([]);
       return;
     }
+
+    const offset = reset ? 0 : colorTypeOffset;
 
     try {
       const response = await fetch(DB_QUERY_API, {
@@ -167,16 +208,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
           columns: ['id', 'cdn_url', 'color_type', 'result_text', 'created_at', 'status'],
           where: { user_id: user.id, status: 'completed' },
           order_by: 'created_at DESC',
-          limit: 100
+          limit: COLOR_TYPE_PAGE_SIZE + 1,
+          offset: offset
         })
       });
       const result = await response.json();
       const data = result.success && Array.isArray(result.data) ? result.data : [];
-      setColorTypeHistory(Array.isArray(data) ? data : []);
+      
+      const hasMore = data.length > COLOR_TYPE_PAGE_SIZE;
+      const items = hasMore ? data.slice(0, COLOR_TYPE_PAGE_SIZE) : data;
+      
+      if (reset) {
+        setColorTypeHistory(items);
+        setColorTypeOffset(COLOR_TYPE_PAGE_SIZE);
+      } else {
+        setColorTypeHistory(prev => [...prev, ...items]);
+        setColorTypeOffset(prev => prev + COLOR_TYPE_PAGE_SIZE);
+      }
+      
+      setHasMoreColorType(hasMore);
       setHasFetchedColorTypeHistory(true);
     } catch (error) {
       console.error('Error fetching color type history:', error);
-      setColorTypeHistory([]);
+      if (reset) {
+        setColorTypeHistory([]);
+      }
     }
   };
 
@@ -193,7 +249,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const refetchColorTypeHistory = async () => {
-    await fetchColorTypeHistory();
+    await fetchColorTypeHistory(true);
+  };
+
+  const loadMoreColorType = async () => {
+    if (!hasMoreColorType || isLoadingMoreColorType) return;
+    
+    setIsLoadingMoreColorType(true);
+    await fetchColorTypeHistory(false);
+    setIsLoadingMoreColorType(false);
   };
 
   const refetchAll = async () => {
@@ -233,9 +297,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
         isLoading,
         hasMoreHistory,
         isLoadingMoreHistory,
+        hasMoreColorType,
+        isLoadingMoreColorType,
+        hasMoreLookbooks,
+        isLoadingMoreLookbooks,
         refetchLookbooks,
         refetchHistory,
         loadMoreHistory,
+        loadMoreColorType,
+        loadMoreLookbooks,
         refetchColorTypeHistory,
         refetchAll
       }}
