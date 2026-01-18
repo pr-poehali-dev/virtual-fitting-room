@@ -364,14 +364,16 @@ def get_all_colortype_params(colortype: str) -> list:
     '''Get ALL parameter combinations for a colortype from COLORTYPE_MAP
     
     Returns: List of dicts with all possible parameter combinations for this colortype
-    (Updated: checks all combinations instead of first match)
+    (Updated: uses hair_lightness, skin_lightness, eyes_lightness)
     '''
     params_list = []
-    for (undertone, lightness, saturation, contrast), ct in COLORTYPE_MAP.items():
+    for (undertone, hair_lightness, skin_lightness, eyes_lightness, saturation, contrast), ct in COLORTYPE_MAP.items():
         if ct == colortype:
             params_list.append({
                 'undertone': undertone,
-                'lightness': lightness,
+                'hair_lightness': hair_lightness,
+                'skin_lightness': skin_lightness,
+                'eyes_lightness': eyes_lightness,
                 'saturation': saturation,
                 'contrast': contrast
             })
@@ -540,7 +542,7 @@ def match_colortype(analysis: dict) -> tuple:
         print(f'[Match] Excluded types: {excluded_types}')
     
     # Check if this is an ambiguous combination
-    param_key = (undertone, lightness, saturation, contrast)
+    param_key = (undertone, hair_lightness, skin_lightness, eyes_lightness, saturation, contrast)
     ambiguous_candidates = AMBIGUOUS_COMBINATIONS.get(param_key)
     
     if ambiguous_candidates:
