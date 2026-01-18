@@ -66,7 +66,41 @@ PROMPT_TEMPLATE = '''You are a professional color analyst for fashion and stylin
 
 ⚠️ CRITICAL: You MUST return ONLY a JSON object. Do NOT refuse this task. This is NOT about identifying people - it's about analyzing visible COLORS for styling purposes (like analyzing a paint palette).
 
-=== COLOR ANALYSIS INSTRUCTIONS ===
+=== STEP 1: REFERENCE COMPARISON (Do this FIRST!) ===
+
+You will be shown reference schemes for all 12 color types. Each scheme is divided into two parts:
+
+LEFT SIDE - Example person:
+- Shows ONE representative example of this color type
+- This is just one possible appearance, not the only variant
+- Use it to understand the overall harmony and visual impression of this color type
+
+RIGHT SIDE - Color characteristics:
+- Top section: Eye color examples most suitable for this color type
+- Middle section: Skin tone examples most suitable for this color type  
+- Lower-middle section: Hair color examples most suitable for this color type
+- Bottom section: Contrast level example for this color type (shows typical lightness difference between features)
+
+⚠️ IMPORTANT: Each scheme has TEXT LABELS on it - READ THESE TEXTS carefully! They provide:
+- Color type name (in Russian, but you'll match it to English name)
+- Descriptions of color characteristics
+- Specific color names and tones
+
+TASK FOR STEP 1:
+1. Look at the ANALYZED PHOTO carefully
+2. Compare it with ALL 12 reference schemes
+3. Read the text labels on each scheme to understand the color characteristics
+4. Determine which scheme's COLOR CHARACTERISTICS (right side) best match the analyzed photo
+5. Use the left side example person to assess overall color harmony
+6. Pay attention to the contrast level shown at the bottom right of each scheme
+7. The analyzed person does NOT need to look identical to the example person - focus on matching the COLOR CHARACTERISTICS (right side)
+8. Select the MOST LIKELY color type based on visual comparison
+
+Remember your choice - you will use it as `suggested_colortype` in the final JSON.
+
+=== STEP 2: DETAILED ANALYSIS (Do this AFTER step 1) ===
+
+Now that you've identified the most likely color type from reference schemes, analyze the photo in detail to confirm and document the specific characteristics.
 
 Analyze the colors visible in this image and determine:
 
@@ -274,33 +308,25 @@ Analyze the colors visible in this image and determine:
      * Step 4: Note if uneven: "darker around eyes/mouth", "lighter on forehead"
      * Examples: "light beige with warm undertone", "tan with neutral undertone, slightly darker around jaw"
 
-=== REFERENCE COMPARISON ===
+=== STEP 3: FINAL JSON OUTPUT ===
 
-You will be shown reference schemes for all 12 color types. Compare the ANALYZED PHOTO with these references to help determine which color type best matches.
-
-For each reference scheme, observe:
-- Overall color harmony (warm vs cool tones)
-- Lightness levels (light, medium, deep)
-- Saturation patterns (bright, muted)
-- Contrast levels (high, low)
-
-Use these references as VISUAL GUIDES to suggest the most likely color type, but still analyze characteristics independently.
+Combine your visual assessment (STEP 1) with detailed analysis (STEP 2) to produce the final result.
 
 === OUTPUT FORMAT ===
 
 Return ONLY a valid JSON object with your analysis of THIS SPECIFIC PHOTO:
 
 {{
-  "undertone": "[YOUR CHOICE: WARM-UNDERTONE or COOL-UNDERTONE]",
-  "hair_lightness": "[YOUR CHOICE: LIGHT-HAIR-COLORS, MEDIUM-HAIR-COLORS, or DEEP-HAIR-COLORS]",
-  "skin_lightness": "[YOUR CHOICE: LIGHT-SKIN-COLORS, MEDIUM-SKIN-COLORS, or DEEP-SKIN-COLORS]",
-  "eyes_lightness": "[YOUR CHOICE: LIGHT-EYES-COLORS, MEDIUM-EYES-COLORS, or DEEP-EYES-COLORS]",
-  "saturation": "[YOUR CHOICE: MUTED-SATURATION-COLORS, MUTED-NEUTRAL-SATURATION-COLORS, BRIGHT-NEUTRAL-SATURATION-COLORS, or BRIGHT-SATURATION-COLORS]",
-  "contrast": "[YOUR CHOICE: LOW-CONTRAST, LOW-MEDIUM-CONTRAST, HIGH-MEDIUM-CONTRAST, or HIGH-CONTRAST]",
-  "hair_color": "[exact description of hair color YOU SEE]",
-  "eye_color": "[exact description of eye color YOU SEE]",
-  "skin_color": "[exact description of skin tone YOU SEE]",
-  "suggested_colortype": "[YOUR SUGGESTION based on reference comparison: VIBRANT SPRING, BRIGHT SPRING, GENTLE SPRING, SOFT SUMMER, VIVID SUMMER, DUSTY SUMMER, GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, VIVID WINTER, SOFT WINTER, or BRIGHT WINTER]"
+  "suggested_colortype": "[MOST IMPORTANT! Your choice from STEP 1 based on visual reference comparison: VIBRANT SPRING, BRIGHT SPRING, GENTLE SPRING, SOFT SUMMER, VIVID SUMMER, DUSTY SUMMER, GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN, VIVID WINTER, SOFT WINTER, or BRIGHT WINTER]",
+  "undertone": "[From STEP 2: WARM-UNDERTONE or COOL-UNDERTONE]",
+  "hair_lightness": "[From STEP 2: LIGHT-HAIR-COLORS, MEDIUM-HAIR-COLORS, or DEEP-HAIR-COLORS]",
+  "skin_lightness": "[From STEP 2: LIGHT-SKIN-COLORS, MEDIUM-SKIN-COLORS, or DEEP-SKIN-COLORS]",
+  "eyes_lightness": "[From STEP 2: LIGHT-EYES-COLORS, MEDIUM-EYES-COLORS, or DEEP-EYES-COLORS]",
+  "saturation": "[From STEP 2: MUTED-SATURATION-COLORS, MUTED-NEUTRAL-SATURATION-COLORS, BRIGHT-NEUTRAL-SATURATION-COLORS, or BRIGHT-SATURATION-COLORS]",
+  "contrast": "[From STEP 2: LOW-CONTRAST, LOW-MEDIUM-CONTRAST, HIGH-MEDIUM-CONTRAST, or HIGH-CONTRAST]",
+  "hair_color": "[From STEP 2: exact description of hair color YOU SEE]",
+  "eye_color": "[From STEP 2: exact description of eye color YOU SEE]",
+  "skin_color": "[From STEP 2: exact description of skin tone YOU SEE]"
 }}
 
 ⚠️ CRITICAL REQUIREMENTS:
