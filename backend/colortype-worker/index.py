@@ -194,8 +194,10 @@ Analyze the colors visible in this image and determine:
    * Assess darkness at SCALP/ROOTS - natural color shows true lightness level
    
    - Choose LIGHT-HAIR-COLORS if: very light hair (platinum, light blond, golden blond, light strawberry blond)
-   - Choose MEDIUM-HAIR-COLORS if: medium hair (medium brown, dark blond, chestnut, auburn)
-   - Choose DEEP-HAIR-COLORS if: dark hair (dark brown, black, deep auburn, dark chestnut, espresso)
+   - Choose MEDIUM-HAIR-COLORS if: medium hair (medium brown, dark blond, chestnut, light auburn, strawberry blond)
+   - Choose DEEP-HAIR-COLORS if: dark hair (auburn, copper, bright auburn, dark brown, black, deep auburn, dark chestnut, espresso)
+   
+   ⚠️ IMPORTANT: Auburn/copper/bright red hair is visually DEEP/DARK even if it has warm tones!
 
 3. SKIN LIGHTNESS - Darkness level of SKIN ONLY:
    
@@ -236,6 +238,9 @@ Analyze the colors visible in this image and determine:
    === STEP 1: Classify HAIR lightness ===
    Ask yourself: "How LIGHT or DARK is this hair color at the ROOTS?"
    
+   ⚠️ CRITICAL: Auburn/copper/bright red hair has HIGH VISUAL WEIGHT (looks dark) even with warm tones!
+   Classify auburn/copper/bright auburn as DARK, NOT medium!
+   
    LIGHT hair includes:
    - platinum, light blond, light golden blond, light honey blond
    - light strawberry blond, golden, pale beige, light olive
@@ -250,9 +255,8 @@ Analyze the colors visible in this image and determine:
    
    DARK-MEDIUM hair includes (closer to dark):
    - medium brown, chestnut brown, chestnut
-   - warm brown, auburn, copper
-   - medium auburn, deep auburn, bright auburn
-   - light clear red, medium golden brown
+   - warm brown
+   - medium golden brown
    - medium-deep cool brown
    - light cool brown, medium cool brown, ash brown
    - medium dark cool brown
@@ -260,7 +264,9 @@ Analyze the colors visible in this image and determine:
    
    DARK hair includes:
    - dark brown, dark cool brown, espresso, black, jet black
-   - deep auburn, mahogany
+   - auburn, copper, bright auburn, medium auburn, deep auburn (⚠️ visually dark!)
+   - light clear red (⚠️ vibrant = dark visual weight)
+   - mahogany
    - dark chestnut, dark auburn, deep brown
    - cool brown, ashy brown, coffee
    - cool black, jet black, deep cool brown
@@ -1051,10 +1057,12 @@ def match_colortype(analysis: dict) -> tuple:
     - Saturation: 50%
     - Contrast: 50%
     
-    Colors (weight x1):
-    - Hair color: 32%
-    - Skin color: 32%
-    - Eye color: 36%
+    Colors (weight x1) - DYNAMIC WEIGHTS:
+    - WARM undertone: Hair 45%, Skin 25%, Eyes 30%
+    - COOL undertone: Hair 32%, Skin 32%, Eyes 36%
+    
+    BONUSES:
+    - Auburn/copper/red hair + VIBRANT SPRING: +0.15
     
     Total score = (param_score * 2.0) + (color_score * 1.0)
     
@@ -1117,10 +1125,13 @@ def match_colortype(analysis: dict) -> tuple:
         excluded_types.update(['VIVID AUTUMN', 'VIVID WINTER', 'VIVID SUMMER'])
         print(f'[Match] Light skin detected → excluding VIVID AUTUMN, VIVID WINTER, and VIVID SUMMER')
     
-    # Rule 8: Blond hair → exclude SOFT WINTER and VIBRANT SPRING
-    if any(keyword in hair_lower for keyword in ['blonde', 'blond', 'light blond', 'light blonde']):
+    # Rule 8: Pure blond hair (NOT strawberry/auburn) → exclude SOFT WINTER and VIBRANT SPRING
+    is_pure_blond = any(keyword in hair_lower for keyword in ['blonde', 'blond', 'light blond', 'light blonde', 'platinum', 'ash blond'])
+    is_auburn_or_red = any(keyword in hair_lower for keyword in ['auburn', 'copper', 'red', 'strawberry'])
+    
+    if is_pure_blond and not is_auburn_or_red:
         excluded_types.update(['SOFT WINTER', 'VIBRANT SPRING'])
-        print(f'[Match] Blond hair detected → excluding SOFT WINTER and VIBRANT SPRING')
+        print(f'[Match] Pure blond hair detected → excluding SOFT WINTER and VIBRANT SPRING')
     
     # Rule 9: Beige skin → exclude SOFT WINTER
     if any(keyword in skin_lower for keyword in ['beige']):
@@ -1188,6 +1199,12 @@ def match_colortype(analysis: dict) -> tuple:
     # ============ STAGE 3: Final selection by color keyword matching ============
     print(f'[Match] STAGE 3: Scoring {len(stage2_candidates)} candidates by color matching + params')
     
+    # Detect characteristic warm hair colors
+    has_auburn_hair = any(keyword in hair_lower for keyword in ['auburn', 'copper', 'red', 'bright auburn', 'ginger'])
+    is_warm_undertone = undertone == 'WARM-UNDERTONE'
+    
+    print(f'[Match] Auburn/red hair detected: {has_auburn_hair}, Warm undertone: {is_warm_undertone}')
+    
     best_colortype = None
     best_total_score = 0.0
     best_param_score = 0.0
@@ -1224,18 +1241,35 @@ def match_colortype(analysis: dict) -> tuple:
                     saturation_match = s_match
                     contrast_match = c_match
         
-        # Calculate color match score (hair 32%, skin 32%, eyes 36%)
+        # Calculate color match score with DYNAMIC WEIGHTS based on undertone
         ref = COLORTYPE_REFERENCES[colortype]
         hair_score = calculate_color_match_score(hair, ref['hair'])
         skin_score = calculate_color_match_score(skin, ref['skin'])
         eyes_score = calculate_color_match_score(eyes, ref['eyes'])
         
-        color_score = (hair_score * 0.32) + (skin_score * 0.32) + (eyes_score * 0.36)
+        # UPDATED WEIGHTS: For WARM undertone, hair is MORE important
+        if is_warm_undertone:
+            # Warm types: hair 45%, skin 25%, eyes 30%
+            hair_weight = 0.45
+            skin_weight = 0.25
+            eyes_weight = 0.30
+        else:
+            # Cool types: hair 32%, skin 32%, eyes 36% (original)
+            hair_weight = 0.32
+            skin_weight = 0.32
+            eyes_weight = 0.36
+        
+        color_score = (hair_score * hair_weight) + (skin_score * skin_weight) + (eyes_score * eyes_weight)
+        
+        # BONUS: Auburn/copper/red hair → +0.15 for VIBRANT SPRING
+        if has_auburn_hair and colortype == 'VIBRANT SPRING':
+            color_score += 0.15
+            print(f'[Match] {colortype}: BONUS +0.15 for auburn hair (characteristic color)')
         
         # Total score: 2x parameters + 1x colors
         total_score = (param_match * 2.0) + (color_score * 1.0)
         
-        print(f'[Match] {colortype}: param={param_match:.2f} (U:{undertone_match:.0f} S:{saturation_match:.0f} C:{contrast_match:.0f}), color={color_score:.2f} (h:{hair_score:.2f} s:{skin_score:.2f} e:{eyes_score:.2f}), total={total_score:.2f}')
+        print(f'[Match] {colortype}: param={param_match:.2f} (U:{undertone_match:.0f} S:{saturation_match:.0f} C:{contrast_match:.0f}), color={color_score:.2f} (h:{hair_score:.2f}*{hair_weight:.2f} s:{skin_score:.2f}*{skin_weight:.2f} e:{eyes_score:.2f}*{eyes_weight:.2f}), total={total_score:.2f}')
         
         if total_score > best_total_score:
             best_total_score = total_score
