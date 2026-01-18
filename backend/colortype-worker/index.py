@@ -121,7 +121,7 @@ Analyze the colors visible in this image and determine:
      Note: Eyes can vary - Spring can have cool blue eyes with warm skin/hair
    
    🎯 CRITICAL DECISION RULE:
-   Step 1: Look at HAIR - does it have ANY golden/yellow/red tones? → WARM
+   Step 1: Look at HAIR - does it have ANY honey/red tones? → WARM
    Step 2: If hair looks ash/gray/pure black (NO golden tones) → COOL
    Step 3: Confirm with SKIN - golden/peachy base = WARM, pink/rosy base = COOL
    
