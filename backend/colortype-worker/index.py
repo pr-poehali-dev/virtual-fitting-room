@@ -73,7 +73,7 @@ Analyze the colors visible in this image and determine:
 1. UNDERTONE - The invisible base that creates visible color (CRITICAL: analyze carefully!)
    PRIORITY: Hair color (51%) → Skin tone (44%) → Eyes (5%)
    
-   ⚠️ HAIR ANALYSIS: Look at ROOTS first (55% weight), then length (45% weight)
+   ⚠️ HAIR ANALYSIS: Look at ROOTS first (50% weight), then length (50% weight)
    * Focus on hair at SCALP/ROOTS (near forehead, temples) - this shows true undertone
    * Natural root color reveals real warm/cool base (dyed ends may differ)
    
@@ -93,7 +93,6 @@ Analyze the colors visible in this image and determine:
      * Chestnut brown (warm brown with golden tones)
      * Auburn, copper, ginger, red tones
      * Mahogany (warm deep brown)
-     * ANY hair with golden/yellow/red reflection
      
      WARM SKIN (golden based):
      * Yellow beige (not rosy beige)
@@ -106,7 +105,7 @@ Analyze the colors visible in this image and determine:
    - Choose COOL-UNDERTONE if the BASE is BLUE (creates cool versions):
      
      COOL HAIR (ash based):
-     * Platinum blonde (no yellow tones)
+     * Platinum blonde
      * Ash blonde, ash brown
      * Charcoal brown (cool dark brown, no golden tones)
      * Jet black, blue-black (pure black)
