@@ -482,9 +482,9 @@ def count_rule_violations(colortype: str, eyes_lower: str, hair_lower: str, skin
     light_skin = any(keyword in skin_lower for keyword in ['light', 'pale', 'ivory', 'porcelain', 'fair', 'alabaster'])
     cool_eyes = any(keyword in eyes_lower for keyword in ['blue', 'gray-blue', 'grey-blue', 'blue-gray', 'blue-grey'])
     
-    # Rule 1: Brown eyes → exclude all SPRING, all SUMMER, and SOFT WINTER
+    # Rule 1: Brown eyes → exclude GENTLE SPRING, BRIGHT SPRING (NOT VIBRANT SPRING - it can have brown eyes), all SUMMER, and SOFT WINTER
     if any(keyword in eyes_lower for keyword in ['black-brown', 'brown', 'brown-green', 'dark brown', 'deep brown', 'chestnut', 'chocolate', 'amber']):
-        if colortype in ['GENTLE SPRING', 'BRIGHT SPRING', 'VIBRANT SPRING', 'SOFT SUMMER', 'DUSTY SUMMER', 'VIVID SUMMER', 'SOFT WINTER']:
+        if colortype in ['GENTLE SPRING', 'BRIGHT SPRING', 'SOFT SUMMER', 'DUSTY SUMMER', 'VIVID SUMMER', 'SOFT WINTER']:
             violations += 1
     
     # Rule 2: Cool light eyes → exclude VIVID AUTUMN and VIVID WINTER
@@ -576,10 +576,10 @@ def match_colortype(analysis: dict) -> tuple:
     skin_lower = skin.lower()
     excluded_types = set()
     
-    # Rule 1: Brown eyes → exclude all SPRING, all SUMMER, and SOFT WINTER
+    # Rule 1: Brown eyes → exclude GENTLE SPRING, BRIGHT SPRING (NOT VIBRANT SPRING - it can have brown eyes), all SUMMER, and SOFT WINTER
     if any(keyword in eyes_lower for keyword in ['black-brown', 'brown', 'brown-green', 'dark brown', 'deep brown', 'chestnut', 'chocolate', 'amber']):
-        excluded_types.update(['GENTLE SPRING', 'BRIGHT SPRING', 'VIBRANT SPRING', 'SOFT SUMMER', 'DUSTY SUMMER', 'VIVID SUMMER', 'SOFT WINTER'])
-        print(f'[Match] Brown eyes detected → excluding all SPRING, all SUMMER, and SOFT WINTER')
+        excluded_types.update(['GENTLE SPRING', 'BRIGHT SPRING', 'SOFT SUMMER', 'DUSTY SUMMER', 'VIVID SUMMER', 'SOFT WINTER'])
+        print(f'[Match] Brown eyes detected → excluding GENTLE SPRING, BRIGHT SPRING (keeping VIBRANT SPRING), all SUMMER, and SOFT WINTER')
     
     # Rule 2: Cool light eyes → exclude VIVID AUTUMN and VIVID WINTER
     if any(keyword in eyes_lower for keyword in ['blue', 'gray', 'grey', 'gray-green', 'gray-blue', 'grey-green', 'grey-blue', 'blue-gray', 'blue-grey']):
