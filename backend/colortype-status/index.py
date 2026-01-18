@@ -103,32 +103,13 @@ def check_replicate_status(prediction_id: str) -> dict:
 # Ambiguous parameter combinations that require color-based resolution
 # If parameters match one of these keys, compare color scores for all candidates
 AMBIGUOUS_COMBINATIONS = {
-    # COOL-UNDERTONE combinations (sorted: LIGHT → MEDIUM → DEEP, BRIGHT → MUTED, HIGH → LOW)
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'MUTED-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): ['DUSTY SUMMER', 'SOFT SUMMER'],
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): ['BRIGHT WINTER', 'VIVID SUMMER'],
-    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): ['SOFT WINTER', 'VIVID SUMMER'],
-    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): ['BRIGHT WINTER', 'VIVID SUMMER'],
-    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): ['VIVID SUMMER', 'BRIGHT WINTER', 'SOFT WINTER'],
-    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): ['BRIGHT WINTER', 'SOFT WINTER'],
-    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): ['BRIGHT WINTER', 'VIVID SUMMER', 'SOFT WINTER'],
-    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): ['BRIGHT WINTER', 'DUSTY SUMMER'],
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): ['VIVID WINTER', 'BRIGHT WINTER'],
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): ['SOFT WINTER', 'VIVID WINTER'],
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): ['SOFT WINTER', 'VIVID WINTER'],
+    # COOL-UNDERTONE combinations
+    ('COOL-UNDERTONE', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): ['BRIGHT WINTER', 'VIVID SUMMER', 'SOFT WINTER'],
     
-    # WARM-UNDERTONE combinations (sorted: LIGHT → MEDIUM → DEEP, BRIGHT → MUTED, HIGH → LOW)
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): ['BRIGHT SPRING', 'VIBRANT SPRING'],
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): ['BRIGHT SPRING', 'VIBRANT SPRING'],
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): ['BRIGHT SPRING', 'VIBRANT SPRING'],
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): ['FIERY AUTUMN', 'VIBRANT SPRING', 'BRIGHT SPRING'],
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): ['FIERY AUTUMN', 'VIBRANT SPRING', 'GENTLE AUTUMN', 'BRIGHT SPRING'],
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): ['FIERY AUTUMN', 'VIBRANT SPRING', 'GENTLE AUTUMN'],
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): ['FIERY AUTUMN', 'VIVID AUTUMN'],
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): ['FIERY AUTUMN', 'VIVID AUTUMN'],
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-CONTRAST'): ['FIERY AUTUMN', 'VIVID AUTUMN'],
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): ['FIERY AUTUMN', 'VIVID AUTUMN'],
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): ['FIERY AUTUMN', 'VIVID AUTUMN'],
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): ['FIERY AUTUMN', 'VIVID AUTUMN'],
+    # WARM-UNDERTONE combinations
+    ('WARM-UNDERTONE', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): ['FIERY AUTUMN', 'VIBRANT SPRING', 'BRIGHT SPRING'],
+    ('WARM-UNDERTONE', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): ['FIERY AUTUMN', 'BRIGHT SPRING', 'GENTLE AUTUMN'],
+    ('WARM-UNDERTONE', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): ['FIERY AUTUMN', 'GENTLE AUTUMN', 'GENTLE SPRING'],
 }
 
 # Colortype reference data with keywords
@@ -195,103 +176,221 @@ COLORTYPE_REFERENCES = {
     }
 }
 
-# Mapping table: (undertone, lightness, saturation, contrast) -> colortype
+# Lightness combinations allowed for each colortype (hair, skin, eyes)
+COLORTYPE_LIGHTNESS_COMBINATIONS = {
+    'VIBRANT SPRING': [
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+    ],
+    'BRIGHT SPRING': [
+        ('LIGHT-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('LIGHT-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+    ],
+    'GENTLE SPRING': [
+        ('LIGHT-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('LIGHT-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('LIGHT-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('LIGHT-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+    ],
+    'SOFT SUMMER': [
+        ('LIGHT-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('LIGHT-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('LIGHT-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('LIGHT-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+    ],
+    'VIVID SUMMER': [
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+    ],
+    'DUSTY SUMMER': [
+        ('LIGHT-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('LIGHT-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('LIGHT-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('LIGHT-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+    ],
+    'GENTLE AUTUMN': [
+        ('LIGHT-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('LIGHT-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('LIGHT-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('LIGHT-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+    ],
+    'FIERY AUTUMN': [
+        ('LIGHT-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('LIGHT-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'DEEP-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'DEEP-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'DEEP-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'DEEP-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+    ],
+    'VIVID AUTUMN': [
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'DEEP-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'DEEP-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'DEEP-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'DEEP-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+    ],
+    'VIVID WINTER': [
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'DEEP-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'DEEP-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'DEEP-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'DEEP-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+    ],
+    'SOFT WINTER': [
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+    ],
+    'BRIGHT WINTER': [
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('MEDIUM-HAIR-COLORS', 'DEEP-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'DEEP-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'MEDIUM-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
+        ('DEEP-HAIR-COLORS', 'DEEP-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
+    ],
+}
+
+# Mapping table: (undertone, saturation, contrast) -> colortype
 COLORTYPE_MAP = {
-    # ============ SOFT SUMMER (COOL, LIGHT, BRIGHT/MUTED-NEUTRAL, LOW) ============
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'SOFT SUMMER',
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-CONTRAST'): 'SOFT SUMMER',
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'SOFT SUMMER',
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'SOFT SUMMER',
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'SOFT SUMMER',
+    # ============ SOFT SUMMER ============
+    ('COOL-UNDERTONE', 'BRIGHT-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'SOFT SUMMER',
+    ('COOL-UNDERTONE', 'BRIGHT-SATURATION-COLORS', 'LOW-CONTRAST'): 'SOFT SUMMER',
+    ('COOL-UNDERTONE', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'SOFT SUMMER',
+    ('COOL-UNDERTONE', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'SOFT SUMMER',
+    ('COOL-UNDERTONE', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'SOFT SUMMER',
 
-    # ============ VIVID SUMMER (COOL, DEEP/MEDIUM, BRIGHT/MUTED, LOW) ============
-    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'VIVID SUMMER',
-    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIVID SUMMER',
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'MUTED-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'VIVID SUMMER',
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'MUTED-SATURATION-COLORS', 'LOW-CONTRAST'): 'VIVID SUMMER',
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'VIVID SUMMER',
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'VIVID SUMMER',
-    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'VIVID SUMMER',
+    # ============ VIVID SUMMER ============
+    ('COOL-UNDERTONE', 'MUTED-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIVID SUMMER',
+    ('COOL-UNDERTONE', 'MUTED-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'VIVID SUMMER',
+    ('COOL-UNDERTONE', 'MUTED-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'VIVID SUMMER',
+    ('COOL-UNDERTONE', 'MUTED-SATURATION-COLORS', 'LOW-CONTRAST'): 'VIVID SUMMER',
 
-    # ============ DUSTY SUMMER (COOL, LIGHT/MEDIUM, MUTED, LOW) ============
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'MUTED-SATURATION-COLORS', 'LOW-CONTRAST'): 'DUSTY SUMMER',
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'DUSTY SUMMER',
-    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'DUSTY SUMMER',
+    # ============ DUSTY SUMMER ============
+    ('COOL-UNDERTONE', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'DUSTY SUMMER',
 
-    # ============ GENTLE AUTUMN (WARM, LIGHT/MEDIUM, MUTED, LOW) ============
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'MUTED-SATURATION-COLORS', 'LOW-CONTRAST'): 'GENTLE AUTUMN',
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'MUTED-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'GENTLE AUTUMN',
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'GENTLE AUTUMN',
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-SATURATION-COLORS', 'LOW-CONTRAST'): 'GENTLE AUTUMN',
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'GENTLE AUTUMN',
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'GENTLE AUTUMN',
+    # ============ GENTLE AUTUMN ============
+    ('WARM-UNDERTONE', 'MUTED-SATURATION-COLORS', 'LOW-CONTRAST'): 'GENTLE AUTUMN',
+    ('WARM-UNDERTONE', 'MUTED-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'GENTLE AUTUMN',
+    ('WARM-UNDERTONE', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'GENTLE AUTUMN',
+    ('WARM-UNDERTONE', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'GENTLE AUTUMN',
 
-    # ============ FIERY AUTUMN (WARM, MEDIUM, BRIGHT, HIGH/LOW) ============
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'FIERY AUTUMN',
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'FIERY AUTUMN',
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'FIERY AUTUMN',
+    # ============ FIERY AUTUMN ============
+    ('WARM-UNDERTONE', 'BRIGHT-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'FIERY AUTUMN',
+    ('WARM-UNDERTONE', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'FIERY AUTUMN',
 
-    # ============ VIVID AUTUMN (WARM, DEEP, MUTED, HIGH/LOW) ============
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'MUTED-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIVID AUTUMN',
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'MUTED-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'VIVID AUTUMN',
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'MUTED-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'VIVID AUTUMN',
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'MUTED-SATURATION-COLORS', 'LOW-CONTRAST'): 'VIVID AUTUMN',
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIVID AUTUMN',
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'VIVID AUTUMN',
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'VIVID AUTUMN',
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'VIVID AUTUMN',
+    # ============ VIVID AUTUMN ============
+    ('WARM-UNDERTONE', 'MUTED-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIVID AUTUMN',
+    ('WARM-UNDERTONE', 'MUTED-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'VIVID AUTUMN',
+    ('WARM-UNDERTONE', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIVID AUTUMN',
+    ('WARM-UNDERTONE', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'VIVID AUTUMN',
 
-    # ============ VIVID WINTER (COOL, DEEP, BRIGHT, LOW) ============
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'VIVID WINTER',
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-CONTRAST'): 'VIVID WINTER',
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'VIVID WINTER',
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'VIVID WINTER',
+    # ============ VIVID WINTER ============
+    ('COOL-UNDERTONE', 'BRIGHT-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'VIVID WINTER',
+    ('COOL-UNDERTONE', 'BRIGHT-SATURATION-COLORS', 'LOW-CONTRAST'): 'VIVID WINTER',
+    ('COOL-UNDERTONE', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'VIVID WINTER',
+    ('COOL-UNDERTONE', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'VIVID WINTER',
 
-    # ============ SOFT WINTER (COOL, MEDIUM/DEEP, BRIGHT/MUTED, HIGH) ============
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'MUTED-SATURATION-COLORS', 'HIGH-CONTRAST'): 'SOFT WINTER',
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'MUTED-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'SOFT WINTER',
+    # ============ SOFT WINTER ============
+    ('COOL-UNDERTONE', 'MUTED-SATURATION-COLORS', 'HIGH-CONTRAST'): 'SOFT WINTER',
+    ('COOL-UNDERTONE', 'MUTED-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'SOFT WINTER',
 
-    # ============ BRIGHT WINTER (COOL, LIGHT/MEDIUM/DEEP, BRIGHT, HIGH/LOW) ============
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-SATURATION-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'BRIGHT WINTER',
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'BRIGHT WINTER',
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'MUTED-SATURATION-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'MUTED-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'BRIGHT WINTER',
-    ('COOL-UNDERTONE', 'LIGHT-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
-    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-SATURATION-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
-    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'BRIGHT WINTER',
-    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-CONTRAST'): 'BRIGHT WINTER',
-    ('COOL-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'BRIGHT WINTER',
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-SATURATION-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'BRIGHT WINTER',
-    ('COOL-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
+    # ============ BRIGHT WINTER ============
+    ('COOL-UNDERTONE', 'BRIGHT-SATURATION-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
+    ('COOL-UNDERTONE', 'BRIGHT-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'BRIGHT WINTER',
+    ('COOL-UNDERTONE', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
+    ('COOL-UNDERTONE', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'BRIGHT WINTER',
+    ('COOL-UNDERTONE', 'MUTED-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'BRIGHT WINTER',
+    ('COOL-UNDERTONE', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
 
-    # ============ VIBRANT SPRING (WARM, LIGHT/MEDIUM/DEEP, BRIGHT/MUTED, HIGH) ============
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIBRANT SPRING',
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'MUTED-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIBRANT SPRING',
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'MUTED-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'VIBRANT SPRING',
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIBRANT SPRING',
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'VIBRANT SPRING',
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIBRANT SPRING',
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'VIBRANT SPRING',
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIBRANT SPRING',
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIBRANT SPRING',
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIBRANT SPRING',
-    ('WARM-UNDERTONE', 'DEEP-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIBRANT SPRING',
+    # ============ VIBRANT SPRING ============
+    ('WARM-UNDERTONE', 'BRIGHT-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIBRANT SPRING',
+    ('WARM-UNDERTONE', 'MUTED-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIBRANT SPRING',
+    ('WARM-UNDERTONE', 'MUTED-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'VIBRANT SPRING',
+    ('WARM-UNDERTONE', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIBRANT SPRING',
+    ('WARM-UNDERTONE', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'VIBRANT SPRING',
+    ('WARM-UNDERTONE', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'VIBRANT SPRING',
 
-    # ============ BRIGHT SPRING (WARM, LIGHT/MEDIUM, BRIGHT, LOW) ============
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'BRIGHT SPRING',
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-CONTRAST'): 'BRIGHT SPRING',
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'BRIGHT SPRING',
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'BRIGHT SPRING',
-    ('WARM-UNDERTONE', 'MEDIUM-LIGHTNESS-COLORS', 'MUTED-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'BRIGHT SPRING',
+    # ============ BRIGHT SPRING ============
+    ('WARM-UNDERTONE', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'BRIGHT SPRING',
+    ('WARM-UNDERTONE', 'BRIGHT-SATURATION-COLORS', 'LOW-CONTRAST'): 'BRIGHT SPRING',
+    ('WARM-UNDERTONE', 'BRIGHT-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'BRIGHT SPRING',
+    ('WARM-UNDERTONE', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'BRIGHT SPRING',
+    ('WARM-UNDERTONE', 'MUTED-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'BRIGHT SPRING',
 
-    # ============ GENTLE SPRING (WARM, LIGHT, BRIGHT/MUTED-NEUTRAL, LOW) ============
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'GENTLE SPRING',
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-SATURATION-COLORS', 'LOW-CONTRAST'): 'GENTLE SPRING',
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'GENTLE SPRING',
-    ('WARM-UNDERTONE', 'LIGHT-COLORS', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'GENTLE SPRING',
+    # ============ GENTLE SPRING ============
+    ('WARM-UNDERTONE', 'BRIGHT-SATURATION-COLORS', 'LOW-MEDIUM-CONTRAST'): 'GENTLE SPRING',
+    ('WARM-UNDERTONE', 'BRIGHT-SATURATION-COLORS', 'LOW-CONTRAST'): 'GENTLE SPRING',
+    ('WARM-UNDERTONE', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'GENTLE SPRING',
+    ('WARM-UNDERTONE', 'MUTED-NEUTRAL-SATURATION-COLORS', 'LOW-CONTRAST'): 'GENTLE SPRING',
 
 }
 
@@ -360,23 +459,15 @@ def calculate_color_match_score(description: str, keywords: list) -> float:
     
     return matches / len(keywords)
 
-def get_all_colortype_params(colortype: str) -> list:
-    '''Get ALL parameter combinations for a colortype from COLORTYPE_MAP
+def get_colortype_params(colortype: str) -> list:
+    '''Get parameter combinations (undertone, saturation, contrast) for a colortype
     
-    Returns: List of dicts with all possible parameter combinations for this colortype
-    (Updated: uses hair_lightness, skin_lightness, eyes_lightness)
+    Returns: List of tuples with parameter combinations from COLORTYPE_MAP
     '''
     params_list = []
-    for (undertone, hair_lightness, skin_lightness, eyes_lightness, saturation, contrast), ct in COLORTYPE_MAP.items():
+    for (undertone, saturation, contrast), ct in COLORTYPE_MAP.items():
         if ct == colortype:
-            params_list.append({
-                'undertone': undertone,
-                'hair_lightness': hair_lightness,
-                'skin_lightness': skin_lightness,
-                'eyes_lightness': eyes_lightness,
-                'saturation': saturation,
-                'contrast': contrast
-            })
+            params_list.append((undertone, saturation, contrast))
     return params_list
 
 def calculate_param_match_score(analysis_value: str, expected_value: str) -> float:
@@ -444,26 +535,24 @@ def count_rule_violations(colortype: str, eyes_lower: str, hair_lower: str, skin
     return violations
 
 def match_colortype(analysis: dict) -> tuple:
-    '''Match analysis to best colortype using weighted 9-parameter scoring
+    '''Match analysis to best colortype using 3-stage filtering
     
-    NEW SCORING (updated):
-    Parameters (75% weight):
+    Stage 1: Filter by lightness combinations (hair, skin, eyes)
+    Stage 2: Check (undertone, saturation, contrast) parameters
+    Stage 3: Final selection by color keyword matching
+    
+    NEW SCORING:
+    Parameters (weight x2):
     - Undertone: 100%
-    - HairLightness: 35%
-    - SkinLightness: 34%
-    - EyesLightness: 31%
     - Saturation: 50%
     - Contrast: 50%
     
-    Colors (25% weight):
+    Colors (weight x1):
     - Hair color: 32%
     - Skin color: 32%
     - Eye color: 36%
     
-    Total score = (param_score * 3.0) + (color_score * 1.0)  [was 2:1, now 3:1]
-    
-    Special handling for ambiguous combinations:
-    - If parameters match AMBIGUOUS_COMBINATIONS, compare color scores only
+    Total score = (param_score * 2.0) + (color_score * 1.0)
     
     Returns: (colortype, explanation)
     '''
@@ -477,7 +566,8 @@ def match_colortype(analysis: dict) -> tuple:
     eyes = analysis.get('eye_color', '')
     skin = analysis.get('skin_color', '')
     
-    print(f'[Match] Analyzing: {undertone}/{hair_lightness}/{skin_lightness}/{eyes_lightness}/{saturation}/{contrast}')
+    print(f'[Match] Analyzing: {undertone}/{saturation}/{contrast}')
+    print(f'[Match] Lightness: hair={hair_lightness}, skin={skin_lightness}, eyes={eyes_lightness}')
     print(f'[Match] Colors: hair="{hair}", skin="{skin}", eyes="{eyes}"')
     
     # Determine exclusions based on eyes, hair, and skin
@@ -541,96 +631,94 @@ def match_colortype(analysis: dict) -> tuple:
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
     
-    # Check if this is an ambiguous combination
-    param_key = (undertone, hair_lightness, skin_lightness, eyes_lightness, saturation, contrast)
+    # ============ STAGE 1: Filter by lightness combinations ============
+    lightness_key = (hair_lightness, skin_lightness, eyes_lightness)
+    stage1_candidates = []
+    
+    for colortype, allowed_combinations in COLORTYPE_LIGHTNESS_COMBINATIONS.items():
+        if lightness_key in allowed_combinations:
+            stage1_candidates.append(colortype)
+    
+    print(f'[Match] STAGE 1: Lightness filter ({lightness_key}) → {len(stage1_candidates)} candidates: {stage1_candidates}')
+    
+    if not stage1_candidates:
+        print(f'[Match] WARNING: No colortypes match lightness combination! Falling back to all colortypes')
+        stage1_candidates = list(COLORTYPE_REFERENCES.keys())
+    
+    # Remove excluded types
+    stage1_candidates = [ct for ct in stage1_candidates if ct not in excluded_types]
+    print(f'[Match] After exclusion rules: {len(stage1_candidates)} candidates: {stage1_candidates}')
+    
+    if not stage1_candidates:
+        print(f'[Match] WARNING: All candidates excluded! Using fallback')
+        stage1_candidates = list(COLORTYPE_REFERENCES.keys())
+    
+    # ============ STAGE 2: Check (undertone, saturation, contrast) ============
+    param_key = (undertone, saturation, contrast)
     ambiguous_candidates = AMBIGUOUS_COMBINATIONS.get(param_key)
     
     if ambiguous_candidates:
-        print(f'[Match] AMBIGUOUS combination detected! Candidates: {ambiguous_candidates}')
-        print(f'[Match] Will decide based on color matching (hair/skin/eyes)')
+        # Intersect with stage1 candidates
+        stage2_candidates = [ct for ct in ambiguous_candidates if ct in stage1_candidates]
+        print(f'[Match] STAGE 2: AMBIGUOUS params ({param_key}) → {ambiguous_candidates}')
+        print(f'[Match] After stage1 filter: {stage2_candidates}')
         
-        # Filter out excluded types
-        valid_candidates = [ct for ct in ambiguous_candidates if ct not in excluded_types]
-        if not valid_candidates:
-            print(f'[Match] WARNING: All ambiguous candidates were excluded! Falling back to standard matching')
+        if not stage2_candidates:
+            print(f'[Match] No intersection with stage1! Using stage1 candidates')
+            stage2_candidates = stage1_candidates
+    else:
+        # Check COLORTYPE_MAP for matching colortypes
+        matching_colortypes = []
+        for (u, s, c), ct in COLORTYPE_MAP.items():
+            if (u, s, c) == param_key and ct in stage1_candidates:
+                matching_colortypes.append(ct)
+        
+        if matching_colortypes:
+            stage2_candidates = matching_colortypes
+            print(f'[Match] STAGE 2: Exact params match → {stage2_candidates}')
         else:
-            best_colortype = None
-            best_color_score = 0.0
-            
-            for colortype in valid_candidates:
-                ref = COLORTYPE_REFERENCES[colortype]
-                hair_score = calculate_color_match_score(hair, ref['hair'])
-                skin_score = calculate_color_match_score(skin, ref['skin'])
-                eyes_score = calculate_color_match_score(eyes, ref['eyes'])
-                
-                color_score = (hair_score * 0.32) + (skin_score * 0.32) + (eyes_score * 0.36)
-                
-                print(f'[Match] {colortype}: color={color_score:.2f} (h:{hair_score:.2f} s:{skin_score:.2f} e:{eyes_score:.2f})')
-                
-                if color_score > best_color_score:
-                    best_color_score = color_score
-                    best_colortype = colortype
-            
-            explanation = format_result(best_colortype, hair, skin, eyes, undertone, saturation, contrast, 'standard')
-            print(f'[Match] FINAL (ambiguous resolved): {best_colortype} with color_score {best_color_score:.2f}')
-            return best_colortype, explanation
+            # No exact match - score all stage1 candidates by parameter closeness
+            print(f'[Match] STAGE 2: No exact match. Scoring all stage1 candidates')
+            stage2_candidates = stage1_candidates
     
-    # Standard matching for non-ambiguous cases
+    # ============ STAGE 3: Final selection by color keyword matching ============
+    print(f'[Match] STAGE 3: Scoring {len(stage2_candidates)} candidates by color matching + params')
+    
     best_colortype = None
     best_total_score = 0.0
     best_param_score = 0.0
     best_color_score = 0.0
     
-    # Check ALL 12 colortypes (excluding eye-based exclusions)
-    for colortype in COLORTYPE_REFERENCES.keys():
-        # Skip excluded types
-        if colortype in excluded_types:
-            print(f'[Match] Skipping {colortype} (excluded by color rule)')
-            continue
-        # Get ALL parameter combinations for this colortype
-        all_params = get_all_colortype_params(colortype)
+    for colortype in stage2_candidates:
+        # Check if this colortype's params match exactly
+        params_list = get_colortype_params(colortype)
         
-        # Find BEST matching parameter combination for this colortype
-        best_param_score = 0.0
-        best_match_info = None
+        # Calculate parameter match score (undertone, saturation, contrast)
+        param_match = 0.0
+        undertone_match = 0.0
+        saturation_match = 0.0
+        contrast_match = 0.0
         
-        if all_params:
-            for expected_params in all_params:
-                # Calculate parameter match score with NEW WEIGHTS
-                undertone_match = calculate_param_match_score(undertone, expected_params['undertone'])
-                hair_lightness_match = calculate_param_match_score(hair_lightness, expected_params.get('hair_lightness', 'MEDIUM-HAIR-COLORS'))
-                skin_lightness_match = calculate_param_match_score(skin_lightness, expected_params.get('skin_lightness', 'MEDIUM-SKIN-COLORS'))
-                eyes_lightness_match = calculate_param_match_score(eyes_lightness, expected_params.get('eyes_lightness', 'MEDIUM-EYES-COLORS'))
-                saturation_match = calculate_param_match_score(saturation, expected_params['saturation'])
-                contrast_match = calculate_param_match_score(contrast, expected_params['contrast'])
+        if param_key in params_list:
+            # Exact match
+            undertone_match = 1.0
+            saturation_match = 1.0
+            contrast_match = 1.0
+            param_match = 1.0
+        else:
+            # Find closest match
+            for (u, s, c) in params_list:
+                u_match = 1.0 if u == undertone else 0.0
+                s_match = 1.0 if s == saturation else 0.0
+                c_match = 1.0 if c == contrast else 0.0
                 
-                param_score_candidate = (
-                    (undertone_match * 1.0) +
-                    (hair_lightness_match * 0.35) +
-                    (skin_lightness_match * 0.34) +
-                    (eyes_lightness_match * 0.31) +
-                    (saturation_match * 0.5) +
-                    (contrast_match * 0.5)
-                )
+                candidate_score = ((u_match * 1.0) + (s_match * 0.5) + (c_match * 0.5)) / 2.0
                 
-                if param_score_candidate > best_param_score:
-                    best_param_score = param_score_candidate
-                    best_match_info = {
-                        'U': undertone_match,
-                        'HL': hair_lightness_match,
-                        'SL': skin_lightness_match,
-                        'EL': eyes_lightness_match,
-                        'S': saturation_match,
-                        'C': contrast_match
-                    }
-        
-        param_score = best_param_score
-        undertone_match = best_match_info['U'] if best_match_info else 0
-        hair_lightness_match = best_match_info['HL'] if best_match_info else 0
-        skin_lightness_match = best_match_info['SL'] if best_match_info else 0
-        eyes_lightness_match = best_match_info['EL'] if best_match_info else 0
-        saturation_match = best_match_info['S'] if best_match_info else 0
-        contrast_match = best_match_info['C'] if best_match_info else 0
+                if candidate_score > param_match:
+                    param_match = candidate_score
+                    undertone_match = u_match
+                    saturation_match = s_match
+                    contrast_match = c_match
         
         # Calculate color match score (hair 32%, skin 32%, eyes 36%)
         ref = COLORTYPE_REFERENCES[colortype]
@@ -640,141 +728,40 @@ def match_colortype(analysis: dict) -> tuple:
         
         color_score = (hair_score * 0.32) + (skin_score * 0.32) + (eyes_score * 0.36)
         
-        # Total score: 3x parameters + 1x colors (was 2:1, now 3:1)
-        total_score = (param_score * 3.0) + (color_score * 1.0)
+        # Total score: 2x parameters + 1x colors
+        total_score = (param_match * 2.0) + (color_score * 1.0)
         
-        print(f'[Match] {colortype}: param={param_score:.2f} (U:{undertone_match:.0f} HL:{hair_lightness_match:.0f} SL:{skin_lightness_match:.0f} EL:{eyes_lightness_match:.0f} S:{saturation_match:.0f} C:{contrast_match:.0f}), color={color_score:.2f} (h:{hair_score:.2f} s:{skin_score:.2f} e:{eyes_score:.2f}), total={total_score:.2f}')
+        print(f'[Match] {colortype}: param={param_match:.2f} (U:{undertone_match:.0f} S:{saturation_match:.0f} C:{contrast_match:.0f}), color={color_score:.2f} (h:{hair_score:.2f} s:{skin_score:.2f} e:{eyes_score:.2f}), total={total_score:.2f}')
         
         if total_score > best_total_score:
             best_total_score = total_score
             best_colortype = colortype
-            best_param_score = param_score
+            best_param_score = param_match
             best_color_score = color_score
     
-    # FALLBACK 1: If no colortype found (all excluded), try inverted undertone
+    # FALLBACK: If no colortype found, use color-only scoring
     if best_colortype is None:
-        print(f'[Match] FALLBACK 1: All colortypes excluded! Inverting undertone...')
-        inverted_undertone = 'COOL-UNDERTONE' if undertone == 'WARM-UNDERTONE' else 'WARM-UNDERTONE'
-        print(f'[Match] Original undertone: {undertone} → Inverted: {inverted_undertone}')
+        print(f'[Match] FALLBACK: No candidates! Scoring all colortypes by color only...')
         
         for colortype in COLORTYPE_REFERENCES.keys():
-            if colortype in excluded_types:
-                continue
+            ref = COLORTYPE_REFERENCES[colortype]
+            hair_score = calculate_color_match_score(hair, ref['hair'])
+            skin_score = calculate_color_match_score(skin, ref['skin'])
+            eyes_score = calculate_color_match_score(eyes, ref['eyes'])
             
-            all_params = get_all_colortype_params(colortype)
-            best_param_score_inv = 0.0
-            best_match_info_inv = None
+            color_score = (hair_score * 0.32) + (skin_score * 0.32) + (eyes_score * 0.36)
             
-            if all_params:
-                for expected_params in all_params:
-                    if expected_params['undertone'] != inverted_undertone:
-                        continue
-                    
-                    undertone_match = 1.0
-                    hair_lightness_match = calculate_param_match_score(hair_lightness, expected_params.get('hair_lightness', 'MEDIUM-HAIR-COLORS'))
-                    skin_lightness_match = calculate_param_match_score(skin_lightness, expected_params.get('skin_lightness', 'MEDIUM-SKIN-COLORS'))
-                    eyes_lightness_match = calculate_param_match_score(eyes_lightness, expected_params.get('eyes_lightness', 'MEDIUM-EYES-COLORS'))
-                    saturation_match = calculate_param_match_score(saturation, expected_params['saturation'])
-                    contrast_match = calculate_param_match_score(contrast, expected_params['contrast'])
-                    
-                    param_score_candidate = (
-                        (undertone_match * 1.0) +
-                        (hair_lightness_match * 0.35) +
-                        (skin_lightness_match * 0.34) +
-                        (eyes_lightness_match * 0.31) +
-                        (saturation_match * 0.5) +
-                        (contrast_match * 0.5)
-                    )
-                    
-                    if param_score_candidate > best_param_score_inv:
-                        best_param_score_inv = param_score_candidate
-                        best_match_info_inv = {
-                            'U': undertone_match,
-                            'HL': hair_lightness_match,
-                            'SL': skin_lightness_match,
-                            'EL': eyes_lightness_match,
-                            'S': saturation_match,
-                            'C': contrast_match
-                        }
+            print(f'[Match] {colortype}: color={color_score:.2f} (h:{hair_score:.2f} s:{skin_score:.2f} e:{eyes_score:.2f})')
             
-            if best_match_info_inv:
-                param_score = best_param_score_inv
-                
-                ref = COLORTYPE_REFERENCES[colortype]
-                hair_score = calculate_color_match_score(hair, ref['hair'])
-                skin_score = calculate_color_match_score(skin, ref['skin'])
-                eyes_score = calculate_color_match_score(eyes, ref['eyes'])
-                
-                color_score = (hair_score * 0.32) + (skin_score * 0.32) + (eyes_score * 0.36)
-                total_score = (param_score * 3.0) + (color_score * 1.0)
-                
-                print(f'[Match] {colortype}: param={param_score:.2f}, color={color_score:.2f}, total={total_score:.2f}')
-                
-                if total_score > best_total_score:
-                    best_total_score = total_score
-                    best_colortype = colortype
-                    best_param_score = param_score
-                    best_color_score = color_score
+            if color_score > best_color_score:
+                best_color_score = color_score
+                best_colortype = colortype
+                best_total_score = color_score
         
         if best_colortype:
-            explanation = format_result(best_colortype, hair, skin, eyes, undertone, saturation, contrast, 'fallback1')
-            print(f'[Match] FALLBACK 1 SUCCESS: {best_colortype} with score {best_total_score:.2f}')
+            explanation = format_result(best_colortype, hair, skin, eyes, undertone, saturation, contrast, 'fallback2')
+            print(f'[Match] FALLBACK SUCCESS: {best_colortype} with color_score {best_color_score:.2f}')
             return best_colortype, explanation
-    
-    # FALLBACK 2: If still no match, choose colortype with fewest rule violations
-    if best_colortype is None:
-        print(f'[Match] FALLBACK 2: No match even with inverted undertone! Choosing least-violating colortype...')
-        min_violations = 999
-        fallback_colortype = None
-        fallback_score = 0.0
-        
-        for colortype in COLORTYPE_REFERENCES.keys():
-            violations = count_rule_violations(colortype, eyes_lower, hair_lower, skin_lower)
-            
-            all_params = get_all_colortype_params(colortype)
-            max_score = 0.0
-            
-            if all_params:
-                for expected_params in all_params:
-                    undertone_match = calculate_param_match_score(undertone, expected_params['undertone'])
-                    hair_lightness_match = calculate_param_match_score(hair_lightness, expected_params.get('hair_lightness', 'MEDIUM-HAIR-COLORS'))
-                    skin_lightness_match = calculate_param_match_score(skin_lightness, expected_params.get('skin_lightness', 'MEDIUM-SKIN-COLORS'))
-                    eyes_lightness_match = calculate_param_match_score(eyes_lightness, expected_params.get('eyes_lightness', 'MEDIUM-EYES-COLORS'))
-                    saturation_match = calculate_param_match_score(saturation, expected_params['saturation'])
-                    contrast_match = calculate_param_match_score(contrast, expected_params['contrast'])
-                    
-                    param_score = (
-                        (undertone_match * 1.0) +
-                        (hair_lightness_match * 0.35) +
-                        (skin_lightness_match * 0.34) +
-                        (eyes_lightness_match * 0.31) +
-                        (saturation_match * 0.5) +
-                        (contrast_match * 0.5)
-                    )
-                    
-                    ref = COLORTYPE_REFERENCES[colortype]
-                    hair_score = calculate_color_match_score(hair, ref['hair'])
-                    skin_score = calculate_color_match_score(skin, ref['skin'])
-                    eyes_score = calculate_color_match_score(eyes, ref['eyes'])
-                    
-                    color_score = (hair_score * 0.32) + (skin_score * 0.32) + (eyes_score * 0.36)
-                    total_score = (param_score * 3.0) + (color_score * 1.0)
-                    
-                    if total_score > max_score:
-                        max_score = total_score
-            
-            print(f'[Match] {colortype}: violations={violations}, score={max_score:.2f}')
-            
-            if violations < min_violations or (violations == min_violations and max_score > fallback_score):
-                min_violations = violations
-                fallback_colortype = colortype
-                fallback_score = max_score
-        
-        best_colortype = fallback_colortype
-        best_total_score = fallback_score
-        print(f'[Match] FALLBACK 2 SELECTED: {best_colortype} with {min_violations} violations, score {best_total_score:.2f}')
-        explanation = format_result(best_colortype, hair, skin, eyes, undertone, saturation, contrast, 'fallback2')
-        return best_colortype, explanation
     
     explanation = format_result(best_colortype, hair, skin, eyes, undertone, saturation, contrast, 'standard')
     
