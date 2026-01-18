@@ -87,11 +87,31 @@ RIGHT SIDE - Color characteristics:
 - Specific color names for hair, skin, and eyes
 - Russian translation of the color type name (ignore this - use English name for JSON)
 
+⚠️ CRITICAL NAME MAPPING: The English names you SEE on scheme images are just TITLES on the schemes. 
+We use DIFFERENT official names for each color type in our system. You MUST use OUR names in JSON output!
+
+WHEN YOU READ this name on scheme → RETURN this name in JSON `suggested_colortype`:
+- "Bright Spring" on scheme → return "VIBRANT SPRING"
+- "Warm Spring" on scheme → return "BRIGHT SPRING"  
+- "Light Spring" on scheme → return "GENTLE SPRING"
+- "Light Summer" on scheme → return "SOFT SUMMER"
+- "Cool Summer" on scheme → return "VIVID SUMMER"
+- "Soft Summer" on scheme → return "DUSTY SUMMER"
+- "Soft Autumn" on scheme → return "GENTLE AUTUMN"
+- "Warm Autumn" on scheme → return "FIERY AUTUMN"
+- "Dark Autumn" on scheme → return "VIVID AUTUMN"
+- "Dark Winter" on scheme → return "VIVID WINTER"
+- "Cool Winter" on scheme → return "SOFT WINTER"
+- "Bright Winter" on scheme → return "BRIGHT WINTER" (same name)
+
+Example: If you see "Bright Spring" text on the scheme, you MUST write "VIBRANT SPRING" in JSON.
+The scheme titles are just labels - our official color type names are different.
+
 TASK FOR STEP 1:
 1. Look at the ANALYZED PHOTO carefully
 2. Compare it with ALL 12 reference schemes
 3. Read the ENGLISH text labels on each scheme to understand:
-   - Which color type it represents
+   - Which color type it represents (but remember to convert the name using the mapping above!)
    - What characteristics define this type (warm/cool, light/deep, muted/bright)
    - What hair/skin/eye colors are typical for this type
 4. Determine which scheme's COLOR CHARACTERISTICS (right side) best match the analyzed photo
@@ -99,7 +119,7 @@ TASK FOR STEP 1:
 6. Pay attention to the contrast level shown at the bottom right of each scheme
 7. The analyzed person does NOT need to look identical to the example person - focus on matching the COLOR CHARACTERISTICS (right side)
 8. Select the MOST LIKELY color type based on visual comparison
-9. Remember the ENGLISH name from the scheme (you'll use it in JSON output)
+9. Convert the scheme title to OUR official name using the mapping table above
 
 Remember your choice - you will use it as `suggested_colortype` in the final JSON.
 
