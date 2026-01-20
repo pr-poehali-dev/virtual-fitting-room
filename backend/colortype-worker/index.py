@@ -10,10 +10,13 @@ import uuid
 import base64
 
 
-# Updated with 5 exclusion rules for accurate color type matching
-# Rules: brown eyes exclude SPRING, cool eyes exclude VIVID AUTUMN/WINTER,
-# chestnut hair excludes BRIGHT SPRING, light skin + cool eyes excludes GENTLE AUTUMN,
-# blonde hair excludes FIERY/VIVID AUTUMN
+# Updated with 6 exclusion rules for accurate color type matching
+# Rule 1: Brown eyes → exclude GENTLE SPRING, BRIGHT SPRING, all SUMMER, SOFT WINTER
+# Rule 2: Cool light eyes → exclude VIVID AUTUMN, VIVID WINTER
+# Rule 3: Chestnut brown hair → exclude BRIGHT SPRING
+# Rule 4: Light skin + cool eyes → exclude GENTLE AUTUMN
+# Rule 5: Blonde hair → exclude FIERY AUTUMN, VIVID AUTUMN
+# Rule 6: Copper hair (NOT light copper) → exclude GENTLE SPRING
 # VIBRANT SPRING now includes warm light brown/golden brown hair with bright eyes
 # Reverted composite image approach - using single photo analysis
 
@@ -977,32 +980,7 @@ def count_rule_violations(colortype: str, eyes_lower: str, hair_lower: str, skin
         if colortype in ['FIERY AUTUMN', 'VIVID AUTUMN']:
             violations += 1
     
-    # Rule 6: Light skin → exclude VIVID AUTUMN, VIVID WINTER, and VIVID SUMMER
-    if light_skin:
-        if colortype in ['VIVID AUTUMN', 'VIVID WINTER', 'VIVID SUMMER']:
-            violations += 1
-    
-    # Rule 7: Blond hair → exclude SOFT WINTER and VIBRANT SPRING
-    if any(keyword in hair_lower for keyword in ['blonde', 'blond', 'light blond', 'light blonde']):
-        if colortype in ['SOFT WINTER', 'VIBRANT SPRING']:
-            violations += 1
-    
-    # Rule 8: Light brown hair → exclude FIERY AUTUMN, VIVID AUTUMN, SOFT WINTER, BRIGHT WINTER, VIVID WINTER
-    if any(keyword in hair_lower for keyword in ['light brown']):
-        if colortype in ['FIERY AUTUMN', 'VIVID AUTUMN', 'SOFT WINTER', 'BRIGHT WINTER', 'VIVID WINTER']:
-            violations += 1
-    
-    # Rule 9: Beige skin → exclude SOFT WINTER
-    if any(keyword in skin_lower for keyword in ['beige']):
-        if colortype == 'SOFT WINTER':
-            violations += 1
-    
-    # Rule 10: Medium brown hair → exclude BRIGHT WINTER
-    if any(keyword in hair_lower for keyword in ['medium brown']):
-        if colortype == 'BRIGHT WINTER':
-            violations += 1
-    
-    # Rule 11: Copper hair (medium-dark warm reddish) → exclude GENTLE SPRING
+    # Rule 6: Copper hair (medium-dark warm reddish) → exclude GENTLE SPRING
     # Exception: LIGHT COPPER (pale golden-reddish blonde) CAN be gentle spring
     if any(keyword in hair_lower for keyword in ['copper', 'auburn', 'red']):
         # Check if it's LIGHT copper (should contain "light" or "pale" or "golden blonde")
