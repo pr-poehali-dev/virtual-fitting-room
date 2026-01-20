@@ -83,7 +83,7 @@ COLORTYPE_REFERENCES_DATA = {
     }
   },
   "DEEP AUTUMN": {
-    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/cover-deep-autumn.webp",
+    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/cover-dark-autumn-1.webp",
     "description": "Глубокая осень: тёплый подтон, глубокие тёплые цвета, карие/тёмно-зелёные глаза, тёмные волосы, высокий контраст.",
     "characteristics": {
       "undertone": "WARM",
@@ -93,7 +93,7 @@ COLORTYPE_REFERENCES_DATA = {
     }
   },
   "DEEP WINTER": {
-    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/cover-deep-winter.webp",
+    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/cover-dark-winter.webp",
     "description": "Глубокая зима: холодный подтон, глубокие холодные цвета, тёмные глаза, тёмные волосы, высокий контраст.",
     "characteristics": {
       "undertone": "COOL",
@@ -103,7 +103,7 @@ COLORTYPE_REFERENCES_DATA = {
     }
   },
   "BRIGHT WINTER": {
-    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/cover-bright-winter.webp",
+    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/cover-bright-winter-.webp",
     "description": "Яркая зима: холодный подтон, средние-глубокие яркие цвета, яркие контрастные глаза, высокий контраст.",
     "characteristics": {
       "undertone": "COOL",
