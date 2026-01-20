@@ -121,6 +121,51 @@ TASK FOR STEP 1:
 
 Remember your choice - you will use it as `suggested_colortype` in the final JSON.
 
+=== REFERENCE IMAGE WITH ALL 12 COLOR TYPES ===
+
+You will also be shown a reference image with visual examples of all 12 color types:
+https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/8439e7f6-1b4d-4d8f-bf8c-4ff173f0fdf1.webp
+
+This image shows multiple person examples for each color type. Use it to compare with the analyzed photo and understand the visual diversity within each type.
+
+⚠️ CRITICAL COLOR TYPE DISTINCTIONS (use these rules when comparing the analyzed photo):
+
+VIBRANT SPRING - WARM, CLEAR, HIGH-CONTRAST, VIBRANT
+Eyes can be brown, but in combination with light hair shades. Eyes are usually bright shades: blue, green, hazel, blue. This color type is similar to BRIGHT WINTER but it does NOT have deep dark hair colors like BRIGHT WINTER has.
+
+BRIGHT WINTER - COLD, SPARKLING EYES, CLEAR SKIN, HIGH-CONTRAST
+Differs from other winters by bright eye colors, clear skin colors, deep dark hair colors.
+
+SOFT WINTER - COLD, ICY, BLUE, HIGH-CONTRAST
+Skin is pale with bluish undertone, eyes are cool colors, skin has clean shades. Hair is dark colors. Differs from BRIGHT WINTER in that skin is lighter and cooler. Differs from VIVID SUMMER in that skin is paler, hair is darker, contrast is higher.
+
+VIVID WINTER - COLD, ASH OR NEUTRAL HAIR, COOL EYES, SKIN NEUTRAL OR COOL OR OLIVE
+Dark hair and dark eyes. Unlike BRIGHT WINTER, skin is less bright, hair is dark colors with ashy shade.
+
+VIVID AUTUMN - WARM, DEEP HAIR, DEEP EYES
+Brown hair tones are warm and saturated and dark. Eyes are dark shades. Differs from VIBRANT SPRING in that eyes are brown in combination with brown eyes.
+
+FIERY AUTUMN - TOTAL WARM, RICH COLORS
+FIERY AUTUMN is darker than BRIGHT SPRING in skin and hair tone and less bright.
+
+GENTLE AUTUMN - WARM, DUSTY, MUTED HAIR, LOW-CONTRAST
+Differs from DUSTY SUMMER in that colors are warmer and more similar to FIERY AUTUMN than to DUSTY SUMMER, but with the same dusty shades.
+
+DUSTY SUMMER - COLD, DUSTY, MUTED HAIR, LOW-CONTRAST
+Differs from VIVID SUMMER in that colors are slightly lighter and more dusty, as if there's more gray in them, less saturation. And colder than GENTLE AUTUMN.
+
+VIVID SUMMER - COLD
+Differs from winter in that hair is less dark, less bright, skin is more tanned, eyes are not as bright.
+
+SOFT SUMMER - COLD, LOW-CONTRAST
+Differs from DUSTY SUMMER and GENTLE AUTUMN in that colors are lighter. Differs from GENTLE SPRING in that colors are cooler.
+
+GENTLE SPRING - WARM, LOW-CONTRAST
+Differs from BRIGHT SPRING in that colors are lighter. Differs from SOFT SUMMER in that colors are warmer.
+
+BRIGHT SPRING - WARM
+Hair and skin are warm, there is no doubt that colors are warm. Hair colors are medium-light and light but darker than GENTLE SPRING and lighter than VIBRANT SPRING and FIERY AUTUMN.
+
 === STEP 2: DETAILED ANALYSIS (Do this AFTER step 1) ===
 
 Now that you've identified the most likely color type from reference schemes, analyze the photo in detail to confirm and document the specific characteristics.
@@ -497,6 +542,16 @@ def submit_to_openai(image_url: str) -> dict:
             'type': 'image_url',
             'image_url': {'url': scheme_url}
         })
+    
+    # Add reference image with all 12 color type examples
+    content.append({
+        'type': 'text',
+        'text': '\n=== ALL 12 COLOR TYPES EXAMPLES (visual reference) ===\n'
+    })
+    content.append({
+        'type': 'image_url',
+        'image_url': {'url': 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/662428f1-c8be-482a-833a-abcc9f0ec971.jpg'}
+    })
     
     # Add analysis instructions
     content.append({
@@ -1100,34 +1155,6 @@ def match_colortype(analysis: dict) -> tuple:
     if any(keyword in hair_lower for keyword in ['golden blond', 'golden blonde', 'blonde', 'blond', 'light blond', 'light blonde', 'honey blond', 'honey blonde']):
         excluded_types.update(['FIERY AUTUMN', 'VIVID AUTUMN'])
         print(f'[Match] Golden blonde/blonde hair detected → excluding FIERY AUTUMN and VIVID AUTUMN')
-    
-    # Rule 6: Pure gray eyes (not gray-blue) → exclude all SPRING
-    if any(keyword in eyes_lower for keyword in ['gray', 'grey']) and not any(keyword in eyes_lower for keyword in ['gray-blue', 'grey-blue', 'blue-gray', 'blue-grey']):
-        excluded_types.update(['GENTLE SPRING', 'BRIGHT SPRING', 'VIBRANT SPRING'])
-        print(f'[Match] Pure gray eyes detected → excluding all SPRING')
-    
-    # Rule 7: Light skin → exclude VIVID AUTUMN, VIVID WINTER, and VIVID SUMMER
-    if light_skin:
-        excluded_types.update(['VIVID AUTUMN', 'VIVID WINTER', 'VIVID SUMMER'])
-        print(f'[Match] Light skin detected → excluding VIVID AUTUMN, VIVID WINTER, and VIVID SUMMER')
-    
-    # Rule 8: Pure blond hair (NOT strawberry/auburn) → exclude SOFT WINTER and VIBRANT SPRING
-    is_pure_blond = any(keyword in hair_lower for keyword in ['blonde', 'blond', 'light blond', 'light blonde', 'platinum', 'ash blond'])
-    is_auburn_or_red = any(keyword in hair_lower for keyword in ['auburn', 'copper', 'red', 'strawberry'])
-    
-    if is_pure_blond and not is_auburn_or_red:
-        excluded_types.update(['SOFT WINTER', 'VIBRANT SPRING'])
-        print(f'[Match] Pure blond hair detected → excluding SOFT WINTER and VIBRANT SPRING')
-    
-    # Rule 9: Beige skin → exclude SOFT WINTER
-    if any(keyword in skin_lower for keyword in ['beige']):
-        excluded_types.add('SOFT WINTER')
-        print(f'[Match] Beige skin detected → excluding SOFT WINTER')
-    
-    # Rule 10: Medium brown hair or ash brown → exclude BRIGHT WINTER
-    if any(keyword in hair_lower for keyword in ['medium brown', 'ash brown']):
-        excluded_types.add('BRIGHT WINTER')
-        print(f'[Match] Medium brown or ash brown hair detected → excluding BRIGHT WINTER')
     
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
