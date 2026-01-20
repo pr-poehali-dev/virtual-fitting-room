@@ -235,85 +235,38 @@ Analyze the colors visible in this image and determine:
    
    - Choose BRIGHT-SATURATION-COLORS if: colors are clear, vivid, pure, bright, vibrant (no gray mixed in, pure pigments)
 
-6. CONTRAST LEVEL - Difference in visual darkness between features:
-   PRIORITY: Hair vs Skin (60%) + Eyes vs Skin (40%)
+6. CONTRAST LEVEL - Difference between hair and skin color
    
-   ⚠️ CRITICAL: Assess VISUAL DARKNESS as if this photo were BLACK-AND-WHITE!
-   Ignore color hue (golden/ash/red) - focus ONLY on how DARK each area appears.
+   🎯 SIMPLE RULE:
+   Contrast is determined by the difference between hair color and skin color.
+   The greater the difference, the higher the contrast. The smaller the difference, the lower the contrast.
    
-   🎯 BLACK-AND-WHITE TEST:
-   Imagine converting this photo to grayscale (black and white).
-   - How DARK does the hair area look? (Light gray, medium gray, or dark gray/black?)
-   - How DARK does the skin area look? (Light tone, medium tone, or dark tone?)
-   - How DARK do the eyes look? (Light, medium, or dark?)
+   Compare the analyzed photo with the reference image showing all 12 color types.
    
-   ⚠️ HAIR ANALYSIS: Look at ROOTS first (55% weight), then length (45% weight)
-   * Assess visual darkness at ROOTS - natural root color shows true tonal contrast
+   ⚠️ CONTRAST REFERENCE FOR EACH COLOR TYPE:
    
-   === STEP 1: Assess VISUAL DARKNESS of each zone ===
+   GENTLE AUTUMN (Нежная осень): LOW-CONTRAST or LOW-MEDIUM-CONTRAST
+   FIERY AUTUMN (Огненная осень): LOW-MEDIUM-CONTRAST or HIGH-MEDIUM-CONTRAST or HIGH-CONTRAST
+   VIVID AUTUMN (Тёмная осень): HIGH-MEDIUM-CONTRAST or HIGH-CONTRAST
    
-   For HAIR (at roots):
-   Ask: "If this were a black-and-white photo, how DARK would the hair appear?"
+   GENTLE SPRING (Нежная весна): LOW-CONTRAST or LOW-MEDIUM-CONTRAST
+   BRIGHT SPRING (Тёплая весна): LOW-CONTRAST or LOW-MEDIUM-CONTRAST or HIGH-MEDIUM-CONTRAST
+   VIBRANT SPRING (Яркая весна): LOW-MEDIUM-CONTRAST or HIGH-MEDIUM-CONTRAST or HIGH-CONTRAST
    
-   - LIGHT tone = Hair looks like LIGHT GRAY or almost white
-     (Very light, pale, bright area - minimal darkness)
+   SOFT WINTER (Мягкая зима): HIGH-MEDIUM-CONTRAST or HIGH-CONTRAST
+   BRIGHT WINTER (Яркая зима): HIGH-MEDIUM-CONTRAST or HIGH-CONTRAST
+   VIVID WINTER (Тёмная зима): HIGH-MEDIUM-CONTRAST or HIGH-CONTRAST
    
-   - MEDIUM tone = Hair looks like MEDIUM GRAY
-     (Moderate darkness - clearly visible but not very dark)
+   SOFT SUMMER (Светлое лето): LOW-CONTRAST or LOW-MEDIUM-CONTRAST
+   DUSTY SUMMER (Пыльное лето): LOW-CONTRAST or LOW-MEDIUM-CONTRAST
+   VIVID SUMMER (Яркое лето): LOW-MEDIUM-CONTRAST or HIGH-MEDIUM-CONTRAST
    
-   - DARK tone = Hair looks like DARK GRAY or BLACK
-     (High darkness - very dark area, strong visual weight)
-   
-   For SKIN:
-   Ask: "If this were a black-and-white photo, how DARK would the skin appear?"
-   
-   - LIGHT tone = Skin looks like LIGHT GRAY or almost white
-     (Very bright, minimal darkness)
-   
-   - MEDIUM tone = Skin looks like MEDIUM GRAY
-     (Moderate darkness level)
-   
-   - DARK tone = Skin looks like DARK GRAY
-     (High darkness level)
-   
-   For EYES:
-   Ask: "If this were a black-and-white photo, how DARK would the eyes appear?"
-   
-   - LIGHT tone = Eyes look like LIGHT GRAY
-     (Bright eyes, low darkness)
-   
-   - MEDIUM tone = Eyes look like MEDIUM GRAY
-     (Moderate darkness)
-   
-   - DARK tone = Eyes look like DARK GRAY or BLACK
-     (Very dark eyes, high darkness)
-   
-   === STEP 2: Determine CONTRAST level ===
-   
-   Now compare the VISUAL DARKNESS between zones:
-   
-   Assign darkness levels:
-   * LIGHT tone → level 0
-   * MEDIUM tone → level 1
-   * DARK tone → level 2
-   
-   Calculate: |hair_level - skin_level| + |eyes_level - skin_level|
-   
-   - Choose LOW-CONTRAST if: total difference = 0
-     (All zones have similar visual darkness)
-     Example: Light hair + Light skin + Light eyes = 0
-   
-   - Choose LOW-MEDIUM-CONTRAST if: total difference = 1
-     (Small difference in visual darkness)
-     Example: Light hair + Light skin + Medium eyes = 1
-   
-   - Choose HIGH-MEDIUM-CONTRAST if: total difference = 2
-     (Noticeable difference in visual darkness)
-     Example: Dark hair + Medium skin + Light eyes = |2-1| + |0-1| = 2
-   
-   - Choose HIGH-CONTRAST if: total difference ≥ 3
-     (Strong difference - almost white areas next to almost black areas)
-     Example: Dark hair + Light skin + Dark eyes = |2-0| + |2-0| = 4
+   YOUR TASK:
+   Determine which contrast level the person in the analyzed photo has:
+   - HIGH-CONTRAST: Very large difference between hair and skin
+   - HIGH-MEDIUM-CONTRAST: Noticeable difference, closer to high
+   - LOW-MEDIUM-CONTRAST: Moderate difference, closer to low
+   - LOW-CONTRAST: Small difference between hair and skin
 
 7. DESCRIBE EXACT COLORS you see (use synonyms and precise descriptors):
    - Hair: Use hair dye terminology for precision:
