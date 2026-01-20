@@ -143,7 +143,7 @@ SOFT WINTER - COLD, ICY, BLUE, HIGH-CONTRAST
 Skin is pale with bluish undertone, eyes are cool colors, skin has clean shades. Hair is dark colors. Differs from BRIGHT WINTER in that skin is lighter and cooler. Differs from VIVID SUMMER in that skin is paler, hair is darker, contrast is higher.
 
 VIVID WINTER - COLD, ASH OR NEUTRAL HAIR, COOL EYES, SKIN NEUTRAL OR COOL OR OLIVE
-Dark hair and dark eyes. Unlike BRIGHT WINTER, skin is less bright, hair is dark colors with ashy shade. Eyes are NOT gray - typically dark brown, black-brown, or deep brown.
+Dark hair and dark eyes. Unlike BRIGHT WINTER, skin is less bright, hair is dark colors with ashy shade.
 
 VIVID AUTUMN - WARM, DEEP HAIR, DEEP EYES
 Brown hair tones are warm and saturated and dark. Eyes are dark shades. Differs from VIBRANT SPRING in that eyes are brown in combination with brown eyes.
@@ -1117,12 +1117,11 @@ def match_colortype(analysis: dict) -> tuple:
     # ============ STAGE 3: Final selection by color keyword matching ============
     print(f'[Match] STAGE 3: Scoring {len(stage2_candidates)} candidates by color matching + params')
     
-    # Detect characteristic features
+    # Detect characteristic warm hair colors
     has_auburn_hair = any(keyword in hair_lower for keyword in ['auburn', 'copper', 'red', 'bright auburn', 'ginger'])
-    has_gray_eyes = any(keyword in eyes_lower for keyword in ['gray', 'grey', 'gray-blue', 'grey-blue', 'gray-green', 'grey-green'])
     is_warm_undertone = undertone == 'WARM-UNDERTONE'
     
-    print(f'[Match] Auburn/red hair detected: {has_auburn_hair}, Gray eyes detected: {has_gray_eyes}, Warm undertone: {is_warm_undertone}')
+    print(f'[Match] Auburn/red hair detected: {has_auburn_hair}, Warm undertone: {is_warm_undertone}')
     
     best_colortype = None
     best_total_score = 0.0
@@ -1184,11 +1183,6 @@ def match_colortype(analysis: dict) -> tuple:
         if has_auburn_hair and colortype == 'VIBRANT SPRING':
             color_score += 0.15
             print(f'[Match] {colortype}: BONUS +0.15 for auburn hair (characteristic color)')
-        
-        # BONUS: Gray eyes → +0.15 for SOFT WINTER
-        if has_gray_eyes and colortype == 'SOFT WINTER':
-            color_score += 0.15
-            print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (characteristic color)')
         
         # Total score: 2x parameters + 1x colors
         total_score = (param_match * 2.0) + (color_score * 1.0)
