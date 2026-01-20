@@ -495,11 +495,15 @@ def submit_to_openai(image_url: str) -> dict:
     })
     
     payload = {
-        'model': 'anthropic/claude-3.5-sonnet',  # OpenRouter format: provider/model
+        'model': 'openai/gpt-4o',  # OpenRouter format: provider/model
         'messages': [
             {
                 'role': 'user',
                 'content': content
+            },
+            {
+                'role': 'assistant',
+                'content': '{"suggested_colortype": "'  # Prefill to bypass refusals
             }
         ],
         'max_tokens': 600,
