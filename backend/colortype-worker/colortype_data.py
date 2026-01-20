@@ -113,7 +113,7 @@ COLORTYPE_REFERENCES_DATA = {
     }
   },
   "COOL WINTER": {
-    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/cover-cold-winter.webp",
+    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/7d48780c-1416-4e3a-9e09-b9bf63755823.webp",
     "description": "Холодная зима: холодный подтон, светлые-средние холодные цвета, холодные глаза, пепельные/тёмные волосы, средне-высокий контраст.",
     "characteristics": {
       "undertone": "COOL",
