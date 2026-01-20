@@ -124,7 +124,7 @@ Remember your choice - you will use it as `suggested_colortype` in the final JSO
 === REFERENCE IMAGE WITH ALL 12 COLOR TYPES ===
 
 You will also be shown a reference image with visual examples of all 12 color types:
-https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/8439e7f6-1b4d-4d8f-bf8c-4ff173f0fdf1.webp
+https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/c4c7b4b3-ec3c-4aa7-a3a8-7c9fb3f23b7b.webp
 
 This image shows multiple person examples for each color type. Use it to compare with the analyzed photo and understand the visual diversity within each type.
 
@@ -468,7 +468,7 @@ def submit_to_openai(image_url: str) -> dict:
     })
     content.append({
         'type': 'image_url',
-        'image_url': {'url': 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/8439e7f6-1b4d-4d8f-bf8c-4ff173f0fdf1.webp'}
+        'image_url': {'url': 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/c4c7b4b3-ec3c-4aa7-a3a8-7c9fb3f23b7b.webp'}
     })
     
     # Add analysis instructions
