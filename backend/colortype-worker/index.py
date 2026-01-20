@@ -495,7 +495,7 @@ def submit_to_openai(image_url: str) -> dict:
     })
     
     payload = {
-        'model': 'openai/gpt-4o',  # OpenRouter format: provider/model
+        'model': 'anthropic/claude-3.5-sonnet',  # OpenRouter format: provider/model
         'messages': [
             {
                 'role': 'user',
