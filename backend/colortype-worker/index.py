@@ -166,6 +166,15 @@ Differs from BRIGHT SPRING in that colors are lighter. Differs from SOFT SUMMER 
 BRIGHT SPRING - WARM
 Hair and skin are warm, there is no doubt that colors are warm. Hair colors are medium-light and light but darker than GENTLE SPRING and lighter than VIBRANT SPRING and FIERY AUTUMN.
 
+🎯 YOUR TASK NOW:
+1. Compare the ANALYZED PHOTO with the reference image showing all 12 color types
+2. Compare the ANALYZED PHOTO with the 12 reference schemes you saw earlier
+3. Use the CRITICAL COLOR TYPE DISTINCTIONS above to identify key differences between similar types
+4. Determine which color type BEST MATCHES the person in the analyzed photo
+5. Make your decision and remember it - you will use it as `suggested_colortype` in the final JSON
+
+⚠️ IMPORTANT: Focus on the OVERALL COLOR HARMONY, not just individual features. The person doesn't need to look identical to examples - focus on matching the color characteristics (warm/cool, light/deep, muted/bright, contrast level).
+
 === STEP 2: DETAILED ANALYSIS (Do this AFTER step 1) ===
 
 Now that you've identified the most likely color type from reference schemes, analyze the photo in detail to confirm and document the specific characteristics.
