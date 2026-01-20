@@ -1388,7 +1388,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     UPDATE color_type_history
                     SET status = 'failed', result_text = %s, updated_at = %s
                     WHERE id = %s
-                ''', ('Анализ занял слишком много времени. Попробуйте другое фото или повторите попытку.', datetime.utcnow(), stuck_id))
+                ''', ('Не удалось получить результат анализа. Попробуйте повторить запрос с другим фото. Если фото отвечает критериям, но результат не получен, обратитесь в техподдержку.', datetime.utcnow(), stuck_id))
                 conn.commit()
                 
                 # NO REFUND - OpenRouter API was called and tokens were spent
@@ -1581,7 +1581,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     
                     # User-friendly message
                     if is_timeout:
-                        user_msg = 'Не удалось получить результат анализа. Если результат не получен, напишите в поддержку — мы вернём деньги.'
+                        user_msg = 'Не удалось получить результат анализа. Попробуйте повторить запрос с другим фото. Если фото отвечает критериям, но результат не получен, обратитесь в техподдержку.'
                     else:
                         user_msg = f'Ошибка сервиса анализа. Попробуйте позже. Деньги возвращены.'
                     

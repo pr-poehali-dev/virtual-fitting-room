@@ -278,7 +278,8 @@ export default function ColorType() {
         setIsAnalyzing(false);
         setAnalysisStatus("");
         toast.error(
-          "Превышено время ожидания. Результат сохранится в истории.",
+          "Не удалось получить результат анализа. Попробуйте повторить запрос с другим фото. Если фото отвечает критериям, но результат не получен, обратитесь в техподдержку.",
+          { duration: 10000 }
         );
       }, TIMEOUT_DURATION);
     } catch (error) {
