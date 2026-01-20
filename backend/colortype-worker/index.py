@@ -1002,6 +1002,14 @@ def count_rule_violations(colortype: str, eyes_lower: str, hair_lower: str, skin
         if colortype == 'BRIGHT WINTER':
             violations += 1
     
+    # Rule 11: Copper hair (medium-dark warm reddish) → exclude GENTLE SPRING
+    # Exception: LIGHT COPPER (pale golden-reddish blonde) CAN be gentle spring
+    if any(keyword in hair_lower for keyword in ['copper', 'auburn', 'red']):
+        # Check if it's LIGHT copper (should contain "light" or "pale" or "golden blonde")
+        is_light_copper = any(light_keyword in hair_lower for light_keyword in ['light copper', 'pale copper', 'light golden', 'pale golden', 'golden blonde'])
+        if not is_light_copper and colortype == 'GENTLE SPRING':
+            violations += 1
+    
     return violations
 
 def match_colortype(analysis: dict) -> tuple:
