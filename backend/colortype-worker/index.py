@@ -550,7 +550,7 @@ def submit_to_openai(image_url: str) -> dict:
     })
     content.append({
         'type': 'image_url',
-        'image_url': {'url': 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/662428f1-c8be-482a-833a-abcc9f0ec971.jpg'}
+        'image_url': {'url': 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/8439e7f6-1b4d-4d8f-bf8c-4ff173f0fdf1.webp'}
     })
     
     # Add analysis instructions
