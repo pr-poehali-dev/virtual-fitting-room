@@ -181,65 +181,21 @@ Now that you've identified the most likely color type from reference schemes, an
 
 Analyze the colors visible in this image and determine:
 
-1. UNDERTONE - The invisible base that creates visible color (CRITICAL: analyze carefully!)
-   PRIORITY: Hair color (51%) → Skin tone (44%) → Eyes (5%)
+1. UNDERTONE - Analyze the overall color temperature (warm or cool)
    
-   ⚠️ HAIR ANALYSIS: Look at ROOTS first (50% weight), then length (50% weight)
-   * Focus on hair at SCALP/ROOTS (near forehead, temples) - this shows true undertone
-   * Natural root color reveals real warm/cool base (dyed ends may differ)
+   🎯 SIMPLE RULE:
+   - Analyze the hair, skin, and eyes colors together
+   - Determine if they are more COOL tones or more WARM tones overall
+   - Look again at the reference image with all 12 color type examples
    
-   ⚠️ UNDERTONE is the BASE (golden or blue) that you DON'T see directly, but it CREATES what you DO see!
+   ⚠️ IMPORTANT KNOWLEDGE:
+   All WINTER and SUMMER types = COOL undertone
+   All AUTUMN and SPRING types = WARM undertone
    
-   THEORY: Everyone has either a GOLDEN base (warm) or BLUE base (cool).
-   - Undertone is NOT visible directly - it creates the EFFECT you see on surface
-   - You won't see literal gold or blue, but you'll see what they CREATE
-   - Skin and hair are linked, but eyes can vary independently
-   
-   🔍 ANALYZE THE BASE:
-   
-   - Choose WARM-UNDERTONE if the BASE is GOLDEN (creates warm versions):
-     
-     WARM HAIR (red/gold based):
-     * Yellow blonde, golden blonde, honey blonde
-     * Chestnut brown (warm brown with golden tones)
-     * Auburn, copper, ginger, red tones
-     * Mahogany (warm deep brown)
-     
-     WARM SKIN (golden based):
-     * Yellow beige (not rosy beige)
-     * Peachy, golden, yellow undertones
-     * Mahogany (for deep skin)
-     
-     WARM EYES (supportive, not decisive): Jade green, golden brown, amber, warm hazel
-     Note: Eyes can vary - don't use as primary undertone indicator
-   
-   - Choose COOL-UNDERTONE if the BASE is BLUE (creates cool versions):
-     
-     COOL HAIR (ash based):
-     * Platinum blonde
-     * Ash blonde, ash brown
-     * Charcoal brown (cool dark brown, no golden tones)
-     * Jet black, blue-black (pure black)
-     * ANY hair WITHOUT golden/red reflection
-     
-     COOL SKIN (blue based):
-     * Rosy beige (not yellow beige)
-     * Pink, blue, rosy undertones
-     * Very light and pale, unsaturated neutral tones
-     * Ebony (for deep skin)
-     
-     COOL EYES (supportive, not decisive): Gray-green, icy blue, gray, cool hazel
-     Note: Eyes can vary - Spring can have cool blue eyes with warm skin/hair
-   
-   🎯 CRITICAL DECISION RULE:
-   Step 1: Look at HAIR - does it have ANY honey/red tones? → WARM
-   Step 2: If hair looks ash/gray/pure black (NO golden tones) → COOL
-   Step 3: Confirm with SKIN - golden/peachy base = WARM, pink/rosy base = COOL
-   
-   ⚠️ COMMON MISTAKES TO AVOID:
-   - Dark hair ≠ automatically cool (dark brown can be warm chestnut!)
-   - Light hair ≠ automatically warm (platinum blonde is cool!)
-   - Focus on the TONE (golden vs ash), not the DARKNESS!
+   YOUR TASK:
+   Determine which undertone the person in the analyzed photo belongs to:
+   - Choose COOL-UNDERTONE if they look more like Winter/Summer types (cool tones)
+   - Choose WARM-UNDERTONE if they look more like Spring/Autumn types (warm tones)
 
 2. HAIR LIGHTNESS - Darkness level of HAIR ONLY:
    ⚠️ HAIR ANALYSIS: Look at ROOTS first (50% weight), then length (50% weight)
