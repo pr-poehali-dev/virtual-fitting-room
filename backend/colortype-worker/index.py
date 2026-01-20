@@ -162,6 +162,7 @@ Differs from DUSTY SUMMER and GENTLE AUTUMN in that colors are lighter. Differs 
 
 GENTLE SPRING - WARM, LOW-CONTRAST
 Differs from BRIGHT SPRING in that colors are lighter. Differs from SOFT SUMMER in that colors are warmer.
+⚠️ EXCEPTION: Copper hair (medium-dark warm reddish hair) is NOT gentle spring - it's too saturated and deep. However, LIGHT COPPER (pale golden-reddish blonde) CAN be gentle spring if combined with low contrast and light warm features.
 
 BRIGHT SPRING - WARM
 Hair and skin are warm, there is no doubt that colors are warm. Hair colors are medium-light and light but darker than GENTLE SPRING and lighter than VIBRANT SPRING and FIERY AUTUMN.
