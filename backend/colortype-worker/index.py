@@ -147,7 +147,7 @@ VIBRANT SPRING - WARM, CLEAR, HIGH-CONTRAST, VIBRANT
 Eyes can be brown, but in combination with light hair shades. Eyes are usually bright shades: blue, green, hazel, blue. This color type is similar to BRIGHT WINTER but it does NOT have deep dark hair colors like BRIGHT WINTER has. This color type is similar to VIVID SUMMER but it does NOT have gray/grey eyes colors like VIVID SUMMER has.
 
 BRIGHT WINTER - COLD, SPARKLING EYES, CLEAR SKIN, HIGH-CONTRAST
-Differs from other winters by bright eye colors, clear skin colors, deep dark hair colors.
+Differs from other winters by bright eye colors, clear skin colors, bright deep dark hair colors. This color type is similar to SOFT WINTER but it does NOT have gray/grey eyes colors like SOFT WINTER has. 
 
 SOFT WINTER - COLD, ICY, BLUE, HIGH-CONTRAST
 Skin is pale with bluish undertone, eyes are cool colors, skin has clean shades. Hair is dark colors. Differs from BRIGHT WINTER in that skin is lighter and cooler. Differs from VIVID SUMMER in that skin is paler, hair is darker, contrast is higher.
