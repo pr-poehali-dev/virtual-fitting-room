@@ -73,7 +73,7 @@ COLORTYPE_REFERENCES_DATA = {
     }
   },
   "FIERY AUTUMN": {
-    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/c270b8af-a83c-44f3-901c-c323a9e7727c.webp",
+    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/b391a764-2516-43ab-8afc-ad1895b1ed5d.webp",
     "description": "Огненная осень: тёплый подтон, светлые-средние цвета, насыщенные тёплые глаза, карамельные волосы, средний контраст.",
     "characteristics": {
       "undertone": "WARM",
