@@ -144,7 +144,7 @@ This image shows multiple person examples for each color type. Use it to compare
 ⚠️ CRITICAL COLOR TYPE DISTINCTIONS (use these rules when comparing the analyzed photo):
 
 VIBRANT SPRING - WARM, CLEAR, HIGH-CONTRAST, VIBRANT
-Eyes can be brown, but in combination with light hair shades. Eyes are usually bright shades: blue, green, hazel, blue. This color type is similar to BRIGHT WINTER but it does NOT have deep dark hair colors like BRIGHT WINTER has.
+Eyes can be brown, but in combination with light hair shades. Eyes are usually bright shades: blue, green, hazel, blue. This color type is similar to BRIGHT WINTER but it does NOT have deep dark hair colors like BRIGHT WINTER has. This color type is similar to VIVID SUMMER but it does NOT have gray/grey eyes colors like VIVID SUMMER has.
 
 BRIGHT WINTER - COLD, SPARKLING EYES, CLEAR SKIN, HIGH-CONTRAST
 Differs from other winters by bright eye colors, clear skin colors, deep dark hair colors.
