@@ -478,7 +478,7 @@ def submit_to_openai(image_url: str) -> dict:
         'messages': [
             {
                 'role': 'user',
-                'content': 'content'
+                'content': content
             },
             {
                 'role': 'assistant',
