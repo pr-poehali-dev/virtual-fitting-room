@@ -3,7 +3,7 @@
 
 COLORTYPE_REFERENCES_DATA = {
   "VIBRANT SPRING": {
-    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/e278dda9-ea11-4801-8bce-6753797427a3.webp",
+    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/966a3574-c81c-48da-baa3-7cc9a3eaa06d.webp",
     "description": "Яркая весна: тёплый подтон, светлые-средние-глубокие цвета, яркие чистые глаза (голубые/зелёные/топазовые/карие), средне-высокий до высокого контраст. Кожа золотистая/персиковая, волосы с золотистым подтоном.",
     "characteristics": {
       "undertone": "WARM",
