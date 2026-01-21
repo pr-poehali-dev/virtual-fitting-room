@@ -93,7 +93,7 @@ COLORTYPE_REFERENCES_DATA = {
     }
   },
   "DEEP WINTER": {
-    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/1c456a8f-f7f6-4d6d-8310-0c72ac6207d7.webp",
+    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/3f7a6348-c852-475f-a335-09e4a6b41b31.webp",
     "description": "Глубокая зима: холодный подтон, глубокие холодные цвета, тёмные глаза, тёмные волосы, высокий контраст.",
     "characteristics": {
       "undertone": "COOL",
