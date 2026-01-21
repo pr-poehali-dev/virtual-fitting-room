@@ -499,11 +499,11 @@ def submit_to_openai(image_url: str) -> dict:
         'messages': [
             {
                 'role': 'user',
-                'content': content
+                'content': 'content'
             },
             {
                 'role': 'assistant',
-                'content': '{"suggested_colortype": "'  # Prefill to bypass refusals
+                'content': '{"suggested_colortype": "}'  # Prefill to bypass refusals
             }
         ],
         'max_tokens': 600,
