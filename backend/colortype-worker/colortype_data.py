@@ -83,7 +83,7 @@ COLORTYPE_REFERENCES_DATA = {
     }
   },
   "DEEP AUTUMN": {
-    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/c00c20d0-f6eb-4f38-9ec0-62803ecbbe53.webp",
+    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/6af417ee-c1a2-4eec-975d-d1205985004e.webp",
     "description": "Глубокая осень: тёплый подтон, глубокие тёплые цвета, карие/тёмно-зелёные глаза, тёмные волосы, высокий контраст.",
     "characteristics": {
       "undertone": "WARM",
