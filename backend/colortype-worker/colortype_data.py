@@ -82,7 +82,7 @@ COLORTYPE_REFERENCES_DATA = {
       "contrast": ["LOW-MEDIUM", "HIGH-MEDIUM"]
     }
   },
-  "DEEP AUTUMN": {
+  "VIVID AUTUMN": {
     "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/6af417ee-c1a2-4eec-975d-d1205985004e.webp",
     "description": "Глубокая осень: тёплый подтон, глубокие тёплые цвета, карие/тёмно-зелёные глаза, тёмные волосы, высокий контраст.",
     "characteristics": {
@@ -92,7 +92,7 @@ COLORTYPE_REFERENCES_DATA = {
       "contrast": ["HIGH-MEDIUM", "HIGH"]
     }
   },
-  "DEEP WINTER": {
+  "VIVID WINTER": {
     "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/3f7a6348-c852-475f-a335-09e4a6b41b31.webp",
     "description": "Глубокая зима: холодный подтон, глубокие холодные цвета, тёмные глаза, тёмные волосы, высокий контраст.",
     "characteristics": {
