@@ -874,9 +874,9 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
     Stage 3: Final selection by color keyword matching
     
     NEW SCORING:
-    Parameters (weight x1):
-    - Undertone: 50%
-    - Saturation: 14%
+    Parameters (weight x1.5):
+    - Undertone: 68%
+    - Saturation: 46%
     - Contrast: 36%
     
     Colors (weight x1) - DYNAMIC WEIGHTS:
@@ -1102,7 +1102,7 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
                 s_match = 1.0 if s == saturation else 0.0
                 c_match = 1.0 if c == contrast else 0.0
                 
-                candidate_score = ((u_match * 0.5) + (s_match * 0.14) + (c_match * 0.36)) / 1.0
+                candidate_score = ((u_match * 0.68) + (s_match * 0.46) + (c_match * 0.36)) / 1.5
                 
                 if candidate_score > param_match:
                     param_match = candidate_score
@@ -1170,8 +1170,8 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
                 color_score += 0.15
                 print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (more often cool undertone)')
         
-        # Total score: 1x parameters + 1x colors
-        total_score = (param_match * 1.0) + (color_score * 1.0)
+        # Total score: 1.5x parameters + 1x colors
+        total_score = (param_match * 1.5) + (color_score * 1.0)
         
         print(f'[Match] {colortype}: param={param_match:.2f} (U:{undertone_match:.0f} S:{saturation_match:.0f} C:{contrast_match:.0f}), color={color_score:.2f} (h:{hair_score:.2f}*{hair_weight:.2f} s:{skin_score:.2f}*{skin_weight:.2f} e:{eyes_score:.2f}*{eyes_weight:.2f}), total={total_score:.2f}')
         
