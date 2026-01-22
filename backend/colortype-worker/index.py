@@ -225,16 +225,30 @@ Return ONLY this JSON (no explanations):
 
 def format_result(colortype: str, hair: str, skin: str, eyes: str, 
                   undertone: str, saturation: str, contrast: str,
-                  fallback_type: str = 'standard') -> str:
-    '''Format user-friendly result message in Russian'''
+                  fallback_type: str = 'standard', gpt_colortype: str = None) -> str:
+    '''Format user-friendly result message in Russian
+    
+    Args:
+        colortype: Color type determined by formula
+        gpt_colortype: Color type suggested by GPT (optional)
+    '''
     colortype_ru = COLORTYPE_NAMES_RU.get(colortype, colortype)
     undertone_ru = UNDERTONE_RU.get(undertone, undertone)
     saturation_ru = SATURATION_RU.get(saturation, saturation)
     contrast_ru = CONTRAST_RU.get(contrast, contrast)
     
-    base_message = f"""# {colortype_ru}
+    # If GPT and formula disagree, show both in title
+    if gpt_colortype and gpt_colortype != colortype:
+        gpt_colortype_ru = COLORTYPE_NAMES_RU.get(gpt_colortype, gpt_colortype)
+        title = f"{gpt_colortype_ru} / {colortype_ru}"
+        colortype_line = f"Ваши возможные цветотипы:\n• ИИ-анализ: {gpt_colortype}\n• Формула параметров: {colortype}"
+    else:
+        title = colortype_ru
+        colortype_line = f"Ваш цветотип — {colortype}."
+    
+    base_message = f"""# {title}
 
-Ваш цветотип — {colortype}.
+{colortype_line}
 
 Ваши цвета:
 • Волосы: {hair}
@@ -863,7 +877,7 @@ def calculate_param_match_score(analysis_value: str, expected_value: str) -> flo
     '''Check if parameter matches expected value (1.0 if match, 0.0 if not)'''
     return 1.0 if analysis_value == expected_value else 0.0
 
-def match_colortype(analysis: dict) -> tuple:
+def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
     '''Match analysis to best colortype using 3-stage filtering
     
     Stage 1: Filter by lightness combinations (hair, skin, eyes)
@@ -1186,11 +1200,11 @@ def match_colortype(analysis: dict) -> tuple:
                 best_total_score = color_score
         
         if best_colortype:
-            explanation = format_result(best_colortype, hair, skin, eyes, undertone, saturation, contrast, 'fallback2')
+            explanation = format_result(best_colortype, hair, skin, eyes, undertone, saturation, contrast, 'fallback2', gpt_suggested_type)
             print(f'[Match] FALLBACK SUCCESS: {best_colortype} with color_score {best_color_score:.2f}')
             return best_colortype, explanation
     
-    explanation = format_result(best_colortype, hair, skin, eyes, undertone, saturation, contrast, 'standard')
+    explanation = format_result(best_colortype, hair, skin, eyes, undertone, saturation, contrast, 'standard', gpt_suggested_type)
     
     print(f'[Match] FINAL: {best_colortype} with score {best_total_score:.2f}')
     
@@ -1481,7 +1495,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         print(f'[ColorType-Worker] GPT suggested colortype: {gpt_suggested_type}')
                         
                         # Calculate colortype via formula (primary method)
-                        color_type, explanation = match_colortype(analysis)
+                        color_type, explanation = match_colortype(analysis, gpt_suggested_type)
                         result_text_value = explanation
                         
                         print(f'[ColorType-Worker] Formula calculated: {color_type}')
@@ -1490,11 +1504,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         # Compare GPT suggestion with formula result
                         if gpt_suggested_type and gpt_suggested_type == color_type:
                             print(f'[ColorType-Worker] ✅ GPT and Formula MATCH: {color_type}')
-                            result_text_value += f'\n\n✅ ИИ-анализ и формула совпадают: {color_type}'
+                            result_text_value += f'\n\nАнализ показал уверенное совпадение по всем параметрам.'
                         elif gpt_suggested_type:
                             print(f'[ColorType-Worker] ⚠️ MISMATCH: GPT={gpt_suggested_type}, Formula={color_type}')
-                            colortype_ru_gpt = COLORTYPE_NAMES_RU.get(gpt_suggested_type, gpt_suggested_type)
-                            result_text_value += f'\n\n⚠️ Расхождение: ИИ предположил {colortype_ru_gpt}, формула определила {COLORTYPE_NAMES_RU.get(color_type, color_type)}'
+                            gpt_colortype_ru = COLORTYPE_NAMES_RU.get(gpt_suggested_type, gpt_suggested_type)
+                            formula_colortype_ru = COLORTYPE_NAMES_RU.get(color_type, color_type)
+                            result_text_value += f'\n\n⚠️ Ваша внешность находится на границе двух типов:\n\n**{gpt_colortype_ru} (по визуальному анализу ИИ):**\nИИ сравнил вашу внешность с референсными фото и определил наибольшее сходство с этим типом.\n\n**{formula_colortype_ru} (по формуле параметров):**\nМатематический анализ характеристик (подтон, насыщенность, контраст) указывает на этот тип.\n\nРекомендуем попробовать палитры обоих типов и выбрать ту, в которой вы чувствуете себя наиболее гармонично.'
                         
                     except (json.JSONDecodeError, KeyError, TypeError) as e:
                         print(f'[ColorType-Worker] Failed to parse JSON: {e}')
