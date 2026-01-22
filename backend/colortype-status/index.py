@@ -603,6 +603,40 @@ def match_colortype(analysis: dict) -> tuple:
         excluded_types.update(['FIERY AUTUMN', 'VIVID AUTUMN'])
         print(f'[Match] Golden blonde/blonde hair detected → excluding FIERY AUTUMN and VIVID AUTUMN')
     
+    # Rule 6: Copper hair (medium-dark warm reddish) → exclude GENTLE SPRING
+    # Exception: LIGHT COPPER (pale golden-reddish blonde) CAN be gentle spring
+    if any(keyword in hair_lower for keyword in ['copper', 'auburn', 'red']):
+        # Check if it's LIGHT copper (should contain "light" or "pale" or "golden blonde")
+        is_light_copper = any(light_keyword in hair_lower for light_keyword in ['light copper', 'pale copper', 'light golden', 'pale golden', 'golden blonde', 'strawberry blonde', 'strawberry blond'])
+        if not is_light_copper:
+            excluded_types.add('GENTLE SPRING')
+            print(f'[Match] Copper/auburn/red hair (NOT light) detected → excluding GENTLE SPRING')
+    
+    # Rule 7: Gray/grey eyes → exclude VIBRANT SPRING (gray eyes = VIVID SUMMER or SOFT WINTER characteristic)
+    if any(keyword in eyes_lower for keyword in ['gray', 'grey', 'gray-blue', 'grey-blue', 'gray-green', 'grey-green']):
+        excluded_types.add('VIBRANT SPRING')
+        print(f'[Match] Gray eyes detected → excluding VIBRANT SPRING (gray = VIVID SUMMER or SOFT WINTER)')
+    
+    # Rule 8: Bright blue/bright green eyes → exclude VIVID SUMMER (bright eyes = VIBRANT SPRING or BRIGHT WINTER)
+    if any(keyword in eyes_lower for keyword in ['bright blue', 'bright green', 'bright blue-green', 'яркий']):
+        excluded_types.add('VIVID SUMMER')
+        print(f'[Match] Bright colored eyes detected → excluding VIVID SUMMER (bright eyes = VIBRANT SPRING or BRIGHT WINTER)')
+    
+    # Rule 9: Light blue/light green/light turquoise eyes → ONLY SOFT SUMMER or GENTLE SPRING (exclude all others)
+    if any(keyword in eyes_lower for keyword in ['light blue', 'light green', 'light turquoise', 'светло-голубые', 'светло-зелёные', 'светло-лазурные']):
+        # Keep only SOFT SUMMER and GENTLE SPRING
+        all_types = {'VIBRANT SPRING', 'BRIGHT SPRING', 'VIVID SUMMER', 'DUSTY SUMMER', 'GENTLE AUTUMN', 'FIERY AUTUMN', 'VIVID AUTUMN', 'SOFT WINTER', 'BRIGHT WINTER', 'VIVID WINTER'}
+        excluded_types.update(all_types)
+        print(f'[Match] Light colored eyes detected → ONLY SOFT SUMMER or GENTLE SPRING allowed')
+    
+    # Rule 10: Bright eyes (bright blue, bright green, bright blue-green) → ONLY VIBRANT SPRING or BRIGHT WINTER
+    # This is more specific than Rule 8, so check last
+    if any(keyword in eyes_lower for keyword in ['bright blue', 'bright green', 'bright blue-green', 'яркие', 'ярко-голубые', 'ярко-зелёные', 'ярко-сине-зелёные']):
+        # Keep only VIBRANT SPRING and BRIGHT WINTER
+        all_types = {'GENTLE SPRING', 'BRIGHT SPRING', 'SOFT SUMMER', 'DUSTY SUMMER', 'VIVID SUMMER', 'GENTLE AUTUMN', 'FIERY AUTUMN', 'VIVID AUTUMN', 'SOFT WINTER', 'VIVID WINTER'}
+        excluded_types.update(all_types)
+        print(f'[Match] Bright eyes detected → ONLY VIBRANT SPRING or BRIGHT WINTER allowed')
+    
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
     
