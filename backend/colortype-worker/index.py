@@ -25,7 +25,7 @@ import base64
 # Rule 12: Dark/deep brown hair + soft/muted gray/gray-blue eyes → SOFT WINTER or VIVID SUMMER (NOT BRIGHT WINTER)
 # Rule 13: Dark brown hair with warm undertone + brown eyes → VIVID AUTUMN (NOT VIBRANT SPRING, NOT GENTLE AUTUMN)
 # Rule 14: Light hair → exclude BRIGHT WINTER, DEEP WINTER, VIVID AUTUMN (these types require ONLY dark hair)
-# Rule 15: Dark brown hair + brown eyes → exclude VIBRANT SPRING (characteristic of VIVID AUTUMN)
+# Rule 15: Brown hair (any shade) + brown eyes → exclude VIBRANT SPRING (VIBRANT SPRING has bright eyes, NOT brown)
 # VIBRANT SPRING: warm, clear, high-contrast, bright eyes (blue/green/hazel), NOT gray eyes, NOT deep dark hair
 # BRIGHT WINTER: cool, BRIGHT/SPARKLING eyes, DEEP DARK hair (signature: dark hair + bright eyes)
 # SOFT WINTER: cool, SOFT/MUTED gray eyes, DEEP DARK hair (signature: dark hair + soft gray eyes)
@@ -1007,10 +1007,12 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
         excluded_types.update(dark_types_requiring_dark_hair)
         print(f'[Match] Light hair detected → excluding {dark_types_requiring_dark_hair} (these types require dark hair ONLY)')
     
-    # Rule 15: Dark brown hair + brown eyes → exclude VIBRANT SPRING (this is VIVID AUTUMN characteristic)
-    if has_dark_hair and has_brown_eyes:
+    # Rule 15: Brown hair (any shade) + brown eyes → exclude VIBRANT SPRING (this is VIVID AUTUMN characteristic)
+    # VIBRANT SPRING: bright eyes (blue/green/hazel), NOT brown eyes
+    has_any_brown_hair = any(keyword in hair_lower for keyword in ['brown', 'chestnut', 'auburn', 'espresso', 'chocolate', 'dark', 'medium brown', 'light brown', 'golden brown', 'warm brown'])
+    if has_any_brown_hair and has_brown_eyes:
         excluded_types.add('VIBRANT SPRING')
-        print(f'[Match] Dark brown hair + brown eyes → excluding VIBRANT SPRING (characteristic of VIVID AUTUMN)')
+        print(f'[Match] Brown hair + brown eyes → excluding VIBRANT SPRING (characteristic of VIVID AUTUMN)')
     
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
