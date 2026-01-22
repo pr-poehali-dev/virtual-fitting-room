@@ -130,7 +130,7 @@ VIVID WINTER - COLD, ASH OR NEUTRAL HAIR, COOL EYES, SKIN NEUTRAL OR COOL OR OLI
 Dark hair and dark eyes. Unlike BRIGHT WINTER, skin is less bright, hair is dark colors with ashy shade. Eyes are NOT gray/grey. But typically dark brown, black-brown, or deep brown.
 
 VIVID AUTUMN - WARM, DEEP HAIR, DEEP EYES
-Brown hair tones are warm and saturated and dark. Eyes are dark shades. Differs from VIBRANT SPRING in that eyes are brown in combination with brown eyes.
+Brown hair tones are warm and saturated and dark. Eyes are dark shades. Differs from VIBRANT SPRING in that eyes are brown in combination with brown hair.
 
 FIERY AUTUMN - TOTAL WARM, RICH COLORS
 FIERY AUTUMN is darker than BRIGHT SPRING in skin and hair tone and less bright.
