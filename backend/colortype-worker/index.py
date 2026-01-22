@@ -261,7 +261,11 @@ def format_result(colortype: str, hair: str, skin: str, eyes: str,
 • Контраст: {contrast_ru}"""
 
     if fallback_type == 'standard':
-        return base_message + "\n\nАнализ показал уверенное совпадение по всем параметрам."
+        # For matching types, don't add extra text (already added in colortype_line)
+        if gpt_colortype and gpt_colortype != colortype:
+            return base_message
+        else:
+            return base_message + "\n\nАнализ показал уверенное совпадение по всем параметрам."
     elif fallback_type == 'fallback1':
         return base_message + "\n\nПри анализе тон показал неоднозначные результаты, но общая картина внешности чётко указывает на этот тип. Обратите внимание: освещение на фото или окрашенные волосы могли повлиять на точность определения."
     elif fallback_type == 'fallback2':
@@ -974,9 +978,9 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
         excluded_types.update(all_types)
         print(f'[Match] Light colored eyes detected → ONLY SOFT SUMMER or GENTLE SPRING allowed')
     
-    # Rule 10: Bright eyes (bright blue, bright green, bright blue-green) → ONLY VIBRANT SPRING or BRIGHT WINTER
+    # Rule 10: Bright eyes (bright blue, bright green, bright blue-green, bright brown) → ONLY VIBRANT SPRING or BRIGHT WINTER
     # This is more specific than Rule 8, so check last
-    if any(keyword in eyes_lower for keyword in ['bright blue', 'bright green', 'bright blue-green', 'яркие', 'ярко-голубые', 'ярко-зелёные', 'ярко-сине-зелёные']):
+    if any(keyword in eyes_lower for keyword in ['bright blue', 'bright green', 'bright blue-green', 'bright brown', 'яркие', 'ярко-голубые', 'ярко-зелёные', 'ярко-сине-зелёные', 'ярко-карие']):
         # Keep only VIBRANT SPRING and BRIGHT WINTER
         all_types = {'GENTLE SPRING', 'BRIGHT SPRING', 'SOFT SUMMER', 'DUSTY SUMMER', 'VIVID SUMMER', 'GENTLE AUTUMN', 'FIERY AUTUMN', 'VIVID AUTUMN', 'SOFT WINTER', 'VIVID WINTER'}
         excluded_types.update(all_types)
@@ -1065,7 +1069,7 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
     has_dark_hair = any(keyword in hair_lower for keyword in ['dark brown', 'deep brown', 'black', 'espresso', 'dark chestnut', 'dark cool brown'])
     
     # Distinguish BRIGHT eyes (яркие) from SOFT/MUTED eyes (мягкие)
-    has_bright_eyes = any(keyword in eyes_lower for keyword in ['bright blue', 'bright gray-blue', 'bright grey-blue', 'bright green', 'bright blue-green', 'ярко-голубые', 'яркие серо-голубые', 'яркие синие'])
+    has_bright_eyes = any(keyword in eyes_lower for keyword in ['bright blue', 'bright gray-blue', 'bright grey-blue', 'bright green', 'bright blue-green', 'bright brown', 'ярко-голубые', 'яркие серо-голубые', 'яркие синие', 'ярко-карие'])
     has_soft_muted_eyes = any(keyword in eyes_lower for keyword in ['soft gray', 'soft gray-blue', 'soft grey-blue', 'soft gray-green', 'soft grey-green', 'мягкие серо-голубые', 'мягкие серые', 'мягкие серо-зелёные'])
     
     is_warm_undertone = undertone == 'WARM-UNDERTONE'
@@ -1457,8 +1461,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         
                         # Map user's eye color to lightness level (NEW 3-level system: LIGHT/MEDIUM/DEEP)
                         EYE_COLOR_TO_LIGHTNESS = {
+                            'light blue': 'LIGHT-EYES-COLORS',              # Светло-голубые
+                            'light green': 'LIGHT-EYES-COLORS',             # Светло-зелёные
+                            'light turquoise': 'LIGHT-EYES-COLORS',         # Светло-лазурные
+                            'bright blue': 'LIGHT-EYES-COLORS',             # Ярко-голубые
+                            'bright green': 'LIGHT-EYES-COLORS',            # Ярко-зелёные
+                            'bright blue-green': 'LIGHT-EYES-COLORS',       # Ярко-сине-зелёные
+                            'bright gray-blue': 'LIGHT-EYES-COLORS',        # Ярко-серо-голубые
+                            'bright brown': 'MEDIUM-EYES-COLORS',           # Ярко-карие (новое!)
                             'blue': 'LIGHT-EYES-COLORS',                    # Голубые
                             'blue-green': 'LIGHT-EYES-COLORS',              # Сине-зелёные
+                            'soft gray-blue': 'MEDIUM-EYES-COLORS',         # Серо-голубые (мягкие)
+                            'soft gray-green': 'MEDIUM-EYES-COLORS',        # Серо-зелёные (мягкие)
+                            'soft gray': 'MEDIUM-EYES-COLORS',              # Серые (мягкие)
                             'green': 'LIGHT-EYES-COLORS',                   # Зелёные
                             'gray-blue': 'LIGHT-EYES-COLORS',               # Серо-голубые
                             'turquoise': 'LIGHT-EYES-COLORS',               # Бирюзовые
@@ -1504,7 +1519,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         # Compare GPT suggestion with formula result
                         if gpt_suggested_type and gpt_suggested_type == color_type:
                             print(f'[ColorType-Worker] ✅ GPT and Formula MATCH: {color_type}')
-                            result_text_value += f'\n\nАнализ показал уверенное совпадение по всем параметрам.'
+                            # Text already added in format_result
                         elif gpt_suggested_type:
                             print(f'[ColorType-Worker] ⚠️ MISMATCH: GPT={gpt_suggested_type}, Formula={color_type}')
                             gpt_colortype_ru = COLORTYPE_NAMES_RU.get(gpt_suggested_type, gpt_suggested_type)

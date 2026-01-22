@@ -28,6 +28,7 @@ const eyeColors: Record<string, string> = {
   "Ярко-зелёные (сверкающие)": "bright green",
   "Ярко-сине-зелёные (сверкающие)": "bright blue-green",
   "Ярко-серо-голубые (сверкающие)": "bright gray-blue",
+  "Ярко-карие (сверкающие)": "bright brown",
   "Голубые (обычные)": "blue",
   "Сине-зелёные (обычные)": "blue-green",
   "Серо-голубые (мягкие)": "soft gray-blue",
