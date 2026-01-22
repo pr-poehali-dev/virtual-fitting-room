@@ -5,6 +5,22 @@ import requests
 from typing import Dict, Any
 from datetime import datetime
 
+# Updated with 14 exclusion rules + bright/soft eyes distinction for accurate color type matching
+# Rule 1: Brown eyes → exclude GENTLE SPRING, BRIGHT SPRING, all SUMMER, SOFT WINTER
+# Rule 2: Cool light eyes → exclude VIVID AUTUMN, VIVID WINTER
+# Rule 3: Chestnut brown hair → exclude BRIGHT SPRING
+# Rule 4: Light skin + cool eyes → exclude GENTLE AUTUMN
+# Rule 5: Blonde hair → exclude FIERY AUTUMN, VIVID AUTUMN
+# Rule 6: Copper hair (NOT light copper) → exclude GENTLE SPRING
+# Rule 7: Gray/grey eyes → exclude VIBRANT SPRING (gray = VIVID SUMMER or SOFT WINTER characteristic)
+# Rule 8: Bright blue/bright green eyes → exclude VIVID SUMMER (bright eyes = VIBRANT SPRING or BRIGHT WINTER)
+# Rule 9: Light blue/light green/light turquoise eyes → ONLY SOFT SUMMER or GENTLE SPRING
+# Rule 10: Bright eyes (bright blue, bright green, bright blue-green, bright brown) → ONLY VIBRANT SPRING or BRIGHT WINTER
+# Rule 11: Dark/deep brown hair + bright blue/gray-blue eyes → BRIGHT WINTER (NOT VIBRANT SPRING, NOT SOFT WINTER)
+# Rule 12: Dark/deep brown hair + soft/muted gray/gray-blue eyes → SOFT WINTER (NOT BRIGHT WINTER, NOT VIVID SUMMER)
+# Rule 13: Dark brown hair with warm undertone + brown eyes → VIVID AUTUMN (NOT VIBRANT SPRING, NOT GENTLE AUTUMN)
+# Rule 14: Light hair → exclude BRIGHT WINTER, DEEP WINTER, VIVID AUTUMN (these types require ONLY dark hair)
+
 # Russian translations for user-facing messages
 COLORTYPE_NAMES_RU = {
     'GENTLE AUTUMN': 'Нежная (мягкая) осень',
