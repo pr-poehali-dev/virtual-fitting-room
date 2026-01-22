@@ -10,15 +10,20 @@ import uuid
 import base64
 
 
-# Updated with 6 exclusion rules for accurate color type matching
+# Updated with 10 exclusion rules for accurate color type matching
 # Rule 1: Brown eyes → exclude GENTLE SPRING, BRIGHT SPRING, all SUMMER, SOFT WINTER
 # Rule 2: Cool light eyes → exclude VIVID AUTUMN, VIVID WINTER
 # Rule 3: Chestnut brown hair → exclude BRIGHT SPRING
 # Rule 4: Light skin + cool eyes → exclude GENTLE AUTUMN
 # Rule 5: Blonde hair → exclude FIERY AUTUMN, VIVID AUTUMN
 # Rule 6: Copper hair (NOT light copper) → exclude GENTLE SPRING
-# VIBRANT SPRING now includes warm light brown/golden brown hair with bright eyes
-# Reverted composite image approach - using single photo analysis
+# Rule 7: Gray/grey eyes → exclude VIBRANT SPRING (gray = VIVID SUMMER or SOFT WINTER characteristic)
+# Rule 8: Bright blue/bright green eyes → exclude VIVID SUMMER (bright eyes = VIBRANT SPRING or BRIGHT WINTER)
+# Rule 9: Light blue/light green/light turquoise eyes → ONLY SOFT SUMMER or GENTLE SPRING
+# Rule 10: Bright eyes (bright blue, bright green, bright blue-green) → ONLY VIBRANT SPRING or BRIGHT WINTER
+# VIBRANT SPRING: warm, clear, high-contrast, bright eyes (blue/green/hazel), NOT gray eyes, NOT deep dark hair
+# VIVID SUMMER: cool, muted, can have gray eyes, NOT bright colored eyes
+# User's eye_color is now passed directly to GPT to avoid misdetection
 
 # Russian translations for user-facing messages
 COLORTYPE_NAMES_RU = {
@@ -117,42 +122,66 @@ This image shows multiple person examples for each color type. Use it to compare
 
 ⚠️ CRITICAL COLOR TYPE DISTINCTIONS (use these rules when comparing the analyzed photo):
 
+⚠️ EYE COLOR RULES:
+- Light eyes (light blue, light green, light turquoise) → ONLY SOFT SUMMER or GENTLE SPRING
+- Bright eyes (bright blue, bright green, bright blue-green) → ONLY VIBRANT SPRING or BRIGHT WINTER
+- Gray/grey eyes (gray, gray-blue, gray-green) → NEVER VIBRANT SPRING (gray = VIVID SUMMER or SOFT WINTER)
+
 VIBRANT SPRING - WARM, CLEAR, HIGH-CONTRAST, VIBRANT
-Eyes can be brown, but in combination with light hair shades. Eyes are usually bright shades: blue, green, hazel, blue. This color type is similar to BRIGHT WINTER but it does NOT have deep dark hair colors like BRIGHT WINTER has. This color type is similar to VIVID SUMMER but it does NOT have gray/grey eyes colors like VIVID SUMMER has.
+Eyes: Bright blue, bright green, bright blue-green, hazel (warm). CAN have brown eyes with light/medium warm hair. NEVER gray/grey eyes.
+Similar to BRIGHT WINTER but does NOT have deep dark hair (VIBRANT SPRING = lighter hair).
+Similar to VIVID SUMMER but does NOT have gray/grey eyes (VIVID SUMMER = gray eyes).
 
 BRIGHT WINTER - COLD, SPARKLING EYES, CLEAR SKIN, HIGH-CONTRAST
-Differs from other winters by bright eye colors, clear skin colors, bright deep dark hair colors. This color type is similar to SOFT WINTER but it does NOT have gray/grey eyes colors like SOFT WINTER has. 
+Eyes: Bright blue, bright green, bright gray-blue, dark brown, black-brown. Eyes are BRIGHT/clear, not muted.
+Differs from SOFT WINTER: eyes are BRIGHTER (not soft muted gray).
+Similar to VIBRANT SPRING but has DEEP DARK hair (BRIGHT WINTER = dark hair).
 
 SOFT WINTER - COLD, ICY, BLUE, HIGH-CONTRAST
-Skin is pale with bluish undertone, eyes are cool colors, skin has clean shades. Hair is dark colors. Differs from BRIGHT WINTER in that skin is lighter and cooler. Differs from VIVID SUMMER in that skin is paler, hair is darker, contrast is higher.
+Eyes: Soft gray, gray-blue, gray-green, cool blue (all MUTED/soft quality).
+Skin is pale with bluish undertone. Hair is dark colors.
+Differs from BRIGHT WINTER: eyes are SOFTER/more muted (not bright sparkling).
+Differs from VIVID SUMMER: skin is paler, hair is darker, contrast is higher.
 
 VIVID WINTER - COLD, ASH OR NEUTRAL HAIR, COOL EYES, SKIN NEUTRAL OR COOL OR OLIVE
-Dark hair and dark eyes. Unlike BRIGHT WINTER, skin is less bright, hair is dark colors with ashy shade. Eyes are NOT gray/grey. But typically dark brown, black-brown, or deep brown.
+Eyes: Dark brown, black-brown, deep brown, chocolate. Eyes are NOT gray, NOT bright blue/green.
+Dark hair and dark eyes. Hair has ashy shade.
 
 VIVID AUTUMN - WARM, DEEP HAIR, DEEP EYES
-Brown hair tones are warm and saturated and dark. Eyes are dark shades. Differs from VIBRANT SPRING in that eyes are brown in combination with brown hair.
+Eyes: Dark brown, brown-green, deep hazel. NEVER light blue/green/gray eyes.
+Warm saturated DARK hair + dark eyes.
+Differs from VIBRANT SPRING: eyes are brown + DARK brown hair (VIBRANT SPRING = lighter hair).
 
 FIERY AUTUMN - TOTAL WARM, RICH COLORS
-FIERY AUTUMN is darker than BRIGHT SPRING in skin and hair tone and less bright.
+Eyes: Hazel, golden brown, amber, warm brown, green.
+Darker than BRIGHT SPRING in skin/hair, less bright.
 
 GENTLE AUTUMN - WARM, DUSTY, MUTED HAIR, LOW-CONTRAST
-Differs from DUSTY SUMMER in that colors are warmer and more similar to FIERY AUTUMN than to DUSTY SUMMER, but with the same dusty shades.
+Eyes: Light blue (rare), light green, hazel, light brown (muted, with warm skin).
+Warmer than DUSTY SUMMER, same dusty shades.
 
 DUSTY SUMMER - COLD, DUSTY, MUTED HAIR, LOW-CONTRAST
-Differs from VIVID SUMMER in that colors are slightly lighter and more dusty, as if there's more gray in them, less saturation. And colder than GENTLE AUTUMN.
+Eyes: Gray-blue, gray-green, muted blue (cool-toned, muted).
+Slightly lighter and more dusty than VIVID SUMMER. Colder than GENTLE AUTUMN.
 
-VIVID SUMMER - COLD
-Differs from winter in that hair is less dark, less bright, skin is more tanned, eyes are not as bright and typically grey/gray colors.
+VIVID SUMMER - COLD, MUTED, MEDIUM-HIGH CONTRAST
+Eyes: Gray, gray-blue, gray-green, cool muted blue/green. NEVER bright blue/bright green.
+Gray/muted eyes distinguish from VIBRANT SPRING (bright eyes) and BRIGHT WINTER (bright eyes).
 
-SOFT SUMMER - COLD, LOW-CONTRAST
-Differs from DUSTY SUMMER and GENTLE AUTUMN in that colors are lighter. Differs from GENTLE SPRING in that colors are cooler.
+SOFT SUMMER - COLD, LOW-CONTRAST, LIGHT
+Eyes: Light blue, light gray-blue, light gray-green, soft blue (LIGHT + cool-toned).
+Lighter colors than DUSTY SUMMER.
+Cooler than GENTLE SPRING (blue undertones vs warm golden).
 
-GENTLE SPRING - WARM, LOW-CONTRAST
-Differs from BRIGHT SPRING in that colors are lighter. Differs from SOFT SUMMER in that colors are warmer.
-⚠️ EXCEPTION: Copper hair (medium-dark warm reddish hair) is NOT gentle spring - it's too saturated and deep. However, LIGHT COPPER (pale golden-reddish blonde) CAN be gentle spring if combined with low contrast and light warm features.
+GENTLE SPRING - WARM, LOW-CONTRAST, LIGHT
+Eyes: Light blue, light green, light turquoise (with WARM undertone), hazel (LIGHT but warm quality).
+Lighter than BRIGHT SPRING.
+Warmer than SOFT SUMMER (golden/peachy skin vs cool pink).
+⚠️ EXCEPTION: Copper hair (medium-dark) is NOT gentle spring. LIGHT COPPER (pale golden-reddish blonde) CAN be gentle spring if low contrast.
 
-BRIGHT SPRING - WARM
-Hair and skin are warm, there is no doubt that colors are warm. Hair colors are medium-light and light but darker than GENTLE SPRING and lighter than VIBRANT SPRING and FIERY AUTUMN.
+BRIGHT SPRING - WARM, CLEAR, MEDIUM CONTRAST
+Eyes: Blue, green, blue-green, hazel (clear/bright). NEVER brown eyes (brown = VIBRANT SPRING or AUTUMN).
+Warm hair/skin. Hair is medium-light, darker than GENTLE SPRING, lighter than VIBRANT SPRING.
 
 🎯 YOUR TASK NOW:
 1. Compare the ANALYZED PHOTO with the reference image showing all 12 color types
@@ -390,8 +419,13 @@ def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str
     
     return cdn_url
 
-def submit_to_openai(image_url: str) -> dict:
-    '''Submit task to OpenRouter (GPT-4o Vision) and get result immediately (synchronous)'''
+def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
+    '''Submit task to OpenRouter (GPT-4o Vision) and get result immediately (synchronous)
+    
+    Args:
+        image_url: URL фото для анализа
+        eye_color: Цвет глаз пользователя (выбран на UI)
+    '''
     from urllib.parse import quote
     
     openrouter_api_key = os.environ.get('OPENROUTER_API_KEY')
@@ -460,6 +494,12 @@ def submit_to_openai(image_url: str) -> dict:
     content.append({
         'type': 'image_url',
         'image_url': {'url': 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/7f872f1f-a74e-47fa-9b3c-79934845836f.webp'}
+    })
+    
+    # Add user's eye color hint BEFORE prompt
+    content.append({
+        'type': 'text',
+        'text': f'\n\n⚠️ USER CONFIRMED EYE COLOR: {eye_color}\nDo NOT analyze eye color - use this exact value in your response.\n'
     })
     
     # Add analysis instructions
@@ -1052,6 +1092,31 @@ def match_colortype(analysis: dict) -> tuple:
         excluded_types.update(['FIERY AUTUMN', 'VIVID AUTUMN'])
         print(f'[Match] Golden blonde/blonde hair detected → excluding FIERY AUTUMN and VIVID AUTUMN')
     
+    # Rule 7: Gray/grey eyes → exclude VIBRANT SPRING (gray eyes = VIVID SUMMER or SOFT WINTER characteristic)
+    if any(keyword in eyes_lower for keyword in ['gray', 'grey', 'gray-blue', 'grey-blue', 'gray-green', 'grey-green']):
+        excluded_types.add('VIBRANT SPRING')
+        print(f'[Match] Gray eyes detected → excluding VIBRANT SPRING (gray = VIVID SUMMER or SOFT WINTER)')
+    
+    # Rule 8: Bright blue/bright green eyes → exclude VIVID SUMMER (bright eyes = VIBRANT SPRING or BRIGHT WINTER)
+    if any(keyword in eyes_lower for keyword in ['bright blue', 'bright green', 'bright blue-green', 'яркий']):
+        excluded_types.add('VIVID SUMMER')
+        print(f'[Match] Bright colored eyes detected → excluding VIVID SUMMER (bright eyes = VIBRANT SPRING or BRIGHT WINTER)')
+    
+    # Rule 9: Light blue/light green/light turquoise eyes → ONLY SOFT SUMMER or GENTLE SPRING (exclude all others)
+    if any(keyword in eyes_lower for keyword in ['light blue', 'light green', 'light turquoise', 'светло-голубые', 'светло-зелёные', 'светло-лазурные']):
+        # Keep only SOFT SUMMER and GENTLE SPRING
+        all_types = {'VIBRANT SPRING', 'BRIGHT SPRING', 'VIVID SUMMER', 'DUSTY SUMMER', 'GENTLE AUTUMN', 'FIERY AUTUMN', 'VIVID AUTUMN', 'SOFT WINTER', 'BRIGHT WINTER', 'VIVID WINTER'}
+        excluded_types.update(all_types)
+        print(f'[Match] Light colored eyes detected → ONLY SOFT SUMMER or GENTLE SPRING allowed')
+    
+    # Rule 10: Bright eyes (bright blue, bright green, bright blue-green) → ONLY VIBRANT SPRING or BRIGHT WINTER
+    # This is more specific than Rule 8, so check last
+    if any(keyword in eyes_lower for keyword in ['bright blue', 'bright green', 'bright blue-green', 'яркие', 'ярко-голубые', 'ярко-зелёные', 'ярко-сине-зелёные']):
+        # Keep only VIBRANT SPRING and BRIGHT WINTER
+        all_types = {'GENTLE SPRING', 'BRIGHT SPRING', 'SOFT SUMMER', 'DUSTY SUMMER', 'VIVID SUMMER', 'GENTLE AUTUMN', 'FIERY AUTUMN', 'VIVID AUTUMN', 'SOFT WINTER', 'VIVID WINTER'}
+        excluded_types.update(all_types)
+        print(f'[Match] Bright eyes detected → ONLY VIBRANT SPRING or BRIGHT WINTER allowed')
+    
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
     
@@ -1439,9 +1504,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 cdn_url = upload_to_yandex_storage(person_image, user_id, task_id)
                 
                 # Submit to OpenAI GPT-4 Vision (synchronous - returns immediately)
-                print(f'[ColorType-Worker] Submitting to OpenAI GPT-4o Vision with user hint: {eye_color}')
+                print(f'[ColorType-Worker] Submitting to OpenAI GPT-4o Vision with user eye_color: {eye_color}')
                 try:
-                    openai_result = submit_to_openai(cdn_url)
+                    openai_result = submit_to_openai(cdn_url, eye_color)
                     raw_result = openai_result.get('output', '')
                     
                     print(f'[ColorType-Worker] OpenAI response: {raw_result[:200]}...')
