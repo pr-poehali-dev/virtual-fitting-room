@@ -10,7 +10,7 @@ import uuid
 import base64
 
 
-# Updated with 15 exclusion rules + bright/soft eyes distinction for accurate color type matching
+# Updated with 16 exclusion rules + bright/soft eyes distinction + penalties for accurate color type matching
 # Rule 1: Brown eyes → exclude GENTLE SPRING, BRIGHT SPRING, all SUMMER, SOFT WINTER
 # Rule 2: Cool light eyes → exclude VIVID AUTUMN, VIVID WINTER
 # Rule 3: Chestnut brown hair → exclude BRIGHT SPRING
@@ -27,6 +27,7 @@ import base64
 # Rule 14: Light hair → exclude BRIGHT WINTER, DEEP WINTER, VIVID AUTUMN (these types require ONLY dark hair)
 # Rule 15: Brown hair (any shade) + brown eyes → exclude VIBRANT SPRING (VIBRANT SPRING has bright eyes, NOT brown)
 # Rule 16: Brown hair (any shade: medium/dark/light brown) → exclude GENTLE SPRING (GENTLE SPRING requires ONLY blonde hair)
+# PENALTY: Non-bright eyes → -0.25 for VIBRANT SPRING (prefers bright/sparkling eyes, but not excluded)
 # VIBRANT SPRING: warm, clear, high-contrast, bright eyes (blue/green/hazel), NOT gray eyes, NOT deep dark hair
 # BRIGHT WINTER: cool, BRIGHT/SPARKLING eyes, DEEP DARK hair (signature: dark hair + bright eyes)
 # SOFT WINTER: cool, SOFT/MUTED gray eyes, DEEP DARK hair (signature: dark hair + soft gray eyes)
@@ -1084,6 +1085,7 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
     
     # Distinguish BRIGHT eyes (яркие) from SOFT/MUTED eyes (мягкие)
     has_bright_eyes = any(keyword in eyes_lower for keyword in ['bright blue', 'bright gray-blue', 'bright grey-blue', 'bright green', 'bright blue-green', 'bright brown', 'ярко-голубые', 'яркие серо-голубые', 'яркие синие', 'ярко-карие'])
+    has_bright_eyes_keyword = has_bright_eyes  # Alias for consistency with Rule 17 check
     has_soft_muted_eyes = any(keyword in eyes_lower for keyword in ['soft gray', 'soft gray-blue', 'soft grey-blue', 'soft gray-green', 'soft grey-green', 'мягкие серо-голубые', 'мягкие серые', 'мягкие серо-зелёные'])
     
     is_warm_undertone = undertone == 'WARM-UNDERTONE'
@@ -1186,6 +1188,11 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
             if colortype not in ['SOFT WINTER', 'VIVID SUMMER', 'DUSTY SUMMER']:
                 color_score += 0.15
                 print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (more often cool undertone)')
+        
+        # PENALTY: Non-bright eyes → -0.25 for VIBRANT SPRING (prefers bright/sparkling eyes)
+        if not has_bright_eyes_keyword and colortype == 'VIBRANT SPRING':
+            color_score -= 0.25
+            print(f'[Match] {colortype}: PENALTY -0.25 for non-bright eyes (VIBRANT SPRING prefers bright eyes)')
         
         # Total score: 1.5x parameters + 1x colors
         total_score = (param_match * 1.5) + (color_score * 1.0)

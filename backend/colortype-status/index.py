@@ -5,7 +5,7 @@ import requests
 from typing import Dict, Any
 from datetime import datetime
 
-# Updated with 15 exclusion rules + bright/soft eyes distinction for accurate color type matching
+# Updated with 16 exclusion rules + bright/soft eyes distinction + penalties for accurate color type matching
 # Rule 1: Brown eyes → exclude GENTLE SPRING, BRIGHT SPRING, all SUMMER, SOFT WINTER
 # Rule 2: Cool light eyes → exclude VIVID AUTUMN, VIVID WINTER
 # Rule 3: Chestnut brown hair → exclude BRIGHT SPRING
@@ -22,6 +22,7 @@ from datetime import datetime
 # Rule 14: Light hair → exclude BRIGHT WINTER, DEEP WINTER, VIVID AUTUMN (these types require ONLY dark hair)
 # Rule 15: Brown hair (any shade) + brown eyes → exclude VIBRANT SPRING (VIBRANT SPRING has bright eyes, NOT brown)
 # Rule 16: Brown hair (any shade: medium/dark/light brown) → exclude GENTLE SPRING (GENTLE SPRING requires ONLY blonde hair)
+# PENALTY: Non-bright eyes → -0.25 for VIBRANT SPRING (prefers bright/sparkling eyes, but not excluded)
 
 # Russian translations for user-facing messages
 COLORTYPE_NAMES_RU = {
@@ -717,6 +718,7 @@ def match_colortype(analysis: dict) -> tuple:
         
         # BONUS: Gray eyes → +0.15 for SOFT WINTER, VIVID SUMMER, DUSTY SUMMER
         has_gray_eyes = any(keyword in eyes_lower for keyword in ['gray', 'grey', 'gray-blue', 'grey-blue', 'gray-green', 'grey-green'])
+        has_bright_eyes_keyword = any(keyword in eyes_lower for keyword in ['bright blue', 'bright green', 'bright blue-green', 'bright gray-blue', 'bright grey-blue', 'bright brown', 'яркие', 'ярко-голубые', 'ярко-зелёные', 'ярко-сине-зелёные', 'ярко-серо-голубые', 'ярко-карие'])
         
         if has_gray_eyes and colortype == 'SOFT WINTER':
             color_score += 0.15
@@ -729,6 +731,11 @@ def match_colortype(analysis: dict) -> tuple:
         if has_gray_eyes and colortype == 'DUSTY SUMMER':
             color_score += 0.15
             print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (characteristic color)')
+        
+        # PENALTY: Non-bright eyes → -0.25 for VIBRANT SPRING (prefers bright/sparkling eyes)
+        if not has_bright_eyes_keyword and colortype == 'VIBRANT SPRING':
+            color_score -= 0.25
+            print(f'[Match] {colortype}: PENALTY -0.25 for non-bright eyes (VIBRANT SPRING prefers bright eyes)')
         
         # Total score: 2x parameters + 1x colors
         total_score = (param_match * 2.0) + (color_score * 1.0)
