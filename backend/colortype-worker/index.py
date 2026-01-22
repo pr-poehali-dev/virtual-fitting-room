@@ -23,12 +23,12 @@ import base64
 # Russian translations for user-facing messages
 COLORTYPE_NAMES_RU = {
     'GENTLE AUTUMN': 'Нежная (мягкая) осень',
-    'FIERY AUTUMN': 'Огненная осень',
+    'FIERY AUTUMN': 'Огненная (тёплая) осень',
     'VIVID AUTUMN': 'Тёмная осень',
     'GENTLE SPRING': 'Нежная (мягкая) весна',
     'BRIGHT SPRING': 'Тёплая весна',
     'VIBRANT SPRING': 'Яркая весна',
-    'SOFT WINTER': 'Мягкая зима',
+    'SOFT WINTER': 'Мягкая (холодная) зима',
     'BRIGHT WINTER': 'Яркая зима',
     'VIVID WINTER': 'Тёмная зима',
     'SOFT SUMMER': 'Светлое (мягкое) лето',
