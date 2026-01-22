@@ -209,10 +209,19 @@ Analyze the colors visible in this image and determine:
    All WINTER and SUMMER types = COOL undertone
    All AUTUMN and SPRING types = WARM undertone
    
+   ⚠️ CRITICAL RULE FOR NEUTRAL UNDERTONES:
+   - If hair or skin has NEUTRAL undertone (neither clearly warm nor clearly cool)
+   - AND eyes are COOL-TONED (blue, gray, gray-blue, gray-green, cool blue-green)
+   - Then the OVERALL undertone should be classified as COOL-UNDERTONE
+   - Neutral undertones lean COOL when paired with cool eyes, lean WARM when paired with warm eyes
+   - Eyes have the strongest influence on undertone determination in ambiguous cases
+   
    YOUR TASK:
    Determine which undertone the person in the analyzed photo belongs to:
    - Choose COOL-UNDERTONE if they look more like Winter/Summer types (cool tones)
    - Choose WARM-UNDERTONE if they look more like Spring/Autumn types (warm tones)
+   - If neutral hair/skin + cool eyes → COOL-UNDERTONE
+   - If neutral hair/skin + warm eyes (hazel, amber, golden brown) → WARM-UNDERTONE
 
 2. HAIR LIGHTNESS - Darkness level of HAIR ONLY:
    ⚠️ HAIR ANALYSIS: Look at ROOTS first (50% weight), then length (50% weight)
