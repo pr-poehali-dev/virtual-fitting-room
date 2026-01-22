@@ -27,7 +27,8 @@ import base64
 # Rule 14: Light hair → exclude BRIGHT WINTER, DEEP WINTER, VIVID AUTUMN (these types require ONLY dark hair)
 # Rule 15: Brown hair (any shade) + brown eyes → exclude VIBRANT SPRING (VIBRANT SPRING has bright eyes, NOT brown)
 # Rule 16: Brown hair (any shade: medium/dark/light brown) → exclude GENTLE SPRING (GENTLE SPRING requires ONLY blonde hair)
-# VIBRANT SPRING: warm, clear, high-contrast, bright eyes (blue/green/hazel), NOT gray eyes, NOT deep dark hair
+# Rule 17: Non-bright eyes → exclude BRIGHT WINTER and VIBRANT SPRING (both require ONLY bright/sparkling eyes)
+# VIBRANT SPRING: warm, clear, high-contrast, BRIGHT eyes (blue/green/hazel), NOT gray eyes, NOT deep dark hair
 # BRIGHT WINTER: cool, BRIGHT/SPARKLING eyes, DEEP DARK hair (signature: dark hair + bright eyes)
 # SOFT WINTER: cool, SOFT/MUTED gray eyes, DEEP DARK hair (signature: dark hair + soft gray eyes)
 # VIVID SUMMER: cool, muted, can have gray eyes, NOT bright colored eyes
@@ -1019,6 +1020,13 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
     if has_any_brown_hair:
         excluded_types.add('GENTLE SPRING')
         print(f'[Match] Brown hair detected → excluding GENTLE SPRING (requires blonde hair ONLY)')
+    
+    # Rule 17: Non-bright eyes → exclude BRIGHT WINTER and VIBRANT SPRING (both require ONLY bright/sparkling eyes)
+    # Check if eyes are NOT bright (must explicitly contain "bright" keyword)
+    has_bright_eyes_keyword = any(keyword in eyes_lower for keyword in ['bright blue', 'bright green', 'bright blue-green', 'bright gray-blue', 'bright grey-blue', 'bright brown', 'яркие', 'ярко-голубые', 'ярко-зелёные', 'ярко-сине-зелёные', 'ярко-серо-голубые', 'ярко-карие'])
+    if not has_bright_eyes_keyword:
+        excluded_types.update(['BRIGHT WINTER', 'VIBRANT SPRING'])
+        print(f'[Match] Non-bright eyes detected → excluding BRIGHT WINTER and VIBRANT SPRING (both require bright/sparkling eyes ONLY)')
     
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
