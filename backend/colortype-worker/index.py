@@ -125,7 +125,7 @@ This image shows multiple person examples for each color type. Use it to compare
 ⚠️ EYE COLOR RULES:
 - Light eyes (light blue, light green, light turquoise) → ONLY SOFT SUMMER or GENTLE SPRING
 - Bright eyes (bright blue, bright green, bright blue-green) → ONLY VIBRANT SPRING or BRIGHT WINTER
-- Gray/grey eyes (gray, gray-blue, gray-green) → NEVER VIBRANT SPRING (gray = VIVID SUMMER or SOFT WINTER)
+- Gray/grey eyes (gray, gray-blue, gray-green) → NEVER VIBRANT SPRING (gray = VIVID SUMMER, DUSTY SUMMER or SOFT WINTER)
 
 VIBRANT SPRING - WARM, CLEAR, HIGH-CONTRAST, VIBRANT
 Eyes: Bright blue, bright green, bright blue-green, hazel (warm). CAN have brown eyes with light/medium warm hair. NEVER gray/grey eyes.
