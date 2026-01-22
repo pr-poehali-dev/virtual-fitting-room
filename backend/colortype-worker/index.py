@@ -26,6 +26,7 @@ import base64
 # Rule 13: Dark brown hair with warm undertone + brown eyes → VIVID AUTUMN (NOT VIBRANT SPRING, NOT GENTLE AUTUMN)
 # Rule 14: Light hair → exclude BRIGHT WINTER, DEEP WINTER, VIVID AUTUMN (these types require ONLY dark hair)
 # Rule 15: Brown hair (any shade) + brown eyes → exclude VIBRANT SPRING (VIBRANT SPRING has bright eyes, NOT brown)
+# Rule 16: Brown hair (any shade: medium/dark/light brown) → exclude GENTLE SPRING (GENTLE SPRING requires ONLY blonde hair)
 # VIBRANT SPRING: warm, clear, high-contrast, bright eyes (blue/green/hazel), NOT gray eyes, NOT deep dark hair
 # BRIGHT WINTER: cool, BRIGHT/SPARKLING eyes, DEEP DARK hair (signature: dark hair + bright eyes)
 # SOFT WINTER: cool, SOFT/MUTED gray eyes, DEEP DARK hair (signature: dark hair + soft gray eyes)
@@ -1013,6 +1014,11 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
     if has_any_brown_hair and has_brown_eyes:
         excluded_types.add('VIBRANT SPRING')
         print(f'[Match] Brown hair + brown eyes → excluding VIBRANT SPRING (characteristic of VIVID AUTUMN)')
+    
+    # Rule 16: Brown hair (any shade) → exclude GENTLE SPRING (GENTLE SPRING requires ONLY blonde hair)
+    if has_any_brown_hair:
+        excluded_types.add('GENTLE SPRING')
+        print(f'[Match] Brown hair detected → excluding GENTLE SPRING (requires blonde hair ONLY)')
     
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
