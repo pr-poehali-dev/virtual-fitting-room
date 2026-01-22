@@ -142,7 +142,7 @@ DUSTY SUMMER - COLD, DUSTY, MUTED HAIR, LOW-CONTRAST
 Differs from VIVID SUMMER in that colors are slightly lighter and more dusty, as if there's more gray in them, less saturation. And colder than GENTLE AUTUMN.
 
 VIVID SUMMER - COLD
-Differs from winter in that hair is less dark, less bright, skin is more tanned, eyes are not as bright.
+Differs from winter in that hair is less dark, less bright, skin is more tanned, eyes are not as bright and typically grey/gray colors.
 
 SOFT SUMMER - COLD, LOW-CONTRAST
 Differs from DUSTY SUMMER and GENTLE AUTUMN in that colors are lighter. Differs from GENTLE SPRING in that colors are cooler.
