@@ -120,6 +120,12 @@ EYE RULES:
 
 1. UNDERTONE (warm or cool):
 
+⚠️ PRIORITIZATION FOR UNDERTONE DETERMINATION:
+Analyze in this order with these weights:
+1. HAIR (45% weight) - Most important indicator
+2. SKIN (40% weight) - Second most important
+3. EYES (15% weight) - Supporting indicator
+
 WARM signs: Golden/peachy skin, warm/honey/auburn hair, overall golden impression.
 COOL signs: Pink/rosy/bluish skin, ash/platinum/black hair, gray/blue eyes, overall icy impression.
 
