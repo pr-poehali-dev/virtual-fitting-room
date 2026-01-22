@@ -21,29 +21,29 @@ const TIMEOUT_DURATION = 180000; // 3 minutes
 
 // Eye colors mapping (Russian → English)
 const eyeColors: Record<string, string> = {
-  "Светло-голубые": "light blue",
-  "Светло-зелёные": "light green",
-  "Светло-лазурные": "light turquoise",
-  "Ярко-голубые (сверкающие)": "bright blue",
-  "Ярко-зелёные (сверкающие)": "bright green",
-  "Ярко-сине-зелёные (сверкающие)": "bright blue-green",
-  "Ярко-серо-голубые (сверкающие)": "bright gray-blue",
-  "Ярко-карие (сверкающие)": "bright brown",
-  "Голубые (обычные)": "blue",
-  "Сине-зелёные (обычные)": "blue-green",
-  "Серо-голубые (мягкие)": "soft gray-blue",
-  "Серо-зелёные (мягкие)": "soft gray-green",
-  "Серые (мягкие)": "soft gray",
-  "Зелёные": "green",
-  "Бирюзовые": "turquoise",
-  "Нефритовые": "jade",
-  "Светло-карие": "light brown",
-  "Карие": "brown",
-  "Коричнево-зелёные": "brown-green",
+  "Голубые (светлые)": "light blue",
+  "Голубые (яркие)": "bright blue",
+  Голубые: "blue",
+  "Зелёные (светлые)": "light green",
+  "Зелёные (яркие)": "bright green",
+  Зелёные: "green",
+  "Лазурные (светлые)": "light turquoise",
+  Бирюзовые: "turquoise",
+  "Сине-зелёные": "blue-green",
+  "Сине-зелёные (яркие)": "bright blue-green",
+  "Серо-голубые (яркие)": "bright gray-blue",
+  "Серо-голубые": "soft gray-blue",
+  "Серо-зелёные": "soft gray-green",
+  Серые: "soft gray",
   "Чёрно-карие": "black-brown",
+  "Карие (яркие)": "bright brown",
+  Карие: "brown",
+  "Карие (светлые)": "light brown",
+  Нефритовые: "jade",
   "Ореховые (золотистые)": "hazel",
   "Золотисто-карие": "golden brown",
-  "Шоколадные": "chocolate",
+  "Коричнево-зелёные": "brown-green",
+  Шоколадные: "chocolate",
 };
 
 // Mapping English color types to Russian
@@ -192,7 +192,8 @@ export default function ColorType() {
           return;
         }
 
-        const colorTypeName = colorTypeNames[data.color_type] || data.color_type;
+        const colorTypeName =
+          colorTypeNames[data.color_type] || data.color_type;
 
         setResult({
           colorType: colorTypeName,
@@ -287,7 +288,7 @@ export default function ColorType() {
         setAnalysisStatus("");
         toast.error(
           "Не удалось получить результат анализа. Попробуйте повторить запрос с другим фото. Если фото отвечает критериям, но результат не получен, обратитесь в техподдержку.",
-          { duration: 10000 }
+          { duration: 10000 },
         );
       }, TIMEOUT_DURATION);
     } catch (error) {
