@@ -1006,6 +1006,13 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
         excluded_types.update(['VIBRANT SPRING', 'GENTLE AUTUMN'])
         print(f'[Match] Dark brown hair with warm undertone + brown eyes → VIVID AUTUMN (excluding VIBRANT SPRING, GENTLE AUTUMN)')
     
+    # Rule 14: BRIGHT WINTER, DEEP WINTER, VIVID AUTUMN → ONLY dark hair allowed (validation)
+    has_light_hair = any(keyword in hair_lower for keyword in ['light brown', 'light', 'blonde', 'blond', 'golden blond', 'ash blond', 'honey', 'caramel', 'strawberry'])
+    dark_types_requiring_dark_hair = {'BRIGHT WINTER', 'DEEP WINTER', 'VIVID AUTUMN'}
+    if has_light_hair:
+        excluded_types.update(dark_types_requiring_dark_hair)
+        print(f'[Match] Light hair detected → excluding {dark_types_requiring_dark_hair} (these types require dark hair ONLY)')
+    
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
     
