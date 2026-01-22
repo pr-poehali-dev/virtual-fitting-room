@@ -10,7 +10,7 @@ import uuid
 import base64
 
 
-# Updated with 11 exclusion rules for accurate color type matching
+# Updated with 11 exclusion rules + bright/soft eyes distinction for accurate color type matching
 # Rule 1: Brown eyes → exclude GENTLE SPRING, BRIGHT SPRING, all SUMMER, SOFT WINTER
 # Rule 2: Cool light eyes → exclude VIVID AUTUMN, VIVID WINTER
 # Rule 3: Chestnut brown hair → exclude BRIGHT SPRING
@@ -21,9 +21,11 @@ import base64
 # Rule 8: Bright blue/bright green eyes → exclude VIVID SUMMER (bright eyes = VIBRANT SPRING or BRIGHT WINTER)
 # Rule 9: Light blue/light green/light turquoise eyes → ONLY SOFT SUMMER or GENTLE SPRING
 # Rule 10: Bright eyes (bright blue, bright green, bright blue-green) → ONLY VIBRANT SPRING or BRIGHT WINTER
-# Rule 11: Dark/deep brown hair + bright blue eyes → BRIGHT WINTER (NOT VIBRANT SPRING) - signature combination
+# Rule 11: Dark/deep brown hair + bright blue/gray-blue eyes → BRIGHT WINTER (NOT VIBRANT SPRING, NOT SOFT WINTER)
+# Rule 12: Dark/deep brown hair + soft/muted gray/gray-blue eyes → SOFT WINTER (NOT BRIGHT WINTER, NOT VIVID SUMMER)
 # VIBRANT SPRING: warm, clear, high-contrast, bright eyes (blue/green/hazel), NOT gray eyes, NOT deep dark hair
-# BRIGHT WINTER: cool, bright eyes, DEEP DARK hair (signature: dark hair + bright blue eyes)
+# BRIGHT WINTER: cool, BRIGHT/SPARKLING eyes, DEEP DARK hair (signature: dark hair + bright eyes)
+# SOFT WINTER: cool, SOFT/MUTED gray eyes, DEEP DARK hair (signature: dark hair + soft gray eyes)
 # VIVID SUMMER: cool, muted, can have gray eyes, NOT bright colored eyes
 # User's eye_color is now passed directly to GPT to avoid misdetection
 
@@ -126,27 +128,31 @@ This image shows multiple person examples for each color type. Use it to compare
 
 ⚠️ EYE COLOR RULES:
 - Light eyes (light blue, light green, light turquoise) → ONLY SOFT SUMMER or GENTLE SPRING
-- Bright eyes (bright blue, bright green, bright blue-green) → ONLY VIBRANT SPRING or BRIGHT WINTER
-- ⚠️ CRITICAL: Dark/deep brown hair + bright blue eyes → ALWAYS BRIGHT WINTER (NOT VIBRANT SPRING)
-- Gray/grey eyes (gray, gray-blue, gray-green) → NEVER VIBRANT SPRING (gray = VIVID SUMMER, DUSTY SUMMER or SOFT WINTER)
+- Bright eyes (bright blue, bright green, bright blue-green, bright gray-blue) → ONLY VIBRANT SPRING or BRIGHT WINTER
+- ⚠️ CRITICAL: Dark/deep brown hair + BRIGHT blue/gray-blue eyes → ALWAYS BRIGHT WINTER (NOT SOFT WINTER, NOT VIBRANT SPRING)
+- ⚠️ CRITICAL: Dark/deep brown hair + SOFT/MUTED gray/gray-blue eyes → ALWAYS SOFT WINTER (NOT BRIGHT WINTER, NOT VIVID SUMMER)
+- Gray/grey eyes (gray, gray-blue, gray-green) WITHOUT "bright" → NEVER VIBRANT SPRING (gray = VIVID SUMMER, DUSTY SUMMER or SOFT WINTER)
 
 VIBRANT SPRING - WARM, CLEAR, HIGH-CONTRAST, VIBRANT
 Eyes: Bright blue, bright green, bright blue-green, hazel (warm). CAN have brown eyes with light/medium warm hair. NEVER gray/grey eyes.
 Hair: Medium to light brown, auburn, golden brown, chestnut. NEVER deep dark brown/black hair.
-⚠️ CRITICAL: Dark/deep brown hair + bright blue eyes = BRIGHT WINTER (NOT VIBRANT SPRING).
+⚠️ CRITICAL: Dark/deep brown hair + bright eyes = BRIGHT WINTER (NOT VIBRANT SPRING).
 Similar to BRIGHT WINTER but does NOT have deep dark hair (VIBRANT SPRING = lighter hair).
 Similar to VIVID SUMMER but does NOT have gray/grey eyes (VIVID SUMMER = gray eyes).
 
-BRIGHT WINTER - COLD, SPARKLING EYES, CLEAR SKIN, HIGH-CONTRAST
-Eyes: Bright blue, bright green, bright gray-blue, dark brown, black-brown. Eyes are BRIGHT/clear, not muted.
+BRIGHT WINTER - COLD, SPARKLING BRIGHT EYES, CLEAR SKIN, HIGH-CONTRAST
+Eyes: BRIGHT blue, BRIGHT green, BRIGHT gray-blue, dark brown, black-brown. Eyes are BRIGHT/SPARKLING/clear, NOT muted or soft.
 Hair: Deep dark brown, black, cool dark brown (DARK hair is key feature).
-⚠️ CRITICAL: Dark/deep brown hair + bright blue eyes = BRIGHT WINTER (typical combination).
-Differs from SOFT WINTER: eyes are BRIGHTER (not soft muted gray).
+⚠️ CRITICAL: Dark hair + BRIGHT blue/gray-blue eyes = BRIGHT WINTER (signature combination).
+⚠️ CRITICAL: If eyes described as "soft", "muted", or just "gray" without "bright" → NOT BRIGHT WINTER, it's SOFT WINTER.
+Differs from SOFT WINTER: eyes are BRIGHTER/SPARKLING (not soft muted gray).
 Similar to VIBRANT SPRING but has DEEP DARK hair (BRIGHT WINTER = dark hair, VIBRANT SPRING = lighter hair).
 
-SOFT WINTER - COLD, ICY, BLUE, HIGH-CONTRAST
-Eyes: Soft gray, gray-blue, gray-green, cool blue (all MUTED/soft quality).
-Skin is pale with bluish undertone. Hair is dark colors.
+SOFT WINTER - COLD, ICY, SOFT/MUTED EYES, HIGH-CONTRAST
+Eyes: Soft gray, gray-blue, gray-green, cool blue (all MUTED/SOFT quality, NOT bright or sparkling).
+Skin is pale/light with cool undertone. Hair is dark colors (dark brown, black).
+⚠️ CRITICAL: Dark hair + SOFT/MUTED gray/gray-blue eyes = SOFT WINTER (signature combination).
+⚠️ CRITICAL: If eyes described as "bright" → NOT SOFT WINTER, it's BRIGHT WINTER.
 Differs from BRIGHT WINTER: eyes are SOFTER/more muted (not bright sparkling).
 Differs from VIVID SUMMER: skin is paler, hair is darker, contrast is higher.
 
@@ -309,7 +315,11 @@ Analyze the colors visible in this image and determine:
      "mahogany" (red-violet), "ash" (cool, no warmth)
      * Specify undertone: "ash" (cool), "golden" (warm), "neutral", "copper" (red)
      * If color differs: describe as "roots: [color], length: [color]" or "ombre/balayage [color] to [color]"
-   - Eyes: Use color names - "deep brown", "bright blue", "hazel", "gray-blue", "green", "amber", "dark gray"
+   - Eyes: ⚠️ CRITICAL - ALWAYS specify if eyes are BRIGHT/SPARKLING or SOFT/MUTED:
+     * For blue/gray-blue/gray eyes: MUST use "bright blue", "bright gray-blue" OR "soft gray", "soft gray-blue", "muted gray-blue"
+     * Examples: "bright blue" (sparkling, clear), "soft gray-blue" (muted, subdued), "bright gray-blue" (clear gray-blue)
+     * Other colors: "deep brown", "hazel", "green", "amber", "dark gray", "light blue"
+     * NEVER just write "gray-blue" or "blue" - always add "bright" or "soft/muted" qualifier
    - Skin: ⚠️ CRITICAL - Analyze skin tone in MULTIPLE facial zones (forehead, cheeks, chin) considering lighting:
      * Step 1: Identify BASE tone from lightest area (usually forehead):
        "porcelain" (very pale, pink undertone), "ivory" (pale, neutral-cool), "fair" (light, neutral), 
@@ -1166,10 +1176,16 @@ def match_colortype(analysis: dict) -> tuple:
     has_auburn_hair = any(keyword in hair_lower for keyword in ['auburn', 'copper', 'red', 'bright auburn', 'ginger'])
     has_gray_eyes = any(keyword in eyes_lower for keyword in ['gray', 'grey', 'gray-blue', 'grey-blue', 'gray-green', 'grey-green'])
     has_dark_hair = any(keyword in hair_lower for keyword in ['dark brown', 'deep brown', 'black', 'espresso', 'dark chestnut', 'dark cool brown'])
-    has_bright_blue_eyes = any(keyword in eyes_lower for keyword in ['bright blue', 'ярко-голубые', 'blue'])
+    
+    # Distinguish BRIGHT eyes (яркие) from SOFT/MUTED eyes (мягкие)
+    has_bright_eyes = any(keyword in eyes_lower for keyword in ['bright blue', 'bright gray-blue', 'bright grey-blue', 'ярко-голубые', 'яркие серо-голубые', 'яркие синие'])
+    has_soft_muted_eyes = any(keyword in eyes_lower for keyword in ['soft', 'muted', 'мягкие', 'приглушенные']) or (
+        has_gray_eyes and not has_bright_eyes
+    )
+    
     is_warm_undertone = undertone == 'WARM-UNDERTONE'
     
-    print(f'[Match] Auburn/red hair detected: {has_auburn_hair}, Gray eyes detected: {has_gray_eyes}, Dark hair: {has_dark_hair}, Bright blue eyes: {has_bright_blue_eyes}, Warm undertone: {is_warm_undertone}')
+    print(f'[Match] Auburn/red hair: {has_auburn_hair}, Gray eyes: {has_gray_eyes}, Dark hair: {has_dark_hair}, Bright eyes: {has_bright_eyes}, Soft/muted eyes: {has_soft_muted_eyes}, Warm undertone: {is_warm_undertone}')
     
     best_colortype = None
     best_total_score = 0.0
@@ -1232,13 +1248,18 @@ def match_colortype(analysis: dict) -> tuple:
             color_score += 0.15
             print(f'[Match] {colortype}: BONUS +0.15 for auburn hair (characteristic color)')
         
-        # BONUS: Dark hair + bright blue eyes → +0.20 for BRIGHT WINTER (signature combination)
-        if has_dark_hair and has_bright_blue_eyes and colortype == 'BRIGHT WINTER':
-            color_score += 0.20
-            print(f'[Match] {colortype}: BONUS +0.20 for dark hair + bright blue eyes (signature combination)')
+        # BONUS: Dark hair + BRIGHT eyes → +0.25 for BRIGHT WINTER (signature combination)
+        if has_dark_hair and has_bright_eyes and colortype == 'BRIGHT WINTER':
+            color_score += 0.25
+            print(f'[Match] {colortype}: BONUS +0.25 for dark hair + bright eyes (signature BRIGHT WINTER)')
         
-        # BONUS: Gray eyes → +0.15 for SOFT WINTER, VIVID SUMMER, DUSTY SUMMER
-        if has_gray_eyes and colortype == 'SOFT WINTER':
+        # BONUS: Dark hair + SOFT/MUTED gray eyes → +0.25 for SOFT WINTER (signature combination)
+        if has_dark_hair and has_soft_muted_eyes and colortype == 'SOFT WINTER':
+            color_score += 0.25
+            print(f'[Match] {colortype}: BONUS +0.25 for dark hair + soft/muted gray eyes (signature SOFT WINTER)')
+        
+        # BONUS: Gray eyes → +0.15 for SOFT WINTER, VIVID SUMMER, DUSTY SUMMER (if not already applied above)
+        if has_gray_eyes and colortype == 'SOFT WINTER' and not has_soft_muted_eyes:
             color_score += 0.15
             print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (characteristic color)')
         
