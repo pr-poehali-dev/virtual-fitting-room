@@ -516,6 +516,7 @@ def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
 
 # Lightness combinations allowed for each colortype (hair, skin, eyes)
 COLORTYPE_LIGHTNESS_COMBINATIONS = {
+    'VIBRANT SPRING': [
         ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'LIGHT-EYES-COLORS'),
         ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'MEDIUM-EYES-COLORS'),
         ('MEDIUM-HAIR-COLORS', 'LIGHT-SKIN-COLORS', 'DEEP-EYES-COLORS'),
