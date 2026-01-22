@@ -93,7 +93,6 @@ RIGHT SIDE - Color characteristics:
 ⚠️ IMPORTANT: Each scheme has TEXT LABELS in ENGLISH - READ THESE TEXTS carefully! They provide:
 - Color type name in English (use this exact name in JSON output)
 
-
 TASK FOR STEP 1:
 1. Look at the ANALYZED PHOTO carefully
 2. Compare it with ALL 12 reference schemes
