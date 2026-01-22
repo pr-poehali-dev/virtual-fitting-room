@@ -133,6 +133,13 @@ EYE COLOR HINTS:
 - GREEN eyes → more often WARM undertone (Spring/Autumn)
 - GRAY eyes → more often COOL undertone (Winter/Summer)
 
+⚠️ BLONDE HAIR TRAP: Light blonde hair may LOOK "golden" but actually be COOL undertone.
+ALWAYS compare with reference examples BEFORE deciding:
+- Compare with Spring/Autumn examples (warm types) in reference schemes (6-7 photos per type)
+- Compare with Winter/Summer examples (cool types) in reference image with all 12 types
+- If analyzed hair is LESS golden/warm than Spring/Autumn examples → it's COOL undertone (Winter/Summer)
+- Only if hair is AS golden/warm as Spring/Autumn examples → it's WARM undertone
+
 Choose: COOL-UNDERTONE or WARM-UNDERTONE
 
 ⚠️ IMPORTANT: Describe colors correctly:
