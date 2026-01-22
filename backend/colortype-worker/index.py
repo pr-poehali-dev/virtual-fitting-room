@@ -987,49 +987,6 @@ def calculate_param_match_score(analysis_value: str, expected_value: str) -> flo
     '''Check if parameter matches expected value (1.0 if match, 0.0 if not)'''
     return 1.0 if analysis_value == expected_value else 0.0
 
-def count_rule_violations(colortype: str, eyes_lower: str, hair_lower: str, skin_lower: str) -> int:
-    '''Count how many exclusion rules this colortype violates
-    Returns: number of violated rules (0 = no violations, 10 = all rules violated)
-    '''
-    violations = 0
-    light_skin = any(keyword in skin_lower for keyword in ['light', 'pale', 'ivory', 'porcelain', 'fair', 'alabaster'])
-    cool_eyes = any(keyword in eyes_lower for keyword in ['blue', 'gray-blue', 'grey-blue', 'blue-gray', 'blue-grey'])
-    
-    # Rule 1: Brown eyes → exclude GENTLE SPRING, BRIGHT SPRING (NOT VIBRANT SPRING - it can have brown eyes), all SUMMER, and SOFT WINTER
-    if any(keyword in eyes_lower for keyword in ['black-brown', 'brown', 'brown-green', 'dark brown', 'deep brown', 'chestnut', 'chocolate', 'amber']):
-        if colortype in ['GENTLE SPRING', 'BRIGHT SPRING', 'SOFT SUMMER', 'DUSTY SUMMER', 'VIVID SUMMER', 'SOFT WINTER']:
-            violations += 1
-    
-    # Rule 2: Cool light eyes → exclude VIVID AUTUMN and VIVID WINTER
-    if any(keyword in eyes_lower for keyword in ['blue', 'gray', 'grey', 'gray-green', 'gray-blue', 'grey-green', 'grey-blue', 'blue-gray', 'blue-grey']):
-        if colortype in ['VIVID AUTUMN', 'VIVID WINTER']:
-            violations += 1
-    
-    # Rule 3: Chestnut brown hair → exclude BRIGHT SPRING
-    if any(keyword in hair_lower for keyword in ['chestnut brown', 'chestnut', 'medium brown', 'warm brown']):
-        if colortype == 'BRIGHT SPRING':
-            violations += 1
-    
-    # Rule 4: Light skin + blue/grey-blue eyes → exclude GENTLE AUTUMN
-    if light_skin and cool_eyes:
-        if colortype == 'GENTLE AUTUMN':
-            violations += 1
-    
-    # Rule 5: Golden blonde or blonde hair → exclude FIERY AUTUMN and VIVID AUTUMN
-    if any(keyword in hair_lower for keyword in ['golden blond', 'golden blonde', 'blonde', 'blond', 'light blond', 'light blonde', 'honey blond', 'honey blonde']):
-        if colortype in ['FIERY AUTUMN', 'VIVID AUTUMN']:
-            violations += 1
-    
-    # Rule 6: Copper hair (medium-dark warm reddish) → exclude GENTLE SPRING
-    # Exception: LIGHT COPPER (pale golden-reddish blonde) CAN be gentle spring
-    if any(keyword in hair_lower for keyword in ['copper', 'auburn', 'red']):
-        # Check if it's LIGHT copper (should contain "light" or "pale" or "golden blonde")
-        is_light_copper = any(light_keyword in hair_lower for light_keyword in ['light copper', 'pale copper', 'light golden', 'pale golden', 'golden blonde', 'strawberry blonde', 'strawberry blond'])
-        if not is_light_copper and colortype == 'GENTLE SPRING':
-            violations += 1
-    
-    return violations
-
 def match_colortype(analysis: dict) -> tuple:
     '''Match analysis to best colortype using 3-stage filtering
     
