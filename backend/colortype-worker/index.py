@@ -177,7 +177,7 @@ GENTLE SPRING - WARM, LOW-CONTRAST, LIGHT
 Eyes: Light blue, light green, light turquoise (with WARM undertone), hazel (LIGHT but warm quality).
 Lighter than BRIGHT SPRING.
 Warmer than SOFT SUMMER (golden/peachy skin vs cool pink).
-⚠️ EXCEPTION: Copper hair (medium-dark) is NOT gentle spring. LIGHT COPPER (pale golden-reddish blonde) CAN be gentle spring if low contrast.
+⚠️ EXCEPTION: Copper hair is NOT gentle spring. LIGHT COPPER (pale golden-reddish blonde) CAN be gentle spring if low contrast.
 
 BRIGHT SPRING - WARM, CLEAR, MEDIUM CONTRAST
 Eyes: Blue, green, blue-green, hazel (clear/bright). NEVER brown eyes (brown = VIBRANT SPRING or AUTUMN).
