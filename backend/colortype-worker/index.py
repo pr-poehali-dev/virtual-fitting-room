@@ -126,14 +126,16 @@ COOL signs: Pink/rosy/bluish skin, ash/platinum/black hair, gray/blue eyes, over
 ⚠️ CRITICAL FOR NEUTRAL CASES:
 Hair/skin can appear NEUTRAL (neither clearly warm nor cool) - this is NORMAL. When hair/skin are NEUTRAL:
 - Look at EYES to decide undertone
-- COOL eyes (blue, gray, gray-blue, gray-green) + neutral hair/skin → COOL-UNDERTONE
+- COOL eyes (blue, gray, gray-blue, gray-green, grey-green, grey-blue) + neutral hair/skin → COOL-UNDERTONE
 - WARM eyes (hazel, amber, golden brown) + neutral hair/skin → WARM-UNDERTONE
-- GREEN eyes + neutral hair/skin → lean WARM-UNDERTONE
+- GREEN eyes (pure green, NOT gray-green) + neutral hair/skin → lean WARM-UNDERTONE
+- ⚠️ SPECIAL RULE: If hair="neutral" AND eyes contain "gray" or "grey" → ALWAYS COOL-UNDERTONE (gray eyes override warm skin)
 - When in doubt → favor COOL if there's ANY coolness
 
 EYE COLOR HINTS:
-- GREEN eyes → more often WARM undertone (Spring/Autumn)
-- GRAY eyes → more often COOL undertone (Winter/Summer)
+- PURE GREEN eyes (jade, emerald, NO gray prefix) → more often WARM undertone (Spring/Autumn)
+- GRAY eyes OR GRAY-GREEN eyes OR GREY-GREEN eyes → ALWAYS COOL undertone (Winter/Summer)
+- If you describe hair as "neutral" + eyes have "gray"/"grey" → you MUST choose COOL-UNDERTONE
 
 ⚠️ CRITICAL FOR BLONDE HAIR - DON'T TRUST COLOR NAMES:
 When you see blonde/light hair, DON'T decide undertone from color name alone ("golden blonde" can be BOTH warm OR cool).
