@@ -737,6 +737,21 @@ def match_colortype(analysis: dict) -> tuple:
         
         color_score = (hair_score * 0.32) + (skin_score * 0.32) + (eyes_score * 0.36)
         
+        # BONUS: Gray eyes → +0.15 for SOFT WINTER, VIVID SUMMER, DUSTY SUMMER
+        has_gray_eyes = any(keyword in eyes_lower for keyword in ['gray', 'grey', 'gray-blue', 'grey-blue', 'gray-green', 'grey-green'])
+        
+        if has_gray_eyes and colortype == 'SOFT WINTER':
+            color_score += 0.15
+            print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (characteristic color)')
+        
+        if has_gray_eyes and colortype == 'VIVID SUMMER':
+            color_score += 0.15
+            print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (characteristic color)')
+        
+        if has_gray_eyes and colortype == 'DUSTY SUMMER':
+            color_score += 0.15
+            print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (characteristic color)')
+        
         # Total score: 2x parameters + 1x colors
         total_score = (param_match * 2.0) + (color_score * 1.0)
         

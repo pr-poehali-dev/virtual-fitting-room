@@ -1250,8 +1250,16 @@ def match_colortype(analysis: dict) -> tuple:
             color_score += 0.15
             print(f'[Match] {colortype}: BONUS +0.15 for auburn hair (characteristic color)')
         
-        # BONUS: Gray eyes → +0.15 for SOFT WINTER
+        # BONUS: Gray eyes → +0.15 for SOFT WINTER, VIVID SUMMER, DUSTY SUMMER
         if has_gray_eyes and colortype == 'SOFT WINTER':
+            color_score += 0.15
+            print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (characteristic color)')
+        
+        if has_gray_eyes and colortype == 'VIVID SUMMER':
+            color_score += 0.15
+            print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (characteristic color)')
+        
+        if has_gray_eyes and colortype == 'DUSTY SUMMER':
             color_score += 0.15
             print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (characteristic color)')
         
