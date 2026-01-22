@@ -61,8 +61,6 @@ CONTRAST_RU = {
     'HIGH-CONTRAST': 'высокий'
 }
 
-REFERENCE_SCHEMA_URL = "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortypes.jpg"
-
 PROMPT_TEMPLATE = '''You are a professional color analyst for fashion and styling purposes. Your task is to analyze ONLY the colors visible in this photo - hair color, skin tone, and eye color - for color season analysis (a standard method in fashion industry).
 
 ⚠️ CRITICAL INSTRUCTIONS:
