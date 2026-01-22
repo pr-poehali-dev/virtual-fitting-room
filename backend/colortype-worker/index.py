@@ -113,7 +113,7 @@ EYE RULES:
 - Bright eyes (bright blue/green/gray-blue) → ONLY VIBRANT SPRING or BRIGHT WINTER
 - Gray eyes (without "bright") → NEVER VIBRANT SPRING
 - Dark hair + BRIGHT eyes → BRIGHT WINTER
-- Dark hair + SOFT gray eyes → SOFT WINTER
+- Dark hair + SOFT gray eyes → SOFT WINTER or VIVID SUMMER or DUSTY SUMMER
 
 === STEP 2: DETAILED ANALYSIS ===
 
