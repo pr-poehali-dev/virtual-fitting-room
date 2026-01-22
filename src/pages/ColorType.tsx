@@ -21,6 +21,12 @@ const TIMEOUT_DURATION = 180000; // 3 minutes
 
 // Eye colors mapping (Russian → English)
 const eyeColors: Record<string, string> = {
+  "Светло-голубые": "light blue",
+  "Светло-зелёные": "light green",
+  "Светло-лазурные": "light turquoise",
+  "Ярко-голубые": "bright blue",
+  "Ярко-зелёные": "bright green",
+  "Ярко-сине-зелёные": "bright blue-green",
   Голубые: "blue",
   "Сине-зелёные": "blue-green",
   "Серо-голубые": "gray-blue",
