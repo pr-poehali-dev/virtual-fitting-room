@@ -17,7 +17,7 @@ from datetime import datetime
 # Rule 9: Light blue/light green/light turquoise eyes → ONLY SOFT SUMMER or GENTLE SPRING
 # Rule 10: Bright eyes (bright blue, bright green, bright blue-green, bright brown) → ONLY VIBRANT SPRING or BRIGHT WINTER
 # Rule 11: Dark/deep brown hair + bright blue/gray-blue eyes → BRIGHT WINTER (NOT VIBRANT SPRING, NOT SOFT WINTER)
-# Rule 12: Dark/deep brown hair + soft/muted gray/gray-blue eyes → SOFT WINTER (NOT BRIGHT WINTER, NOT VIVID SUMMER)
+# Rule 12: Dark/deep brown hair + soft/muted gray/gray-blue eyes → SOFT WINTER or VIVID SUMMER (NOT BRIGHT WINTER)
 # Rule 13: Dark brown hair with warm undertone + brown eyes → VIVID AUTUMN (NOT VIBRANT SPRING, NOT GENTLE AUTUMN)
 # Rule 14: Light hair → exclude BRIGHT WINTER, DEEP WINTER, VIVID AUTUMN (these types require ONLY dark hair)
 # Rule 15: Dark brown hair + brown eyes → exclude VIBRANT SPRING (characteristic of VIVID AUTUMN)
@@ -566,13 +566,46 @@ def match_colortype(analysis: dict) -> tuple:
         excluded_types.update(all_types)
         print(f'[Match] Light colored eyes detected → ONLY SOFT SUMMER or GENTLE SPRING allowed')
     
-    # Rule 10: Bright eyes (bright blue, bright green, bright blue-green) → ONLY VIBRANT SPRING or BRIGHT WINTER
+    # Rule 10: Bright eyes (bright blue, bright green, bright blue-green, bright brown) → ONLY VIBRANT SPRING or BRIGHT WINTER
     # This is more specific than Rule 8, so check last
-    if any(keyword in eyes_lower for keyword in ['bright blue', 'bright green', 'bright blue-green', 'яркие', 'ярко-голубые', 'ярко-зелёные', 'ярко-сине-зелёные']):
+    if any(keyword in eyes_lower for keyword in ['bright blue', 'bright green', 'bright blue-green', 'bright brown', 'яркие', 'ярко-голубые', 'ярко-зелёные', 'ярко-сине-зелёные', 'ярко-карие']):
         # Keep only VIBRANT SPRING and BRIGHT WINTER
         all_types = {'GENTLE SPRING', 'BRIGHT SPRING', 'SOFT SUMMER', 'DUSTY SUMMER', 'VIVID SUMMER', 'GENTLE AUTUMN', 'FIERY AUTUMN', 'VIVID AUTUMN', 'SOFT WINTER', 'VIVID WINTER'}
         excluded_types.update(all_types)
         print(f'[Match] Bright eyes detected → ONLY VIBRANT SPRING or BRIGHT WINTER allowed')
+    
+    # Rule 11: Dark/deep brown hair + bright eyes → BRIGHT WINTER (NOT VIBRANT SPRING, NOT SOFT WINTER)
+    has_dark_hair = any(keyword in hair_lower for keyword in ['dark brown', 'deep brown', 'black', 'espresso', 'dark chestnut', 'dark cool brown'])
+    has_bright_blue_eyes = any(keyword in eyes_lower for keyword in ['bright blue', 'bright gray-blue', 'bright grey-blue', 'ярко-голубые', 'яркие серо-голубые'])
+    if has_dark_hair and has_bright_blue_eyes:
+        excluded_types.update(['VIBRANT SPRING', 'SOFT WINTER'])
+        print(f'[Match] Dark/deep brown hair + bright eyes → BRIGHT WINTER (excluding VIBRANT SPRING, SOFT WINTER)')
+    
+    # Rule 12: Dark/deep brown hair + soft/muted gray eyes → SOFT WINTER or VIVID SUMMER (NOT BRIGHT WINTER)
+    # FIXED: VIVID SUMMER can also have dark hair + soft gray eyes at LOW-MEDIUM contrast!
+    has_soft_gray_eyes = any(keyword in eyes_lower for keyword in ['soft gray', 'soft gray-blue', 'soft grey-blue', 'soft gray-green', 'мягкие серо-голубые', 'мягкие серые'])
+    if has_dark_hair and has_soft_gray_eyes:
+        excluded_types.add('BRIGHT WINTER')
+        print(f'[Match] Dark/deep brown hair + soft/muted gray eyes → SOFT WINTER or VIVID SUMMER (excluding BRIGHT WINTER only)')
+    
+    # Rule 13: Dark brown hair with warm undertone + brown eyes → VIVID AUTUMN (NOT VIBRANT SPRING, NOT GENTLE AUTUMN)
+    has_dark_brown_warm = any(keyword in hair_lower for keyword in ['dark brown with warm', 'dark brown warm', 'warm dark brown', 'deep brown with warm', 'deep brown warm'])
+    has_brown_eyes = any(keyword in eyes_lower for keyword in ['brown', 'dark brown', 'deep brown', 'chestnut', 'chocolate'])
+    if has_dark_brown_warm and has_brown_eyes:
+        excluded_types.update(['VIBRANT SPRING', 'GENTLE AUTUMN'])
+        print(f'[Match] Dark brown hair with warm undertone + brown eyes → VIVID AUTUMN (excluding VIBRANT SPRING, GENTLE AUTUMN)')
+    
+    # Rule 14: BRIGHT WINTER, DEEP WINTER, VIVID AUTUMN → ONLY dark hair allowed (validation)
+    has_light_hair = any(keyword in hair_lower for keyword in ['light brown', 'light', 'blonde', 'blond', 'golden blond', 'ash blond', 'honey', 'caramel', 'strawberry'])
+    dark_types_requiring_dark_hair = {'BRIGHT WINTER', 'DEEP WINTER', 'VIVID AUTUMN'}
+    if has_light_hair:
+        excluded_types.update(dark_types_requiring_dark_hair)
+        print(f'[Match] Light hair detected → excluding {dark_types_requiring_dark_hair} (these types require dark hair ONLY)')
+    
+    # Rule 15: Dark brown hair + brown eyes → exclude VIBRANT SPRING (this is VIVID AUTUMN characteristic)
+    if has_dark_hair and has_brown_eyes:
+        excluded_types.add('VIBRANT SPRING')
+        print(f'[Match] Dark brown hair + brown eyes → excluding VIBRANT SPRING (characteristic of VIVID AUTUMN)')
     
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
