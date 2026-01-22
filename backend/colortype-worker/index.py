@@ -10,7 +10,7 @@ import uuid
 import base64
 
 
-# Updated with 11 exclusion rules + bright/soft eyes distinction for accurate color type matching
+# Updated with 13 exclusion rules + bright/soft eyes distinction for accurate color type matching
 # Rule 1: Brown eyes → exclude GENTLE SPRING, BRIGHT SPRING, all SUMMER, SOFT WINTER
 # Rule 2: Cool light eyes → exclude VIVID AUTUMN, VIVID WINTER
 # Rule 3: Chestnut brown hair → exclude BRIGHT SPRING
@@ -23,6 +23,7 @@ import base64
 # Rule 10: Bright eyes (bright blue, bright green, bright blue-green) → ONLY VIBRANT SPRING or BRIGHT WINTER
 # Rule 11: Dark/deep brown hair + bright blue/gray-blue eyes → BRIGHT WINTER (NOT VIBRANT SPRING, NOT SOFT WINTER)
 # Rule 12: Dark/deep brown hair + soft/muted gray/gray-blue eyes → SOFT WINTER (NOT BRIGHT WINTER, NOT VIVID SUMMER)
+# Rule 13: Dark brown hair with warm undertone + brown eyes → VIVID AUTUMN (NOT VIBRANT SPRING, NOT GENTLE AUTUMN)
 # VIBRANT SPRING: warm, clear, high-contrast, bright eyes (blue/green/hazel), NOT gray eyes, NOT deep dark hair
 # BRIGHT WINTER: cool, BRIGHT/SPARKLING eyes, DEEP DARK hair (signature: dark hair + bright eyes)
 # SOFT WINTER: cool, SOFT/MUTED gray eyes, DEEP DARK hair (signature: dark hair + soft gray eyes)
@@ -1143,6 +1144,13 @@ def match_colortype(analysis: dict) -> tuple:
     if has_dark_hair and has_soft_gray_eyes:
         excluded_types.update(['BRIGHT WINTER', 'VIVID SUMMER'])
         print(f'[Match] Dark/deep brown hair + soft/muted gray eyes → SOFT WINTER (excluding BRIGHT WINTER, VIVID SUMMER)')
+    
+    # Rule 13: Dark brown hair with warm undertone + brown eyes → VIVID AUTUMN (NOT VIBRANT SPRING, NOT GENTLE AUTUMN)
+    has_dark_brown_warm = any(keyword in hair_lower for keyword in ['dark brown with warm', 'dark brown warm', 'warm dark brown', 'deep brown with warm', 'deep brown warm'])
+    has_brown_eyes = any(keyword in eyes_lower for keyword in ['brown', 'dark brown', 'deep brown', 'chestnut', 'chocolate'])
+    if has_dark_brown_warm and has_brown_eyes:
+        excluded_types.update(['VIBRANT SPRING', 'GENTLE AUTUMN'])
+        print(f'[Match] Dark brown hair with warm undertone + brown eyes → VIVID AUTUMN (excluding VIBRANT SPRING, GENTLE AUTUMN)')
     
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
