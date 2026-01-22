@@ -1015,7 +1015,7 @@ def count_rule_violations(colortype: str, eyes_lower: str, hair_lower: str, skin
     # Exception: LIGHT COPPER (pale golden-reddish blonde) CAN be gentle spring
     if any(keyword in hair_lower for keyword in ['copper', 'auburn', 'red']):
         # Check if it's LIGHT copper (should contain "light" or "pale" or "golden blonde")
-        is_light_copper = any(light_keyword in hair_lower for light_keyword in ['light copper', 'pale copper', 'light golden', 'pale golden', 'golden blonde'])
+        is_light_copper = any(light_keyword in hair_lower for light_keyword in ['light copper', 'pale copper', 'light golden', 'pale golden', 'golden blonde', 'strawberry blonde', 'strawberry blond'])
         if not is_light_copper and colortype == 'GENTLE SPRING':
             violations += 1
     
@@ -1091,6 +1091,15 @@ def match_colortype(analysis: dict) -> tuple:
     if any(keyword in hair_lower for keyword in ['golden blond', 'golden blonde', 'blonde', 'blond', 'light blond', 'light blonde', 'honey blond', 'honey blonde']):
         excluded_types.update(['FIERY AUTUMN', 'VIVID AUTUMN'])
         print(f'[Match] Golden blonde/blonde hair detected → excluding FIERY AUTUMN and VIVID AUTUMN')
+    
+    # Rule 6: Copper hair (medium-dark warm reddish) → exclude GENTLE SPRING
+    # Exception: LIGHT COPPER (pale golden-reddish blonde) CAN be gentle spring
+    if any(keyword in hair_lower for keyword in ['copper', 'auburn', 'red']):
+        # Check if it's LIGHT copper (should contain "light" or "pale" or "golden blonde")
+        is_light_copper = any(light_keyword in hair_lower for light_keyword in ['light copper', 'pale copper', 'light golden', 'pale golden', 'golden blonde', 'strawberry blonde', 'strawberry blond'])
+        if not is_light_copper:
+            excluded_types.add('GENTLE SPRING')
+            print(f'[Match] Copper/auburn/red hair (NOT light) detected → excluding GENTLE SPRING')
     
     # Rule 7: Gray/grey eyes → exclude VIBRANT SPRING (gray eyes = VIVID SUMMER or SOFT WINTER characteristic)
     if any(keyword in eyes_lower for keyword in ['gray', 'grey', 'gray-blue', 'grey-blue', 'gray-green', 'grey-green']):
