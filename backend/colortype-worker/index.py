@@ -10,7 +10,7 @@ import uuid
 import base64
 
 
-# Updated with 10 exclusion rules for accurate color type matching
+# Updated with 11 exclusion rules for accurate color type matching
 # Rule 1: Brown eyes → exclude GENTLE SPRING, BRIGHT SPRING, all SUMMER, SOFT WINTER
 # Rule 2: Cool light eyes → exclude VIVID AUTUMN, VIVID WINTER
 # Rule 3: Chestnut brown hair → exclude BRIGHT SPRING
@@ -21,7 +21,9 @@ import base64
 # Rule 8: Bright blue/bright green eyes → exclude VIVID SUMMER (bright eyes = VIBRANT SPRING or BRIGHT WINTER)
 # Rule 9: Light blue/light green/light turquoise eyes → ONLY SOFT SUMMER or GENTLE SPRING
 # Rule 10: Bright eyes (bright blue, bright green, bright blue-green) → ONLY VIBRANT SPRING or BRIGHT WINTER
+# Rule 11: Dark/deep brown hair + bright blue eyes → BRIGHT WINTER (NOT VIBRANT SPRING) - signature combination
 # VIBRANT SPRING: warm, clear, high-contrast, bright eyes (blue/green/hazel), NOT gray eyes, NOT deep dark hair
+# BRIGHT WINTER: cool, bright eyes, DEEP DARK hair (signature: dark hair + bright blue eyes)
 # VIVID SUMMER: cool, muted, can have gray eyes, NOT bright colored eyes
 # User's eye_color is now passed directly to GPT to avoid misdetection
 
@@ -125,18 +127,22 @@ This image shows multiple person examples for each color type. Use it to compare
 ⚠️ EYE COLOR RULES:
 - Light eyes (light blue, light green, light turquoise) → ONLY SOFT SUMMER or GENTLE SPRING
 - Bright eyes (bright blue, bright green, bright blue-green) → ONLY VIBRANT SPRING or BRIGHT WINTER
-- Dark brown hair and bright blue eyes typical for BRIGHT WINTER 
+- ⚠️ CRITICAL: Dark/deep brown hair + bright blue eyes → ALWAYS BRIGHT WINTER (NOT VIBRANT SPRING)
 - Gray/grey eyes (gray, gray-blue, gray-green) → NEVER VIBRANT SPRING (gray = VIVID SUMMER, DUSTY SUMMER or SOFT WINTER)
 
 VIBRANT SPRING - WARM, CLEAR, HIGH-CONTRAST, VIBRANT
 Eyes: Bright blue, bright green, bright blue-green, hazel (warm). CAN have brown eyes with light/medium warm hair. NEVER gray/grey eyes.
+Hair: Medium to light brown, auburn, golden brown, chestnut. NEVER deep dark brown/black hair.
+⚠️ CRITICAL: Dark/deep brown hair + bright blue eyes = BRIGHT WINTER (NOT VIBRANT SPRING).
 Similar to BRIGHT WINTER but does NOT have deep dark hair (VIBRANT SPRING = lighter hair).
 Similar to VIVID SUMMER but does NOT have gray/grey eyes (VIVID SUMMER = gray eyes).
 
 BRIGHT WINTER - COLD, SPARKLING EYES, CLEAR SKIN, HIGH-CONTRAST
 Eyes: Bright blue, bright green, bright gray-blue, dark brown, black-brown. Eyes are BRIGHT/clear, not muted.
+Hair: Deep dark brown, black, cool dark brown (DARK hair is key feature).
+⚠️ CRITICAL: Dark/deep brown hair + bright blue eyes = BRIGHT WINTER (typical combination).
 Differs from SOFT WINTER: eyes are BRIGHTER (not soft muted gray).
-Similar to VIBRANT SPRING but has DEEP DARK hair (BRIGHT WINTER = dark hair).
+Similar to VIBRANT SPRING but has DEEP DARK hair (BRIGHT WINTER = dark hair, VIBRANT SPRING = lighter hair).
 
 SOFT WINTER - COLD, ICY, BLUE, HIGH-CONTRAST
 Eyes: Soft gray, gray-blue, gray-green, cool blue (all MUTED/soft quality).
@@ -1093,6 +1099,13 @@ def match_colortype(analysis: dict) -> tuple:
         excluded_types.update(all_types)
         print(f'[Match] Bright eyes detected → ONLY VIBRANT SPRING or BRIGHT WINTER allowed')
     
+    # Rule 11: Dark/deep brown hair + bright blue eyes → BRIGHT WINTER (NOT VIBRANT SPRING)
+    has_dark_hair = any(keyword in hair_lower for keyword in ['dark brown', 'deep brown', 'black', 'espresso', 'dark chestnut', 'dark cool brown'])
+    has_bright_blue_eyes = any(keyword in eyes_lower for keyword in ['bright blue', 'ярко-голубые', 'blue'])
+    if has_dark_hair and has_bright_blue_eyes:
+        excluded_types.add('VIBRANT SPRING')
+        print(f'[Match] Dark/deep brown hair + bright blue eyes → BRIGHT WINTER (excluding VIBRANT SPRING)')
+    
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
     
@@ -1152,9 +1165,11 @@ def match_colortype(analysis: dict) -> tuple:
     # Detect characteristic features
     has_auburn_hair = any(keyword in hair_lower for keyword in ['auburn', 'copper', 'red', 'bright auburn', 'ginger'])
     has_gray_eyes = any(keyword in eyes_lower for keyword in ['gray', 'grey', 'gray-blue', 'grey-blue', 'gray-green', 'grey-green'])
+    has_dark_hair = any(keyword in hair_lower for keyword in ['dark brown', 'deep brown', 'black', 'espresso', 'dark chestnut', 'dark cool brown'])
+    has_bright_blue_eyes = any(keyword in eyes_lower for keyword in ['bright blue', 'ярко-голубые', 'blue'])
     is_warm_undertone = undertone == 'WARM-UNDERTONE'
     
-    print(f'[Match] Auburn/red hair detected: {has_auburn_hair}, Gray eyes detected: {has_gray_eyes}, Warm undertone: {is_warm_undertone}')
+    print(f'[Match] Auburn/red hair detected: {has_auburn_hair}, Gray eyes detected: {has_gray_eyes}, Dark hair: {has_dark_hair}, Bright blue eyes: {has_bright_blue_eyes}, Warm undertone: {is_warm_undertone}')
     
     best_colortype = None
     best_total_score = 0.0
@@ -1216,6 +1231,11 @@ def match_colortype(analysis: dict) -> tuple:
         if has_auburn_hair and colortype == 'VIBRANT SPRING':
             color_score += 0.15
             print(f'[Match] {colortype}: BONUS +0.15 for auburn hair (characteristic color)')
+        
+        # BONUS: Dark hair + bright blue eyes → +0.20 for BRIGHT WINTER (signature combination)
+        if has_dark_hair and has_bright_blue_eyes and colortype == 'BRIGHT WINTER':
+            color_score += 0.20
+            print(f'[Match] {colortype}: BONUS +0.20 for dark hair + bright blue eyes (signature combination)')
         
         # BONUS: Gray eyes → +0.15 for SOFT WINTER, VIVID SUMMER, DUSTY SUMMER
         if has_gray_eyes and colortype == 'SOFT WINTER':
