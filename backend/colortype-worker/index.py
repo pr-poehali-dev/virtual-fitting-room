@@ -127,7 +127,7 @@ SOFT WINTER - COLD, ICY, BLUE, HIGH-CONTRAST
 Skin is pale with bluish undertone, eyes are cool colors, skin has clean shades. Hair is dark colors. Differs from BRIGHT WINTER in that skin is lighter and cooler. Differs from VIVID SUMMER in that skin is paler, hair is darker, contrast is higher.
 
 VIVID WINTER - COLD, ASH OR NEUTRAL HAIR, COOL EYES, SKIN NEUTRAL OR COOL OR OLIVE
-Dark hair and dark eyes. Unlike BRIGHT WINTER, skin is less bright, hair is dark colors with ashy shade. Eyes are NOT gray - typically dark brown, black-brown, or deep brown.
+Dark hair and dark eyes. Unlike BRIGHT WINTER, skin is less bright, hair is dark colors with ashy shade. Eyes are NOT gray/grey. But typically dark brown, black-brown, or deep brown.
 
 VIVID AUTUMN - WARM, DEEP HAIR, DEEP EYES
 Brown hair tones are warm and saturated and dark. Eyes are dark shades. Differs from VIBRANT SPRING in that eyes are brown in combination with brown eyes.
