@@ -137,21 +137,16 @@ EYE COLOR HINTS:
 ⚠️ CRITICAL FOR BLONDE HAIR - DON'T TRUST COLOR NAMES:
 When you see blonde/light hair, DON'T decide undertone from color name alone ("golden blonde" ≠ warm automatically).
 MANDATORY: Compare the photo directly with reference images:
-1. Open Spring/Autumn reference schemes (warm types with 6-7 photos each)
-2. Open Winter/Summer reference image (cool types)
+1. Open reference image (compare warm types with cool types)
 3. Look at ACTUAL hair color in references, not descriptions
 4. Compare analyzed photo with reference photos side-by-side
 5. Ask: "Does this blonde hair have the SAME warm/honey/peachy quality as Spring/Autumn examples?"
    - YES → WARM-UNDERTONE (honey, peachy, golden-yellow tones visible)
    - NO → COOL-UNDERTONE (ashy, silvery, platinum, neutral-beige tones)
-6. "Golden blonde" CAN be COOL if it's more beige/neutral than true honey-gold
+6. "Golden blonde" CAN be COOL if it's more beige/neutral/blue than true honey-gold
 7. When in doubt between warm/cool blonde → choose COOL (most blondes are cool-toned)
 
 Choose: COOL-UNDERTONE or WARM-UNDERTONE
-
-⚠️ IMPORTANT: Describe colors correctly:
-- Cool undertone → use "cool", "ash", "neutral" (NEVER "golden", "warm")
-- Warm undertone → use "warm", "golden", "honey" (NEVER "ash", "cool")
 
 2. HAIR LIGHTNESS (assess ROOTS 50% + length 50%):
 - LIGHT-HAIR-COLORS: platinum, light blond, golden blond, light strawberry blond
