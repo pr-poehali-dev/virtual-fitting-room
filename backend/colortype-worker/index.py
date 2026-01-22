@@ -135,16 +135,18 @@ EYE COLOR HINTS:
 - GRAY eyes → more often COOL undertone (Winter/Summer)
 
 ⚠️ CRITICAL FOR BLONDE HAIR - DON'T TRUST COLOR NAMES:
-When you see blonde/light hair, DON'T decide undertone from color name alone ("golden blonde" ≠ warm automatically).
+When you see blonde/light hair, DON'T decide undertone from color name alone ("golden blonde" can be BOTH warm OR cool).
 MANDATORY: Compare the photo directly with reference images:
 1. Open reference image (compare warm types with cool types)
-3. Look at ACTUAL hair color in references, not descriptions
-4. Compare analyzed photo with reference photos side-by-side
-5. Ask: "Does this blonde hair have the SAME warm/honey/peachy quality as Spring/Autumn examples?"
-   - YES → WARM-UNDERTONE (honey, peachy, golden-yellow tones visible)
-   - NO → COOL-UNDERTONE (ashy, silvery, platinum, neutral-beige tones)
-6. "Golden blonde" CAN be COOL if it's more beige/neutral/blue than true honey-gold
-7. When in doubt between warm/cool blonde → choose COOL (most blondes are cool-toned)
+2. Look at ACTUAL hair color in references, not descriptions
+3. Compare analyzed photo with reference photos side-by-side
+4. GOLDEN BLONDE has TWO types - check carefully:
+   - SANDY/PEACHY golden blonde (orange sandy, honey, peachy tones) → WARM-UNDERTONE
+   - LIGHT YELLOW golden blonde (beige, ash, platinum, lemon yellow, neutral) → COOL-UNDERTONE
+5. Ask: "Does this blonde have warm peachy/sandy/honey tones OR cool yellow/beige/ashy tones?"
+   - Warm peachy/sandy/honey → WARM-UNDERTONE
+   - Cool yellow/beige/ashy/platinum → COOL-UNDERTONE
+6. When in doubt between warm/cool blonde → choose COOL (most blondes are cool-toned)
 
 Choose: COOL-UNDERTONE or WARM-UNDERTONE
 
@@ -873,8 +875,8 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
     NEW SCORING:
     Parameters (weight x1):
     - Undertone: 50%
-    - Saturation: 25%
-    - Contrast: 25%
+    - Saturation: 14%
+    - Contrast: 36%
     
     Colors (weight x1) - DYNAMIC WEIGHTS:
     - WARM undertone: Hair 45%, Skin 25%, Eyes 30%
@@ -1094,7 +1096,7 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
                 s_match = 1.0 if s == saturation else 0.0
                 c_match = 1.0 if c == contrast else 0.0
                 
-                candidate_score = ((u_match * 0.5) + (s_match * 0.25) + (c_match * 0.25)) / 1.0
+                candidate_score = ((u_match * 0.5) + (s_match * 0.14) + (c_match * 0.36)) / 1.0
                 
                 if candidate_score > param_match:
                     param_match = candidate_score
