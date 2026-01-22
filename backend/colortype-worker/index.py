@@ -1109,12 +1109,18 @@ def match_colortype(analysis: dict) -> tuple:
         excluded_types.update(all_types)
         print(f'[Match] Bright eyes detected → ONLY VIBRANT SPRING or BRIGHT WINTER allowed')
     
-    # Rule 11: Dark/deep brown hair + bright blue eyes → BRIGHT WINTER (NOT VIBRANT SPRING)
+    # Rule 11: Dark/deep brown hair + bright eyes → BRIGHT WINTER (NOT VIBRANT SPRING, NOT SOFT WINTER)
     has_dark_hair = any(keyword in hair_lower for keyword in ['dark brown', 'deep brown', 'black', 'espresso', 'dark chestnut', 'dark cool brown'])
-    has_bright_blue_eyes = any(keyword in eyes_lower for keyword in ['bright blue', 'ярко-голубые', 'blue'])
+    has_bright_blue_eyes = any(keyword in eyes_lower for keyword in ['bright blue', 'bright gray-blue', 'bright grey-blue', 'ярко-голубые', 'яркие серо-голубые'])
     if has_dark_hair and has_bright_blue_eyes:
-        excluded_types.add('VIBRANT SPRING')
-        print(f'[Match] Dark/deep brown hair + bright blue eyes → BRIGHT WINTER (excluding VIBRANT SPRING)')
+        excluded_types.update(['VIBRANT SPRING', 'SOFT WINTER'])
+        print(f'[Match] Dark/deep brown hair + bright eyes → BRIGHT WINTER (excluding VIBRANT SPRING, SOFT WINTER)')
+    
+    # Rule 12: Dark/deep brown hair + soft/muted gray eyes → SOFT WINTER (NOT BRIGHT WINTER, NOT VIVID SUMMER)
+    has_soft_gray_eyes = any(keyword in eyes_lower for keyword in ['soft gray', 'soft gray-blue', 'soft grey-blue', 'soft gray-green', 'мягкие серо-голубые', 'мягкие серые'])
+    if has_dark_hair and has_soft_gray_eyes:
+        excluded_types.update(['BRIGHT WINTER', 'VIVID SUMMER'])
+        print(f'[Match] Dark/deep brown hair + soft/muted gray eyes → SOFT WINTER (excluding BRIGHT WINTER, VIVID SUMMER)')
     
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
@@ -1178,10 +1184,8 @@ def match_colortype(analysis: dict) -> tuple:
     has_dark_hair = any(keyword in hair_lower for keyword in ['dark brown', 'deep brown', 'black', 'espresso', 'dark chestnut', 'dark cool brown'])
     
     # Distinguish BRIGHT eyes (яркие) from SOFT/MUTED eyes (мягкие)
-    has_bright_eyes = any(keyword in eyes_lower for keyword in ['bright blue', 'bright gray-blue', 'bright grey-blue', 'ярко-голубые', 'яркие серо-голубые', 'яркие синие'])
-    has_soft_muted_eyes = any(keyword in eyes_lower for keyword in ['soft', 'muted', 'мягкие', 'приглушенные']) or (
-        has_gray_eyes and not has_bright_eyes
-    )
+    has_bright_eyes = any(keyword in eyes_lower for keyword in ['bright blue', 'bright gray-blue', 'bright grey-blue', 'bright green', 'bright blue-green', 'ярко-голубые', 'яркие серо-голубые', 'яркие синие'])
+    has_soft_muted_eyes = any(keyword in eyes_lower for keyword in ['soft gray', 'soft gray-blue', 'soft grey-blue', 'soft gray-green', 'soft grey-green', 'мягкие серо-голубые', 'мягкие серые', 'мягкие серо-зелёные'])
     
     is_warm_undertone = undertone == 'WARM-UNDERTONE'
     
