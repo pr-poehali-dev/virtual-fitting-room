@@ -92,9 +92,7 @@ RIGHT SIDE - Color characteristics:
 
 ⚠️ IMPORTANT: Each scheme has TEXT LABELS in ENGLISH - READ THESE TEXTS carefully! They provide:
 - Color type name in English (use this exact name in JSON output)
-- Descriptions of color characteristics (undertone, lightness, saturation, contrast)
-- Specific color names for hair, skin, and eyes
-- Russian translation of the color type name (ignore this - use English name for JSON)
+
 
 TASK FOR STEP 1:
 1. Look at the ANALYZED PHOTO carefully
