@@ -242,10 +242,16 @@ Analyze the colors visible in this image and determine:
    - Eyes: Blue, gray, gray-blue, gray-green, cool blue-green
    - Overall impression: Colors look COOL, ashy, icy, no warmth
    
+   ⚠️ EYE COLOR AS UNDERTONE HINT:
+   - GREEN eyes (green, jade, emerald, olive-green) → MORE OFTEN WARM undertone (Spring/Autumn types)
+   - GRAY eyes (gray, grey, gray-blue, gray-green) → MORE OFTEN COOL undertone (Winter/Summer types)
+   - This is a HINT, not absolute rule - always check skin/hair too
+   
    ⚠️ CRITICAL RULE FOR NEUTRAL/AMBIGUOUS CASES:
    - If hair/skin appear NEUTRAL (neither clearly warm nor clearly cool)
    - AND eyes are COOL (blue, gray, gray-blue, gray-green) → classify as COOL-UNDERTONE
    - If hair/skin appear NEUTRAL + eyes are WARM (hazel, amber, golden brown) → classify as WARM-UNDERTONE
+   - If hair/skin appear NEUTRAL + eyes are GREEN → lean toward WARM-UNDERTONE
    - When in doubt between warm/neutral → lean toward COOL if there's ANY coolness in appearance
    - The boundary between warm and neutral should favor COOL classification
    
@@ -1211,6 +1217,7 @@ def match_colortype(analysis: dict) -> tuple:
     # Detect characteristic features
     has_auburn_hair = any(keyword in hair_lower for keyword in ['auburn', 'copper', 'red', 'bright auburn', 'ginger'])
     has_gray_eyes = any(keyword in eyes_lower for keyword in ['gray', 'grey', 'gray-blue', 'grey-blue', 'gray-green', 'grey-green'])
+    has_green_eyes = any(keyword in eyes_lower for keyword in ['green', 'jade', 'emerald', 'olive-green', 'olive green'])
     has_dark_hair = any(keyword in hair_lower for keyword in ['dark brown', 'deep brown', 'black', 'espresso', 'dark chestnut', 'dark cool brown'])
     
     # Distinguish BRIGHT eyes (яркие) from SOFT/MUTED eyes (мягкие)
@@ -1218,8 +1225,9 @@ def match_colortype(analysis: dict) -> tuple:
     has_soft_muted_eyes = any(keyword in eyes_lower for keyword in ['soft gray', 'soft gray-blue', 'soft grey-blue', 'soft gray-green', 'soft grey-green', 'мягкие серо-голубые', 'мягкие серые', 'мягкие серо-зелёные'])
     
     is_warm_undertone = undertone == 'WARM-UNDERTONE'
+    is_cool_undertone = undertone == 'COOL-UNDERTONE'
     
-    print(f'[Match] Auburn/red hair: {has_auburn_hair}, Gray eyes: {has_gray_eyes}, Dark hair: {has_dark_hair}, Bright eyes: {has_bright_eyes}, Soft/muted eyes: {has_soft_muted_eyes}, Warm undertone: {is_warm_undertone}')
+    print(f'[Match] Auburn/red hair: {has_auburn_hair}, Gray eyes: {has_gray_eyes}, Green eyes: {has_green_eyes}, Dark hair: {has_dark_hair}, Bright eyes: {has_bright_eyes}, Soft/muted eyes: {has_soft_muted_eyes}, Warm undertone: {is_warm_undertone}')
     
     best_colortype = None
     best_total_score = 0.0
@@ -1304,6 +1312,18 @@ def match_colortype(analysis: dict) -> tuple:
         if has_gray_eyes and colortype == 'DUSTY SUMMER':
             color_score += 0.15
             print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (characteristic color)')
+        
+        # BONUS: Green eyes → +0.15 for WARM undertone types (Spring/Autumn)
+        if has_green_eyes and is_warm_undertone and colortype in ['GENTLE SPRING', 'BRIGHT SPRING', 'VIBRANT SPRING', 'GENTLE AUTUMN', 'FIERY AUTUMN', 'VIVID AUTUMN']:
+            color_score += 0.15
+            print(f'[Match] {colortype}: BONUS +0.15 for green eyes (more often warm undertone)')
+        
+        # BONUS: Gray eyes → +0.15 for COOL undertone types (Winter/Summer) - general bonus
+        if has_gray_eyes and is_cool_undertone and colortype in ['SOFT WINTER', 'BRIGHT WINTER', 'VIVID WINTER', 'SOFT SUMMER', 'DUSTY SUMMER', 'VIVID SUMMER']:
+            # Only apply if not already applied above (SOFT WINTER, VIVID SUMMER, DUSTY SUMMER)
+            if colortype not in ['SOFT WINTER', 'VIVID SUMMER', 'DUSTY SUMMER']:
+                color_score += 0.15
+                print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (more often cool undertone)')
         
         # Total score: 2x parameters + 1x colors
         total_score = (param_match * 2.0) + (color_score * 1.0)
