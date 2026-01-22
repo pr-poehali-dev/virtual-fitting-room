@@ -124,6 +124,16 @@ https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/7f8
 
 This image shows multiple person examples for each color type. Use it to compare with the analyzed photo and understand the visual diversity within each type.
 
+⚠️ CRITICAL UNDERTONE KNOWLEDGE - LEARN THIS FIRST:
+All 12 color types are divided by UNDERTONE (temperature):
+- COOL UNDERTONE (холодный подтон): All WINTER types (SOFT WINTER, BRIGHT WINTER, VIVID WINTER) + All SUMMER types (SOFT SUMMER, DUSTY SUMMER, VIVID SUMMER)
+- WARM UNDERTONE (тёплый подтон): All SPRING types (GENTLE SPRING, BRIGHT SPRING, VIBRANT SPRING) + All AUTUMN types (GENTLE AUTUMN, FIERY AUTUMN, VIVID AUTUMN)
+
+🎯 When you look at reference schemes and examples:
+- WINTER/SUMMER examples = these are COOL undertone people (pink/bluish skin, ash/cool hair, cool eyes)
+- SPRING/AUTUMN examples = these are WARM undertone people (golden/peachy skin, golden/warm hair, warm eyes)
+- Use these examples to calibrate your understanding of what "warm" vs "cool" looks like
+
 ⚠️ CRITICAL COLOR TYPE DISTINCTIONS (use these rules when comparing the analyzed photo):
 
 ⚠️ EYE COLOR RULES:
@@ -213,28 +223,40 @@ Analyze the colors visible in this image and determine:
 
 1. UNDERTONE - Analyze the overall color temperature (warm or cool)
    
-   🎯 SIMPLE RULE:
-   - Analyze the hair, skin, and eyes colors together
-   - Determine if they are more COOL tones or more WARM tones overall
-   - Look again at the reference image with all 12 color type examples
+   🎯 CRITICAL: Reference schemes and examples you saw earlier are YOUR CALIBRATION for undertone!
+   - All WINTER/SUMMER examples = COOL undertone (this is what "cool" looks like)
+   - All SPRING/AUTUMN examples = WARM undertone (this is what "warm" looks like)
+   - Compare the analyzed photo with these examples to determine undertone
    
-   ⚠️ IMPORTANT KNOWLEDGE:
-   All WINTER and SUMMER types = COOL undertone
-   All AUTUMN and SPRING types = WARM undertone
+   ⚠️ VISUAL SIGNS FOR UNDERTONE DETERMINATION:
    
-   ⚠️ CRITICAL RULE FOR NEUTRAL UNDERTONES:
-   - If hair or skin has NEUTRAL undertone (neither clearly warm nor clearly cool)
-   - AND eyes are COOL-TONED (blue, gray, gray-blue, gray-green, cool blue-green)
-   - Then the OVERALL undertone should be classified as COOL-UNDERTONE
-   - Neutral undertones lean COOL when paired with cool eyes, lean WARM when paired with warm eyes
-   - Eyes have the strongest influence on undertone determination in ambiguous cases
+   WARM UNDERTONE signs (SPRING/AUTUMN types):
+   - Skin: Golden, peachy, yellow, warm beige, bronze tones
+   - Hair: Golden blonde, honey, warm brown, auburn, copper, red, warm chestnut (any GOLDEN/WARM cast)
+   - Overall impression: Colors look WARM, golden, sunny
+   
+   COOL UNDERTONE signs (WINTER/SUMMER types):
+   - Skin: Pink, rosy, bluish, cool beige, porcelain, ivory (NO golden/yellow cast)
+   - Hair: Ash blonde, platinum, cool brown, ash brown, BLACK (NO golden/warm cast)
+   - Eyes: Blue, gray, gray-blue, gray-green, cool blue-green
+   - Overall impression: Colors look COOL, ashy, icy, no warmth
+   
+   ⚠️ CRITICAL RULE FOR NEUTRAL/AMBIGUOUS CASES:
+   - If hair/skin appear NEUTRAL (neither clearly warm nor clearly cool)
+   - AND eyes are COOL (blue, gray, gray-blue, gray-green) → classify as COOL-UNDERTONE
+   - If hair/skin appear NEUTRAL + eyes are WARM (hazel, amber, golden brown) → classify as WARM-UNDERTONE
+   - When in doubt between warm/neutral → lean toward COOL if there's ANY coolness in appearance
+   - The boundary between warm and neutral should favor COOL classification
+   
+   ⚠️ IMPORTANT: Do NOT call colors "warm" if the person has cool undertone (Winter/Summer)!
+   - Cool undertone people: describe colors as "cool", "ash", "neutral" (NEVER "golden", "honey", "warm")
+   - Warm undertone people: describe colors as "warm", "golden", "honey" (NEVER "ash", "cool")
    
    YOUR TASK:
-   Determine which undertone the person in the analyzed photo belongs to:
-   - Choose COOL-UNDERTONE if they look more like Winter/Summer types (cool tones)
-   - Choose WARM-UNDERTONE if they look more like Spring/Autumn types (warm tones)
-   - If neutral hair/skin + cool eyes → COOL-UNDERTONE
-   - If neutral hair/skin + warm eyes (hazel, amber, golden brown) → WARM-UNDERTONE
+   1. Compare analyzed photo with Winter/Summer examples (cool) vs Spring/Autumn examples (warm)
+   2. Look for visual signs: golden/peachy skin + warm hair = WARM; pink/rosy skin + ash hair = COOL
+   3. If ambiguous/neutral appearance + cool eyes → COOL-UNDERTONE
+   4. Choose: COOL-UNDERTONE or WARM-UNDERTONE
 
 2. HAIR LIGHTNESS - Darkness level of HAIR ONLY:
    ⚠️ HAIR ANALYSIS: Look at ROOTS first (50% weight), then length (50% weight)
