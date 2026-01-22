@@ -135,7 +135,7 @@ EYE COLOR HINTS:
 - GRAY eyes → more often COOL undertone (Winter/Summer)
 
 ⚠️ CRITICAL FOR BLONDE HAIR - DON'T TRUST COLOR NAMES:
-When you see blonde/light hair, DON'T decide undertone from color name alone ("golden" ≠ warm automatically).
+When you see blonde/light hair, DON'T decide undertone from color name alone ("golden blonde" ≠ warm automatically).
 MANDATORY: Compare the photo directly with reference images:
 1. Open Spring/Autumn reference schemes (warm types with 6-7 photos each)
 2. Open Winter/Summer reference image (cool types)
