@@ -10,7 +10,7 @@ import uuid
 import base64
 
 
-# Updated with 16 exclusion rules + bright/soft eyes distinction + penalties for accurate color type matching
+# Updated with 17 exclusion rules + bright/soft eyes distinction + penalties for accurate color type matching
 # Rule 1: Brown eyes → exclude GENTLE SPRING, BRIGHT SPRING, all SUMMER, SOFT WINTER
 # Rule 2: Cool light eyes → exclude VIVID AUTUMN, VIVID WINTER
 # Rule 3: Chestnut brown hair → exclude BRIGHT SPRING
@@ -27,6 +27,7 @@ import base64
 # Rule 14: Light hair → exclude BRIGHT WINTER, DEEP WINTER, VIVID AUTUMN (these types require ONLY dark hair)
 # Rule 15: Brown hair (any shade) OR auburn hair + brown eyes → exclude VIBRANT SPRING (VIBRANT SPRING has bright eyes, NOT brown)
 # Rule 16: Brown hair (any shade: medium/dark/light brown) → exclude GENTLE SPRING (GENTLE SPRING requires ONLY blonde hair)
+# Rule 17: Medium ash brown hair → exclude SOFT SUMMER (SOFT SUMMER requires light/blonde hair)
 # PENALTY: Non-bright eyes → -0.25 for VIBRANT SPRING (prefers bright/sparkling eyes, but not excluded)
 # VIBRANT SPRING: warm, clear, high-contrast, bright eyes (blue/green/hazel), NOT gray eyes, NOT deep dark hair
 # BRIGHT WINTER: cool, BRIGHT/SPARKLING eyes, DEEP DARK hair (signature: dark hair + bright eyes)
@@ -781,7 +782,6 @@ COLORTYPE_MAP = {
     ('COOL-UNDERTONE', 'BRIGHT-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'BRIGHT WINTER',
     ('COOL-UNDERTONE', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
     ('COOL-UNDERTONE', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'BRIGHT WINTER',
-    ('COOL-UNDERTONE', 'MUTED-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): 'BRIGHT WINTER',
     ('COOL-UNDERTONE', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-CONTRAST'): 'BRIGHT WINTER',
 
     # ============ VIBRANT SPRING ============
@@ -1032,6 +1032,12 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
     if has_any_brown_hair:
         excluded_types.add('GENTLE SPRING')
         print(f'[Match] Brown hair detected → excluding GENTLE SPRING (requires blonde hair ONLY)')
+    
+    # Rule 17: Medium ash brown hair → exclude SOFT SUMMER (SOFT SUMMER requires light/blonde hair)
+    has_medium_ash_brown = any(keyword in hair_lower for keyword in ['medium ash brown', 'medium cool brown', 'ash brown'])
+    if has_medium_ash_brown:
+        excluded_types.add('SOFT SUMMER')
+        print(f'[Match] Medium ash brown hair detected → excluding SOFT SUMMER (requires light/blonde hair)')
     
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
