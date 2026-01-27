@@ -677,12 +677,12 @@ COLORTYPE_REFERENCES = {
         'skin': ['ivory', 'light warm beige', 'pale']
     },
     'BRIGHT SPRING': {
-        'hair': ['golden blond', 'honey blond', 'golden brown', 'strawberry blond', 'light clear red', 'medium golden brown'],
+        'hair': ['golden blond', 'light copper', 'medium golden blonde', 'honey blond', 'golden brown', 'strawberry blond', 'light clear red', 'medium golden brown'],
         'eyes': ['blue', 'green', 'blue-green', 'bright blue'],
         'skin': ['ivory', 'light warm beige', 'honey', 'warm beige']
     },
     'VIBRANT SPRING': {
-        'hair': ['bright auburn', 'medium golden brown', 'auburn', 'golden brown', 'chestnut brown', 'chestnut'],
+        'hair': ['bright auburn', 'medium copper', 'bright copper', 'medium golden brown', 'auburn', 'golden brown', 'chestnut brown', 'chestnut'],
         'eyes': ['blue-green', 'blue', 'green', 'golden brown', 'bright'],
         'skin': ['ivory', 'light warm beige', 'medium warm beige', 'medium golden brown']
     },
