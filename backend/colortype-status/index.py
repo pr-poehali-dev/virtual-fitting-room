@@ -123,7 +123,7 @@ def check_replicate_status(prediction_id: str) -> dict:
 # If parameters match one of these keys, compare color scores for all candidates
 AMBIGUOUS_COMBINATIONS = {
     # COOL-UNDERTONE combinations
-    ('COOL-UNDERTONE', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): ['BRIGHT WINTER', 'VIVID SUMMER', 'SOFT WINTER'],
+    ('COOL-UNDERTONE', 'MUTED-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): ['VIVID SUMMER', 'SOFT WINTER'],
     
     # WARM-UNDERTONE combinations
     ('WARM-UNDERTONE', 'BRIGHT-NEUTRAL-SATURATION-COLORS', 'HIGH-MEDIUM-CONTRAST'): ['FIERY AUTUMN', 'VIBRANT SPRING', 'BRIGHT SPRING'],
