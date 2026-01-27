@@ -162,6 +162,9 @@ MANDATORY: Compare the photo directly with reference images:
 Choose: COOL-UNDERTONE or WARM-UNDERTONE
 
 2. HAIR LIGHTNESS (assess ROOTS 50% + length 50%):
+
+⚠️ CRITICAL: Analyze hair COLOR AS A WHOLE - look at the ENTIRE visible hair mass, determine which color DOMINATES (takes up more area). If hair is multi-tonal (e.g., highlighted blonde + dark roots), identify which color is MORE PREVALENT in the total hair volume.
+
 - LIGHT-HAIR-COLORS: platinum, light blond, golden blond, light strawberry blond
 - MEDIUM-HAIR-COLORS: medium brown, dark blond, chestnut, light auburn, strawberry blond
 - DEEP-HAIR-COLORS: auburn, copper, bright auburn, dark brown, black, deep auburn, dark chestnut, espresso
