@@ -19,47 +19,84 @@ const COST = 30;
 const POLLING_INTERVAL = 20000; // 20 seconds
 const TIMEOUT_DURATION = 180000; // 3 minutes
 
-// Eye colors mapping (Russian → English)
+// Eye colors mapping (Russian → English) - grouped by base color, alphabetically sorted
 const eyeColors: Record<string, string> = {
+  // Бирюзовые
+  Бирюзовые: "turquoise",
+  "Бирюзовые голубые": "turquoise blue",
+
+  // Голубые
+  Голубые: "blue",
+  "Голубые (мягкие)": "soft blue",
   "Голубые (светлые)": "light blue",
   "Голубые (яркие)": "bright blue",
-  "Голубые (мягкие)": "soft blue",
-  Голубые: "blue",
-  "Сине-серые": "blue-gray",
-  Лазурные: "azure",
-  Нефритовые: "jade",
+
+  // Зелёные
+  Зелёные: "green",
   "Зелёные (светлые)": "light green",
   "Зелёные (яркие)": "bright green",
-  Зелёные: "green",
-  "Лазурные (светлые)": "light turquoise",
-  "Бирюзовые голубые": "turquoise blue",
-  Бирюзовые: "turquoise",
-  "Сине-зелёные (светлые)": "light blue-green",
-  "Сине-зелёные (яркие)": "bright blue-green",
-  "Сине-зелёные": "blue-green",
-  "Серо-голубые (яркие)": "bright gray-blue",
-  "Серо-голубые (мягкие)": "soft gray-blue",
-  "Серо-голубые": "gray-blue",
-  "Серо-зелёные (мягкие)": "soft gray-green",
-  "Серо-зелёные": "gray-green",
-  "Серые (мягкие)": "soft gray",
-  Серые: "gray",
-  "Чёрно-карие": "black-brown",
-  Чёрные: "black",
-  "Карие (яркие)": "bright brown",
-  "Карие (тёмные)": "dark brown",
+
+  // Золотистые
+  Золотистые: "golden",
+  "Золотисто-карие": "golden brown",
+
+  // Карие
   Карие: "brown",
   "Карие (светлые)": "light brown",
-  "Коричнево-зелёные (яркие)": "bright brown-green",
+  "Карие (тёмные)": "dark brown",
+  "Карие (яркие)": "bright brown",
+
+  // Коричнево-зелёные
   "Коричнево-зелёные": "brown-green",
+  "Коричнево-зелёные (яркие)": "bright brown-green",
+
+  // Лазурные
+  Лазурные: "azure",
+  "Лазурные (светлые)": "light turquoise",
+
+  // Нефритовые
+  Нефритовые: "jade",
+
+  // Ореховые
   "Ореховые (золотистые)": "hazel",
-  "Золотисто-карие": "golden brown",
-  Золотистые: "golden",
-  Шоколадные: "chocolate",
+
+  // Серо-голубые
+  "Серо-голубые": "gray-blue",
+  "Серо-голубые (мягкие)": "soft gray-blue",
+  "Серо-голубые (яркие)": "bright gray-blue",
+
+  // Серо-зелёные
+  "Серо-зелёные": "gray-green",
+  "Серо-зелёные (мягкие)": "soft gray-green",
+
+  // Серые
+  Серые: "gray",
+  "Серые (мягкие)": "soft gray",
+
+  // Сине-зелёные
+  "Сине-зелёные": "blue-green",
+  "Сине-зелёные (светлые)": "light blue-green",
+  "Сине-зелёные (яркие)": "bright blue-green",
+
+  // Сине-серые
+  "Сине-серые": "blue-gray",
+
+  // Цвета какао
   "Цвета какао": "cocoa",
+
+  // Чёрно-карие
+  "Чёрно-карие": "black-brown",
+
+  // Чёрные
+  Чёрные: "black",
+
+  // Шоколадные
+  Шоколадные: "chocolate",
+
+  // Другие
+  Приглушённые: "muted",
   Тёмные: "dark",
   Холодные: "cool",
-  Приглушённые: "muted",
 };
 
 // Mapping English color types to Russian
