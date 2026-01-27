@@ -1162,10 +1162,10 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
             color_score += 0.15
             print(f'[Match] {colortype}: BONUS +0.15 for auburn hair (characteristic color)')
         
-        # BONUS: Auburn/copper/red hair + brown eyes → +0.60 for FIERY AUTUMN (signature combination)
+        # BONUS: Auburn/copper/red hair + brown eyes → +1.00 for FIERY AUTUMN (signature combination)
         if has_auburn_hair and has_brown_eyes and colortype == 'FIERY AUTUMN':
-            color_score += 0.60
-            print(f'[Match] {colortype}: BONUS +0.60 for auburn hair + brown eyes (signature FIERY AUTUMN)')
+            color_score += 1.00
+            print(f'[Match] {colortype}: BONUS +1.00 for auburn hair + brown eyes (signature FIERY AUTUMN)')
         
         # BONUS: Dark hair + BRIGHT eyes → +0.25 for BRIGHT WINTER (signature combination)
         if has_dark_hair and has_bright_eyes and colortype == 'BRIGHT WINTER':

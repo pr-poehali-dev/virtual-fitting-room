@@ -726,12 +726,12 @@ def match_colortype(analysis: dict) -> tuple:
             color_score += 0.15
             print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (characteristic color)')
         
-        # BONUS: Auburn/copper/red hair + brown eyes → +0.60 for FIERY AUTUMN (signature combination)
+        # BONUS: Auburn/copper/red hair + brown eyes → +1.00 for FIERY AUTUMN (signature combination)
         has_auburn_hair = any(keyword in hair_lower for keyword in ['auburn', 'copper', 'red', 'bright auburn', 'ginger'])
         has_brown_eyes = any(keyword in eyes_lower for keyword in ['brown', 'dark brown', 'deep brown', 'chestnut', 'chocolate'])
         if has_auburn_hair and has_brown_eyes and colortype == 'FIERY AUTUMN':
-            color_score += 0.60
-            print(f'[Match] {colortype}: BONUS +0.60 for auburn hair + brown eyes (signature FIERY AUTUMN)')
+            color_score += 1.00
+            print(f'[Match] {colortype}: BONUS +1.00 for auburn hair + brown eyes (signature FIERY AUTUMN)')
         
         # PENALTY: Non-bright eyes → -0.25 for VIBRANT SPRING (prefers bright/sparkling eyes)
         if not has_bright_eyes_keyword and colortype == 'VIBRANT SPRING':
