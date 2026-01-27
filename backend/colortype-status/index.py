@@ -609,6 +609,7 @@ def match_colortype(analysis: dict) -> tuple:
         print(f'[Match] Brown/auburn hair + brown eyes → excluding VIBRANT SPRING (characteristic of VIVID AUTUMN)')
     
     # Rule 16: Brown hair (any shade) → exclude GENTLE SPRING (GENTLE SPRING requires ONLY blonde hair)
+    has_any_brown_hair = any(keyword in hair_lower for keyword in ['brown', 'chestnut', 'espresso', 'chocolate', 'dark', 'medium brown', 'light brown', 'golden brown', 'warm brown'])
     if has_any_brown_hair:
         excluded_types.add('GENTLE SPRING')
         print(f'[Match] Brown hair detected → excluding GENTLE SPRING (requires blonde hair ONLY)')
