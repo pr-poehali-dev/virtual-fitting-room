@@ -1030,22 +1030,12 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
     
-    # ============ STAGE 1: Filter by lightness combinations ============
+    # ============ STAGE 1: Prepare lightness scoring (NO FILTERING) ============
     lightness_key = (hair_lightness, skin_lightness, eyes_lightness)
-    stage1_candidates = []
+    print(f'[Match] STAGE 1: Lightness combination ({lightness_key}) - will be used for SCORING, not filtering')
     
-    for colortype, allowed_combinations in COLORTYPE_LIGHTNESS_COMBINATIONS.items():
-        if lightness_key in allowed_combinations:
-            stage1_candidates.append(colortype)
-    
-    print(f'[Match] STAGE 1: Lightness filter ({lightness_key}) → {len(stage1_candidates)} candidates: {stage1_candidates}')
-    
-    if not stage1_candidates:
-        print(f'[Match] WARNING: No colortypes match lightness combination! Falling back to all colortypes')
-        stage1_candidates = list(COLORTYPE_REFERENCES.keys())
-    
-    # Remove excluded types
-    stage1_candidates = [ct for ct in stage1_candidates if ct not in excluded_types]
+    # Start with all colortypes (except excluded by rules)
+    stage1_candidates = [ct for ct in COLORTYPE_REFERENCES.keys() if ct not in excluded_types]
     print(f'[Match] After exclusion rules: {len(stage1_candidates)} candidates: {stage1_candidates}')
     
     if not stage1_candidates:
@@ -1154,6 +1144,12 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
             eyes_weight = 0.36
         
         color_score = (hair_score * hair_weight) + (skin_score * skin_weight) + (eyes_score * eyes_weight)
+        
+        # BONUS: Lightness combination match → +0.30 if (hair, skin, eyes) lightness matches colortype's allowed combinations
+        if colortype in COLORTYPE_LIGHTNESS_COMBINATIONS:
+            if lightness_key in COLORTYPE_LIGHTNESS_COMBINATIONS[colortype]:
+                color_score += 0.30
+                print(f'[Match] {colortype}: BONUS +0.30 for lightness combination match {lightness_key}')
         
         # BONUS: Auburn/copper/red hair → +0.15 for VIBRANT SPRING
         if has_auburn_hair and colortype == 'VIBRANT SPRING':
