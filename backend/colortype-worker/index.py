@@ -682,12 +682,12 @@ COLORTYPE_REFERENCES = {
     },
     'VIVID AUTUMN': {
         'hair': ['dark chestnut', 'dark auburn', 'espresso', 'deep brown', 'black'],
-        'eyes': ['brown', 'brown-green', 'dark brown'],
+        'eyes': ['brown', 'brown-green', 'dark brown', 'chocolate'],
         'skin': ['pale warm beige', 'medium warm beige', 'chestnut', 'mahogany']
     },
     'GENTLE SPRING': {
         'hair': ['golden blond', 'light strawberry blond', 'strawberry', 'light blond', 'golden'],
-        'eyes': ['blue', 'blue-green', 'light blue'],
+        'eyes': ['blue', 'blue-green', 'light blue', 'light blue-green', 'light green', 'light turquoise'],
         'skin': ['ivory', 'light warm beige', 'pale']
     },
     'BRIGHT SPRING': {
@@ -697,7 +697,7 @@ COLORTYPE_REFERENCES = {
     },
     'VIBRANT SPRING': {
         'hair': ['bright auburn', 'medium copper', 'bright copper', 'medium golden brown', 'auburn', 'golden brown', 'chestnut brown', 'chestnut'],
-        'eyes': ['blue-green', 'blue', 'green', 'golden brown', 'bright'],
+        'eyes': ['blue-green', 'blue', 'green', 'golden brown', 'bright', 'bright brown', 'bright blue', 'bright brown-green', 'bright green', 'bright blue-green'],
         'skin': ['ivory', 'light warm beige', 'medium warm beige', 'medium golden brown']
     },
     'SOFT WINTER': {
@@ -707,7 +707,7 @@ COLORTYPE_REFERENCES = {
     },
     'BRIGHT WINTER': {
         'hair': ['dark cool brown', 'black', 'cool black', 'deep brown'],
-        'eyes': ['brown', 'blue', 'brown-green', 'green', 'gray', 'dark'],
+        'eyes': ['brown', 'blue', 'brown-green', 'green', 'gray', 'dark', 'bright brown', 'bright blue', 'bright brown-green', 'bright green', 'bright gray-blue'],
         'skin': ['pale beige', 'medium beige', 'light olive', 'medium olive', 'coffee']
     },
     'VIVID WINTER': {
@@ -717,17 +717,17 @@ COLORTYPE_REFERENCES = {
     },
     'SOFT SUMMER': {
         'hair': ['pale cool blond', 'medium cool blond', 'cool blond', 'ash blond', 'light ash'],
-        'eyes': ['blue', 'gray-blue', 'gray-green', 'soft blue'],
+        'eyes': ['blue', 'gray-blue', 'gray-green', 'soft blue', 'soft gray', 'soft gray-blue', 'soft gray-green', 'light blue', 'light blue-green'],
         'skin': ['porcelain', 'light beige', 'pale']
     },
     'DUSTY SUMMER': {
         'hair': ['medium cool blond', 'deep cool blond', 'light cool brown', 'medium cool brown', 'ash brown'],
-        'eyes': ['gray-blue', 'gray-green', 'blue', 'muted'],
+        'eyes': ['gray-blue', 'gray-green', 'blue', 'muted', 'azure', 'soft gray-blue', 'soft gray-green'],
         'skin': ['light beige', 'medium beige', 'almond']
     },
     'VIVID SUMMER': {
         'hair': ['light cool brown', 'deep cool brown', 'medium dark cool brown', 'cool brown'],
-        'eyes': ['blue-gray', 'blue-green', 'gray-green', 'cocoa'],
+        'eyes': ['blue-gray', 'blue-green', 'gray-green', 'cocoa', 'azure', 'gray'],
         'skin': ['medium beige', 'cocoa', 'brown']
     }
 }
