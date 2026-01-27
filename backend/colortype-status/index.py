@@ -20,7 +20,7 @@ from datetime import datetime
 # Rule 12: Dark/deep brown hair + soft/muted gray/gray-blue eyes → SOFT WINTER or VIVID SUMMER (NOT BRIGHT WINTER)
 # Rule 13: Dark brown hair with warm undertone + brown eyes → VIVID AUTUMN (NOT VIBRANT SPRING, NOT GENTLE AUTUMN)
 # Rule 14: Light hair → exclude BRIGHT WINTER, DEEP WINTER, VIVID AUTUMN (these types require ONLY dark hair)
-# Rule 15: Brown hair (any shade) + brown eyes → exclude VIBRANT SPRING (VIBRANT SPRING has bright eyes, NOT brown)
+# Rule 15: Brown hair (any shade) OR auburn hair + brown eyes → exclude VIBRANT SPRING (VIBRANT SPRING has bright eyes, NOT brown)
 # Rule 16: Brown hair (any shade: medium/dark/light brown) → exclude GENTLE SPRING (GENTLE SPRING requires ONLY blonde hair)
 # PENALTY: Non-bright eyes → -0.25 for VIBRANT SPRING (prefers bright/sparkling eyes, but not excluded)
 
