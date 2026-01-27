@@ -666,6 +666,23 @@ def match_colortype(analysis: dict) -> tuple:
     # ============ STAGE 3: Final selection by color keyword matching ============
     print(f'[Match] STAGE 3: Scoring {len(stage2_candidates)} candidates by color matching + params')
     
+    # Detect characteristic features
+    has_auburn_hair = any(keyword in hair_lower for keyword in ['auburn', 'copper', 'red', 'bright auburn', 'ginger'])
+    has_gray_eyes = any(keyword in eyes_lower for keyword in ['gray', 'grey', 'gray-blue', 'grey-blue', 'gray-green', 'grey-green'])
+    has_green_eyes = any(keyword in eyes_lower for keyword in ['green', 'jade', 'emerald', 'olive-green', 'olive green'])
+    has_dark_hair = any(keyword in hair_lower for keyword in ['dark brown', 'deep brown', 'black', 'espresso', 'dark chestnut', 'dark cool brown'])
+    has_brown_eyes = any(keyword in eyes_lower for keyword in ['brown', 'dark brown', 'deep brown', 'chestnut', 'chocolate'])
+    
+    # Distinguish BRIGHT eyes (яркие) from SOFT/MUTED eyes (мягкие)
+    has_bright_eyes = any(keyword in eyes_lower for keyword in ['bright blue', 'bright gray-blue', 'bright grey-blue', 'bright green', 'bright blue-green', 'bright brown', 'ярко-голубые', 'яркие серо-голубые', 'яркие синие', 'ярко-карие'])
+    has_bright_eyes_keyword = has_bright_eyes  # Alias for consistency
+    has_soft_muted_eyes = any(keyword in eyes_lower for keyword in ['soft gray', 'soft gray-blue', 'soft grey-blue', 'soft gray-green', 'soft grey-green', 'мягкие серо-голубые', 'мягкие серые', 'мягкие серо-зелёные'])
+    
+    is_warm_undertone = undertone == 'WARM-UNDERTONE'
+    is_cool_undertone = undertone == 'COOL-UNDERTONE'
+    
+    print(f'[Match] Auburn/red hair: {has_auburn_hair}, Gray eyes: {has_gray_eyes}, Green eyes: {has_green_eyes}, Dark hair: {has_dark_hair}, Bright eyes: {has_bright_eyes}, Soft/muted eyes: {has_soft_muted_eyes}, Warm undertone: {is_warm_undertone}')
+    
     best_colortype = None
     best_total_score = 0.0
     best_param_score = 0.0
@@ -694,7 +711,7 @@ def match_colortype(analysis: dict) -> tuple:
                 s_match = 1.0 if s == saturation else 0.0
                 c_match = 1.0 if c == contrast else 0.0
                 
-                candidate_score = ((u_match * 1.0) + (s_match * 0.5) + (c_match * 0.5)) / 2.0
+                candidate_score = ((u_match * 0.68) + (s_match * 0.46) + (c_match * 0.36)) / 1.5
                 
                 if candidate_score > param_match:
                     param_match = candidate_score
@@ -702,13 +719,25 @@ def match_colortype(analysis: dict) -> tuple:
                     saturation_match = s_match
                     contrast_match = c_match
         
-        # Calculate color match score (hair 32%, skin 32%, eyes 36%)
+        # Calculate color match score with DYNAMIC WEIGHTS based on undertone
         ref = COLORTYPE_REFERENCES[colortype]
         hair_score = calculate_color_match_score(hair, ref['hair'])
         skin_score = calculate_color_match_score(skin, ref['skin'])
         eyes_score = calculate_color_match_score(eyes, ref['eyes'])
         
-        color_score = (hair_score * 0.32) + (skin_score * 0.32) + (eyes_score * 0.36)
+        # UPDATED WEIGHTS: For WARM undertone, hair is MORE important
+        if is_warm_undertone:
+            # Warm types: hair 45%, skin 25%, eyes 30%
+            hair_weight = 0.45
+            skin_weight = 0.25
+            eyes_weight = 0.30
+        else:
+            # Cool types: hair 32%, skin 32%, eyes 36% (original)
+            hair_weight = 0.32
+            skin_weight = 0.32
+            eyes_weight = 0.36
+        
+        color_score = (hair_score * hair_weight) + (skin_score * skin_weight) + (eyes_score * eyes_weight)
         
         # BONUS: Lightness combination match → +0.30 if (hair, skin, eyes) lightness matches colortype's allowed combinations
         if colortype in COLORTYPE_LIGHTNESS_COMBINATIONS:
@@ -716,11 +745,28 @@ def match_colortype(analysis: dict) -> tuple:
                 color_score += 0.30
                 print(f'[Match] {colortype}: BONUS +0.30 for lightness combination match {lightness_key}')
         
-        # BONUS: Gray eyes → +0.15 for SOFT WINTER, VIVID SUMMER, DUSTY SUMMER
-        has_gray_eyes = any(keyword in eyes_lower for keyword in ['gray', 'grey', 'gray-blue', 'grey-blue', 'gray-green', 'grey-green'])
-        has_bright_eyes_keyword = any(keyword in eyes_lower for keyword in ['bright blue', 'bright green', 'bright blue-green', 'bright gray-blue', 'bright grey-blue', 'bright brown', 'яркие', 'ярко-голубые', 'ярко-зелёные', 'ярко-сине-зелёные', 'ярко-серо-голубые', 'ярко-карие'])
+        # BONUS: Auburn/copper/red hair → +0.15 for VIBRANT SPRING
+        if has_auburn_hair and colortype == 'VIBRANT SPRING':
+            color_score += 0.15
+            print(f'[Match] {colortype}: BONUS +0.15 for auburn hair (characteristic color)')
         
-        if has_gray_eyes and colortype == 'SOFT WINTER':
+        # BONUS: Auburn/copper/red hair + brown eyes → +1.00 for FIERY AUTUMN (signature combination)
+        if has_auburn_hair and has_brown_eyes and colortype == 'FIERY AUTUMN':
+            color_score += 1.00
+            print(f'[Match] {colortype}: BONUS +1.00 for auburn hair + brown eyes (signature FIERY AUTUMN)')
+        
+        # BONUS: Dark hair + BRIGHT eyes → +0.25 for BRIGHT WINTER (signature combination)
+        if has_dark_hair and has_bright_eyes and colortype == 'BRIGHT WINTER':
+            color_score += 0.25
+            print(f'[Match] {colortype}: BONUS +0.25 for dark hair + bright eyes (signature BRIGHT WINTER)')
+        
+        # BONUS: Dark hair + SOFT/MUTED gray eyes → +0.25 for SOFT WINTER (signature combination)
+        if has_dark_hair and has_soft_muted_eyes and colortype == 'SOFT WINTER':
+            color_score += 0.25
+            print(f'[Match] {colortype}: BONUS +0.25 for dark hair + soft/muted gray eyes (signature SOFT WINTER)')
+        
+        # BONUS: Gray eyes → +0.15 for SOFT WINTER, VIVID SUMMER, DUSTY SUMMER (if not already applied above)
+        if has_gray_eyes and colortype == 'SOFT WINTER' and not has_soft_muted_eyes:
             color_score += 0.15
             print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (characteristic color)')
         
@@ -732,12 +778,17 @@ def match_colortype(analysis: dict) -> tuple:
             color_score += 0.15
             print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (characteristic color)')
         
-        # BONUS: Auburn/copper/red hair + brown eyes → +1.00 for FIERY AUTUMN (signature combination)
-        has_auburn_hair = any(keyword in hair_lower for keyword in ['auburn', 'copper', 'red', 'bright auburn', 'ginger'])
-        has_brown_eyes = any(keyword in eyes_lower for keyword in ['brown', 'dark brown', 'deep brown', 'chestnut', 'chocolate'])
-        if has_auburn_hair and has_brown_eyes and colortype == 'FIERY AUTUMN':
-            color_score += 1.00
-            print(f'[Match] {colortype}: BONUS +1.00 for auburn hair + brown eyes (signature FIERY AUTUMN)')
+        # BONUS: Green eyes → +0.15 for WARM undertone types (Spring/Autumn)
+        if has_green_eyes and is_warm_undertone and colortype in ['GENTLE SPRING', 'BRIGHT SPRING', 'VIBRANT SPRING', 'GENTLE AUTUMN', 'FIERY AUTUMN', 'VIVID AUTUMN']:
+            color_score += 0.15
+            print(f'[Match] {colortype}: BONUS +0.15 for green eyes (more often warm undertone)')
+        
+        # BONUS: Gray eyes → +0.15 for COOL undertone types (Winter/Summer) - general bonus
+        if has_gray_eyes and is_cool_undertone and colortype in ['SOFT WINTER', 'BRIGHT WINTER', 'VIVID WINTER', 'SOFT SUMMER', 'DUSTY SUMMER', 'VIVID SUMMER']:
+            # Only apply if not already applied above (SOFT WINTER, VIVID SUMMER, DUSTY SUMMER)
+            if colortype not in ['SOFT WINTER', 'VIVID SUMMER', 'DUSTY SUMMER']:
+                color_score += 0.15
+                print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (more often cool undertone)')
         
         # BONUS: Light ash blonde hair → +0.20 for SOFT SUMMER (signature hair color)
         has_light_ash_blonde = any(keyword in hair_lower for keyword in ['light ash blonde', 'light ash blond', 'pale ash blonde', 'pale ash blond', 'ash blonde', 'ash blond', 'platinum'])
@@ -767,10 +818,10 @@ def match_colortype(analysis: dict) -> tuple:
             color_score -= 0.25
             print(f'[Match] {colortype}: PENALTY -0.25 for non-bright eyes (VIBRANT SPRING prefers bright eyes)')
         
-        # Total score: 2x parameters + 1x colors
-        total_score = (param_match * 2.0) + (color_score * 1.0)
+        # Total score: 1.5x parameters + 1x colors
+        total_score = (param_match * 1.5) + (color_score * 1.0)
         
-        print(f'[Match] {colortype}: param={param_match:.2f} (U:{undertone_match:.0f} S:{saturation_match:.0f} C:{contrast_match:.0f}), color={color_score:.2f} (h:{hair_score:.2f} s:{skin_score:.2f} e:{eyes_score:.2f}), total={total_score:.2f}')
+        print(f'[Match] {colortype}: param={param_match:.2f} (U:{undertone_match:.0f} S:{saturation_match:.0f} C:{contrast_match:.0f}), color={color_score:.2f} (h:{hair_score:.2f}*{hair_weight:.2f} s:{skin_score:.2f}*{skin_weight:.2f} e:{eyes_score:.2f}*{eyes_weight:.2f}), total={total_score:.2f}')
         
         if total_score > best_total_score:
             best_total_score = total_score
