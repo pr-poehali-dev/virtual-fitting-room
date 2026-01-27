@@ -86,6 +86,12 @@ Each scheme shows:
 - RIGHT: Color characteristics (eyes/skin/hair/contrast examples)
 - TEXT LABELS in ENGLISH (use exact names in JSON)
 
+⚠️ CRITICAL WORKFLOW:
+1. FIRST: Open and carefully examine the reference image with ALL 12 color types
+2. SECOND: Look at and analyze ALL 12 types one by one - review each type's characteristics
+3. THIRD: Only AFTER viewing all 12 types, compare the analyzed photo with each type
+4. FOURTH: Make your final decision based on which type matches BEST overall
+
 TASK: Compare ANALYZED PHOTO with all 12 schemes. Match COLOR CHARACTERISTICS (right side), not exact appearance. Select MOST LIKELY type → use as `suggested_colortype` in JSON.
 
 Reference image: https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/7f872f1f-a74e-47fa-9b3c-79934845836f.webp
