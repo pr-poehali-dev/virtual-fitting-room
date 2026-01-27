@@ -601,12 +601,12 @@ def match_colortype(analysis: dict) -> tuple:
         excluded_types.update(dark_types_requiring_dark_hair)
         print(f'[Match] Light hair detected → excluding {dark_types_requiring_dark_hair} (these types require dark hair ONLY)')
     
-    # Rule 15: Brown hair (any shade) + brown eyes → exclude VIBRANT SPRING (this is VIVID AUTUMN characteristic)
+    # Rule 15: Brown hair (any shade) OR auburn hair + brown eyes → exclude VIBRANT SPRING (this is VIVID AUTUMN characteristic)
     # VIBRANT SPRING: bright eyes (blue/green/hazel), NOT brown eyes
-    has_any_brown_hair = any(keyword in hair_lower for keyword in ['brown', 'chestnut', 'auburn', 'espresso', 'chocolate', 'dark', 'medium brown', 'light brown', 'golden brown', 'warm brown'])
-    if has_any_brown_hair and has_brown_eyes:
+    has_any_brown_or_auburn_hair = any(keyword in hair_lower for keyword in ['brown', 'chestnut', 'auburn', 'espresso', 'chocolate', 'dark', 'medium brown', 'light brown', 'golden brown', 'warm brown', 'copper', 'red'])
+    if has_any_brown_or_auburn_hair and has_brown_eyes:
         excluded_types.add('VIBRANT SPRING')
-        print(f'[Match] Brown hair + brown eyes → excluding VIBRANT SPRING (characteristic of VIVID AUTUMN)')
+        print(f'[Match] Brown/auburn hair + brown eyes → excluding VIBRANT SPRING (characteristic of VIVID AUTUMN)')
     
     # Rule 16: Brown hair (any shade) → exclude GENTLE SPRING (GENTLE SPRING requires ONLY blonde hair)
     if has_any_brown_hair:
@@ -616,22 +616,12 @@ def match_colortype(analysis: dict) -> tuple:
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
     
-    # ============ STAGE 1: Filter by lightness combinations ============
+    # ============ STAGE 1: Prepare lightness scoring (NO FILTERING) ============
     lightness_key = (hair_lightness, skin_lightness, eyes_lightness)
-    stage1_candidates = []
+    print(f'[Match] STAGE 1: Lightness combination ({lightness_key}) - will be used for SCORING, not filtering')
     
-    for colortype, allowed_combinations in COLORTYPE_LIGHTNESS_COMBINATIONS.items():
-        if lightness_key in allowed_combinations:
-            stage1_candidates.append(colortype)
-    
-    print(f'[Match] STAGE 1: Lightness filter ({lightness_key}) → {len(stage1_candidates)} candidates: {stage1_candidates}')
-    
-    if not stage1_candidates:
-        print(f'[Match] WARNING: No colortypes match lightness combination! Falling back to all colortypes')
-        stage1_candidates = list(COLORTYPE_REFERENCES.keys())
-    
-    # Remove excluded types
-    stage1_candidates = [ct for ct in stage1_candidates if ct not in excluded_types]
+    # Start with all colortypes (except excluded by rules)
+    stage1_candidates = [ct for ct in COLORTYPE_REFERENCES.keys() if ct not in excluded_types]
     print(f'[Match] After exclusion rules: {len(stage1_candidates)} candidates: {stage1_candidates}')
     
     if not stage1_candidates:
@@ -712,6 +702,12 @@ def match_colortype(analysis: dict) -> tuple:
         eyes_score = calculate_color_match_score(eyes, ref['eyes'])
         
         color_score = (hair_score * 0.32) + (skin_score * 0.32) + (eyes_score * 0.36)
+        
+        # BONUS: Lightness combination match → +0.30 if (hair, skin, eyes) lightness matches colortype's allowed combinations
+        if colortype in COLORTYPE_LIGHTNESS_COMBINATIONS:
+            if lightness_key in COLORTYPE_LIGHTNESS_COMBINATIONS[colortype]:
+                color_score += 0.30
+                print(f'[Match] {colortype}: BONUS +0.30 for lightness combination match {lightness_key}')
         
         # BONUS: Gray eyes → +0.15 for SOFT WINTER, VIVID SUMMER, DUSTY SUMMER
         has_gray_eyes = any(keyword in eyes_lower for keyword in ['gray', 'grey', 'gray-blue', 'grey-blue', 'gray-green', 'grey-green'])
