@@ -1208,6 +1208,12 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
                 color_score += 0.15
                 print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (more often cool undertone)')
         
+        # BONUS: Light ash blonde hair → +0.20 for SOFT SUMMER (signature hair color)
+        has_light_ash_blonde = any(keyword in hair_lower for keyword in ['light ash blonde', 'light ash blond', 'pale ash blonde', 'pale ash blond', 'ash blonde', 'ash blond', 'platinum'])
+        if has_light_ash_blonde and colortype == 'SOFT SUMMER':
+            color_score += 0.20
+            print(f'[Match] {colortype}: BONUS +0.20 for light ash blonde hair (signature SOFT SUMMER)')
+        
         # PENALTY: Non-bright eyes → -0.25 for VIBRANT SPRING (prefers bright/sparkling eyes)
         if not has_bright_eyes_keyword and colortype == 'VIBRANT SPRING':
             color_score -= 0.25
