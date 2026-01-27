@@ -755,6 +755,13 @@ def match_colortype(analysis: dict) -> tuple:
             color_score += 0.25
             print(f'[Match] {colortype}: BONUS +0.25 for medium ash brown hair (signature VIVID SUMMER)')
         
+        # BONUS: Medium golden brown hair + golden brown/brown eyes → +0.25 for FIERY AUTUMN (characteristic combination)
+        has_medium_golden_brown_hair = any(keyword in hair_lower for keyword in ['medium golden brown', 'golden brown'])
+        has_golden_brown_eyes = any(keyword in eyes_lower for keyword in ['golden brown', 'brown', 'dark brown', 'light brown'])
+        if has_medium_golden_brown_hair and has_golden_brown_eyes and colortype == 'FIERY AUTUMN':
+            color_score += 0.25
+            print(f'[Match] {colortype}: BONUS +0.25 for medium golden brown hair + golden brown/brown eyes (characteristic FIERY AUTUMN)')
+        
         # PENALTY: Non-bright eyes → -0.25 for VIBRANT SPRING (prefers bright/sparkling eyes)
         if not has_bright_eyes_keyword and colortype == 'VIBRANT SPRING':
             color_score -= 0.25
