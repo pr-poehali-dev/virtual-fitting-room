@@ -196,6 +196,9 @@ Ask: "Are colors CLEAR/PURE or DUSTY/SOFT?"
 - BRIGHT-SATURATION-COLORS: clear, vivid, pure, bright, vibrant (no gray)
 
 6. CONTRAST (hair vs skin difference):
+
+⚠️ CRITICAL: Evaluate contrast by looking at the OVERALL VISUAL IMPRESSION of hair mass vs skin area, NOT individual points. Step back and see the general color patches (hair as one large patch, skin as another). The larger the difference between these overall patches = higher contrast.
+
 Compare with reference image. Larger difference (hair vs skin) = higher contrast.
 - HIGH-CONTRAST: Very large difference
 - HIGH-MEDIUM-CONTRAST: Noticeable difference (closer to high)
