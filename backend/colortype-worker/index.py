@@ -891,7 +891,7 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
     - COOL undertone: Hair 45%, Skin 25%, Eyes 30%
     
     BONUSES:
-    - Auburn/copper/red hair + VIBRANT SPRING: +0.15
+    (none)
     
     Total score = (param_score * 1.0) + (color_score * 1.0)
     
@@ -1149,10 +1149,6 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
                 color_score += 0.30
                 print(f'[Match] {colortype}: BONUS +0.30 for lightness combination match {lightness_key}')
         
-        # BONUS: Auburn/copper/red hair → +0.15 for VIBRANT SPRING
-        if has_auburn_hair and colortype == 'VIBRANT SPRING':
-            color_score += 0.15
-            print(f'[Match] {colortype}: BONUS +0.15 for auburn hair (characteristic color)')
         
         # BONUS: Auburn/copper/red hair + brown eyes → +1.00 for FIERY AUTUMN (signature combination)
         if has_auburn_hair and has_brown_eyes and colortype == 'FIERY AUTUMN':
