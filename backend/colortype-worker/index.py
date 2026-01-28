@@ -197,7 +197,6 @@ Ask: "Are colors CLEAR/PURE or DUSTY/SOFT?"
 
 ⚠️ CRITICAL: Evaluate contrast by looking at the OVERALL VISUAL IMPRESSION of hair mass vs skin area, NOT individual points. Step back and see the general color patches (hair as one large patch, skin as another). The larger the difference between these overall patches = higher contrast.
 
-Compare with the 9 example persons in each scheme. Larger difference (hair vs skin) = higher contrast.
 - HIGH-CONTRAST: Very large difference
 - HIGH-MEDIUM-CONTRAST: Noticeable difference (closer to high)
 - LOW-MEDIUM-CONTRAST: Moderate difference (closer to low)
