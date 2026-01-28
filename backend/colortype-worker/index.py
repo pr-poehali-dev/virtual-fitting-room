@@ -201,10 +201,14 @@ Contrast is determined by the difference in lightness (proximity to white/black)
 - Assess how light/dark the hair is (closeness to white or black)
 - Assess how light/dark the skin is (closeness to white or black)
 - Compare the difference in lightness between them:
-  * HIGH-CONTRAST: Very large difference (one very light, the other very dark)
-  * HIGH-MEDIUM-CONTRAST: Noticeable difference (closer to high)
-  * LOW-MEDIUM-CONTRAST: Moderate difference (closer to low)
   * LOW-CONTRAST: Small difference (both approximately the same lightness)
+    Examples: GENTLE SPRING (light blonde + light skin), SOFT SUMMER (light ash + light skin)
+  * LOW-MEDIUM-CONTRAST: Moderate difference (closer to low)
+    Examples: BRIGHT SPRING (golden blonde + light skin), GENTLE AUTUMN (light-medium + light-medium), DUSTY SUMMER (medium ash + light-medium)
+  * HIGH-MEDIUM-CONTRAST: Noticeable difference (closer to high)
+    Examples: FIERY AUTUMN (dark auburn + medium-light skin), VIBRANT SPRING (medium-dark + light skin)
+  * HIGH-CONTRAST: Very large difference (one very light, the other very dark)
+    Examples: VIVID WINTER (black hair + light skin), SOFT WINTER (dark + pale), BRIGHT WINTER (dark + fair)
 
 7. DESCRIBE EXACT COLORS:
 
