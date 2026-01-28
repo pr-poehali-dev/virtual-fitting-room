@@ -53,7 +53,7 @@ COLORTYPE_REFERENCES_DATA = {
     }
   },
   "DUSTY SUMMER": {
-    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/92e7dfa7-30bb-4a8c-afa5-5265e1b90a77.webp",
+    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/6683828d-af80-4a07-88d8-487f28be1ee7.webp",
     "description": "Пыльное (мягкое) лето: холодный подтон, светлые-средние цвета, приглушённые холодные глаза, кожа с розовым приглушённым подтоном, низкий до низко-среднего контраст.",
     "characteristics": {
       "undertone": "COOL",
