@@ -103,7 +103,7 @@ COLORTYPE_REFERENCES_DATA = {
     }
   },
   "BRIGHT WINTER": {
-    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/5f0819db-3853-48c2-913a-ae7bc4729132.webp",
+    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/d907c4ce-1674-4aac-8e18-551d97249ca0.webp",
     "description": "Яркая зима: холодный подтон, средние-глубокие яркие цвета, яркие контрастные глаза, высокий контраст.",
     "characteristics": {
       "undertone": "COOL",
