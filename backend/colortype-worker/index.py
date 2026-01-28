@@ -1217,6 +1217,12 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
             color_score -= 0.25
             print(f'[Match] {colortype}: PENALTY -0.25 for non-bright eyes (VIBRANT SPRING prefers bright eyes)')
         
+        # PENALTY: Medium brown hair → -0.30 for BRIGHT WINTER (requires dark/deep hair only)
+        has_medium_brown_hair = any(keyword in hair_lower for keyword in ['medium brown', 'medium ash brown', 'medium cool brown', 'medium warm brown'])
+        if has_medium_brown_hair and colortype == 'BRIGHT WINTER':
+            color_score -= 0.30
+            print(f'[Match] {colortype}: PENALTY -0.30 for medium brown hair (BRIGHT WINTER requires dark/deep hair only)')
+        
         # Total score: 1.5x parameters + 1x colors
         total_score = (param_match * 1.5) + (color_score * 1.0)
         
