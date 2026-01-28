@@ -416,16 +416,6 @@ def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
             'image_url': {'url': scheme_url}
         })
     
-    # Add reference image with all 12 color type examples
-    content.append({
-        'type': 'text',
-        'text': '\n=== ALL 12 COLOR TYPES EXAMPLES (visual reference) ===\n'
-    })
-    content.append({
-        'type': 'image_url',
-        'image_url': {'url': 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/7f872f1f-a74e-47fa-9b3c-79934845836f.webp'}
-    })
-    
     # Add user's eye color hint BEFORE prompt
     content.append({
         'type': 'text',
