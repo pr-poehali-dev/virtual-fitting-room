@@ -703,7 +703,7 @@ COLORTYPE_REFERENCES = {
         'skin': ['medium beige', 'deep olive', 'café noir', 'ebony', 'dark']
     },
     'SOFT SUMMER': {
-        'hair': ['pale cool blond', 'medium cool blond', 'cool blond', 'ash blond', 'light ash'],
+        'hair': ['pale cool blond', 'medium cool blond', 'cool blond', 'ash blond', 'light ash', 'light ash blond'],
         'eyes': ['blue', 'gray-blue', 'gray-green', 'soft blue', 'soft gray', 'soft gray-blue', 'soft gray-green', 'light blue', 'light blue-green'],
         'skin': ['porcelain', 'light beige', 'pale']
     },
