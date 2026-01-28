@@ -113,7 +113,7 @@ COLORTYPE_REFERENCES_DATA = {
     }
   },
   "SOFT WINTER": {
-    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/08b69c08-b93d-45bd-abfc-e2ec5b5a1989.webp",
+    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/4baaabac-a2bc-4c36-a891-f286107021f8.webp",
     "description": "Холодная зима: холодный подтон, светлые-средние холодные цвета, холодные глаза, пепельные/тёмные волосы, средне-высокий контраст.",
     "characteristics": {
       "undertone": "COOL",
