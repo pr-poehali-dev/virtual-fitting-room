@@ -109,8 +109,8 @@ VIVID WINTER: Cool, dark hair + dark eyes, ash shade.
 VIVID AUTUMN: Warm, dark hair + brown/hazel eyes.
 FIERY AUTUMN: Warm, rich colors, hazel/amber/green eyes.
 GENTLE AUTUMN: Warm, dusty/muted, low contrast.
-DUSTY SUMMER: Cool, dusty/muted, low contrast, gray-blue eyes.
-VIVID SUMMER: Cool, muted, medium-high contrast, gray eyes. NOT bright eyes.
+DUSTY SUMMER: Cool, dusty/muted, low contrast, gray-blue eyes, medium ash brown hair.
+VIVID SUMMER: Cool, muted, medium-high contrast, gray eyes. 
 SOFT SUMMER: Cool, low contrast, light colors, light cool eyes.
 GENTLE SPRING: Warm, low contrast, light colors, light warm eyes.
 BRIGHT SPRING: Warm, clear, medium contrast, blue/green eyes (NOT brown).
