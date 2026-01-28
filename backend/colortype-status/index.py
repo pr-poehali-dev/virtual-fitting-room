@@ -593,8 +593,8 @@ def match_colortype(analysis: dict) -> tuple:
     has_dark_brown_warm = any(keyword in hair_lower for keyword in ['dark brown with warm', 'dark brown warm', 'warm dark brown', 'deep brown with warm', 'deep brown warm'])
     has_brown_eyes = any(keyword in eyes_lower for keyword in ['brown', 'dark brown', 'deep brown', 'chestnut', 'chocolate'])
     if has_dark_brown_warm and has_brown_eyes:
-        excluded_types.update(['VIBRANT SPRING', 'GENTLE AUTUMN'])
-        print(f'[Match] Dark brown hair with warm undertone + brown eyes → VIVID AUTUMN (excluding VIBRANT SPRING, GENTLE AUTUMN)')
+        excluded_types.update(['VIBRANT SPRING', 'GENTLE AUTUMN', 'FIERY AUTUMN'])
+        print(f'[Match] Dark brown hair with warm undertone + brown eyes → VIVID AUTUMN (excluding VIBRANT SPRING, GENTLE AUTUMN, FIERY AUTUMN)')
     
     # Rule 14: BRIGHT WINTER, DEEP WINTER, VIVID AUTUMN → ONLY dark hair allowed (validation)
     has_light_hair = any(keyword in hair_lower for keyword in ['light brown', 'light', 'blonde', 'blond', 'golden blond', 'ash blond', 'honey', 'caramel', 'strawberry'])
@@ -766,16 +766,6 @@ def match_colortype(analysis: dict) -> tuple:
         if has_dark_hair and has_soft_muted_eyes and colortype == 'SOFT WINTER':
             color_score += 0.25
             print(f'[Match] {colortype}: BONUS +0.25 for dark hair + soft/muted gray eyes (signature SOFT WINTER)')
-        
-        # Rule 13: Dark brown hair with warm undertone + brown eyes → VIVID AUTUMN (NOT FIERY AUTUMN, NOT VIBRANT SPRING, NOT GENTLE AUTUMN)
-        has_dark_brown_warm = any(keyword in hair_lower for keyword in ['dark brown with warm', 'dark brown warm', 'warm dark brown', 'deep brown with warm', 'deep brown warm'])
-        if has_dark_brown_warm and has_brown_eyes:
-            if colortype == 'VIVID AUTUMN':
-                color_score += 1.00
-                print(f'[Match] {colortype}: BONUS +1.00 for dark brown warm hair + brown eyes (Rule 13: signature VIVID AUTUMN)')
-            elif colortype in ['FIERY AUTUMN', 'VIBRANT SPRING', 'GENTLE AUTUMN']:
-                color_score -= 0.50
-                print(f'[Match] {colortype}: PENALTY -0.50 for dark brown warm hair + brown eyes (Rule 13: should be VIVID AUTUMN)')
         
         # BONUS: Gray eyes → +0.15 for SOFT WINTER, VIVID SUMMER, DUSTY SUMMER (if not already applied above)
         if has_gray_eyes and colortype == 'SOFT WINTER' and not has_soft_muted_eyes:
