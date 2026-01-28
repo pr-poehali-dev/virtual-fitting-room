@@ -43,7 +43,7 @@ COLORTYPE_REFERENCES_DATA = {
     }
   },
   "VIVID SUMMER": {
-    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/17472ab2-2f2c-4704-9d06-7f11c40b7801.webp",
+    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/bc08b86d-32f9-4ed6-9b44-48bd2ca3b396.webp",
     "description": "Яркое (холодное) лето: холодный подтон, светлые-средние цвета, приглушённые холодные глаза, пепельные волосы, средний контраст.",
     "characteristics": {
       "undertone": "COOL",
