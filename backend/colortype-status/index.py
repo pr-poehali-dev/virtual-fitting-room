@@ -5,7 +5,7 @@ import requests
 from typing import Dict, Any
 from datetime import datetime
 
-# Updated with 17 exclusion rules + bright/soft eyes distinction + penalties for accurate color type matching
+# Updated with 18 exclusion rules + bright/soft eyes distinction + penalties for accurate color type matching
 # Rule 1: Brown eyes → exclude GENTLE SPRING, BRIGHT SPRING, all SUMMER, SOFT WINTER
 # Rule 2: Cool light eyes → exclude VIVID AUTUMN, VIVID WINTER
 # Rule 3: Chestnut brown hair → exclude BRIGHT SPRING
@@ -23,6 +23,8 @@ from datetime import datetime
 # Rule 15: Brown hair (any shade) OR auburn hair + brown eyes → exclude VIBRANT SPRING (VIBRANT SPRING has bright eyes, NOT brown)
 # Rule 16: Brown hair (any shade: medium/dark/light brown) → exclude GENTLE SPRING (GENTLE SPRING requires ONLY blonde hair)
 # Rule 17: Medium ash brown hair → exclude SOFT SUMMER (SOFT SUMMER requires light/blonde hair)
+# Rule 18: Blonde hair (any shade) → exclude VIVID SUMMER (VIVID SUMMER requires medium/dark hair)
+# BONUS: Ash blond hair → +0.15 for SOFT SUMMER (characteristic hair color)
 # PENALTY: Non-bright eyes → -0.25 for VIBRANT SPRING (prefers bright/sparkling eyes, but not excluded)
 
 # Russian translations for user-facing messages
@@ -622,6 +624,12 @@ def match_colortype(analysis: dict) -> tuple:
         excluded_types.add('SOFT SUMMER')
         print(f'[Match] Medium ash brown hair detected → excluding SOFT SUMMER (requires light/blonde hair)')
     
+    # Rule 18: Blonde hair (any shade) → exclude VIVID SUMMER (VIVID SUMMER requires medium/dark hair)
+    has_blonde_hair = any(keyword in hair_lower for keyword in ['blonde', 'blond', 'golden blond', 'golden blonde', 'ash blond', 'ash blonde', 'light blond', 'light blonde', 'honey blond', 'honey blonde', 'platinum', 'strawberry blond', 'strawberry blonde'])
+    if has_blonde_hair:
+        excluded_types.add('VIVID SUMMER')
+        print(f'[Match] Blonde hair detected → excluding VIVID SUMMER (requires medium/dark hair)')
+    
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
     
@@ -797,6 +805,12 @@ def match_colortype(analysis: dict) -> tuple:
         if has_light_ash_blonde and colortype == 'SOFT SUMMER':
             color_score += 0.20
             print(f'[Match] {colortype}: BONUS +0.20 for light ash blonde hair (signature SOFT SUMMER)')
+        
+        # BONUS: Ash blond hair (any ash blonde shade) → +0.15 for SOFT SUMMER (characteristic hair color)
+        has_ash_blond = any(keyword in hair_lower for keyword in ['ash blond', 'ash blonde'])
+        if has_ash_blond and colortype == 'SOFT SUMMER' and not has_light_ash_blonde:
+            color_score += 0.15
+            print(f'[Match] {colortype}: BONUS +0.15 for ash blond hair (characteristic SOFT SUMMER)')
         
         # BONUS: Medium ash brown hair → +0.25 for DUSTY SUMMER and VIVID SUMMER (signature hair color)
         has_medium_ash_brown_hair = any(keyword in hair_lower for keyword in ['medium ash brown', 'medium cool brown', 'ash brown', 'cool brown'])
