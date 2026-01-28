@@ -203,14 +203,6 @@ Compare with the 9 example persons in each scheme. Larger difference (hair vs sk
 - LOW-MEDIUM-CONTRAST: Moderate difference (closer to low)
 - LOW-CONTRAST: Small difference
 
-CONTRAST BY TYPE (USUALLY):
-GENTLE AUTUMN/SPRING: LOW-CONTRAST or LOW-MEDIUM-CONTRAST
-SOFT/DUSTY SUMMER: LOW-CONTRAST to HIGH-MEDIUM-CONTRAST
-BRIGHT SPRING: LOW-CONTRAST to HIGH-MEDIUM-CONTRAST
-FIERY AUTUMN: LOW-MEDIUM-CONTRAST to HIGH-CONTRAST
-VIBRANT SPRING/VIVID AUTUMN: LOW-MEDIUM-CONTRAST to HIGH-CONTRAST
-ALL WINTER/VIVID SUMMER: HIGH-MEDIUM-CONTRAST to HIGH-CONTRAST
-
 7. DESCRIBE EXACT COLORS:
 
 Hair: Check the right side of schemes for hair color name examples. Use levels: "platinum blonde" (10), "ash blonde" (8-9, cool), "golden blonde" (7-8, warm), "light brown" (6), "chestnut" (5), "dark brown" (4), "black" (1-2), "auburn/copper" (red). Specify undertone: ash/golden/neutral/copper. If roots differ: "roots: X, length: Y".
