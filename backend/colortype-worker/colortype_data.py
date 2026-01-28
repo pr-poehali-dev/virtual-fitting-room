@@ -63,7 +63,7 @@ COLORTYPE_REFERENCES_DATA = {
     }
   },
   "GENTLE AUTUMN": {
-    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/2272a73e-e937-46cc-8d43-c42b6bf4c8b4.webp",
+    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/f83d3deb-51da-463f-b144-9e10a96e078a.webp",
     "description": "Нежная (мягкая) осень: тёплый подтон, светлые-средние приглушённые цвета, низкий контраст.",
     "characteristics": {
       "undertone": "WARM",
