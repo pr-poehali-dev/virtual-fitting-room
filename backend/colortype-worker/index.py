@@ -882,9 +882,9 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
     
     NEW SCORING:
     Parameters (weight x1.5):
-    - Undertone: 68%
-    - Saturation: 46%
-    - Contrast: 36%
+    - Undertone: 75%
+    - Saturation: 45%
+    - Contrast: 30%
     
     Colors (weight x1) - DYNAMIC WEIGHTS:
     - WARM undertone: Hair 45%, Skin 25%, Eyes 30%
@@ -1115,7 +1115,7 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
                 s_match = 1.0 if s == saturation else 0.0
                 c_match = 1.0 if c == contrast else 0.0
                 
-                candidate_score = ((u_match * 0.68) + (s_match * 0.46) + (c_match * 0.36)) / 1.5
+                candidate_score = ((u_match * 0.75) + (s_match * 0.45) + (c_match * 0.30)) / 1.5
                 
                 if candidate_score > param_match:
                     param_match = candidate_score
