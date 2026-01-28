@@ -171,9 +171,8 @@ Choose: COOL-UNDERTONE or WARM-UNDERTONE
 ⚠️ CRITICAL: Analyze hair COLOR AS A WHOLE - look at the ENTIRE visible hair mass, determine which color DOMINATES (takes up more area). If hair is multi-tonal (e.g., highlighted blonde + dark roots), identify which color is MORE PREVALENT in the total hair volume.
 
 - LIGHT-HAIR-COLORS: platinum, light blond, golden blond, light strawberry blond
-- MEDIUM-HAIR-COLORS: medium brown, dark blond, chestnut, light auburn, strawberry blond
-- DEEP-HAIR-COLORS: auburn, copper, bright auburn, dark brown, black, deep auburn, dark chestnut, espresso
-⚠️ Auburn/copper/red = DEEP even if warm!
+- MEDIUM-HAIR-COLORS: medium brown, dark blond, chestnut, light auburn, strawberry blond, copper, auburn, bright auburn
+- DEEP-HAIR-COLORS: dark brown, black, deep auburn, dark chestnut, espresso, deep brown, ash brown
 ⚠️ You can see hair color examples in the right side of each scheme - if they match, use those color names.
 
 3. SKIN LIGHTNESS:
