@@ -152,10 +152,10 @@ EYE COLOR HINTS:
 
 ⚠️ CRITICAL FOR BLONDE HAIR - DON'T TRUST COLOR NAMES:
 When you see blonde/light hair, DON'T decide undertone from color name alone ("golden blonde" can be BOTH warm OR cool).
-MANDATORY: Compare the photo directly with reference images:
-1. Open reference image (compare warm types with cool types)
-2. Look at ACTUAL hair color in references, not descriptions
-3. Compare analyzed photo with reference photos side-by-side
+MANDATORY: Compare the photo directly with the 9 example persons in each scheme:
+1. Look at the 9 example persons in warm types (SPRING/AUTUMN schemes) vs cool types (WINTER/SUMMER schemes)
+2. Look at ACTUAL hair color in the 9 examples, not descriptions
+3. Compare analyzed photo with the example persons side-by-side
 4. GOLDEN BLONDE has TWO types - check carefully:
    - SANDY/PEACHY golden blonde (orange sandy, honey, peachy tones) → WARM-UNDERTONE
    - LIGHT YELLOW golden blonde (beige, ash, platinum, lemon yellow, neutral) → COOL-UNDERTONE
@@ -196,7 +196,7 @@ Ask: "Are colors CLEAR/PURE or DUSTY/SOFT?"
 
 ⚠️ CRITICAL: Evaluate contrast by looking at the OVERALL VISUAL IMPRESSION of hair mass vs skin area, NOT individual points. Step back and see the general color patches (hair as one large patch, skin as another). The larger the difference between these overall patches = higher contrast.
 
-Compare with reference image. Larger difference (hair vs skin) = higher contrast.
+Compare with the 9 example persons in each scheme. Larger difference (hair vs skin) = higher contrast.
 - HIGH-CONTRAST: Very large difference
 - HIGH-MEDIUM-CONTRAST: Noticeable difference (closer to high)
 - LOW-MEDIUM-CONTRAST: Moderate difference (closer to low)
