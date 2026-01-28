@@ -888,7 +888,7 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
     
     Colors (weight x1) - DYNAMIC WEIGHTS:
     - WARM undertone: Hair 45%, Skin 25%, Eyes 30%
-    - COOL undertone: Hair 32%, Skin 32%, Eyes 36%
+    - COOL undertone: Hair 45%, Skin 25%, Eyes 30%
     
     BONUSES:
     - Auburn/copper/red hair + VIBRANT SPRING: +0.15
@@ -1136,10 +1136,10 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
             skin_weight = 0.25
             eyes_weight = 0.30
         else:
-            # Cool types: hair 32%, skin 32%, eyes 36% (original)
-            hair_weight = 0.32
-            skin_weight = 0.32
-            eyes_weight = 0.36
+            # Cool types: hair 45%, skin 25%, eyes 30%
+            hair_weight = 0.45
+            skin_weight = 0.25
+            eyes_weight = 0.30
         
         color_score = (hair_score * hair_weight) + (skin_score * skin_weight) + (eyes_score * eyes_weight)
         

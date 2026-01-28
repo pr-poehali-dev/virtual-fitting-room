@@ -734,10 +734,10 @@ def match_colortype(analysis: dict) -> tuple:
             skin_weight = 0.25
             eyes_weight = 0.30
         else:
-            # Cool types: hair 32%, skin 32%, eyes 36% (original)
-            hair_weight = 0.32
-            skin_weight = 0.32
-            eyes_weight = 0.36
+            # Cool types: hair 45%, skin 25%, eyes 30%
+            hair_weight = 0.45
+            skin_weight = 0.25
+            eyes_weight = 0.30
         
         color_score = (hair_score * hair_weight) + (skin_score * skin_weight) + (eyes_score * eyes_weight)
         
