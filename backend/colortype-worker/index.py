@@ -174,11 +174,13 @@ Choose: COOL-UNDERTONE or WARM-UNDERTONE
 - MEDIUM-HAIR-COLORS: medium brown, dark blond, chestnut, light auburn, strawberry blond
 - DEEP-HAIR-COLORS: auburn, copper, bright auburn, dark brown, black, deep auburn, dark chestnut, espresso
 ⚠️ Auburn/copper/red = DEEP even if warm!
+⚠️ You can see hair color examples in the right side of each scheme - if they match, use those color names.
 
 3. SKIN LIGHTNESS:
 - LIGHT-SKIN-COLORS: porcelain, ivory, alabaster, pale, fair
 - MEDIUM-SKIN-COLORS: beige, medium beige, warm beige, olive, café au lait
 - DEEP-SKIN-COLORS: deep brown, mahogany, ebony, chestnut
+⚠️ You can see skin color examples in the right side of each scheme - if they match, use those color names.
 
 4. EYES LIGHTNESS:
 - LIGHT-EYES-COLORS: light blue, bright blue, light green, light gray, jade
@@ -212,14 +214,14 @@ ALL WINTER/VIVID SUMMER: HIGH-MEDIUM-CONTRAST to HIGH-CONTRAST
 
 7. DESCRIBE EXACT COLORS:
 
-Hair: Use levels: "platinum blonde" (10), "ash blonde" (8-9, cool), "golden blonde" (7-8, warm), "light brown" (6), "chestnut" (5), "dark brown" (4), "black" (1-2), "auburn/copper" (red). Specify undertone: ash/golden/neutral/copper. If roots differ: "roots: X, length: Y".
+Hair: Check the right side of schemes for hair color examples. Use levels: "platinum blonde" (10), "ash blonde" (8-9, cool), "golden blonde" (7-8, warm), "light brown" (6), "chestnut" (5), "dark brown" (4), "black" (1-2), "auburn/copper" (red). Specify undertone: ash/golden/neutral/copper. If roots differ: "roots: X, length: Y".
 
 Eyes: ⚠️ CRITICAL - ALWAYS specify BRIGHT or SOFT for blue/gray eyes:
 - "bright blue", "bright gray-blue" OR "soft gray", "soft gray-blue", "muted gray-blue"
 - NEVER just "blue" or "gray-blue" - add qualifier!
 - Other: "deep brown", "hazel", "green", "amber", "dark gray", "light blue"
 
-Skin: Analyze multiple zones (forehead/cheeks/chin):
+Skin: Check the right side of schemes for skin color examples. Analyze multiple zones (forehead/cheeks/chin):
 - Base: "porcelain" (pale pink), "ivory" (pale neutral-cool), "fair" (light), "light beige" (light-medium warm), "beige" (medium), "olive" (green-yellow), "tan" (medium-dark warm), "caramel" (golden), "bronze" (dark warm), "deep brown", "rich ebony"
 - Undertone: cool (pink/red), warm (yellow/golden), neutral, olive
 - Combine: "{base} with {undertone} undertone"
