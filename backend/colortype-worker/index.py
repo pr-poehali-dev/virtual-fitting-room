@@ -213,12 +213,9 @@ ALL WINTER/VIVID SUMMER: HIGH-MEDIUM-CONTRAST to HIGH-CONTRAST
 
 7. DESCRIBE EXACT COLORS:
 
-Hair: Check the right side of schemes for hair color examples. Use levels: "platinum blonde" (10), "ash blonde" (8-9, cool), "golden blonde" (7-8, warm), "light brown" (6), "chestnut" (5), "dark brown" (4), "black" (1-2), "auburn/copper" (red). Specify undertone: ash/golden/neutral/copper. If roots differ: "roots: X, length: Y".
+Hair: Check the right side of schemes for hair color name examples. Use levels: "platinum blonde" (10), "ash blonde" (8-9, cool), "golden blonde" (7-8, warm), "light brown" (6), "chestnut" (5), "dark brown" (4), "black" (1-2), "auburn/copper" (red). Specify undertone: ash/golden/neutral/copper. If roots differ: "roots: X, length: Y".
 
-Eyes: ⚠️ CRITICAL - ALWAYS specify BRIGHT or SOFT for blue/gray eyes:
-- "bright blue", "bright gray-blue" OR "soft gray", "soft gray-blue", "muted gray-blue"
-- NEVER just "blue" or "gray-blue" - add qualifier!
-- Other: "deep brown", "hazel", "green", "amber", "dark gray", "light blue"
+Eyes: Use the USER CONFIRMED EYE COLOR specified above (do not analyze, just use that exact value in your response).
 
 Skin: Check the right side of schemes for skin color examples. Analyze multiple zones (forehead/cheeks/chin):
 - Base: "porcelain" (pale pink), "ivory" (pale neutral-cool), "fair" (light), "light beige" (light-medium warm), "beige" (medium), "olive" (green-yellow), "tan" (medium-dark warm), "caramel" (golden), "bronze" (dark warm), "deep brown", "rich ebony"
