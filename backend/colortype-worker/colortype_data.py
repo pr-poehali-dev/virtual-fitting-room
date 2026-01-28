@@ -13,7 +13,7 @@ COLORTYPE_REFERENCES_DATA = {
     }
   },
   "BRIGHT SPRING": {
-    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/da22f119-1f5f-4a47-be0c-4b7d036e8fef.webp",
+    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/1ac743c2-b143-4c19-b7fc-093a902727a7.webp",
     "description": "Тёплая весна: тёплый подтон, светлые-средние цвета (медовые/золотистые оттенки), яркая-нейтральная до яркой насыщенность, низко-средний до средне-высокого контраст.",
     "characteristics": {
       "undertone": "WARM",
