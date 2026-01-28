@@ -712,7 +712,7 @@ COLORTYPE_REFERENCES = {
         'skin': ['light beige', 'medium beige', 'almond']
     },
     'VIVID SUMMER': {
-        'hair': ['light cool brown', 'deep cool brown', 'medium dark cool brown', 'cool brown'],
+        'hair': ['light cool brown', 'deep cool brown', 'medium dark cool brown', 'cool brown', 'medium ash brown'],
         'eyes': ['blue-gray', 'blue-green', 'gray-green', 'cocoa', 'azure', 'gray'],
         'skin': ['medium beige', 'cocoa', 'brown']
     }
