@@ -195,12 +195,16 @@ Ask: "Are colors CLEAR/PURE or DUSTY/SOFT?"
 
 6. CONTRAST (hair vs skin difference):
 
-⚠️ CRITICAL: Evaluate contrast by looking at the OVERALL VISUAL IMPRESSION of hair mass vs skin area, NOT individual points. Step back and see the general color patches (hair as one large patch, skin as another). The larger the difference between these overall patches = higher contrast.
+⚠️ CRITICAL: Evaluate contrast by looking at the OVERALL VISUAL IMPRESSION of hair mass vs skin area, NOT individual points. Step back and see the general color patches (hair as one large patch, skin as another).
 
-- HIGH-CONTRAST: Very large difference
-- HIGH-MEDIUM-CONTRAST: Noticeable difference (closer to high)
-- LOW-MEDIUM-CONTRAST: Moderate difference (closer to low)
-- LOW-CONTRAST: Small difference
+Контраст определяется по разнице в светлоте (близость к белому/черному):
+- Оцени насколько волосы светлые/темные (близки к белому или черному)
+- Оцени насколько кожа светлая/темная (близка к белому или черному)
+- Сравни разницу в светлоте между ними:
+  * HIGH-CONTRAST: Very large difference (один очень светлый, другой очень темный)
+  * HIGH-MEDIUM-CONTRAST: Noticeable difference (closer to high)
+  * LOW-MEDIUM-CONTRAST: Moderate difference (closer to low)
+  * LOW-CONTRAST: Small difference (оба примерно одинаковой светлоты)
 
 7. DESCRIBE EXACT COLORS:
 
