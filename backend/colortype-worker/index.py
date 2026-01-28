@@ -80,22 +80,19 @@ PROMPT_TEMPLATE = '''You are a professional color analyst. Analyze ONLY visible 
 
 === STEP 1: VISUAL COMPARISON ===
 
-You will see 12 reference schemes (one per color type) + 1 reference image with all 12 types.
+You will see 12 reference schemes (one per color type).
 
 Each scheme shows:
-- LEFT: Example person (shows overall harmony)
+- LEFT: 9 example persons for this color type (shows overall harmony)
 - RIGHT: Color characteristics (eyes/skin/hair/contrast examples)
 - TEXT LABELS in ENGLISH (use exact names in JSON)
 
 ⚠️ CRITICAL WORKFLOW:
-1. FIRST: Open and carefully examine the reference image with ALL 12 color types
-2. SECOND: Look at and analyze ALL 12 types one by one - review each type's characteristics
-3. THIRD: Only AFTER viewing all 12 types, compare the analyzed photo with each type
-4. FOURTH: Make your final decision based on which type matches BEST overall
+1. FIRST: Look at and analyze ALL 12 types one by one - review each type's characteristics
+2. SECOND: Compare the analyzed photo with each type
+3. THIRD: Make your final decision based on which type matches BEST overall
 
 TASK: Compare ANALYZED PHOTO with all 12 schemes. Match COLOR CHARACTERISTICS (right side), not exact appearance. Select MOST LIKELY type → use as `suggested_colortype` in JSON.
-
-Reference image: https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/7f872f1f-a74e-47fa-9b3c-79934845836f.webp
 
 ⚠️ UNDERTONE CALIBRATION:
 - COOL = WINTER (SOFT/BRIGHT/VIVID WINTER) + SUMMER (SOFT/DUSTY/VIVID SUMMER)
