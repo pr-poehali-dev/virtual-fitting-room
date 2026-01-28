@@ -33,7 +33,7 @@ COLORTYPE_REFERENCES_DATA = {
     }
   },
   "SOFT SUMMER": {
-    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/67758270-d132-4e88-9781-d302d7fe7a1a.webp",
+    "scheme_url": "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/f652cc58-788b-4f10-badd-365dd20b5875.webp",
     "description": "Светлое (мягкое) лето: холодный подтон, светлые-средние цвета, светлые холодные глаза, пепельные волосы, низкий контраст.",
     "characteristics": {
       "undertone": "COOL",
