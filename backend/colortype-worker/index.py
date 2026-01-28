@@ -116,7 +116,6 @@ GENTLE SPRING: Warm, low contrast, light colors, light warm eyes.
 BRIGHT SPRING: Warm, clear, medium contrast, blue/green eyes (NOT brown).
 
 EYE RULES:
-- Light eyes (light blue/green/turquoise) → ONLY SOFT SUMMER or GENTLE SPRING
 - Bright eyes (bright blue/green/gray-blue) → ONLY VIBRANT SPRING or BRIGHT WINTER
 - Gray eyes (without "bright") → NEVER VIBRANT SPRING
 - Dark hair + BRIGHT eyes → BRIGHT WINTER
