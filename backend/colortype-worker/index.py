@@ -709,7 +709,7 @@ COLORTYPE_REFERENCES = {
         'skin': ['porcelain', 'light beige', 'pale']
     },
     'DUSTY SUMMER': {
-        'hair': ['medium cool blond', 'deep cool blond', 'light cool brown', 'medium cool brown', 'ash brown'],
+        'hair': ['medium cool blond', 'deep cool blond', 'light cool brown', 'medium cool brown', 'ash brown', 'medium ash brown'],
         'eyes': ['gray-blue', 'gray-green', 'blue', 'muted', 'azure', 'soft gray-blue', 'soft gray-green'],
         'skin': ['light beige', 'medium beige', 'almond']
     },
