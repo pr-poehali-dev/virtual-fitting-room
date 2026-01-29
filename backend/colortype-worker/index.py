@@ -117,6 +117,11 @@ SOFT SUMMER: Cool, low contrast, very light blond colors hair, light cool eyes.
 GENTLE SPRING: Warm, low contrast, light warm blond colors hair, light eyes.
 BRIGHT SPRING: Warm, clear, medium contrast, blue/green eyes (NOT brown).
 
+⚠️ BLONDE HAIR TEMPERATURE GUIDE (for visual colortype comparison):
+- COOL blonde (Summer/Winter types): grayish, ashy, platinum, beige, silvery, white-blonde, dirty blonde, taupe (looks GRAY-based)
+- WARM blonde (Spring/Autumn types): peachy, sandy, honey, golden-orange, buttery, strawberry (looks YELLOW/ORANGE-based)
+- When comparing with reference schemes, match blonde temperature to determine correct season group
+
 EYE RULES:
 - Bright eyes (bright blue/green/gray-blue) → ONLY VIBRANT SPRING or BRIGHT WINTER
 - Gray eyes (without "bright") → NEVER VIBRANT SPRING
