@@ -153,7 +153,7 @@ EYE COLOR HINTS:
 - If you describe hair as "neutral" + eyes have "gray"/"grey" → you MUST choose COOL-UNDERTONE
 
 ⚠️ CRITICAL FOR BLONDE HAIR - DON'T TRUST COLOR NAMES:
-When you see blonde/light hair, DON'T decide undertone from color name alone ("golden blonde" can be BOTH warm OR cool).
+When you see blonde/light blonde hair, DON'T decide undertone from color name alone ("golden blonde" can be BOTH warm OR cool).
 MANDATORY: Compare the photo directly with the 9 example persons in each scheme:
 1. Look at the 9 example persons in warm types (SPRING/AUTUMN schemes) vs cool types (WINTER/SUMMER schemes)
 2. Look at ACTUAL hair color in the 9 examples, not descriptions
