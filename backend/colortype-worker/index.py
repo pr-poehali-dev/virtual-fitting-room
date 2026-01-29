@@ -164,7 +164,11 @@ MANDATORY: Compare the photo directly with the 9 example persons in each scheme:
 5. Ask: "Does this blonde have warm peachy/sandy/honey tones OR cool yellow/beige/ashy/very light tones?"
    - Warm peachy/sandy/honey → WARM-UNDERTONE
    - Cool yellow/beige/ashy/platinum/very light → COOL-UNDERTONE
-6. When in doubt between warm/cool blonde → choose COOL (most blondes are cool-toned)
+6. ⚠️ CRITICAL: For blonde hair undertone, compare with SOFT SUMMER and GENTLE SPRING examples specifically:
+   - Look at the 9 example persons in SOFT SUMMER scheme vs 9 example persons in GENTLE SPRING scheme
+   - Compare the analyzed photo's hair color: closer to SOFT SUMMER examples → COOL-UNDERTONE, closer to GENTLE SPRING examples → WARM-UNDERTONE
+   - This comparison is MOST IMPORTANT for determining blonde hair undertone
+7. When in doubt between warm/cool blonde → choose COOL (most blondes are cool-toned)
 
 Choose: COOL-UNDERTONE or WARM-UNDERTONE
 
