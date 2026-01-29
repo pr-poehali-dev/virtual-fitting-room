@@ -1147,8 +1147,14 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
             color_score += 0.25
             print(f'[Match] {colortype}: BONUS +0.25 for dark hair + soft/muted gray eyes (signature SOFT WINTER)')
         
+        # BONUS: Dark hair + ANY gray eyes + HIGH-CONTRAST → +0.20 for SOFT WINTER (characteristic combination)
+        # This covers cases where GPT doesn't specify "soft" in gray eyes description
+        if has_dark_hair and has_gray_eyes and contrast == 'HIGH-CONTRAST' and colortype == 'SOFT WINTER' and not has_soft_muted_eyes:
+            color_score += 0.20
+            print(f'[Match] {colortype}: BONUS +0.20 for dark hair + gray eyes + HIGH-CONTRAST (characteristic SOFT WINTER)')
+        
         # BONUS: Gray eyes → +0.15 for SOFT WINTER, VIVID SUMMER, DUSTY SUMMER (if not already applied above)
-        if has_gray_eyes and colortype == 'SOFT WINTER' and not has_soft_muted_eyes:
+        if has_gray_eyes and colortype == 'SOFT WINTER' and not has_soft_muted_eyes and contrast != 'HIGH-CONTRAST':
             color_score += 0.15
             print(f'[Match] {colortype}: BONUS +0.15 for gray eyes (characteristic color)')
         
