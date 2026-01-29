@@ -161,9 +161,9 @@ MANDATORY: Compare the photo directly with the 9 example persons in each scheme:
 4. GOLDEN BLONDE has TWO types - check carefully:
    - SANDY/PEACHY golden blonde (orange sandy, honey, peachy tones) → WARM-UNDERTONE
    - LIGHT YELLOW golden blonde (beige, ash, platinum, lemon yellow, neutral) → COOL-UNDERTONE
-5. Ask: "Does this blonde have warm peachy/sandy/honey tones OR cool yellow/beige/ashy tones?"
+5. Ask: "Does this blonde have warm peachy/sandy/honey tones OR cool yellow/beige/ashy/very light tones?"
    - Warm peachy/sandy/honey → WARM-UNDERTONE
-   - Cool yellow/beige/ashy/platinum → COOL-UNDERTONE
+   - Cool yellow/beige/ashy/platinum/very light → COOL-UNDERTONE
 6. When in doubt between warm/cool blonde → choose COOL (most blondes are cool-toned)
 
 Choose: COOL-UNDERTONE or WARM-UNDERTONE
