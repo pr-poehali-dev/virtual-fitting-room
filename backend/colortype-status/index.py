@@ -813,6 +813,12 @@ def match_colortype(analysis: dict) -> tuple:
             color_score += 0.15
             print(f'[Match] {colortype}: BONUS +0.15 for ash blond hair (characteristic SOFT SUMMER)')
         
+        # BONUS: Light ash blond hair → +0.30 for SOFT SUMMER (signature hair color)
+        has_light_ash_blond_hair = any(keyword in hair_lower for keyword in ['light ash blond', 'light ash blonde'])
+        if has_light_ash_blond_hair and colortype == 'SOFT SUMMER':
+            color_score += 0.30
+            print(f'[Match] {colortype}: BONUS +0.30 for light ash blond hair (signature SOFT SUMMER)')
+        
         # BONUS: Medium ash brown hair → +0.25 for DUSTY SUMMER and VIVID SUMMER (signature hair color)
         has_medium_ash_brown_hair = any(keyword in hair_lower for keyword in ['medium ash brown', 'medium cool brown', 'ash brown', 'cool brown'])
         if has_medium_ash_brown_hair and colortype == 'DUSTY SUMMER':
@@ -845,6 +851,12 @@ def match_colortype(analysis: dict) -> tuple:
         if has_medium_brown_hair and colortype == 'SOFT WINTER':
             color_score -= 0.20
             print(f'[Match] {colortype}: PENALTY -0.20 for medium brown hair (SOFT WINTER requires dark/deep hair only)')
+        
+        # BONUS: Black-brown eyes → +0.15 for VIVID WINTER (characteristic eye color)
+        has_black_brown_eyes = any(keyword in eyes_lower for keyword in ['black-brown', 'black brown', 'very dark brown', 'blackish brown'])
+        if has_black_brown_eyes and colortype == 'VIVID WINTER':
+            color_score += 0.15
+            print(f'[Match] {colortype}: BONUS +0.15 for black-brown eyes (characteristic VIVID WINTER)')
         
         # Total score: 1.5x parameters + 1x colors
         total_score = (param_match * 1.5) + (color_score * 1.0)
