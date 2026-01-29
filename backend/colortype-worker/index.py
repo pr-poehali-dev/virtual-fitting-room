@@ -152,23 +152,35 @@ EYE COLOR HINTS:
 - GRAY eyes OR GRAY-GREEN eyes OR GREY-GREEN eyes → ALWAYS COOL undertone (Winter/Summer)
 - If you describe hair as "neutral" + eyes have "gray"/"grey" → you MUST choose COOL-UNDERTONE
 
-⚠️ CRITICAL FOR BLONDE HAIR - DON'T TRUST COLOR NAMES:
-When you see blonde/light blonde hair, DON'T decide undertone from color name alone ("golden blonde" can be BOTH warm OR cool).
-MANDATORY: Compare the photo directly with the 9 example persons in each scheme:
-1. Look at the 9 example persons in warm types (SPRING/AUTUMN schemes) vs cool types (WINTER/SUMMER schemes)
-2. Look at ACTUAL hair color in the 9 examples, not descriptions
-3. Compare analyzed photo with the example persons side-by-side
-4. GOLDEN BLONDE has TWO types - check carefully:
-   - SANDY/PEACHY golden blonde (orange sandy, honey, peachy tones) → WARM-UNDERTONE
-   - LIGHT YELLOW golden blonde (beige, ash, platinum, lemon yellow, neutral) → COOL-UNDERTONE
-5. Ask: "Does this blonde have warm peachy/sandy/honey tones OR cool yellow/beige/ashy/very light tones?"
-   - Warm peachy/sandy/honey → WARM-UNDERTONE
-   - Cool yellow/beige/ashy/platinum/very light → COOL-UNDERTONE
-6. ⚠️ CRITICAL: For blonde hair undertone, compare with SOFT SUMMER and GENTLE SPRING examples specifically:
-   - Look at the 9 example persons in SOFT SUMMER scheme vs 9 example persons in GENTLE SPRING scheme
-   - Compare the analyzed photo's hair color: closer to SOFT SUMMER examples → COOL-UNDERTONE, closer to GENTLE SPRING examples → WARM-UNDERTONE
-   - This comparison is MOST IMPORTANT for determining blonde hair undertone
-7. When in doubt between warm/cool blonde → choose COOL (most blondes are cool-toned)
+⚠️ CRITICAL FOR BLONDE HAIR - UNDERTONE ANALYSIS PRIORITY:
+For blonde/light hair, follow this MANDATORY 3-step process:
+
+STEP 1 - VISUAL TEMPERATURE TEST:
+Look at the hair and ask: "What COLOR FAMILY does this blonde belong to?"
+- COOL blonde = grayish, ashy, platinum, beige, silvery, white-blonde, dirty blonde, taupe (looks GRAY-based)
+- WARM blonde = peachy, sandy, honey, golden-orange, buttery, strawberry (looks YELLOW/ORANGE-based)
+- If blonde looks NEUTRAL/unclear → proceed to STEP 2
+
+STEP 2 - REFERENCE COMPARISON:
+Compare analyzed photo with reference schemes:
+- SOFT SUMMER (cool): ash blonde, platinum, grayish-beige blonde, silver-blonde, taupe blonde
+- DUSTY SUMMER (cool): medium ash blonde, cool beige blonde with gray tones
+- GENTLE SPRING (warm): golden blonde with peachy/sandy tones, honey blonde, warm butter blonde
+- BRIGHT SPRING (warm): bright golden blonde, sunny blonde, warm yellow blonde
+Which reference group matches CLOSEST? That determines undertone.
+
+STEP 3 - CRITICAL RULES:
+- ASH/PLATINUM/BEIGE/GRAY tones in blonde = ALWAYS COOL-UNDERTONE
+- PEACHY/SANDY/HONEY/ORANGE tones in blonde = ALWAYS WARM-UNDERTONE
+- "Golden blonde" is AMBIGUOUS - check if it's:
+  * Cool golden = light yellow/beige with NO orange/peach = COOL-UNDERTONE
+  * Warm golden = honey/peachy/sandy/orange yellow = WARM-UNDERTONE
+- If still unclear after steps 1-2 → choose COOL-UNDERTONE (most blondes are cool)
+
+⚠️ COMMON MISTAKES TO AVOID:
+- DO NOT call ash/platinum/beige blonde "golden" - it's COOL
+- DO NOT call honey/peachy/sandy blonde "ash" - it's WARM
+- DO NOT use color names alone - LOOK at actual hair tone (gray-based vs yellow-based)
 
 Choose: COOL-UNDERTONE or WARM-UNDERTONE
 
@@ -218,7 +230,16 @@ Contrast is determined by the difference in lightness (proximity to white/black)
 
 7. DESCRIBE EXACT COLORS:
 
-Hair: Check the right side of schemes for hair color name examples. Use levels: "platinum blonde" (10), "ash blonde" (8-9, cool), "golden blonde" (7-8, warm), "light brown" (6), "chestnut" (5), "dark brown" (4), "black" (1-2), "auburn/copper" (red). Specify undertone: ash/golden/neutral/copper. If roots differ: "roots: X, length: Y".
+Hair: Check the right side of schemes for hair color name examples. Use levels: "platinum blonde" (10, COOL), "ash blonde" (8-9, COOL), "light golden blonde" (7-8, CHECK: cool if beige/yellow, warm if peachy/sandy), "medium blonde" (6-7, CHECK undertone), "light brown" (6), "chestnut" (5), "dark brown" (4), "black" (1-2), "auburn/copper" (red, WARM). 
+
+⚠️ For blonde hair, MANDATORY format: "{lightness level} {undertone descriptor} blonde"
+Examples:
+- "light ash blonde" (COOL: grayish, platinum, beige tones)
+- "light golden blonde" - MUST specify if COOL (beige/yellow) or WARM (peachy/honey)
+- "medium ash blonde" (COOL: taupe, gray-beige)
+- "light warm blonde" (WARM: peachy, sandy, honey tones)
+
+If roots differ: "roots: X, length: Y".
 
 Eyes: Use the USER CONFIRMED EYE COLOR specified above (do not analyze, just use that exact value in your response).
 
