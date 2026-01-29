@@ -647,6 +647,11 @@ def match_colortype(analysis: dict) -> tuple:
     # ============ STAGE 3: Final selection by color keyword matching ============
     print(f'[Match] STAGE 3: Scoring {len(stage2_candidates)} candidates by color matching + params')
     
+    # Check if current param_key is ambiguous (multiple colortypes share same parameters)
+    is_ambiguous_combination = param_key in AMBIGUOUS_COMBINATIONS
+    if is_ambiguous_combination:
+        print(f'[Match] AMBIGUOUS combination detected → all candidates will get param_match=1.0')
+    
     # Detect characteristic features
     has_auburn_hair = any(keyword in hair_lower for keyword in ['auburn', 'copper', 'red', 'bright auburn', 'ginger'])
     has_gray_eyes = any(keyword in eyes_lower for keyword in ['gray', 'grey', 'gray-blue', 'grey-blue', 'gray-green', 'grey-green'])
@@ -670,35 +675,45 @@ def match_colortype(analysis: dict) -> tuple:
     best_color_score = 0.0
     
     for colortype in stage2_candidates:
-        # Check if this colortype's params match exactly
-        params_list = get_colortype_params(colortype)
-        
         # Calculate parameter match score (undertone, saturation, contrast)
         param_match = 0.0
         undertone_match = 0.0
         saturation_match = 0.0
         contrast_match = 0.0
         
-        if param_key in params_list:
-            # Exact match
+        # ⚠️ CRITICAL FIX: If param_key is in AMBIGUOUS_COMBINATIONS, ALL candidates get param_match=1.0
+        # This ensures ambiguous combinations give equal parameter scores, and winner is determined by colors+bonuses
+        if is_ambiguous_combination and ambiguous_candidates and colortype in ambiguous_candidates:
+            # Ambiguous combination → all candidates get equal parameter score
             undertone_match = 1.0
             saturation_match = 1.0
             contrast_match = 1.0
             param_match = 1.0
+            print(f'[Match] {colortype}: AMBIGUOUS → param_match=1.0 (equal for all candidates)')
         else:
-            # Find closest match
-            for (u, s, c) in params_list:
-                u_match = 1.0 if u == undertone else 0.0
-                s_match = 1.0 if s == saturation else 0.0
-                c_match = 1.0 if c == contrast else 0.0
-                
-                candidate_score = ((u_match * 0.68) + (s_match * 0.46) + (c_match * 0.36)) / 1.5
-                
-                if candidate_score > param_match:
-                    param_match = candidate_score
-                    undertone_match = u_match
-                    saturation_match = s_match
-                    contrast_match = c_match
+            # Normal logic: check COLORTYPE_MAP for exact or closest match
+            params_list = get_colortype_params(colortype)
+            
+            if param_key in params_list:
+                # Exact match
+                undertone_match = 1.0
+                saturation_match = 1.0
+                contrast_match = 1.0
+                param_match = 1.0
+            else:
+                # Find closest match
+                for (u, s, c) in params_list:
+                    u_match = 1.0 if u == undertone else 0.0
+                    s_match = 1.0 if s == saturation else 0.0
+                    c_match = 1.0 if c == contrast else 0.0
+                    
+                    candidate_score = ((u_match * 0.68) + (s_match * 0.46) + (c_match * 0.36)) / 1.5
+                    
+                    if candidate_score > param_match:
+                        param_match = candidate_score
+                        undertone_match = u_match
+                        saturation_match = s_match
+                        contrast_match = c_match
         
         # Calculate color match score with DYNAMIC WEIGHTS based on undertone
         ref = COLORTYPE_REFERENCES[colortype]
