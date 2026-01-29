@@ -849,6 +849,12 @@ def match_colortype(analysis: dict) -> tuple:
             color_score += 0.15
             print(f'[Match] {colortype}: BONUS +0.15 for black-brown eyes (characteristic VIVID WINTER)')
         
+        # PENALTY: Dark brown hair → -0.30 for DUSTY SUMMER (requires light/medium hair, NOT dark)
+        has_dark_brown_hair_color = any(keyword in hair_lower for keyword in ['dark brown', 'deep brown', 'dark cool brown', 'dark ash brown'])
+        if has_dark_brown_hair_color and colortype == 'DUSTY SUMMER':
+            color_score -= 0.30
+            print(f'[Match] {colortype}: PENALTY -0.30 for dark brown hair (DUSTY SUMMER requires light/medium hair only)')
+        
         # Total score: 1.5x parameters + 1x colors
         total_score = (param_match * 1.5) + (color_score * 1.0)
         
