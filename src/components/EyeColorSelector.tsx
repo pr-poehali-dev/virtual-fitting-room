@@ -18,11 +18,11 @@ interface EyeColorSelectorProps {
 const eyeColorMap: Record<string, [string, string]> = {
   // Turquoise / Бирюзовые
   turquoise: ["#3e899c", "#62b39d"],
-  "turquoise blue": ["#3e899c", "#75b8d5"],
+  "turquoise blue": ["#3e979c", "#4ed9d0"],
 
   // Blue / Голубые
   blue: ["#3e6791", "#74b6d5"],
-  cyan: ["#4ea0aa", "#74b6d5"],
+  cyan: ["#4ea0aa", "#74d2d5"],
   "soft blue": ["#7991a9", "#86b3d1"],
   "light blue": ["#7597b1", "#a7ccdd"],
   "warm blue": ["#6e8d92", "#85b8bb"],
@@ -63,7 +63,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   jade: ["#2f5851", "#5c9561"],
 
   // Hazel / Ореховые
-  hazel: ["#787f4d", "#bf9a3a"],
+  hazel: ["#787f4d", "#957c3d"],
   "icy hazel": ["#675b37", "#9f9676"],
   "light hazel": ["#5d5e36", "#cdb26d"],
   "dark hazel": ["#50341e", "#956a3d"],
