@@ -117,9 +117,9 @@ const eyeColorMap: Record<string, [string, string]> = {
   amber: ["#4f2203", "#986334"],
 
   // Other / Другие
-  muted: ["#B0B0B0", "#BBBBBB"],
-  dark: ["#2F2F2F", "#5F5F5F"],
-  cool: ["#708090", "#708090"],
+  muted: ["#B0B0B0", "#9bb6bd"],
+  dark: ["#211003", "#2f1207"],
+  cool: ["#708090", "#617b95"],
 };
 
 // Eye icon component with radial gradient
