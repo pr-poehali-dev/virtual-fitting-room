@@ -56,7 +56,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "brown-black": ["#3a2220", "#241a11"],
 
   // Azure / Лазурные
-  azure: ["#1f4d44", "#5ac5b4"],
+  azure: ["#19493f", "#51a99b"],
   "light turquoise": ["#509aa6", "#6feae0"],
 
   // Jade / Нефритовые
@@ -73,7 +73,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "dark olive": ["#434a3a", "#6b6b3a"],
 
   // Gray-Blue / Серо-голубые
-  "gray-blue": ["#6699CC", "#688ea0"],
+  "gray-blue": ["#638595", "#6699CC"],
   "soft gray-blue": ["#8FA8C0", "#7c94a0"],
   "bright gray-blue": ["#4A90C9", "#54b3df"],
 
@@ -86,17 +86,17 @@ const eyeColorMap: Record<string, [string, string]> = {
 
   // Gray / Серые
   gray: ["#425363", "#798593"],
-  "soft gray": ["#A9A9A9", "#A9A9A9"],
+  "soft gray": ["#A9A9A9", "#8eacc9"],
   "light grey": ["#576878", "#849ba8"],
   "dark grey": ["#343d4c", "#506169"],
 
   // Blue-Green / Сине-зелёные
-  "blue-green": ["#0D98BA", "#0D98BA"],
-  "light blue-green": ["#66CDAA", "#66CDAA"],
-  "bright blue-green": ["#00CED1", "#00CED1"],
+  "blue-green": ["#6699CC", "#79b96f"],
+  "light blue-green": ["#7597b1", "#c4dca0"],
+  "bright blue-green": ["#70acdc", "#9fbb70"],
 
   // Blue-Gray / Сине-серые
-  "blue-gray": ["#3a7b99", "#6699CC"],
+  "blue-gray": ["#638595", "#74b6d5"],
 
   // Cocoa / Цвета какао
   cocoa: ["#6F4E37", "#6F4E37"],
