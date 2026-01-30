@@ -104,6 +104,16 @@ Use reference examples as your "temperature gauge": Winter/Summer = cool, Spring
 
 ⚠️ KEY DISTINCTIONS:
 
+Before selecting ANY colortype, you MUST compare the analyzed photo with ALL 12 reference schemes carefully:
+1. Look at the LEFT side of each scheme - 9 example persons showing typical appearance for that colortype
+2. Compare the analyzed photo's OVERALL VISUAL IMPRESSION with these 9 examples
+3. Ask yourself: "Does this person look similar to these 9 examples in terms of color harmony?"
+   - Specifically compare: HAIR COLOR SHADES (warm golden vs cool ash, light vs dark tones)
+   - SKIN UNDERTONES (pink/rosy cool vs peachy/golden warm, light vs deep)
+   - EYE COLOR harmony with hair and skin (user confirmed eye color as reference point)
+4. Focus on actual HAIR COLOR SHADES and UNDERTONES (the actual visual color tones, NOT color names) visible in the examples
+5. Only after comparing with ALL 12 schemes, select the BEST MATCH
+
 VIBRANT SPRING: Warm, clear, high-contrast. Bright eyes (blue/green/hazel). Medium-light hair (auburn/golden brown). NOT gray eyes, NOT deep dark hair.
 BRIGHT WINTER: Cool, sparkling BRIGHT eyes, deep DARK hair (signature: dark hair + bright eyes). If dark hair + bright blue eyes → BRIGHT WINTER.
 SOFT WINTER: Cool, SOFT/MUTED gray eyes, dark hair (signature: dark hair + soft gray eyes). If eyes "soft/muted" → SOFT WINTER, NOT BRIGHT WINTER.
@@ -116,6 +126,8 @@ VIVID SUMMER: Cool, muted, medium-high contrast, gray eyes.
 SOFT SUMMER: Cool, low contrast, very light blond colors hair, light cool eyes.
 GENTLE SPRING: Warm, low contrast, light warm blond colors hair, light eyes.
 BRIGHT SPRING: Warm, clear, medium contrast, blue/green eyes (NOT brown).
+
+CRITICAL: Do NOT skip this comparison step. The 9 example persons on each scheme are your primary guide for visual matching - pay special attention to the EXACT HAIR COLOR TONES you see in the examples, SKIN UNDERTONES (cool/warm), and how they work together with the user's confirmed EYE COLOR to create overall color harmony.
 
 ⚠️ BLONDE HAIR TEMPERATURE GUIDE (for visual colortype comparison):
 - COOL blonde (Summer/Winter types): grayish, ashy, platinum, beige, silvery, white-blonde, dirty blonde, taupe (looks GRAY-based)
