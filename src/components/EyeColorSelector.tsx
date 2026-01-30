@@ -25,7 +25,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "cyan": ["#4ea0aa", "#57aab4"],
   "soft blue": ["#87CEEB", "#87CEEB"],
   "light blue": ["#7597b1", "#a7ccdd"],
-  "warm blue": ["#6495ED", "#6495ED"],
+  "warm blue": ["#6e8d92", "#85b8bb"],
   "cool blue": ["#4682B4", "#4682B4"],
   "bright blue": ["#1f6c8f", "#6fc6f0"],
 
@@ -34,7 +34,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "emerald green": ["#1e6851", "#3a9b7c"],
   "light green": ["#8e975e", "#c4dca0"],
   "dark green": ["#006400", "#006400"],
-  "warm green": ["#6B8E23", "#6B8E23"],
+  "warm green": ["#657e47", "#959e4f"],
   "bright green": ["#00FF00", "#00FF00"],
 
   // Golden / Золотистые
@@ -65,7 +65,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   // Hazel / Ореховые
   "hazel": ["#82935a", "#9f8c5a"],
   "icy hazel": ["#C19A6B", "#C19A6B"],
-  "light hazel": ["#5f4a39", "#a97c5b"],
+  "light hazel": ["#5d5e36", "#7c5f1f"],
   "dark hazel": ["#50341e", "#6a4f32"],
 
   // Olive / Оливковые
@@ -111,7 +111,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "chocolate": ["#7B3F00", "#7B3F00"],
 
   // Topaz / Топазовые
-  "topaz": ["#FFCC99", "#FFCC99"],
+  "topaz": ["#723612", "#ae632d"],
 
   // Amber / Янтарные
   "amber": ["#4f2203", "#986334"],
