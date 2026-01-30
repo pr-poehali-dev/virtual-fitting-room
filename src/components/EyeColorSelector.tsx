@@ -27,13 +27,13 @@ const eyeColorMap: Record<string, [string, string]> = {
   "light blue": ["#7597b1", "#a7ccdd"],
   "warm blue": ["#6e8d92", "#85b8bb"],
   "cool blue": ["#4d6a8c", "#74b6d5"],
-  "bright blue": ["#70acdc", "#54c2bc"],
+  "bright blue": ["#70acdc", "#5ccad9"],
 
   // Green / Зелёные
   green: ["#416267", "#79b96f"],
   "emerald green": ["#1e6851", "#3a9b7c"],
-  "light green": ["#8e975e", "#c4dca0"],
-  "dark green": ["#423b29", "#524c22"],
+  "light green": ["#71975e", "#c4dca0"],
+  "dark green": ["#423b29", "#5b6d30"],
   "warm green": ["#657e47", "#959e4f"],
   "bright green": ["#50b1a5", "#90a370"],
 
