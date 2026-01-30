@@ -18,7 +18,7 @@ interface EyeColorSelectorProps {
 const eyeColorMap: Record<string, [string, string]> = {
   // Turquoise / Бирюзовые
   turquoise: ["#1b6165", "#51a99b"],
-  "turquoise blue": ["#1b6165", "#6feae0"],
+  "turquoise blue": ["#1c929f", "#6feae0"],
 
   // Azure / Лазурные
   azure: ["#1b3865", "#589cc9"],
@@ -26,7 +26,7 @@ const eyeColorMap: Record<string, [string, string]> = {
 
   // Blue / Голубые
   blue: ["#3e6791", "#74b6d5"],
-  cyan: ["#4ea0aa", "#74d2d5"],
+  cyan: ["#2ea5b3", "#74d2d5"],
   "soft blue": ["#7991a9", "#86b3d1"],
   "light blue": ["#7597b1", "#a7ccdd"],
   "warm blue": ["#5fa7b3", "#85b8bb"],
