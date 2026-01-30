@@ -78,11 +78,11 @@ const eyeColorMap: Record<string, [string, string]> = {
   "bright gray-blue": ["#7b8285", "#54b3df"],
 
   // Gray-Green / Серо-зелёные
-  "gray-green": ["#425363", "#79b96f"],
-  "soft gray-green": ["#8FA8C0", "#A2AC8A"],
+  "gray-green": ["#425363", "#6c9166"],
+  "soft gray-green": ["#76838f", "#A2AC8A"],
 
   // Gray-Brown / Серо-карие
-  "light grey brown": ["#3e4f56", "#707a6c"],
+  "light grey brown": ["#3e4f56", "#9b856c"],
 
   // Gray / Серые
   gray: ["#425363", "#798593"],
@@ -99,7 +99,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "blue-gray": ["#638595", "#74b6d5"],
 
   // Cocoa / Цвета какао
-  cocoa: ["#6F4E37", "#6F4E37"],
+  cocoa: ["#6F4E37", "#7d4444"],
 
   // Black-Brown / Чёрно-карие
   "black-brown": ["#3B2F2F", "#3B2F2F"],
@@ -108,13 +108,13 @@ const eyeColorMap: Record<string, [string, string]> = {
   black: ["#1e2629", "#2a2924"],
 
   // Chocolate / Шоколадные
-  chocolate: ["#7B3F00", "#7B3F00"],
+  chocolate: ["#53290f", "#7B3F00"],
 
   // Topaz / Топазовые
   topaz: ["#723612", "#ae632d"],
 
   // Amber / Янтарные
-  amber: ["#4f2203", "#986334"],
+  amber: ["#4f2203", "#b98030"],
 
   // Other / Другие
   muted: ["#B0B0B0", "#9bb6bd"],
