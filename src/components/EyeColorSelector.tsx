@@ -17,8 +17,12 @@ interface EyeColorSelectorProps {
 // Color mapping for eye colors (English value → [outer, inner] gradient colors)
 const eyeColorMap: Record<string, [string, string]> = {
   // Turquoise / Бирюзовые
-  turquoise: ["#3e899c", "#62b39d"],
-  "turquoise blue": ["#3e979c", "#4ed9d0"],
+  turquoise: ["#1b6165", "#51a99b"],
+  "turquoise blue": ["#1f9ebd", "#51a99b"],
+
+  // Azure / Лазурные
+  azure: ["#1b6165", "#51a99b"],
+  "light turquoise": ["#509aa6", "#6feae0"],
 
   // Blue / Голубые
   blue: ["#3e6791", "#74b6d5"],
@@ -54,10 +58,6 @@ const eyeColorMap: Record<string, [string, string]> = {
 
   // Brown-Black / Коричнево-чёрные
   "brown-black": ["#3a2220", "#241a11"],
-
-  // Azure / Лазурные
-  azure: ["#1b6165", "#51a99b"],
-  "light turquoise": ["#509aa6", "#6feae0"],
 
   // Jade / Нефритовые
   jade: ["#2f5851", "#5c9561"],
