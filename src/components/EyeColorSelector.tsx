@@ -21,7 +21,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "turquoise blue": ["#00CED1", "#00CED1"],
 
   // Blue / Голубые
-  "blue": ["#4169E1", "#4169E1"],
+  "blue": ["#4b6e8e", "#5995b7"],
   "cyan": ["#00BFFF", "#00BFFF"],
   "soft blue": ["#87CEEB", "#87CEEB"],
   "light blue": ["#527490", "#95c8de"],
@@ -30,7 +30,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "bright blue": ["#0080FF", "#0080FF"],
 
   // Green / Зелёные
-  "green": ["#228B22", "#228B22"],
+  "green": ["#416267", "#79b96f"],
   "emerald green": ["#50C878", "#50C878"],
   "light green": ["#4d7575", "#6fb6ad"],
   "dark green": ["#006400", "#006400"],
@@ -85,7 +85,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "light grey brown": ["#9B8B7E", "#9B8B7E"],
 
   // Gray / Серые
-  "gray": ["#808080", "#808080"],
+  "gray": ["#425363", "#798593"],
   "soft gray": ["#A9A9A9", "#A9A9A9"],
   "light grey": ["#415465", "#8494a1"],
   "dark grey": ["#696969", "#696969"],
