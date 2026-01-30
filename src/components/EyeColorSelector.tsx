@@ -96,7 +96,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "bright blue-green": ["#70acdc", "#9fbb70"],
 
   // Blue-Gray / Сине-серые
-  "blue-gray": ["#638595", "#74b6d5"],
+  "blue-gray": ["#596f79", "#74b6d5"],
 
   // Cocoa / Цвета какао
   cocoa: ["#6F4E37", "#7d4444"],
