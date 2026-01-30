@@ -4,7 +4,7 @@ import Icon from "@/components/ui/icon";
 interface EyeColorOption {
   label: string;
   value: string;
-  imagePath: string;
+  color: string;
 }
 
 interface EyeColorSelectorProps {
@@ -12,6 +12,133 @@ interface EyeColorSelectorProps {
   onChange: (value: string) => void;
   disabled?: boolean;
   options: Record<string, string>; // Russian → English mapping
+}
+
+// Color mapping for eye colors (English value → hex color)
+const eyeColorMap: Record<string, string> = {
+  // Turquoise / Бирюзовые
+  "turquoise": "#40E0D0",
+  "turquoise blue": "#00CED1",
+
+  // Blue / Голубые
+  "blue": "#4169E1",
+  "cyan": "#00BFFF",
+  "soft blue": "#87CEEB",
+  "light blue": "#ADD8E6",
+  "warm blue": "#6495ED",
+  "cool blue": "#4682B4",
+  "bright blue": "#0080FF",
+
+  // Green / Зелёные
+  "green": "#228B22",
+  "emerald green": "#50C878",
+  "light green": "#90EE90",
+  "dark green": "#006400",
+  "warm green": "#6B8E23",
+  "bright green": "#00FF00",
+
+  // Golden / Золотистые
+  "golden": "#FFD700",
+  "golden brown": "#996515",
+
+  // Brown / Карие
+  "brown": "#8B4513",
+  "light brown": "#A0522D",
+  "dark brown": "#654321",
+  "cool brown": "#704214",
+  "bright brown": "#A0522D",
+
+  // Brown-Green / Коричнево-зелёные
+  "brown-green": "#6B5D3D",
+  "bright brown-green": "#7A6C4F",
+
+  // Brown-Black / Коричнево-чёрные
+  "brown-black": "#3E2723",
+
+  // Azure / Лазурные
+  "azure": "#007FFF",
+  "light turquoise": "#AFEEEE",
+
+  // Jade / Нефритовые
+  "jade": "#00A86B",
+
+  // Hazel / Ореховые
+  "hazel": "#8E7618",
+  "icy hazel": "#C19A6B",
+  "light hazel": "#B8956A",
+  "dark hazel": "#6B5D3D",
+
+  // Olive / Оливковые
+  "olive green": "#556B2F",
+  "dark olive": "#4B5320",
+
+  // Gray-Blue / Серо-голубые
+  "gray-blue": "#6699CC",
+  "soft gray-blue": "#8FA8C0",
+  "bright gray-blue": "#4A90C9",
+
+  // Gray-Green / Серо-зелёные
+  "gray-green": "#8A9A5B",
+  "soft gray-green": "#A2AC8A",
+
+  // Gray-Brown / Серо-карие
+  "light grey brown": "#9B8B7E",
+
+  // Gray / Серые
+  "gray": "#808080",
+  "soft gray": "#A9A9A9",
+  "light grey": "#D3D3D3",
+  "dark grey": "#696969",
+
+  // Blue-Green / Сине-зелёные
+  "blue-green": "#0D98BA",
+  "light blue-green": "#66CDAA",
+  "bright blue-green": "#00CED1",
+
+  // Blue-Gray / Сине-серые
+  "blue-gray": "#6699CC",
+
+  // Cocoa / Цвета какао
+  "cocoa": "#6F4E37",
+
+  // Black-Brown / Чёрно-карие
+  "black-brown": "#3B2F2F",
+
+  // Black / Чёрные
+  "black": "#000000",
+
+  // Chocolate / Шоколадные
+  "chocolate": "#7B3F00",
+
+  // Topaz / Топазовые
+  "topaz": "#FFCC99",
+
+  // Amber / Янтарные
+  "amber": "#FFBF00",
+
+  // Other / Другие
+  "muted": "#B0B0B0",
+  "dark": "#2F2F2F",
+  "cool": "#708090",
+};
+
+// Eye icon component
+function EyeIcon({ color }: { color: string }) {
+  return (
+    <div
+      className="w-[30px] h-[30px] rounded-full flex items-center justify-center relative flex-shrink-0"
+      style={{ backgroundColor: color }}
+    >
+      {/* Pupil (black circle) */}
+      <div className="w-[10px] h-[10px] rounded-full bg-black relative">
+        {/* Highlight (white circle, offset from center) */}
+        <div
+          className="w-[4px] h-[4px] rounded-full bg-white absolute"
+          style={{ top: "1px", left: "2px" }}
+        />
+      </div>
+    </div>
+  );
 }
 
 export default function EyeColorSelector({
@@ -24,12 +151,12 @@ export default function EyeColorSelector({
   const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Convert options to array with image paths
+  // Convert options to array with colors
   const colorOptions: EyeColorOption[] = Object.entries(options).map(
     ([ru, en]) => ({
       label: ru,
       value: en,
-      imagePath: `/images/eyes-colors/${en.replace(/ /g, "-")}.jpg`,
+      color: eyeColorMap[en] || "#999999", // Default gray if color not found
     })
   );
 
@@ -63,16 +190,6 @@ export default function EyeColorSelector({
     setSearchQuery("");
   };
 
-  // Handle image error - show gray placeholder
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const target = e.target as HTMLImageElement;
-    target.style.display = "none";
-    const placeholder = target.nextElementSibling as HTMLDivElement;
-    if (placeholder) {
-      placeholder.style.display = "block";
-    }
-  };
-
   return (
     <div ref={containerRef} className="relative w-full">
       {/* Selected value display */}
@@ -85,18 +202,7 @@ export default function EyeColorSelector({
         <div className="flex items-center gap-2 flex-1 min-w-0">
           {selectedOption ? (
             <>
-              <div className="w-10 h-10 flex-shrink-0 rounded overflow-hidden bg-muted relative">
-                <img
-                  src={selectedOption.imagePath}
-                  alt={selectedOption.label}
-                  className="w-full h-full object-cover"
-                  onError={handleImageError}
-                />
-                <div
-                  className="w-full h-full bg-muted hidden"
-                  style={{ display: "none" }}
-                />
-              </div>
+              <EyeIcon color={selectedOption.color} />
               <span className="text-left truncate">{selectedOption.label}</span>
             </>
           ) : (
@@ -144,18 +250,7 @@ export default function EyeColorSelector({
                     value === option.value ? "bg-muted" : ""
                   }`}
                 >
-                  <div className="w-10 h-10 flex-shrink-0 rounded overflow-hidden bg-muted relative">
-                    <img
-                      src={option.imagePath}
-                      alt={option.label}
-                      className="w-full h-full object-cover"
-                      onError={handleImageError}
-                    />
-                    <div
-                      className="w-full h-full bg-muted hidden"
-                      style={{ display: "none" }}
-                    />
-                  </div>
+                  <EyeIcon color={option.color} />
                   <span className="flex-1">{option.label}</span>
                   {value === option.value && (
                     <Icon name="Check" size={16} className="text-primary" />
