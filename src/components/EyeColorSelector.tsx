@@ -32,7 +32,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   // Green / Зелёные
   "green": ["#228B22", "#228B22"],
   "emerald green": ["#50C878", "#50C878"],
-  "light green": ["#90EE90", "#90EE90"],
+  "light green": ["#4d7575", "#6fb6ad"],
   "dark green": ["#006400", "#006400"],
   "warm green": ["#6B8E23", "#6B8E23"],
   "bright green": ["#00FF00", "#00FF00"],
@@ -56,7 +56,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "brown-black": ["#3E2723", "#3E2723"],
 
   // Azure / Лазурные
-  "azure": ["#007FFF", "#007FFF"],
+  "azure": ["#4e697c", "#6da1aa"],
   "light turquoise": ["#AFEEEE", "#AFEEEE"],
 
   // Jade / Нефритовые
