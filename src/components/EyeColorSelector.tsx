@@ -129,7 +129,7 @@ function EyeIcon({ gradient }: { gradient: [string, string] }) {
     <div
       className="w-[30px] h-[30px] rounded-full flex items-center justify-center relative flex-shrink-0"
       style={{
-        background: `radial-gradient(circle, ${innerColor} 0%, ${outerColor} 50%)`,
+        background: `radial-gradient(circle, ${innerColor} 0%, ${outerColor} 40%)`,
       }}
     >
       {/* Pupil (black circle) */}
