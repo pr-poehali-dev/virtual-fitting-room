@@ -35,7 +35,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "light green": ["#71975e", "#c4dca0"],
   "dark green": ["#423b29", "#5b6d30"],
   "warm green": ["#657e47", "#959e4f"],
-  "bright green": ["#50b1a5", "#9fbb70"],
+  "bright green": ["#20755e", "#9fbb70"],
 
   // Golden / Золотистые
   golden: ["#855f38", "#d59e54"],
@@ -74,7 +74,7 @@ const eyeColorMap: Record<string, [string, string]> = {
 
   // Gray-Blue / Серо-голубые
   "gray-blue": ["#566065", "#6a91b7"],
-  "soft gray-blue": ["#7c94a0", "#8FA8C0"],
+  "soft gray-blue": ["#7c94a0", "#8cabc3"],
   "bright gray-blue": ["#7b8285", "#54b3df"],
 
   // Gray-Green / Серо-зелёные
@@ -96,7 +96,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "bright blue-green": ["#2b72ab", "#bad78a"],
 
   // Blue-Gray / Сине-серые
-  "blue-gray": ["#596f79", "#74b6d5"],
+  "blue-gray": ["#596f79", "#74aad5"],
 
   // Cocoa / Цвета какао
   cocoa: ["#6F4E37", "#7d4444"],
