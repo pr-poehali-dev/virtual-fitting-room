@@ -17,12 +17,12 @@ interface EyeColorSelectorProps {
 // Color mapping for eye colors (English value → [outer, inner] gradient colors)
 const eyeColorMap: Record<string, [string, string]> = {
   // Turquoise / Бирюзовые
-  "turquoise": ["#40E0D0", "#40E0D0"],
+  turquoise: ["#40E0D0", "#40E0D0"],
   "turquoise blue": ["#00CED1", "#00CED1"],
 
   // Blue / Голубые
-  "blue": ["#445468", "#5f758e"],
-  "cyan": ["#4ea0aa", "#57aab4"],
+  blue: ["#445468", "#5f758e"],
+  cyan: ["#4ea0aa", "#57aab4"],
   "soft blue": ["#87CEEB", "#87CEEB"],
   "light blue": ["#7597b1", "#a7ccdd"],
   "warm blue": ["#6e8d92", "#85b8bb"],
@@ -30,7 +30,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "bright blue": ["#70acdc", "#79c9c5"],
 
   // Green / Зелёные
-  "green": ["#416267", "#79b96f"],
+  green: ["#416267", "#79b96f"],
   "emerald green": ["#1e6851", "#3a9b7c"],
   "light green": ["#8e975e", "#c4dca0"],
   "dark green": ["#423b29", "#524c22"],
@@ -38,11 +38,11 @@ const eyeColorMap: Record<string, [string, string]> = {
   "bright green": ["#50b1a5", "#90a370"],
 
   // Golden / Золотистые
-  "golden": ["#FFD700", "#FFD700"],
+  golden: ["#FFD700", "#FFD700"],
   "golden brown": ["#41200d", "#652905"],
 
   // Brown / Карие
-  "brown": ["#8B4513", "#8B4513"],
+  brown: ["#8B4513", "#8B4513"],
   "light brown": ["#a7795f", "#bd946f"],
   "dark brown": ["#2e1c18", "#3a2417"],
   "cool brown": ["#4a4436", "#756360"],
@@ -56,14 +56,14 @@ const eyeColorMap: Record<string, [string, string]> = {
   "brown-black": ["#3a2220", "#241a11"],
 
   // Azure / Лазурные
-  "azure": ["#47786e", "#55958e"],
+  azure: ["#47786e", "#55958e"],
   "light turquoise": ["#AFEEEE", "#AFEEEE"],
 
   // Jade / Нефритовые
-  "jade": ["#00A86B", "#00A86B"],
+  jade: ["#00A86B", "#00A86B"],
 
   // Hazel / Ореховые
-  "hazel": ["#82935a", "#9f8c5a"],
+  hazel: ["#82935a", "#9f8c5a"],
   "icy hazel": ["#6b6d58", "#8c8774"],
   "light hazel": ["#5d5e36", "#7c5f1f"],
   "dark hazel": ["#50341e", "#6a4f32"],
@@ -85,7 +85,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "light grey brown": ["#3e4f56", "#707a6c"],
 
   // Gray / Серые
-  "gray": ["#425363", "#798593"],
+  gray: ["#425363", "#798593"],
   "soft gray": ["#A9A9A9", "#A9A9A9"],
   "light grey": ["#576878", "#849ba8"],
   "dark grey": ["#343d4c", "#506169"],
@@ -99,27 +99,27 @@ const eyeColorMap: Record<string, [string, string]> = {
   "blue-gray": ["#6699CC", "#6699CC"],
 
   // Cocoa / Цвета какао
-  "cocoa": ["#6F4E37", "#6F4E37"],
+  cocoa: ["#6F4E37", "#6F4E37"],
 
   // Black-Brown / Чёрно-карие
   "black-brown": ["#3B2F2F", "#3B2F2F"],
 
   // Black / Чёрные
-  "black": ["#1e2629", "#2a2924"],
+  black: ["#1e2629", "#2a2924"],
 
   // Chocolate / Шоколадные
-  "chocolate": ["#7B3F00", "#7B3F00"],
+  chocolate: ["#7B3F00", "#7B3F00"],
 
   // Topaz / Топазовые
-  "topaz": ["#723612", "#ae632d"],
+  topaz: ["#723612", "#ae632d"],
 
   // Amber / Янтарные
-  "amber": ["#4f2203", "#986334"],
+  amber: ["#4f2203", "#986334"],
 
   // Other / Другие
-  "muted": ["#B0B0B0", "#B0B0B0"],
-  "dark": ["#2F2F2F", "#2F2F2F"],
-  "cool": ["#708090", "#708090"],
+  muted: ["#B0B0B0", "#B0B0B0"],
+  dark: ["#2F2F2F", "#2F2F2F"],
+  cool: ["#708090", "#708090"],
 };
 
 // Eye icon component with radial gradient
@@ -129,7 +129,7 @@ function EyeIcon({ gradient }: { gradient: [string, string] }) {
     <div
       className="w-[30px] h-[30px] rounded-full flex items-center justify-center relative flex-shrink-0"
       style={{
-        background: `radial-gradient(circle, ${innerColor} 0%, ${outerColor} 80%)`
+        background: `radial-gradient(circle, ${innerColor} 0%, ${outerColor} 60%)`,
       }}
     >
       {/* Pupil (black circle) */}
@@ -160,12 +160,12 @@ export default function EyeColorSelector({
       label: ru,
       value: en,
       gradient: eyeColorMap[en] || ["#999999", "#999999"], // Default gray if color not found
-    })
+    }),
   );
 
   // Filter options based on search
   const filteredOptions = colorOptions.filter((option) =>
-    option.label.toLowerCase().includes(searchQuery.toLowerCase())
+    option.label.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Get selected option
