@@ -34,7 +34,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "emerald green": ["#1e6851", "#3a9b7c"],
   "light green": ["#71975e", "#c4dca0"],
   "dark green": ["#423b29", "#5b6d30"],
-  "warm green": ["#657e47", "#959e4f"],
+  "warm green": ["#506735", "#959e4f"],
   "bright green": ["#20755e", "#9fbb70"],
 
   // Golden / Золотистые
