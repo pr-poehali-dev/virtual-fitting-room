@@ -21,8 +21,8 @@ const eyeColorMap: Record<string, [string, string]> = {
   "turquoise blue": ["#1b6165", "#6feae0"],
 
   // Azure / Лазурные
-  azure: ["#1b6165", "#51a99b"],
-  "light turquoise": ["#509aa6", "#6feae0"],
+  azure: ["#1b3865", "#589cc9"],
+  "light turquoise": ["#5072a6", "#6fb9ea"],
 
   // Blue / Голубые
   blue: ["#3e6791", "#74b6d5"],
