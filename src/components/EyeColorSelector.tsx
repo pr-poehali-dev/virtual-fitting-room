@@ -63,7 +63,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   jade: ["#2f5851", "#5c9561"],
 
   // Hazel / Ореховые
-  hazel: ["#787f4d", "#957c3d"],
+  hazel: ["#7f6f4d", "#957c3d"],
   "icy hazel": ["#675b37", "#9f9676"],
   "light hazel": ["#5d5e36", "#cdb26d"],
   "dark hazel": ["#50341e", "#956a3d"],
