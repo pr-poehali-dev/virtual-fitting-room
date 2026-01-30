@@ -56,11 +56,11 @@ const eyeColorMap: Record<string, [string, string]> = {
   "brown-black": ["#3a2220", "#241a11"],
 
   // Azure / Лазурные
-  azure: ["#47786e", "#55958e"],
+  azure: ["#2f6157", "#5ac5b4"],
   "light turquoise": ["#509aa6", "#6feae0"],
 
   // Jade / Нефритовые
-  jade: ["#2f5851", "#3c5e33"],
+  jade: ["#2f5851", "#5c9561"],
 
   // Hazel / Ореховые
   hazel: ["#82935a", "#9f8c5a"],
