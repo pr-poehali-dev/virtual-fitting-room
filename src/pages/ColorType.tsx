@@ -5,6 +5,7 @@ import Icon from "@/components/ui/icon";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
 import ImageCropper from "@/components/ImageCropper";
+import EyeColorSelector from "@/components/EyeColorSelector";
 import { validateImageFile } from "@/utils/fileValidation";
 import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataContext";
@@ -508,12 +509,20 @@ export default function ColorType() {
 
                   {uploadedImage && (
                     <div className="space-y-2">
-                      <label
-                        htmlFor="eye-color"
-                        className="block text-sm font-medium text-foreground"
-                      >
+                      <label className="block text-sm font-medium text-foreground">
                         Цвет глаз
                       </label>
+                      
+                      {/* Custom selector with eye images */}
+                      <EyeColorSelector
+                        value={eyeColor}
+                        onChange={setEyeColor}
+                        disabled={isAnalyzing}
+                        options={eyeColors}
+                      />
+
+                      {/* Old select - kept for backup, hidden by default */}
+                      {/* 
                       <select
                         id="eye-color"
                         value={
@@ -539,6 +548,8 @@ export default function ColorType() {
                           </option>
                         ))}
                       </select>
+                      */}
+                      
                       <p className="text-xs text-muted-foreground mt-1">
                         💡 Для более точного результата укажите ваш реальный цвет глаз — ИИ не всегда правильно определяет этот параметр автоматически.
                       </p>
