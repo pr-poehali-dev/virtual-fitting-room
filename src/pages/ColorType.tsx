@@ -27,13 +27,19 @@ const eyeColors: Record<string, string> = {
 
   // Голубые
   Голубые: "blue",
+  "Голубые (бирюзово-голубые)": "cyan",
   "Голубые (мягкие)": "soft blue",
   "Голубые (светлые)": "light blue",
+  "Голубые (тёплые)": "warm blue",
+  "Голубые (холодные)": "cool blue",
   "Голубые (яркие)": "bright blue",
 
   // Зелёные
   Зелёные: "green",
+  "Зелёные (изумрудные)": "emerald green",
   "Зелёные (светлые)": "light green",
+  "Зелёные (тёмные)": "dark green",
+  "Зелёные (тёплые)": "warm green",
   "Зелёные (яркие)": "bright green",
 
   // Золотистые
@@ -44,11 +50,15 @@ const eyeColors: Record<string, string> = {
   Карие: "brown",
   "Карие (светлые)": "light brown",
   "Карие (тёмные)": "dark brown",
+  "Карие (холодные)": "cool brown",
   "Карие (яркие)": "bright brown",
 
   // Коричнево-зелёные
   "Коричнево-зелёные": "brown-green",
   "Коричнево-зелёные (яркие)": "bright brown-green",
+
+  // Коричнево-чёрные
+  "Коричнево-чёрные": "brown-black",
 
   // Лазурные
   Лазурные: "azure",
@@ -59,6 +69,13 @@ const eyeColors: Record<string, string> = {
 
   // Ореховые
   "Ореховые (золотистые)": "hazel",
+  "Ореховые (ледяные)": "icy hazel",
+  "Ореховые (светлые)": "light hazel",
+  "Ореховые (тёмные)": "dark hazel",
+
+  // Оливковые
+  "Оливково-зелёные": "olive green",
+  "Оливковые (тёмные)": "dark olive",
 
   // Серо-голубые
   "Серо-голубые": "gray-blue",
@@ -69,9 +86,14 @@ const eyeColors: Record<string, string> = {
   "Серо-зелёные": "gray-green",
   "Серо-зелёные (мягкие)": "soft gray-green",
 
+  // Серо-карие
+  "Серо-карие (светлые)": "light grey brown",
+
   // Серые
   Серые: "gray",
   "Серые (мягкие)": "soft gray",
+  "Серые (светлые)": "light grey",
+  "Серые (тёмные)": "dark grey",
 
   // Сине-зелёные
   "Сине-зелёные": "blue-green",
@@ -92,6 +114,12 @@ const eyeColors: Record<string, string> = {
 
   // Шоколадные
   Шоколадные: "chocolate",
+
+  // Топазовые
+  Топазовые: "topaz",
+
+  // Янтарные
+  Янтарные: "amber",
 
   // Другие
   Приглушённые: "muted",
