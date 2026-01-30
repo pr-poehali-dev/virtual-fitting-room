@@ -410,6 +410,21 @@ export default function ColorType() {
                       </p>
                     </div>
                   </div>
+                  <div className="flex items-start gap-3 pt-2 border-t border-border/50">
+                    <Icon
+                      name="Info"
+                      className="text-primary mt-0.5 flex-shrink-0"
+                      size={20}
+                    />
+                    <div className="text-sm text-muted-foreground">
+                      <p>
+                        <span className="font-medium text-foreground">
+                          Важно:
+                        </span>{" "}
+                        Цветотип — это художественное определение. ИИ и математическая формула могут по-разному интерпретировать один и тот же снимок из-за нюансов внешности. Общая точность системы составляет ~90%.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -496,6 +511,9 @@ export default function ColorType() {
                           </option>
                         ))}
                       </select>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        💡 Для более точного результата укажите ваш реальный цвет глаз — ИИ не всегда правильно определяет этот параметр автоматически.
+                      </p>
                     </div>
                   )}
 
