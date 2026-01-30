@@ -26,16 +26,16 @@ const eyeColorMap: Record<string, [string, string]> = {
   "soft blue": ["#87CEEB", "#87CEEB"],
   "light blue": ["#7597b1", "#a7ccdd"],
   "warm blue": ["#6e8d92", "#85b8bb"],
-  "cool blue": ["#4682B4", "#4682B4"],
-  "bright blue": ["#1f6c8f", "#6fc6f0"],
+  "cool blue": ["#486378", "#658398"],
+  "bright blue": ["#70acdc", "#79c9c5"],
 
   // Green / Зелёные
   "green": ["#416267", "#79b96f"],
   "emerald green": ["#1e6851", "#3a9b7c"],
   "light green": ["#8e975e", "#c4dca0"],
-  "dark green": ["#006400", "#006400"],
+  "dark green": ["#423b29", "#524c22"],
   "warm green": ["#657e47", "#959e4f"],
-  "bright green": ["#00FF00", "#00FF00"],
+  "bright green": ["#50b1a5", "#90a370"],
 
   // Golden / Золотистые
   "golden": ["#FFD700", "#FFD700"],
@@ -44,8 +44,8 @@ const eyeColorMap: Record<string, [string, string]> = {
   // Brown / Карие
   "brown": ["#8B4513", "#8B4513"],
   "light brown": ["#a7795f", "#bd946f"],
-  "dark brown": ["#1c1912", "#372920"],
-  "cool brown": ["#704214", "#704214"],
+  "dark brown": ["#2e1c18", "#3a2417"],
+  "cool brown": ["#4a4436", "#756360"],
   "bright brown": ["#A0522D", "#A0522D"],
 
   // Brown-Green / Коричнево-зелёные
@@ -56,7 +56,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "brown-black": ["#3a2220", "#241a11"],
 
   // Azure / Лазурные
-  "azure": ["#4e697c", "#6da1aa"],
+  "azure": ["#47786e", "#55958e"],
   "light turquoise": ["#AFEEEE", "#AFEEEE"],
 
   // Jade / Нефритовые
@@ -64,7 +64,7 @@ const eyeColorMap: Record<string, [string, string]> = {
 
   // Hazel / Ореховые
   "hazel": ["#82935a", "#9f8c5a"],
-  "icy hazel": ["#C19A6B", "#C19A6B"],
+  "icy hazel": ["#6b6d58", "#8c8774"],
   "light hazel": ["#5d5e36", "#7c5f1f"],
   "dark hazel": ["#50341e", "#6a4f32"],
 
@@ -87,8 +87,8 @@ const eyeColorMap: Record<string, [string, string]> = {
   // Gray / Серые
   "gray": ["#425363", "#798593"],
   "soft gray": ["#A9A9A9", "#A9A9A9"],
-  "light grey": ["#415465", "#8494a1"],
-  "dark grey": ["#696969", "#696969"],
+  "light grey": ["#576878", "#849ba8"],
+  "dark grey": ["#343d4c", "#506169"],
 
   // Blue-Green / Сине-зелёные
   "blue-green": ["#0D98BA", "#0D98BA"],
