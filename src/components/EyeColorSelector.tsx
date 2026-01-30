@@ -22,7 +22,7 @@ const eyeColorMap: Record<string, [string, string]> = {
 
   // Blue / Голубые
   blue: ["#3e6791", "#74b6d5"],
-  cyan: ["#4ea0aa", "#57aab4"],
+  cyan: ["#4ea0aa", "#74b6d5"],
   "soft blue": ["#7991a9", "#86b3d1"],
   "light blue": ["#7597b1", "#a7ccdd"],
   "warm blue": ["#6e8d92", "#85b8bb"],
