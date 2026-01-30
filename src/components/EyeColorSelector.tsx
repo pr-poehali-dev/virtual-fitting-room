@@ -60,7 +60,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "light turquoise": ["#509aa6", "#6feae0"],
 
   // Jade / Нефритовые
-  jade: ["#00A86B", "#00A86B"],
+  jade: ["#2f5851", "#3c5e33"],
 
   // Hazel / Ореховые
   hazel: ["#82935a", "#9f8c5a"],
@@ -73,9 +73,9 @@ const eyeColorMap: Record<string, [string, string]> = {
   "dark olive": ["#434a3a", "#6b6b3a"],
 
   // Gray-Blue / Серо-голубые
-  "gray-blue": ["#6699CC", "#6699CC"],
-  "soft gray-blue": ["#8FA8C0", "#8FA8C0"],
-  "bright gray-blue": ["#4A90C9", "#4A90C9"],
+  "gray-blue": ["#6699CC", "#688ea0"],
+  "soft gray-blue": ["#8FA8C0", "#7c94a0"],
+  "bright gray-blue": ["#4A90C9", "#54b3df"],
 
   // Gray-Green / Серо-зелёные
   "gray-green": ["#8A9A5B", "#8A9A5B"],
@@ -96,7 +96,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "bright blue-green": ["#00CED1", "#00CED1"],
 
   // Blue-Gray / Сине-серые
-  "blue-gray": ["#6699CC", "#6699CC"],
+  "blue-gray": ["#3a7b99", "#6699CC"],
 
   // Cocoa / Цвета какао
   cocoa: ["#6F4E37", "#6F4E37"],
