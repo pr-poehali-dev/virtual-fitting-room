@@ -82,7 +82,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "soft gray-green": ["#A2AC8A", "#A2AC8A"],
 
   // Gray-Brown / Серо-карие
-  "light grey brown": ["#9B8B7E", "#9B8B7E"],
+  "light grey brown": ["#3e4f56", "#707a6c"],
 
   // Gray / Серые
   "gray": ["#425363", "#798593"],
@@ -129,7 +129,7 @@ function EyeIcon({ gradient }: { gradient: [string, string] }) {
     <div
       className="w-[30px] h-[30px] rounded-full flex items-center justify-center relative flex-shrink-0"
       style={{
-        background: `radial-gradient(circle, ${innerColor} 0%, ${outerColor} 100%)`
+        background: `radial-gradient(circle, ${innerColor} 0%, ${outerColor} 80%)`
       }}
     >
       {/* Pupil (black circle) */}
