@@ -39,11 +39,11 @@ const eyeColorMap: Record<string, [string, string]> = {
 
   // Golden / Золотистые
   "golden": ["#FFD700", "#FFD700"],
-  "golden brown": ["#996515", "#996515"],
+  "golden brown": ["#41200d", "#652905"],
 
   // Brown / Карие
   "brown": ["#8B4513", "#8B4513"],
-  "light brown": ["#A0522D", "#A0522D"],
+  "light brown": ["#a7795f", "#bd946f"],
   "dark brown": ["#1c1912", "#372920"],
   "cool brown": ["#704214", "#704214"],
   "bright brown": ["#A0522D", "#A0522D"],
@@ -63,13 +63,13 @@ const eyeColorMap: Record<string, [string, string]> = {
   "jade": ["#00A86B", "#00A86B"],
 
   // Hazel / Ореховые
-  "hazel": ["#8E7618", "#8E7618"],
+  "hazel": ["#82935a", "#9f8c5a"],
   "icy hazel": ["#C19A6B", "#C19A6B"],
   "light hazel": ["#B8956A", "#B8956A"],
-  "dark hazel": ["#424a33", "#5c5736"],
+  "dark hazel": ["#50341e", "#6a4f32"],
 
   // Olive / Оливковые
-  "olive green": ["#556B2F", "#556B2F"],
+  "olive green": ["#6e5431", "#765d35"],
   "dark olive": ["#434a3a", "#6b6b3a"],
 
   // Gray-Blue / Серо-голубые
@@ -114,7 +114,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "topaz": ["#FFCC99", "#FFCC99"],
 
   // Amber / Янтарные
-  "amber": ["#FFBF00", "#FFBF00"],
+  "amber": ["#4f2203", "#986334"],
 
   // Other / Другие
   "muted": ["#B0B0B0", "#B0B0B0"],
