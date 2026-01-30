@@ -73,7 +73,7 @@ const eyeColorMap: Record<string, [string, string]> = {
   "dark olive": ["#434a3a", "#6b6b3a"],
 
   // Gray-Blue / Серо-голубые
-  "gray-blue": ["#566065", "#6699CC"],
+  "gray-blue": ["#566065", "#6a91b7"],
   "soft gray-blue": ["#7c94a0", "#8FA8C0"],
   "bright gray-blue": ["#7b8285", "#54b3df"],
 
