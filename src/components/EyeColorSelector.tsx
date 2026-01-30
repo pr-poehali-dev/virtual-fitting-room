@@ -4,7 +4,7 @@ import Icon from "@/components/ui/icon";
 interface EyeColorOption {
   label: string;
   value: string;
-  color: string;
+  gradient: [string, string]; // [outer, inner]
 }
 
 interface EyeColorSelectorProps {
@@ -14,120 +14,123 @@ interface EyeColorSelectorProps {
   options: Record<string, string>; // Russian → English mapping
 }
 
-// Color mapping for eye colors (English value → hex color)
-const eyeColorMap: Record<string, string> = {
+// Color mapping for eye colors (English value → [outer, inner] gradient colors)
+const eyeColorMap: Record<string, [string, string]> = {
   // Turquoise / Бирюзовые
-  "turquoise": "#40E0D0",
-  "turquoise blue": "#00CED1",
+  "turquoise": ["#40E0D0", "#40E0D0"],
+  "turquoise blue": ["#00CED1", "#00CED1"],
 
   // Blue / Голубые
-  "blue": "#4169E1",
-  "cyan": "#00BFFF",
-  "soft blue": "#87CEEB",
-  "light blue": "#ADD8E6",
-  "warm blue": "#6495ED",
-  "cool blue": "#4682B4",
-  "bright blue": "#0080FF",
+  "blue": ["#4169E1", "#4169E1"],
+  "cyan": ["#00BFFF", "#00BFFF"],
+  "soft blue": ["#87CEEB", "#87CEEB"],
+  "light blue": ["#527490", "#95c8de"],
+  "warm blue": ["#6495ED", "#6495ED"],
+  "cool blue": ["#4682B4", "#4682B4"],
+  "bright blue": ["#0080FF", "#0080FF"],
 
   // Green / Зелёные
-  "green": "#228B22",
-  "emerald green": "#50C878",
-  "light green": "#90EE90",
-  "dark green": "#006400",
-  "warm green": "#6B8E23",
-  "bright green": "#00FF00",
+  "green": ["#228B22", "#228B22"],
+  "emerald green": ["#50C878", "#50C878"],
+  "light green": ["#90EE90", "#90EE90"],
+  "dark green": ["#006400", "#006400"],
+  "warm green": ["#6B8E23", "#6B8E23"],
+  "bright green": ["#00FF00", "#00FF00"],
 
   // Golden / Золотистые
-  "golden": "#FFD700",
-  "golden brown": "#996515",
+  "golden": ["#FFD700", "#FFD700"],
+  "golden brown": ["#996515", "#996515"],
 
   // Brown / Карие
-  "brown": "#8B4513",
-  "light brown": "#A0522D",
-  "dark brown": "#654321",
-  "cool brown": "#704214",
-  "bright brown": "#A0522D",
+  "brown": ["#8B4513", "#8B4513"],
+  "light brown": ["#A0522D", "#A0522D"],
+  "dark brown": ["#654321", "#654321"],
+  "cool brown": ["#704214", "#704214"],
+  "bright brown": ["#A0522D", "#A0522D"],
 
   // Brown-Green / Коричнево-зелёные
-  "brown-green": "#6B5D3D",
-  "bright brown-green": "#7A6C4F",
+  "brown-green": ["#6B5D3D", "#6B5D3D"],
+  "bright brown-green": ["#7A6C4F", "#7A6C4F"],
 
   // Brown-Black / Коричнево-чёрные
-  "brown-black": "#3E2723",
+  "brown-black": ["#3E2723", "#3E2723"],
 
   // Azure / Лазурные
-  "azure": "#007FFF",
-  "light turquoise": "#AFEEEE",
+  "azure": ["#007FFF", "#007FFF"],
+  "light turquoise": ["#AFEEEE", "#AFEEEE"],
 
   // Jade / Нефритовые
-  "jade": "#00A86B",
+  "jade": ["#00A86B", "#00A86B"],
 
   // Hazel / Ореховые
-  "hazel": "#8E7618",
-  "icy hazel": "#C19A6B",
-  "light hazel": "#B8956A",
-  "dark hazel": "#6B5D3D",
+  "hazel": ["#8E7618", "#8E7618"],
+  "icy hazel": ["#C19A6B", "#C19A6B"],
+  "light hazel": ["#B8956A", "#B8956A"],
+  "dark hazel": ["#6B5D3D", "#6B5D3D"],
 
   // Olive / Оливковые
-  "olive green": "#556B2F",
-  "dark olive": "#4B5320",
+  "olive green": ["#556B2F", "#556B2F"],
+  "dark olive": ["#4B5320", "#4B5320"],
 
   // Gray-Blue / Серо-голубые
-  "gray-blue": "#6699CC",
-  "soft gray-blue": "#8FA8C0",
-  "bright gray-blue": "#4A90C9",
+  "gray-blue": ["#6699CC", "#6699CC"],
+  "soft gray-blue": ["#8FA8C0", "#8FA8C0"],
+  "bright gray-blue": ["#4A90C9", "#4A90C9"],
 
   // Gray-Green / Серо-зелёные
-  "gray-green": "#8A9A5B",
-  "soft gray-green": "#A2AC8A",
+  "gray-green": ["#8A9A5B", "#8A9A5B"],
+  "soft gray-green": ["#A2AC8A", "#A2AC8A"],
 
   // Gray-Brown / Серо-карие
-  "light grey brown": "#9B8B7E",
+  "light grey brown": ["#9B8B7E", "#9B8B7E"],
 
   // Gray / Серые
-  "gray": "#808080",
-  "soft gray": "#A9A9A9",
-  "light grey": "#D3D3D3",
-  "dark grey": "#696969",
+  "gray": ["#808080", "#808080"],
+  "soft gray": ["#A9A9A9", "#A9A9A9"],
+  "light grey": ["#415465", "#8494a1"],
+  "dark grey": ["#696969", "#696969"],
 
   // Blue-Green / Сине-зелёные
-  "blue-green": "#0D98BA",
-  "light blue-green": "#66CDAA",
-  "bright blue-green": "#00CED1",
+  "blue-green": ["#0D98BA", "#0D98BA"],
+  "light blue-green": ["#66CDAA", "#66CDAA"],
+  "bright blue-green": ["#00CED1", "#00CED1"],
 
   // Blue-Gray / Сине-серые
-  "blue-gray": "#6699CC",
+  "blue-gray": ["#6699CC", "#6699CC"],
 
   // Cocoa / Цвета какао
-  "cocoa": "#6F4E37",
+  "cocoa": ["#6F4E37", "#6F4E37"],
 
   // Black-Brown / Чёрно-карие
-  "black-brown": "#3B2F2F",
+  "black-brown": ["#3B2F2F", "#3B2F2F"],
 
   // Black / Чёрные
-  "black": "#000000",
+  "black": ["#000000", "#000000"],
 
   // Chocolate / Шоколадные
-  "chocolate": "#7B3F00",
+  "chocolate": ["#7B3F00", "#7B3F00"],
 
   // Topaz / Топазовые
-  "topaz": "#FFCC99",
+  "topaz": ["#FFCC99", "#FFCC99"],
 
   // Amber / Янтарные
-  "amber": "#FFBF00",
+  "amber": ["#FFBF00", "#FFBF00"],
 
   // Other / Другие
-  "muted": "#B0B0B0",
-  "dark": "#2F2F2F",
-  "cool": "#708090",
+  "muted": ["#B0B0B0", "#B0B0B0"],
+  "dark": ["#2F2F2F", "#2F2F2F"],
+  "cool": ["#708090", "#708090"],
 };
 
-// Eye icon component
-function EyeIcon({ color }: { color: string }) {
+// Eye icon component with radial gradient
+function EyeIcon({ gradient }: { gradient: [string, string] }) {
+  const [outerColor, innerColor] = gradient;
   return (
     <div
       className="w-[30px] h-[30px] rounded-full flex items-center justify-center relative flex-shrink-0"
-      style={{ backgroundColor: color }}
+      style={{
+        background: `radial-gradient(circle, ${innerColor} 0%, ${outerColor} 100%)`
+      }}
     >
       {/* Pupil (black circle) */}
       <div className="w-[10px] h-[10px] rounded-full bg-black relative">
@@ -151,12 +154,12 @@ export default function EyeColorSelector({
   const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Convert options to array with colors
+  // Convert options to array with gradients
   const colorOptions: EyeColorOption[] = Object.entries(options).map(
     ([ru, en]) => ({
       label: ru,
       value: en,
-      color: eyeColorMap[en] || "#999999", // Default gray if color not found
+      gradient: eyeColorMap[en] || ["#999999", "#999999"], // Default gray if color not found
     })
   );
 
@@ -202,7 +205,7 @@ export default function EyeColorSelector({
         <div className="flex items-center gap-2 flex-1 min-w-0">
           {selectedOption ? (
             <>
-              <EyeIcon color={selectedOption.color} />
+              <EyeIcon gradient={selectedOption.gradient} />
               <span className="text-left truncate">{selectedOption.label}</span>
             </>
           ) : (
@@ -250,7 +253,7 @@ export default function EyeColorSelector({
                     value === option.value ? "bg-muted" : ""
                   }`}
                 >
-                  <EyeIcon color={option.color} />
+                  <EyeIcon gradient={option.gradient} />
                   <span className="flex-1">{option.label}</span>
                   {value === option.value && (
                     <Icon name="Check" size={16} className="text-primary" />
