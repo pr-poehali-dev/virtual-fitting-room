@@ -17,13 +17,13 @@ interface EyeColorSelectorProps {
 // Color mapping for eye colors (English value → [outer, inner] gradient colors)
 const eyeColorMap: Record<string, [string, string]> = {
   // Turquoise / Бирюзовые
-  turquoise: ["#40E0D0", "#40E0D0"],
-  "turquoise blue": ["#00CED1", "#00CED1"],
+  turquoise: ["#3e899c", "#62b39d"],
+  "turquoise blue": ["#4a949e", "#54c2bc"],
 
   // Blue / Голубые
   blue: ["#445468", "#5f758e"],
   cyan: ["#4ea0aa", "#57aab4"],
-  "soft blue": ["#87CEEB", "#87CEEB"],
+  "soft blue": ["#7991a9", "#7a8ea9"],
   "light blue": ["#7597b1", "#a7ccdd"],
   "warm blue": ["#6e8d92", "#85b8bb"],
   "cool blue": ["#486378", "#658398"],
@@ -38,26 +38,26 @@ const eyeColorMap: Record<string, [string, string]> = {
   "bright green": ["#50b1a5", "#90a370"],
 
   // Golden / Золотистые
-  golden: ["#FFD700", "#FFD700"],
+  golden: ["#855f38", "#c39456"],
   "golden brown": ["#41200d", "#652905"],
 
   // Brown / Карие
-  brown: ["#8B4513", "#8B4513"],
+  brown: ["#4d3720", "#492b11"],
   "light brown": ["#a7795f", "#bd946f"],
   "dark brown": ["#2e1c18", "#3a2417"],
   "cool brown": ["#4a4436", "#756360"],
-  "bright brown": ["#A0522D", "#A0522D"],
+  "bright brown": ["#48280f", "#5c3d1a"],
 
   // Brown-Green / Коричнево-зелёные
-  "brown-green": ["#6B5D3D", "#6B5D3D"],
-  "bright brown-green": ["#7A6C4F", "#7A6C4F"],
+  "brown-green": ["#48280f", "#5f6c34"],
+  "bright brown-green": ["#48280f", "#8c9e4c"],
 
   // Brown-Black / Коричнево-чёрные
   "brown-black": ["#3a2220", "#241a11"],
 
   // Azure / Лазурные
   azure: ["#47786e", "#55958e"],
-  "light turquoise": ["#AFEEEE", "#AFEEEE"],
+  "light turquoise": ["#509aa6", "#6feae0"],
 
   // Jade / Нефритовые
   jade: ["#00A86B", "#00A86B"],
