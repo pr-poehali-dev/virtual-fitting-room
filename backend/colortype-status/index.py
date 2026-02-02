@@ -746,6 +746,11 @@ def match_colortype(analysis: dict) -> tuple:
             color_score += 0.15
             print(f'[Match] {colortype}: BONUS +0.15 for auburn hair (characteristic color)')
         
+        # BONUS: Auburn/copper/red hair → +0.15 for BRIGHT SPRING
+        if has_auburn_hair and colortype == 'BRIGHT SPRING':
+            color_score += 0.15
+            print(f'[Match] {colortype}: BONUS +0.15 for auburn/copper hair (characteristic color)')
+        
         # BONUS: Auburn/copper/red hair + brown eyes → +1.00 for FIERY AUTUMN (signature combination)
         if has_auburn_hair and has_brown_eyes and colortype == 'FIERY AUTUMN':
             color_score += 1.00
