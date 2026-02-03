@@ -85,7 +85,7 @@ PROMPT_TEMPLATE = '''You are a professional color analyst. Analyze ONLY visible 
 You will see 12 reference schemes (one per color type).
 
 Each scheme shows:
-- LEFT: 9 example persons for this color type (shows overall harmony)
+- LEFT: 9 example persons for this color type (shows overall harmony in 9 options)
 - RIGHT: Color characteristics (eyes/skin/hair/contrast examples)
 - TEXT LABELS in ENGLISH (use exact names in JSON)
 
