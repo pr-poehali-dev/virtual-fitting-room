@@ -152,8 +152,8 @@ Analyze in this order with these weights:
 2. SKIN (40% weight) - Second most important
 3. EYES (15% weight) - Supporting indicator
 
-WARM signs: Golden/peachy skin, warm/honey/auburn hair, overall golden impression.
-COOL signs: Pink/rosy/bluish skin, ash/platinum/black hair, gray/blue eyes, overall icy impression.
+WARM signs: Golden/peachy skin, warm/warm golden/honey/auburn/copper hair, overall golden impression.
+COOL signs: Pink/rosy/bluish skin, ash/cool golden/platinum/black/brown hair, gray/blue eyes, overall icy impression.
 
 ⚠️ CRITICAL FOR NEUTRAL CASES:
 Hair/skin can appear NEUTRAL (neither clearly warm nor cool) - this is NORMAL. When hair/skin are NEUTRAL:
