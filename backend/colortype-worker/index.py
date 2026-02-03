@@ -134,6 +134,12 @@ CRITICAL: Do NOT skip this comparison step. The 9 example persons on each scheme
 - WARM blonde (Spring types): light warm golden, peachy, sandy, honey, golden-orange, buttery, strawberry (looks COPPER/ORANGE-based)
 - When comparing with reference schemes, match blonde temperature to determine correct season group
 
+⚠️ CRITICAL FOR BLONDE: Default assumption is COOL unless CLEARLY warm.
+- If blonde has ANY grayish/ashy/silvery component → COOL (even if slightly golden)
+- If blonde is "natural blonde" without obvious copper/orange tones → COOL
+- WARM blonde MUST have VISIBLE copper/peachy/honey/orange undertones (not just "slightly warm")
+- When in doubt between cool/warm blonde → choose COOL (most natural blondes are cool-based)
+
 EYE RULES:
 - Bright eyes (bright blue/green/gray-blue) → OFTEN VIBRANT SPRING or BRIGHT WINTER
 - Gray eyes (without "bright") → NEVER VIBRANT SPRING
@@ -174,8 +180,9 @@ For blonde/light hair, follow this MANDATORY 3-step process:
 
 STEP 1 - VISUAL TEMPERATURE TEST:
 Look at the hair and ask: "What COLOR FAMILY does this blonde belong to?"
-- COOL blonde = light cool golden, grayish, ashy, platinum, beige, silvery, white-blonde, dirty blonde, taupe (looks YELLOW/GRAY-based)
-- WARM blonde = warm golden, peachy, sandy, honey, golden-orange, buttery, strawberry (looks COPPER/ORANGE-based)
+- COOL blonde = light cool golden, light golden (natural), grayish, ashy, platinum, beige, silvery, white-blonde, dirty blonde, taupe, sandy (looks YELLOW/GRAY-based)
+- WARM blonde = warm golden with VISIBLE copper/peachy tones, peachy, honey with orange undertone, golden-orange, buttery with copper, strawberry (looks COPPER/ORANGE-based)
+- ⚠️ CRITICAL: Light golden/sandy/honey WITHOUT visible copper/orange → COOL (default for natural blonde)
 - If blonde looks NEUTRAL/unclear → proceed to STEP 2
 
 STEP 2 - REFERENCE COMPARISON:
@@ -188,10 +195,13 @@ Which reference group matches CLOSEST? That determines undertone.
 
 STEP 3 - CRITICAL RULES:
 - COOL/ASH/PLATINUM/BEIGE/GRAY tones in blonde = ALWAYS COOL-UNDERTONE
-- WARM/PEACHY/SANDY/HONEY/ORANGE tones in blonde = ALWAYS WARM-UNDERTONE
-- "Golden blonde" is AMBIGUOUS - check if it's:
-  * Cool golden = light yellow/beige with NO orange/peach = COOL-UNDERTONE
-  * Warm golden = honey/peachy/sandy/orange yellow = WARM-UNDERTONE
+- Light golden (natural) → COOL (unless clearly peachy/copper)
+- Sandy/honey (natural) → COOL (unless clearly orange-based)
+- WARM blonde requires VISIBLE copper/peachy/orange undertones (not just "slightly warm")
+- "Golden blonde" analysis:
+  * Light golden/natural golden with NO visible copper/orange = COOL-UNDERTONE
+  * Light warm golden → Check: is it VISIBLY copper/peachy? YES → WARM, NO → COOL
+  * Golden with obvious peachy/honey/orange tones = WARM-UNDERTONE
 - If still unclear after steps 1-2 → choose COOL-UNDERTONE (most blondes are cool)
 
 ⚠️ COMMON MISTAKES TO AVOID:
