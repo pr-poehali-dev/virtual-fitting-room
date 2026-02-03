@@ -144,7 +144,7 @@ EYE RULES:
 
 1. UNDERTONE (warm or cool):
 
-⚠️ THEORY: Undertone is the invisible base of coloring (golden=warm, blue=cool). Skin has either rosy beige (cool) or yellow beige (warm); deeper tones are ebony (cool) or mahogany (warm). Hair is ash-based (cool) or red/gold-based (warm) - e.g., chestnut brown=warm, charcoal brown=cool; yellow blonde=warm, platinum blonde=cool. Eyes give overall impression (gray-green=cool, jade green=warm). All three (skin/hair/eyes) are genetically linked - all warm OR all cool together. Cool undertone = Winter/Summer. Warm undertone = Autumn/Spring.
+⚠️ THEORY: Undertone is the invisible base of coloring (golden=warm, blue=cool). Skin has either rosy beige (cool) or yellow beige (warm); deeper tones are ebony (cool) or mahogany (warm). Hair is ash-based (cool) or red/gold-based (warm) - e.g., chestnut brown=warm, charcoal brown=cool; copper blonde=warm, platinum blonde=cool; light warm golden=warm, light cool golden=cool. Eyes give overall impression (gray-green=cool, jade green=warm). All three (skin/hair/eyes) are genetically linked - all warm OR all cool together. Cool undertone = Winter/Summer. Warm undertone = Autumn/Spring.
 
 ⚠️ PRIORITIZATION FOR UNDERTONE DETERMINATION:
 Analyze in this order with these weights:
