@@ -108,7 +108,7 @@ Before selecting ANY colortype, you MUST compare the analyzed photo with ALL 12 
 1. Look at the LEFT side of each scheme - 9 example persons showing typical appearance for that colortype
 2. Compare the analyzed photo's OVERALL VISUAL IMPRESSION with these 9 examples
 3. Ask yourself: "Does this person look similar to these 9 examples in terms of color harmony?"
-   - Specifically compare: HAIR COLOR SHADES (warm golden vs cool ash, light vs dark tones)
+   - Specifically compare: HAIR COLOR SHADES (warm golden vs cool golden or ash, light vs dark tones)
    - SKIN UNDERTONES (pink/rosy cool vs peachy/golden warm, light vs deep)
    - EYE COLOR harmony with hair and skin (user confirmed eye color as reference point)
 4. Focus on actual HAIR COLOR SHADES and UNDERTONES (the actual visual color tones, NOT color names) visible in the examples
