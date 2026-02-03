@@ -135,7 +135,7 @@ CRITICAL: Do NOT skip this comparison step. The 9 example persons on each scheme
 - When comparing with reference schemes, match blonde temperature to determine correct season group
 
 EYE RULES:
-- Bright eyes (bright blue/green/gray-blue) → ONLY VIBRANT SPRING or BRIGHT WINTER
+- Bright eyes (bright blue/green/gray-blue) → OFTEN VIBRANT SPRING or BRIGHT WINTER
 - Gray eyes (without "bright") → NEVER VIBRANT SPRING
 - Dark hair + BRIGHT eyes → BRIGHT WINTER
 - Dark hair + SOFT gray eyes → SOFT WINTER or VIVID SUMMER or DUSTY SUMMER
