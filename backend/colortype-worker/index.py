@@ -123,8 +123,8 @@ FIERY AUTUMN: Warm, rich colors, hazel/amber/green eyes.
 GENTLE AUTUMN: Warm, dusty/muted, low contrast.
 DUSTY SUMMER: Cool, dusty/muted, low contrast, gray-blue eyes, medium ash brown hair.
 VIVID SUMMER: Cool, muted, medium-high contrast, gray eyes. 
-SOFT SUMMER: Cool, low contrast, very light blond colors hair, light cool eyes.
-GENTLE SPRING: Warm, low contrast, light warm blond colors hair, light eyes.
+SOFT SUMMER: Cool, low contrast, very light golden or ash blond colors hair, light cool eyes.
+GENTLE SPRING: Warm, low contrast, light golden warm blond colors hair, light eyes.
 BRIGHT SPRING: Warm, clear, medium contrast, blue/green eyes (NOT brown).
 
 CRITICAL: Do NOT skip this comparison step. The 9 example persons on each scheme are your primary guide for visual matching - pay special attention to the EXACT HAIR COLOR TONES you see in the examples, SKIN UNDERTONES (cool/warm), and how they work together with the user's confirmed EYE COLOR to create overall color harmony.
