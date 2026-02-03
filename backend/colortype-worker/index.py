@@ -140,6 +140,22 @@ CRITICAL: Do NOT skip this comparison step. The 9 example persons on each scheme
 - WARM blonde MUST have VISIBLE copper/peachy/honey/orange undertones (not just "slightly warm")
 - When in doubt between cool/warm blonde → choose COOL (most natural blondes are cool-based)
 
+⚠️ CRITICAL COMPARISON IMAGE FOR SOFT SUMMER vs GENTLE SPRING:
+Reference image: https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/687ea33c-ac4b-4a46-89db-b2affc7f74f4.webp
+
+THIS IMAGE SHOWS:
+- TOP ROW: Representatives of SOFT SUMMER (cool-undertone, light cool golden/ash blonde, low contrast)
+- BOTTOM ROW: Representatives of GENTLE SPRING (warm-undertone, light warm golden blonde, low contrast)
+
+⚠️ MANDATORY STEP: Before choosing between SOFT SUMMER and GENTLE SPRING:
+1. Look at this reference image carefully
+2. Compare the COLOR NUANCES of the analyzed photo with BOTH rows
+3. Ask: "Does the hair/skin harmony look more like TOP row (cool, grayish-golden) or BOTTOM row (warm, peachy-golden)?"
+4. Match the EXACT color temperature and undertone nuances
+5. Only after this comparison, select SOFT SUMMER or GENTLE SPRING
+
+This comparison is CRITICAL for distinguishing between these two similar-looking but different colortypes.
+
 EYE RULES:
 - Bright eyes (bright blue/green/gray-blue) → OFTEN VIBRANT SPRING or BRIGHT WINTER
 - Gray eyes (without "bright") → NEVER VIBRANT SPRING
