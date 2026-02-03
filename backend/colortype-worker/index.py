@@ -130,8 +130,8 @@ BRIGHT SPRING: Warm, clear, medium contrast, warm copper hair, blue/green eyes (
 CRITICAL: Do NOT skip this comparison step. The 9 example persons on each scheme are your primary guide for visual matching - pay special attention to the EXACT HAIR COLOR TONES you see in the examples, SKIN UNDERTONES (cool/warm), and how they work together with the user's confirmed EYE COLOR to create overall color harmony.
 
 ⚠️ BLONDE HAIR TEMPERATURE GUIDE (for visual colortype comparison):
-- COOL blonde (Summer/Winter types): grayish, ashy, platinum, beige, silvery, white-blonde, dirty blonde, taupe (looks GRAY-based)
-- WARM blonde (Spring/Autumn types): peachy, sandy, honey, golden-orange, buttery, strawberry (looks YELLOW/ORANGE-based)
+- COOL blonde (Summer types): light cool golden, grayish, ashy, platinum, beige, silvery, white-blonde, dirty blonde, taupe (looks YELLOW/GRAY-based)
+- WARM blonde (Spring types): light warm golden, peachy, sandy, honey, golden-orange, buttery, strawberry (looks COPPER/ORANGE-based)
 - When comparing with reference schemes, match blonde temperature to determine correct season group
 
 EYE RULES:
