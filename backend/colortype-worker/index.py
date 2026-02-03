@@ -222,7 +222,7 @@ Choose: COOL-UNDERTONE or WARM-UNDERTONE
 - DEEP-EYES-COLORS: dark brown, black-brown, deep brown, chocolate
 
 5. SATURATION (Hair 50%, Eyes 30%, Skin 20%; assess ROOTS 55% + length 45%):
-Ask: "Are colors CLEAR/PURE or DUSTY/SOFT?"
+Ask: "Are colors CLEAR/PURE/BRIGHT or DUSTY/SOFT/MUTED?"
 - MUTED-SATURATION-COLORS: dusty, grayish, soft, subdued (gray veil)
 - MUTED-NEUTRAL-SATURATION-COLORS: moderately saturated, lean soft/gentle (closer to MUTED)
 - BRIGHT-NEUTRAL-SATURATION-COLORS: moderately saturated, lean clear/vivid (closer to BRIGHT)
@@ -251,7 +251,7 @@ Hair: Check the right side of schemes for hair color name examples. Use levels: 
 
 ⚠️ For blonde hair, MANDATORY format: "{lightness level} {undertone descriptor} blonde"
 Examples:
-- "light ash blonde" (COOL: grayish, platinum, beige tones)
+- "light ash blonde" (COOL: light cool golden, grayish, platinum, beige tones)
 - "light golden blonde" - MUST specify if COOL (beige/yellow) or WARM (peachy/honey)
 - "medium ash blonde" (COOL: taupe, gray-beige)
 - "light warm blonde" (WARM: peachy, sandy, honey tones)
