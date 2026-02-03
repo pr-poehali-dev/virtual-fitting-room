@@ -180,15 +180,15 @@ Look at the hair and ask: "What COLOR FAMILY does this blonde belong to?"
 
 STEP 2 - REFERENCE COMPARISON:
 Compare analyzed photo with reference schemes:
-- SOFT SUMMER (cool): ash blonde, platinum, grayish-beige blonde, silver-blonde, taupe blonde
+- SOFT SUMMER (cool): light cool golden, ash blonde, platinum, grayish-beige blonde, silver-blonde, taupe blonde
 - DUSTY SUMMER (cool): medium ash blonde, cool beige blonde with gray tones
-- GENTLE SPRING (warm): golden blonde with peachy/sandy tones, honey blonde, warm butter blonde
+- GENTLE SPRING (warm): light warm golden, golden blonde with peachy/sandy tones, honey blonde, warm butter blonde
 - BRIGHT SPRING (warm): bright golden blonde, sunny blonde, warm yellow blonde
 Which reference group matches CLOSEST? That determines undertone.
 
 STEP 3 - CRITICAL RULES:
-- ASH/PLATINUM/BEIGE/GRAY tones in blonde = ALWAYS COOL-UNDERTONE
-- PEACHY/SANDY/HONEY/ORANGE tones in blonde = ALWAYS WARM-UNDERTONE
+- COOL/ASH/PLATINUM/BEIGE/GRAY tones in blonde = ALWAYS COOL-UNDERTONE
+- WARM/PEACHY/SANDY/HONEY/ORANGE tones in blonde = ALWAYS WARM-UNDERTONE
 - "Golden blonde" is AMBIGUOUS - check if it's:
   * Cool golden = light yellow/beige with NO orange/peach = COOL-UNDERTONE
   * Warm golden = honey/peachy/sandy/orange yellow = WARM-UNDERTONE
