@@ -602,6 +602,12 @@ def match_colortype(analysis: dict) -> tuple:
         excluded_types.add('VIVID SUMMER')
         print(f'[Match] Blonde hair detected → excluding VIVID SUMMER (requires medium/dark hair)')
     
+    # Rule 19: Medium golden brown hair OR brown hair → exclude BRIGHT SPRING
+    has_medium_golden_brown_or_brown = any(keyword in hair_lower for keyword in ['medium golden brown', 'brown hair', 'brown', 'golden brown'])
+    if has_medium_golden_brown_or_brown:
+        excluded_types.add('BRIGHT SPRING')
+        print(f'[Match] Medium golden brown/brown hair detected → excluding BRIGHT SPRING')
+    
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
     
@@ -838,6 +844,12 @@ def match_colortype(analysis: dict) -> tuple:
         if has_medium_golden_brown_hair and has_golden_brown_eyes and colortype == 'FIERY AUTUMN':
             color_score += 0.25
             print(f'[Match] {colortype}: BONUS +0.25 for medium golden brown hair + golden brown/brown eyes (characteristic FIERY AUTUMN)')
+        
+        # PENALTY: Dark brown hair → -0.30 for DUSTY SUMMER and VIVID SUMMER (require light/medium hair)
+        has_dark_brown_hair_color = any(keyword in hair_lower for keyword in ['dark brown', 'deep brown', 'dark cool brown', 'dark ash brown'])
+        if has_dark_brown_hair_color and colortype in ['DUSTY SUMMER', 'VIVID SUMMER']:
+            color_score -= 0.30
+            print(f'[Match] {colortype}: PENALTY -0.30 for dark brown hair ({colortype} requires light/medium hair only)')
         
         # PENALTY: Non-bright eyes → -0.25 for VIBRANT SPRING (prefers bright/sparkling eyes)
         if not has_bright_eyes_keyword and colortype == 'VIBRANT SPRING':
