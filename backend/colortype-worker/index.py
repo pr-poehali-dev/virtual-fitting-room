@@ -174,8 +174,8 @@ For blonde/light hair, follow this MANDATORY 3-step process:
 
 STEP 1 - VISUAL TEMPERATURE TEST:
 Look at the hair and ask: "What COLOR FAMILY does this blonde belong to?"
-- COOL blonde = grayish, ashy, platinum, beige, silvery, white-blonde, dirty blonde, taupe (looks GRAY-based)
-- WARM blonde = peachy, sandy, honey, golden-orange, buttery, strawberry (looks YELLOW/ORANGE-based)
+- COOL blonde = light cool golden, grayish, ashy, platinum, beige, silvery, white-blonde, dirty blonde, taupe (looks YELLOW/GRAY-based)
+- WARM blonde = warm golden, peachy, sandy, honey, golden-orange, buttery, strawberry (looks COPPER/ORANGE-based)
 - If blonde looks NEUTRAL/unclear → proceed to STEP 2
 
 STEP 2 - REFERENCE COMPARISON:
