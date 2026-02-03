@@ -165,7 +165,7 @@ Hair/skin can appear NEUTRAL (neither clearly warm nor cool) - this is NORMAL. W
 - When in doubt → favor COOL if there's ANY coolness
 
 EYE COLOR HINTS:
-- PURE GREEN eyes (jade, emerald, NO gray prefix) → more often WARM undertone (Spring/Autumn)
+- PURE GREEN eyes (jade, NO gray prefix) → more often WARM undertone (Spring/Autumn)
 - GRAY eyes OR GRAY-GREEN eyes OR GREY-GREEN eyes → ALWAYS COOL undertone (Winter/Summer)
 - If you describe hair as "neutral" + eyes have "gray"/"grey" → you MUST choose COOL-UNDERTONE
 
