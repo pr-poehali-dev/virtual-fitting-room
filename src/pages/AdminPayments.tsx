@@ -29,6 +29,7 @@ export default function AdminPayments() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPayments, setTotalPayments] = useState(0);
+  const [refundingId, setRefundingId] = useState<string | null>(null);
   const paymentsPerPage = 50;
 
   useEffect(() => {
@@ -68,6 +69,42 @@ export default function AdminPayments() {
       toast.error('Ошибка загрузки платежей');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRefund = async (userId: string, transactionId: string) => {
+    const adminToken = localStorage.getItem('admin_jwt');
+    const reason = prompt('Причина возврата (необязательно):') || 'Возврат администратором';
+
+    if (!confirm('Вы уверены, что хотите вернуть 30₽ пользователю?')) {
+      return;
+    }
+
+    setRefundingId(transactionId);
+
+    try {
+      const response = await fetch(`${ADMIN_API}?action=refund`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Token': adminToken || ''
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          amount: 30,
+          reason
+        })
+      });
+
+      if (!response.ok) throw new Error('Refund failed');
+      
+      const data = await response.json();
+      toast.success(`Возврат выполнен! Новый баланс: ${data.new_balance.toFixed(2)}₽`);
+      fetchPayments();
+    } catch (error) {
+      toast.error('Ошибка возврата средств');
+    } finally {
+      setRefundingId(null);
     }
   };
 
@@ -117,6 +154,7 @@ export default function AdminPayments() {
                         <th className="px-4 py-3 text-left text-sm font-medium">Описание</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Баланс после</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Дата</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Действия</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -152,6 +190,28 @@ export default function AdminPayments() {
                           <td className="px-4 py-3 text-sm text-gray-600">{payment.balance_after.toFixed(2)} ₽</td>
                           <td className="px-4 py-3 text-sm text-gray-500">
                             {new Date(payment.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-3">
+                            {payment.type === 'charge' && payment.amount < 0 && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleRefund(payment.user_id, payment.id)}
+                                disabled={refundingId === payment.id}
+                              >
+                                {refundingId === payment.id ? (
+                                  <>
+                                    <Icon name="Loader2" className="animate-spin mr-1" size={14} />
+                                    Возврат...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Icon name="RefreshCw" className="mr-1" size={14} />
+                                    Вернуть
+                                  </>
+                                )}
+                              </Button>
+                            )}
                           </td>
                         </tr>
                       ))}
