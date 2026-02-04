@@ -229,15 +229,20 @@ export default function WalletTab() {
         </Card>
       </div>
 
-      {balanceHistory.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Icon name="Receipt" size={24} />
-              История операций
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Icon name="Receipt" size={24} />
+            История операций
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {balanceHistory.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Icon name="FileText" size={48} className="mx-auto mb-3 opacity-50" />
+              <p>История пополнений и списаний пуста</p>
+            </div>
+          ) : (
             <div className="space-y-3">
               {balanceHistory.map((transaction) => (
                 <div 
@@ -287,9 +292,9 @@ export default function WalletTab() {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
