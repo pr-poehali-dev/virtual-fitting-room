@@ -26,13 +26,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-40">
           <div className="container mx-auto px-4 py-4">
             <nav className="flex items-center justify-between lg:justify-end">
-              <button
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors z-[60]"
-                aria-label="Toggle menu"
-              >
-                <Icon name="Menu" size={24} />
-              </button>
+              <div className="flex items-center gap-2 lg:hidden">
+                <button
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="p-2 hover:bg-muted rounded-lg transition-colors z-[60]"
+                  aria-label="Toggle menu"
+                >
+                  <Icon name="Menu" size={24} />
+                </button>
+                {user && <HeaderBalance />}
+              </div>
               
               <Link to="/" className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 lg:mr-auto flex items-center hover:opacity-80 transition-opacity">
                 <img src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/logo-fitting-room-1.svg" alt="Virtual Fitting" className="h-8 md:h-10" />
@@ -40,7 +43,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-2">
               {user ? (
                 <>
-                  <HeaderBalance />
+                  <div className="hidden lg:block">
+                    <HeaderBalance />
+                  </div>
                   <span className="text-sm text-muted-foreground hidden lg:inline">{user.name}</span>
                   <Button 
                     variant="ghost" 
