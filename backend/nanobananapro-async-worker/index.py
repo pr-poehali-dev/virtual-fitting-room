@@ -202,8 +202,8 @@ def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
             cursor.close()
             return
         
-        # Check if user has unlimited access
-        cursor.execute('SELECT unlimited_access FROM users WHERE id = %s', (user_id,))
+        # Check if user has unlimited access and get balance
+        cursor.execute('SELECT unlimited_access, balance FROM users WHERE id = %s', (user_id,))
         user_row = cursor.fetchone()
         
         if not user_row:
@@ -212,6 +212,7 @@ def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
             return
         
         unlimited_access = user_row[0]
+        balance_before = float(user_row[1])
         
         if unlimited_access:
             print(f'[Refund] User {user_id} has unlimited access, no refund needed')
@@ -220,9 +221,19 @@ def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
             cursor.close()
             return
         
+        balance_after = balance_before + 30
+        
         # Refund 30 rubles
         cursor.execute('UPDATE users SET balance = balance + 30 WHERE id = %s', (user_id,))
         cursor.execute('UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks SET refunded = true WHERE id = %s', (task_id,))
+        
+        # Record balance transaction (try_on_id = NULL since no history record yet)
+        cursor.execute('''
+            INSERT INTO balance_transactions
+            (user_id, type, amount, balance_before, balance_after, description, try_on_id)
+            VALUES (%s, 'refund', 30, %s, %s, 'Возврат: технический сбой примерочной', NULL)
+        ''', (user_id, balance_before, balance_after))
+        
         conn.commit()
         
         print(f'[Refund] Refunded 30 rubles to user {user_id} for task {task_id}')
@@ -231,18 +242,19 @@ def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
     except Exception as e:
         print(f'[Refund] Error refunding balance: {str(e)}')
 
-def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garments: list, prompt: str) -> None:
-    '''Save result to try_on_history table'''
+def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garments: list, prompt: str) -> Optional[str]:
+    '''Save result to try_on_history table and return history_id'''
     try:
         cursor = conn.cursor()
         
         # Build garments JSON (matching table structure)
         garments_json = json.dumps(garments)
         
-        # Check if user has unlimited access
-        cursor.execute('SELECT unlimited_access FROM users WHERE id = %s', (user_id,))
+        # Get user balance and access level
+        cursor.execute('SELECT unlimited_access, balance FROM users WHERE id = %s', (user_id,))
         user_row = cursor.fetchone()
         unlimited_access = user_row[0] if user_row else False
+        balance = float(user_row[1]) if user_row else 0
         
         # Cost: 0 for unlimited users, 30 for others
         cost = 0 if unlimited_access else 30
@@ -254,6 +266,7 @@ def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garment
             INSERT INTO t_p29007832_virtual_fitting_room.try_on_history 
             (user_id, person_image, garment_image, result_image, garments, model_used, cost, created_at, saved_to_lookbook)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
         ''', (
             user_id,
             person_image,
@@ -266,12 +279,29 @@ def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garment
             False
         ))
         
+        history_row = cursor.fetchone()
+        history_id = str(history_row[0]) if history_row else None
+        
+        # Record balance transaction
+        if history_id:
+            balance_after = balance - cost if not unlimited_access else balance
+            description = 'Виртуальная примерочная (безлимитный доступ)' if unlimited_access else 'Виртуальная примерочная'
+            
+            cursor.execute('''
+                INSERT INTO balance_transactions
+                (user_id, type, amount, balance_before, balance_after, description, try_on_id)
+                VALUES (%s, 'charge', %s, %s, %s, %s, %s)
+            ''', (user_id, -cost if not unlimited_access else 0, balance, balance_after, description, history_id))
+            print(f'[History] Recorded balance transaction: -{cost} rubles (history_id={history_id})')
+        
         conn.commit()
         cursor.close()
-        print(f'[History] Saved to try_on_history for user {user_id}')
+        print(f'[History] Saved to try_on_history for user {user_id} (id={history_id})')
+        return history_id
     
     except Exception as e:
         print(f'[History] Failed to save: {str(e)}')
+        return None
 
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:

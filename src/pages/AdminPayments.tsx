@@ -14,12 +14,13 @@ interface Payment {
   user_id: string;
   user_email: string;
   user_name: string;
+  type: 'deposit' | 'charge' | 'refund';
   amount: number;
-  payment_method: string;
-  status: string;
-  order_id: string;
+  balance_before: number;
+  balance_after: number;
+  description: string;
   created_at: string;
-  updated_at: string;
+  is_deleted: boolean;
 }
 
 export default function AdminPayments() {
@@ -70,9 +71,13 @@ export default function AdminPayments() {
     }
   };
 
-  const totalAmount = payments
-    .filter(p => p.status === 'completed')
+  const totalDeposits = payments
+    .filter(p => p.type === 'deposit')
     .reduce((sum, p) => sum + p.amount, 0);
+  
+  const totalCharges = payments
+    .filter(p => p.type === 'charge')
+    .reduce((sum, p) => sum + Math.abs(p.amount), 0);
 
   if (isLoading) {
     return (
@@ -94,9 +99,9 @@ export default function AdminPayments() {
           
           <div className="flex-1">
             <div className="mb-8">
-              <h1 className="text-3xl font-bold mb-2">Платежи</h1>
+              <h1 className="text-3xl font-bold mb-2">История операций</h1>
               <p className="text-muted-foreground">
-                Всего платежей: {totalPayments} | Сумма: {totalAmount.toFixed(2)} ₽
+                Всего операций: {totalPayments} | Пополнения: {totalDeposits.toFixed(2)} ₽ | Списания: {totalCharges.toFixed(2)} ₽
               </p>
             </div>
 
@@ -107,10 +112,10 @@ export default function AdminPayments() {
                     <thead className="bg-gray-50 border-b">
                       <tr>
                         <th className="px-4 py-3 text-left text-sm font-medium">Пользователь</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Тип</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Сумма</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Метод</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Статус</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Order ID</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Описание</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Баланс после</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Дата</th>
                       </tr>
                     </thead>
@@ -121,20 +126,30 @@ export default function AdminPayments() {
                             <div className="text-sm font-medium">{payment.user_name}</div>
                             <div className="text-xs text-gray-500">{payment.user_email}</div>
                           </td>
-                          <td className="px-4 py-3 text-sm font-medium">{payment.amount.toFixed(2)} ₽</td>
-                          <td className="px-4 py-3 text-sm">{payment.payment_method}</td>
                           <td className="px-4 py-3">
                             <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${
-                              payment.status === 'completed' 
+                              payment.type === 'deposit' 
                                 ? 'bg-green-100 text-green-700'
-                                : payment.status === 'pending'
-                                ? 'bg-yellow-100 text-yellow-700'
+                                : payment.type === 'refund'
+                                ? 'bg-blue-100 text-blue-700'
                                 : 'bg-red-100 text-red-700'
                             }`}>
-                              {payment.status}
+                              {payment.type === 'deposit' ? 'Пополнение' : payment.type === 'refund' ? 'Возврат' : 'Списание'}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-sm font-mono text-gray-600">{payment.order_id}</td>
+                          <td className={`px-4 py-3 text-sm font-medium ${
+                            payment.type === 'deposit' || payment.type === 'refund' ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {payment.type === 'deposit' || payment.type === 'refund' ? '+' : ''}
+                            {payment.amount.toFixed(2)} ₽
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {payment.description}
+                            {payment.is_deleted && (
+                              <span className="ml-2 text-xs text-gray-500">(удалено)</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{payment.balance_after.toFixed(2)} ₽</td>
                           <td className="px-4 py-3 text-sm text-gray-500">
                             {new Date(payment.created_at).toLocaleDateString()}
                           </td>

@@ -488,7 +488,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         elif action == 'payments':
             limit = query_params.get('limit', '1000')
             offset = query_params.get('offset', '0')
-            status_filter = query_params.get('status')
+            type_filter = query_params.get('type')
             date_from = query_params.get('date_from')
             date_to = query_params.get('date_to')
             
@@ -499,65 +499,98 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 limit = 1000
                 offset = 0
             
-            # Count total payments
+            # Count total transactions
             count_query = '''
                 SELECT COUNT(*) as total
-                FROM payment_transactions pt
+                FROM balance_transactions bt
                 WHERE 1=1
             '''
             count_params = []
             
-            if status_filter:
-                count_query += " AND pt.status = %s"
-                count_params.append(status_filter)
+            if type_filter:
+                count_query += " AND bt.type = %s"
+                count_params.append(type_filter)
             
             if date_from:
-                count_query += " AND pt.created_at >= %s"
+                count_query += " AND bt.created_at >= %s"
                 count_params.append(date_from)
             
             if date_to:
-                count_query += " AND pt.created_at <= %s"
+                count_query += " AND bt.created_at <= %s"
                 count_params.append(date_to)
             
             cursor.execute(count_query, count_params)
             total = cursor.fetchone()['total']
             
-            # Get payments with pagination
+            # Get transactions with pagination
             query = '''
                 SELECT 
-                    pt.id,
-                    pt.user_id,
-                    pt.amount,
-                    pt.payment_method,
-                    pt.status,
-                    pt.order_id,
-                    pt.created_at,
-                    pt.updated_at,
+                    bt.id,
+                    bt.user_id,
+                    bt.type,
+                    bt.amount,
+                    bt.balance_before,
+                    bt.balance_after,
+                    bt.description,
+                    bt.created_at,
+                    bt.try_on_id,
+                    bt.color_type_id,
                     u.email,
-                    u.name
-                FROM payment_transactions pt
-                LEFT JOIN users u ON pt.user_id = u.id
+                    u.name,
+                    th.removed_at AS try_on_removed,
+                    th.saved_to_lookbook,
+                    ct.removed_at AS color_removed
+                FROM balance_transactions bt
+                LEFT JOIN users u ON bt.user_id = u.id
+                LEFT JOIN try_on_history th ON bt.try_on_id = th.id
+                LEFT JOIN color_type_history ct ON bt.color_type_id = ct.id
                 WHERE 1=1
             '''
             params = []
             
-            if status_filter:
-                query += " AND pt.status = %s"
-                params.append(status_filter)
+            if type_filter:
+                query += " AND bt.type = %s"
+                params.append(type_filter)
             
             if date_from:
-                query += " AND pt.created_at >= %s"
+                query += " AND bt.created_at >= %s"
                 params.append(date_from)
             
             if date_to:
-                query += " AND pt.created_at <= %s"
+                query += " AND bt.created_at <= %s"
                 params.append(date_to)
             
-            query += " ORDER BY pt.created_at DESC LIMIT %s OFFSET %s"
+            query += " ORDER BY bt.created_at DESC LIMIT %s OFFSET %s"
             params.extend([limit, offset])
             
             cursor.execute(query, params)
-            payments = cursor.fetchall()
+            transactions = cursor.fetchall()
+            
+            result_transactions = []
+            for t in transactions:
+                display_description = t['description']
+                
+                if t['try_on_id'] and t['try_on_removed']:
+                    if t['saved_to_lookbook']:
+                        display_description = 'Виртуальная примерочная [УДАЛЕНО ИЗ ЛУКБУКА]'
+                    else:
+                        display_description = 'Виртуальная примерочная [УДАЛЕНО ИЗ ИСТОРИИ]'
+                elif t['color_type_id'] and t['color_removed']:
+                    display_description = 'Определение цветотипа [УДАЛЕНО ИЗ ИСТОРИИ]'
+                
+                result_transactions.append({
+                    'id': str(t['id']),
+                    'user_id': t['user_id'],
+                    'user_email': t['email'],
+                    'user_name': t['name'],
+                    'type': t['type'],
+                    'amount': float(t['amount']),
+                    'balance_before': float(t['balance_before']),
+                    'balance_after': float(t['balance_after']),
+                    'description': display_description,
+                    'created_at': t['created_at'].isoformat(),
+                    'is_deleted': bool(t['try_on_removed'] or t['color_removed'])
+                })
             
             return {
                 'statusCode': 200,
@@ -567,18 +600,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({
-                    'payments': [{
-                        'id': str(p['id']),
-                        'user_id': p['user_id'],
-                        'user_email': p['email'],
-                        'user_name': p['name'],
-                        'amount': float(p['amount']),
-                        'payment_method': p['payment_method'],
-                        'status': p['status'],
-                        'order_id': p['order_id'],
-                        'created_at': p['created_at'].isoformat(),
-                        'updated_at': p['updated_at'].isoformat() if p['updated_at'] else None
-                    } for p in payments],
+                    'payments': result_transactions,
                     'total': total
                 })
             }

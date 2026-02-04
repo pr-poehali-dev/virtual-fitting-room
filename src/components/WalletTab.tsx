@@ -7,8 +7,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 
 const USER_BALANCE_API = 'https://functions.poehali.dev/68409278-10ab-4733-b48d-b1b4360620a1';
-const PAYMENT_API = 'https://functions.poehali.dev/90e72041-1a9e-4a24-9d4b-dc3347bdbe77';
-const PAYMENT_HISTORY_API = 'https://functions.poehali.dev/4956bfc7-c402-4191-8f90-2aeffeb2c1be';
+const YOOKASSA_PAYMENT_API = 'https://functions.poehali.dev/f7ad0852-ed82-4ae0-b6ee-c2629c1ac4bb';
+const BALANCE_HISTORY_API = 'https://functions.poehali.dev/3cbe003b-0f4c-4e91-894b-4e5170c468ad';
 
 interface BalanceInfo {
   balance: number;
@@ -18,28 +18,29 @@ interface BalanceInfo {
   can_generate: boolean;
 }
 
-interface PaymentTransaction {
+interface BalanceTransaction {
   id: string;
+  type: 'deposit' | 'charge' | 'refund';
   amount: number;
-  payment_method: string;
-  status: string;
-  order_id: string;
+  balance_before: number;
+  balance_after: number;
+  description: string;
   created_at: string;
-  updated_at: string;
+  is_deleted: boolean;
 }
 
 export default function WalletTab() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [balanceInfo, setBalanceInfo] = useState<BalanceInfo | null>(null);
-  const [paymentHistory, setPaymentHistory] = useState<PaymentTransaction[]>([]);
+  const [balanceHistory, setBalanceHistory] = useState<BalanceTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchBalance();
-      fetchPaymentHistory();
+      fetchBalanceHistory();
     }
     
     const payment = searchParams.get('payment');
@@ -47,7 +48,7 @@ export default function WalletTab() {
       toast.success('Платеж успешно обработан!');
       setTimeout(() => {
         fetchBalance();
-        fetchPaymentHistory();
+        fetchBalanceHistory();
       }, 1000);
     } else if (payment === 'failed') {
       toast.error('Ошибка оплаты');
@@ -77,18 +78,18 @@ export default function WalletTab() {
     }
   };
 
-  const fetchPaymentHistory = async () => {
+  const fetchBalanceHistory = async () => {
     if (!user) return;
 
     try {
-      const response = await fetch(`${PAYMENT_HISTORY_API}?user_id=${user.id}`);
+      const response = await fetch(`${BALANCE_HISTORY_API}?user_id=${user.id}`);
 
       if (response.ok) {
         const data = await response.json();
-        setPaymentHistory(data.transactions);
+        setBalanceHistory(data.transactions);
       }
     } catch (error) {
-      console.error('Ошибка загрузки истории платежей:', error);
+      console.error('Ошибка загрузки истории операций:', error);
     }
   };
 
@@ -98,7 +99,7 @@ export default function WalletTab() {
     setIsCreatingPayment(true);
 
     try {
-      const response = await fetch(PAYMENT_API, {
+      const response = await fetch(YOOKASSA_PAYMENT_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -222,50 +223,55 @@ export default function WalletTab() {
               </div>
             )}
             <p className="text-xs text-muted-foreground mt-4">
-              Оплата через Сбербанк. Безопасная обработка платежей.
+              Оплата через ЮКасса. Безопасная обработка платежей.
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {paymentHistory.length > 0 && (
+      {balanceHistory.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Icon name="Receipt" size={24} />
-              История платежей
+              История операций
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {paymentHistory.map((transaction) => (
+              {balanceHistory.map((transaction) => (
                 <div 
                   key={transaction.id} 
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium">{transaction.amount.toFixed(2)} ₽</span>
-                      {transaction.status === 'completed' && (
-                        <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                          <Icon name="CheckCircle2" size={12} />
-                          Завершен
-                        </span>
+                      {transaction.type === 'deposit' && (
+                        <Icon name="ArrowDownCircle" size={16} className="text-green-600" />
                       )}
-                      {transaction.status === 'pending' && (
-                        <span className="inline-flex items-center gap-1 text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">
-                          <Icon name="Clock" size={12} />
-                          Ожидание
-                        </span>
+                      {transaction.type === 'charge' && (
+                        <Icon name="ArrowUpCircle" size={16} className="text-red-600" />
                       )}
-                      {transaction.status === 'failed' && (
-                        <span className="inline-flex items-center gap-1 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
-                          <Icon name="XCircle" size={12} />
-                          Ошибка
+                      {transaction.type === 'refund' && (
+                        <Icon name="RefreshCw" size={16} className="text-blue-600" />
+                      )}
+                      <span className={`font-medium ${
+                        transaction.type === 'deposit' || transaction.type === 'refund' 
+                          ? 'text-green-600' 
+                          : 'text-red-600'
+                      }`}>
+                        {transaction.type === 'deposit' || transaction.type === 'refund' ? '+' : ''}
+                        {transaction.amount.toFixed(2)} ₽
+                      </span>
+                      {transaction.is_deleted && (
+                        <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                          <Icon name="Trash2" size={12} />
+                          Удалено
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm mb-1">{transaction.description}</p>
+                    <p className="text-xs text-muted-foreground">
                       {new Date(transaction.created_at).toLocaleDateString('ru-RU', {
                         day: 'numeric',
                         month: 'long',
@@ -275,8 +281,8 @@ export default function WalletTab() {
                       })}
                     </p>
                   </div>
-                  <div className="text-right text-xs text-muted-foreground">
-                    ID: {transaction.order_id || transaction.id.slice(0, 8)}
+                  <div className="text-right text-xs text-muted-foreground space-y-1">
+                    <div>Баланс: {transaction.balance_after.toFixed(2)} ₽</div>
                   </div>
                 </div>
               ))}

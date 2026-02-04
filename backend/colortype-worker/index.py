@@ -579,9 +579,23 @@ def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
             cursor.close()
             return
         
+        # Get current balance for transaction record
+        cursor.execute('SELECT balance FROM users WHERE id = %s', (user_id,))
+        balance_row = cursor.fetchone()
+        balance_before = float(balance_row[0]) if balance_row else 0
+        balance_after = balance_before + 30
+        
         # Refund 30 rubles
         cursor.execute('UPDATE users SET balance = balance + 30 WHERE id = %s', (user_id,))
         cursor.execute('UPDATE color_type_history SET refunded = true WHERE id = %s', (task_id,))
+        
+        # Record balance transaction
+        cursor.execute('''
+            INSERT INTO balance_transactions
+            (user_id, type, amount, balance_before, balance_after, description, color_type_id)
+            VALUES (%s, 'refund', 30, %s, %s, 'Возврат: технический сбой цветотипа', %s)
+        ''', (user_id, balance_before, balance_after, task_id))
+        
         conn.commit()
         
         print(f'[Refund] Refunded 30 rubles to user {user_id} for task {task_id}')

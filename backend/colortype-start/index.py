@@ -169,6 +169,23 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             eye_color
         ))
         
+        # Record balance transaction
+        if cost > 0:
+            balance_after = balance - cost
+            cursor.execute('''
+                INSERT INTO balance_transactions
+                (user_id, type, amount, balance_before, balance_after, description, color_type_id)
+                VALUES (%s, 'charge', %s, %s, %s, 'Определение цветотипа', %s)
+            ''', (user_id, -cost, balance, balance_after, task_id))
+            print(f'[COLORTYPE-START-{request_id}] Recorded balance transaction: -{cost} rubles')
+        elif unlimited_access:
+            cursor.execute('''
+                INSERT INTO balance_transactions
+                (user_id, type, amount, balance_before, balance_after, description, color_type_id)
+                VALUES (%s, 'charge', 0, %s, %s, 'Определение цветотипа (безлимитный доступ)', %s)
+            ''', (user_id, balance, balance, task_id))
+            print(f'[COLORTYPE-START-{request_id}] Recorded balance transaction: 0 rubles (unlimited)')
+        
         conn.commit()
         print(f'[COLORTYPE-START-{request_id}] Task {task_id} saved to database')
         cursor.close()
