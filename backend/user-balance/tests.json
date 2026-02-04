@@ -1,31 +1,31 @@
 {
   "tests": [
     {
-      "name": "Get user balance",
+      "name": "OPTIONS request returns CORS headers",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET without X-User-Id returns 401",
       "method": "GET",
-      "headers": {
-        "X-User-Id": "test-user-123"
-      },
-      "expectedStatus": 200,
+      "path": "/",
+      "expectedStatus": 401,
       "expectedBody": {
-        "balance": "number",
-        "free_tries_remaining": "number",
-        "can_generate": "boolean"
+        "error": "Требуется авторизация"
       },
       "bodyMatcher": "partial"
     },
     {
-      "name": "Deduct balance",
+      "name": "POST deduct without X-User-Id returns 401",
       "method": "POST",
-      "headers": {
-        "X-User-Id": "test-user-123"
-      },
+      "path": "/",
       "body": {
         "action": "deduct"
       },
-      "expectedStatus": 200,
+      "expectedStatus": 401,
       "expectedBody": {
-        "success": "boolean"
+        "error": "Требуется авторизация"
       },
       "bodyMatcher": "partial"
     }

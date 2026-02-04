@@ -34,7 +34,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if not user_id:
         return {
             'statusCode': 401,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
             'body': json.dumps({'error': 'Требуется авторизация'})
         }
     
@@ -53,7 +53,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if not result:
                 return {
                     'statusCode': 404,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                     'body': json.dumps({'error': 'Пользователь не найден'})
                 }
             
@@ -63,7 +63,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             return {
                 'statusCode': 200,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                 'body': json.dumps({
                     'balance': float(balance),
                     'free_tries_remaining': free_tries_remaining,
@@ -78,12 +78,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             action = body_data.get('action')
             
             if action == 'deduct':
-                steps = body_data.get('steps', 1)
                 cost_per_step = 30
-                total_cost = cost_per_step * steps
+                total_cost = cost_per_step
+                generation_type = body_data.get('generation_type', 'try_on')
+                generation_id = body_data.get('generation_id')
                 
                 cur.execute('''
-                    SELECT balance, free_tries_used, unlimited_access 
+                    SELECT balance, unlimited_access 
                     FROM t_p29007832_virtual_fitting_room.users 
                     WHERE id = %s
                 ''', (user_id,))
@@ -92,62 +93,98 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if not result:
                     return {
                         'statusCode': 404,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                         'body': json.dumps({'error': 'Пользователь не найден'})
                     }
                 
-                balance, free_tries_used, unlimited_access = result
+                balance, unlimited_access = result
+                balance_before = float(balance)
                 
                 if unlimited_access:
+                    description = f'{"Виртуальная примерочная" if generation_type == "try_on" else "Определение цветотипа"} (безлимитный доступ)'
+                    
+                    if generation_id:
+                        cur.execute('''
+                            INSERT INTO t_p29007832_virtual_fitting_room.balance_transactions
+                            (user_id, type, amount, balance_before, balance_after, description, try_on_id, color_type_id)
+                            VALUES (%s, 'charge', 0, %s, %s, %s, %s, %s)
+                        ''', (
+                            user_id, 
+                            balance_before, 
+                            balance_before, 
+                            description,
+                            generation_id if generation_type == 'try_on' else None,
+                            generation_id if generation_type == 'color_type' else None
+                        ))
+                        conn.commit()
+                    
                     return {
                         'statusCode': 200,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                         'body': json.dumps({
                             'success': True,
                             'unlimited': True,
-                            'message': 'Безлимитный доступ',
-                            'steps': steps
+                            'message': 'Безлимитный доступ'
                         })
                     }
                 
                 if balance >= total_cost:
+                    balance_after = balance_before - total_cost
+                    description = 'Виртуальная примерочная' if generation_type == 'try_on' else 'Определение цветотипа'
+                    
                     cur.execute('''
                         UPDATE t_p29007832_virtual_fitting_room.users 
                         SET balance = balance - %s, updated_at = CURRENT_TIMESTAMP
                         WHERE id = %s
                     ''', (total_cost, user_id))
+                    
+                    if generation_id:
+                        cur.execute('''
+                            INSERT INTO t_p29007832_virtual_fitting_room.balance_transactions
+                            (user_id, type, amount, balance_before, balance_after, description, try_on_id, color_type_id)
+                            VALUES (%s, 'charge', %s, %s, %s, %s, %s, %s)
+                        ''', (
+                            user_id, 
+                            -total_cost,
+                            balance_before, 
+                            balance_after, 
+                            description,
+                            generation_id if generation_type == 'try_on' else None,
+                            generation_id if generation_type == 'color_type' else None
+                        ))
+                    
                     conn.commit()
                     
                     return {
                         'statusCode': 200,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                         'body': json.dumps({
                             'success': True,
                             'paid_try': True,
-                            'new_balance': float(balance - total_cost),
-                            'cost': total_cost,
-                            'steps': steps
+                            'new_balance': balance_after,
+                            'cost': total_cost
                         })
                     }
                 
                 return {
                     'statusCode': 402,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                     'body': json.dumps({
                         'error': 'Недостаточно средств',
-                        'balance': float(balance),
-                        'required': total_cost,
-                        'steps': steps
+                        'balance': balance_before,
+                        'required': total_cost
                     })
                 }
             
             elif action == 'refund':
-                steps = body_data.get('steps', 1)
                 cost_per_step = 30
-                total_refund = cost_per_step * steps
+                total_refund = cost_per_step
+                generation_type = body_data.get('generation_type', 'try_on')
+                generation_id = body_data.get('generation_id')
+                reason = body_data.get('reason', 'Технический сбой')
                 
                 cur.execute('''
-                    SELECT balance, free_tries_used, unlimited_access 
+                    SELECT balance, unlimited_access 
                     FROM t_p29007832_virtual_fitting_room.users 
                     WHERE id = %s
                 ''', (user_id,))
@@ -156,16 +193,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if not result:
                     return {
                         'statusCode': 404,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                         'body': json.dumps({'error': 'Пользователь не найден'})
                     }
                 
-                balance, free_tries_used, unlimited_access = result
+                balance, unlimited_access = result
+                balance_before = float(balance)
                 
                 if unlimited_access:
                     return {
                         'statusCode': 200,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                         'body': json.dumps({
                             'success': True,
                             'unlimited': True,
@@ -173,34 +211,54 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         })
                     }
                 
+                balance_after = balance_before + total_refund
+                service_name = 'примерочной' if generation_type == 'try_on' else 'цветотипа'
+                description = f'Возврат: {reason} {service_name}'
+                
                 cur.execute('''
                     UPDATE t_p29007832_virtual_fitting_room.users 
                     SET balance = balance + %s, updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
                 ''', (total_refund, user_id))
+                
+                if generation_id:
+                    cur.execute('''
+                        INSERT INTO t_p29007832_virtual_fitting_room.balance_transactions
+                        (user_id, type, amount, balance_before, balance_after, description, try_on_id, color_type_id)
+                        VALUES (%s, 'refund', %s, %s, %s, %s, %s, %s)
+                    ''', (
+                        user_id, 
+                        total_refund,
+                        balance_before, 
+                        balance_after, 
+                        description,
+                        generation_id if generation_type == 'try_on' else None,
+                        generation_id if generation_type == 'color_type' else None
+                    ))
+                
                 conn.commit()
                 
                 return {
                     'statusCode': 200,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                     'body': json.dumps({
                         'success': True,
                         'refunded': True,
                         'refund_type': 'paid',
                         'refund_amount': total_refund,
-                        'new_balance': float(balance + total_refund)
+                        'new_balance': balance_after
                     })
                 }
             
             return {
                 'statusCode': 400,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                 'body': json.dumps({'error': 'Неизвестное действие'})
             }
         
         return {
             'statusCode': 405,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://fitting-room.ru'},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
             'body': json.dumps({'error': 'Метод не поддерживается'})
         }
     
