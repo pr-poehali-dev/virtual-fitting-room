@@ -88,6 +88,23 @@ const Contacts = () => {
 
             <section>
               <h2 className="text-2xl font-semibold mb-4 text-gray-900">
+                Реквизиты
+              </h2>
+              <div className="bg-gray-50 rounded-lg p-6">
+                <p className="text-gray-700 mb-2">
+                  <span className="font-semibold">Индивидуальный предприниматель:</span> Бакова Аполлинария Александровна
+                </p>
+                <p className="text-gray-700 mb-2">
+                  <span className="font-semibold">ИНН:</span> 780510907491
+                </p>
+                <p className="text-gray-700">
+                  <span className="font-semibold">ОГРНИП:</span> 325784700410088
+                </p>
+              </div>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900">
                 Часто задаваемые вопросы
               </h2>
               <div className="space-y-4">
