@@ -55,7 +55,7 @@ const Payment = () => {
                   <div className="flex-shrink-0 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">Загрузите фото и запустите услугу</h3>
-                    <p>Выберите нужную услугу (примерочная или цветотип), загрузите фотографию и нажмите "Генерировать". Стоимость будет списана с вашего баланса только после успешной генерации результата.</p>
+                    <p>Выберите нужную услугу (примерочная или цветотип), загрузите фотографию и нажмите "Генерировать". 30 рублей списываются с баланса сразу при запуске генерации.</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
@@ -78,20 +78,42 @@ const Payment = () => {
 
             <section>
               <h2 className="text-2xl font-semibold mb-3 text-gray-900">Когда списывается оплата</h2>
-              <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
-                <h3 className="font-semibold text-gray-900 mb-2">Оплата списывается только после успешной генерации:</h3>
-                <ul className="list-disc list-inside space-y-1 text-gray-700">
-                  <li>Вы загрузили фото и нажали "Генерировать"</li>
-                  <li>Система обработала фото и создала результат</li>
-                  <li>Результат появился на экране и сохранился в истории</li>
-                </ul>
+              <div className="bg-purple-50 border-l-4 border-purple-500 p-4 mb-4">
+                <h3 className="font-semibold text-gray-900 mb-2">Списание происходит сразу</h3>
+                <p className="text-gray-700">
+                  30 рублей списываются с баланса сразу после нажатия кнопки запуска (до начала обработки).
+                </p>
               </div>
+
+              <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
+                <h3 className="font-semibold text-gray-900 mb-2">Автоматический возврат средств</h3>
+                <p className="text-gray-700 mb-3">Деньги <strong>автоматически вернутся на баланс</strong>, если:</p>
+                
+                <div className="space-y-3">
+                  <div>
+                    <p className="font-medium text-gray-900">Виртуальная примерочная:</p>
+                    <ul className="list-disc list-inside space-y-1 text-gray-700 ml-4">
+                      <li>Произошла техническая ошибка до отправки в нейросеть</li>
+                      <li>Нейросеть вернула статус ошибки обработки (не смогла создать результат)</li>
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <p className="font-medium text-gray-900">Определение цветотипа:</p>
+                    <ul className="list-disc list-inside space-y-1 text-gray-700 ml-4">
+                      <li>Произошла техническая ошибка до отправки запроса в нейросеть</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-red-50 border-l-4 border-red-500 p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">Оплата НЕ списывается, если:</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">Когда деньги НЕ возвращаются</h3>
+                <p className="text-gray-700 mb-2"><strong>Важно:</strong> Деньги <strong>не вернутся</strong>, если:</p>
                 <ul className="list-disc list-inside space-y-1 text-gray-700">
-                  <li>Произошла ошибка при обработке фото</li>
-                  <li>Система не смогла создать результат</li>
-                  <li>Вы закрыли страницу до завершения генерации (средства вернутся на баланс)</li>
+                  <li>Нейросеть обработала фото и выдала результат (даже если результат вам не понравился)</li>
+                  <li>Вы закрыли страницу во время генерации — обработка продолжится, результат сохранится в истории</li>
+                  <li>Превышено время ожидания — обработка продолжается в фоне, результат появится в истории позже</li>
                 </ul>
               </div>
             </section>
@@ -107,8 +129,8 @@ const Payment = () => {
                 <li>Вы направили заявление о возврате на styleselect@mail.ru</li>
               </ul>
               <p className="mb-4">
-                <strong>Важно:</strong> Возврат за уже использованные услуги не производится. 
-                Если в вашей истории есть готовые результаты (примерка или цветотип), эти услуги считаются оказанными.
+                <strong>Важно:</strong> Возврат средств с баланса производится только в случае, если услуги не были использованы. 
+                Если в вашей истории есть готовые результаты (примерка или цветотип), эти услуги считаются оказанными, и возврат за них не производится.
               </p>
               <p>
                 Возврат осуществляется в течение 10 рабочих дней на банковскую карту, с которой было пополнение.
