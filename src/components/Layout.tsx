@@ -5,6 +5,7 @@ import Icon from '@/components/ui/icon';
 import { useAuth } from '@/context/AuthContext';
 import Footer from '@/components/Footer';
 import Sidebar from '@/components/Sidebar';
+import HeaderBalance from '@/components/HeaderBalance';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -39,6 +40,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-2">
               {user ? (
                 <>
+                  <HeaderBalance />
                   <span className="text-sm text-muted-foreground hidden lg:inline">{user.name}</span>
                   <Button 
                     variant="ghost" 
