@@ -19,6 +19,7 @@ interface Payment {
   balance_before: number;
   balance_after: number;
   description: string;
+  yookassa_payment_id: string | null;
   created_at: string;
   is_deleted: boolean;
 }
@@ -152,6 +153,7 @@ export default function AdminPayments() {
                         <th className="px-4 py-3 text-left text-sm font-medium">Тип</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Сумма</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Описание</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">ID ЮКассы</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Баланс после</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Дата</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Действия</th>
@@ -185,6 +187,26 @@ export default function AdminPayments() {
                             {payment.description}
                             {payment.is_deleted && (
                               <span className="ml-2 text-xs text-gray-500">(удалено)</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-gray-500 font-mono">
+                            {payment.yookassa_payment_id ? (
+                              <div className="flex items-center gap-1">
+                                <span className="truncate max-w-[200px]" title={payment.yookassa_payment_id}>
+                                  {payment.yookassa_payment_id}
+                                </span>
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(payment.yookassa_payment_id!);
+                                    toast.success('ID скопирован');
+                                  }}
+                                  className="p-1 hover:bg-gray-100 rounded"
+                                >
+                                  <Icon name="Copy" size={14} />
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">—</span>
                             )}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-600">{payment.balance_after.toFixed(2)} ₽</td>

@@ -535,6 +535,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     bt.created_at,
                     bt.try_on_id,
                     bt.color_type_id,
+                    bt.yookassa_payment_id,
                     u.email,
                     u.name,
                     th.removed_at AS try_on_removed,
@@ -588,6 +589,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'balance_before': float(t['balance_before']),
                     'balance_after': float(t['balance_after']),
                     'description': display_description,
+                    'yookassa_payment_id': t['yookassa_payment_id'],
                     'created_at': t['created_at'].isoformat(),
                     'is_deleted': bool(t['try_on_removed'] or t['color_removed'])
                 })
