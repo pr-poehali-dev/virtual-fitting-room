@@ -207,6 +207,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         elif method == 'POST' and '/webhook' in path:
             body_data = json.loads(event.get('body', '{}'))
+            print(f"[WEBHOOK] Received: {json.dumps(body_data)}")
             
             event_type = body_data.get('event')
             payment_object = body_data.get('object', {})
@@ -217,6 +218,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 metadata = payment_object.get('metadata', {})
                 transaction_id = metadata.get('transaction_id')
                 user_id = metadata.get('user_id')
+                print(f"[WEBHOOK] Payment succeeded: payment_id={yookassa_payment_id}, transaction_id={transaction_id}, user_id={user_id}, amount={amount_value}")
                 
                 if transaction_id and user_id:
                     cur.execute('''
@@ -227,6 +229,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     transaction = cur.fetchone()
                     if transaction and transaction[0] == 'pending':
                         amount = transaction[1]
+                        print(f"[WEBHOOK] Found pending transaction: amount={amount}")
                         
                         cur.execute('''
                             SELECT balance FROM t_p29007832_virtual_fitting_room.users 
@@ -235,6 +238,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         user_data = cur.fetchone()
                         balance_before = float(user_data[0]) if user_data else 0
                         balance_after = balance_before + float(amount)
+                        print(f"[WEBHOOK] Balance update: {balance_before} → {balance_after}")
                         
                         cur.execute('''
                             UPDATE t_p29007832_virtual_fitting_room.payment_transactions 
@@ -255,6 +259,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         ''', (user_id, amount, balance_before, balance_after, transaction_id, yookassa_payment_id))
                         
                         conn.commit()
+                        print(f"[WEBHOOK] Successfully updated balance for user {user_id}")
+                    else:
+                        print(f"[WEBHOOK] Transaction not found or not pending: {transaction}")
             
             return {
                 'statusCode': 200,
