@@ -68,6 +68,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
+            print("[DEBUG] Getting user email from DB")
+            cur.execute('''
+                SELECT email FROM t_p29007832_virtual_fitting_room.users 
+                WHERE id = %s
+            ''', (user_id,))
+            user_row = cur.fetchone()
+            if not user_row:
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                    'body': json.dumps({'error': 'Пользователь не найден'}),
+                    'isBase64Encoded': False
+                }
+            user_email = user_row[0]
+            print(f"[DEBUG] User email: {user_email}")
+            
             print("[DEBUG] Inserting transaction into DB")
             cur.execute('''
                 INSERT INTO t_p29007832_virtual_fitting_room.payment_transactions 
@@ -109,7 +125,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'description': f'Пополнение баланса на {amount} ₽',
                 'receipt': {
                     'customer': {
-                        'email': 'customer@fitting-room.ru'
+                        'email': user_email
                     },
                     'items': [{
                         'description': 'Пополнение баланса виртуальной примерочной',
