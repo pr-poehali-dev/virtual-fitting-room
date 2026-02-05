@@ -9,6 +9,8 @@ import base64
 YOOKASSA_API = 'https://api.yookassa.ru/v3'
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    print(f"[DEBUG] Received event: {json.dumps(event)}")
+    
     def get_cors_origin(event: Dict[str, Any]) -> str:
         origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin', '')
         allowed_origins = ['https://fitting-room.ru', 'https://preview--virtual-fitting-room.poehali.dev']
@@ -16,6 +18,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     method: str = event.get('httpMethod', 'GET')
     path: str = event.get('path', '')
+    print(f"[DEBUG] Method: {method}, Path: {path}")
     
     if method == 'OPTIONS':
         return {
