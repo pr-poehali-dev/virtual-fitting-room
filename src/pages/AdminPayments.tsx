@@ -31,9 +31,6 @@ export default function AdminPayments() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPayments, setTotalPayments] = useState(0);
   const [refundingId, setRefundingId] = useState<string | null>(null);
-  const [logs, setLogs] = useState<string>('');
-  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
-  const [showLogs, setShowLogs] = useState(false);
   const paymentsPerPage = 50;
 
   useEffect(() => {
@@ -112,25 +109,7 @@ export default function AdminPayments() {
     }
   };
 
-  const fetchLogs = async () => {
-    setIsLoadingLogs(true);
-    try {
-      const response = await fetch('/__logs?source=backend/yookassa-payment&limit=100');
-      if (response.ok) {
-        const data = await response.json();
-        const logsText = data.logs?.map((log: any) => 
-          `[${new Date(log.timestamp).toLocaleString('ru-RU')}] ${log.message}`
-        ).join('\n') || 'Логи пусты';
-        setLogs(logsText);
-      } else {
-        setLogs('Ошибка загрузки логов');
-      }
-    } catch (error) {
-      setLogs('Ошибка соединения при загрузке логов');
-    } finally {
-      setIsLoadingLogs(false);
-    }
-  };
+
 
   const totalDeposits = payments
     .filter(p => p.type === 'deposit')
@@ -160,56 +139,11 @@ export default function AdminPayments() {
           
           <div className="flex-1">
             <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h1 className="text-3xl font-bold mb-2">История операций</h1>
-                  <p className="text-muted-foreground">
-                    Всего операций: {totalPayments} | Пополнения: {totalDeposits.toFixed(2)} ₽ | Списания: {totalCharges.toFixed(2)} ₽
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowLogs(!showLogs);
-                    if (!showLogs) fetchLogs();
-                  }}
-                >
-                  <Icon name="FileText" className="mr-2" size={16} />
-                  {showLogs ? 'Скрыть логи' : 'Показать логи webhook'}
-                </Button>
-              </div>
+              <h1 className="text-3xl font-bold mb-2">История операций</h1>
+              <p className="text-muted-foreground">
+                Всего операций: {totalPayments} | Пополнения: {totalDeposits.toFixed(2)} ₽ | Списания: {totalCharges.toFixed(2)} ₽
+              </p>
             </div>
-
-            {showLogs && (
-              <Card className="mb-6">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold">Логи функции yookassa-payment</h3>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={fetchLogs}
-                      disabled={isLoadingLogs}
-                    >
-                      {isLoadingLogs ? (
-                        <>
-                          <Icon name="Loader2" className="animate-spin mr-1" size={14} />
-                          Загрузка...
-                        </>
-                      ) : (
-                        <>
-                          <Icon name="RefreshCw" className="mr-1" size={14} />
-                          Обновить
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                  <pre className="bg-gray-50 p-4 rounded text-xs overflow-x-auto max-h-96 overflow-y-auto">
-                    {logs || 'Нажмите "Обновить" для загрузки логов'}
-                  </pre>
-                </CardContent>
-              </Card>
-            )}
 
             <Card>
               <CardContent className="p-0">
