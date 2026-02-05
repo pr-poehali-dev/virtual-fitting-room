@@ -51,9 +51,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         body_data = json.loads(event.get('body', '{}')) if method == 'POST' else {}
         print(f"[DEBUG] POST body_data keys: {list(body_data.keys())}")
         
-        # ЮКасса отправляет webhook с полями: id, status, payment_method, amount, metadata
-        # Обычный запрос на создание платежа содержит: user_id, amount
-        is_webhook = ('id' in body_data and 'status' in body_data and 'payment_method' in body_data)
+        # ЮКасса отправляет webhook в формате: {"type": "notification", "event": "payment.succeeded", "object": {...}}
+        # Обычный запрос на создание платежа содержит: {"user_id": "...", "amount": 30}
+        is_webhook = (body_data.get('type') == 'notification' and 'event' in body_data and 'object' in body_data)
         print(f"[DEBUG] is_webhook={is_webhook}")
         
         if method == 'POST' and not is_webhook:
@@ -218,13 +218,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         elif method == 'POST' and is_webhook:
             print(f"[WEBHOOK] Received: {json.dumps(body_data)}")
             
-            # ЮКасса отправляет данные напрямую, без обёртки event/object
-            payment_status = body_data.get('status')
+            # ЮКасса отправляет данные в формате: {"event": "payment.succeeded", "object": {...}}
+            event_type = body_data.get('event')
+            payment_object = body_data.get('object', {})
+            payment_status = payment_object.get('status')
             
-            if payment_status == 'succeeded':
-                yookassa_payment_id = body_data.get('id')
-                amount_value = float(body_data.get('amount', {}).get('value', 0))
-                metadata = body_data.get('metadata', {})
+            if event_type == 'payment.succeeded' and payment_status == 'succeeded':
+                yookassa_payment_id = payment_object.get('id')
+                amount_value = float(payment_object.get('amount', {}).get('value', 0))
+                metadata = payment_object.get('metadata', {})
                 transaction_id = metadata.get('transaction_id')
                 user_id = metadata.get('user_id')
                 print(f"[WEBHOOK] Payment succeeded: payment_id={yookassa_payment_id}, transaction_id={transaction_id}, user_id={user_id}, amount={amount_value}")
