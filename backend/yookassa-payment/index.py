@@ -49,7 +49,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     try:
         # Определяем тип POST запроса по наличию поля 'event' в body
         body_data = json.loads(event.get('body', '{}')) if method == 'POST' else {}
+        print(f"[DEBUG] POST body_data: {json.dumps(body_data)}")
         is_webhook = body_data.get('event') is not None
+        print(f"[DEBUG] is_webhook={is_webhook}, has_event_field={body_data.get('event') is not None}")
         
         if method == 'POST' and not is_webhook:
             print("[DEBUG] Processing payment creation request")
