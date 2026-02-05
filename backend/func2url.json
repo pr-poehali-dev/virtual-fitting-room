@@ -1,4 +1,6 @@
 {
+  "yookassa-yookassa": "https://functions.poehali.dev/e2547160-6cc4-491c-addb-33d7480c5cb1",
+  "yookassa-yookassa-webhook": "https://functions.poehali.dev/f47d8e43-e7eb-437f-a9ab-b559e30f6ca9",
   "balance-history": "https://functions.poehali.dev/3cbe003b-0f4c-4e91-894b-4e5170c468ad",
   "yookassa-payment": "https://functions.poehali.dev/f7ad0852-ed82-4ae0-b6ee-c2629c1ac4bb",
   "colortype-worker": "https://functions.poehali.dev/c13ce63e-ae23-419d-84f1-b6958e4ea586",

@@ -51,9 +51,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         body_data = json.loads(event.get('body', '{}')) if method == 'POST' else {}
         print(f"[DEBUG] POST body_data keys: {list(body_data.keys())}")
         
-        # ЮКасса отправляет webhook с полями: id, status, payment_method, metadata
+        # ЮКасса отправляет webhook с полями: id, status, payment_method, amount, metadata
         # Обычный запрос на создание платежа содержит: user_id, amount
-        is_webhook = ('status' in body_data and 'payment_method' in body_data) or body_data.get('event') is not None
+        is_webhook = ('id' in body_data and 'status' in body_data and 'payment_method' in body_data)
         print(f"[DEBUG] is_webhook={is_webhook}")
         
         if method == 'POST' and not is_webhook:
