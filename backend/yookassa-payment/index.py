@@ -30,8 +30,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
-    conn = psycopg2.connect(os.environ['DATABASE_URL'])
-    cur = conn.cursor()
+    try:
+        conn = psycopg2.connect(os.environ['DATABASE_URL'])
+        cur = conn.cursor()
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+            'body': json.dumps({'error': f'Database connection error: {str(e)}'}),
+            'isBase64Encoded': False
+        }
     
     try:
         if method == 'POST' and '/webhook' not in path:
@@ -272,6 +280,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+            'body': json.dumps({'error': f'Unexpected error: {str(e)}'}),
+            'isBase64Encoded': False
+        }
     finally:
-        cur.close()
-        conn.close()
+        try:
+            if 'cur' in locals():
+                cur.close()
+            if 'conn' in locals():
+                conn.close()
+        except:
+            pass
