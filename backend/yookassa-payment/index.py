@@ -46,9 +46,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     try:
         if method == 'POST' and '/webhook' not in path:
+            print("[DEBUG] Processing payment creation request")
             body_data = json.loads(event.get('body', '{}'))
             user_id = body_data.get('user_id')
             amount = body_data.get('amount')
+            print(f"[DEBUG] user_id={user_id}, amount={amount}")
             
             if not user_id or not amount:
                 return {
@@ -66,6 +68,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
+            print("[DEBUG] Inserting transaction into DB")
             cur.execute('''
                 INSERT INTO t_p29007832_virtual_fitting_room.payment_transactions 
                 (user_id, amount, status, payment_method) 
@@ -76,10 +79,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             transaction = cur.fetchone()
             transaction_id = str(transaction[0])
             conn.commit()
+            print(f"[DEBUG] Transaction created: {transaction_id}")
             
             site_url = os.environ.get('SITE_URL', 'https://fitting-room.ru')
             shop_id = os.environ.get('YUKASSA_SHOP_ID')
             secret_key = os.environ.get('YUKASSA_SECRET_KEY')
+            print(f"[DEBUG] shop_id exists: {bool(shop_id)}, secret_key exists: {bool(secret_key)}")
             
             if not shop_id or not secret_key:
                 return {
@@ -112,6 +117,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             auth_encoded = base64.b64encode(auth_string.encode()).decode()
             
             try:
+                print(f"[DEBUG] Calling YooKassa API with amount={amount}")
                 response = requests.post(
                     f'{YOOKASSA_API}/payments',
                     json=payment_data,
@@ -123,7 +129,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     timeout=10
                 )
                 
+                print(f"[DEBUG] YooKassa response status: {response.status_code}")
                 result = response.json()
+                print(f"[DEBUG] YooKassa response: {result}")
                 
                 if response.status_code in [200, 201]:
                     yookassa_payment_id = result.get('id')
