@@ -107,6 +107,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 },
                 'capture': True,
                 'description': f'Пополнение баланса на {amount} ₽',
+                'receipt': {
+                    'customer': {
+                        'email': 'customer@fitting-room.ru'
+                    },
+                    'items': [{
+                        'description': 'Пополнение баланса виртуальной примерочной',
+                        'quantity': '1.00',
+                        'amount': {
+                            'value': f'{amount:.2f}',
+                            'currency': 'RUB'
+                        },
+                        'vat_code': 1
+                    }]
+                },
                 'metadata': {
                     'transaction_id': transaction_id,
                     'user_id': user_id
