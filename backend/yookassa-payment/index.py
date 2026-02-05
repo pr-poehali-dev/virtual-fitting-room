@@ -134,7 +134,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             'value': f'{amount:.2f}',
                             'currency': 'RUB'
                         },
-                        'vat_code': 1
+                        'vat_code': 1,
+                        'payment_subject': 'service'
                     }]
                 },
                 'metadata': {
