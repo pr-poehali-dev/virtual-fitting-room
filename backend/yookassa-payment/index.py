@@ -18,7 +18,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     method: str = event.get('httpMethod', 'GET')
     path: str = event.get('path', '')
-    print(f"[DEBUG] Method: {method}, Path: {path}")
+    url: str = event.get('url', '')
+    request_id = event.get('requestContext', {}).get('requestId', '')
+    print(f"[DEBUG] Method: {method}, Path: '{path}', URL: '{url}', RequestID: {request_id}")
     
     if method == 'OPTIONS':
         return {
@@ -45,9 +47,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
-        if method == 'POST' and '/webhook' not in path:
+        # Определяем тип POST запроса по наличию поля 'event' в body
+        body_data = json.loads(event.get('body', '{}')) if method == 'POST' else {}
+        is_webhook = body_data.get('event') is not None
+        
+        if method == 'POST' and not is_webhook:
             print("[DEBUG] Processing payment creation request")
-            body_data = json.loads(event.get('body', '{}'))
             user_id = body_data.get('user_id')
             amount = body_data.get('amount')
             print(f"[DEBUG] user_id={user_id}, amount={amount}")
@@ -205,8 +210,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
         
-        elif method == 'POST' and '/webhook' in path:
-            body_data = json.loads(event.get('body', '{}'))
+        elif method == 'POST' and is_webhook:
             print(f"[WEBHOOK] Received: {json.dumps(body_data)}")
             
             event_type = body_data.get('event')
