@@ -26,7 +26,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
                 'Access-Control-Max-Age': '86400'
             },
-            'body': ''
+            'body': '',
+            'isBase64Encoded': False
         }
     
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
@@ -42,14 +43,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
-                    'body': json.dumps({'error': 'Требуется user_id и amount'})
+                    'body': json.dumps({'error': 'Требуется user_id и amount'}),
+                    'isBase64Encoded': False
                 }
             
             if amount < 30:
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
-                    'body': json.dumps({'error': 'Минимальная сумма пополнения — 30 рублей'})
+                    'body': json.dumps({'error': 'Минимальная сумма пополнения — 30 рублей'}),
+                    'isBase64Encoded': False
                 }
             
             cur.execute('''
@@ -63,15 +66,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             transaction_id = str(transaction[0])
             conn.commit()
             
-            site_url = os.environ.get('SITE_URL', 'https://p29007832.poehali.dev')
-            shop_id = os.environ.get('YOOKASSA_SHOP_ID')
-            secret_key = os.environ.get('YOOKASSA_SECRET_KEY')
+            site_url = os.environ.get('SITE_URL', 'https://fitting-room.ru')
+            shop_id = os.environ.get('YUKASSA_SHOP_ID')
+            secret_key = os.environ.get('YUKASSA_SECRET_KEY')
             
             if not shop_id or not secret_key:
                 return {
                     'statusCode': 500,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
-                    'body': json.dumps({'error': 'ЮКасса не настроена. Ожидаем подключения.'})
+                    'body': json.dumps({'error': 'ЮКасса не настроена. Ожидаем подключения.'}),
+                    'isBase64Encoded': False
                 }
             
             idempotence_key = str(uuid.uuid4())
@@ -128,7 +132,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             'payment_url': confirmation_url,
                             'payment_id': yookassa_payment_id,
                             'transaction_id': transaction_id
-                        })
+                        }),
+                        'isBase64Encoded': False
                     }
                 else:
                     return {
@@ -137,14 +142,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'body': json.dumps({
                             'error': 'Ошибка создания платежа',
                             'details': result
-                        })
+                        }),
+                        'isBase64Encoded': False
                     }
             
             except Exception as e:
                 return {
                     'statusCode': 500,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
-                    'body': json.dumps({'error': f'Ошибка API ЮКассы: {str(e)}'})
+                    'body': json.dumps({'error': f'Ошибка API ЮКассы: {str(e)}'}),
+                    'isBase64Encoded': False
                 }
         
         elif method == 'POST' and '/webhook' in path:
@@ -201,7 +208,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json'},
-                'body': json.dumps({'status': 'ok'})
+                'body': json.dumps({'status': 'ok'}),
+                'isBase64Encoded': False
             }
         
         elif method == 'GET':
@@ -212,17 +220,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
-                    'body': json.dumps({'error': 'Требуется payment_id'})
+                    'body': json.dumps({'error': 'Требуется payment_id'}),
+                    'isBase64Encoded': False
                 }
             
-            shop_id = os.environ.get('YOOKASSA_SHOP_ID')
-            secret_key = os.environ.get('YOOKASSA_SECRET_KEY')
+            shop_id = os.environ.get('YUKASSA_SHOP_ID')
+            secret_key = os.environ.get('YUKASSA_SECRET_KEY')
             
             if not shop_id or not secret_key:
                 return {
                     'statusCode': 500,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
-                    'body': json.dumps({'error': 'ЮКасса не настроена'})
+                    'body': json.dumps({'error': 'ЮКасса не настроена'}),
+                    'isBase64Encoded': False
                 }
             
             auth_string = f'{shop_id}:{secret_key}'
@@ -243,20 +253,23 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({
                         'status': result.get('status'),
                         'amount': result.get('amount', {}).get('value')
-                    })
+                    }),
+                    'isBase64Encoded': False
                 }
             
             except Exception as e:
                 return {
                     'statusCode': 500,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
-                    'body': json.dumps({'error': f'Ошибка проверки статуса: {str(e)}'})
+                    'body': json.dumps({'error': f'Ошибка проверки статуса: {str(e)}'}),
+                    'isBase64Encoded': False
                 }
         
         return {
             'statusCode': 405,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
-            'body': json.dumps({'error': 'Метод не поддерживается'})
+            'body': json.dumps({'error': 'Метод не поддерживается'}),
+            'isBase64Encoded': False
         }
     
     finally:
