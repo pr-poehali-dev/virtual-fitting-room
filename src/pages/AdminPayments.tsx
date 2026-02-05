@@ -137,10 +137,21 @@ export default function AdminPayments() {
           
           <div className="flex-1">
             <div className="mb-8">
-              <h1 className="text-3xl font-bold mb-2">История операций</h1>
-              <p className="text-muted-foreground">
-                Всего операций: {totalPayments} | Пополнения: {totalDeposits.toFixed(2)} ₽ | Списания: {totalCharges.toFixed(2)} ₽
-              </p>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h1 className="text-3xl font-bold mb-2">История операций</h1>
+                  <p className="text-muted-foreground">
+                    Всего операций: {totalPayments} | Пополнения: {totalDeposits.toFixed(2)} ₽ | Списания: {totalCharges.toFixed(2)} ₽
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => window.open('https://preview--virtual-fitting-room.poehali.dev/logs?source=backend/yookassa-payment', '_blank')}
+                >
+                  <Icon name="FileText" className="mr-2" size={16} />
+                  Логи webhook
+                </Button>
+              </div>
             </div>
 
             <Card>
