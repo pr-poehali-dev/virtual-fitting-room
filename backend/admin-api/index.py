@@ -288,6 +288,58 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 })
             }
         
+        elif action == 'get_user_balance' and method == 'GET':
+            user_id = query_params.get('user_id')
+            
+            if not user_id:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Missing user_id'})
+                }
+            
+            try:
+                cursor.execute('SELECT balance FROM users WHERE id = %s', (user_id,))
+                user_row = cursor.fetchone()
+                
+                if not user_row:
+                    return {
+                        'statusCode': 404,
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': get_cors_origin(event)
+                        },
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'error': 'User not found'})
+                    }
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({
+                        'balance': float(user_row['balance'])
+                    })
+                }
+            
+            except Exception as e:
+                return {
+                    'statusCode': 500,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': f'Failed to fetch balance: {str(e)}'})
+                }
+        
         elif action == 'users':
             limit = query_params.get('limit', '1000')
             offset = query_params.get('offset', '0')

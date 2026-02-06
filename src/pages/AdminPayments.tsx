@@ -117,8 +117,8 @@ export default function AdminPayments() {
     let actualBalance = 0;
     
     try {
-      const balanceResponse = await fetch(`https://functions.poehali.dev/66b3bc14-b88d-44e9-a844-25e2aabc4976?user_id=${userId}`, {
-        headers: { 'X-User-Id': userId }
+      const balanceResponse = await fetch(`${ADMIN_API}?action=get_user_balance&user_id=${userId}`, {
+        headers: { 'X-Admin-Token': adminToken || '' }
       });
       
       if (!balanceResponse.ok) {
