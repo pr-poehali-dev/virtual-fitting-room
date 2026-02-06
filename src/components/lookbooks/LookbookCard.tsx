@@ -47,7 +47,7 @@ export default function LookbookCard({ lookbook, onView, onEdit, onDelete }: Loo
       <CardContent className="p-4">
         <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
           <span>{lookbook.photos.length} фото</span>
-          <span>{new Date(lookbook.created_at).toLocaleDateString('ru-RU', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}</span>
+          <span>{new Date(lookbook.created_at).toLocaleDateString()}</span>
         </div>
         <div className="flex gap-2">
           <Button 

@@ -294,13 +294,12 @@ export default function WalletTab() {
                     </div>
                     <p className="text-sm mb-1">{transaction.description}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(transaction.created_at).toLocaleString('ru-RU', {
+                      {new Date(transaction.created_at).toLocaleDateString('ru-RU', {
                         day: 'numeric',
                         month: 'long',
                         year: 'numeric',
                         hour: '2-digit',
-                        minute: '2-digit',
-                        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                        minute: '2-digit'
                       })}
                     </p>
                   </div>

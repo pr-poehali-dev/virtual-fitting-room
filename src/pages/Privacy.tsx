@@ -122,7 +122,7 @@ const Privacy = () => {
           </div>
 
           <div className="mt-8 pt-6 border-t border-gray-200 text-sm text-gray-500">
-            <p>Дата последнего обновления: {new Date().toLocaleDateString('ru-RU', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}</p>
+            <p>Дата последнего обновления: {new Date().toLocaleDateString('ru-RU')}</p>
           </div>
         </div>
       </div>

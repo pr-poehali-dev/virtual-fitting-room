@@ -360,8 +360,7 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
                   {new Date(item.created_at).toLocaleDateString('ru-RU', {
                     day: 'numeric',
                     month: 'short',
-                    year: 'numeric',
-                    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                    year: 'numeric'
                   })}
                 </p>
                 <div className="flex gap-1 justify-center">
