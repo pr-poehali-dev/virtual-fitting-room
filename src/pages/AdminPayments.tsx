@@ -109,9 +109,33 @@ export default function AdminPayments() {
     }
   };
 
-  const handleDeduct = async (userId: string, transactionId: string, currentBalance: number) => {
+  const handleDeduct = async (userId: string, transactionId: string) => {
     const adminToken = localStorage.getItem('admin_jwt');
-    const amountStr = prompt(`Введите сумму списания (текущий баланс: ${currentBalance.toFixed(2)}₽):`);
+    
+    // Получаем актуальный баланс пользователя
+    setRefundingId(transactionId);
+    let actualBalance = 0;
+    
+    try {
+      const balanceResponse = await fetch(`https://functions.poehali.dev/66b3bc14-b88d-44e9-a844-25e2aabc4976?user_id=${userId}`, {
+        headers: { 'X-User-Id': userId }
+      });
+      
+      if (!balanceResponse.ok) {
+        throw new Error('Failed to fetch balance');
+      }
+      
+      const balanceData = await balanceResponse.json();
+      actualBalance = balanceData.balance || 0;
+    } catch (error) {
+      toast.error('Не удалось получить текущий баланс');
+      setRefundingId(null);
+      return;
+    }
+    
+    setRefundingId(null);
+    
+    const amountStr = prompt(`Введите сумму списания (текущий баланс: ${actualBalance.toFixed(2)}₽):`);
     
     if (!amountStr) return;
     
@@ -121,8 +145,8 @@ export default function AdminPayments() {
       return;
     }
     
-    if (amount > currentBalance) {
-      toast.error(`Недостаточно средств. Баланс: ${currentBalance.toFixed(2)}₽`);
+    if (amount > actualBalance) {
+      toast.error(`Недостаточно средств. Баланс: ${actualBalance.toFixed(2)}₽`);
       return;
     }
     
@@ -299,7 +323,7 @@ export default function AdminPayments() {
                                 <Button
                                   size="sm"
                                   variant="destructive"
-                                  onClick={() => handleDeduct(payment.user_id, payment.id, payment.balance_after)}
+                                  onClick={() => handleDeduct(payment.user_id, payment.id)}
                                   disabled={refundingId === payment.id}
                                 >
                                   {refundingId === payment.id ? (
