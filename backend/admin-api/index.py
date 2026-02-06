@@ -500,12 +500,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     h.saved_to_lookbook,
                     h.cost,
                     h.result_image,
-                    h.created_at,
-                    CASE 
-                        WHEN EXISTS (SELECT 1 FROM lookbooks l WHERE h.user_id = l.user_id AND h.result_image = ANY(l.photos)) THEN 'in_lookbook'
-                        WHEN h.created_at >= NOW() - INTERVAL '180 days' THEN 'in_history'
-                        ELSE 'removed'
-                    END as photo_status
+                    h.created_at
                 FROM try_on_history h
                 LEFT JOIN users u ON h.user_id = u.id
                 WHERE {where_clause}
@@ -531,7 +526,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'model_used': h['model_used'],
                     'saved_to_lookbook': h['saved_to_lookbook'],
                     'cost': float(h['cost']) if h['cost'] else 0,
-                    'photo_status': h['photo_status'],
                     'result_image': h['result_image'],
                     'created_at': h['created_at'].isoformat()
                 } for h in history])
