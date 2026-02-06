@@ -32,6 +32,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     params = event.get('queryStringParameters', {})
     user_id = params.get('user_id')
+    limit = params.get('limit', '50')
+    offset = params.get('offset', '0')
     
     if not user_id:
         return {
@@ -40,10 +42,26 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Требуется user_id'})
         }
     
+    try:
+        limit = int(limit)
+        offset = int(offset)
+    except ValueError:
+        limit = 50
+        offset = 0
+    
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
     
     try:
+        cur.execute('''
+            SELECT COUNT(*) as total
+            FROM t_p29007832_virtual_fitting_room.balance_transactions bt
+            WHERE bt.user_id = %s
+        ''', (user_id,))
+        
+        total_row = cur.fetchone()
+        total = total_row[0] if total_row else 0
+        
         cur.execute('''
             SELECT 
                 bt.id,
@@ -63,7 +81,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             LEFT JOIN t_p29007832_virtual_fitting_room.color_type_history ct ON bt.color_type_id = ct.id
             WHERE bt.user_id = %s
             ORDER BY bt.created_at DESC
-        ''', (user_id,))
+            LIMIT %s OFFSET %s
+        ''', (user_id, limit, offset))
         
         transactions = cur.fetchall()
         
@@ -95,7 +114,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
-            'body': json.dumps({'transactions': result})
+            'body': json.dumps({
+                'transactions': result,
+                'total': total
+            })
         }
     
     finally:

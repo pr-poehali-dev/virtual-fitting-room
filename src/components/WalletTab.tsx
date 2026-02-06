@@ -36,6 +36,9 @@ export default function WalletTab() {
   const [balanceHistory, setBalanceHistory] = useState<BalanceTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalTransactions, setTotalTransactions] = useState(0);
+  const transactionsPerPage = 50;
 
   useEffect(() => {
     if (user) {
@@ -53,7 +56,7 @@ export default function WalletTab() {
     } else if (payment === 'failed') {
       toast.error('Ошибка оплаты');
     }
-  }, [user, searchParams]);
+  }, [user, searchParams, currentPage]);
 
   const fetchBalance = async () => {
     if (!user) return;
@@ -82,11 +85,15 @@ export default function WalletTab() {
     if (!user) return;
 
     try {
-      const response = await fetch(`${BALANCE_HISTORY_API}?user_id=${user.id}`);
+      const offset = (currentPage - 1) * transactionsPerPage;
+      const response = await fetch(
+        `${BALANCE_HISTORY_API}?user_id=${user.id}&limit=${transactionsPerPage}&offset=${offset}`
+      );
 
       if (response.ok) {
         const data = await response.json();
-        setBalanceHistory(data.transactions);
+        setBalanceHistory(data.transactions || []);
+        setTotalTransactions(data.total || data.transactions.length);
       }
     } catch (error) {
       console.error('Ошибка загрузки истории операций:', error);
@@ -301,6 +308,32 @@ export default function WalletTab() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {totalTransactions > transactionsPerPage && (
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <Icon name="ChevronLeft" size={16} />
+                Назад
+              </Button>
+              <span className="text-sm text-muted-foreground px-4">
+                Страница {currentPage} из {Math.ceil(totalTransactions / transactionsPerPage)}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalTransactions / transactionsPerPage), p + 1))}
+                disabled={currentPage >= Math.ceil(totalTransactions / transactionsPerPage)}
+              >
+                Вперёд
+                <Icon name="ChevronRight" size={16} />
+              </Button>
             </div>
           )}
         </CardContent>

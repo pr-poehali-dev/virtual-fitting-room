@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
@@ -31,6 +33,10 @@ export default function AdminPayments() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPayments, setTotalPayments] = useState(0);
   const [refundingId, setRefundingId] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<string>('all');
+  const [yookassaFilter, setYookassaFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const paymentsPerPage = 50;
 
   useEffect(() => {
@@ -50,7 +56,7 @@ export default function AdminPayments() {
       return;
     }
     fetchPayments();
-  }, [navigate, currentPage]);
+  }, [navigate, currentPage, typeFilter, dateFilter, yookassaFilter, searchQuery]);
 
   const fetchPayments = async () => {
     const adminToken = localStorage.getItem('admin_jwt');
@@ -58,7 +64,39 @@ export default function AdminPayments() {
 
     try {
       const offset = (currentPage - 1) * paymentsPerPage;
-      const response = await fetch(`${ADMIN_API}?action=payments&limit=${paymentsPerPage}&offset=${offset}`, {
+      
+      let url = `${ADMIN_API}?action=payments&limit=${paymentsPerPage}&offset=${offset}`;
+      
+      if (typeFilter !== 'all') {
+        url += `&type=${typeFilter}`;
+      }
+      
+      if (dateFilter !== 'all') {
+        const now = new Date();
+        let dateFrom = '';
+        
+        if (dateFilter === 'today') {
+          dateFrom = new Date(now.setHours(0, 0, 0, 0)).toISOString();
+        } else if (dateFilter === 'week') {
+          dateFrom = new Date(now.setDate(now.getDate() - 7)).toISOString();
+        } else if (dateFilter === 'month') {
+          dateFrom = new Date(now.setMonth(now.getMonth() - 1)).toISOString();
+        }
+        
+        if (dateFrom) {
+          url += `&date_from=${dateFrom}`;
+        }
+      }
+      
+      if (yookassaFilter !== 'all') {
+        url += `&has_yookassa_id=${yookassaFilter}`;
+      }
+      
+      if (searchQuery.trim()) {
+        url += `&search=${encodeURIComponent(searchQuery.trim())}`;
+      }
+      
+      const response = await fetch(url, {
         headers: { 'X-Admin-Token': adminToken || '' }
       });
 
@@ -226,6 +264,99 @@ export default function AdminPayments() {
                 Всего операций: {totalPayments} | Пополнения: {totalDeposits.toFixed(2)} ₽ | Списания: {totalCharges.toFixed(2)} ₽
               </p>
             </div>
+
+            <Card className="mb-6">
+              <CardContent className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Тип операции</label>
+                    <Select value={typeFilter} onValueChange={(value) => { setTypeFilter(value); setCurrentPage(1); }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Все" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Все</SelectItem>
+                        <SelectItem value="deposit">Пополнение</SelectItem>
+                        <SelectItem value="charge">Списание</SelectItem>
+                        <SelectItem value="refund">Возврат</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Период</label>
+                    <Select value={dateFilter} onValueChange={(value) => { setDateFilter(value); setCurrentPage(1); }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Всё время" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Всё время</SelectItem>
+                        <SelectItem value="today">Сегодня</SelectItem>
+                        <SelectItem value="week">Неделя</SelectItem>
+                        <SelectItem value="month">Месяц</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">ID ЮКассы</label>
+                    <Select value={yookassaFilter} onValueChange={(value) => { setYookassaFilter(value); setCurrentPage(1); }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Все" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Все</SelectItem>
+                        <SelectItem value="true">Есть</SelectItem>
+                        <SelectItem value="false">Нет</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Поиск</label>
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        placeholder="Email, имя, ID, описание..."
+                        value={searchQuery}
+                        onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                        className="pr-8"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => { setSearchQuery(''); setCurrentPage(1); }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          <Icon name="X" size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {(typeFilter !== 'all' || dateFilter !== 'all' || yookassaFilter !== 'all' || searchQuery) && (
+                  <div className="mt-4 flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      Применены фильтры
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setTypeFilter('all');
+                        setDateFilter('all');
+                        setYookassaFilter('all');
+                        setSearchQuery('');
+                        setCurrentPage(1);
+                      }}
+                    >
+                      <Icon name="X" size={14} className="mr-1" />
+                      Сбросить всё
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             <Card>
               <CardContent className="p-0">

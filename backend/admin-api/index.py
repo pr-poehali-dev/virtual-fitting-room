@@ -543,6 +543,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             type_filter = query_params.get('type')
             date_from = query_params.get('date_from')
             date_to = query_params.get('date_to')
+            search = query_params.get('search', '').strip()
+            has_yookassa_id = query_params.get('has_yookassa_id')
             
             try:
                 limit = int(limit)
@@ -555,6 +557,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             count_query = '''
                 SELECT COUNT(*) as total
                 FROM balance_transactions bt
+                LEFT JOIN users u ON bt.user_id = u.id
                 WHERE 1=1
             '''
             count_params = []
@@ -570,6 +573,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if date_to:
                 count_query += " AND bt.created_at <= %s"
                 count_params.append(date_to)
+            
+            if search:
+                count_query += " AND (LOWER(u.email) LIKE LOWER(%s) OR LOWER(u.name) LIKE LOWER(%s) OR LOWER(bt.yookassa_payment_id) LIKE LOWER(%s) OR LOWER(bt.description) LIKE LOWER(%s))"
+                search_pattern = f'%{search}%'
+                count_params.extend([search_pattern, search_pattern, search_pattern, search_pattern])
+            
+            if has_yookassa_id == 'true':
+                count_query += " AND bt.yookassa_payment_id IS NOT NULL"
+            elif has_yookassa_id == 'false':
+                count_query += " AND bt.yookassa_payment_id IS NULL"
             
             cursor.execute(count_query, count_params)
             total = cursor.fetchone()['total']
@@ -612,6 +625,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if date_to:
                 query += " AND bt.created_at <= %s"
                 params.append(date_to)
+            
+            if search:
+                query += " AND (LOWER(u.email) LIKE LOWER(%s) OR LOWER(u.name) LIKE LOWER(%s) OR LOWER(bt.yookassa_payment_id) LIKE LOWER(%s) OR LOWER(bt.description) LIKE LOWER(%s))"
+                search_pattern = f'%{search}%'
+                params.extend([search_pattern, search_pattern, search_pattern, search_pattern])
+            
+            if has_yookassa_id == 'true':
+                query += " AND bt.yookassa_payment_id IS NOT NULL"
+            elif has_yookassa_id == 'false':
+                query += " AND bt.yookassa_payment_id IS NULL"
             
             query += " ORDER BY bt.created_at DESC LIMIT %s OFFSET %s"
             params.extend([limit, offset])
