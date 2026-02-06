@@ -28,6 +28,7 @@ import AdminLookbooks from "./pages/AdminLookbooks";
 import AdminPayments from "./pages/AdminPayments";
 import AdminCatalog from "./pages/AdminCatalog";
 import AdminGenerations from "./pages/AdminGenerations";
+import AdminColorTypes from "./pages/AdminColorTypes";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
@@ -93,6 +94,7 @@ const App = () => (
             <Route path="/admin/payments" element={<AdminPayments />} />
             <Route path="/admin/catalog" element={<AdminCatalog />} />
             <Route path="/admin/generations" element={<AdminGenerations />} />
+            <Route path="/admin/colortypes" element={<AdminColorTypes />} />
             
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

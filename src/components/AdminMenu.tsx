@@ -12,6 +12,7 @@ const AdminMenu = () => {
     { path: '/admin/payments', icon: 'CreditCard', label: 'Платежи' },
     { path: '/admin/catalog', icon: 'Package', label: 'Каталог' },
     { path: '/admin/generations', icon: 'Sparkles', label: 'Генерации' },
+    { path: '/admin/colortypes', icon: 'Palette', label: 'Цветотипы' },
   ];
 
   return (

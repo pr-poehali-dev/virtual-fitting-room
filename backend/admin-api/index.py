@@ -265,6 +265,30 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             )
             month_revenue = cursor.fetchone()['total']
             
+            # Color type stats
+            cursor.execute("SELECT COUNT(*) as total FROM color_type_history")
+            total_colortypes = cursor.fetchone()['total']
+            
+            cursor.execute("SELECT COUNT(*) as total FROM color_type_history WHERE status = 'completed'")
+            completed_colortypes = cursor.fetchone()['total']
+            
+            cursor.execute("SELECT COUNT(*) as total FROM color_type_history WHERE status = 'failed'")
+            failed_colortypes = cursor.fetchone()['total']
+            
+            # Balance transactions stats
+            cursor.execute("SELECT COALESCE(SUM(amount), 0) as total FROM balance_transactions WHERE type = 'refund'")
+            total_refunds = cursor.fetchone()['total']
+            
+            cursor.execute("SELECT COALESCE(SUM(ABS(amount)), 0) as total FROM balance_transactions WHERE type = 'charge'")
+            total_charges = cursor.fetchone()['total']
+            
+            cursor.execute("SELECT COALESCE(AVG(ABS(amount)), 0) as avg FROM balance_transactions WHERE type = 'charge'")
+            avg_charge = cursor.fetchone()['avg']
+            
+            # Total user balances
+            cursor.execute("SELECT COALESCE(SUM(balance), 0) as total FROM users")
+            users_balance = cursor.fetchone()['total']
+            
             return {
                 'statusCode': 200,
                 'headers': {
@@ -284,8 +308,80 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'total_revenue': float(total_revenue),
                     'today_revenue': float(today_revenue),
                     'month_revenue': float(month_revenue),
-                    'total_payments': total_payments
+                    'total_payments': total_payments,
+                    'total_colortypes': total_colortypes,
+                    'completed_colortypes': completed_colortypes,
+                    'failed_colortypes': failed_colortypes,
+                    'total_refunds': float(total_refunds),
+                    'total_charges': float(total_charges),
+                    'avg_charge': float(avg_charge),
+                    'users_balance': float(users_balance)
                 })
+            }
+        
+        elif action == 'colortype_history':
+            # Build WHERE clause based on filters
+            filters = []
+            filter_values = []
+            
+            user_id_filter = query_params.get('user_id')
+            status_filter = query_params.get('status')
+            
+            if user_id_filter:
+                filters.append("c.user_id = %s")
+                filter_values.append(user_id_filter)
+            
+            if status_filter:
+                filters.append("c.status = %s")
+                filter_values.append(status_filter)
+            
+            where_clause = " AND ".join(filters) if filters else "1=1"
+            
+            query = f"""
+                SELECT 
+                    c.id,
+                    c.user_id,
+                    u.email as user_email,
+                    u.name as user_name,
+                    c.status,
+                    c.color_type,
+                    c.result_text,
+                    c.person_image,
+                    c.cdn_url,
+                    c.cost,
+                    c.refunded,
+                    c.created_at
+                FROM color_type_history c
+                LEFT JOIN users u ON c.user_id::uuid = u.id
+                WHERE {where_clause}
+                ORDER BY c.created_at DESC
+                LIMIT 500
+            """
+            
+            cursor.execute(query, filter_values)
+            history = cursor.fetchall()
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': get_cors_origin(event)
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps([{
+                    'id': str(h['id']),
+                    'user_id': h['user_id'],
+                    'user_email': h['user_email'],
+                    'user_name': h['user_name'],
+                    'status': h['status'],
+                    'color_type': h['color_type'],
+                    'result_text': h['result_text'],
+                    'person_image': h['person_image'],
+                    'cdn_url': h['cdn_url'],
+                    'cost': float(h['cost']) if h['cost'] else 0,
+                    'refunded': h['refunded'],
+                    'created_at': h['created_at'].isoformat() if h['created_at'] else None
+                } for h in history])
             }
         
         elif action == 'get_user_balance' and method == 'GET':

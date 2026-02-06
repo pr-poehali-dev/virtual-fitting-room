@@ -21,6 +21,13 @@ interface Stats {
   today_revenue: number;
   month_revenue: number;
   total_payments: number;
+  total_colortypes: number;
+  completed_colortypes: number;
+  failed_colortypes: number;
+  total_refunds: number;
+  total_charges: number;
+  avg_charge: number;
+  users_balance: number;
 }
 
 export default function AdminStats() {
@@ -240,6 +247,129 @@ export default function AdminStats() {
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
                     На транзакцию
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Всего цветотипов
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Icon name="Palette" size={24} className="text-pink-600" />
+                    <span className="text-3xl font-bold">{stats?.total_colortypes || 0}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Всего анализов
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-green-200 bg-green-50/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Завершённых
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Icon name="CheckCircle" size={24} className="text-green-600" />
+                    <span className="text-3xl font-bold">{stats?.completed_colortypes || 0}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {stats?.total_colortypes ? ((stats.completed_colortypes / stats.total_colortypes) * 100).toFixed(1) : 0}% успешных
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-red-200 bg-red-50/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Неудачных
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Icon name="XCircle" size={24} className="text-red-600" />
+                    <span className="text-3xl font-bold">{stats?.failed_colortypes || 0}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {stats?.total_colortypes ? ((stats.failed_colortypes / stats.total_colortypes) * 100).toFixed(1) : 0}% ошибок
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="border-rose-200 bg-rose-50/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Сумма возвратов
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Icon name="Undo2" size={24} className="text-rose-600" />
+                    <span className="text-3xl font-bold">{stats?.total_refunds?.toFixed(0) || 0} ₽</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Возвращено пользователям
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-amber-200 bg-amber-50/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Сумма списаний
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Icon name="ArrowDownCircle" size={24} className="text-amber-600" />
+                    <span className="text-3xl font-bold">{stats?.total_charges?.toFixed(0) || 0} ₽</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Потрачено на услуги
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-teal-200 bg-teal-50/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Баланс пользователей
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Icon name="PiggyBank" size={24} className="text-teal-600" />
+                    <span className="text-3xl font-bold">{stats?.users_balance?.toFixed(0) || 0} ₽</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    На счетах платформы
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-indigo-200 bg-indigo-50/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Средняя услуга
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Icon name="TrendingUp" size={24} className="text-indigo-600" />
+                    <span className="text-3xl font-bold">{stats?.avg_charge?.toFixed(0) || 0} ₽</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Средняя стоимость
                   </p>
                 </CardContent>
               </Card>
