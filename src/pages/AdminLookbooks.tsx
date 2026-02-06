@@ -164,7 +164,7 @@ export default function AdminLookbooks() {
                             <td className="px-4 py-3 text-sm">{lookbook.photos.length}</td>
                             <td className="px-4 py-3 text-sm">{user?.email || 'Unknown'}</td>
                             <td className="px-4 py-3 text-sm text-gray-500">
-                              {new Date(lookbook.created_at).toLocaleDateString()}
+                              {new Date(lookbook.created_at).toLocaleDateString('ru-RU', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}
                             </td>
                           </tr>
                         );

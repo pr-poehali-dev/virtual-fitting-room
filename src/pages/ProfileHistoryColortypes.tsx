@@ -164,12 +164,13 @@ export default function ProfileHistoryColortypes() {
                           {item.color_type ? (colorTypeNames[item.color_type] || item.color_type) : 'Цветотип'}
                         </h3>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(item.created_at).toLocaleDateString('ru-RU', {
+                          {new Date(item.created_at).toLocaleString('ru-RU', {
                             day: 'numeric',
                             month: 'long',
                             year: 'numeric',
                             hour: '2-digit',
-                            minute: '2-digit'
+                            minute: '2-digit',
+                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
                           })}
                         </p>
                       </div>

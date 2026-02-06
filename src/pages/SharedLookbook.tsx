@@ -150,7 +150,8 @@ export default function SharedLookbook() {
             Создан: {new Date(lookbook.created_at).toLocaleDateString('ru-RU', {
               year: 'numeric',
               month: 'long',
-              day: 'numeric'
+              day: 'numeric',
+              timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
             })}
           </div>
         </div>

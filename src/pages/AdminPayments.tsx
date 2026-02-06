@@ -426,7 +426,7 @@ export default function AdminPayments() {
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-600">{payment.balance_after.toFixed(2)} ₽</td>
                           <td className="px-4 py-3 text-sm text-gray-500">
-                            {new Date(payment.created_at).toLocaleDateString()}
+                            {new Date(payment.created_at).toLocaleDateString('ru-RU', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex gap-2">

@@ -249,7 +249,7 @@ export default function AdminGenerations() {
                           </td>
                           <td className="px-4 py-3 text-sm">{gen.cost?.toFixed(2)} ₽</td>
                           <td className="px-4 py-3 text-sm text-gray-500">
-                            {new Date(gen.created_at).toLocaleDateString()}
+                            {new Date(gen.created_at).toLocaleDateString('ru-RU', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}
                           </td>
                         </tr>
                       ))}

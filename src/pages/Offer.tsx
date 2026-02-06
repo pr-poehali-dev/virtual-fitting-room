@@ -91,7 +91,7 @@ const Offer = () => {
           </div>
 
           <div className="mt-8 pt-6 border-t border-gray-200 text-sm text-gray-500">
-            <p>Дата публикации: {new Date().toLocaleDateString('ru-RU')}</p>
+            <p>Дата публикации: {new Date().toLocaleDateString('ru-RU', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}</p>
           </div>
         </div>
       </div>
