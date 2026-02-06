@@ -1091,6 +1091,13 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
         excluded_types.add('BRIGHT SPRING')
         print(f'[Match] Medium golden brown/brown hair detected → excluding BRIGHT SPRING')
     
+    # Rule 20: Any brown hair (except ash brown) → exclude SOFT SUMMER (SOFT SUMMER requires light/blonde hair ONLY)
+    has_any_brown_except_ash = any(keyword in hair_lower for keyword in ['medium brown', 'dark brown', 'light brown', 'golden brown', 'warm brown', 'medium golden brown', 'chestnut'])
+    has_ash_qualifier = any(keyword in hair_lower for keyword in ['ash brown', 'cool brown', 'ash'])
+    if has_any_brown_except_ash and not has_ash_qualifier:
+        excluded_types.add('SOFT SUMMER')
+        print(f'[Match] Brown hair (non-ash) detected → excluding SOFT SUMMER (requires light/blonde hair ONLY)')
+    
     if excluded_types:
         print(f'[Match] Excluded types: {excluded_types}')
     
@@ -1328,8 +1335,9 @@ def match_colortype(analysis: dict, gpt_suggested_type: str = None) -> tuple:
             color_score += 0.25
             print(f'[Match] {colortype}: BONUS +0.25 for medium golden brown hair + golden brown/brown eyes (characteristic FIERY AUTUMN)')
         
-        # PENALTY: Non-bright eyes → -0.25 for VIBRANT SPRING (prefers bright/sparkling eyes)
-        if not has_bright_eyes_keyword and colortype == 'VIBRANT SPRING':
+        # PENALTY: Non-bright eyes → -0.25 for VIBRANT SPRING (BUT light blue/light green/blue/green ARE acceptable!)
+        has_acceptable_light_eyes = any(keyword in eyes_lower for keyword in ['light blue', 'light green', 'light turquoise', 'blue-green', 'blue', 'green', 'hazel'])
+        if not has_bright_eyes_keyword and not has_acceptable_light_eyes and colortype == 'VIBRANT SPRING':
             color_score -= 0.25
             print(f'[Match] {colortype}: PENALTY -0.25 for non-bright eyes (VIBRANT SPRING prefers bright eyes)')
         
