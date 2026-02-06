@@ -109,6 +109,64 @@ export default function AdminPayments() {
     }
   };
 
+  const handleDeduct = async (userId: string, transactionId: string, currentBalance: number) => {
+    const adminToken = localStorage.getItem('admin_jwt');
+    const amountStr = prompt(`Введите сумму списания (текущий баланс: ${currentBalance.toFixed(2)}₽):`);
+    
+    if (!amountStr) return;
+    
+    const amount = parseFloat(amountStr);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Некорректная сумма');
+      return;
+    }
+    
+    if (amount > currentBalance) {
+      toast.error(`Недостаточно средств. Баланс: ${currentBalance.toFixed(2)}₽`);
+      return;
+    }
+    
+    const reason = prompt('Причина списания (обязательно):');
+    if (!reason || reason.trim() === '') {
+      toast.error('Необходимо указать причину списания');
+      return;
+    }
+
+    if (!confirm(`Вы уверены, что хотите списать ${amount.toFixed(2)}₽ с баланса пользователя?`)) {
+      return;
+    }
+
+    setRefundingId(transactionId);
+
+    try {
+      const response = await fetch(`${ADMIN_API}?action=deduct_balance`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Token': adminToken || ''
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          amount: amount,
+          reason: reason.trim()
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Deduction failed');
+      }
+      
+      const data = await response.json();
+      toast.success(`Списание выполнено! Новый баланс: ${data.new_balance.toFixed(2)}₽`);
+      fetchPayments();
+    } catch (error: any) {
+      toast.error(error.message || 'Ошибка списания средств');
+    } finally {
+      setRefundingId(null);
+    }
+  };
+
 
 
   const totalDeposits = payments
@@ -216,25 +274,48 @@ export default function AdminPayments() {
                             {new Date(payment.created_at).toLocaleDateString()}
                           </td>
                           <td className="px-4 py-3">
-                            {payment.type === 'charge' && payment.amount < 0 && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleRefund(payment.user_id, payment.id)}
-                                disabled={refundingId === payment.id}
-                              >
-                                {refundingId === payment.id ? (
-                                  <>
-                                    <Icon name="Loader2" className="animate-spin mr-1" size={14} />
-                                    Возврат...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Icon name="RefreshCw" className="mr-1" size={14} />
-                                    Вернуть
-                                  </>
-                                )}
-                              </Button>
+                            <div className="flex gap-2">
+                              {payment.type === 'charge' && payment.amount < 0 && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleRefund(payment.user_id, payment.id)}
+                                  disabled={refundingId === payment.id}
+                                >
+                                  {refundingId === payment.id ? (
+                                    <>
+                                      <Icon name="Loader2" className="animate-spin mr-1" size={14} />
+                                      Возврат...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Icon name="RefreshCw" className="mr-1" size={14} />
+                                      Вернуть
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                              {payment.type === 'deposit' && (
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleDeduct(payment.user_id, payment.id, payment.balance_after)}
+                                  disabled={refundingId === payment.id}
+                                >
+                                  {refundingId === payment.id ? (
+                                    <>
+                                      <Icon name="Loader2" className="animate-spin mr-1" size={14} />
+                                      Списание...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Icon name="Minus" className="mr-1" size={14} />
+                                      Списать
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                            </div>
                             )}
                           </td>
                         </tr>

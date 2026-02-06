@@ -681,6 +681,103 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': f'Refund failed: {str(e)}'})
                 }
         
+        elif action == 'deduct_balance' and method == 'POST':
+            body_data = json.loads(event.get('body', '{}'))
+            user_id = body_data.get('user_id')
+            amount = body_data.get('amount')
+            reason = body_data.get('reason', 'Списание администратором')
+            
+            if not user_id or not amount:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Missing user_id or amount'})
+                }
+            
+            if amount <= 0:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Amount must be positive'})
+                }
+            
+            try:
+                # Get current balance
+                cursor.execute('SELECT balance FROM users WHERE id = %s', (user_id,))
+                user_row = cursor.fetchone()
+                
+                if not user_row:
+                    return {
+                        'statusCode': 404,
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': get_cors_origin(event)
+                        },
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'error': 'User not found'})
+                    }
+                
+                balance_before = float(user_row['balance'])
+                
+                if balance_before < amount:
+                    return {
+                        'statusCode': 400,
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': get_cors_origin(event)
+                        },
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'error': f'Insufficient balance. Current: {balance_before}₽, Required: {amount}₽'})
+                    }
+                
+                balance_after = balance_before - amount
+                
+                # Update balance (deduct)
+                cursor.execute('UPDATE users SET balance = balance - %s WHERE id = %s', (amount, user_id))
+                
+                # Record transaction with negative amount for charge
+                cursor.execute('''
+                    INSERT INTO balance_transactions
+                    (user_id, type, amount, balance_before, balance_after, description)
+                    VALUES (%s, 'charge', %s, %s, %s, %s)
+                ''', (user_id, -amount, balance_before, balance_after, reason))
+                
+                conn.commit()
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({
+                        'success': True,
+                        'new_balance': balance_after,
+                        'deducted_amount': amount
+                    })
+                }
+            
+            except Exception as e:
+                conn.rollback()
+                return {
+                    'statusCode': 500,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': f'Deduction failed: {str(e)}'})
+                }
+        
         elif action == 'delete_user' and method == 'DELETE':
             user_id = query_params.get('user_id')
             
