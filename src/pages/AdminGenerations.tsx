@@ -21,9 +21,7 @@ interface GenerationHistory {
   user_email: string;
   user_name: string;
   model_used: string;
-  saved_to_lookbook: boolean;
   cost: number;
-  photo_status: 'in_history' | 'in_lookbook' | 'removed';
   result_image: string;
   created_at: string;
 }
@@ -208,8 +206,6 @@ export default function AdminGenerations() {
                         <th className="px-4 py-3 text-left text-sm font-medium">Превью</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Пользователь</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Модель</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Сохранено</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Статус</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Стоимость</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Дата</th>
                       </tr>
@@ -229,24 +225,6 @@ export default function AdminGenerations() {
                             <div className="text-xs text-gray-500">{gen.user_email}</div>
                           </td>
                           <td className="px-4 py-3 text-sm">{gen.model_used}</td>
-                          <td className="px-4 py-3">
-                            {gen.saved_to_lookbook ? (
-                              <Icon name="Check" size={16} className="text-green-600" />
-                            ) : (
-                              <Icon name="X" size={16} className="text-gray-400" />
-                            )}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${
-                              gen.photo_status === 'in_lookbook' 
-                                ? 'bg-green-100 text-green-700'
-                                : gen.photo_status === 'in_history'
-                                ? 'bg-blue-100 text-blue-700'
-                                : 'bg-gray-100 text-gray-700'
-                            }`}>
-                              {gen.photo_status}
-                            </span>
-                          </td>
                           <td className="px-4 py-3 text-sm">{gen.cost?.toFixed(2)} ₽</td>
                           <td className="px-4 py-3 text-sm text-gray-500">
                             {new Date(gen.created_at).toLocaleDateString()}
