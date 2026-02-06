@@ -316,7 +316,6 @@ export default function AdminPayments() {
                                 </Button>
                               )}
                             </div>
-                            )}
                           </td>
                         </tr>
                       ))}
