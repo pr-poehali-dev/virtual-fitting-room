@@ -162,7 +162,7 @@ export default function AdminGenerations() {
                         <SelectItem value="all">Все</SelectItem>
                         <SelectItem value="replicate">Replicate</SelectItem>
                         <SelectItem value="seedream">SeeDream</SelectItem>
-                        <SelectItem value="nanobana">NanoBanana</SelectItem>
+                        <SelectItem value="nanobananapro">NanoBananaPro</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
