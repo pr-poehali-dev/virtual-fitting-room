@@ -40,7 +40,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Link to="/" className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 lg:mr-auto flex items-center hover:opacity-80 transition-opacity">
                 <img src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/logo-fitting-room-1.svg" alt="Virtual Fitting" className="h-8 md:h-10" />
               </Link>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 lg:gap-4">
               {user ? (
                 <>
                   <div className="hidden lg:block">
