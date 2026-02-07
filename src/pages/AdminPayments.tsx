@@ -22,6 +22,9 @@ interface Payment {
   balance_after: number;
   description: string;
   yookassa_payment_id: string | null;
+  try_on_id: string | null;
+  color_type_id: string | null;
+  payment_id: string | null;
   created_at: string;
   is_deleted: boolean;
 }
@@ -131,7 +134,8 @@ export default function AdminPayments() {
         body: JSON.stringify({
           user_id: userId,
           amount: 30,
-          reason
+          reason,
+          transaction_id: transactionId
         })
       });
 
@@ -210,7 +214,8 @@ export default function AdminPayments() {
         body: JSON.stringify({
           user_id: userId,
           amount: amount,
-          reason: reason.trim()
+          reason: reason.trim(),
+          payment_transaction_id: transactionId
         })
       });
 
@@ -368,6 +373,7 @@ export default function AdminPayments() {
                         <th className="px-4 py-3 text-left text-sm font-medium">Тип</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Сумма</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Описание</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">ID операции</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">ID ЮКассы</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Баланс после</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Дата</th>
@@ -402,6 +408,29 @@ export default function AdminPayments() {
                             {payment.description}
                             {payment.is_deleted && (
                               <span className="ml-2 text-xs text-gray-500">(удалено)</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-gray-500 font-mono">
+                            {payment.try_on_id || payment.color_type_id || payment.payment_id ? (
+                              <div className="flex items-center gap-1">
+                                <span className="truncate max-w-[120px]" title={payment.try_on_id || payment.color_type_id || payment.payment_id || ''}>
+                                  {(payment.try_on_id || payment.color_type_id || payment.payment_id || '').substring(0, 8)}...
+                                </span>
+                                <button
+                                  onClick={() => {
+                                    const id = payment.try_on_id || payment.color_type_id || payment.payment_id;
+                                    if (id) {
+                                      navigator.clipboard.writeText(id);
+                                      toast.success('ID скопирован');
+                                    }
+                                  }}
+                                  className="p-1 hover:bg-gray-100 rounded"
+                                >
+                                  <Icon name="Copy" size={14} />
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">—</span>
                             )}
                           </td>
                           <td className="px-4 py-3 text-xs text-gray-500 font-mono">

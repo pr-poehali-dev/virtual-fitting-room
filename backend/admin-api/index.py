@@ -690,6 +690,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     bt.created_at,
                     bt.try_on_id,
                     bt.color_type_id,
+                    bt.payment_id,
                     bt.yookassa_payment_id,
                     u.email,
                     u.name,
@@ -755,6 +756,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'balance_after': float(t['balance_after']),
                     'description': display_description,
                     'yookassa_payment_id': t['yookassa_payment_id'],
+                    'try_on_id': str(t['try_on_id']) if t['try_on_id'] else None,
+                    'color_type_id': str(t['color_type_id']) if t['color_type_id'] else None,
+                    'payment_id': str(t['payment_id']) if t['payment_id'] else None,
                     'created_at': t['created_at'].isoformat(),
                     'is_deleted': bool(t['try_on_removed'] or t['color_removed'])
                 })
@@ -777,6 +781,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             user_id = body_data.get('user_id')
             amount = body_data.get('amount', 30)
             reason = body_data.get('reason', 'Возврат администратором')
+            transaction_id = body_data.get('transaction_id')
             
             if not user_id:
                 return {
@@ -808,15 +813,31 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 balance_before = float(user_row['balance'])
                 balance_after = balance_before + amount
                 
+                # Get try_on_id, color_type_id, yookassa_payment_id from original transaction
+                try_on_id = None
+                color_type_id = None
+                yookassa_payment_id = None
+                
+                if transaction_id:
+                    cursor.execute(
+                        'SELECT try_on_id, color_type_id, yookassa_payment_id FROM balance_transactions WHERE id = %s',
+                        (transaction_id,)
+                    )
+                    orig_tx = cursor.fetchone()
+                    if orig_tx:
+                        try_on_id = orig_tx['try_on_id']
+                        color_type_id = orig_tx['color_type_id']
+                        yookassa_payment_id = orig_tx['yookassa_payment_id']
+                
                 # Update balance
                 cursor.execute('UPDATE users SET balance = balance + %s WHERE id = %s', (amount, user_id))
                 
-                # Record transaction
+                # Record transaction with copied IDs
                 cursor.execute('''
                     INSERT INTO balance_transactions
-                    (user_id, type, amount, balance_before, balance_after, description)
-                    VALUES (%s, 'refund', %s, %s, %s, %s)
-                ''', (user_id, amount, balance_before, balance_after, reason))
+                    (user_id, type, amount, balance_before, balance_after, description, try_on_id, color_type_id, yookassa_payment_id)
+                    VALUES (%s, 'refund', %s, %s, %s, %s, %s, %s, %s)
+                ''', (user_id, amount, balance_before, balance_after, reason, try_on_id, color_type_id, yookassa_payment_id))
                 
                 conn.commit()
                 
@@ -851,6 +872,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             user_id = body_data.get('user_id')
             amount = body_data.get('amount')
             reason = body_data.get('reason', 'Списание администратором')
+            payment_transaction_id = body_data.get('payment_transaction_id')
             
             if not user_id or not amount:
                 return {
@@ -905,15 +927,26 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
                 balance_after = balance_before - amount
                 
+                # Get yookassa_payment_id from original payment transaction if provided
+                yookassa_payment_id = None
+                if payment_transaction_id:
+                    cursor.execute(
+                        'SELECT yookassa_payment_id FROM balance_transactions WHERE id = %s',
+                        (payment_transaction_id,)
+                    )
+                    orig_payment = cursor.fetchone()
+                    if orig_payment:
+                        yookassa_payment_id = orig_payment['yookassa_payment_id']
+                
                 # Update balance (deduct)
                 cursor.execute('UPDATE users SET balance = balance - %s WHERE id = %s', (amount, user_id))
                 
-                # Record transaction with negative amount for charge
+                # Record transaction with negative amount for charge and payment_id link
                 cursor.execute('''
                     INSERT INTO balance_transactions
-                    (user_id, type, amount, balance_before, balance_after, description)
-                    VALUES (%s, 'charge', %s, %s, %s, %s)
-                ''', (user_id, -amount, balance_before, balance_after, reason))
+                    (user_id, type, amount, balance_before, balance_after, description, payment_id, yookassa_payment_id)
+                    VALUES (%s, 'charge', %s, %s, %s, %s, %s, %s)
+                ''', (user_id, -amount, balance_before, balance_after, reason, payment_transaction_id, yookassa_payment_id))
                 
                 conn.commit()
                 

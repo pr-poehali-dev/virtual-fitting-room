@@ -203,6 +203,7 @@ export default function AdminGenerations() {
                   <table className="w-full">
                     <thead className="bg-gray-50 border-b">
                       <tr>
+                        <th className="px-4 py-3 text-left text-sm font-medium">ID</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Превью</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Пользователь</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Модель</th>
@@ -213,6 +214,9 @@ export default function AdminGenerations() {
                     <tbody>
                       {generationHistory.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((gen) => (
                         <tr key={gen.id} className="border-b hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm font-mono">
+                            {gen.id.substring(0, 8)}...
+                          </td>
                           <td className="px-4 py-3">
                             <img 
                               src={gen.result_image} 
