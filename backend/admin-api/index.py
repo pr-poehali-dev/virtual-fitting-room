@@ -279,11 +279,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             cursor.execute("SELECT COALESCE(SUM(amount), 0) as total FROM balance_transactions WHERE type = 'refund'")
             total_refunds = cursor.fetchone()['total']
             
-            cursor.execute("SELECT COALESCE(SUM(ABS(amount)), 0) as total FROM balance_transactions WHERE type = 'charge'")
-            total_charges = cursor.fetchone()['total']
+            # Charges for color type
+            cursor.execute("SELECT COALESCE(SUM(ABS(amount)), 0) as total FROM balance_transactions WHERE type = 'charge' AND color_type_id IS NOT NULL")
+            charges_colortype = cursor.fetchone()['total']
             
-            cursor.execute("SELECT COALESCE(AVG(ABS(amount)), 0) as avg FROM balance_transactions WHERE type = 'charge'")
-            avg_charge = cursor.fetchone()['avg']
+            # Charges for try-on
+            cursor.execute("SELECT COALESCE(SUM(ABS(amount)), 0) as total FROM balance_transactions WHERE type = 'charge' AND try_on_id IS NOT NULL")
+            charges_tryon = cursor.fetchone()['total']
+            
+            # Manual charges (no color_type_id and no try_on_id)
+            cursor.execute("SELECT COALESCE(SUM(ABS(amount)), 0) as total FROM balance_transactions WHERE type = 'charge' AND color_type_id IS NULL AND try_on_id IS NULL")
+            charges_manual = cursor.fetchone()['total']
             
             # Total user balances
             cursor.execute("SELECT COALESCE(SUM(balance), 0) as total FROM users")
@@ -313,8 +319,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'completed_colortypes': completed_colortypes,
                     'failed_colortypes': failed_colortypes,
                     'total_refunds': float(total_refunds),
-                    'total_charges': float(total_charges),
-                    'avg_charge': float(avg_charge),
+                    'charges_colortype': float(charges_colortype),
+                    'charges_tryon': float(charges_tryon),
+                    'charges_manual': float(charges_manual),
                     'users_balance': float(users_balance)
                 })
             }

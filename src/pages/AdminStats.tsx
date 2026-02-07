@@ -25,8 +25,9 @@ interface Stats {
   completed_colortypes: number;
   failed_colortypes: number;
   total_refunds: number;
-  total_charges: number;
-  avg_charge: number;
+  charges_colortype: number;
+  charges_tryon: number;
+  charges_manual: number;
   users_balance: number;
 }
 
@@ -305,7 +306,60 @@ export default function AdminStats() {
               </Card>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+            <div className="grid md:grid-cols-3 gap-6 mt-8">
+              <Card className="border-purple-200 bg-purple-50/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Списания за цветотип
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Icon name="Palette" size={24} className="text-purple-600" />
+                    <span className="text-3xl font-bold">{stats?.charges_colortype?.toFixed(0) || 0} ₽</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Анализ цветотипа
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-blue-200 bg-blue-50/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Списания за примерку
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Icon name="Shirt" size={24} className="text-blue-600" />
+                    <span className="text-3xl font-bold">{stats?.charges_tryon?.toFixed(0) || 0} ₽</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Виртуальная примерочная
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-orange-200 bg-orange-50/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Ручные списания
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Icon name="HandCoins" size={24} className="text-orange-600" />
+                    <span className="text-3xl font-bold">{stats?.charges_manual?.toFixed(0) || 0} ₽</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Для возврата в ЮКассе
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mt-8">
               <Card className="border-rose-200 bg-rose-50/50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -323,23 +377,6 @@ export default function AdminStats() {
                 </CardContent>
               </Card>
 
-              <Card className="border-amber-200 bg-amber-50/50">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Сумма списаний
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-2">
-                    <Icon name="ArrowDownCircle" size={24} className="text-amber-600" />
-                    <span className="text-3xl font-bold">{stats?.total_charges?.toFixed(0) || 0} ₽</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Потрачено на услуги
-                  </p>
-                </CardContent>
-              </Card>
-
               <Card className="border-teal-200 bg-teal-50/50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -353,23 +390,6 @@ export default function AdminStats() {
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
                     На счетах платформы
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-indigo-200 bg-indigo-50/50">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Средняя услуга
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-2">
-                    <Icon name="TrendingUp" size={24} className="text-indigo-600" />
-                    <span className="text-3xl font-bold">{stats?.avg_charge?.toFixed(0) || 0} ₽</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Средняя стоимость
                   </p>
                 </CardContent>
               </Card>
