@@ -40,6 +40,8 @@ export default function AdminColorTypes() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedItem, setSelectedItem] = useState<ColorTypeHistory | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<ColorTypeHistory | null>(null);
   const itemsPerPage = 20;
 
   useEffect(() => {
@@ -108,6 +110,35 @@ export default function AdminColorTypes() {
       toast.error('Ошибка загрузки истории цветотипов');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDeleteClick = (item: ColorTypeHistory) => {
+    setItemToDelete(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return;
+
+    const adminToken = localStorage.getItem('admin_jwt');
+    
+    try {
+      const response = await fetch(`${ADMIN_API}?action=delete_colortype&analysis_id=${itemToDelete.id}`, {
+        method: 'DELETE',
+        headers: { 'X-Admin-Token': adminToken || '' }
+      });
+
+      if (response.ok) {
+        toast.success('Запись удалена');
+        setColorTypeHistory(prev => prev.filter(item => item.id !== itemToDelete.id));
+        setDeleteDialogOpen(false);
+        setItemToDelete(null);
+      } else {
+        toast.error('Ошибка удаления');
+      }
+    } catch (error) {
+      toast.error('Ошибка удаления');
     }
   };
 
@@ -236,6 +267,7 @@ export default function AdminColorTypes() {
                         <th className="px-4 py-3 text-left text-sm font-medium">Стоимость</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Дата</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Действия</th>
+                        <th className="px-4 py-3 text-center text-sm font-medium">Удалить</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -277,6 +309,17 @@ export default function AdminColorTypes() {
                               <Icon name="Eye" size={16} />
                               Детали
                             </button>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {item.status === 'failed' && (
+                              <button
+                                onClick={() => handleDeleteClick(item)}
+                                className="text-red-600 hover:text-red-800 transition-colors inline-flex items-center justify-center"
+                                title="Удалить запись"
+                              >
+                                <Icon name="Trash2" size={18} />
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -350,6 +393,40 @@ export default function AdminColorTypes() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Подтверждение удаления</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Вы уверены, что хотите удалить эту запись анализа цветотипа?
+            </p>
+            {itemToDelete && (
+              <div className="bg-muted p-3 rounded-lg space-y-2 text-sm">
+                <p><strong>ID:</strong> {itemToDelete.id.substring(0, 8)}...</p>
+                <p><strong>Пользователь:</strong> {itemToDelete.user_email}</p>
+                <p><strong>Дата:</strong> {new Date(itemToDelete.created_at).toLocaleString('ru-RU')}</p>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={() => setDeleteDialogOpen(false)}
+              className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+            >
+              Отмена
+            </button>
+            <button
+              onClick={handleDeleteConfirm}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              Удалить
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
     </Layout>

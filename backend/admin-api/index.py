@@ -1026,6 +1026,33 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'success': True, 'deleted': deleted_count})
             }
         
+        elif action == 'delete_colortype' and method == 'DELETE':
+            analysis_id = query_params.get('analysis_id')
+            
+            if not analysis_id:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Missing analysis_id'})
+                }
+            
+            cursor.execute("DELETE FROM color_type_history WHERE id = %s", (analysis_id,))
+            conn.commit()
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': get_cors_origin(event)
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps({'success': True})
+            }
+        
         else:
             return {
                 'statusCode': 400,
