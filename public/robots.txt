@@ -1,14 +1,9 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
+
+# Запрет индексации служебных страниц
+Disallow: /payment-info
+Disallow: /offer
+Disallow: /privacy
+Disallow: /personal-data
+Disallow: /contacts
