@@ -10,6 +10,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 def get_db_connection():
+    # Force redeploy
     dsn = os.environ.get('DATABASE_URL')
     if '?' in dsn:
         dsn += '&options=-c%20search_path%3Dt_p29007832_virtual_fitting_room'

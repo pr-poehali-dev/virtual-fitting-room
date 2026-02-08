@@ -14,6 +14,7 @@ from typing import Dict, Any
 SBERBANK_API = 'https://securepayments.sberbank.ru/payment/rest'
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    # Force redeploy
     def get_cors_origin(event: Dict[str, Any]) -> str:
         origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin', '')
         allowed_origins = ['https://fitting-room.ru', 'https://preview--virtual-fitting-room.poehali.dev']

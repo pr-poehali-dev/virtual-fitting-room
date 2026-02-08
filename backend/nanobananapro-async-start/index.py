@@ -8,6 +8,7 @@ from datetime import datetime
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
     Business: Start async NanoBanana generation and return task_id immediately
+    # Force redeploy
     Args: event - dict with httpMethod, body (person_image, garments, custom_prompt)
           context - object with request_id attribute
     Returns: HTTP response with task_id (no waiting)

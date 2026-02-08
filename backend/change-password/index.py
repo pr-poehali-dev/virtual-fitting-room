@@ -21,6 +21,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
           context - object with attributes: request_id, function_name
     Returns: HTTP response
     '''
+    # Force redeploy to restore environment variables
     def get_cors_origin(event: Dict[str, Any]) -> str:
         origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin', '')
         allowed_origins = ['https://fitting-room.ru', 'https://preview--virtual-fitting-room.poehali.dev']
