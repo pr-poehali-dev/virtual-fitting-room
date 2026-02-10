@@ -224,11 +224,18 @@ export default function ReplicateTryOnGenerator({
         }
         
         const token = localStorage.getItem('session_token');
+        
+        // CRITICAL: Skip polling if no token (prevents 401 errors)
+        if (!token) {
+          console.error('[NanoBananaPro] NO TOKEN in localStorage, skipping poll');
+          return;
+        }
+        
         const response = await fetch(DB_QUERY_API, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(token ? { 'X-Session-Token': token } : {})
+            'X-Session-Token': token
           },
           credentials: 'include',
           body: JSON.stringify({
