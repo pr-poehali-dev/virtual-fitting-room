@@ -9,7 +9,7 @@
       },
       "expectedStatus": 401,
       "expectedBody": {
-        "error": "User ID required"
+        "error": "string"
       },
       "bodyMatcher": "partial"
     }

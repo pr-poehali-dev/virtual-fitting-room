@@ -270,8 +270,7 @@ export function useReplicateTryOn() {
       const startResponse = await fetch(NANOBANANAPRO_START_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id,
+          'Content-Type': 'application/json'
         },
         credentials: 'include',
         body: JSON.stringify({

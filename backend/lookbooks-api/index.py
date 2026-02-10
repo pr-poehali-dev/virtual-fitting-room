@@ -7,6 +7,7 @@ import requests
 import boto3
 from botocore.config import Config
 from pydantic import BaseModel, Field, field_validator
+from session_utils import validate_session
 
 def get_db_connection():
     # Force redeploy
@@ -143,9 +144,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 200,
             'headers': {
-                'Access-Control-Allow-Origin': 'https://fitting-room.ru',
+                'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Max-Age': '86400'
             },
             'body': ''
@@ -155,8 +157,26 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     
     try:
-        headers = event.get('headers', {})
-        user_id = headers.get('x-user-id') or headers.get('X-User-Id')
+        # Validate session for non-public GET requests
+        query_params = event.get('queryStringParameters') or {}
+        share_token = query_params.get('share_token')
+        
+        # Public access with share_token doesn't need auth
+        if method == 'GET' and share_token:
+            user_id = None
+        else:
+            is_valid, user_id, error_msg = validate_session(event)
+            if not is_valid and method != 'GET':
+                return {
+                    'statusCode': 401,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': error_msg or 'Unauthorized'})
+                }
         
         if method == 'GET':
             query_params = event.get('queryStringParameters') or {}
@@ -185,7 +205,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({
@@ -204,7 +225,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 401,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Unauthorized - User ID required'})
@@ -232,7 +254,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({
@@ -258,7 +281,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps([{
@@ -280,7 +304,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 401,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Unauthorized - User ID required'})
@@ -302,7 +327,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': f'Validation error: {str(e)}'})
@@ -318,7 +344,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing name or person_name'})
@@ -381,7 +408,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 401,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Unauthorized - User ID required'})
@@ -403,7 +431,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing id'})
@@ -467,7 +496,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 404,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Lookbook not found'})
@@ -557,7 +587,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 401,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Unauthorized - User ID required'})
@@ -571,7 +602,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing id'})
@@ -589,7 +621,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 404,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Lookbook not found'})
@@ -610,7 +643,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 404,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Lookbook not found'})

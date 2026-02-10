@@ -6,6 +6,7 @@ from psycopg2.extras import RealDictCursor
 import boto3
 from botocore.config import Config
 from pydantic import BaseModel, Field, field_validator
+from session_utils import validate_session
 
 def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')
@@ -35,28 +36,31 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Max-Age': '86400'
             },
             'body': ''
         }
     
+    # Validate session token
+    is_valid, user_id, error_msg = validate_session(event)
+    
+    if not is_valid:
+        return {
+            'statusCode': 401,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': get_cors_origin(event),
+                'Access-Control-Allow-Credentials': 'true'
+            },
+            'isBase64Encoded': False,
+            'body': json.dumps({'error': error_msg or 'Unauthorized'})
+        }
+    
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        headers = event.get('headers', {})
-        user_id = headers.get('x-user-id') or headers.get('X-User-Id')
-        
-        if not user_id:
-            return {
-                'statusCode': 401,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event)
-                },
-                'isBase64Encoded': False,
-                'body': json.dumps({'error': 'Unauthorized - User ID required'})
-            }
         
         if method == 'GET':
             print(f'[HistoryAPI] GET request for user {user_id}')
@@ -88,7 +92,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event)
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                    'Access-Control-Allow-Credentials': 'true'
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps(result_items)
@@ -178,7 +183,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 201,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event)
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                    'Access-Control-Allow-Credentials': 'true'
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({
@@ -293,7 +299,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event)
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                    'Access-Control-Allow-Credentials': 'true'
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'message': 'History item deleted successfully'})
@@ -304,7 +311,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 405,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event)
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                    'Access-Control-Allow-Credentials': 'true'
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'error': 'Method not allowed'})

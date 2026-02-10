@@ -4,6 +4,7 @@ import psycopg2
 from typing import Dict, Any
 import uuid
 from datetime import datetime
+from session_utils import validate_session
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -25,7 +26,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Max-Age': '86400'
             },
             'body': ''
@@ -34,7 +36,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if method != 'POST':
         return {
             'statusCode': 405,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'Method not allowed'})
         }
@@ -48,20 +50,23 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if not database_url:
         return {
             'statusCode': 500,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'DATABASE_URL not configured'})
         }
     
-    user_id = event.get('headers', {}).get('X-User-Id') or event.get('headers', {}).get('x-user-id')
-    print(f'[COLORTYPE-START-{request_id}] User ID: {user_id}')
-    if not user_id:
+    # Validate session token
+    is_valid, user_id, error_msg = validate_session(event)
+    
+    if not is_valid:
         return {
             'statusCode': 401,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
             'isBase64Encoded': False,
-            'body': json.dumps({'error': 'User ID required'})
+            'body': json.dumps({'error': error_msg or 'Unauthorized'})
         }
+    
+    print(f'[COLORTYPE-START-{request_id}] User ID: {user_id}')
     
     body_data = json.loads(event.get('body', '{}'))
     person_image = body_data.get('person_image')
@@ -70,7 +75,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if not person_image:
         return {
             'statusCode': 400,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'person_image is required'})
         }
@@ -88,7 +93,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.close()
             return {
                 'statusCode': 404,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
                 'isBase64Encoded': False,
                 'body': json.dumps({'error': 'User not found'})
             }
@@ -106,7 +111,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 conn.close()
                 return {
                     'statusCode': 402,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Insufficient balance', 'required': cost, 'current': balance})
                 }
@@ -142,7 +147,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.close()
             return {
                 'statusCode': 200,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
                 'isBase64Encoded': False,
                 'body': json.dumps({
                     'task_id': existing_task_id,
@@ -204,7 +209,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print(f'[COLORTYPE-START-{request_id}] ========== REQUEST COMPLETED ==========')
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
             'isBase64Encoded': False,
             'body': json.dumps({
                 'task_id': task_id,
@@ -217,7 +222,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print(f'[COLORTYPE-START-{request_id}] ERROR: {str(e)}')
         return {
             'statusCode': 500,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
             'isBase64Encoded': False,
             'body': json.dumps({'error': f'Database error: {str(e)}'})
         }
