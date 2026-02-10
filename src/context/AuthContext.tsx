@@ -29,10 +29,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const validateSession = async () => {
       try {
-        localStorage.removeItem('user');
-        localStorage.removeItem('session_token');
-        localStorage.removeItem('token_expiry');
-        
         const response = await fetch(AUTH_API, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
