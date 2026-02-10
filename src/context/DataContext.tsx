@@ -78,6 +78,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [isLoadingMoreLookbooks, setIsLoadingMoreLookbooks] = useState(false);
   const [lookbooksOffset, setLookbooksOffset] = useState(0);
 
+  // Helper to get auth headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('session_token');
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'X-Session-Token': token } : {})
+    };
+  };
+
   const fetchLookbooks = async (reset = false) => {
     if (!user?.id) {
       setLookbooks([]);
@@ -89,9 +98,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
         body: JSON.stringify({
           table: 'lookbooks',
@@ -137,9 +144,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
         body: JSON.stringify({
           table: 'try_on_history',
@@ -198,9 +203,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
         body: JSON.stringify({
           table: 'color_type_history',

@@ -217,10 +217,12 @@ export default function ReplicateTryOnGenerator({
           return;
         }
         
+        const token = localStorage.getItem('session_token');
         const response = await fetch(DB_QUERY_API, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...(token ? { 'X-Session-Token': token } : {})
           },
           credentials: 'include',
           body: JSON.stringify({

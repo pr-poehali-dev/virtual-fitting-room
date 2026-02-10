@@ -71,6 +71,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(data.error || 'Login failed');
     }
 
+    // Save token to localStorage for API requests
+    if (data.session_token) {
+      localStorage.setItem('session_token', data.session_token);
+    }
+
     setUser(data.user);
   };
 
@@ -100,6 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Logout failed:', error);
     }
+    // Clear token from localStorage
+    localStorage.removeItem('session_token');
     setUser(null);
   };
 
