@@ -272,11 +272,16 @@ export function useReplicateTryOn() {
       });
 
       const token = localStorage.getItem('session_token');
+      
+      if (!token) {
+        throw new Error('Нет токена авторизации. Пожалуйста, перезайдите в систему.');
+      }
+      
       const startResponse = await fetch(NANOBANANAPRO_START_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { 'X-Session-Token': token } : {})
+          'X-Session-Token': token
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -317,9 +322,10 @@ export function useReplicateTryOn() {
         setGenerationStatus('Время ожидания истекло. Проверьте результат позже через кнопку "Проверить задачи".');
       }, 180000);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Generation error:', error);
-      toast.error(error.message || 'Ошибка генерации');
+      const errorMessage = error instanceof Error ? error.message : 'Ошибка генерации';
+      toast.error(errorMessage);
       setIsGenerating(false);
       setGenerationStatus('');
       
@@ -334,11 +340,19 @@ export function useReplicateTryOn() {
 
     try {
       const token = localStorage.getItem('session_token');
+      
+      if (!token) {
+        console.error('[NanoBananaPro-POLL] Нет токена в localStorage!');
+        return;
+      }
+      
+      console.log('[NanoBananaPro-POLL] Отправка запроса с токеном:', token.substring(0, 20));
+      
       const statusResponse = await fetch(`${NANOBANANAPRO_STATUS_API}?task_id=${currentTaskId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { 'X-Session-Token': token } : {})
+          'X-Session-Token': token
         },
         credentials: 'include',
       });
@@ -402,11 +416,16 @@ export function useReplicateTryOn() {
       setGenerationStatus('Проверка существующих задач...');
 
       const token = localStorage.getItem('session_token');
+      
+      if (!token) {
+        throw new Error('Нет токена авторизации');
+      }
+      
       const workerResponse = await fetch(NANOBANANAPRO_WORKER_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { 'X-Session-Token': token } : {})
+          'X-Session-Token': token
         },
         credentials: 'include',
       });
@@ -423,9 +442,10 @@ export function useReplicateTryOn() {
 
       setIsGenerating(false);
       setGenerationStatus('');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Worker error:', error);
-      toast.error(error.message || 'Ошибка проверки задач');
+      const errorMessage = error instanceof Error ? error.message : 'Ошибка проверки задач';
+      toast.error(errorMessage);
       setIsGenerating(false);
       setGenerationStatus('');
     } finally {
@@ -491,11 +511,16 @@ export function useReplicateTryOn() {
       }
 
       const token2 = localStorage.getItem('session_token');
+      
+      if (!token2) {
+        throw new Error('Нет токена авторизации');
+      }
+      
       const insertResponse = await fetch(`${DB_QUERY_API}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token2 ? { 'X-Session-Token': token2 } : {})
+          'X-Session-Token': token2
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -509,9 +534,10 @@ export function useReplicateTryOn() {
       setShowSaveDialog(false);
       resetForm();
       await refetchLookbooks();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Save error:', error);
-      toast.error(error.message || 'Ошибка сохранения');
+      const errorMessage = error instanceof Error ? error.message : 'Ошибка сохранения';
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }

@@ -81,9 +81,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Helper to get auth headers
   const getAuthHeaders = () => {
     const token = localStorage.getItem('session_token');
+    
+    if (!token) {
+      console.error('[DataContext] Нет токена в localStorage при запросе данных!');
+      throw new Error('Нет токена авторизации');
+    }
+    
     return {
       'Content-Type': 'application/json',
-      ...(token ? { 'X-Session-Token': token } : {})
+      'X-Session-Token': token
     };
   };
 
