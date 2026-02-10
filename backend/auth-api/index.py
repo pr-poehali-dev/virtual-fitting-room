@@ -249,8 +249,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     
-    # Get IP address from request context
-    ip_address = event.get('requestContext', {}).get('identity', {}).get('sourceIp', 'unknown')
+    # Get real IP address (behind proxy/CDN)
+    headers = event.get('headers', {})
+    x_forwarded_for = headers.get('x-forwarded-for') or headers.get('X-Forwarded-For', '')
+    x_real_ip = headers.get('x-real-ip') or headers.get('X-Real-IP', '')
+    
+    if x_forwarded_for:
+        ip_address = x_forwarded_for.split(',')[0].strip()
+    elif x_real_ip:
+        ip_address = x_real_ip
+    else:
+        ip_address = event.get('requestContext', {}).get('identity', {}).get('sourceIp', 'unknown')
     
     try:
         body_data = json.loads(body_str)
@@ -339,9 +348,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         elif action == 'login':
-            request_context = event.get('requestContext', {})
-            identity = request_context.get('identity', {})
-            ip_address = identity.get('sourceIp', 'unknown')
+            # Get real IP address (behind proxy/CDN)
+            headers = event.get('headers', {})
+            x_forwarded_for = headers.get('x-forwarded-for') or headers.get('X-Forwarded-For', '')
+            x_real_ip = headers.get('x-real-ip') or headers.get('X-Real-IP', '')
+            
+            # X-Forwarded-For may contain multiple IPs: "client, proxy1, proxy2"
+            # Take the first one (real client IP)
+            if x_forwarded_for:
+                ip_address = x_forwarded_for.split(',')[0].strip()
+            elif x_real_ip:
+                ip_address = x_real_ip
+            else:
+                # Fallback to context IP (may be proxy IP)
+                request_context = event.get('requestContext', {})
+                identity = request_context.get('identity', {})
+                ip_address = identity.get('sourceIp', 'unknown')
             
             # Clean old attempts
             cursor.execute(
