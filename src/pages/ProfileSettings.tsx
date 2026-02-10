@@ -71,21 +71,12 @@ export default function ProfileSettings() {
     setIsChangingPassword(true);
 
     try {
-      const sessionToken = localStorage.getItem('session_token');
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      
-      // DUAL-mode: send token if available, fallback to user ID
-      if (sessionToken) {
-        headers['X-Session-Token'] = sessionToken;
-      } else {
-        headers['X-User-Id'] = user.id;
-      }
-      
       const response = await fetch(CHANGE_PASSWORD_API, {
         method: 'PUT',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
         body: JSON.stringify({
           current_password: currentPassword,
           new_password: newPassword
@@ -116,21 +107,12 @@ export default function ProfileSettings() {
     }
 
     try {
-      const sessionToken = localStorage.getItem('session_token');
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      
-      // DUAL-mode: send token if available, fallback to user ID
-      if (sessionToken) {
-        headers['X-Session-Token'] = sessionToken;
-      } else {
-        headers['X-User-Id'] = user.id;
-      }
-      
       const response = await fetch(UPDATE_PROFILE_API, {
         method: 'PUT',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
         body: JSON.stringify({
           name: editedName
         })
@@ -164,19 +146,9 @@ export default function ProfileSettings() {
     if (!doubleConfirm) return;
 
     try {
-      const sessionToken = localStorage.getItem('session_token');
-      const headers: Record<string, string> = {};
-      
-      // DUAL-mode: send token if available, fallback to user ID
-      if (sessionToken) {
-        headers['X-Session-Token'] = sessionToken;
-      } else {
-        headers['X-User-Id'] = user.id;
-      }
-      
       const response = await fetch(DELETE_ACCOUNT_API, {
         method: 'DELETE',
-        headers
+        credentials: 'include'
       });
 
       const data = await response.json();

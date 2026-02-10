@@ -33,7 +33,9 @@ export default function VerifyEmail() {
 
     const verifyEmail = async () => {
       try {
-        const response = await fetch(`${VERIFY_API}?token=${token}`);
+        const response = await fetch(`${VERIFY_API}?token=${token}`, {
+          credentials: 'include'
+        });
         const data = await response.json();
 
         if (!response.ok) {
@@ -47,10 +49,6 @@ export default function VerifyEmail() {
           return;
         }
 
-        const expiryTime = Date.now() + (24 * 60 * 60 * 1000);
-        sessionStorage.setItem('user', JSON.stringify(data.user));
-        sessionStorage.setItem('session_token', data.session_token);
-        sessionStorage.setItem('token_expiry', expiryTime.toString());
         updateUser(data.user);
 
         setIsSuccess(true);

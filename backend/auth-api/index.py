@@ -218,6 +218,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-Session-Token',
+                'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Max-Age': '86400'
             },
             'body': ''
@@ -264,19 +265,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     try:
         body_data = json.loads(body_str)
         action = body_data.get('action')
-        email = body_data.get('email')
-        password = body_data.get('password')
         
-        if not email or not password:
-            return {
-                'statusCode': 400,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event)
-                },
-                'isBase64Encoded': False,
-                'body': json.dumps({'error': 'Missing email or password'})
-            }
+        # validate and logout don't require email/password
+        if action not in ['validate', 'logout']:
+            email = body_data.get('email')
+            password = body_data.get('password')
+            
+            if not email or not password:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Missing email or password'})
+                }
+        else:
+            email = None
+            password = None
         
         if action == 'register':
             name = body_data.get('name')
@@ -506,14 +513,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             # Save session to DB for validation
             save_session_to_db(cursor, conn, str(user['id']), session_token, ip_address, user_agent)
             
-            # DUAL-mode: return token in JSON (old way) for now
-            # HttpOnly cookie support can be added later when needed
+            # Set session token in httpOnly cookie (secure)
+            cookie_value = f"session_token={session_token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=604800"
             
             return {
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event)
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                    'Access-Control-Allow-Credentials': 'true',
+                    'X-Set-Cookie': cookie_value
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({
@@ -525,8 +534,107 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'email_verified': user['email_verified'],
                         'balance': float(user['balance']) if user.get('balance') else 0.0,
                         'unlimited_access': bool(user.get('unlimited_access', False))
+                    }
+                })
+            }
+        
+        elif action == 'logout':
+            # Clear session cookie
+            cookie_value = "session_token=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0"
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                    'Access-Control-Allow-Credentials': 'true',
+                    'X-Set-Cookie': cookie_value
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps({'message': 'Logged out successfully'})
+            }
+        
+        elif action == 'validate':
+            # Read session token from X-Cookie header (mapped from Cookie by proxy)
+            cookie_header = event.get('headers', {}).get('x-cookie') or event.get('headers', {}).get('X-Cookie', '')
+            session_token = None
+            
+            if cookie_header:
+                for cookie in cookie_header.split(';'):
+                    cookie = cookie.strip()
+                    if cookie.startswith('session_token='):
+                        session_token = cookie.split('=', 1)[1]
+                        break
+            
+            if not session_token:
+                return {
+                    'statusCode': 401,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
-                    'session_token': session_token
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'No session token found'})
+                }
+            
+            # Validate token
+            is_valid, result = validate_session_token(cursor, session_token)
+            
+            if not is_valid:
+                return {
+                    'statusCode': 401,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': result})
+                }
+            
+            user_id = result
+            
+            # Get user data
+            cursor.execute(
+                "SELECT id, email, name, created_at, email_verified, balance, unlimited_access FROM users WHERE id = %s",
+                (user_id,)
+            )
+            
+            user = cursor.fetchone()
+            
+            if not user:
+                return {
+                    'statusCode': 401,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'User not found'})
+                }
+            
+            conn.commit()
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                    'Access-Control-Allow-Credentials': 'true'
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps({
+                    'user': {
+                        'id': str(user['id']),
+                        'email': user['email'],
+                        'name': user['name'],
+                        'created_at': user['created_at'].isoformat(),
+                        'email_verified': user['email_verified'],
+                        'balance': float(user['balance']) if user.get('balance') else 0.0,
+                        'unlimited_access': bool(user.get('unlimited_access', False))
+                    }
                 })
             }
         
@@ -535,7 +643,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 400,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event)
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                    'Access-Control-Allow-Credentials': 'true'
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'error': 'Invalid action'})

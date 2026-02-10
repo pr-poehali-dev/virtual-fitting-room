@@ -27,26 +27,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const tokenExpiry = localStorage.getItem('token_expiry');
-    
-    if (storedUser && tokenExpiry) {
-      const expiryTime = parseInt(tokenExpiry, 10);
-      if (Date.now() < expiryTime) {
-        setUser(JSON.parse(storedUser));
-      } else {
+    const validateSession = async () => {
+      try {
         localStorage.removeItem('user');
         localStorage.removeItem('session_token');
         localStorage.removeItem('token_expiry');
+        
+        const response = await fetch(AUTH_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ action: 'validate' })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Session validation failed:', error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+
+    validateSession();
   }, []);
 
   const login = async (email: string, password: string) => {
     const response = await fetch(AUTH_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ action: 'login', email, password })
     });
 
@@ -56,10 +71,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(data.error || 'Login failed');
     }
 
-    const expiryTime = Date.now() + (7 * 24 * 60 * 60 * 1000);
-    localStorage.setItem('user', JSON.stringify(data.user));
-    localStorage.setItem('session_token', data.session_token);
-    localStorage.setItem('token_expiry', expiryTime.toString());
     setUser(data.user);
   };
 
@@ -67,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await fetch(AUTH_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ action: 'register', email, password, name })
     });
 
@@ -75,25 +87,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!response.ok) {
       throw new Error(data.error || 'Registration failed');
     }
-
-    if (data.user && data.session_token) {
-      const expiryTime = Date.now() + (7 * 24 * 60 * 60 * 1000);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('session_token', data.session_token);
-      localStorage.setItem('token_expiry', expiryTime.toString());
-      setUser(data.user);
-    }
   };
 
-  const logout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('session_token');
-    localStorage.removeItem('token_expiry');
+  const logout = async () => {
+    try {
+      await fetch(AUTH_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action: 'logout' })
+      });
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
     setUser(null);
   };
 
   const updateUser = (userData: User) => {
-    localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
   };
 

@@ -26,6 +26,15 @@
         "password": "wrongpassword"
       },
       "expectedStatus": 401
+    },
+    {
+      "name": "Test validate without cookie",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "validate"
+      },
+      "expectedStatus": 401
     }
   ]
 }

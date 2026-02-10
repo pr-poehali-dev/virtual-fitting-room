@@ -1,7 +1,7 @@
 import json
 import os
 from typing import Dict, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 import secrets
 
 try:
@@ -22,6 +22,20 @@ def get_db_connection():
 
 def generate_session_token() -> str:
     return secrets.token_urlsafe(32)
+
+def save_session_to_db(cursor, conn, user_id: str, token: str, ip_address: str, user_agent: str):
+    '''
+    Save session token to database for validation and revocation
+    '''
+    expires_at = datetime.now() + timedelta(days=7)
+    cursor.execute(
+        """
+        INSERT INTO sessions (user_id, token, expires_at, ip_address, user_agent)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+        (user_id, token, expires_at, ip_address, user_agent)
+    )
+    conn.commit()
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -44,6 +58,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'GET, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Max-Age': '86400'
             },
             'body': ''
@@ -135,13 +150,36 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         conn.commit()
         
+        # Generate and save session
         session_token = generate_session_token()
+        
+        # Get IP and user agent
+        headers = event.get('headers', {})
+        x_forwarded_for = headers.get('x-forwarded-for') or headers.get('X-Forwarded-For', '')
+        x_real_ip = headers.get('x-real-ip') or headers.get('X-Real-IP', '')
+        
+        if x_forwarded_for:
+            ip_address = x_forwarded_for.split(',')[0].strip()
+        elif x_real_ip:
+            ip_address = x_real_ip
+        else:
+            ip_address = event.get('requestContext', {}).get('identity', {}).get('sourceIp', 'unknown')
+        
+        user_agent = headers.get('user-agent', 'unknown')
+        
+        # Save session to DB
+        save_session_to_db(cursor, conn, str(user['id']), session_token, ip_address, user_agent)
+        
+        # Set session token in httpOnly cookie
+        cookie_value = f"session_token={session_token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=604800"
         
         return {
             'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': get_cors_origin(event)
+                'Access-Control-Allow-Origin': get_cors_origin(event),
+                'Access-Control-Allow-Credentials': 'true',
+                'X-Set-Cookie': cookie_value
             },
             'isBase64Encoded': False,
             'body': json.dumps({
@@ -150,9 +188,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'id': str(user['id']),
                     'email': user['email'],
                     'name': user['name'],
-                    'created_at': user['created_at'].isoformat()
-                },
-                'session_token': session_token
+                    'created_at': user['created_at'].isoformat(),
+                    'email_verified': True
+                }
             })
         }
     
