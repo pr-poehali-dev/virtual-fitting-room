@@ -171,7 +171,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         save_session_to_db(cursor, conn, str(user['id']), session_token, ip_address, user_agent)
         
         # Set session token in httpOnly cookie
-        cookie_value = f"session_token={session_token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=604800"
+        cookie_value = f"session_token={session_token}; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=604800"
         
         return {
             'statusCode': 200,
