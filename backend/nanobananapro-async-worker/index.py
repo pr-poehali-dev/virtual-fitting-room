@@ -453,9 +453,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 # Check fal.ai status
                 status_data = check_fal_status(fal_response_url)
                 
-                task_status = status_data.get('status', status_data.get('state', 'UNKNOWN'))
+                fal_status = status_data.get('status', status_data.get('state', 'UNKNOWN'))
                 
-                if task_status == 'COMPLETED' or 'images' in status_data or 'image' in status_data:
+                if fal_status.upper() == 'COMPLETED' or 'images' in status_data or 'image' in status_data:
                     if 'images' in status_data and len(status_data['images']) > 0:
                         fal_result_url = status_data['images'][0]['url']
                     elif 'image' in status_data:
@@ -514,7 +514,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         ''', (fal_result_url, datetime.utcnow(), f'S3 upload failed: {str(save_error)}', task_id))
                         conn.commit()
                 
-                elif fal_status in ['FAILED', 'EXPIRED']:
+                elif fal_status.upper() in ['FAILED', 'EXPIRED']:
                     error_raw = status_data.get('error', 'Generation failed')
                     error_msg = f'Ошибка генерации: {str(error_raw)[:100]}'
                     
@@ -567,7 +567,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 status_data = check_fal_status(stuck_response_url)
                 fal_status = status_data.get('status', status_data.get('state', 'UNKNOWN'))
                 
-                if fal_status == 'COMPLETED' or 'images' in status_data or 'image' in status_data:
+                if fal_status.upper() == 'COMPLETED' or 'images' in status_data or 'image' in status_data:
                     if 'images' in status_data and len(status_data['images']) > 0:
                         fal_result_url = status_data['images'][0]['url']
                     elif 'image' in status_data:
@@ -617,7 +617,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         ''', (fal_result_url, datetime.utcnow(), stuck_id))
                         conn.commit()
                 
-                elif fal_status in ['FAILED', 'EXPIRED']:
+                elif fal_status.upper() in ['FAILED', 'EXPIRED']:
                     error_msg = f'Ошибка генерации: {str(status_data.get("error", "Generation failed"))[:100]}'
                     print(f'[NanoBanana] Stuck task {stuck_id} failed')
                     cursor.execute('''
