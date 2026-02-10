@@ -5,6 +5,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import boto3
 from botocore.config import Config
+from session_utils import validate_session
 
 def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')
@@ -87,7 +88,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'DELETE, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
+                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id, X-Session-Token',
+                'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Max-Age': '86400'
             },
             'body': ''
@@ -104,10 +106,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Method not allowed'})
         }
     
-    headers = event.get('headers', {})
-    user_id = headers.get('x-user-id') or headers.get('X-User-Id')
+    # DUAL-mode: validate session token (new) or fallback to X-User-Id (old)
+    is_valid, user_id, error_msg = validate_session(event)
     
-    if not user_id:
+    if not is_valid:
         return {
             'statusCode': 401,
             'headers': {
@@ -115,7 +117,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': get_cors_origin(event)
             },
             'isBase64Encoded': False,
-            'body': json.dumps({'error': 'Unauthorized - User ID required'})
+            'body': json.dumps({'error': error_msg or 'Unauthorized'})
         }
     
     conn = get_db_connection()

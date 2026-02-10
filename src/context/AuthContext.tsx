@@ -47,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await fetch(AUTH_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ action: 'login', email, password })
     });
 
@@ -56,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(data.error || 'Login failed');
     }
 
-    const expiryTime = Date.now() + (24 * 60 * 60 * 1000);
+    const expiryTime = Date.now() + (7 * 24 * 60 * 60 * 1000);
     localStorage.setItem('user', JSON.stringify(data.user));
     localStorage.setItem('session_token', data.session_token);
     localStorage.setItem('token_expiry', expiryTime.toString());
@@ -67,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await fetch(AUTH_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ action: 'register', email, password, name })
     });
 
@@ -77,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (data.user && data.session_token) {
-      const expiryTime = Date.now() + (24 * 60 * 60 * 1000);
+      const expiryTime = Date.now() + (7 * 24 * 60 * 60 * 1000);
       localStorage.setItem('user', JSON.stringify(data.user));
       localStorage.setItem('session_token', data.session_token);
       localStorage.setItem('token_expiry', expiryTime.toString());

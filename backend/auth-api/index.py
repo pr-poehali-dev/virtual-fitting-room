@@ -27,6 +27,51 @@ def hash_password(password: str) -> str:
 def generate_session_token() -> str:
     return secrets.token_urlsafe(32)
 
+def save_session_to_db(cursor, conn, user_id: str, token: str, ip_address: str, user_agent: str):
+    '''
+    Save session token to database for validation and revocation
+    '''
+    expires_at = datetime.now() + timedelta(days=7)
+    cursor.execute(
+        """
+        INSERT INTO sessions (user_id, token, expires_at, ip_address, user_agent)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+        (user_id, token, expires_at, ip_address, user_agent)
+    )
+    conn.commit()
+
+def validate_session_token(cursor, token: str) -> tuple[bool, str]:
+    '''
+    Validate session token from database
+    Returns: (is_valid, user_id or error_message)
+    '''
+    if not token:
+        return (False, 'Token required')
+    
+    cursor.execute(
+        """
+        SELECT user_id, expires_at FROM sessions 
+        WHERE token = %s
+        """,
+        (token,)
+    )
+    session = cursor.fetchone()
+    
+    if not session:
+        return (False, 'Invalid token')
+    
+    if datetime.now() > session['expires_at']:
+        return (False, 'Token expired')
+    
+    # Update last_used_at
+    cursor.execute(
+        "UPDATE sessions SET last_used_at = CURRENT_TIMESTAMP WHERE token = %s",
+        (token,)
+    )
+    
+    return (True, str(session['user_id']))
+
 def check_rate_limit(cursor, conn, ip_address: str, email: str) -> tuple[bool, str]:
     '''
     Check rate limiting - max 5 failed attempts per IP in 15 minutes
@@ -434,12 +479,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.commit()
             
             session_token = generate_session_token()
+            user_agent = event.get('headers', {}).get('user-agent', 'unknown')
+            
+            # Save session to DB for validation
+            save_session_to_db(cursor, conn, str(user['id']), session_token, ip_address, user_agent)
+            
+            # DUAL-mode: return token in JSON (old way) + set httpOnly cookie (new way)
+            cookie_value = f"session_token={session_token}; HttpOnly; Secure; SameSite=Lax; Max-Age=604800; Path=/"
             
             return {
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event)
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                    'Access-Control-Allow-Credentials': 'true',
+                    'X-Set-Cookie': cookie_value
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({
