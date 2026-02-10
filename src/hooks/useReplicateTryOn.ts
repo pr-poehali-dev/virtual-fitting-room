@@ -241,9 +241,8 @@ export function useReplicateTryOn() {
     }
     setShowCategoryError(false);
 
-    const hasBalance = await checkReplicateBalance(user.id);
-    if (!hasBalance) {
-      toast.error('Недостаточно средств. Пополните баланс.');
+    const balanceCheck = await checkReplicateBalance(user, selectedClothingItems.length);
+    if (!balanceCheck.canGenerate) {
       return;
     }
 
@@ -252,7 +251,7 @@ export function useReplicateTryOn() {
       setGenerationStatus('Подготовка запроса...');
       setHasTimedOut(false);
 
-      await deductReplicateBalance(user.id);
+      await deductReplicateBalance(user, selectedClothingItems.length);
 
       const garmentDict: { [key: string]: string } = {};
       selectedClothingItems.forEach(item => {
@@ -318,7 +317,7 @@ export function useReplicateTryOn() {
       setGenerationStatus('');
       
       if (user) {
-        await refundReplicateBalance(user.id);
+        await refundReplicateBalance(user, selectedClothingItems.length);
       }
     }
   };
@@ -360,7 +359,7 @@ export function useReplicateTryOn() {
         toast.error('Ошибка генерации изображения');
         
         if (user) {
-          await refundReplicateBalance(user.id);
+          await refundReplicateBalance(user, selectedClothingItems.length);
         }
       } else if (statusData.status === 'processing') {
         setGenerationStatus('Обработка изображения...');
