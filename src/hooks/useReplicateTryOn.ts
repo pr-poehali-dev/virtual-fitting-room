@@ -271,10 +271,12 @@ export function useReplicateTryOn() {
         custom_prompt: customPrompt || undefined
       });
 
+      const token = localStorage.getItem('session_token');
       const startResponse = await fetch(NANOBANANAPRO_START_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'X-Session-Token': token } : {})
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -331,10 +333,12 @@ export function useReplicateTryOn() {
     if (!user) return;
 
     try {
+      const token = localStorage.getItem('session_token');
       const statusResponse = await fetch(`${NANOBANANAPRO_STATUS_API}?task_id=${currentTaskId}`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'X-Session-Token': token } : {})
         },
         credentials: 'include',
       });
@@ -397,10 +401,12 @@ export function useReplicateTryOn() {
       setIsGenerating(true);
       setGenerationStatus('Проверка существующих задач...');
 
+      const token = localStorage.getItem('session_token');
       const workerResponse = await fetch(NANOBANANAPRO_WORKER_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'X-Session-Token': token } : {})
         },
         credentials: 'include',
       });
@@ -435,10 +441,12 @@ export function useReplicateTryOn() {
       let finalLookbookId = lookbookId;
       
       if (lookbookId === 'new' && lookbookName) {
+        const token = localStorage.getItem('session_token');
         const createResponse = await fetch(`${DB_QUERY_API}`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...(token ? { 'X-Session-Token': token } : {})
           },
           credentials: 'include',
           body: JSON.stringify({
@@ -461,10 +469,12 @@ export function useReplicateTryOn() {
       if (cdnImageUrl) {
         imageToSave = cdnImageUrl;
       } else {
+        const token = localStorage.getItem('session_token');
         const saveImageResponse = await fetch(SAVE_IMAGE_FTP_API, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...(token ? { 'X-Session-Token': token } : {})
           },
           credentials: 'include',
           body: JSON.stringify({
@@ -480,10 +490,12 @@ export function useReplicateTryOn() {
         imageToSave = saveImageData.cdn_url;
       }
 
+      const token2 = localStorage.getItem('session_token');
       const insertResponse = await fetch(`${DB_QUERY_API}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token2 ? { 'X-Session-Token': token2 } : {})
         },
         credentials: 'include',
         body: JSON.stringify({
