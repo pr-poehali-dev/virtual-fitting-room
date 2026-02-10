@@ -662,6 +662,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({
+                    'session_token': session_token,
                     'user': {
                         'id': str(user['id']),
                         'email': user['email'],

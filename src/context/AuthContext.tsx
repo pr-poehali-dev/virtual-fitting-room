@@ -38,6 +38,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (response.ok) {
           const data = await response.json();
+          
+          // Save token to localStorage (CRITICAL for API requests after page reload!)
+          console.log('[Auth] Validate response:', { hasToken: !!data.session_token, hasUser: !!data.user });
+          if (data.session_token) {
+            localStorage.setItem('session_token', data.session_token);
+            console.log('[Auth] Token saved to localStorage from validation');
+          } else {
+            console.error('[Auth] No session_token in validate response!');
+          }
+          
           setUser(data.user);
         } else {
           setUser(null);
