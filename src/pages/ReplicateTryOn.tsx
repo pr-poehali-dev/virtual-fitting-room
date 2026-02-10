@@ -495,10 +495,20 @@ export default function ReplicateTryOn() {
       console.log(
         `[NanoBananaPro-CALL-${callId}] About to send fetch request...`,
       );
+      
+      const token = localStorage.getItem('session_token');
+      
+      if (!token) {
+        throw new Error('Нет токена авторизации. Пожалуйста, перезайдите в систему.');
+      }
+      
+      console.log('[NanoBananaPro-START] Token first 20 chars:', token.substring(0, 20));
+      
       const response = await fetch(NANOBANANAPRO_START_API, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-Session-Token": token
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -524,17 +534,21 @@ export default function ReplicateTryOn() {
       );
       toast.success("Задача создана! Ожидайте результат...");
 
-      fetch(`${NANOBANANAPRO_WORKER_API}?task_id=${data.task_id}`).catch(
-        (err) => {
+      const workerToken = localStorage.getItem('session_token');
+      if (workerToken) {
+        fetch(`${NANOBANANAPRO_WORKER_API}?task_id=${data.task_id}`, {
+          headers: { 'X-Session-Token': workerToken },
+          credentials: 'include'
+        }).catch((err) => {
           console.log(
             "[NanoBananaPro] Worker trigger failed (non-critical):",
             err,
           );
-        },
-      );
+        });
+      }
 
       startPolling(data.task_id);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Generation error:", error);
       toast.error(error.message || "Ошибка запуска генерации");
       setIsGenerating(false);
@@ -579,11 +593,23 @@ export default function ReplicateTryOn() {
           return;
         }
 
+        const token = localStorage.getItem('session_token');
+        
+        if (!token) {
+          console.error('[NanoBananaPro] КРИТИЧНО: Нет токена в localStorage при polling! Пропускаем запрос.');
+          return;
+        }
+        
+        console.log('[NanoBananaPro] Polling request #' + checkCount);
+        console.log('[NanoBananaPro] Token first 20 chars:', token.substring(0, 20));
+        
         const response = await fetch(DB_QUERY_API, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "X-Session-Token": token
           },
+          credentials: 'include',
           body: JSON.stringify({
             table: "nanobananapro_tasks",
             action: "select",
@@ -612,14 +638,20 @@ export default function ReplicateTryOn() {
           console.log(
             "[NanoBananaPro] Triggering worker to check fal.ai status",
           );
-          fetch(`${NANOBANANAPRO_WORKER_API}?task_id=${taskId}`).catch(
-            (err) => {
+          const workerToken = localStorage.getItem('session_token');
+          if (workerToken) {
+            fetch(`${NANOBANANAPRO_WORKER_API}?task_id=${taskId}`, {
+              headers: { 'X-Session-Token': workerToken },
+              credentials: 'include'
+            }).catch((err) => {
               console.log(
                 "[NanoBananaPro] Worker trigger failed (non-critical):",
                 err,
               );
-            },
-          );
+            });
+          } else {
+            console.warn('[NanoBananaPro] Нет токена для worker trigger');
+          }
         }
 
         if (data.status === "pending") {
@@ -674,7 +706,7 @@ export default function ReplicateTryOn() {
         } else {
           console.log("[NanoBananaPro] Unknown status:", data.status);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("[NanoBananaPro] Polling error:", error);
       }
     }, 30000);
