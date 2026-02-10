@@ -35,7 +35,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'PUT, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-User-Id, X-Session-Token',
-                'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Max-Age': '86400'
             },
             'body': ''

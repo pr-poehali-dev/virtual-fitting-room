@@ -484,16 +484,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             # Save session to DB for validation
             save_session_to_db(cursor, conn, str(user['id']), session_token, ip_address, user_agent)
             
-            # DUAL-mode: return token in JSON (old way) + set httpOnly cookie (new way)
-            cookie_value = f"session_token={session_token}; HttpOnly; Secure; SameSite=Lax; Max-Age=604800; Path=/"
+            # DUAL-mode: return token in JSON (old way) for now
+            # HttpOnly cookie support can be added later when needed
             
             return {
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event),
-                    'Access-Control-Allow-Credentials': 'true',
-                    'X-Set-Cookie': cookie_value
+                    'Access-Control-Allow-Origin': get_cors_origin(event)
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({

@@ -47,7 +47,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await fetch(AUTH_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ action: 'login', email, password })
     });
 
@@ -68,7 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await fetch(AUTH_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ action: 'register', email, password, name })
     });
 

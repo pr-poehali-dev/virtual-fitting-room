@@ -86,7 +86,6 @@ export default function ProfileSettings() {
       const response = await fetch(CHANGE_PASSWORD_API, {
         method: 'PUT',
         headers,
-        credentials: 'include',
         body: JSON.stringify({
           current_password: currentPassword,
           new_password: newPassword
@@ -132,7 +131,6 @@ export default function ProfileSettings() {
       const response = await fetch(UPDATE_PROFILE_API, {
         method: 'PUT',
         headers,
-        credentials: 'include',
         body: JSON.stringify({
           name: editedName
         })
@@ -178,8 +176,7 @@ export default function ProfileSettings() {
       
       const response = await fetch(DELETE_ACCOUNT_API, {
         method: 'DELETE',
-        headers,
-        credentials: 'include'
+        headers
       });
 
       const data = await response.json();
