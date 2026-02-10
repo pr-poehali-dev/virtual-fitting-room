@@ -4,6 +4,7 @@ import psycopg2
 import boto3
 from botocore.config import Config
 from typing import Dict, Any, List, Optional
+from session_utils import validate_session
 
 def delete_from_s3_if_orphaned(photo_url: str, user_id: str, cursor, schema: str) -> None: 
     '''
@@ -72,7 +73,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Max-Age': '86400'
             },
             'body': '',
@@ -84,10 +86,26 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 405,
             'headers': {
                 'Access-Control-Allow-Origin': get_cors_origin(event),
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Credentials': 'true'
             },
             'body': json.dumps({'error': 'Method not allowed'}),
             'isBase64Encoded': False
+        }
+    
+    # Validate session token
+    is_valid, user_id, error_msg = validate_session(event)
+    
+    if not is_valid:
+        return {
+            'statusCode': 401,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': get_cors_origin(event),
+                'Access-Control-Allow-Credentials': 'true'
+            },
+            'isBase64Encoded': False,
+            'body': json.dumps({'error': error_msg or 'Unauthorized'})
         }
     
     try:
@@ -103,7 +121,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 400,
                 'headers': {
                     'Access-Control-Allow-Origin': get_cors_origin(event),
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Credentials': 'true'
                 },
                 'body': json.dumps({'error': 'Missing table or action'}),
                 'isBase64Encoded': False
@@ -124,7 +143,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 403,
                 'headers': {
                     'Access-Control-Allow-Origin': get_cors_origin(event),
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Credentials': 'true'
                 },
                 'body': json.dumps({'error': f'Access to table {table} is not allowed'}),
                 'isBase64Encoded': False
@@ -205,9 +225,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if not where or not data:
                 raise Exception('Missing where or data for update')
             
-            # Получаем user_id из headers
-            headers = event.get('headers', {})
-            user_id = headers.get('x-user-id') or headers.get('X-User-Id')
+            # user_id уже получен из validate_session выше
             
             # Для lookbooks - проверяем удалённые фото
             removed_photos = []
@@ -336,7 +354,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': get_cors_origin(event),
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Credentials': 'true'
             },
             'body': json.dumps({
                 'success': True,
@@ -351,7 +370,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 500,
             'headers': {
                 'Access-Control-Allow-Origin': get_cors_origin(event),
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Credentials': 'true'
             },
             'body': json.dumps({'error': str(e)}),
             'isBase64Encoded': False

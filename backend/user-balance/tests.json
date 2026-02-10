@@ -7,17 +7,17 @@
       "expectedStatus": 200
     },
     {
-      "name": "GET without X-User-Id returns 401",
+      "name": "GET without token returns 401",
       "method": "GET",
       "path": "/",
       "expectedStatus": 401,
       "expectedBody": {
-        "error": "Требуется авторизация"
+        "error": "string"
       },
       "bodyMatcher": "partial"
     },
     {
-      "name": "POST deduct without X-User-Id returns 401",
+      "name": "POST deduct without token returns 401",
       "method": "POST",
       "path": "/",
       "body": {
@@ -25,7 +25,7 @@
       },
       "expectedStatus": 401,
       "expectedBody": {
-        "error": "Требуется авторизация"
+        "error": "string"
       },
       "bodyMatcher": "partial"
     }

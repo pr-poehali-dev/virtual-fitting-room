@@ -90,9 +90,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           table: 'lookbooks',
           action: 'select',
@@ -138,9 +138,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           table: 'try_on_history',
           action: 'select',
@@ -199,9 +199,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           table: 'color_type_history',
           action: 'select',

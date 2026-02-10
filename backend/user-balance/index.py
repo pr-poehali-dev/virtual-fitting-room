@@ -8,6 +8,7 @@ import json
 import os
 import psycopg2
 from typing import Dict, Any
+from session_utils import validate_session
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     def get_cors_origin(event: Dict[str, Any]) -> str:
@@ -23,19 +24,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Max-Age': '86400'
             },
             'body': ''
         }
     
-    user_id = event.get('headers', {}).get('X-User-Id') or event.get('headers', {}).get('x-user-id')
+    # Validate session token
+    is_valid, user_id, error_msg = validate_session(event)
     
-    if not user_id:
+    if not is_valid:
         return {
             'statusCode': 401,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
-            'body': json.dumps({'error': 'Требуется авторизация'})
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+            'body': json.dumps({'error': error_msg or 'Требуется авторизация'})
         }
     
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
@@ -53,7 +56,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if not result:
                 return {
                     'statusCode': 404,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
                     'body': json.dumps({'error': 'Пользователь не найден'})
                 }
             
@@ -63,7 +66,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             return {
                 'statusCode': 200,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
                 'body': json.dumps({
                     'balance': float(balance),
                     'free_tries_remaining': free_tries_remaining,
@@ -93,7 +96,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if not result:
                     return {
                         'statusCode': 404,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
                         'body': json.dumps({'error': 'Пользователь не найден'})
                     }
                 
@@ -120,7 +123,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     
                     return {
                         'statusCode': 200,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
                         'body': json.dumps({
                             'success': True,
                             'unlimited': True,
@@ -157,7 +160,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     
                     return {
                         'statusCode': 200,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
                         'body': json.dumps({
                             'success': True,
                             'paid_try': True,
@@ -168,7 +171,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
                 return {
                     'statusCode': 402,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
                     'body': json.dumps({
                         'error': 'Недостаточно средств',
                         'balance': balance_before,
@@ -193,7 +196,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if not result:
                     return {
                         'statusCode': 404,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
                         'body': json.dumps({'error': 'Пользователь не найден'})
                     }
                 
@@ -203,7 +206,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if unlimited_access:
                     return {
                         'statusCode': 200,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
                         'body': json.dumps({
                             'success': True,
                             'unlimited': True,
@@ -240,7 +243,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
                 return {
                     'statusCode': 200,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
                     'body': json.dumps({
                         'success': True,
                         'refunded': True,
@@ -252,13 +255,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             return {
                 'statusCode': 400,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
                 'body': json.dumps({'error': 'Неизвестное действие'})
             }
         
         return {
             'statusCode': 405,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
             'body': json.dumps({'error': 'Метод не поддерживается'})
         }
     
