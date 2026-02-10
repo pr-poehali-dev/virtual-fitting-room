@@ -229,7 +229,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 405,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': get_cors_origin(event)
+                'Access-Control-Allow-Origin': get_cors_origin(event),
+                'Access-Control-Allow-Credentials': 'true'
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'Method not allowed'})
@@ -241,7 +242,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 400,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': get_cors_origin(event)
+                'Access-Control-Allow-Origin': get_cors_origin(event),
+                'Access-Control-Allow-Credentials': 'true'
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'Missing request body'})
@@ -276,7 +278,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing email or password'})
@@ -292,7 +295,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing name'})
@@ -306,7 +310,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Email already registered'})
@@ -345,7 +350,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 201,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event)
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                    'Access-Control-Allow-Credentials': 'true'
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({
@@ -398,7 +404,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 429,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Too many login attempts from this IP. Please try again in 15 minutes.'})
@@ -422,7 +429,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 429,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Too many failed login attempts for this account. Please try again in 1 hour or reset your password.'})
@@ -447,7 +455,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 401,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Invalid email or password'})
@@ -484,7 +493,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 401,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Invalid email or password'})
@@ -495,7 +505,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 403,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Email not verified. Please check your email.'})
@@ -656,7 +667,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': get_cors_origin(event)
+                'Access-Control-Allow-Origin': get_cors_origin(event),
+                'Access-Control-Allow-Credentials': 'true'
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': str(e)})
