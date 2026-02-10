@@ -148,10 +148,12 @@ export default function ReplicateTryOnGenerator({
       });
 
       console.log(`[NanoBananaPro-CALL-${callId}] About to send fetch request...`);
+      const token = localStorage.getItem('session_token');
       const response = await fetch(NANOBANANAPRO_START_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'X-Session-Token': token } : {})
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -174,7 +176,11 @@ export default function ReplicateTryOnGenerator({
       setGenerationStatus('В очереди... Обычно генерация занимает 30-90 секунд');
       toast.success('Задача создана! Ожидайте результат...');
       
-      fetch(`${NANOBANANAPRO_WORKER_API}?task_id=${data.task_id}`).catch(err => {
+      const token2 = localStorage.getItem('session_token');
+      fetch(`${NANOBANANAPRO_WORKER_API}?task_id=${data.task_id}`, {
+        headers: token2 ? { 'X-Session-Token': token2 } : {},
+        credentials: 'include'
+      }).catch(err => {
         console.log('[NanoBananaPro] Worker trigger failed (non-critical):', err);
       });
       
@@ -248,7 +254,11 @@ export default function ReplicateTryOnGenerator({
         
         if (data.status === 'processing' && triggerWorker) {
           console.log('[NanoBananaPro] Triggering worker to check fal.ai status');
-          fetch(`${NANOBANANAPRO_WORKER_API}?task_id=${taskId}`).catch(err => {
+          const token3 = localStorage.getItem('session_token');
+          fetch(`${NANOBANANAPRO_WORKER_API}?task_id=${taskId}`, {
+            headers: token3 ? { 'X-Session-Token': token3 } : {},
+            credentials: 'include'
+          }).catch(err => {
             console.log('[NanoBananaPro] Worker trigger failed (non-critical):', err);
           });
         }
