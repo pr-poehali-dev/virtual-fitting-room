@@ -222,6 +222,7 @@ export default function ReplicateTryOnGenerator({
           headers: {
             'Content-Type': 'application/json'
           },
+          credentials: 'include',
           body: JSON.stringify({
             table: 'nanobananapro_tasks',
             action: 'select',
