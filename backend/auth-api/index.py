@@ -551,8 +551,32 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         elif action == 'logout':
+            # Get session token from cookie or header
+            headers = event.get('headers', {})
+            cookie_header = headers.get('x-cookie') or headers.get('X-Cookie', '')
+            session_token = headers.get('x-session-token') or headers.get('X-Session-Token')
+            
+            # Try to extract from cookie if not in header
+            if not session_token and cookie_header:
+                for cookie in cookie_header.split(';'):
+                    cookie = cookie.strip()
+                    if cookie.startswith('session_token='):
+                        session_token = cookie.split('=', 1)[1]
+                        break
+            
+            # Delete session from database if token exists
+            if session_token:
+                try:
+                    cursor.execute(
+                        "DELETE FROM sessions WHERE token = %s",
+                        (session_token,)
+                    )
+                    conn.commit()
+                except Exception as e:
+                    print(f'Error deleting session: {e}')
+            
             # Clear session cookie
-            cookie_value = "session_token=; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=0"
+            cookie_value = "session_token=; Path=/; HttpOnly; Secure; SameSite=None; Domain=.poehali.dev; Max-Age=0"
             
             return {
                 'statusCode': 200,
