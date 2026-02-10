@@ -313,8 +313,8 @@ export default function ColorType() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-User-Id": user.id,
         },
+        credentials: 'include',
         body: JSON.stringify({
           person_image: imageToAnalyze,
           eye_color: eyeColor,

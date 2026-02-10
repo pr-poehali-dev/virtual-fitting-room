@@ -499,8 +499,8 @@ export default function ReplicateTryOn() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-User-Id": user.id,
         },
+        credentials: 'include',
         body: JSON.stringify({
           person_image: uploadedImage,
           garments:
@@ -715,8 +715,8 @@ export default function ReplicateTryOn() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-User-Id": user.id,
         },
+        credentials: 'include',
         body: JSON.stringify({
           table: "lookbooks",
           action: "update",
@@ -754,8 +754,8 @@ export default function ReplicateTryOn() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-User-Id": user.id,
         },
+        credentials: 'include',
         body: JSON.stringify({
           table: "lookbooks",
           action: "insert",

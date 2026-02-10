@@ -63,9 +63,7 @@ export default function WalletTab() {
 
     try {
       const response = await fetch(USER_BALANCE_API, {
-        headers: {
-          'X-User-Id': user.id
-        }
+        credentials: 'include'
       });
 
       if (response.ok) {

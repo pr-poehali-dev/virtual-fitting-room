@@ -100,9 +100,9 @@ export default function ProfileLookbooks() {
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           table: 'lookbooks',
           action: 'insert',
@@ -150,9 +150,9 @@ export default function ProfileLookbooks() {
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           table: 'lookbooks',
           action: 'update',
@@ -191,9 +191,9 @@ export default function ProfileLookbooks() {
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           table: 'lookbooks',
           action: 'delete',
@@ -223,9 +223,9 @@ export default function ProfileLookbooks() {
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           table: 'lookbooks',
           action: 'update',

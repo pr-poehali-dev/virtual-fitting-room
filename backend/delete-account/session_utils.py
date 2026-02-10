@@ -81,11 +81,4 @@ def validate_session(event: dict) -> tuple[bool, str, str]:
             cursor.close()
             conn.close()
     
-    # Fallback to old way: X-User-Id header (for backward compatibility)
-    headers = event.get('headers', {})
-    user_id = headers.get('x-user-id') or headers.get('X-User-Id')
-    
-    if user_id:
-        return (True, user_id, '')
-    
-    return (False, None, 'No authentication provided')
+    return (False, None, 'No authentication provided - session token required')

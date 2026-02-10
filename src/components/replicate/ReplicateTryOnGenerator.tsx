@@ -152,8 +152,8 @@ export default function ReplicateTryOnGenerator({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-User-Id': user.id,
         },
+        credentials: 'include',
         body: JSON.stringify({
           person_image: uploadedImage,
           garments: selectedClothingItems.map((item) => ({

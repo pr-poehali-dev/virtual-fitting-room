@@ -105,9 +105,9 @@ export default function Profile() {
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user?.id || ''
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           table: 'lookbooks',
           action: 'select',
@@ -151,9 +151,9 @@ export default function Profile() {
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           table: 'lookbooks',
           action: 'insert',
@@ -204,9 +204,9 @@ export default function Profile() {
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           table: 'lookbooks',
           action: 'update',
@@ -253,9 +253,9 @@ export default function Profile() {
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           table: 'lookbooks',
           action: 'delete',
@@ -458,9 +458,9 @@ export default function Profile() {
       const response = await fetch(CHANGE_PASSWORD_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           current_password: currentPassword,
           new_password: newPassword
@@ -493,9 +493,9 @@ export default function Profile() {
       const response = await fetch(UPDATE_PROFILE_API, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           name: editedName
         })
@@ -531,9 +531,7 @@ export default function Profile() {
     try {
       const response = await fetch(DELETE_ACCOUNT_API, {
         method: 'DELETE',
-        headers: {
-          'X-User-Id': user.id
-        }
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -689,9 +687,9 @@ export default function Profile() {
                                         await fetch(LOOKBOOKS_API, {
                                           method: 'PUT',
                                           headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-User-Id': user.id
+                                            'Content-Type': 'application/json'
                                           },
+                                          credentials: 'include',
                                           body: JSON.stringify({
                                             id: targetLookbookId,
                                             name: targetLookbook.name,
@@ -704,9 +702,9 @@ export default function Profile() {
                                         await fetch(LOOKBOOKS_API, {
                                           method: 'PUT',
                                           headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-User-Id': user.id
+                                            'Content-Type': 'application/json'
                                           },
+                                          credentials: 'include',
                                           body: JSON.stringify({
                                             id: editingLookbookId,
                                             name: newLookbookName,

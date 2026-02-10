@@ -473,8 +473,7 @@ export function useReplicateTryOn() {
       const insertResponse = await fetch(`${DB_QUERY_API}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id,
+          'Content-Type': 'application/json'
         },
         credentials: 'include',
         body: JSON.stringify({

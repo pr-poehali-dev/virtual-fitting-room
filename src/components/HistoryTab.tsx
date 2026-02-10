@@ -85,9 +85,9 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': userId
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           table: 'lookbooks',
           action: 'update',
@@ -119,9 +119,9 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': userId
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           table: 'try_on_history',
           action: 'delete',
@@ -152,9 +152,9 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
         fetch(DB_QUERY_API, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'X-User-Id': userId
+            'Content-Type': 'application/json'
           },
+          credentials: 'include',
           body: JSON.stringify({
             table: 'try_on_history',
             action: 'delete',

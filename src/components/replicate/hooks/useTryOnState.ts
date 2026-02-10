@@ -142,9 +142,7 @@ export function useTryOnState() {
     
     try {
       const response = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
-        headers: {
-          'X-User-Id': user.id
-        }
+        credentials: 'include'
       });
       
       if (response.ok) {
@@ -331,9 +329,9 @@ export function useTryOnState() {
       const response = await fetch('https://functions.poehali.dev/fdb150a0-d5ba-47ec-9d9a-e13595cd92d1', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user?.id || 'anonymous'
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           task_id: taskId,
           user_choice: 'continue'
@@ -380,9 +378,7 @@ export function useTryOnState() {
     const interval = setInterval(async () => {
       try {
         const response = await fetch(`${REPLICATE_STATUS_API}?task_id=${id}`, {
-          headers: {
-            'X-User-Id': user?.id || 'anonymous'
-          }
+          credentials: 'include'
         });
 
         if (!response.ok) {
@@ -434,9 +430,7 @@ export function useTryOnState() {
           const checker = setInterval(async () => {
             try {
               const checkResponse = await fetch(`${REPLICATE_STATUS_API}?task_id=${id}`, {
-                headers: {
-                  'X-User-Id': user?.id || 'anonymous'
-                }
+                credentials: 'include'
               });
 
               if (checkResponse.ok) {
@@ -507,9 +501,9 @@ export function useTryOnState() {
       const response = await fetch(REPLICATE_START_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user?.id || 'anonymous'
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify(requestBody)
       });
 
@@ -549,9 +543,9 @@ export function useTryOnState() {
         const createResponse = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'X-User-Id': user.id
+            'Content-Type': 'application/json'
           },
+          credentials: 'include',
           body: JSON.stringify({
             name: newLookbookName,
             person_name: newLookbookPersonName || null
@@ -570,9 +564,9 @@ export function useTryOnState() {
       const addImageResponse = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           lookbook_id: lookbookId,
           image_url: generatedImage
