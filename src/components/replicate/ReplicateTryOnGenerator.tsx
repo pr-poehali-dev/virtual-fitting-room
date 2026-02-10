@@ -149,11 +149,16 @@ export default function ReplicateTryOnGenerator({
 
       console.log(`[NanoBananaPro-CALL-${callId}] About to send fetch request...`);
       const token = localStorage.getItem('session_token');
+      
+      if (!token) {
+        throw new Error('Нет токена авторизации. Пожалуйста, перезайдите в систему.');
+      }
+      
       const response = await fetch(NANOBANANAPRO_START_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { 'X-Session-Token': token } : {})
+          'X-Session-Token': token
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -176,18 +181,21 @@ export default function ReplicateTryOnGenerator({
       setGenerationStatus('В очереди... Обычно генерация занимает 30-90 секунд');
       toast.success('Задача создана! Ожидайте результат...');
       
-      const token2 = localStorage.getItem('session_token');
-      fetch(`${NANOBANANAPRO_WORKER_API}?task_id=${data.task_id}`, {
-        headers: token2 ? { 'X-Session-Token': token2 } : {},
-        credentials: 'include'
-      }).catch(err => {
-        console.log('[NanoBananaPro] Worker trigger failed (non-critical):', err);
-      });
+      const workerToken = localStorage.getItem('session_token');
+      if (workerToken) {
+        fetch(`${NANOBANANAPRO_WORKER_API}?task_id=${data.task_id}`, {
+          headers: { 'X-Session-Token': workerToken },
+          credentials: 'include'
+        }).catch(err => {
+          console.log('[NanoBananaPro] Worker trigger failed (non-critical):', err);
+        });
+      }
       
       startPolling(data.task_id);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Generation error:', error);
-      toast.error(error.message || 'Ошибка запуска генерации');
+      const errorMessage = error instanceof Error ? error.message : 'Ошибка запуска генерации';
+      toast.error(errorMessage);
       setIsGenerating(false);
       setGenerationStatus('');
       
@@ -224,11 +232,19 @@ export default function ReplicateTryOnGenerator({
         }
         
         const token = localStorage.getItem('session_token');
+        
+        if (!token) {
+          console.error('[NanoBananaPro] КРИТИЧНО: Нет токена в localStorage при polling! Пропускаем запрос.');
+          return;
+        }
+        
+        console.log('[NanoBananaPro] Polling с токеном:', token.substring(0, 10) + '...');
+        
         const response = await fetch(DB_QUERY_API, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(token ? { 'X-Session-Token': token } : {})
+            'X-Session-Token': token
           },
           credentials: 'include',
           body: JSON.stringify({
@@ -240,6 +256,7 @@ export default function ReplicateTryOnGenerator({
         });
         
         if (!response.ok) {
+          console.error('[NanoBananaPro] Polling failed with status:', response.status);
           throw new Error('Ошибка проверки статуса');
         }
 
@@ -254,13 +271,17 @@ export default function ReplicateTryOnGenerator({
         
         if (data.status === 'processing' && triggerWorker) {
           console.log('[NanoBananaPro] Triggering worker to check fal.ai status');
-          const token3 = localStorage.getItem('session_token');
-          fetch(`${NANOBANANAPRO_WORKER_API}?task_id=${taskId}`, {
-            headers: token3 ? { 'X-Session-Token': token3 } : {},
-            credentials: 'include'
-          }).catch(err => {
-            console.log('[NanoBananaPro] Worker trigger failed (non-critical):', err);
-          });
+          const workerToken = localStorage.getItem('session_token');
+          if (workerToken) {
+            fetch(`${NANOBANANAPRO_WORKER_API}?task_id=${taskId}`, {
+              headers: { 'X-Session-Token': workerToken },
+              credentials: 'include'
+            }).catch(err => {
+              console.log('[NanoBananaPro] Worker trigger failed (non-critical):', err);
+            });
+          } else {
+            console.warn('[NanoBananaPro] Нет токена для worker trigger');
+          }
         }
         
         if (data.status === 'pending') {
@@ -306,7 +327,7 @@ export default function ReplicateTryOnGenerator({
         } else {
           console.log('[NanoBananaPro] Unknown status:', data.status);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[NanoBananaPro] Polling error:', error);
       }
     }, 30000);
