@@ -27,6 +27,61 @@ def hash_password(password: str) -> str:
 def generate_session_token() -> str:
     return secrets.token_urlsafe(32)
 
+def check_rate_limit(cursor, conn, ip_address: str, email: str) -> tuple[bool, str]:
+    '''
+    Check rate limiting - max 5 failed attempts per IP in 15 minutes
+    OR max 10 failed attempts per email in 1 hour
+    Returns: (is_allowed, error_message)
+    '''
+    # Check IP-based rate limit
+    cursor.execute(
+        """
+        SELECT COUNT(*) as attempt_count
+        FROM user_login_attempts
+        WHERE ip_address = %s
+        AND attempt_time > NOW() - INTERVAL '15 minutes'
+        AND success = false
+        """,
+        (ip_address,)
+    )
+    result = cursor.fetchone()
+    ip_failed_attempts = result['attempt_count'] if result else 0
+    
+    if ip_failed_attempts >= 5:
+        return (False, 'Too many failed login attempts from this IP. Please try again in 15 minutes.')
+    
+    # Check email-based rate limit
+    cursor.execute(
+        """
+        SELECT COUNT(*) as attempt_count
+        FROM user_login_attempts
+        WHERE email = %s
+        AND attempt_time > NOW() - INTERVAL '1 hour'
+        AND success = false
+        """,
+        (email,)
+    )
+    result = cursor.fetchone()
+    email_failed_attempts = result['attempt_count'] if result else 0
+    
+    if email_failed_attempts >= 10:
+        return (False, 'Too many failed login attempts for this account. Please try again in 1 hour or reset your password.')
+    
+    return (True, '')
+
+def log_login_attempt(cursor, conn, ip_address: str, email: str, success: bool):
+    '''
+    Log login attempt for rate limiting
+    '''
+    cursor.execute(
+        """
+        INSERT INTO user_login_attempts (ip_address, email, success, attempt_time)
+        VALUES (%s, %s, %s, NOW())
+        """,
+        (ip_address, email, success)
+    )
+    conn.commit()
+
 def send_verification_email(email: str, token: str, user_name: str):
     smtp_host = os.environ.get('SMTP_HOST')
     smtp_port = int(os.environ.get('SMTP_PORT', '587'))
@@ -149,6 +204,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     
+    # Get IP address from request context
+    ip_address = event.get('requestContext', {}).get('identity', {}).get('sourceIp', 'unknown')
+    
     try:
         body_data = json.loads(body_str)
         action = body_data.get('action')
@@ -240,13 +298,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             identity = request_context.get('identity', {})
             ip_address = identity.get('sourceIp', 'unknown')
             
+            # Clean old attempts
             cursor.execute(
                 """
                 DELETE FROM login_attempts 
-                WHERE attempt_time < NOW() - INTERVAL '15 minutes'
+                WHERE attempt_time < NOW() - INTERVAL '1 hour'
                 """
             )
             
+            # Check IP-based rate limit (5 attempts in 15 minutes)
             cursor.execute(
                 """
                 SELECT COUNT(*) as attempt_count 
@@ -258,8 +318,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 (ip_address,)
             )
             
-            attempts = cursor.fetchone()
-            if attempts['attempt_count'] >= 5:
+            ip_attempts = cursor.fetchone()
+            if ip_attempts['attempt_count'] >= 5:
                 return {
                     'statusCode': 429,
                     'headers': {
@@ -267,7 +327,31 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'Access-Control-Allow-Origin': get_cors_origin(event)
                     },
                     'isBase64Encoded': False,
-                    'body': json.dumps({'error': 'Too many login attempts. Please try again in 15 minutes.'})
+                    'body': json.dumps({'error': 'Too many login attempts from this IP. Please try again in 15 minutes.'})
+                }
+            
+            # Check email-based rate limit (10 attempts in 1 hour)
+            cursor.execute(
+                """
+                SELECT COUNT(*) as attempt_count 
+                FROM login_attempts 
+                WHERE email = %s 
+                AND attempt_time > NOW() - INTERVAL '1 hour'
+                AND success = false
+                """,
+                (email,)
+            )
+            
+            email_attempts = cursor.fetchone()
+            if email_attempts['attempt_count'] >= 10:
+                return {
+                    'statusCode': 429,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Too many failed login attempts for this account. Please try again in 1 hour or reset your password.'})
                 }
             
             # Get user with password hash
