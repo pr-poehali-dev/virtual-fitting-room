@@ -260,9 +260,14 @@ export function useReplicateTryOn() {
         }
       });
 
+      const garmentsArray = Object.entries(garmentDict).map(([category, image]) => ({
+        category,
+        image
+      }));
+
       console.log('Starting NanoBananaPro generation with:', {
-        human_img: uploadedImage,
-        garment_dict: garmentDict,
+        person_image: uploadedImage,
+        garments: garmentsArray,
         custom_prompt: customPrompt || undefined
       });
 
@@ -273,8 +278,8 @@ export function useReplicateTryOn() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          human_img: uploadedImage,
-          garment_dict: garmentDict,
+          person_image: uploadedImage,
+          garments: garmentsArray,
           custom_prompt: customPrompt || undefined
         }),
       });
