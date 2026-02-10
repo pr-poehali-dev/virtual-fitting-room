@@ -330,7 +330,7 @@ export function useReplicateTryOn() {
       const statusResponse = await fetch(`${NANOBANANAPRO_STATUS_API}?task_id=${currentTaskId}`, {
         method: 'GET',
         headers: {
-          'X-User-Id': user.id,
+          'Content-Type': 'application/json'
         },
         credentials: 'include',
       });
@@ -391,8 +391,7 @@ export function useReplicateTryOn() {
       const workerResponse = await fetch(NANOBANANAPRO_WORKER_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': user.id,
+          'Content-Type': 'application/json'
         },
         credentials: 'include',
       });
@@ -430,8 +429,7 @@ export function useReplicateTryOn() {
         const createResponse = await fetch(`${DB_QUERY_API}`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'X-User-Id': user.id,
+            'Content-Type': 'application/json'
           },
           credentials: 'include',
           body: JSON.stringify({
@@ -457,8 +455,7 @@ export function useReplicateTryOn() {
         const saveImageResponse = await fetch(SAVE_IMAGE_FTP_API, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'X-User-Id': user.id,
+            'Content-Type': 'application/json'
           },
           credentials: 'include',
           body: JSON.stringify({
