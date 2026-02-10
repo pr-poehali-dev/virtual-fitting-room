@@ -12,10 +12,14 @@
   "nanobananapro-async-status": "https://functions.poehali.dev/6d603f3d-bbe3-450d-863a-63d513ad5ba7",
   "nanobananapro-async-worker": "https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d",
   "nanobananapro-async-start": "https://functions.poehali.dev/aac1d5d8-c9bd-43c6-822e-857c18f3c1f8",
+  "delete-image-ftp": "https://functions.poehali.dev/caf33ea6-1aaa-46b4-bc76-9b03bee18925",
+  "save-image-ftp": "https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8",
   "payment-history": "https://functions.poehali.dev/4956bfc7-c402-4191-8f90-2aeffeb2c1be",
   "sberbank-payment": "https://functions.poehali.dev/90e72041-1a9e-4a24-9d4b-dc3347bdbe77",
   "admin-manage-access": "https://functions.poehali.dev/15f28986-cce9-4e25-a05b-0860b1cf9cf7",
   "user-balance": "https://functions.poehali.dev/68409278-10ab-4733-b48d-b1b4360620a1",
+  "image-preprocessing": "https://functions.poehali.dev/3fe8c892-ab5f-4d26-a2c5-ae4166276334",
+  "image-composer": "https://functions.poehali.dev/021a040a-aa04-40b9-86e3-77547b31401b",
   "catalog-api": "https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc",
   "resend-verification": "https://functions.poehali.dev/cf48d1a6-141c-4ecb-befe-6203d8292d89",
   "verify-email": "https://functions.poehali.dev/fa1c7591-e53a-4699-8b1d-d0ed3ebfdd27",
@@ -26,5 +30,6 @@
   "admin-api": "https://functions.poehali.dev/6667a30b-a520-41d8-b23a-e240a9aefb15",
   "auth-api": "https://functions.poehali.dev/589c58eb-91b4-4f2a-923c-6a91ed722a82",
   "try-on-history-api": "https://functions.poehali.dev/8436b2bf-ae39-4d91-b2b7-91951b4235cd",
-  "lookbooks-api": "https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b"
+  "lookbooks-api": "https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b",
+  "color-type-analysis": "https://functions.poehali.dev/dc1d4a27-c7b0-448b-8b71-3dc704a7c27b"
 }
