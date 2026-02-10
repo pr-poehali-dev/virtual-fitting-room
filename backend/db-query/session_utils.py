@@ -22,20 +22,29 @@ def extract_token_from_event(event: dict) -> str:
     """
     headers = event.get('headers', {})
     
+    print(f'[SessionDebug] All headers: {list(headers.keys())}')
+    print(f'[SessionDebug] x-cookie: {headers.get("x-cookie", "NOT FOUND")}')
+    print(f'[SessionDebug] X-Cookie: {headers.get("X-Cookie", "NOT FOUND")}')
+    
     # Try X-Session-Token header (new way - from localStorage)
     token = headers.get('x-session-token') or headers.get('X-Session-Token')
     if token:
+        print(f'[SessionDebug] Found token in X-Session-Token header')
         return token
     
     # Try X-Cookie header (httpOnly cookie)
     cookie_header = headers.get('x-cookie') or headers.get('X-Cookie', '')
     if cookie_header:
+        print(f'[SessionDebug] Cookie header value: {cookie_header[:50]}...')
         # Parse session_token from cookies
         for cookie in cookie_header.split(';'):
             cookie = cookie.strip()
             if cookie.startswith('session_token='):
-                return cookie.split('=', 1)[1]
+                token = cookie.split('=', 1)[1]
+                print(f'[SessionDebug] Found session_token in cookie')
+                return token
     
+    print(f'[SessionDebug] No token found in any header!')
     return None
 
 def validate_session(event: dict) -> tuple[bool, str, str]:
