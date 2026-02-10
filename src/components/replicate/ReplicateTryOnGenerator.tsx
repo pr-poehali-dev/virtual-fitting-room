@@ -238,7 +238,9 @@ export default function ReplicateTryOnGenerator({
           return;
         }
         
-        console.log('[NanoBananaPro] Polling с токеном:', token.substring(0, 10) + '...');
+        console.log('[NanoBananaPro] Polling request #' + checkCount);
+        console.log('[NanoBananaPro] Full token from localStorage:', token);
+        console.log('[NanoBananaPro] Token first 20 chars:', token.substring(0, 20));
         
         const response = await fetch(DB_QUERY_API, {
           method: 'POST',

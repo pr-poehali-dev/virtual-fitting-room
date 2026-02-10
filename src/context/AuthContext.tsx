@@ -42,8 +42,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Save token to localStorage (CRITICAL for API requests after page reload!)
           console.log('[Auth] Validate response:', { hasToken: !!data.session_token, hasUser: !!data.user });
           if (data.session_token) {
+            console.log('[Auth] Backend returned token on validate:', data.session_token);
             localStorage.setItem('session_token', data.session_token);
-            console.log('[Auth] Token saved to localStorage from validation');
+            const savedToken = localStorage.getItem('session_token');
+            console.log('[Auth] Token saved to localStorage:', savedToken);
+            console.log('[Auth] Tokens match:', data.session_token === savedToken);
           } else {
             console.error('[Auth] No session_token in validate response!');
           }
@@ -80,8 +83,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Save token to localStorage for API requests
     console.log('[Auth] Login response:', { hasToken: !!data.session_token, hasUser: !!data.user });
     if (data.session_token) {
+      console.log('[Auth] Backend returned token:', data.session_token);
       localStorage.setItem('session_token', data.session_token);
-      console.log('[Auth] Token saved to localStorage');
+      const savedToken = localStorage.getItem('session_token');
+      console.log('[Auth] Token saved to localStorage:', savedToken);
+      console.log('[Auth] Tokens match:', data.session_token === savedToken);
     } else {
       console.error('[Auth] No session_token in response!');
     }
