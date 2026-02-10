@@ -146,6 +146,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor.execute("DELETE FROM replicate_tasks WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM seedream_tasks WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM history_api_debug_log WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM sessions WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM login_attempts WHERE email = (SELECT email FROM users WHERE id = %s)", (user_id,))
         cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
         
