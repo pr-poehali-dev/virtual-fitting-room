@@ -40,10 +40,8 @@ def extract_token_from_event(event: dict) -> str:
 
 def validate_session(event: dict) -> tuple[bool, str, str]:
     """
-    Validate session token and return user_id
+    Validate session token from cookie or X-Session-Token header
     Returns: (is_valid, user_id, error_message)
-    
-    DUAL-mode: supports both token validation (new) and X-User-Id fallback (old)
     """
     # Try new way: validate token from DB
     token = extract_token_from_event(event)

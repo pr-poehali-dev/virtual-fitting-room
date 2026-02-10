@@ -1,6 +1,6 @@
 '''
 Business: Manage user balance, check limits, and deduct credits for try-on generations
-Args: event with httpMethod, headers (X-User-Id), body
+Args: event with httpMethod, headers (session token via cookie/X-Session-Token), body
 Returns: User balance info or updated balance after deduction
 '''
 

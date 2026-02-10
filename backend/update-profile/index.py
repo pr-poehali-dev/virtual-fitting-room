@@ -34,7 +34,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'PUT, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id, X-Session-Token',
+                'Access-Control-Allow-Headers': 'Content-Type, X-Session-Token',
                 'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Max-Age': '86400'
             },
@@ -53,7 +53,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Method not allowed'})
         }
     
-    # DUAL-mode: validate session token (new) or fallback to X-User-Id (old)
+    # Validate session token from cookie or X-Session-Token header
     is_valid, user_id, error_msg = validate_session(event)
     
     if not is_valid:
