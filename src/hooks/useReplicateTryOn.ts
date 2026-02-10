@@ -339,6 +339,11 @@ export function useReplicateTryOn() {
         credentials: 'include',
       });
 
+      if (!statusResponse.ok) {
+        console.error('[NanoBananaPro-POLL] HTTP error:', statusResponse.status);
+        return;
+      }
+
       const statusData = await statusResponse.json();
       console.log('Status check:', statusData);
 
