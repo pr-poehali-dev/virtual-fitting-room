@@ -72,8 +72,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // Save token to localStorage for API requests
+    console.log('[Auth] Login response:', { hasToken: !!data.session_token, hasUser: !!data.user });
     if (data.session_token) {
       localStorage.setItem('session_token', data.session_token);
+      console.log('[Auth] Token saved to localStorage');
+    } else {
+      console.error('[Auth] No session_token in response!');
     }
 
     setUser(data.user);
