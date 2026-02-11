@@ -413,7 +413,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing user_id'})
@@ -438,7 +439,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({
@@ -451,7 +453,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 500,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': f'Failed to fetch balance: {str(e)}'})
@@ -565,7 +568,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event)
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                'Access-Control-Allow-Credentials': 'true'
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps([{
@@ -815,7 +819,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing user_id'})
@@ -872,7 +877,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({
@@ -888,7 +894,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 500,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': f'Refund failed: {str(e)}'})
@@ -906,7 +913,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing user_id or amount'})
@@ -917,7 +925,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Amount must be positive'})
@@ -981,7 +990,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({
@@ -997,7 +1007,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 500,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': f'Deduction failed: {str(e)}'})
@@ -1011,7 +1022,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing user_id'})
@@ -1053,7 +1065,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing lookbook_id'})
@@ -1097,7 +1110,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing analysis_id'})
