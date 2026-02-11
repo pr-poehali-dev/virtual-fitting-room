@@ -63,6 +63,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         total_row = cur.fetchone()
         total = total_row[0] if total_row else 0
         
+        # Get user's current balance from users table (single source of truth)
+        cur.execute('''
+            SELECT balance FROM t_p29007832_virtual_fitting_room.users WHERE id = %s
+        ''', (user_id,))
+        user_balance_row = cur.fetchone()
+        user_balance = float(user_balance_row[0]) if user_balance_row else 0.0
+        
         cur.execute('''
             SELECT 
                 bt.id,
@@ -89,7 +96,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         result = []
         for tx in transactions:
-            tx_id, tx_type, amount, balance_before, balance_after, description, created_at, try_on_id, color_type_id, try_on_removed, saved_to_lookbook, color_removed = tx
+            tx_id, tx_type, amount, balance_before, balance_after_old, description, created_at, try_on_id, color_type_id, try_on_removed, saved_to_lookbook, color_removed = tx
             
             display_description = description
             
@@ -106,7 +113,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'type': tx_type,
                 'amount': float(amount),
                 'balance_before': float(balance_before),
-                'balance_after': float(balance_after),
+                'balance_after': user_balance,  # Real balance from users table (single source of truth)
                 'description': display_description,
                 'created_at': created_at.isoformat() if created_at else None,
                 'is_deleted': bool(try_on_removed or color_removed)

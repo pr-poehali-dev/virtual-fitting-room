@@ -685,6 +685,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             total = cursor.fetchone()['total']
             
             # Get transactions with pagination
+            # Use u.balance (single source of truth) instead of bt.balance_after
             query = '''
                 SELECT 
                     bt.id,
@@ -701,6 +702,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     bt.yookassa_payment_id,
                     u.email,
                     u.name,
+                    u.balance as user_current_balance,
                     th.removed_at AS try_on_removed,
                     th.saved_to_lookbook,
                     ct.removed_at AS color_removed
@@ -760,7 +762,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'type': t['type'],
                     'amount': float(t['amount']),
                     'balance_before': float(t['balance_before']),
-                    'balance_after': float(t['balance_after']),
+                    'balance_after': float(t['user_current_balance']) if t['user_current_balance'] is not None else 0.0,  # Real balance from users table (single source of truth)
                     'description': display_description,
                     'yookassa_payment_id': t['yookassa_payment_id'],
                     'try_on_id': str(t['try_on_id']) if t['try_on_id'] else None,
