@@ -7,6 +7,11 @@ from typing import Dict, Any
 SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'fitting-room-admin-2024')
 
+def get_cors_origin(event: Dict[str, Any]) -> str:
+    origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin', '')
+    allowed_origins = ['https://fitting-room.ru', 'https://p29007832.vercel.app']
+    return origin if origin in allowed_origins else 'https://fitting-room.ru'
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
     Выдача JWT токенов для админ-панели
@@ -19,7 +24,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 200,
             'headers': {
-                'Access-Control-Allow-Origin': 'https://p29007832.vercel.app',
+                'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type',
                 'Access-Control-Allow-Credentials': 'true',
@@ -34,7 +39,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 405,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://p29007832.vercel.app',
+                'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Credentials': 'true'
             },
             'body': json.dumps({'error': 'Method not allowed'}),
@@ -55,7 +60,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 400,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://p29007832.vercel.app',
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
                     'Access-Control-Allow-Credentials': 'true'
                 },
                 'body': json.dumps({'error': 'Password required'}),
@@ -67,7 +72,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 401,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://p29007832.vercel.app',
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
                     'Access-Control-Allow-Credentials': 'true'
                 },
                 'body': json.dumps({'error': 'Invalid password'}),
@@ -87,7 +92,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://p29007832.vercel.app',
+                'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Credentials': 'true',
                 'X-Set-Cookie': f'admin_token={token}; HttpOnly; Secure; SameSite=None; Max-Age=86400; Path=/'
             },
@@ -103,7 +108,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 400,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://p29007832.vercel.app',
+                'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Credentials': 'true'
             },
             'body': json.dumps({'error': 'Invalid JSON'}),
@@ -114,7 +119,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://p29007832.vercel.app',
+                'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Credentials': 'true'
             },
             'body': json.dumps({'error': str(e)}),
