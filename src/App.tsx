@@ -21,7 +21,7 @@ import ProfileSettings from "./pages/ProfileSettings";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import SharedLookbook from "./pages/SharedLookbook";
-import Admin from "./pages/Admin";
+import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminStats from "./pages/AdminStats";
 import AdminUsers from "./pages/AdminUsers";
@@ -88,15 +88,15 @@ const App = () => (
             <Route path="/profile-old" element={<Profile />} />
             
             {/* Admin Routes */}
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/stats" element={<AdminStats />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/lookbooks" element={<AdminLookbooks />} />
-            <Route path="/admin/payments" element={<AdminPayments />} />
-            <Route path="/admin/catalog" element={<AdminCatalog />} />
-            <Route path="/admin/generations" element={<AdminGenerations />} />
-            <Route path="/admin/colortypes" element={<AdminColorTypes />} />
+            <Route path="/vf-console" element={<AdminLogin />} />
+            <Route path="/vf-console/dashboard" element={<AdminDashboard />} />
+            <Route path="/vf-console/stats" element={<AdminStats />} />
+            <Route path="/vf-console/users" element={<AdminUsers />} />
+            <Route path="/vf-console/lookbooks" element={<AdminLookbooks />} />
+            <Route path="/vf-console/payments" element={<AdminPayments />} />
+            <Route path="/vf-console/catalog" element={<AdminCatalog />} />
+            <Route path="/vf-console/generations" element={<AdminGenerations />} />
+            <Route path="/vf-console/colortypes" element={<AdminColorTypes />} />
             
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

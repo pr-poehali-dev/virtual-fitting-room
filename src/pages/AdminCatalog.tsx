@@ -75,22 +75,8 @@ export default function AdminCatalog() {
   const [uploadSource, setUploadSource] = useState<'url' | 'file'>('url');
 
   useEffect(() => {
-    const adminToken = localStorage.getItem('admin_jwt');
-    const tokenExpiry = localStorage.getItem('admin_jwt_expiry');
-
-    if (!adminToken || !tokenExpiry) {
-      navigate('/admin');
-      return;
-    }
-
-    const expiryTime = new Date(tokenExpiry).getTime();
-    if (Date.now() >= expiryTime) {
-      localStorage.removeItem('admin_jwt');
-      localStorage.removeItem('admin_jwt_expiry');
-      navigate('/admin');
-      return;
-    }
-  }, [navigate]);
+    
+  }, []);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -136,14 +122,12 @@ export default function AdminCatalog() {
       return;
     }
 
-    const adminToken = localStorage.getItem('admin_jwt');
-
     try {
       const response = await fetch(CATALOG_API, {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': adminToken || ''
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(newClothing)
       });
@@ -178,8 +162,6 @@ export default function AdminCatalog() {
   const handleUpdateClothing = async () => {
     if (!editingClothing) return;
 
-    const adminToken = localStorage.getItem('admin_jwt');
-
     try {
       const categoryIds = filters?.categories
         .filter(cat => editingClothing.categories.includes(cat.name))
@@ -195,9 +177,9 @@ export default function AdminCatalog() {
 
       const response = await fetch(CATALOG_API, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': adminToken || ''
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           id: editingClothing.id,
@@ -227,12 +209,10 @@ export default function AdminCatalog() {
   const handleDeleteClothing = async (id: string) => {
     if (!confirm('Удалить эту позицию из каталога?')) return;
 
-    const adminToken = localStorage.getItem('admin_jwt');
-
     try {
       const response = await fetch(`${CATALOG_API}?action=delete&id=${id}`, {
         method: 'DELETE',
-        headers: { 'X-Admin-Token': adminToken || '' }
+        credentials: 'include'
       });
 
       if (response.ok) {

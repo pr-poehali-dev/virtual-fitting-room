@@ -19,9 +19,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 200,
             'headers': {
-                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': 'https://p29007832.vercel.app',
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Max-Age': '86400'
             },
             'body': '',
@@ -33,7 +34,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 405,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+                'Access-Control-Allow-Origin': 'https://p29007832.vercel.app',
+                'Access-Control-Allow-Credentials': 'true'
             },
             'body': json.dumps({'error': 'Method not allowed'}),
             'isBase64Encoded': False
@@ -53,7 +55,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 400,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
+                    'Access-Control-Allow-Origin': 'https://p29007832.vercel.app',
+                    'Access-Control-Allow-Credentials': 'true'
                 },
                 'body': json.dumps({'error': 'Password required'}),
                 'isBase64Encoded': False
@@ -64,7 +67,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 401,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
+                    'Access-Control-Allow-Origin': 'https://p29007832.vercel.app',
+                    'Access-Control-Allow-Credentials': 'true'
                 },
                 'body': json.dumps({'error': 'Invalid password'}),
                 'isBase64Encoded': False
@@ -83,11 +87,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+                'Access-Control-Allow-Origin': 'https://p29007832.vercel.app',
+                'Access-Control-Allow-Credentials': 'true',
+                'X-Set-Cookie': f'admin_token={token}; HttpOnly; Secure; SameSite=None; Max-Age=86400; Path=/'
             },
             'body': json.dumps({
-                'token': token,
-                'expires_at': expiry.isoformat()
+                'success': True,
+                'message': 'Authenticated'
             }),
             'isBase64Encoded': False
         }
@@ -97,7 +103,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 400,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+                'Access-Control-Allow-Origin': 'https://p29007832.vercel.app',
+                'Access-Control-Allow-Credentials': 'true'
             },
             'body': json.dumps({'error': 'Invalid JSON'}),
             'isBase64Encoded': False
@@ -107,7 +114,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+                'Access-Control-Allow-Origin': 'https://p29007832.vercel.app',
+                'Access-Control-Allow-Credentials': 'true'
             },
             'body': json.dumps({'error': str(e)}),
             'isBase64Encoded': False

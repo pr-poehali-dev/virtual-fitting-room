@@ -30,33 +30,22 @@ export default function AdminUsers() {
   const usersPerPage = 50;
 
   useEffect(() => {
-    const adminToken = localStorage.getItem('admin_jwt');
-    const tokenExpiry = localStorage.getItem('admin_jwt_expiry');
-
-    if (!adminToken || !tokenExpiry) {
-      navigate('/admin');
-      return;
-    }
-
-    const expiryTime = new Date(tokenExpiry).getTime();
-    if (Date.now() >= expiryTime) {
-      localStorage.removeItem('admin_jwt');
-      localStorage.removeItem('admin_jwt_expiry');
-      navigate('/admin');
-      return;
-    }
     fetchUsers();
-  }, [navigate, currentPage]);
+  }, [currentPage]);
 
   const fetchUsers = async () => {
-    const adminToken = localStorage.getItem('admin_jwt');
     setIsLoading(true);
 
     try {
       const offset = (currentPage - 1) * usersPerPage;
       const response = await fetch(`${ADMIN_API}?action=users&limit=${usersPerPage}&offset=${offset}`, {
-        headers: { 'X-Admin-Token': adminToken || '' }
+        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        navigate('/vf-console');
+        return;
+      }
 
       if (!response.ok) throw new Error('Failed to fetch users');
       const data = await response.json();
@@ -70,15 +59,14 @@ export default function AdminUsers() {
   };
 
   const handleToggleUnlimitedAccess = async (userEmail: string, currentAccess: boolean) => {
-    const adminToken = localStorage.getItem('admin_jwt');
     const newAccess = !currentAccess;
 
     try {
       const response = await fetch(ADMIN_MANAGE_ACCESS_API, {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': adminToken || ''
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           user_email: userEmail,

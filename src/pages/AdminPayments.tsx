@@ -43,26 +43,10 @@ export default function AdminPayments() {
   const paymentsPerPage = 50;
 
   useEffect(() => {
-    const adminToken = localStorage.getItem('admin_jwt');
-    const tokenExpiry = localStorage.getItem('admin_jwt_expiry');
-
-    if (!adminToken || !tokenExpiry) {
-      navigate('/admin');
-      return;
-    }
-
-    const expiryTime = new Date(tokenExpiry).getTime();
-    if (Date.now() >= expiryTime) {
-      localStorage.removeItem('admin_jwt');
-      localStorage.removeItem('admin_jwt_expiry');
-      navigate('/admin');
-      return;
-    }
     fetchPayments();
-  }, [navigate, currentPage, typeFilter, dateFilter, yookassaFilter, searchQuery]);
+  }, [currentPage, typeFilter, dateFilter, yookassaFilter, searchQuery]);
 
   const fetchPayments = async () => {
-    const adminToken = localStorage.getItem('admin_jwt');
     setIsLoading(true);
 
     try {
@@ -100,8 +84,13 @@ export default function AdminPayments() {
       }
       
       const response = await fetch(url, {
-        headers: { 'X-Admin-Token': adminToken || '' }
+        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        navigate('/vf-console');
+        return;
+      }
 
       if (!response.ok) throw new Error('Failed to fetch payments');
       const data = await response.json();
@@ -115,7 +104,6 @@ export default function AdminPayments() {
   };
 
   const handleRefund = async (userId: string, transactionId: string) => {
-    const adminToken = localStorage.getItem('admin_jwt');
     const reason = prompt('Причина возврата (необязательно):') || 'Возврат администратором';
 
     if (!confirm('Вы уверены, что хотите вернуть 30₽ пользователю?')) {
@@ -127,9 +115,9 @@ export default function AdminPayments() {
     try {
       const response = await fetch(`${ADMIN_API}?action=refund`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': adminToken || ''
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           user_id: userId,
@@ -152,7 +140,6 @@ export default function AdminPayments() {
   };
 
   const handleDeduct = async (userId: string, transactionId: string) => {
-    const adminToken = localStorage.getItem('admin_jwt');
     
     // Получаем актуальный баланс пользователя
     setRefundingId(transactionId);
@@ -160,7 +147,7 @@ export default function AdminPayments() {
     
     try {
       const balanceResponse = await fetch(`${ADMIN_API}?action=get_user_balance&user_id=${userId}`, {
-        headers: { 'X-Admin-Token': adminToken || '' }
+        credentials: 'include'
       });
       
       if (!balanceResponse.ok) {
@@ -207,9 +194,9 @@ export default function AdminPayments() {
     try {
       const response = await fetch(`${ADMIN_API}?action=deduct_balance`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': adminToken || ''
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           user_id: userId,

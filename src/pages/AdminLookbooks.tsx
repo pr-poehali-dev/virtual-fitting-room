@@ -36,23 +36,8 @@ export default function AdminLookbooks() {
   const lookbooksPerPage = 50;
 
   useEffect(() => {
-    const adminToken = localStorage.getItem('admin_jwt');
-    const tokenExpiry = localStorage.getItem('admin_jwt_expiry');
-
-    if (!adminToken || !tokenExpiry) {
-      navigate('/admin');
-      return;
-    }
-
-    const expiryTime = new Date(tokenExpiry).getTime();
-    if (Date.now() >= expiryTime) {
-      localStorage.removeItem('admin_jwt');
-      localStorage.removeItem('admin_jwt_expiry');
-      navigate('/admin');
-      return;
-    }
     fetchData();
-  }, [navigate, currentPage]);
+  }, [currentPage]);
 
   useEffect(() => {
     if (selectedUserId === 'all') {
@@ -63,19 +48,23 @@ export default function AdminLookbooks() {
   }, [selectedUserId, lookbooks]);
 
   const fetchData = async () => {
-    const adminToken = localStorage.getItem('admin_jwt');
     setIsLoading(true);
 
     try {
       const offset = (currentPage - 1) * lookbooksPerPage;
       const [usersRes, lookbooksRes] = await Promise.all([
         fetch(`${ADMIN_API}?action=users&limit=1000&offset=0`, {
-          headers: { 'X-Admin-Token': adminToken || '' }
+          credentials: 'include'
         }),
         fetch(`${ADMIN_API}?action=lookbooks&limit=${lookbooksPerPage}&offset=${offset}`, {
-          headers: { 'X-Admin-Token': adminToken || '' }
+          credentials: 'include'
         })
       ]);
+
+      if (usersRes.status === 401 || lookbooksRes.status === 401) {
+        navigate('/vf-console');
+        return;
+      }
 
       if (!usersRes.ok || !lookbooksRes.ok) throw new Error('Failed to fetch data');
 

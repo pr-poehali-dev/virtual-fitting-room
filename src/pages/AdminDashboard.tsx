@@ -26,37 +26,26 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const adminToken = localStorage.getItem('admin_jwt');
-    const tokenExpiry = localStorage.getItem('admin_jwt_expiry');
+    fetchStats();
+  }, []);
 
-    if (adminToken && tokenExpiry) {
-      const expiryTime = new Date(tokenExpiry).getTime();
-      if (Date.now() < expiryTime) {
-        fetchStats();
-      } else {
-        localStorage.removeItem('admin_jwt');
-        localStorage.removeItem('admin_jwt_expiry');
-        navigate('/admin');
-      }
-    } else {
-      navigate('/admin');
-    }
-  }, [navigate]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('admin_jwt');
-    localStorage.removeItem('admin_jwt_expiry');
-    navigate('/admin');
+  const handleLogout = async () => {
+    document.cookie = 'admin_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    navigate('/vf-console');
   };
 
   const fetchStats = async () => {
     setIsLoading(true);
-    const adminToken = localStorage.getItem('admin_jwt');
 
     try {
       const response = await fetch(`${ADMIN_API}?action=stats`, {
-        headers: { 'X-Admin-Token': adminToken || '' }
+        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        navigate('/vf-console');
+        return;
+      }
 
       if (!response.ok) throw new Error('Failed to fetch stats');
       const data = await response.json();
@@ -75,7 +64,7 @@ export default function AdminDashboard() {
       title: 'Статистика',
       description: 'Общая статистика платформы',
       icon: 'BarChart3',
-      path: '/admin/stats',
+      path: '/vf-console/stats',
       color: 'bg-indigo-100 text-indigo-700',
       value: '-'
     },
@@ -83,7 +72,7 @@ export default function AdminDashboard() {
       title: 'Пользователи',
       description: 'Управление пользователями',
       icon: 'Users',
-      path: '/admin/users',
+      path: '/vf-console/users',
       color: 'bg-blue-100 text-blue-700',
       value: stats?.total_users || 0
     },
@@ -91,7 +80,7 @@ export default function AdminDashboard() {
       title: 'Лукбуки',
       description: 'Просмотр всех лукбуков',
       icon: 'Album',
-      path: '/admin/lookbooks',
+      path: '/vf-console/lookbooks',
       color: 'bg-purple-100 text-purple-700',
       value: stats?.total_lookbooks || 0
     },
@@ -99,7 +88,7 @@ export default function AdminDashboard() {
       title: 'Платежи',
       description: 'История платежей',
       icon: 'CreditCard',
-      path: '/admin/payments',
+      path: '/vf-console/payments',
       color: 'bg-green-100 text-green-700',
       value: '-'
     },
@@ -107,7 +96,7 @@ export default function AdminDashboard() {
       title: 'Каталог',
       description: 'Управление каталогом одежды',
       icon: 'Package',
-      path: '/admin/catalog',
+      path: '/vf-console/catalog',
       color: 'bg-orange-100 text-orange-700',
       value: '-'
     },
@@ -115,7 +104,7 @@ export default function AdminDashboard() {
       title: 'Генерации',
       description: 'История генераций',
       icon: 'Sparkles',
-      path: '/admin/generations',
+      path: '/vf-console/generations',
       color: 'bg-pink-100 text-pink-700',
       value: `${(stats?.total_replicate || 0) + (stats?.total_seedream || 0) + (stats?.total_nanobana || 0)}`
     }
