@@ -301,9 +301,6 @@ export default function WalletTab() {
                       })}
                     </p>
                   </div>
-                  <div className="text-right text-xs text-muted-foreground space-y-1">
-                    <div>Баланс: {transaction.balance_after.toFixed(2)} ₽</div>
-                  </div>
                 </div>
               ))}
             </div>

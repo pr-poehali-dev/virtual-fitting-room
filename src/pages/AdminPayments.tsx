@@ -227,8 +227,9 @@ export default function AdminPayments() {
       const data = await response.json();
       toast.success(`Списание выполнено! Новый баланс: ${data.new_balance.toFixed(2)}₽`);
       fetchPayments();
-    } catch (error: any) {
-      toast.error(error.message || 'Ошибка списания средств');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Ошибка списания средств';
+      toast.error(errorMessage);
     } finally {
       setRefundingId(null);
     }
@@ -375,7 +376,7 @@ export default function AdminPayments() {
                         <th className="px-4 py-3 text-left text-sm font-medium">Описание</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">ID операции</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">ID ЮКассы</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Баланс после</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Баланс</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Дата</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Действия</th>
                       </tr>
