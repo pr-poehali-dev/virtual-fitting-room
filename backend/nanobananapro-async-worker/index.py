@@ -242,8 +242,8 @@ def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
     except Exception as e:
         print(f'[Refund] Error refunding balance: {str(e)}')
 
-def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garments: list, prompt: str) -> Optional[str]:
-    '''Save result to try_on_history table and return history_id'''
+def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garments: list, prompt: str, task_id: str) -> Optional[str]:
+    '''Save result to try_on_history table with task_id and return history_id'''
     try:
         cursor = conn.cursor()
         
@@ -264,8 +264,8 @@ def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garment
         
         cursor.execute('''
             INSERT INTO t_p29007832_virtual_fitting_room.try_on_history 
-            (user_id, person_image, garment_image, result_image, garments, model_used, cost, created_at, saved_to_lookbook)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (user_id, person_image, garment_image, result_image, garments, model_used, cost, created_at, saved_to_lookbook, task_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
         ''', (
             user_id,
@@ -276,7 +276,8 @@ def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garment
             'nanobananapro',
             cost,
             datetime.utcnow(),
-            False
+            False,
+            task_id
         ))
         
         history_row = cursor.fetchone()
@@ -299,8 +300,14 @@ def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garment
         print(f'[History] Saved to try_on_history for user {user_id} (id={history_id})')
         return history_id
     
+    except psycopg2.errors.UniqueViolation:
+        # Another worker already saved this task - this is OK!
+        print(f'[History] Task {task_id} already saved by another worker, skipping duplicate')
+        cursor.close()
+        return None
     except Exception as e:
         print(f'[History] Failed to save: {str(e)}')
+        cursor.close()
         return None
 
 
@@ -485,15 +492,29 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             person_img, garments_json, prompt = task_details
                             garments = json.loads(garments_json)
                             
-                            # Save to history
-                            save_to_history(conn, user_id, cdn_url, person_img, garments, prompt or '')
+                            # ATOMIC: Mark as saved BEFORE actual save to prevent race condition
+                            print(f'[NanoBanana] Atomically marking task {task_id} as saved_to_history')
+                            cursor.execute('''
+                                UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                                SET saved_to_history = true
+                                WHERE id = %s AND saved_to_history = false
+                                RETURNING id
+                            ''', (task_id,))
+                            atomic_check = cursor.fetchone()
+                            conn.commit()
+                            
+                            if not atomic_check:
+                                print(f'[NanoBanana] Task {task_id} already marked as saved by another worker, aborting save')
+                            else:
+                                # Only this worker can save now
+                                print(f'[NanoBanana] Task {task_id} marked, proceeding with save to history')
+                                save_to_history(conn, user_id, cdn_url, person_img, garments, prompt or '', task_id)
                         
-                        # Update task with CDN URL
+                        # Update task with CDN URL (saved_to_history already set above)
                         cursor.execute('''
                             UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
                             SET status = 'completed',
                                 result_url = %s,
-                                saved_to_history = true,
                                 updated_at = %s
                             WHERE id = %s
                         ''', (cdn_url, datetime.utcnow(), task_id))
