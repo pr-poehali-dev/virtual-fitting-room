@@ -460,11 +460,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # PUT /catalog-api - Update clothing item (admin only)
         elif method == 'PUT':
-            admin_token = event.get('headers', {}).get('x-admin-token') or event.get('headers', {}).get('X-Admin-Token')
-            admin_password = event.get('headers', {}).get('x-admin-password') or event.get('headers', {}).get('X-Admin-Password')
-            expected_password = os.environ.get('ADMIN_PASSWORD')
+            # Read admin token from cookie
+            headers = event.get('headers', {})
+            cookie_header = headers.get('x-cookie') or headers.get('X-Cookie') or headers.get('cookie') or headers.get('Cookie', '')
             
-            if not admin_token and (not admin_password or admin_password != expected_password):
+            admin_token = None
+            if cookie_header:
+                cookies = cookie_header.split('; ')
+                for cookie in cookies:
+                    if cookie.startswith('admin_token='):
+                        admin_token = cookie.split('=', 1)[1]
+                        break
+            
+            # Verify JWT token
+            is_valid, error_message = verify_admin_jwt(admin_token)
+            if not is_valid:
                 return {
                     'statusCode': 403,
                     'headers': {
@@ -473,7 +483,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
-                    'body': json.dumps({'error': 'Forbidden'})
+                    'body': json.dumps({'error': error_message})
                 }
             
             body_data = json.loads(event.get('body', '{}'))
@@ -571,7 +581,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event)
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                    'Access-Control-Allow-Credentials': 'true'
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'message': 'Clothing item updated'})
@@ -579,11 +590,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # DELETE /catalog-api?id=uuid (admin only)
         elif method == 'DELETE':
-            admin_token = event.get('headers', {}).get('x-admin-token') or event.get('headers', {}).get('X-Admin-Token')
-            admin_password = event.get('headers', {}).get('x-admin-password') or event.get('headers', {}).get('X-Admin-Password')
-            expected_password = os.environ.get('ADMIN_PASSWORD')
+            # Read admin token from cookie
+            headers = event.get('headers', {})
+            cookie_header = headers.get('x-cookie') or headers.get('X-Cookie') or headers.get('cookie') or headers.get('Cookie', '')
             
-            if not admin_token and (not admin_password or admin_password != expected_password):
+            admin_token = None
+            if cookie_header:
+                cookies = cookie_header.split('; ')
+                for cookie in cookies:
+                    if cookie.startswith('admin_token='):
+                        admin_token = cookie.split('=', 1)[1]
+                        break
+            
+            # Verify JWT token
+            is_valid, error_message = verify_admin_jwt(admin_token)
+            if not is_valid:
                 return {
                     'statusCode': 403,
                     'headers': {
@@ -592,7 +613,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
-                    'body': json.dumps({'error': 'Forbidden'})
+                    'body': json.dumps({'error': error_message})
                 }
             
             clothing_id = query_params.get('id')
@@ -642,7 +663,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event)
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                    'Access-Control-Allow-Credentials': 'true'
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'message': 'Clothing item deleted'})
