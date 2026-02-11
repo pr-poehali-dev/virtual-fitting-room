@@ -161,10 +161,11 @@ export default function WalletTab() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
+                  {/* Временно скрыто - бесплатные примерки пока не используются */}
+                  {/* <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Бесплатных примерок:</span>
                     <span className="font-medium">{balanceInfo?.free_tries_remaining} / 3</span>
-                  </div>
+                  </div> */}
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Доступно примерок:</span>
                     <span className="font-medium">{balanceInfo?.paid_tries_available}</span>
