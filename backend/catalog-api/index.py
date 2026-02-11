@@ -85,7 +85,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 405,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Use POST method for background removal'})
@@ -197,7 +198,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps(result, default=str)
@@ -224,7 +226,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({
@@ -364,7 +367,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 500,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Background removal failed'})
@@ -385,7 +389,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing image_url'})
@@ -446,7 +451,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 201,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event)
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                    'Access-Control-Allow-Credentials': 'true'
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'id': str(clothing_id), 'message': 'Clothing item added'})
@@ -463,7 +469,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 403,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Forbidden'})
@@ -485,7 +492,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing id or image_url'})
@@ -580,7 +588,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 403,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Forbidden'})
@@ -592,7 +601,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 400,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Missing id parameter'})
