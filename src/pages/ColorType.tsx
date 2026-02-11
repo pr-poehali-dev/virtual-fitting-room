@@ -9,6 +9,7 @@ import EyeColorSelector from "@/components/EyeColorSelector";
 import { validateImageFile } from "@/utils/fileValidation";
 import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataContext";
+import { useBalance } from "@/context/BalanceContext";
 import { useNavigate } from "react-router-dom";
 
 const COLORTYPE_START_API =
@@ -127,6 +128,7 @@ const colorTypeNames: Record<string, string> = {
 export default function ColorType() {
   const { user } = useAuth();
   const { refetchColorTypeHistory } = useData();
+  const { refreshBalance } = useBalance();
   const navigate = useNavigate();
 
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -265,6 +267,7 @@ export default function ColorType() {
         setAnalysisStatus("");
         toast.success("Цветотип определён!");
         refetchColorTypeHistory();
+        refreshBalance();
       } else if (data.status === "failed") {
         if (pollingIntervalRef.current)
           clearInterval(pollingIntervalRef.current);

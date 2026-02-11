@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
+import { useBalance } from '@/context/BalanceContext';
 import { useSearchParams } from 'react-router-dom';
 
 const USER_BALANCE_API = 'https://functions.poehali.dev/68409278-10ab-4733-b48d-b1b4360620a1';
@@ -31,6 +32,7 @@ interface BalanceTransaction {
 
 export default function WalletTab() {
   const { user } = useAuth();
+  const { refreshBalance } = useBalance();
   const [searchParams] = useSearchParams();
   const [balanceInfo, setBalanceInfo] = useState<BalanceInfo | null>(null);
   const [balanceHistory, setBalanceHistory] = useState<BalanceTransaction[]>([]);
@@ -52,6 +54,7 @@ export default function WalletTab() {
       setTimeout(() => {
         fetchBalance();
         fetchBalanceHistory();
+        refreshBalance();
       }, 1000);
     } else if (payment === 'failed') {
       toast.error('Ошибка оплаты');

@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 import ReplicateResultPanel from '@/components/replicate/ReplicateResultPanel';
 import { checkReplicateBalance, deductReplicateBalance, refundReplicateBalance } from '@/utils/replicateBalanceUtils';
+import { useBalance } from '@/context/BalanceContext';
 
 interface SelectedClothing {
   id: string;
@@ -68,6 +69,7 @@ export default function ReplicateTryOnGenerator({
   onGeneratedImageChange,
   onCdnImageUrlChange
 }: ReplicateTryOnGeneratorProps) {
+  const { refreshBalance } = useBalance();
   const [customPrompt, setCustomPrompt] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStatus, setGenerationStatus] = useState<string>('');
@@ -315,6 +317,7 @@ export default function ReplicateTryOnGenerator({
           
           console.log('[NanoBananaPro] Worker already saved to S3 and history');
           await onRefetchHistory();
+          await refreshBalance();
         } else if (data.status === 'failed') {
           console.error('[NanoBananaPro] FAILED:', data.error_message);
           setIsGenerating(false);

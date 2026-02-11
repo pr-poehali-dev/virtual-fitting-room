@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { DataProvider } from "./context/DataContext";
+import { BalanceProvider } from "./context/BalanceContext";
 import { useEffect } from "react";
 
 import Home from "./pages/Home";
@@ -65,11 +66,12 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <VersionManager />
     <AuthProvider>
-      <DataProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+      <BalanceProvider>
+        <DataProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/virtualfitting" element={<ReplicateTryOn />} />
@@ -113,7 +115,8 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
-      </DataProvider>
+        </DataProvider>
+      </BalanceProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
