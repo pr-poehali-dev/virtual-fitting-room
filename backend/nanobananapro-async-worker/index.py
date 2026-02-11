@@ -614,13 +614,29 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         if task_details:
                             person_img, garments_json, prompt = task_details
                             garments = json.loads(garments_json)
-                            save_to_history(conn, stuck_user_id, cdn_url, person_img, garments, prompt or '')
+                            
+                            # ATOMIC: Mark as saved BEFORE actual save to prevent race condition
+                            print(f'[NanoBanana] Atomically marking stuck task {stuck_id} as saved_to_history')
+                            cursor.execute('''
+                                UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                                SET saved_to_history = true
+                                WHERE id = %s AND saved_to_history = false
+                                RETURNING id
+                            ''', (stuck_id,))
+                            atomic_check = cursor.fetchone()
+                            conn.commit()
+                            
+                            if not atomic_check:
+                                print(f'[NanoBanana] Stuck task {stuck_id} already marked as saved by another worker, aborting save')
+                            else:
+                                print(f'[NanoBanana] Stuck task {stuck_id} marked, proceeding with save to history')
+                                save_to_history(conn, stuck_user_id, cdn_url, person_img, garments, prompt or '', stuck_id)
                         
+                        # Update task status (saved_to_history already set above)
                         cursor.execute('''
                             UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
                             SET status = 'completed',
                                 result_url = %s,
-                                saved_to_history = true,
                                 updated_at = %s
                             WHERE id = %s
                         ''', (cdn_url, datetime.utcnow(), stuck_id))
