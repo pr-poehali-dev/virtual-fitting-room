@@ -4,20 +4,28 @@
  */
 
 export type ColorTypeName =
-  | 'DUSTY_SUMMER'
-  | 'VIVID_SUMMER'
-  | 'SOFT_SUMMER'
-  | 'FIERY_AUTUMN'
-  | 'GENTLE_AUTUMN'
-  | 'VIVID_AUTUMN'
-  | 'BRIGHT_WINTER'
-  | 'VIVID_WINTER'
-  | 'SOFT_WINTER'
-  | 'BRIGHT_SPRING'
-  | 'WARM_SPRING'
-  | 'GENTLE_SPRING';
+  | "DUSTY_SUMMER"
+  | "VIVID_SUMMER"
+  | "SOFT_SUMMER"
+  | "FIERY_AUTUMN"
+  | "GENTLE_AUTUMN"
+  | "VIVID_AUTUMN"
+  | "BRIGHT_WINTER"
+  | "VIVID_WINTER"
+  | "SOFT_WINTER"
+  | "BRIGHT_SPRING"
+  | "WARM_SPRING"
+  | "GENTLE_SPRING";
 
-export type SeasonKey = 'summer' | 'summerBright' | 'autumn' | 'autumnBright' | 'winter' | 'winterBright' | 'spring' | 'springBright';
+export type SeasonKey =
+  | "summer"
+  | "summerBright"
+  | "autumn"
+  | "autumnBright"
+  | "winter"
+  | "winterBright"
+  | "spring"
+  | "springBright";
 
 export interface ColorTypeRule {
   name: ColorTypeName;
@@ -29,74 +37,74 @@ export interface ColorTypeRule {
 export const colorTypeRules: Record<ColorTypeName, ColorTypeRule> = {
   // ========== ЛЕТО ==========
   DUSTY_SUMMER: {
-    name: 'DUSTY_SUMMER',
-    displayName: 'Пыльное Лето',
-    season: 'summer',
+    name: "DUSTY_SUMMER",
+    displayName: "Пыльное Лето",
+    season: "summer",
   },
   VIVID_SUMMER: {
-    name: 'VIVID_SUMMER',
-    displayName: 'Яркое Лето',
-    season: 'summerBright',
+    name: "VIVID_SUMMER",
+    displayName: "Яркое Лето",
+    season: "summerBright",
   },
   SOFT_SUMMER: {
-    name: 'SOFT_SUMMER',
-    displayName: 'Мягкое Лето',
-    season: 'summerBright',
-    filter: 'brightness(1.3)',
+    name: "SOFT_SUMMER",
+    displayName: "Мягкое Лето",
+    season: "summerBright",
+    filter: "brightness(1.15)",
   },
 
   // ========== ОСЕНЬ ==========
   FIERY_AUTUMN: {
-    name: 'FIERY_AUTUMN',
-    displayName: 'Огненная Осень',
-    season: 'autumnBright',
+    name: "FIERY_AUTUMN",
+    displayName: "Огненная Осень",
+    season: "autumnBright",
   },
   GENTLE_AUTUMN: {
-    name: 'GENTLE_AUTUMN',
-    displayName: 'Нежная Осень',
-    season: 'autumn',
+    name: "GENTLE_AUTUMN",
+    displayName: "Нежная Осень",
+    season: "autumn",
   },
   VIVID_AUTUMN: {
-    name: 'VIVID_AUTUMN',
-    displayName: 'Яркая Осень',
-    season: 'autumnBright',
-    filter: 'brightness(0.85)',
+    name: "VIVID_AUTUMN",
+    displayName: "Яркая Осень",
+    season: "autumn",
+    filter: "brightness(0.85)",
   },
 
   // ========== ЗИМА ==========
   BRIGHT_WINTER: {
-    name: 'BRIGHT_WINTER',
-    displayName: 'Яркая Зима',
-    season: 'winterBright',
+    name: "BRIGHT_WINTER",
+    displayName: "Яркая Зима",
+    season: "winterBright",
   },
   VIVID_WINTER: {
-    name: 'VIVID_WINTER',
-    displayName: 'Контрастная Зима',
-    season: 'winterBright',
-    filter: 'brightness(0.85)',
+    name: "VIVID_WINTER",
+    displayName: "Контрастная Зима",
+    season: "winter",
+    filter: "brightness(0.85)",
   },
   SOFT_WINTER: {
-    name: 'SOFT_WINTER',
-    displayName: 'Мягкая Зима',
-    season: 'winter',
+    name: "SOFT_WINTER",
+    displayName: "Мягкая Зима",
+    season: "winter",
   },
 
   // ========== ВЕСНА ==========
   BRIGHT_SPRING: {
-    name: 'BRIGHT_SPRING',
-    displayName: 'Яркая Весна',
-    season: 'springBright',
+    name: "BRIGHT_SPRING",
+    displayName: "Яркая Весна",
+    season: "springBright",
   },
   WARM_SPRING: {
-    name: 'WARM_SPRING',
-    displayName: 'Тёплая Весна',
-    season: 'spring',
+    name: "WARM_SPRING",
+    displayName: "Тёплая Весна",
+    season: "spring",
   },
   GENTLE_SPRING: {
-    name: 'GENTLE_SPRING',
-    displayName: 'Нежная Весна',
-    season: 'springBright',
-    filter: 'brightness(1.3)',
+    name: "GENTLE_SPRING",
+    displayName: "Нежная Весна",
+    season: "springBright",
+    filter: "brightness(1.15)",
   },
 };
 
@@ -122,8 +130,10 @@ export function getAllColorTypes(): ColorTypeRule[] {
 /**
  * Получить цветотипы по сезону
  */
-export function getColorTypesBySeason(season: 'summer' | 'autumn' | 'winter' | 'spring'): ColorTypeRule[] {
-  return Object.values(colorTypeRules).filter(rule => 
-    rule.season === season || rule.season === `${season}Bright`
+export function getColorTypesBySeason(
+  season: "summer" | "autumn" | "winter" | "spring",
+): ColorTypeRule[] {
+  return Object.values(colorTypeRules).filter(
+    (rule) => rule.season === season || rule.season === `${season}Bright`,
   );
 }
