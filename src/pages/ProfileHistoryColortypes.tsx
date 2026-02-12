@@ -20,9 +20,8 @@ const colorTypeNames: Record<string, string> = {
   'FIERY AUTUMN': 'Огненная Осень',
   'VIVID AUTUMN': 'Тёмная Осень',
   'GENTLE SPRING': 'Нежная Весна',
-  'BRIGHT SPRING': 'Яркая Весна',
-  'WARM SPRING': 'Тёплая Весна',
-  'VIBRANT SPRING': 'Яркая Весна'
+  'VIBRANT SPRING': 'Яркая Весна',
+  'BRIGHT SPRING': 'Тёплая Весна'
 };
 
 const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';

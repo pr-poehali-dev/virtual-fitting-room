@@ -19,8 +19,7 @@ const colorTypeNamesMap: Record<string, ColorTypeName> = {
   'VIVID AUTUMN': 'VIVID_AUTUMN',
   'GENTLE SPRING': 'GENTLE_SPRING',
   'BRIGHT SPRING': 'BRIGHT_SPRING',
-  'WARM SPRING': 'WARM_SPRING',
-  'VIBRANT SPRING': 'BRIGHT_SPRING',
+  'VIBRANT SPRING': 'VIBRANT_SPRING',
 };
 
 const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';

@@ -13,8 +13,8 @@ export type ColorTypeName =
   | "BRIGHT_WINTER"
   | "VIVID_WINTER"
   | "SOFT_WINTER"
+  | "VIBRANT_SPRING"
   | "BRIGHT_SPRING"
-  | "WARM_SPRING"
   | "GENTLE_SPRING";
 
 export type SeasonKey =
@@ -90,13 +90,13 @@ export const colorTypeRules: Record<ColorTypeName, ColorTypeRule> = {
   },
 
   // ========== ВЕСНА ==========
-  BRIGHT_SPRING: {
-    name: "BRIGHT_SPRING",
+  VIBRANT_SPRING: {
+    name: "VIBRANT_SPRING",
     displayName: "Яркая Весна",
     season: "springBright",
   },
-  WARM_SPRING: {
-    name: "WARM_SPRING",
+  BRIGHT_SPRING: {
+    name: "BRIGHT_SPRING",
     displayName: "Тёплая Весна",
     season: "spring",
   },
