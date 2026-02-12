@@ -157,7 +157,7 @@ export default function PalettePage() {
         <div className="grid lg:grid-cols-[1fr,1.5fr] gap-6">
           <div className="space-y-6">
             {analysis.cdn_url && (
-              <div className="aspect-[3/4] rounded-lg overflow-hidden bg-muted">
+              <div className="max-h-[50vh] rounded-lg overflow-hidden bg-muted">
                 <img
                   src={analysis.cdn_url}
                   alt="Portrait"
