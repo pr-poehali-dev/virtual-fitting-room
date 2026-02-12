@@ -66,7 +66,7 @@ export const colorTypeRules: Record<ColorTypeName, ColorTypeRule> = {
   },
   VIVID_AUTUMN: {
     name: "VIVID_AUTUMN",
-    displayName: "Яркая Осень",
+    displayName: "Тёмная Осень",
     season: "autumn",
     filter: "brightness(0.85)",
   },
@@ -79,7 +79,7 @@ export const colorTypeRules: Record<ColorTypeName, ColorTypeRule> = {
   },
   VIVID_WINTER: {
     name: "VIVID_WINTER",
-    displayName: "Контрастная Зима",
+    displayName: "Тёмная Зима",
     season: "winter",
     filter: "brightness(0.85)",
   },
