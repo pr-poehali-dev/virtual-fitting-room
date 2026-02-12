@@ -128,7 +128,18 @@ export default function PalettePage() {
   const paletteInfo = colorTypeKey ? getPalettesForColorType(colorTypeKey) : null;
   const cssFilter = paletteInfo?.filter || '';
   
-  const hasAiResult = analysis.color_type_ai && analysis.color_type_ai !== analysis.color_type;
+  const hasAiResult = !!(
+    analysis.color_type_ai && 
+    analysis.color_type_ai.trim() !== '' && 
+    analysis.color_type_ai.trim().toUpperCase() !== analysis.color_type.trim().toUpperCase()
+  );
+
+  console.log('🎨 Palette Debug:', {
+    formula: analysis.color_type,
+    ai: analysis.color_type_ai,
+    hasAiResult,
+    activeSource
+  });
 
   return (
     <div className="min-h-screen bg-background">
