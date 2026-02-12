@@ -221,12 +221,12 @@ export default function PalettePage() {
               return (
                 <div key={paletteNum} className="bg-card rounded-lg border p-4">
                   <h3 className="font-semibold mb-4">Палитра {paletteNum}</h3>
-                  <div className="grid grid-cols-5 gap-3">
+                  <div className="grid grid-cols-10 gap-2">
                     {paletteColors.map((color) => (
                       <button
                         key={color.name}
                         onClick={() => setSelectedColor({ name: color.name, hex: color.hex })}
-                        className="group relative aspect-square rounded-lg overflow-hidden border-2 transition-all hover:scale-105 hover:shadow-lg"
+                        className="group relative aspect-square rounded overflow-hidden border-2 transition-all hover:scale-105 hover:shadow-lg"
                         style={{
                           borderColor:
                             selectedColor?.name === color.name
