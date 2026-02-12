@@ -25,8 +25,12 @@ const AUTH_API = 'https://functions.poehali.dev/589c58eb-91b4-4f2a-923c-6a91ed72
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [sessionChecked, setSessionChecked] = useState(false);
 
   useEffect(() => {
+    // Проверяем сессию только один раз при загрузке приложения
+    if (sessionChecked) return;
+
     const validateSession = async () => {
       try {
         const response = await fetch(AUTH_API, {
@@ -39,16 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (response.ok) {
           const data = await response.json();
           
-          // Save token to localStorage (CRITICAL for API requests after page reload!)
-          console.log('[Auth] Validate response:', { hasToken: !!data.session_token, hasUser: !!data.user });
           if (data.session_token) {
-            console.log('[Auth] Backend returned token on validate:', data.session_token);
             localStorage.setItem('session_token', data.session_token);
-            const savedToken = localStorage.getItem('session_token');
-            console.log('[Auth] Token saved to localStorage:', savedToken);
-            console.log('[Auth] Tokens match:', data.session_token === savedToken);
-          } else {
-            console.error('[Auth] No session_token in validate response!');
           }
           
           setUser(data.user);
@@ -60,11 +56,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
       } finally {
         setIsLoading(false);
+        setSessionChecked(true);
       }
     };
 
     validateSession();
-  }, []);
+  }, [sessionChecked]);
 
   const login = async (email: string, password: string) => {
     const response = await fetch(AUTH_API, {
@@ -80,19 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(data.error || 'Login failed');
     }
 
-    // Save token to localStorage for API requests
-    console.log('[Auth] Login response:', { hasToken: !!data.session_token, hasUser: !!data.user });
     if (data.session_token) {
-      console.log('[Auth] Backend returned token:', data.session_token);
       localStorage.setItem('session_token', data.session_token);
-      const savedToken = localStorage.getItem('session_token');
-      console.log('[Auth] Token saved to localStorage:', savedToken);
-      console.log('[Auth] Tokens match:', data.session_token === savedToken);
-    } else {
-      console.error('[Auth] No session_token in response!');
     }
 
     setUser(data.user);
+    setSessionChecked(true);
   };
 
   const register = async (email: string, password: string, name: string) => {
@@ -121,9 +111,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Logout failed:', error);
     }
-    // Clear token from localStorage
     localStorage.removeItem('session_token');
     setUser(null);
+    setSessionChecked(false);
   };
 
   const updateUser = (userData: User) => {
