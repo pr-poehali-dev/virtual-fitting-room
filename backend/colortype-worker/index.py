@@ -1722,13 +1722,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         color_type = None
                         result_text_value = raw_result
                     
-                    # Save result to DB
+                    # Save result to DB (color_type = formula result, color_type_ai = GPT suggestion)
                     cursor.execute('''
                         UPDATE color_type_history
-                        SET status = 'completed', result_text = %s, color_type = %s, 
+                        SET status = 'completed', result_text = %s, color_type = %s, color_type_ai = %s,
                             cdn_url = %s, saved_to_history = true, updated_at = %s
                         WHERE id = %s
-                    ''', (result_text_value, color_type, cdn_url, datetime.utcnow(), task_id))
+                    ''', (result_text_value, color_type, gpt_suggested_type if gpt_suggested_type else None, cdn_url, datetime.utcnow(), task_id))
                     conn.commit()
                     
                     print(f'[ColorType-Worker] Task {task_id} completed successfully')

@@ -28,6 +28,7 @@ interface ColorTypeAnalysis {
   id: string;
   cdn_url?: string;
   color_type: string;
+  color_type_ai?: string;
   result_text: string;
   created_at: string;
 }
@@ -41,6 +42,7 @@ export default function PalettePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedColor, setSelectedColor] = useState<{ name: string; hex: string } | null>(null);
   const [allColors, setAllColors] = useState<Array<{ name: string; hex: string; paletteNum: number }>>([]);
+  const [activeSource, setActiveSource] = useState<'formula' | 'ai'>('formula');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -72,7 +74,8 @@ export default function PalettePage() {
           const analysisData = result.data[0];
           setAnalysis(analysisData);
 
-          const colorTypeKey = colorTypeNamesMap[analysisData.color_type];
+          const currentColorType = activeSource === 'formula' ? analysisData.color_type : (analysisData.color_type_ai || analysisData.color_type);
+          const colorTypeKey = colorTypeNamesMap[currentColorType];
           if (colorTypeKey) {
             const paletteInfo = getPalettesForColorType(colorTypeKey);
             const seasonPalettes = seasonalPalettes[paletteInfo.season];
@@ -106,7 +109,7 @@ export default function PalettePage() {
     };
 
     fetchAnalysis();
-  }, [analysisId, user, navigate]);
+  }, [analysisId, user, navigate, activeSource]);
 
   if (authLoading || isLoading) {
     return (
@@ -120,9 +123,12 @@ export default function PalettePage() {
     return null;
   }
 
-  const colorTypeKey = colorTypeNamesMap[analysis.color_type];
+  const currentColorType = activeSource === 'formula' ? analysis.color_type : (analysis.color_type_ai || analysis.color_type);
+  const colorTypeKey = colorTypeNamesMap[currentColorType];
   const paletteInfo = colorTypeKey ? getPalettesForColorType(colorTypeKey) : null;
   const cssFilter = paletteInfo?.filter || '';
+  
+  const hasAiResult = analysis.color_type_ai && analysis.color_type_ai !== analysis.color_type;
 
   return (
     <div className="min-h-screen bg-background">
@@ -146,10 +152,32 @@ export default function PalettePage() {
       </div>
 
       <div className="container mx-auto px-4 py-4">
-        <div className="bg-muted/30 rounded-lg p-4 mb-4">
-          <p className="text-sm text-muted-foreground">
-            Панель инструментов (в разработке)
-          </p>
+        <div className="bg-card border rounded-lg p-4 mb-4">
+          {hasAiResult ? (
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium">Источник:</span>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant={activeSource === 'formula' ? 'default' : 'outline'}
+                  onClick={() => setActiveSource('formula')}
+                >
+                  Формула
+                </Button>
+                <Button
+                  size="sm"
+                  variant={activeSource === 'ai' ? 'default' : 'outline'}
+                  onClick={() => setActiveSource('ai')}
+                >
+                  ИИ
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Панель инструментов (в разработке)
+            </p>
+          )}
         </div>
       </div>
 
