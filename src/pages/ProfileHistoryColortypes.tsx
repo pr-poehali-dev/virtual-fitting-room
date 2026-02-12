@@ -174,10 +174,19 @@ export default function ProfileHistoryColortypes() {
                         </p>
                       </div>
                       {item.result_text && (
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground mb-3">
                           {item.result_text}
                         </p>
                       )}
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/palette/${item.id}`)}
+                      >
+                        <Icon name="Palette" className="mr-2" size={16} />
+                        Смотреть палитру
+                      </Button>
                     </CardContent>
                   </Card>
                   ))}

@@ -18,6 +18,7 @@ import ProfileHistory from "./pages/ProfileHistory";
 import ProfileHistoryColortypes from "./pages/ProfileHistoryColortypes";
 import ProfileWallet from "./pages/ProfileWallet";
 import ProfileSettings from "./pages/ProfileSettings";
+import PalettePage from "./pages/PalettePage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import SharedLookbook from "./pages/SharedLookbook";
@@ -86,6 +87,7 @@ const App = () => (
             <Route path="/profile/wallet" element={<ProfileWallet />} />
             <Route path="/profile/settings" element={<ProfileSettings />} />
             <Route path="/profile-old" element={<Profile />} />
+            <Route path="/palette/:analysisId" element={<PalettePage />} />
             
             {/* Admin Routes */}
             <Route path="/vf-console" element={<AdminLogin />} />
