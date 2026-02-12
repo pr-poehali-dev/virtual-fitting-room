@@ -11,6 +11,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataContext";
 import { useBalance } from "@/context/BalanceContext";
 import { useNavigate } from "react-router-dom";
+import { colorTypeRules, ColorTypeName } from "@/data/colorTypeRules";
+import { seasonalPalettes } from "@/data/seasonalPalettes";
 
 const COLORTYPE_START_API =
   "https://functions.poehali.dev/f5ab39bd-a682-44d8-ac47-d7b9d035013b";
@@ -125,6 +127,21 @@ const colorTypeNames: Record<string, string> = {
   "VIBRANT SPRING": "Яркая Весна",
 };
 
+const colorTypeToEnum: Record<string, ColorTypeName> = {
+  "Мягкая Зима": "SOFT_WINTER",
+  "Яркая Зима": "BRIGHT_WINTER",
+  "Тёмная Зима": "VIVID_WINTER",
+  "Светлое Лето": "SOFT_SUMMER",
+  "Мягкое (Пыльное) Лето": "DUSTY_SUMMER",
+  "Яркое Лето": "VIVID_SUMMER",
+  "Нежная Осень": "GENTLE_AUTUMN",
+  "Огненная Осень": "FIERY_AUTUMN",
+  "Тёмная Осень": "VIVID_AUTUMN",
+  "Нежная Весна": "GENTLE_SPRING",
+  "Тёплая Весна": "BRIGHT_SPRING",
+  "Яркая Весна": "VIBRANT_SPRING",
+};
+
 export default function ColorType() {
   const { user } = useAuth();
   const { refetchColorTypeHistory } = useData();
@@ -143,6 +160,7 @@ export default function ColorType() {
 
   const [result, setResult] = useState<{
     colorType: string;
+    colorTypeAi: string | null;
     description: string;
   } | null>(null);
 
@@ -258,9 +276,13 @@ export default function ColorType() {
 
         const colorTypeName =
           colorTypeNames[data.color_type] || data.color_type;
+        const colorTypeAiName = data.color_type_ai
+          ? colorTypeNames[data.color_type_ai] || data.color_type_ai
+          : null;
 
         setResult({
           colorType: colorTypeName,
+          colorTypeAi: colorTypeAiName,
           description: data.result_text || "",
         });
         setIsAnalyzing(false);
@@ -591,13 +613,73 @@ export default function ColorType() {
                         </div>
                       </div>
 
+                      {/* Palettes */}
+                      {(() => {
+                        const hasTwoResults = result.colorTypeAi && result.colorTypeAi !== result.colorType;
+
+                        const renderPalette = (colorTypeName: string, label?: string) => {
+                          const colorTypeEnum = colorTypeToEnum[colorTypeName];
+                          if (!colorTypeEnum) return null;
+
+                          const rule = colorTypeRules[colorTypeEnum];
+                          if (!rule) return null;
+
+                          const palettes = seasonalPalettes[rule.season];
+                          if (!palettes) return null;
+
+                          return (
+                            <div className="space-y-4">
+                              <h4 className="text-lg font-medium text-center">
+                                {label || 'Ваша палитра'}
+                              </h4>
+                              
+                              {Object.entries(palettes).map(([paletteKey, palette]) => (
+                                <div key={paletteKey} className="space-y-2">
+                                  <div className="grid grid-cols-5 gap-2">
+                                    {Object.entries(palette).map(([colorName, colorValue]) => (
+                                      <div
+                                        key={colorName}
+                                        className="aspect-square rounded-lg border border-border/50"
+                                        style={{
+                                          backgroundColor: colorValue,
+                                          filter: rule.filter || 'none',
+                                        }}
+                                        title={colorName}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        };
+
+                        if (hasTwoResults) {
+                          return (
+                            <div className="space-y-6">
+                              {renderPalette(result.colorType, `Результат формулы: ${result.colorType}`)}
+                              <div className="border-t border-border/50 pt-2" />
+                              {renderPalette(result.colorTypeAi!, `Результат ИИ: ${result.colorTypeAi}`)}
+                            </div>
+                          );
+                        }
+
+                        return renderPalette(result.colorType);
+                      })()}
+
+                      <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground text-center">
+                        <p>
+                          Просмотр и редактирование палитр доступен в личном кабинете в разделе «История цветотипов»
+                        </p>
+                      </div>
+
                       <Button
                         onClick={() => navigate("/profile/history-colortypes")}
                         variant="outline"
                         className="w-full"
                       >
                         <Icon name="History" className="mr-2" size={20} />
-                        Посмотреть историю
+                        Перейти в историю
                       </Button>
                     </div>
                   ) : isAnalyzing ? (

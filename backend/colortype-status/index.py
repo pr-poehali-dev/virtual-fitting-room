@@ -1006,7 +1006,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT status, result_text, color_type, replicate_prediction_id
+            SELECT status, result_text, color_type, replicate_prediction_id, color_type_ai
             FROM color_type_history
             WHERE id = %s
         ''', (task_id,))
@@ -1023,7 +1023,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Task not found'})
             }
         
-        status, result_text, color_type, replicate_prediction_id = row
+        status, result_text, color_type, replicate_prediction_id, color_type_ai = row
         
         # Direct API check (no worker trigger, like nanobananapro-async-status)
         if force_check and status == 'processing' and replicate_prediction_id:
@@ -1120,7 +1120,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'task_id': task_id,
             'status': status,
             'result_text': result_text,
-            'color_type': color_type
+            'color_type': color_type,
+            'color_type_ai': color_type_ai
         }
         
         return {
