@@ -19,6 +19,7 @@ const colorTypeNamesMap: Record<string, ColorTypeName> = {
   'VIVID AUTUMN': 'VIVID_AUTUMN',
   'GENTLE SPRING': 'GENTLE_SPRING',
   'BRIGHT SPRING': 'BRIGHT_SPRING',
+  'WARM SPRING': 'WARM_SPRING',
   'VIBRANT SPRING': 'BRIGHT_SPRING',
 };
 

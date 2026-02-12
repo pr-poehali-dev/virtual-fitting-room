@@ -20,7 +20,8 @@ const colorTypeNames: Record<string, string> = {
   'FIERY AUTUMN': 'Огненная Осень',
   'VIVID AUTUMN': 'Тёмная Осень',
   'GENTLE SPRING': 'Нежная Весна',
-  'BRIGHT SPRING': 'Тёплая Весна',
+  'BRIGHT SPRING': 'Яркая Весна',
+  'WARM SPRING': 'Тёплая Весна',
   'VIBRANT SPRING': 'Яркая Весна'
 };
 
