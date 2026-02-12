@@ -50,7 +50,7 @@ export const colorTypeRules: Record<ColorTypeName, ColorTypeRule> = {
     name: "SOFT_SUMMER",
     displayName: "Мягкое Лето",
     season: "summerBright",
-    filter: "brightness(1.15)",
+    filter: "brightness(1.1)",
   },
 
   // ========== ОСЕНЬ ==========
@@ -67,8 +67,8 @@ export const colorTypeRules: Record<ColorTypeName, ColorTypeRule> = {
   VIVID_AUTUMN: {
     name: "VIVID_AUTUMN",
     displayName: "Тёмная Осень",
-    season: "autumn",
-    filter: "brightness(0.85)",
+    season: "autumnBright",
+    filter: "brightness(0.9)",
   },
 
   // ========== ЗИМА ==========
@@ -80,8 +80,8 @@ export const colorTypeRules: Record<ColorTypeName, ColorTypeRule> = {
   VIVID_WINTER: {
     name: "VIVID_WINTER",
     displayName: "Тёмная Зима",
-    season: "winter",
-    filter: "brightness(0.85)",
+    season: "winterBright",
+    filter: "brightness(0.9)",
   },
   SOFT_WINTER: {
     name: "SOFT_WINTER",
@@ -104,7 +104,7 @@ export const colorTypeRules: Record<ColorTypeName, ColorTypeRule> = {
     name: "GENTLE_SPRING",
     displayName: "Нежная Весна",
     season: "springBright",
-    filter: "brightness(1.15)",
+    filter: "brightness(1.1)",
   },
 };
 
