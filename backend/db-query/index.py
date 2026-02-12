@@ -276,10 +276,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if not where:
                 raise Exception('Missing where for delete')
             
-            # Используем validated_user_id от session token (строка 96)
+            # Используем user_id от session token (строка 97)
             # Для try_on_history - сохраняем result_image перед удалением
             photos_to_check = []
-            if table == 'try_on_history' and validated_user_id:
+            if table == 'try_on_history' and user_id:
                 where_parts = []
                 params = []
                 for key, value in where.items():
@@ -293,7 +293,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     photos_to_check.append(row[0])
             
             # Для lookbooks - сохраняем photos перед удалением
-            elif table == 'lookbooks' and validated_user_id:
+            elif table == 'lookbooks' and user_id:
                 where_parts = []
                 params = []
                 for key, value in where.items():
@@ -307,7 +307,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     photos_to_check.extend(row[0])
             
             # Для color_type_history - сохраняем cdn_url перед удалением
-            elif table == 'color_type_history' and validated_user_id:
+            elif table == 'color_type_history' and user_id:
                 where_parts = []
                 params = []
                 for key, value in where.items():
@@ -337,9 +337,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.commit()
             
             # Проверяем и удаляем фото из S3
-            if validated_user_id and photos_to_check:
+            if user_id and photos_to_check:
                 for photo_url in photos_to_check:
-                    delete_from_s3_if_orphaned(photo_url, validated_user_id, cursor, schema)
+                    delete_from_s3_if_orphaned(photo_url, user_id, cursor, schema)
         
         else:
             raise Exception(f'Unknown action: {action}')
