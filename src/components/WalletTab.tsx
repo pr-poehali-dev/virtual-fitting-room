@@ -1,15 +1,18 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import Icon from '@/components/ui/icon';
-import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
-import { useBalance } from '@/context/BalanceContext';
-import { useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Icon from "@/components/ui/icon";
+import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
+import { useBalance } from "@/context/BalanceContext";
+import { useSearchParams } from "react-router-dom";
 
-const USER_BALANCE_API = 'https://functions.poehali.dev/68409278-10ab-4733-b48d-b1b4360620a1';
-const YOOKASSA_PAYMENT_API = 'https://functions.poehali.dev/f7ad0852-ed82-4ae0-b6ee-c2629c1ac4bb';
-const BALANCE_HISTORY_API = 'https://functions.poehali.dev/3cbe003b-0f4c-4e91-894b-4e5170c468ad';
+const USER_BALANCE_API =
+  "https://functions.poehali.dev/68409278-10ab-4733-b48d-b1b4360620a1";
+const YOOKASSA_PAYMENT_API =
+  "https://functions.poehali.dev/f7ad0852-ed82-4ae0-b6ee-c2629c1ac4bb";
+const BALANCE_HISTORY_API =
+  "https://functions.poehali.dev/3cbe003b-0f4c-4e91-894b-4e5170c468ad";
 
 interface BalanceInfo {
   balance: number;
@@ -21,7 +24,7 @@ interface BalanceInfo {
 
 interface BalanceTransaction {
   id: string;
-  type: 'deposit' | 'charge' | 'refund';
+  type: "deposit" | "charge" | "refund";
   amount: number;
   balance_before: number;
   balance_after: number;
@@ -35,7 +38,9 @@ export default function WalletTab() {
   const { refreshBalance } = useBalance();
   const [searchParams] = useSearchParams();
   const [balanceInfo, setBalanceInfo] = useState<BalanceInfo | null>(null);
-  const [balanceHistory, setBalanceHistory] = useState<BalanceTransaction[]>([]);
+  const [balanceHistory, setBalanceHistory] = useState<BalanceTransaction[]>(
+    [],
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,17 +52,17 @@ export default function WalletTab() {
       fetchBalance();
       fetchBalanceHistory();
     }
-    
-    const payment = searchParams.get('payment');
-    if (payment === 'success') {
-      toast.success('Платеж успешно обработан!');
+
+    const payment = searchParams.get("payment");
+    if (payment === "success") {
+      toast.success("Платеж успешно обработан!");
       setTimeout(() => {
         fetchBalance();
         fetchBalanceHistory();
         refreshBalance();
       }, 1000);
-    } else if (payment === 'failed') {
-      toast.error('Ошибка оплаты');
+    } else if (payment === "failed") {
+      toast.error("Ошибка оплаты");
     }
   }, [user, searchParams, currentPage]);
 
@@ -66,17 +71,17 @@ export default function WalletTab() {
 
     try {
       const response = await fetch(USER_BALANCE_API, {
-        credentials: 'include'
+        credentials: "include",
       });
 
       if (response.ok) {
         const data = await response.json();
         setBalanceInfo(data);
       } else {
-        toast.error('Ошибка загрузки баланса');
+        toast.error("Ошибка загрузки баланса");
       }
     } catch (error) {
-      toast.error('Ошибка соединения');
+      toast.error("Ошибка соединения");
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +93,7 @@ export default function WalletTab() {
     try {
       const offset = (currentPage - 1) * transactionsPerPage;
       const response = await fetch(
-        `${BALANCE_HISTORY_API}?user_id=${user.id}&limit=${transactionsPerPage}&offset=${offset}`
+        `${BALANCE_HISTORY_API}?user_id=${user.id}&limit=${transactionsPerPage}&offset=${offset}`,
       );
 
       if (response.ok) {
@@ -97,7 +102,7 @@ export default function WalletTab() {
         setTotalTransactions(data.total || data.transactions.length);
       }
     } catch (error) {
-      console.error('Ошибка загрузки истории операций:', error);
+      console.error("Ошибка загрузки истории операций:", error);
     }
   };
 
@@ -108,14 +113,14 @@ export default function WalletTab() {
 
     try {
       const response = await fetch(YOOKASSA_PAYMENT_API, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           user_id: user.id,
-          amount
-        })
+          amount,
+        }),
       });
 
       const data = await response.json();
@@ -123,10 +128,10 @@ export default function WalletTab() {
       if (response.ok && data.payment_url) {
         window.location.href = data.payment_url;
       } else {
-        toast.error(data.error || 'Ошибка создания платежа');
+        toast.error(data.error || "Ошибка создания платежа");
       }
     } catch (error) {
-      toast.error('Ошибка соединения');
+      toast.error("Ошибка соединения");
     } finally {
       setIsCreatingPayment(false);
     }
@@ -153,10 +158,14 @@ export default function WalletTab() {
           <CardContent>
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Сумма на счету</p>
-                <p className="text-4xl font-light">{balanceInfo?.balance.toFixed(2)} ₽</p>
+                <p className="text-sm text-muted-foreground mb-1">
+                  Сумма на счету
+                </p>
+                <p className="text-4xl font-light">
+                  {balanceInfo?.balance.toFixed(2)} ₽
+                </p>
               </div>
-              
+
               {balanceInfo?.unlimited_access ? (
                 <div className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-3 rounded-lg">
                   <Icon name="Infinity" size={20} />
@@ -170,11 +179,15 @@ export default function WalletTab() {
                     <span className="font-medium">{balanceInfo?.free_tries_remaining} / 3</span>
                   </div> */}
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Доступно примерок:</span>
-                    <span className="font-medium">{balanceInfo?.paid_tries_available}</span>
+                    <span className="text-sm text-muted-foreground">
+                      Доступно примерок:
+                    </span>
+                    <span className="font-medium">
+                      {balanceInfo?.paid_tries_available}
+                    </span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-3">
-                    Стоимость: 30₽ за образ / шаг
+                    Стоимость: 50₽ за образ / шаг
                   </p>
                 </div>
               )}
@@ -222,7 +235,9 @@ export default function WalletTab() {
                 disabled={isCreatingPayment}
               >
                 <span>300 ₽</span>
-                <span className="text-sm text-muted-foreground">10 образов</span>
+                <span className="text-sm text-muted-foreground">
+                  10 образов
+                </span>
               </Button>
               <Button
                 className="w-full justify-between"
@@ -232,7 +247,9 @@ export default function WalletTab() {
                 disabled={isCreatingPayment}
               >
                 <span>900 ₽</span>
-                <span className="text-sm text-muted-foreground">30 образов</span>
+                <span className="text-sm text-muted-foreground">
+                  30 образов
+                </span>
               </Button>
             </div>
             {isCreatingPayment && (
@@ -258,33 +275,55 @@ export default function WalletTab() {
         <CardContent>
           {balanceHistory.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <Icon name="FileText" size={48} className="mx-auto mb-3 opacity-50" />
+              <Icon
+                name="FileText"
+                size={48}
+                className="mx-auto mb-3 opacity-50"
+              />
               <p>История пополнений и списаний пуста</p>
             </div>
           ) : (
             <div className="space-y-3">
               {balanceHistory.map((transaction) => (
-                <div 
-                  key={transaction.id} 
+                <div
+                  key={transaction.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      {transaction.type === 'deposit' && (
-                        <Icon name="ArrowDownCircle" size={16} className="text-green-600" />
+                      {transaction.type === "deposit" && (
+                        <Icon
+                          name="ArrowDownCircle"
+                          size={16}
+                          className="text-green-600"
+                        />
                       )}
-                      {transaction.type === 'charge' && (
-                        <Icon name="ArrowUpCircle" size={16} className="text-red-600" />
+                      {transaction.type === "charge" && (
+                        <Icon
+                          name="ArrowUpCircle"
+                          size={16}
+                          className="text-red-600"
+                        />
                       )}
-                      {transaction.type === 'refund' && (
-                        <Icon name="RefreshCw" size={16} className="text-blue-600" />
+                      {transaction.type === "refund" && (
+                        <Icon
+                          name="RefreshCw"
+                          size={16}
+                          className="text-blue-600"
+                        />
                       )}
-                      <span className={`font-medium ${
-                        transaction.type === 'deposit' || transaction.type === 'refund' 
-                          ? 'text-green-600' 
-                          : 'text-red-600'
-                      }`}>
-                        {transaction.type === 'deposit' || transaction.type === 'refund' ? '+' : ''}
+                      <span
+                        className={`font-medium ${
+                          transaction.type === "deposit" ||
+                          transaction.type === "refund"
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {transaction.type === "deposit" ||
+                        transaction.type === "refund"
+                          ? "+"
+                          : ""}
                         {transaction.amount.toFixed(2)} ₽
                       </span>
                       {transaction.is_deleted && (
@@ -296,13 +335,16 @@ export default function WalletTab() {
                     </div>
                     <p className="text-sm mb-1">{transaction.description}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(transaction.created_at).toLocaleDateString('ru-RU', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                      {new Date(transaction.created_at).toLocaleDateString(
+                        "ru-RU",
+                        {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      )}
                     </p>
                   </div>
                 </div>
@@ -315,20 +357,31 @@ export default function WalletTab() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
               >
                 <Icon name="ChevronLeft" size={16} />
                 Назад
               </Button>
               <span className="text-sm text-muted-foreground px-4">
-                Страница {currentPage} из {Math.ceil(totalTransactions / transactionsPerPage)}
+                Страница {currentPage} из{" "}
+                {Math.ceil(totalTransactions / transactionsPerPage)}
               </span>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalTransactions / transactionsPerPage), p + 1))}
-                disabled={currentPage >= Math.ceil(totalTransactions / transactionsPerPage)}
+                onClick={() =>
+                  setCurrentPage((p) =>
+                    Math.min(
+                      Math.ceil(totalTransactions / transactionsPerPage),
+                      p + 1,
+                    ),
+                  )
+                }
+                disabled={
+                  currentPage >=
+                  Math.ceil(totalTransactions / transactionsPerPage)
+                }
               >
                 Вперёд
                 <Icon name="ChevronRight" size={16} />
