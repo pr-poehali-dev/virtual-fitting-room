@@ -579,7 +579,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
             WHERE status = 'processing' 
               AND fal_response_url IS NOT NULL
-              AND created_at < NOW() - INTERVAL '3 minutes'
+              AND updated_at < NOW() - INTERVAL '3 minutes'
               AND id != %s
             ORDER BY created_at ASC
             LIMIT 5
