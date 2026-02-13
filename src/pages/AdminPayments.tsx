@@ -131,7 +131,7 @@ export default function AdminPayments() {
         },
         body: JSON.stringify({
           user_id: userId,
-          amount: 30,
+          amount: 50,
           reason,
           transaction_id: transactionId,
         }),
