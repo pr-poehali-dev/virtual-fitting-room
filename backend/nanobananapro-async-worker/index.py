@@ -426,26 +426,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     }
                 
                 try:
-                    # FIFO queue: wait if other fresh tasks are being processed
-                    max_wait_attempts = 8
-                    wait_interval = 15
-                    for attempt in range(max_wait_attempts):
-                        cursor.execute('''
-                            SELECT COUNT(*) FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
-                            WHERE status = 'processing'
-                              AND id != %s
-                              AND fal_request_id IS NOT NULL
-                              AND created_at > NOW() - INTERVAL '2 minutes'
-                              AND created_at < (SELECT created_at FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks WHERE id = %s)
-                        ''', (task_id, task_id))
-                        active_count = cursor.fetchone()[0]
-                        
-                        if active_count == 0:
-                            break
-                        
-                        print(f'[NanoBanana] Task {task_id}: {active_count} fresh task(s) ahead in queue, waiting {wait_interval}s (attempt {attempt+1}/{max_wait_attempts})')
-                        time.sleep(wait_interval)
-                    
                     request_id, response_url = submit_to_fal_queue(person_image, garments, prompt_hints or '')
                     print(f'[NanoBanana] Task {task_id} submitted to fal.ai: request_id={request_id}')
                     
