@@ -639,9 +639,9 @@ export default function ReplicateTryOn() {
         }
         console.log("[NanoBananaPro] Status check result:", data);
 
-        if (data.status === "processing" && triggerWorker) {
+        if ((data.status === "processing" || data.status === "pending") && triggerWorker) {
           console.log(
-            "[NanoBananaPro] Triggering worker to check fal.ai status",
+            "[NanoBananaPro] Triggering worker to check/advance task",
           );
           const workerToken = localStorage.getItem('session_token');
           if (workerToken) {
