@@ -700,14 +700,6 @@ export default function ReplicateTryOn() {
           toast.error(data.error_message || "Ошибка генерации");
           clearInterval(interval);
           setPollingInterval(null);
-
-          if (user) {
-            await refundReplicateBalance(
-              user,
-              selectedClothingItems?.length || 0,
-            );
-            console.log("[NanoBananaPro] Balance refunded due to API error");
-          }
         } else {
           console.log("[NanoBananaPro] Unknown status:", data.status);
         }

@@ -283,18 +283,6 @@ def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garment
         history_row = cursor.fetchone()
         history_id = str(history_row[0]) if history_row else None
         
-        # Record balance transaction
-        if history_id:
-            balance_after = balance - cost if not unlimited_access else balance
-            description = 'Виртуальная примерочная (безлимитный доступ)' if unlimited_access else 'Виртуальная примерочная'
-            
-            cursor.execute('''
-                INSERT INTO balance_transactions
-                (user_id, type, amount, balance_before, balance_after, description, try_on_id)
-                VALUES (%s, 'charge', %s, %s, %s, %s, %s)
-            ''', (user_id, -cost if not unlimited_access else 0, balance, balance_after, description, history_id))
-            print(f'[History] Recorded balance transaction: -{cost} rubles (history_id={history_id})')
-        
         conn.commit()
         cursor.close()
         print(f'[History] Saved to try_on_history for user {user_id} (id={history_id})')

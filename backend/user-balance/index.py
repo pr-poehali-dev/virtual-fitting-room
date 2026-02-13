@@ -106,20 +106,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if unlimited_access:
                     description = f'{"Виртуальная примерочная" if generation_type == "try_on" else "Определение цветотипа"} (безлимитный доступ)'
                     
-                    if generation_id:
-                        cur.execute('''
-                            INSERT INTO t_p29007832_virtual_fitting_room.balance_transactions
-                            (user_id, type, amount, balance_before, balance_after, description, try_on_id, color_type_id)
-                            VALUES (%s, 'charge', 0, %s, %s, %s, %s, %s)
-                        ''', (
-                            user_id, 
-                            balance_before, 
-                            balance_before, 
-                            description,
-                            generation_id if generation_type == 'try_on' else None,
-                            generation_id if generation_type == 'color_type' else None
-                        ))
-                        conn.commit()
+                    cur.execute('''
+                        INSERT INTO t_p29007832_virtual_fitting_room.balance_transactions
+                        (user_id, type, amount, balance_before, balance_after, description, try_on_id, color_type_id)
+                        VALUES (%s, 'charge', 0, %s, %s, %s, %s, %s)
+                    ''', (
+                        user_id, 
+                        balance_before, 
+                        balance_before, 
+                        description,
+                        generation_id if generation_type == 'try_on' else None,
+                        generation_id if generation_type == 'color_type' else None
+                    ))
+                    conn.commit()
                     
                     return {
                         'statusCode': 200,
@@ -141,20 +140,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         WHERE id = %s
                     ''', (total_cost, user_id))
                     
-                    if generation_id:
-                        cur.execute('''
-                            INSERT INTO t_p29007832_virtual_fitting_room.balance_transactions
-                            (user_id, type, amount, balance_before, balance_after, description, try_on_id, color_type_id)
-                            VALUES (%s, 'charge', %s, %s, %s, %s, %s, %s)
-                        ''', (
-                            user_id, 
-                            -total_cost,
-                            balance_before, 
-                            balance_after, 
-                            description,
-                            generation_id if generation_type == 'try_on' else None,
-                            generation_id if generation_type == 'color_type' else None
-                        ))
+                    cur.execute('''
+                        INSERT INTO t_p29007832_virtual_fitting_room.balance_transactions
+                        (user_id, type, amount, balance_before, balance_after, description, try_on_id, color_type_id)
+                        VALUES (%s, 'charge', %s, %s, %s, %s, %s, %s)
+                    ''', (
+                        user_id, 
+                        -total_cost,
+                        balance_before, 
+                        balance_after, 
+                        description,
+                        generation_id if generation_type == 'try_on' else None,
+                        generation_id if generation_type == 'color_type' else None
+                    ))
                     
                     conn.commit()
                     
@@ -224,20 +222,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     WHERE id = %s
                 ''', (total_refund, user_id))
                 
-                if generation_id:
-                    cur.execute('''
-                        INSERT INTO t_p29007832_virtual_fitting_room.balance_transactions
-                        (user_id, type, amount, balance_before, balance_after, description, try_on_id, color_type_id)
-                        VALUES (%s, 'refund', %s, %s, %s, %s, %s, %s)
-                    ''', (
-                        user_id, 
-                        total_refund,
-                        balance_before, 
-                        balance_after, 
-                        description,
-                        generation_id if generation_type == 'try_on' else None,
-                        generation_id if generation_type == 'color_type' else None
-                    ))
+                cur.execute('''
+                    INSERT INTO t_p29007832_virtual_fitting_room.balance_transactions
+                    (user_id, type, amount, balance_before, balance_after, description, try_on_id, color_type_id)
+                    VALUES (%s, 'refund', %s, %s, %s, %s, %s, %s)
+                ''', (
+                    user_id, 
+                    total_refund,
+                    balance_before, 
+                    balance_after, 
+                    description,
+                    generation_id if generation_type == 'try_on' else None,
+                    generation_id if generation_type == 'color_type' else None
+                ))
                 
                 conn.commit()
                 
