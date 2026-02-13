@@ -22,7 +22,7 @@ export const checkReplicateBalance = async (
   }
 
   const steps = garmentCount;
-  const costPerStep = 30;
+  const costPerStep = 50;
   const totalCost = steps * costPerStep;
 
   try {
@@ -57,7 +57,7 @@ export const deductReplicateBalance = async (
     return false;
   }
 
-  const costPerStep = 30;
+  const costPerStep = 50;
   const totalCost = steps * costPerStep;
 
   try {

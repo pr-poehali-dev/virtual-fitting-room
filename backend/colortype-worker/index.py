@@ -548,7 +548,7 @@ def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
     raise Exception(f'Failed to submit to OpenRouter: {response.status_code} - {response.text[:500]}')
 
 def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
-    '''Refund 30 rubles to user balance if not unlimited and not already refunded'''
+    '''Refund 50 rubles to user balance if not unlimited and not already refunded'''
     try:
         cursor = conn.cursor()
         
@@ -583,22 +583,22 @@ def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
         cursor.execute('SELECT balance FROM users WHERE id = %s', (user_id,))
         balance_row = cursor.fetchone()
         balance_before = float(balance_row[0]) if balance_row else 0
-        balance_after = balance_before + 30
+        balance_after = balance_before + 50
         
-        # Refund 30 rubles
-        cursor.execute('UPDATE users SET balance = balance + 30 WHERE id = %s', (user_id,))
+        # Refund 50 rubles
+        cursor.execute('UPDATE users SET balance = balance + 50 WHERE id = %s', (user_id,))
         cursor.execute('UPDATE color_type_history SET refunded = true WHERE id = %s', (task_id,))
         
         # Record balance transaction
         cursor.execute('''
             INSERT INTO balance_transactions
             (user_id, type, amount, balance_before, balance_after, description, color_type_id)
-            VALUES (%s, 'refund', 30, %s, %s, 'Возврат: технический сбой цветотипа', %s)
+            VALUES (%s, 'refund', 50, %s, %s, 'Возврат: технический сбой цветотипа', %s)
         ''', (user_id, balance_before, balance_after, task_id))
         
         conn.commit()
         
-        print(f'[Refund] Refunded 30 rubles to user {user_id} for task {task_id}')
+        print(f'[Refund] Refunded 50 rubles to user {user_id} for task {task_id}')
         cursor.close()
         
     except Exception as e:

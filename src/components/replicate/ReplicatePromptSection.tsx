@@ -56,7 +56,7 @@ export default function ReplicatePromptSection({
           ) : (
             <>
               <Icon name="Sparkles" className="mr-2 h-5 w-5" />
-              Примерить (30 ₽)
+              Примерить (50 ₽)
             </>
           )}
         </Button>

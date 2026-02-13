@@ -19,7 +19,7 @@ const COLORTYPE_START_API =
 const COLORTYPE_STATUS_API =
   "https://functions.poehali.dev/7f1395ac-bddc-45ec-b997-b39497110680";
 
-const COST = 30;
+const COST = 50;
 const POLLING_INTERVAL = 20000; // 20 seconds
 const TIMEOUT_DURATION = 180000; // 3 minutes
 

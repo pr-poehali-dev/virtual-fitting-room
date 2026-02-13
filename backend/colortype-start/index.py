@@ -102,7 +102,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         unlimited_access = user_row[1]
         
         # Cost: 0 for unlimited users, 30 for others
-        cost = 0 if unlimited_access else 30
+        cost = 0 if unlimited_access else 50
         
         # Check balance only if not unlimited
         if not unlimited_access:

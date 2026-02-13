@@ -211,21 +211,11 @@ export default function WalletTab() {
                 className="w-full justify-between"
                 variant="outline"
                 size="lg"
-                onClick={() => handleTopUp(30)}
+                onClick={() => handleTopUp(50)}
                 disabled={isCreatingPayment}
               >
-                <span>30 ₽</span>
+                <span>50 ₽</span>
                 <span className="text-sm text-muted-foreground">1 образ</span>
-              </Button>
-              <Button
-                className="w-full justify-between"
-                variant="outline"
-                size="lg"
-                onClick={() => handleTopUp(150)}
-                disabled={isCreatingPayment}
-              >
-                <span>150 ₽</span>
-                <span className="text-sm text-muted-foreground">5 образов</span>
               </Button>
               <Button
                 className="w-full justify-between"
@@ -235,6 +225,16 @@ export default function WalletTab() {
                 disabled={isCreatingPayment}
               >
                 <span>300 ₽</span>
+                <span className="text-sm text-muted-foreground">6 образов</span>
+              </Button>
+              <Button
+                className="w-full justify-between"
+                variant="outline"
+                size="lg"
+                onClick={() => handleTopUp(500)}
+                disabled={isCreatingPayment}
+              >
+                <span>500 ₽</span>
                 <span className="text-sm text-muted-foreground">
                   10 образов
                 </span>
@@ -243,12 +243,24 @@ export default function WalletTab() {
                 className="w-full justify-between"
                 variant="outline"
                 size="lg"
-                onClick={() => handleTopUp(900)}
+                onClick={() => handleTopUp(1500)}
                 disabled={isCreatingPayment}
               >
-                <span>900 ₽</span>
+                <span>1 500 ₽</span>
                 <span className="text-sm text-muted-foreground">
                   30 образов
+                </span>
+              </Button>
+              <Button
+                className="w-full justify-between"
+                variant="outline"
+                size="lg"
+                onClick={() => handleTopUp(3000)}
+                disabled={isCreatingPayment}
+              >
+                <span>3 000 ₽</span>
+                <span className="text-sm text-muted-foreground">
+                  60 образов
                 </span>
               </Button>
             </div>

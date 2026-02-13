@@ -1019,7 +1019,7 @@ export default function ReplicateTryOn() {
 
                   {!user?.unlimited_access && !isGenerating && (
                     <p className="text-sm text-muted-foreground text-center">
-                      Стоимость генерации: 30₽
+                      Стоимость генерации: 50₽
                     </p>
                   )}
                 </div>
