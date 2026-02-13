@@ -27,6 +27,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useCatalogFilters, useCatalog } from "@/hooks/useCatalog";
+import { useBalance } from "@/context/BalanceContext";
 
 interface ClothingItem {
   id: string;
@@ -102,6 +103,10 @@ const proxyFalImage = async (falUrl: string): Promise<string> => {
 export default function ReplicateTryOn() {
   const { user } = useAuth();
   const { lookbooks, refetchLookbooks, refetchHistory } = useData();
+  const { balanceInfo } = useBalance();
+
+  const hasInsufficientBalance = user && !balanceInfo?.unlimited_access && !balanceInfo?.can_generate;
+
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedClothingItems, setSelectedClothingItems] = useState<
     SelectedClothing[]
@@ -889,7 +894,7 @@ export default function ReplicateTryOn() {
                           Требуется авторизация
                         </p>
                         <p className="text-sm text-muted-foreground mb-2">
-                          Для генерации изображений необходимо войти в аккаунт
+                          Для генерации изображений необходимо войти в аккаунт и пополнить баланс минимум на 50 рублей.
                         </p>
                         <div className="flex gap-2">
                           <Link to="/login">
@@ -903,6 +908,31 @@ export default function ReplicateTryOn() {
                             </Button>
                           </Link>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {hasInsufficientBalance && (
+                  <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Icon
+                        name="Wallet"
+                        className="text-orange-600 mt-0.5 flex-shrink-0"
+                        size={20}
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-orange-700 mb-1">
+                          Недостаточно средств
+                        </p>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Пополните баланс для генерации. Стоимость: 50₽
+                        </p>
+                        <Link to="/profile/wallet">
+                          <Button size="sm" variant="default">
+                            Пополнить баланс
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -995,7 +1025,8 @@ export default function ReplicateTryOn() {
                       !uploadedImage ||
                       (selectedClothingItems?.length || 0) === 0 ||
                       isGenerating ||
-                      !user
+                      !user ||
+                      !!hasInsufficientBalance
                     }
                     className="w-full"
                     size="lg"

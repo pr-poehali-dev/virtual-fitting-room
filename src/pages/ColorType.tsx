@@ -10,7 +10,7 @@ import { validateImageFile } from "@/utils/fileValidation";
 import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataContext";
 import { useBalance } from "@/context/BalanceContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { colorTypeRules, ColorTypeName } from "@/data/colorTypeRules";
 import { seasonalPalettes } from "@/data/seasonalPalettes";
 
@@ -145,8 +145,10 @@ const colorTypeToEnum: Record<string, ColorTypeName> = {
 export default function ColorType() {
   const { user } = useAuth();
   const { refetchColorTypeHistory } = useData();
-  const { refreshBalance } = useBalance();
+  const { refreshBalance, balanceInfo } = useBalance();
   const navigate = useNavigate();
+
+  const hasInsufficientBalance = user && !balanceInfo?.unlimited_access && !balanceInfo?.can_generate;
 
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
@@ -468,6 +470,63 @@ export default function ColorType() {
             {/* Left Panel - Upload */}
             <Card className="animate-scale-in">
               <CardContent className="p-8">
+                {!user && (
+                  <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Icon
+                        name="Info"
+                        className="text-primary mt-0.5 flex-shrink-0"
+                        size={20}
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-primary mb-1">
+                          Требуется авторизация
+                        </p>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Для генерации изображений необходимо войти в аккаунт и пополнить баланс минимум на 50 рублей.
+                        </p>
+                        <div className="flex gap-2">
+                          <Link to="/login">
+                            <Button size="sm" variant="default">
+                              Войти
+                            </Button>
+                          </Link>
+                          <Link to="/register">
+                            <Button size="sm" variant="outline">
+                              Регистрация
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {hasInsufficientBalance && (
+                  <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Icon
+                        name="Wallet"
+                        className="text-orange-600 mt-0.5 flex-shrink-0"
+                        size={20}
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-orange-700 mb-1">
+                          Недостаточно средств
+                        </p>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Пополните баланс для генерации. Стоимость: {COST}₽
+                        </p>
+                        <Link to="/profile/wallet">
+                          <Button size="sm" variant="default">
+                            Пополнить баланс
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium mb-3">
@@ -563,7 +622,7 @@ export default function ColorType() {
 
                   <Button
                     onClick={handleAnalyze}
-                    disabled={isAnalyzing || !uploadedImage || !eyeColor}
+                    disabled={isAnalyzing || !uploadedImage || !eyeColor || !user || !!hasInsufficientBalance}
                     className="w-full h-12 text-base"
                     size="lg"
                   >
