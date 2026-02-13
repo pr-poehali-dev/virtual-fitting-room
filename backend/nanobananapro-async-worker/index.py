@@ -256,8 +256,8 @@ def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garment
         unlimited_access = user_row[0] if user_row else False
         balance = float(user_row[1]) if user_row else 0
         
-        # Cost: 0 for unlimited users, 30 for others
-        cost = 0 if unlimited_access else 30
+        # Cost: 0 for unlimited users, 50 for others
+        cost = 0 if unlimited_access else 50
         
         # Extract first garment image for garment_image column
         garment_image = garments[0]['image'] if garments and len(garments) > 0 else ''
