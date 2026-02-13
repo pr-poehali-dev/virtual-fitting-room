@@ -403,6 +403,26 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Process pending task
         if task_status == 'pending':
             if not fal_request_id:
+                # FIFO: check if another fresh task is already being processed
+                cursor.execute('''
+                    SELECT COUNT(*) FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                    WHERE status = 'processing'
+                      AND fal_request_id IS NOT NULL
+                      AND created_at > NOW() - INTERVAL '2 minutes'
+                ''')
+                active_count = cursor.fetchone()[0]
+                
+                if active_count > 0:
+                    print(f'[NanoBanana] Task {task_id}: {active_count} active task(s) in queue, staying pending')
+                    cursor.close()
+                    conn.close()
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'status': 'queued', 'active_tasks': active_count})
+                    }
+                
                 # ATOMIC: Mark as processing FIRST to prevent race condition
                 print(f'[NanoBanana] Task {task_id}: ATOMIC UPDATE to prevent duplicate submission')
                 cursor.execute('''
@@ -668,6 +688,49 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
             except Exception as e:
                 print(f'[NanoBanana] Error processing stuck task {stuck_id}: {str(e)}')
+        
+        # Reset zombie tasks: processing without fal_request_id for >2 minutes
+        try:
+            cursor.execute('''
+                UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                SET status = 'pending', updated_at = %s
+                WHERE status = 'processing'
+                  AND fal_request_id IS NULL
+                  AND created_at < NOW() - INTERVAL '2 minutes'
+                RETURNING id
+            ''', (datetime.utcnow(),))
+            zombie_rows = cursor.fetchall()
+            conn.commit()
+            if zombie_rows:
+                zombie_ids = [r[0] for r in zombie_rows]
+                print(f'[NanoBanana] Reset {len(zombie_ids)} zombie tasks back to pending: {zombie_ids}')
+        except Exception as e:
+            print(f'[NanoBanana] Error resetting zombie tasks: {str(e)}')
+        
+        # Pick up orphan pending tasks older than 1 minute (user closed browser)
+        try:
+            cursor.execute('''
+                SELECT id FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                WHERE status = 'pending'
+                  AND fal_request_id IS NULL
+                  AND created_at < NOW() - INTERVAL '1 minute'
+                  AND id != %s
+                ORDER BY created_at ASC
+                LIMIT 1
+            ''', (task_id,))
+            orphan_row = cursor.fetchone()
+            if orphan_row:
+                orphan_id = orphan_row[0]
+                print(f'[NanoBanana] Found orphan pending task {orphan_id}, triggering worker')
+                try:
+                    import urllib.request
+                    worker_url = f'https://functions.poehali.dev/1f4c772e-0425-4fe4-98a6-baa3979ba94d?task_id={orphan_id}'
+                    req = urllib.request.Request(worker_url, method='GET')
+                    urllib.request.urlopen(req, timeout=2)
+                except Exception as trigger_err:
+                    print(f'[NanoBanana] Orphan trigger failed (non-critical): {trigger_err}')
+        except Exception as e:
+            print(f'[NanoBanana] Error checking orphan tasks: {str(e)}')
         
         cursor.close()
         conn.close()
