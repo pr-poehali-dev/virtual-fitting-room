@@ -29,7 +29,7 @@
       },
       "expectedStatus": 400,
       "expectedBody": {
-        "error": "Минимальная сумма пополнения — 30 рублей"
+        "error": "Минимальная сумма пополнения — 50 рублей"
       },
       "bodyMatcher": "partial"
     }

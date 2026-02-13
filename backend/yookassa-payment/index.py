@@ -75,7 +75,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
-                    'body': json.dumps({'error': 'Минимальная сумма пополнения — 30 рублей'}),
+                    'body': json.dumps({'error': 'Минимальная сумма пополнения — 50 рублей'}),
                     'isBase64Encoded': False
                 }
             
