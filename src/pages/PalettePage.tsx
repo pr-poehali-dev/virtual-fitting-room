@@ -126,7 +126,7 @@ export default function PalettePage() {
   const currentColorType = activeSource === 'formula' ? analysis.color_type : (analysis.color_type_ai || analysis.color_type);
   const colorTypeKey = colorTypeNamesMap[currentColorType];
   const paletteInfo = colorTypeKey ? getPalettesForColorType(colorTypeKey) : null;
-  const cssFilter = paletteInfo?.filter || '';
+  
   
   const hasAiResult = !!(
     analysis.color_type_ai && 
@@ -211,7 +211,6 @@ export default function PalettePage() {
                   className="w-full h-32 rounded-lg mb-4"
                   style={{
                     backgroundColor: selectedColor.hex,
-                    filter: cssFilter,
                   }}
                 />
                 <h3 className="font-semibold text-lg capitalize">

@@ -20,18 +20,21 @@ export type ColorTypeName =
 export type SeasonKey =
   | "summer"
   | "summerBright"
+  | "summerSoft"
   | "autumn"
   | "autumnBright"
+  | "autumnVivid"
   | "winter"
   | "winterBright"
+  | "winterVivid"
   | "spring"
-  | "springBright";
+  | "springBright"
+  | "springGentle";
 
 export interface ColorTypeRule {
   name: ColorTypeName;
   displayName: string;
   season: SeasonKey;
-  filter?: string;
 }
 
 export const colorTypeRules: Record<ColorTypeName, ColorTypeRule> = {
@@ -49,8 +52,7 @@ export const colorTypeRules: Record<ColorTypeName, ColorTypeRule> = {
   SOFT_SUMMER: {
     name: "SOFT_SUMMER",
     displayName: "Мягкое Лето",
-    season: "summerBright",
-    filter: "brightness(1.05)",
+    season: "summerSoft",
   },
 
   // ========== ОСЕНЬ ==========
@@ -67,8 +69,7 @@ export const colorTypeRules: Record<ColorTypeName, ColorTypeRule> = {
   VIVID_AUTUMN: {
     name: "VIVID_AUTUMN",
     displayName: "Тёмная Осень",
-    season: "autumnBright",
-    filter: "brightness(0.95)",
+    season: "autumnVivid",
   },
 
   // ========== ЗИМА ==========
@@ -80,8 +81,7 @@ export const colorTypeRules: Record<ColorTypeName, ColorTypeRule> = {
   VIVID_WINTER: {
     name: "VIVID_WINTER",
     displayName: "Тёмная Зима",
-    season: "winterBright",
-    filter: "brightness(0.95)",
+    season: "winterVivid",
   },
   SOFT_WINTER: {
     name: "SOFT_WINTER",
@@ -103,8 +103,7 @@ export const colorTypeRules: Record<ColorTypeName, ColorTypeRule> = {
   GENTLE_SPRING: {
     name: "GENTLE_SPRING",
     displayName: "Нежная Весна",
-    season: "springBright",
-    filter: "brightness(1.05)",
+    season: "springGentle",
   },
 };
 
@@ -115,7 +114,6 @@ export function getPalettesForColorType(colorType: ColorTypeName) {
   const rule = colorTypeRules[colorType];
   return {
     season: rule.season,
-    filter: rule.filter,
     displayName: rule.displayName,
   };
 }
