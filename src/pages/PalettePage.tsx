@@ -195,32 +195,36 @@ export default function PalettePage() {
       <div className="container mx-auto px-4 pb-8">
         <div className="grid lg:grid-cols-[1fr,1.5fr] gap-6">
           <div className="space-y-6">
-            {analysis.cdn_url && (
-              <div className="rounded-lg overflow-hidden bg-muted">
-                <img
-                  src={analysis.cdn_url}
-                  alt="Portrait"
-                  className="w-full max-h-[50vh] object-contain"
-                />
-              </div>
-            )}
+            <div className="bg-card rounded-lg border overflow-hidden">
+              {analysis.cdn_url && (
+                <div className="bg-muted">
+                  <img
+                    src={analysis.cdn_url}
+                    alt="Portrait"
+                    className="w-full max-h-[50vh] object-contain"
+                  />
+                </div>
+              )}
 
-            {selectedColor && (
-              <div className="bg-card rounded-lg border p-6">
-                <div
-                  className="w-full h-32 rounded-lg mb-4"
-                  style={{
-                    backgroundColor: selectedColor.hex,
-                  }}
-                />
-                <h3 className="font-semibold text-lg capitalize">
-                  {selectedColor.name.replace(/-/g, ' ')}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {selectedColor.hex}
-                </p>
-              </div>
-            )}
+              {selectedColor && (
+                <div>
+                  <div
+                    className="w-full h-44"
+                    style={{
+                      backgroundColor: selectedColor.hex,
+                    }}
+                  />
+                  <div className="p-4">
+                    <h3 className="font-semibold text-lg capitalize">
+                      {selectedColor.name.replace(/-/g, ' ')}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedColor.hex}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-6">
