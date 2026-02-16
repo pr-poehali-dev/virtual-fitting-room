@@ -509,7 +509,3 @@ export const seasonalPalettes: SeasonalPalettesData = {
     },
   },
 };
-
-export const seasonalPalettes: SeasonalPalettesData = Object.fromEntries(
-  Object.entries(rawPalettes).map(([key, season]) => [key, sortColorsBySpectrum(season)])
-) as SeasonalPalettesData;
