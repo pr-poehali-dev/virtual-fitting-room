@@ -249,7 +249,6 @@ export default function PalettePage() {
                           className="w-full h-full"
                           style={{
                             backgroundColor: color.hex,
-                            filter: cssFilter,
                           }}
                         />
                       </button>
