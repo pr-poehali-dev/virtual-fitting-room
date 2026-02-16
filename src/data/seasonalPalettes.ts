@@ -22,6 +22,10 @@ export interface SeasonalPalettesData {
   winterBright: SeasonPalettes;
   spring: SeasonPalettes;
   springBright: SeasonPalettes;
+  summerSoft: SeasonPalettes;
+  autumnVivid: SeasonPalettes;
+  winterVivid: SeasonPalettes;
+  springGentle: SeasonPalettes;
 }
 
 export const seasonalPalettes: SeasonalPalettesData = {
@@ -342,6 +346,166 @@ export const seasonalPalettes: SeasonalPalettesData = {
       'jungle-teal': '#0f8a78ff',
       'sky-surge': '#50b2d3ff',
       'sky-surge-2': '#2fbbdaff',
+    },
+  },
+
+  // ========== ЛЕТО (мягкое / светлое) ==========
+  summerSoft: {
+    palette1: {
+      'ocean-twilight': '#3c4e9fff',
+      'french-blue': '#374b9dff',
+      'sapphire-sky': '#3572c1ff',
+      'powder-blue': '#9cb3dcff',
+      'periwinkle': '#a9b1d7ff',
+      'periwinkle-2': '#bdbcdbff',
+      'rosy-copper': '#bf5343ff',
+      'dusty-rose': '#bc776cff',
+      'almond-silk': '#e2cfcbff',
+      'soft-blush': '#e8d5d9ff',
+    },
+    palette2: {
+      'intense-cherry': '#c22131ff',
+      'primary-scarlet': '#e0252cff',
+      'amaranth': '#de425cff',
+      'scarlet-rush': '#e22b3dff',
+      'old-rose': '#d8829dff',
+      'pink-orchid': '#e0a7c0ff',
+      'powder-blue': '#a9c2dbff',
+      'strong-cyan': '#0dd0e1ff',
+      'strong-cyan-2': '#43c5d6ff',
+      'pearl-aqua': '#85c5c5ff',
+    },
+    palette3: {
+      'glaucous': '#6d84caff',
+      'raspberry-plum': '#af2982ff',
+      'magenta-bloom': '#e92c65ff',
+      'hot-berry': '#d8317cff',
+      'sweet-peony': '#ce6d92ff',
+      'lilac': '#da9ac3ff',
+      'wisteria': '#be99d0ff',
+      'bone': '#e2d7c4ff',
+      'pastel-petal': '#e3bfccff',
+      'pale-sky': '#bbcfe0ff',
+    },
+  },
+
+  // ========== ОСЕНЬ (тёмная / насыщенная) ==========
+  autumnVivid: {
+    palette1: {
+      'dark-garnet': '#6b130eff',
+      'prussian-blue': '#0d1b30ff',
+      'mauve-shadow': '#694457ff',
+      'dark-garnet-2': '#6b140eff',
+      'rich-mahogany': '#280c0cff',
+      'rich-mahogany-2': '#3e1810ff',
+      'deep-walnut': '#482a13ff',
+      'toffee-brown': '#9f6a3eff',
+      'camel': '#b9906eff',
+      'rosy-taupe': '#be9b8bff',
+    },
+    palette2: {
+      'mahogany-red': '#a41215ff',
+      'twilight-indigo': '#192a5cff',
+      'pine-teal': '#075c52ff',
+      'deep-space-blue': '#0c2e42ff',
+      'olive': '#818c2aff',
+      'fern': '#476a32ff',
+      'evergreen': '#0c2416ff',
+      'sage-green': '#7ea563ff',
+      'olive-bark': '#605022ff',
+      'dark-coffee': '#372513ff',
+    },
+    palette3: {
+      'deep-crimson': '#921313ff',
+      'midnight-violet': '#2f143aff',
+      'black-cherry': '#681517ff',
+      'brown-red': '#9b3028ff',
+      'rusty-spice': '#ae3919ff',
+      'oxidized-iron': '#a93116ff',
+      'copperwood': '#ac620eff',
+      'bronze': '#c78335ff',
+      'golden-earth': '#98630cff',
+      'golden-bronze': '#b9971cff',
+    },
+  },
+
+  // ========== ЗИМА (тёмная / насыщенная) ==========
+  winterVivid: {
+    palette1: {
+      'dark-amaranth': '#890f3aff',
+      'ruby-red': '#961329ff',
+      'ruby-red-2': '#b1132aff',
+      'prussian-blue': '#0f1025ff',
+      'rosy-taupe': '#c1a09aff',
+      'ink-black': '#070f18ff',
+      'midnight-violet': '#2a253eff',
+      'dusty-grape': '#586392ff',
+      'lavender-grey': '#9da4beff',
+      'thistle': '#b5afcfff',
+    },
+    palette2: {
+      'night-bordeaux': '#68121fff',
+      'midnight-violet': '#1f0d1eff',
+      'midnight-violet-2': '#1e1333ff',
+      'regal-navy': '#163275ff',
+      'regal-navy-2': '#0b3c7cff',
+      'baltic-blue': '#00639cff',
+      'steel-azure': '#034e8cff',
+      'dark-teal': '#153535ff',
+      'stormy-teal': '#055f57ff',
+      'emerald-depths': '#08583dff',
+    },
+    palette3: {
+      'rosewood': '#bb265aff',
+      'cherry-rose': '#ad2754ff',
+      'rose-punch': '#c34f7fff',
+      'soft-fawn': '#cdad62ff',
+      'khaki-beige': '#c0b496ff',
+      'cool-steel': '#98b7beff',
+      'muted-teal': '#93bbb6ff',
+      'amethyst-smoke': '#a78ebbff',
+      'wisteria-blue': '#8ca0c1ff',
+      'lilac': '#be98b4ff',
+    },
+  },
+
+  // ========== ВЕСНА (нежная) ==========
+  springGentle: {
+    palette1: {
+      'steel-azure': '#244ba0ff',
+      'azure-blue': '#0a7bdeff',
+      'pale-oak': '#d4c1b3ff',
+      'chocolate': '#d76c2bff',
+      'toasted-almond': '#d29560ff',
+      'apricot-cream': '#e5c79aff',
+      'powder-petal': '#ecdad1ff',
+      'wheat': '#eed6a6ff',
+      'wheat-2': '#eed8b2ff',
+      'almond-cream': '#ebdcceff',
+    },
+    palette2: {
+      'racing-red': '#e92d2dff',
+      'light-coral': '#e17f7aff',
+      'light-coral-2': '#e4918bff',
+      'cotton-rose': '#ecbeb4ff',
+      'tangerine-dream': '#ecaa8bff',
+      'desert-sand': '#edc4afff',
+      'jasmine': '#eed381ff',
+      'moss-green': '#4cc25dff',
+      'celadon': '#92cd98ff',
+      'vanilla-custard': '#d7dda2ff',
+    },
+    palette3: {
+      'strawberry-red': '#ea2f35ff',
+      'bubblegum-pink': '#e26d80ff',
+      'petal-rouge': '#dd7685ff',
+      'cotton-rose': '#e5c0c0ff',
+      'lavender-purple': '#906bbbff',
+      'glaucous': '#768cc4ff',
+      'ocean-twilight': '#4155b8ff',
+      'ocean-mist': '#1bc5acff',
+      'sky-blue-light': '#7bbed4ff',
+      'sky-blue-light-2': '#5fc4dbff',
     },
   },
 };
