@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { seasonalPalettes, ColorPalette } from '@/data/seasonalPalettes';
 import { colorTypeRules, ColorTypeName, getPalettesForColorType } from '@/data/colorTypeRules';
@@ -43,6 +44,7 @@ export default function PalettePage() {
   const [selectedColor, setSelectedColor] = useState<{ name: string; hex: string } | null>(null);
   const [allColors, setAllColors] = useState<Array<{ name: string; hex: string; paletteNum: number }>>([]);
   const [activeSource, setActiveSource] = useState<'formula' | 'ai'>('formula');
+  const [overrideColorType, setOverrideColorType] = useState<ColorTypeName | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -75,7 +77,7 @@ export default function PalettePage() {
           setAnalysis(analysisData);
 
           const currentColorType = activeSource === 'formula' ? analysisData.color_type : (analysisData.color_type_ai || analysisData.color_type);
-          const colorTypeKey = colorTypeNamesMap[currentColorType];
+          const colorTypeKey = overrideColorType || colorTypeNamesMap[currentColorType];
           if (colorTypeKey) {
             const paletteInfo = getPalettesForColorType(colorTypeKey);
             const seasonPalettes = seasonalPalettes[paletteInfo.season];
@@ -109,7 +111,7 @@ export default function PalettePage() {
     };
 
     fetchAnalysis();
-  }, [analysisId, user, navigate, activeSource]);
+  }, [analysisId, user, navigate, activeSource, overrideColorType]);
 
   if (authLoading || isLoading) {
     return (
@@ -124,8 +126,9 @@ export default function PalettePage() {
   }
 
   const currentColorType = activeSource === 'formula' ? analysis.color_type : (analysis.color_type_ai || analysis.color_type);
-  const colorTypeKey = colorTypeNamesMap[currentColorType];
-  const paletteInfo = colorTypeKey ? getPalettesForColorType(colorTypeKey) : null;
+  const baseColorTypeKey = colorTypeNamesMap[currentColorType];
+  const effectiveColorTypeKey = overrideColorType || baseColorTypeKey;
+  const paletteInfo = effectiveColorTypeKey ? getPalettesForColorType(effectiveColorTypeKey) : null;
   
   
   const hasAiResult = !!(
@@ -164,31 +167,41 @@ export default function PalettePage() {
 
       <div className="container mx-auto px-4 py-4">
         <div className="bg-card border rounded-lg p-4 mb-4">
-          {hasAiResult ? (
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-medium">Источник:</span>
-              <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant={!overrideColorType && activeSource === 'formula' ? 'default' : 'outline'}
+                onClick={() => { setOverrideColorType(null); setActiveSource('formula'); }}
+              >
+                Формула
+              </Button>
+              {hasAiResult && (
                 <Button
                   size="sm"
-                  variant={activeSource === 'formula' ? 'default' : 'outline'}
-                  onClick={() => setActiveSource('formula')}
-                >
-                  Формула
-                </Button>
-                <Button
-                  size="sm"
-                  variant={activeSource === 'ai' ? 'default' : 'outline'}
-                  onClick={() => setActiveSource('ai')}
+                  variant={!overrideColorType && activeSource === 'ai' ? 'default' : 'outline'}
+                  onClick={() => { setOverrideColorType(null); setActiveSource('ai'); }}
                 >
                   ИИ
                 </Button>
-              </div>
+              )}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Панель инструментов (в разработке)
-            </p>
-          )}
+            <Select
+              value={overrideColorType || ''}
+              onValueChange={(value) => setOverrideColorType(value as ColorTypeName)}
+            >
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="Другой цветотип..." />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.values(colorTypeRules).map((rule) => (
+                  <SelectItem key={rule.name} value={rule.name}>
+                    {rule.displayName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
