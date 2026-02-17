@@ -1189,7 +1189,7 @@ export default function ReplicateTryOn() {
           </div>
 
           <div className="text-center mt-8 pb-4">
-            <p className="text-xs text-muted-foreground display-none">
+            <p className="text-xs text-muted-foreground" style="display: none;">
               Powered by NanoBananaPro
             </p>
           </div>
