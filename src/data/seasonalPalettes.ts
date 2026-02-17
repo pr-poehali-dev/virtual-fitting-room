@@ -109,46 +109,6 @@ export const seasonalPalettes: SeasonalPalettesData = {
     },
   },
 
-  // ========== ОСЕНЬ (яркая) ==========
-  autumnBright: {
-    palette1: {
-      "dark-wine": "#761d1eff",
-      "mahogany-red": "#be191dff",
-      "mahogany-red-2": "#a71b1aff",
-      "rich-mahogany": "#2e1010ff",
-      "dark-wine-2": "#7c1913ff",
-      "dark-wine-3": "#7b1a13ff",
-      "brick-red": "#af4037ff",
-      espresso: "#461e16ff",
-      "rusty-spice": "#c13d1eff",
-      "red-ochre": "#c94722ff",
-    },
-    palette2: {
-      silver: "#ccbfb9ff",
-      "deep-walnut": "#53331aff",
-      "faded-copper": "#ad7e57ff",
-      "khaki-beige": "#c2ad9bff",
-      "dark-coffee": "#3b2a1aff",
-      ochre: "#c67313ff",
-      camel: "#ca985dff",
-      copperwood: "#b07311ff",
-      "olive-bark": "#695a2fff",
-      "metallic-gold": "#d5af25ff",
-    },
-    palette3: {
-      "palm-leaf": "#909c3aff",
-      "muted-teal": "#99a98eff",
-      fern: "#577345ff",
-      evergreen: "#11281bff",
-      "blue-spruce": "#0b685dff",
-      "deep-space-blue": "#11364bff",
-      "prussian-blue": "#112035ff",
-      "twilight-indigo": "#223367ff",
-      "midnight-violet": "#341c3eff",
-      "taupe-grey": "#6c5f66ff",
-    },
-  },
-
   // ========== ОСЕНЬ (обычная) ==========
   autumn: {
     palette1: {
@@ -186,6 +146,45 @@ export const seasonalPalettes: SeasonalPalettesData = {
       "imperial-blue": "#162e73ff",
       "dark-amethyst": "#391249ff",
       "berry-blush": "#a4286aff",
+    },
+  },
+  // ========== ОСЕНЬ (яркая) ==========
+  autumnBright: {
+    palette1: {
+      "dark-wine": "#761d1eff",
+      "mahogany-red": "#be191dff",
+      "mahogany-red-2": "#a71b1aff",
+      "rich-mahogany": "#2e1010ff",
+      "dark-wine-2": "#7c1913ff",
+      "dark-wine-3": "#7b1a13ff",
+      "brick-red": "#af4037ff",
+      espresso: "#461e16ff",
+      "rusty-spice": "#c13d1eff",
+      "red-ochre": "#c94722ff",
+    },
+    palette2: {
+      silver: "#ccbfb9ff",
+      "deep-walnut": "#53331aff",
+      "faded-copper": "#ad7e57ff",
+      "khaki-beige": "#c2ad9bff",
+      "dark-coffee": "#3b2a1aff",
+      ochre: "#c67313ff",
+      camel: "#ca985dff",
+      copperwood: "#b07311ff",
+      "olive-bark": "#695a2fff",
+      "metallic-gold": "#d5af25ff",
+    },
+    palette3: {
+      "palm-leaf": "#909c3aff",
+      "muted-teal": "#99a98eff",
+      fern: "#577345ff",
+      evergreen: "#11281bff",
+      "blue-spruce": "#0b685dff",
+      "deep-space-blue": "#11364bff",
+      "prussian-blue": "#112035ff",
+      "twilight-indigo": "#223367ff",
+      "midnight-violet": "#341c3eff",
+      "taupe-grey": "#6c5f66ff",
     },
   },
 
