@@ -6,6 +6,8 @@ import uuid
 from datetime import datetime
 from session_utils import validate_session
 
+COLORTYPE_COST = 50
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
     Запуск анализа цветотипа внешности и возврат task_id без ожидания результата
@@ -101,8 +103,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         balance = float(user_row[0])
         unlimited_access = user_row[1]
         
-        # Cost: 0 for unlimited users, 30 for others
-        cost = 0 if unlimited_access else 50
+        cost = 0 if unlimited_access else COLORTYPE_COST
         
         # Check balance only if not unlimited
         if not unlimited_access:

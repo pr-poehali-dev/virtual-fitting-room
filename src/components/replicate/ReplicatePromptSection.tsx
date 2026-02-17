@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
+import { GENERATION_COST } from '@/config/prices';
 
 interface ReplicatePromptSectionProps {
   customPrompt: string;
@@ -56,7 +57,7 @@ export default function ReplicatePromptSection({
           ) : (
             <>
               <Icon name="Sparkles" className="mr-2 h-5 w-5" />
-              Примерить (50 ₽)
+              Примерить ({GENERATION_COST} ₽)
             </>
           )}
         </Button>

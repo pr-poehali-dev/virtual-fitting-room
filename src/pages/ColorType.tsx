@@ -8,6 +8,7 @@ import ImageCropper from "@/components/ImageCropper";
 import EyeColorSelector from "@/components/EyeColorSelector";
 import { validateImageFile } from "@/utils/fileValidation";
 import { useAuth } from "@/context/AuthContext";
+import { COLORTYPE_COST, MIN_TOPUP } from "@/config/prices";
 import { useData } from "@/context/DataContext";
 import { useBalance } from "@/context/BalanceContext";
 import { useNavigate, Link } from "react-router-dom";
@@ -19,7 +20,7 @@ const COLORTYPE_START_API =
 const COLORTYPE_STATUS_API =
   "https://functions.poehali.dev/7f1395ac-bddc-45ec-b997-b39497110680";
 
-const COST = 50;
+const COST = COLORTYPE_COST;
 const POLLING_INTERVAL = 20000; // 20 seconds
 const TIMEOUT_DURATION = 180000; // 3 minutes
 
@@ -483,7 +484,7 @@ export default function ColorType() {
                           Требуется авторизация
                         </p>
                         <p className="text-sm text-muted-foreground mb-2">
-                          Для генерации изображений необходимо войти в аккаунт и пополнить баланс минимум на 50 рублей.
+                          Для генерации изображений необходимо войти в аккаунт и пополнить баланс минимум на {MIN_TOPUP} рублей.
                         </p>
                         <div className="flex gap-2">
                           <Link to="/login">

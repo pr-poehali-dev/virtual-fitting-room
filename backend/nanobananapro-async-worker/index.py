@@ -9,6 +9,8 @@ import boto3
 import time
 import uuid
 
+GENERATION_COST = 50
+
 def normalize_image_format(image: str) -> str:
     '''Convert image to data URI format if needed'''
     if image.startswith('http://') or image.startswith('https://'):
@@ -221,22 +223,20 @@ def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
             cursor.close()
             return
         
-        balance_after = balance_before + 50
+        balance_after = balance_before + GENERATION_COST
         
-        # Refund 50 rubles
-        cursor.execute('UPDATE users SET balance = balance + 50 WHERE id = %s', (user_id,))
+        cursor.execute('UPDATE users SET balance = balance + %s WHERE id = %s', (GENERATION_COST, user_id))
         cursor.execute('UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks SET refunded = true WHERE id = %s', (task_id,))
         
-        # Record balance transaction (try_on_id = NULL since no history record yet)
         cursor.execute('''
             INSERT INTO balance_transactions
             (user_id, type, amount, balance_before, balance_after, description, try_on_id)
-            VALUES (%s, 'refund', 50, %s, %s, 'Возврат: технический сбой примерочной', NULL)
-        ''', (user_id, balance_before, balance_after))
+            VALUES (%s, 'refund', %s, %s, %s, 'Возврат: технический сбой примерочной', NULL)
+        ''', (user_id, GENERATION_COST, balance_before, balance_after))
         
         conn.commit()
         
-        print(f'[Refund] Refunded 50 rubles to user {user_id} for task {task_id}')
+        print(f'[Refund] Refunded {GENERATION_COST} rubles to user {user_id} for task {task_id}')
         cursor.close()
         
     except Exception as e:
@@ -256,8 +256,7 @@ def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garment
         unlimited_access = user_row[0] if user_row else False
         balance = float(user_row[1]) if user_row else 0
         
-        # Cost: 0 for unlimited users, 50 for others
-        cost = 0 if unlimited_access else 50
+        cost = 0 if unlimited_access else GENERATION_COST
         
         # Extract first garment image for garment_image column
         garment_image = garments[0]['image'] if garments and len(garments) > 0 else ''

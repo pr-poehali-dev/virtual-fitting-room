@@ -9,6 +9,7 @@ import time
 import uuid
 import base64
 
+COLORTYPE_COST = 50
 
 # Updated with 18 exclusion rules + bright/soft eyes distinction + penalties for accurate color type matching
 # Rule 1: Brown eyes → exclude GENTLE SPRING, BRIGHT SPRING, all SUMMER, SOFT WINTER
@@ -583,22 +584,20 @@ def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
         cursor.execute('SELECT balance FROM users WHERE id = %s', (user_id,))
         balance_row = cursor.fetchone()
         balance_before = float(balance_row[0]) if balance_row else 0
-        balance_after = balance_before + 50
+        balance_after = balance_before + COLORTYPE_COST
         
-        # Refund 50 rubles
-        cursor.execute('UPDATE users SET balance = balance + 50 WHERE id = %s', (user_id,))
+        cursor.execute('UPDATE users SET balance = balance + %s WHERE id = %s', (COLORTYPE_COST, user_id))
         cursor.execute('UPDATE color_type_history SET refunded = true WHERE id = %s', (task_id,))
         
-        # Record balance transaction
         cursor.execute('''
             INSERT INTO balance_transactions
             (user_id, type, amount, balance_before, balance_after, description, color_type_id)
-            VALUES (%s, 'refund', 50, %s, %s, 'Возврат: технический сбой цветотипа', %s)
-        ''', (user_id, balance_before, balance_after, task_id))
+            VALUES (%s, 'refund', %s, %s, %s, 'Возврат: технический сбой цветотипа', %s)
+        ''', (user_id, COLORTYPE_COST, balance_before, balance_after, task_id))
         
         conn.commit()
         
-        print(f'[Refund] Refunded 50 rubles to user {user_id} for task {task_id}')
+        print(f'[Refund] Refunded {COLORTYPE_COST} rubles to user {user_id} for task {task_id}')
         cursor.close()
         
     except Exception as e:

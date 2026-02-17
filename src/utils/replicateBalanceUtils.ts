@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import { GENERATION_COST } from '@/config/prices';
 
 interface User {
   id: string;
@@ -22,7 +23,7 @@ export const checkReplicateBalance = async (
   }
 
   const steps = garmentCount;
-  const costPerStep = 50;
+  const costPerStep = GENERATION_COST;
   const totalCost = steps * costPerStep;
 
   try {
@@ -57,7 +58,7 @@ export const deductReplicateBalance = async (
     return false;
   }
 
-  const costPerStep = 50;
+  const costPerStep = GENERATION_COST;
   const totalCost = steps * costPerStep;
 
   try {

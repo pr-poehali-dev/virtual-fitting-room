@@ -10,6 +10,10 @@ import psycopg2
 from typing import Dict, Any
 from session_utils import validate_session
 
+GENERATION_COST = 50
+COLORTYPE_COST = 50
+MIN_TOPUP = 50
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     def get_cors_origin(event: Dict[str, Any]) -> str:
         origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin', '')
@@ -62,7 +66,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             balance, free_tries_used, unlimited_access = result
             free_tries_remaining = 0
-            paid_tries_available = int(balance / 50) if balance >= 50 else 0
+            paid_tries_available = int(balance / GENERATION_COST) if balance >= GENERATION_COST else 0
             
             return {
                 'statusCode': 200,
@@ -81,7 +85,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             action = body_data.get('action')
             
             if action == 'deduct':
-                cost_per_step = 50
+                cost_per_step = GENERATION_COST
                 total_cost = cost_per_step
                 generation_type = body_data.get('generation_type', 'try_on')
                 generation_id = body_data.get('generation_id')
@@ -178,7 +182,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             elif action == 'refund':
-                cost_per_step = 50
+                cost_per_step = GENERATION_COST
                 total_refund = cost_per_step
                 generation_type = body_data.get('generation_type', 'try_on')
                 generation_id = body_data.get('generation_id')

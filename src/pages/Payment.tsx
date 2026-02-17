@@ -1,4 +1,5 @@
 import Layout from "@/components/Layout";
+import { GENERATION_COST, COLORTYPE_COST, MIN_TOPUP } from "@/config/prices";
 
 const Payment = () => {
   return (
@@ -36,7 +37,7 @@ const Payment = () => {
                     Виртуальная примерочная
                   </h3>
                   <p className="text-2xl font-bold text-purple-600">
-                    50 рублей
+                    {GENERATION_COST} рублей
                   </p>
                   <p className="text-sm text-gray-600 mt-1">За одну примерку</p>
                 </div>
@@ -45,7 +46,7 @@ const Payment = () => {
                     Определение цветотипа
                   </h3>
                   <p className="text-2xl font-bold text-purple-600">
-                    50 рублей
+                    {COLORTYPE_COST} рублей
                   </p>
                   <p className="text-sm text-gray-600 mt-1">За один анализ</p>
                 </div>
@@ -68,7 +69,7 @@ const Payment = () => {
                     <p>
                       В личном кабинете (вкладка "Кошелек") пополните счет на
                       нужную сумму через ЮКассу. Минимальная сумма пополнения —
-                      50 рублей.
+                      {MIN_TOPUP} рублей.
                     </p>
                   </div>
                 </div>
@@ -82,7 +83,7 @@ const Payment = () => {
                     </h3>
                     <p>
                       Выберите нужную услугу (примерочная или цветотип),
-                      загрузите фотографию и нажмите "Генерировать". 50 рублей
+                      загрузите фотографию и нажмите "Генерировать". {GENERATION_COST} рублей
                       списываются с баланса сразу при запуске генерации.
                     </p>
                   </div>
@@ -125,7 +126,7 @@ const Payment = () => {
                   Списание происходит сразу
                 </h3>
                 <p className="text-gray-700">
-                  50 рублей списываются с баланса сразу после нажатия кнопки
+                  {GENERATION_COST} рублей списываются с баланса сразу после нажатия кнопки
                   запуска (до начала обработки).
                 </p>
               </div>

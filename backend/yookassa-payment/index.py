@@ -7,6 +7,7 @@ import requests
 import base64
 
 YOOKASSA_API = 'https://api.yookassa.ru/v3'
+MIN_TOPUP = 50
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     print(f"[DEBUG] Received event: {json.dumps(event)}")
@@ -71,11 +72,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
-            if amount < 50:
+            if amount < MIN_TOPUP:
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
-                    'body': json.dumps({'error': 'Минимальная сумма пополнения — 50 рублей'}),
+                    'body': json.dumps({'error': f'Минимальная сумма пополнения — {MIN_TOPUP} рублей'}),
                     'isBase64Encoded': False
                 }
             

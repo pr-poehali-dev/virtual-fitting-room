@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/accordion";
 import { useCatalogFilters, useCatalog } from "@/hooks/useCatalog";
 import { useBalance } from "@/context/BalanceContext";
+import { GENERATION_COST, MIN_TOPUP } from "@/config/prices";
 
 interface ClothingItem {
   id: string;
@@ -901,7 +902,7 @@ export default function ReplicateTryOn() {
                         </p>
                         <p className="text-sm text-muted-foreground mb-2">
                           Для генерации изображений необходимо войти в аккаунт и
-                          пополнить баланс минимум на 50 рублей.
+                          пополнить баланс минимум на {MIN_TOPUP} рублей.
                         </p>
                         <div className="flex gap-2">
                           <Link to="/login">
@@ -933,7 +934,7 @@ export default function ReplicateTryOn() {
                           Недостаточно средств
                         </p>
                         <p className="text-sm text-muted-foreground mb-2">
-                          Пополните баланс для генерации. Стоимость: 50₽
+                          Пополните баланс для генерации. Стоимость: {GENERATION_COST}₽
                         </p>
                         <Link to="/profile/wallet">
                           <Button size="sm" variant="default">

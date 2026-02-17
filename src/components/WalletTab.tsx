@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useBalance } from "@/context/BalanceContext";
 import { useSearchParams } from "react-router-dom";
+import { GENERATION_COST, MIN_TOPUP } from "@/config/prices";
 
 const USER_BALANCE_API =
   "https://functions.poehali.dev/68409278-10ab-4733-b48d-b1b4360620a1";
@@ -187,7 +188,7 @@ export default function WalletTab() {
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-3">
-                    Стоимость: 50₽ за образ / шаг
+                    Стоимость: {GENERATION_COST}₽ за образ / шаг
                   </p>
                 </div>
               )}
@@ -207,62 +208,21 @@ export default function WalletTab() {
               Выберите сумму для пополнения баланса
             </p>
             <div className="space-y-3">
-              <Button
-                className="w-full justify-between"
-                variant="outline"
-                size="lg"
-                onClick={() => handleTopUp(50)}
-                disabled={isCreatingPayment}
-              >
-                <span>50 ₽</span>
-                <span className="text-sm text-muted-foreground">1 образ</span>
-              </Button>
-              <Button
-                className="w-full justify-between"
-                variant="outline"
-                size="lg"
-                onClick={() => handleTopUp(300)}
-                disabled={isCreatingPayment}
-              >
-                <span>300 ₽</span>
-                <span className="text-sm text-muted-foreground">6 образов</span>
-              </Button>
-              <Button
-                className="w-full justify-between"
-                variant="outline"
-                size="lg"
-                onClick={() => handleTopUp(500)}
-                disabled={isCreatingPayment}
-              >
-                <span>500 ₽</span>
-                <span className="text-sm text-muted-foreground">
-                  10 образов
-                </span>
-              </Button>
-              <Button
-                className="w-full justify-between"
-                variant="outline"
-                size="lg"
-                onClick={() => handleTopUp(1500)}
-                disabled={isCreatingPayment}
-              >
-                <span>1 500 ₽</span>
-                <span className="text-sm text-muted-foreground">
-                  30 образов
-                </span>
-              </Button>
-              <Button
-                className="w-full justify-between"
-                variant="outline"
-                size="lg"
-                onClick={() => handleTopUp(3000)}
-                disabled={isCreatingPayment}
-              >
-                <span>3 000 ₽</span>
-                <span className="text-sm text-muted-foreground">
-                  60 образов
-                </span>
-              </Button>
+              {[MIN_TOPUP, 300, 500, 1500, 3000].map((amount) => (
+                <Button
+                  key={amount}
+                  className="w-full justify-between"
+                  variant="outline"
+                  size="lg"
+                  onClick={() => handleTopUp(amount)}
+                  disabled={isCreatingPayment}
+                >
+                  <span>{amount.toLocaleString("ru-RU")} ₽</span>
+                  <span className="text-sm text-muted-foreground">
+                    {Math.floor(amount / GENERATION_COST)} образ{Math.floor(amount / GENERATION_COST) === 1 ? "" : Math.floor(amount / GENERATION_COST) < 5 ? "а" : "ов"}
+                  </span>
+                </Button>
+              ))}
             </div>
             {isCreatingPayment && (
               <div className="flex items-center justify-center mt-4">
