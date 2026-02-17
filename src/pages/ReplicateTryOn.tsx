@@ -105,7 +105,8 @@ export default function ReplicateTryOn() {
   const { lookbooks, refetchLookbooks, refetchHistory } = useData();
   const { balanceInfo } = useBalance();
 
-  const hasInsufficientBalance = user && !balanceInfo?.unlimited_access && !balanceInfo?.can_generate;
+  const hasInsufficientBalance =
+    user && !balanceInfo?.unlimited_access && !balanceInfo?.can_generate;
 
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedClothingItems, setSelectedClothingItems] = useState<
@@ -500,22 +501,27 @@ export default function ReplicateTryOn() {
       console.log(
         `[NanoBananaPro-CALL-${callId}] About to send fetch request...`,
       );
-      
-      const token = localStorage.getItem('session_token');
-      
+
+      const token = localStorage.getItem("session_token");
+
       if (!token) {
-        throw new Error('Нет токена авторизации. Пожалуйста, перезайдите в систему.');
+        throw new Error(
+          "Нет токена авторизации. Пожалуйста, перезайдите в систему.",
+        );
       }
-      
-      console.log('[NanoBananaPro-START] Token first 20 chars:', token.substring(0, 20));
-      
+
+      console.log(
+        "[NanoBananaPro-START] Token first 20 chars:",
+        token.substring(0, 20),
+      );
+
       const response = await fetch(NANOBANANAPRO_START_API, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Session-Token": token
+          "X-Session-Token": token,
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({
           person_image: uploadedImage,
           garments:
@@ -539,11 +545,11 @@ export default function ReplicateTryOn() {
       );
       toast.success("Задача создана! Ожидайте результат...");
 
-      const workerToken = localStorage.getItem('session_token');
+      const workerToken = localStorage.getItem("session_token");
       if (workerToken) {
         fetch(`${NANOBANANAPRO_WORKER_API}?task_id=${data.task_id}`, {
-          headers: { 'X-Session-Token': workerToken },
-          credentials: 'include'
+          headers: { "X-Session-Token": workerToken },
+          credentials: "include",
         }).catch((err) => {
           console.log(
             "[NanoBananaPro] Worker trigger failed (non-critical):",
@@ -598,23 +604,28 @@ export default function ReplicateTryOn() {
           return;
         }
 
-        const token = localStorage.getItem('session_token');
-        
+        const token = localStorage.getItem("session_token");
+
         if (!token) {
-          console.error('[NanoBananaPro] КРИТИЧНО: Нет токена в localStorage при polling! Пропускаем запрос.');
+          console.error(
+            "[NanoBananaPro] КРИТИЧНО: Нет токена в localStorage при polling! Пропускаем запрос.",
+          );
           return;
         }
-        
-        console.log('[NanoBananaPro] Polling request #' + checkCount);
-        console.log('[NanoBananaPro] Token first 20 chars:', token.substring(0, 20));
-        
+
+        console.log("[NanoBananaPro] Polling request #" + checkCount);
+        console.log(
+          "[NanoBananaPro] Token first 20 chars:",
+          token.substring(0, 20),
+        );
+
         const response = await fetch(DB_QUERY_API, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Session-Token": token
+            "X-Session-Token": token,
           },
-          credentials: 'include',
+          credentials: "include",
           body: JSON.stringify({
             table: "nanobananapro_tasks",
             action: "select",
@@ -639,15 +650,18 @@ export default function ReplicateTryOn() {
         }
         console.log("[NanoBananaPro] Status check result:", data);
 
-        if ((data.status === "processing" || data.status === "pending") && triggerWorker) {
+        if (
+          (data.status === "processing" || data.status === "pending") &&
+          triggerWorker
+        ) {
           console.log(
             "[NanoBananaPro] Triggering worker to check/advance task",
           );
-          const workerToken = localStorage.getItem('session_token');
+          const workerToken = localStorage.getItem("session_token");
           if (workerToken) {
             fetch(`${NANOBANANAPRO_WORKER_API}?task_id=${taskId}`, {
-              headers: { 'X-Session-Token': workerToken },
-              credentials: 'include'
+              headers: { "X-Session-Token": workerToken },
+              credentials: "include",
             }).catch((err) => {
               console.log(
                 "[NanoBananaPro] Worker trigger failed (non-critical):",
@@ -655,7 +669,7 @@ export default function ReplicateTryOn() {
               );
             });
           } else {
-            console.warn('[NanoBananaPro] Нет токена для worker trigger');
+            console.warn("[NanoBananaPro] Нет токена для worker trigger");
           }
         }
 
@@ -745,7 +759,7 @@ export default function ReplicateTryOn() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({
           table: "lookbooks",
           action: "update",
@@ -784,7 +798,7 @@ export default function ReplicateTryOn() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({
           table: "lookbooks",
           action: "insert",
@@ -886,7 +900,8 @@ export default function ReplicateTryOn() {
                           Требуется авторизация
                         </p>
                         <p className="text-sm text-muted-foreground mb-2">
-                          Для генерации изображений необходимо войти в аккаунт и пополнить баланс минимум на 50 рублей.
+                          Для генерации изображений необходимо войти в аккаунт и
+                          пополнить баланс минимум на 50 рублей.
                         </p>
                         <div className="flex gap-2">
                           <Link to="/login">
@@ -1174,7 +1189,7 @@ export default function ReplicateTryOn() {
           </div>
 
           <div className="text-center mt-8 pb-4">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground display-none">
               Powered by NanoBananaPro
             </p>
           </div>
