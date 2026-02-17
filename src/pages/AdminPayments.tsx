@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { GENERATION_COST } from "@/config/prices";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -116,7 +117,7 @@ export default function AdminPayments() {
     const reason =
       prompt("Причина возврата (необязательно):") || "Возврат администратором";
 
-    if (!confirm("Вы уверены, что хотите вернуть 50₽ пользователю?")) {
+    if (!confirm(`Вы уверены, что хотите вернуть ${GENERATION_COST}₽ пользователю?`)) {
       return;
     }
 

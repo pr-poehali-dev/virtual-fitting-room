@@ -1058,7 +1058,7 @@ export default function ReplicateTryOn() {
 
                   {!user?.unlimited_access && !isGenerating && (
                     <p className="text-sm text-muted-foreground text-center">
-                      Стоимость генерации: 50₽
+                      Стоимость генерации: {GENERATION_COST}₽
                     </p>
                   )}
                 </div>

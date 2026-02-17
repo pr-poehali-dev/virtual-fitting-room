@@ -12,6 +12,7 @@ import {
   refundReplicateBalance,
 } from "@/utils/replicateBalanceUtils";
 import { useBalance } from "@/context/BalanceContext";
+import { GENERATION_COST } from "@/config/prices";
 
 interface SelectedClothing {
   id: string;
@@ -476,7 +477,7 @@ export default function ReplicateTryOnGenerator({
 
             {!user?.unlimited_access && !isGenerating && (
               <p className="text-sm text-muted-foreground text-center">
-                Стоимость генерации: 50₽
+                Стоимость генерации: {GENERATION_COST}₽
               </p>
             )}
 
