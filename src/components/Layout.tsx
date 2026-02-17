@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { useAuth } from '@/context/AuthContext';
 import Footer from '@/components/Footer';
+import CookieBanner from '@/components/CookieBanner';
 import Sidebar from '@/components/Sidebar';
 import HeaderBalance from '@/components/HeaderBalance';
 
@@ -108,6 +109,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </header>
         <main>{children}</main>
         <Footer />
+        <CookieBanner />
       </div>
     </div>
   );
