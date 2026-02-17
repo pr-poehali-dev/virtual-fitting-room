@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Icon from "@/components/ui/icon";
 import { useAuth } from "@/context/AuthContext";
 import Footer from "@/components/Footer";
+import CookieBanner from "@/components/CookieBanner";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -196,6 +197,7 @@ const Home = () => {
         </main>
 
         <Footer />
+        <CookieBanner />
       </div>
     </div>
   );
