@@ -1,0 +1,555 @@
+import json
+import os
+import psycopg2
+from typing import Dict, Any, Optional
+import requests
+from datetime import datetime
+from googletrans import Translator
+import boto3
+import time
+import uuid
+
+GENERATION_COST = 50
+
+def normalize_image_format(image: str) -> str:
+    if image.startswith('http://') or image.startswith('https://'):
+        return image
+    if image.startswith('data:'):
+        return image
+    return f'data:image/jpeg;base64,{image}'
+
+def translate_to_english(text: str) -> str:
+    if not text or not text.strip():
+        return text
+    try:
+        translator = Translator()
+        detected = translator.detect(text)
+        if detected.lang == 'ru':
+            print(f'[Translate] Detected Russian, translating: {text}')
+            translated = translator.translate(text, src='ru', dest='en')
+            result = translated.text
+            print(f'[Translate] Translated to: {result}')
+            return result
+        else:
+            print(f'[Translate] Detected {detected.lang}, keeping original')
+            return text
+    except Exception as e:
+        print(f'[Translate] Error: {e}, keeping original text')
+        return text
+
+def build_capsule_prompt(template_data: dict) -> str:
+    garments = template_data.get('garments', [])
+    title = template_data.get('title', '')
+    show_labels = template_data.get('show_labels', True)
+    model_outfit = template_data.get('model_outfit', [])
+    prompt = template_data.get('prompt', '')
+
+    base = "Create a fashion capsule wardrobe image exactly like the template/reference image layout. "
+    base += "The image has TWO parts side by side: LEFT part is a full-body photo of the model, RIGHT part is a grid of clothing items with labels. "
+
+    outfit_items = []
+    for idx in model_outfit:
+        if idx < len(garments):
+            g = garments[idx]
+            hint = g.get('hint', '')
+            label = g.get('label', '')
+            desc = hint or label or f'item {idx+1}'
+            outfit_items.append(desc)
+
+    if outfit_items:
+        translated_outfit = translate_to_english(', '.join(outfit_items))
+        base += f"LEFT: The model from the person photo wearing these items together: {translated_outfit}. "
+    else:
+        base += "LEFT: The model from the person photo in a stylish outfit. "
+
+    if prompt:
+        translated_prompt = translate_to_english(prompt)
+        base += f"Background and style: {translated_prompt}. "
+
+    base += "RIGHT: A clean grid layout of all clothing items, each item neatly arranged. "
+
+    if show_labels and title:
+        translated_title = translate_to_english(title)
+        base += f"Title at the top of the right side in bold font (Roboto or Montserrat): \"{translated_title}\". "
+
+    if show_labels:
+        base += "Each clothing item in the grid has a numbered label below it in clean font (Roboto or Montserrat). Labels: "
+        label_parts = []
+        for i, g in enumerate(garments):
+            label = g.get('label', f'Item {i+1}')
+            label_parts.append(f"{i+1}. {label}")
+        base += ', '.join(label_parts) + '. '
+
+    base += "Keep the EXACT face and body shape from the person photo. Professional fashion lookbook style. Clean white or light background for the clothing grid. "
+
+    return base
+
+def build_grid_prompt(template_data: dict) -> str:
+    grid_size = template_data.get('grid_size', 4)
+    slots = template_data.get('slots', [])
+    garments = template_data.get('garments', [])
+    prompt = template_data.get('prompt', '')
+
+    if grid_size == 4:
+        base = "Create a fashion lookbook collage with exactly 4 photos in a 2x2 grid layout. "
+    else:
+        base = "Create a fashion lookbook collage with exactly 8 photos in a 2x4 grid layout (2 rows, 4 columns). "
+
+    base += "Each cell contains the same model from the person photo but in a DIFFERENT outfit. "
+
+    for i, slot in enumerate(slots):
+        slot_type = slot.get('type', 'outfit')
+        cell_num = i + 1
+
+        if slot_type == 'outfit':
+            outfit_indices = slot.get('outfit', [])
+            outfit_desc_parts = []
+            for idx in outfit_indices:
+                if idx < len(garments):
+                    g = garments[idx]
+                    hint = g.get('hint', '')
+                    label = g.get('label', '')
+                    desc = hint or label or f'item {idx+1}'
+                    outfit_desc_parts.append(desc)
+            slot_prompt = slot.get('prompt', '')
+            if outfit_desc_parts:
+                translated_items = translate_to_english(', '.join(outfit_desc_parts))
+                base += f"Cell {cell_num}: Model wearing {translated_items}. "
+            if slot_prompt:
+                translated_slot = translate_to_english(slot_prompt)
+                base += f"Style/background for cell {cell_num}: {translated_slot}. "
+        elif slot_type == 'text':
+            text_content = slot.get('prompt', '')
+            if text_content:
+                translated_text = translate_to_english(text_content)
+                base += f"Cell {cell_num}: Instead of a photo, display text in bold clean font (Roboto or Montserrat): \"{translated_text}\". "
+        elif slot_type == 'palette':
+            palette_desc = slot.get('prompt', '')
+            if palette_desc:
+                translated_palette = translate_to_english(palette_desc)
+                base += f"Cell {cell_num}: Instead of a photo, display a color palette: {translated_palette}. "
+
+    if prompt:
+        translated_prompt = translate_to_english(prompt)
+        base += f"Overall style: {translated_prompt}. "
+
+    base += "Keep the EXACT face and body shape from the person photo in all outfit cells. Professional fashion lookbook style. Same background style across all outfit cells for consistency. "
+
+    return base
+
+def submit_template_to_fal(person_image: str, template_image: str, garment_images: list, prompt: str, mode: str, grid_size: int = 4) -> tuple:
+    fal_api_key = os.environ.get('FAL_API_KEY')
+    if not fal_api_key:
+        raise Exception('FAL_API_KEY not configured')
+
+    image_urls = [normalize_image_format(template_image), normalize_image_format(person_image)]
+    for img in garment_images:
+        image_urls.append(normalize_image_format(img))
+
+    if mode == 'capsule':
+        aspect_ratio = '4:3'
+    elif grid_size == 8:
+        aspect_ratio = '4:3'
+    else:
+        aspect_ratio = '3:4'
+
+    print(f'[TemplateWorker] Mode: {mode}, aspect_ratio: {aspect_ratio}')
+    print(f'[TemplateWorker] Images: 1=template, 2=person, 3-{len(image_urls)}=clothes')
+    print(f'[TemplateWorker] Prompt length: {len(prompt)} chars')
+
+    headers = {
+        'Authorization': f'Key {fal_api_key}',
+        'Content-Type': 'application/json'
+    }
+
+    payload = {
+        'image_urls': image_urls,
+        'prompt': prompt,
+        'aspect_ratio': aspect_ratio,
+        'num_images': 1
+    }
+
+    response = requests.post(
+        'https://queue.fal.run/fal-ai/nano-banana-pro/edit',
+        headers=headers,
+        json=payload,
+        timeout=30
+    )
+
+    if response.status_code == 200:
+        result = response.json()
+        if 'request_id' in result and 'response_url' in result:
+            return (result['request_id'], result['response_url'])
+
+    raise Exception(f'Failed to submit to queue: {response.status_code} - {response.text}')
+
+def check_fal_status(response_url: str) -> Optional[dict]:
+    fal_api_key = os.environ.get('FAL_API_KEY')
+    if not fal_api_key:
+        raise Exception('FAL_API_KEY not configured')
+    headers = {
+        'Authorization': f'Key {fal_api_key}',
+        'Content-Type': 'application/json'
+    }
+    response = requests.get(response_url, headers=headers, timeout=10)
+    if response.status_code == 200:
+        return response.json()
+    raise Exception(f'Failed to check status: {response.status_code} - {response.text}')
+
+def upload_to_s3(image_url: str, user_id: str, mode: str) -> str:
+    s3_access_key = os.environ.get('S3_ACCESS_KEY')
+    s3_secret_key = os.environ.get('S3_SECRET_KEY')
+    s3_bucket = os.environ.get('S3_BUCKET_NAME', 'fitting-room-images')
+    if not s3_access_key or not s3_secret_key:
+        raise Exception('S3 credentials not configured')
+
+    print(f'[S3] Downloading image: {image_url[:50]}...')
+    img_response = requests.get(image_url, timeout=30)
+    if img_response.status_code != 200:
+        raise Exception(f'Failed to download image: {img_response.status_code}')
+    image_data = img_response.content
+    print(f'[S3] Downloaded {len(image_data)} bytes')
+
+    timestamp = time.strftime('%Y%m%d_%H%M%S')
+    random_suffix = uuid.uuid4().hex[:8]
+    subfolder = 'capsule' if mode == 'capsule' else 'grid'
+    filename = f'{subfolder}_{timestamp}_{user_id}_{random_suffix}.jpg'
+    s3_key = f'images/lookbooks/{user_id}/{subfolder}/{filename}'
+
+    print(f'[S3] Uploading to: {s3_key}')
+
+    s3 = boto3.client('s3',
+        endpoint_url='https://storage.yandexcloud.net',
+        aws_access_key_id=s3_access_key,
+        aws_secret_access_key=s3_secret_key
+    )
+    s3.put_object(Bucket=s3_bucket, Key=s3_key, Body=image_data, ContentType='image/jpeg')
+    cdn_url = f'https://storage.yandexcloud.net/{s3_bucket}/{s3_key}'
+    print(f'[S3] Upload complete: {cdn_url}')
+    return cdn_url
+
+def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
+    try:
+        cursor = conn.cursor()
+        cursor.execute('SELECT refunded FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks WHERE id = %s', (task_id,))
+        refund_row = cursor.fetchone()
+        if refund_row and refund_row[0]:
+            print(f'[Refund] Task {task_id} already refunded')
+            cursor.close()
+            return
+        cursor.execute('SELECT unlimited_access, balance FROM t_p29007832_virtual_fitting_room.users WHERE id = %s', (user_id,))
+        user_row = cursor.fetchone()
+        if not user_row:
+            cursor.close()
+            return
+        unlimited_access = user_row[0]
+        balance_before = float(user_row[1])
+        if unlimited_access:
+            cursor.execute('UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks SET refunded = true WHERE id = %s', (task_id,))
+            conn.commit()
+            cursor.close()
+            return
+        balance_after = balance_before + GENERATION_COST
+        cursor.execute('UPDATE t_p29007832_virtual_fitting_room.users SET balance = balance + %s WHERE id = %s', (GENERATION_COST, user_id))
+        cursor.execute('UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks SET refunded = true WHERE id = %s', (task_id,))
+        cursor.execute('''
+            INSERT INTO t_p29007832_virtual_fitting_room.balance_transactions
+            (user_id, type, amount, balance_before, balance_after, description, try_on_id)
+            VALUES (%s, 'refund', %s, %s, %s, 'Возврат: сбой шаблонной генерации', NULL)
+        ''', (user_id, GENERATION_COST, balance_before, balance_after))
+        conn.commit()
+        print(f'[Refund] Refunded {GENERATION_COST} to user {user_id}')
+        cursor.close()
+    except Exception as e:
+        print(f'[Refund] Error: {str(e)}')
+
+def save_to_history(conn, user_id: str, cdn_url: str, person_image: str, garments: list, prompt: str, task_id: str, mode: str) -> Optional[str]:
+    try:
+        cursor = conn.cursor()
+        garments_json = json.dumps(garments)
+        cursor.execute('SELECT unlimited_access, balance FROM t_p29007832_virtual_fitting_room.users WHERE id = %s', (user_id,))
+        user_row = cursor.fetchone()
+        unlimited_access = user_row[0] if user_row else False
+        cost = 0 if unlimited_access else GENERATION_COST
+        garment_image = garments[0].get('image', '') if garments else ''
+        model_used = 'capsule' if mode == 'capsule' else 'lookbook_grid'
+
+        cursor.execute('''
+            INSERT INTO t_p29007832_virtual_fitting_room.try_on_history
+            (user_id, person_image, garment_image, result_image, garments, model_used, cost, created_at, saved_to_lookbook, task_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        ''', (user_id, person_image, garment_image, cdn_url, garments_json, model_used, cost, datetime.utcnow(), False, task_id))
+        history_row = cursor.fetchone()
+        history_id = str(history_row[0]) if history_row else None
+        conn.commit()
+        cursor.close()
+        print(f'[History] Saved {mode} to history (id={history_id})')
+        return history_id
+    except psycopg2.errors.UniqueViolation:
+        print(f'[History] Task {task_id} already saved, skipping')
+        cursor.close()
+        return None
+    except Exception as e:
+        print(f'[History] Failed to save: {str(e)}')
+        cursor.close()
+        return None
+
+
+def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    '''Обработка шаблонных задач генерации (капсула/лукбук-сетка) через NanoBanana'''
+    def get_cors_origin(event: Dict[str, Any]) -> str:
+        origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin', '')
+        allowed_origins = ['https://fitting-room.ru', 'https://preview--virtual-fitting-room.poehali.dev']
+        return origin if origin in allowed_origins else 'https://fitting-room.ru'
+
+    method: str = event.get('httpMethod', 'GET')
+
+    if method == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': get_cors_origin(event),
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, X-Session-Token',
+                'Access-Control-Allow-Credentials': 'true',
+                'Access-Control-Max-Age': '86400'
+            },
+            'body': ''
+        }
+
+    query_params = event.get('queryStringParameters') or {}
+    task_id = query_params.get('task_id')
+
+    if not task_id:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+            'isBase64Encoded': False,
+            'body': json.dumps({'error': 'task_id parameter is required'})
+        }
+
+    print(f'[TemplateWorker] Processing task: {task_id}')
+
+    database_url = os.environ.get('DATABASE_URL')
+    if not database_url:
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+            'isBase64Encoded': False,
+            'body': json.dumps({'error': 'DATABASE_URL not configured'})
+        }
+
+    try:
+        conn = psycopg2.connect(database_url)
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT id, person_image, garments, prompt_hints, fal_request_id, fal_response_url, user_id, status, saved_to_history, mode, template_data
+            FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
+            WHERE id = %s
+        ''', (task_id,))
+
+        row = cursor.fetchone()
+        if not row:
+            cursor.close()
+            conn.close()
+            return {
+                'statusCode': 404,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+                'isBase64Encoded': False,
+                'body': json.dumps({'error': 'Task not found'})
+            }
+
+        task_id, person_image, garments_json, prompt_hints, fal_request_id, fal_response_url, user_id, task_status, saved_to_history, mode, template_data_json = row
+        garments = json.loads(garments_json) if garments_json else []
+        template_data = json.loads(template_data_json) if template_data_json else {}
+
+        if mode not in ('capsule', 'lookbook_grid'):
+            cursor.close()
+            conn.close()
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+                'isBase64Encoded': False,
+                'body': json.dumps({'error': f'Template worker cannot process mode: {mode}'})
+            }
+
+        if saved_to_history:
+            cursor.close()
+            conn.close()
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+                'isBase64Encoded': False,
+                'body': json.dumps({'status': 'already_processed'})
+            }
+
+        if task_status == 'pending':
+            if not fal_request_id:
+                cursor.execute('''
+                    SELECT COUNT(*) FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                    WHERE status = 'processing'
+                      AND fal_request_id IS NOT NULL
+                      AND mode IN ('capsule', 'lookbook_grid')
+                      AND created_at > NOW() - INTERVAL '3 minutes'
+                ''')
+                active_count = cursor.fetchone()[0]
+                if active_count > 0:
+                    print(f'[TemplateWorker] {active_count} active template task(s), staying pending')
+                    cursor.close()
+                    conn.close()
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'status': 'queued', 'active_tasks': active_count})
+                    }
+
+                cursor.execute('''
+                    UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                    SET status = 'processing', updated_at = %s
+                    WHERE id = %s AND status = 'pending'
+                    RETURNING id
+                ''', (datetime.utcnow(), task_id))
+                updated_row = cursor.fetchone()
+                conn.commit()
+
+                if not updated_row:
+                    cursor.close()
+                    conn.close()
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'status': 'task_already_processing'})
+                    }
+
+                try:
+                    if mode == 'capsule':
+                        built_prompt = build_capsule_prompt(template_data)
+                    else:
+                        built_prompt = build_grid_prompt(template_data)
+
+                    print(f'[TemplateWorker] Built prompt: {built_prompt[:200]}...')
+
+                    template_image = template_data.get('template_image', '') or person_image
+                    garment_images = [g['image'] for g in garments if g.get('image')]
+                    grid_size = template_data.get('grid_size', 4)
+
+                    fal_req_id, response_url = submit_template_to_fal(
+                        person_image, template_image, garment_images, built_prompt, mode, grid_size
+                    )
+                    print(f'[TemplateWorker] Submitted to fal.ai: {fal_req_id}')
+
+                    cursor.execute('''
+                        UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                        SET fal_request_id = %s, fal_response_url = %s, updated_at = %s
+                        WHERE id = %s
+                    ''', (fal_req_id, response_url, datetime.utcnow(), task_id))
+                    conn.commit()
+
+                except Exception as e:
+                    error_msg = str(e)
+                    print(f'[TemplateWorker] Submit failed: {error_msg}')
+                    cursor.execute('''
+                        UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                        SET status = 'failed', error_message = %s, updated_at = %s
+                        WHERE id = %s
+                    ''', (error_msg, datetime.utcnow(), task_id))
+                    conn.commit()
+                    refund_balance_if_needed(conn, user_id, task_id)
+
+        if task_status == 'processing' and fal_response_url:
+            try:
+                status_data = check_fal_status(fal_response_url)
+                fal_status = status_data.get('status', status_data.get('state', 'UNKNOWN'))
+
+                if fal_status.upper() == 'COMPLETED' or 'images' in status_data or 'image' in status_data:
+                    if 'images' in status_data and len(status_data['images']) > 0:
+                        fal_result_url = status_data['images'][0]['url']
+                    elif 'image' in status_data:
+                        if isinstance(status_data['image'], dict):
+                            fal_result_url = status_data['image']['url']
+                        else:
+                            fal_result_url = status_data['image']
+                    else:
+                        raise Exception('No image in response')
+
+                    print(f'[TemplateWorker] Task {task_id} completed! URL: {fal_result_url}')
+
+                    try:
+                        cdn_url = upload_to_s3(fal_result_url, user_id, mode)
+
+                        cursor.execute('''
+                            SELECT person_image, garments, prompt_hints, mode
+                            FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                            WHERE id = %s
+                        ''', (task_id,))
+                        task_details = cursor.fetchone()
+                        if task_details:
+                            person_img, g_json, prompt, task_mode = task_details
+                            g_list = json.loads(g_json) if g_json else []
+
+                            cursor.execute('''
+                                UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                                SET saved_to_history = true
+                                WHERE id = %s AND saved_to_history = false
+                                RETURNING id
+                            ''', (task_id,))
+                            atomic_check = cursor.fetchone()
+                            conn.commit()
+
+                            if atomic_check:
+                                save_to_history(conn, user_id, cdn_url, person_img, g_list, prompt or '', task_id, task_mode)
+
+                        cursor.execute('''
+                            UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                            SET status = 'completed', result_url = %s, updated_at = %s
+                            WHERE id = %s
+                        ''', (cdn_url, datetime.utcnow(), task_id))
+                        conn.commit()
+                        print(f'[TemplateWorker] Task {task_id} FULLY saved')
+
+                    except Exception as save_error:
+                        print(f'[TemplateWorker] S3 save failed: {str(save_error)}')
+                        cursor.execute('''
+                            UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                            SET status = 'completed', result_url = %s, updated_at = %s, error_message = %s
+                            WHERE id = %s
+                        ''', (fal_result_url, datetime.utcnow(), f'S3 failed: {str(save_error)}', task_id))
+                        conn.commit()
+
+                elif fal_status.upper() in ['FAILED', 'EXPIRED']:
+                    error_msg = f'Ошибка генерации: {status_data.get("error", "Generation failed")}'
+                    cursor.execute('''
+                        UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                        SET status = 'failed', error_message = %s, updated_at = %s
+                        WHERE id = %s
+                    ''', (error_msg, datetime.utcnow(), task_id))
+                    conn.commit()
+                    refund_balance_if_needed(conn, user_id, task_id)
+                else:
+                    print(f'[TemplateWorker] Task {task_id} still processing')
+
+            except Exception as e:
+                print(f'[TemplateWorker] Status check error: {str(e)}')
+
+        cursor.close()
+        conn.close()
+
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+            'isBase64Encoded': False,
+            'body': json.dumps({'status': 'processed', 'task_id': task_id})
+        }
+
+    except Exception as e:
+        print(f'[TemplateWorker] Error: {str(e)}')
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+            'isBase64Encoded': False,
+            'body': json.dumps({'error': str(e)})
+        }
