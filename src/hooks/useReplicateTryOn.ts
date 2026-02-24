@@ -320,7 +320,7 @@ export function useReplicateTryOn() {
         setHasTimedOut(true);
         setIsGenerating(false);
         setGenerationStatus('Время ожидания истекло. Проверьте результат позже через кнопку "Проверить задачи".');
-      }, 180000);
+      }, 360000);
 
     } catch (error: unknown) {
       console.error('Generation error:', error);

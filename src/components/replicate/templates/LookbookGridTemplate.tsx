@@ -134,20 +134,22 @@ export default function LookbookGridTemplate({
 
   const addGarmentSlot = useCallback(
     (withPhoto: boolean) => {
-      const photoCount = garments.filter((g) => g.image).length;
-      const textCount = garments.filter((g) => !g.image).length;
-      if (withPhoto && photoCount >= 8) {
-        toast.error("Максимум 8 фото одежды");
+      const photoCount = garments.filter((g) => !g.textOnly).length;
+      const textCount = garments.filter((g) => g.textOnly).length;
+      if (withPhoto && photoCount >= 10) {
+        toast.error("Максимум 10 фото одежды");
         return;
       }
-      if (!withPhoto && textCount >= 7) {
-        toast.error("Максимум 7 описаний без фото");
+      if (!withPhoto && textCount >= 5) {
+        toast.error("Максимум 5 описаний без фото");
         return;
       }
       setGarments((prev) => [
         ...prev,
         {
           id: `g-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          image: undefined,
+          textOnly: !withPhoto,
           hint: "",
           label: "",
         },

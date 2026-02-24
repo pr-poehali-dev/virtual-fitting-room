@@ -22,10 +22,10 @@ export default function CapsuleClothingList({
   onAddTextOnly,
   disabled,
 }: CapsuleClothingListProps) {
-  const photoCount = garments.filter((g) => g.image).length;
-  const textCount = garments.filter((g) => !g.image).length;
-  const canAddPhoto = photoCount < 8;
-  const canAddText = textCount < 7;
+  const photoCount = garments.filter((g) => !g.textOnly).length;
+  const textCount = garments.filter((g) => g.textOnly).length;
+  const canAddPhoto = photoCount < 10;
+  const canAddText = textCount < 5;
 
   return (
     <div>
@@ -83,7 +83,7 @@ export default function CapsuleClothingList({
       )}
 
       <p className="text-xs text-muted-foreground mt-2">
-        До 8 фото + до 7 описаний текстом
+        До 10 фото + до 5 описаний текстом
       </p>
     </div>
   );

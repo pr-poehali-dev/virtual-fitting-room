@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 export interface TemplateGarment {
   id: string;
   image?: string;
+  textOnly?: boolean;
   hint: string;
   label: string;
 }

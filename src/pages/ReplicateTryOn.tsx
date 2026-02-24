@@ -587,7 +587,7 @@ export default function ReplicateTryOn() {
     console.log("[NanoBananaPro] Starting polling for task:", taskId);
     let checkCount = 0;
     const startTime = Date.now();
-    const TIMEOUT_MS = 180000;
+    const TIMEOUT_MS = 360000;
 
     const interval = setInterval(async () => {
       try {

@@ -36,33 +36,41 @@ export default function CapsuleClothingSlot({
   return (
     <div className="flex gap-3 items-start p-3 border rounded-lg bg-white">
       <div className="flex-shrink-0">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/jpg,image/png,image/webp"
-          onChange={handleFileChange}
-          className="hidden"
-          id={`garment-upload-${garment.id}`}
-          disabled={disabled}
-        />
-        {garment.image ? (
-          <label
-            htmlFor={`garment-upload-${garment.id}`}
-            className="block w-16 h-16 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
-          >
-            <img
-              src={garment.image}
-              alt={garment.label || `Вещь ${index + 1}`}
-              className="w-full h-full object-cover"
-            />
-          </label>
+        {garment.textOnly ? (
+          <div className="flex items-center justify-center w-16 h-16 bg-purple-50 border border-purple-200 rounded-lg">
+            <Icon name="Type" size={20} className="text-purple-400" />
+          </div>
         ) : (
-          <label
-            htmlFor={`garment-upload-${garment.id}`}
-            className="flex items-center justify-center w-16 h-16 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-purple-400 transition-colors"
-          >
-            <Icon name="ImagePlus" size={20} className="text-gray-400" />
-          </label>
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
+              onChange={handleFileChange}
+              className="hidden"
+              id={`garment-upload-${garment.id}`}
+              disabled={disabled}
+            />
+            {garment.image ? (
+              <label
+                htmlFor={`garment-upload-${garment.id}`}
+                className="block w-16 h-16 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+              >
+                <img
+                  src={garment.image}
+                  alt={garment.label || `Вещь ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </label>
+            ) : (
+              <label
+                htmlFor={`garment-upload-${garment.id}`}
+                className="flex items-center justify-center w-16 h-16 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-purple-400 transition-colors"
+              >
+                <Icon name="ImagePlus" size={20} className="text-gray-400" />
+              </label>
+            )}
+          </>
         )}
       </div>
 
