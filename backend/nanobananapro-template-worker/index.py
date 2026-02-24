@@ -535,6 +535,142 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             except Exception as e:
                 print(f'[TemplateWorker] Status check error: {str(e)}')
 
+        print(f'[TemplateWorker] Checking for stuck tasks older than 4 minutes...')
+        cursor.execute('''
+            SELECT id, fal_response_url, user_id, created_at, mode, template_data
+            FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
+            WHERE status = 'processing'
+              AND fal_response_url IS NOT NULL
+              AND mode IN ('capsule', 'lookbook_grid')
+              AND updated_at < NOW() - INTERVAL '4 minutes'
+              AND id != %s
+            ORDER BY created_at ASC
+            LIMIT 5
+        ''', (task_id,))
+
+        stuck_tasks = cursor.fetchall()
+        print(f'[TemplateWorker] Found {len(stuck_tasks)} stuck tasks')
+
+        for stuck_task in stuck_tasks:
+            stuck_id, stuck_response_url, stuck_user_id, stuck_created, stuck_mode, stuck_template_data_json = stuck_task
+            print(f'[TemplateWorker] Processing stuck task {stuck_id} (created {stuck_created})')
+
+            try:
+                status_data = check_fal_status(stuck_response_url)
+                fal_status = status_data.get('status', status_data.get('state', 'UNKNOWN'))
+
+                if fal_status.upper() == 'COMPLETED' or 'images' in status_data or 'image' in status_data:
+                    if 'images' in status_data and len(status_data['images']) > 0:
+                        fal_result_url = status_data['images'][0]['url']
+                    elif 'image' in status_data:
+                        if isinstance(status_data['image'], dict):
+                            fal_result_url = status_data['image']['url']
+                        else:
+                            fal_result_url = status_data['image']
+                    else:
+                        continue
+
+                    print(f'[TemplateWorker] Stuck task {stuck_id} completed! Uploading to S3...')
+
+                    try:
+                        cdn_url = upload_to_s3(fal_result_url, stuck_user_id, stuck_mode or 'capsule')
+
+                        cursor.execute('''
+                            SELECT person_image, garments, prompt_hints
+                            FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                            WHERE id = %s
+                        ''', (stuck_id,))
+                        task_details = cursor.fetchone()
+                        if task_details:
+                            person_img, garments_json_s, prompt_s = task_details
+                            garments_s = json.loads(garments_json_s) if garments_json_s else []
+
+                            cursor.execute('''
+                                UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                                SET saved_to_history = true
+                                WHERE id = %s AND saved_to_history = false
+                                RETURNING id
+                            ''', (stuck_id,))
+                            atomic_check = cursor.fetchone()
+                            conn.commit()
+
+                            if atomic_check:
+                                save_to_history(conn, stuck_user_id, cdn_url, person_img, garments_s, prompt_s or '', stuck_id, stuck_mode or 'capsule')
+
+                        cursor.execute('''
+                            UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                            SET status = 'completed', result_url = %s, updated_at = %s
+                            WHERE id = %s
+                        ''', (cdn_url, datetime.utcnow(), stuck_id))
+                        conn.commit()
+                        print(f'[TemplateWorker] Stuck task {stuck_id} SAVED!')
+
+                    except Exception as save_error:
+                        print(f'[TemplateWorker] Failed to save stuck task {stuck_id}: {str(save_error)}')
+                        cursor.execute('''
+                            UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                            SET status = 'completed', result_url = %s, updated_at = %s
+                            WHERE id = %s
+                        ''', (fal_result_url, datetime.utcnow(), stuck_id))
+                        conn.commit()
+
+                elif fal_status.upper() in ['FAILED', 'EXPIRED']:
+                    error_msg = f'Ошибка генерации: {str(status_data.get("error", "Generation failed"))[:100]}'
+                    print(f'[TemplateWorker] Stuck task {stuck_id} failed')
+                    cursor.execute('''
+                        UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                        SET status = 'failed', error_message = %s, updated_at = %s
+                        WHERE id = %s
+                    ''', (error_msg, datetime.utcnow(), stuck_id))
+                    conn.commit()
+                    refund_balance_if_needed(conn, stuck_user_id, stuck_id)
+
+            except Exception as e:
+                print(f'[TemplateWorker] Error processing stuck task {stuck_id}: {str(e)}')
+
+        try:
+            cursor.execute('''
+                UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                SET status = 'pending', updated_at = %s
+                WHERE status = 'processing'
+                  AND fal_request_id IS NULL
+                  AND mode IN ('capsule', 'lookbook_grid')
+                  AND created_at < NOW() - INTERVAL '3 minutes'
+                RETURNING id
+            ''', (datetime.utcnow(),))
+            zombie_rows = cursor.fetchall()
+            conn.commit()
+            if zombie_rows:
+                zombie_ids = [r[0] for r in zombie_rows]
+                print(f'[TemplateWorker] Reset {len(zombie_ids)} zombie tasks back to pending: {zombie_ids}')
+        except Exception as e:
+            print(f'[TemplateWorker] Error resetting zombie tasks: {str(e)}')
+
+        try:
+            cursor.execute('''
+                SELECT id FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                WHERE status = 'pending'
+                  AND fal_request_id IS NULL
+                  AND mode IN ('capsule', 'lookbook_grid')
+                  AND created_at < NOW() - INTERVAL '2 minutes'
+                  AND id != %s
+                ORDER BY created_at ASC
+                LIMIT 1
+            ''', (task_id,))
+            orphan_row = cursor.fetchone()
+            if orphan_row:
+                orphan_id = orphan_row[0]
+                print(f'[TemplateWorker] Found orphan pending task {orphan_id}, triggering worker')
+                try:
+                    import urllib.request
+                    worker_url = f'https://functions.poehali.dev/7f57bfff-f742-4a66-b506-c2acb4e2cdd3?task_id={orphan_id}'
+                    req = urllib.request.Request(worker_url, method='GET')
+                    urllib.request.urlopen(req, timeout=2)
+                except Exception as trigger_err:
+                    print(f'[TemplateWorker] Orphan trigger failed (non-critical): {trigger_err}')
+        except Exception as e:
+            print(f'[TemplateWorker] Error checking orphan tasks: {str(e)}')
+
         cursor.close()
         conn.close()
 
@@ -542,7 +678,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
             'isBase64Encoded': False,
-            'body': json.dumps({'status': 'processed', 'task_id': task_id})
+            'body': json.dumps({'status': 'processed', 'task_id': task_id, 'stuck_tasks_processed': len(stuck_tasks)})
         }
 
     except Exception as e:
