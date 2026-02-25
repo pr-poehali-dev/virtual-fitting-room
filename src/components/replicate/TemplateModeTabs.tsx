@@ -11,7 +11,7 @@ interface TemplateModeTabsProps {
 function StandardIcon({ className }: { className?: string }) {
   return (
     <img
-      src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/ec565def-be35-4c73-ac5f-8d9d0734f3aa.svg"
+      src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/ebb5eb96-9ec1-4f29-83fe-b10d3bf233e9.svg"
       alt="Примерка"
       className={cn("w-20 h-20", className)}
     />
