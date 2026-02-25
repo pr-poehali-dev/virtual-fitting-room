@@ -10,13 +10,20 @@ import Icon from "@/components/ui/icon";
 import { Link } from "react-router-dom";
 import ReplicateImageUpload from "@/components/replicate/ReplicateImageUpload";
 import ReplicateResultPanel from "@/components/replicate/ReplicateResultPanel";
+import ReplicateSaveDialog from "@/components/replicate/ReplicateSaveDialog";
 import ImageCropper from "@/components/ImageCropper";
 import CapsuleClothingList from "./CapsuleClothingList";
 import ClothingMultiSelect from "./ClothingMultiSelect";
 import type { TemplateGarment } from "./ClothingMultiSelect";
 import { useTemplateGeneration } from "@/hooks/useTemplateGeneration";
+import { useData } from "@/context/DataContext";
 import { validateImageFile } from "@/utils/fileValidation";
 import { GENERATION_COST, MIN_TOPUP } from "@/config/prices";
+
+const IMAGE_PROXY_API =
+  "https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90";
+const DB_QUERY_API =
+  "https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9";
 
 interface CapsuleTemplateProps {
   user: { id: string; email: string; unlimited_access?: boolean } | null;
@@ -45,10 +52,18 @@ export default function CapsuleTemplate({
     isGenerating,
     generationStatus,
     generatedImage,
+    cdnImageUrl,
     hasTimedOut,
     generate,
     reset,
   } = useTemplateGeneration(user, onRefetchHistory);
+
+  const { lookbooks, refetchLookbooks } = useData();
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [selectedLookbookId, setSelectedLookbookId] = useState("");
+  const [newLookbookName, setNewLookbookName] = useState("");
+  const [newLookbookPersonName, setNewLookbookPersonName] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const resizeImage = (
     file: File,
@@ -233,19 +248,106 @@ export default function CapsuleTemplate({
   const handleDownloadImage = async () => {
     if (!generatedImage) return;
     try {
-      const response = await fetch(generatedImage);
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
+      let blob: Blob;
+      if (generatedImage.startsWith("data:")) {
+        const response = await fetch(generatedImage);
+        blob = await response.blob();
+      } else {
+        const proxyResponse = await fetch(
+          `${IMAGE_PROXY_API}?url=${encodeURIComponent(generatedImage)}`
+        );
+        if (!proxyResponse.ok) throw new Error("Failed to proxy image");
+        const proxyData = await proxyResponse.json();
+        const response = await fetch(proxyData.data_url);
+        blob = await response.blob();
+      }
+      const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = url;
+      link.href = blobUrl;
       link.download = `capsule-${Date.now()}.jpg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 100);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
       toast.success("Скачано!");
     } catch {
       toast.error("Ошибка скачивания");
+    }
+  };
+
+  const handleSaveToExistingLookbook = async () => {
+    if (!selectedLookbookId || !user) return;
+    if (!cdnImageUrl) {
+      toast.error("Изображение ещё сохраняется, подождите...");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const lookbook = lookbooks?.find((lb: { id: string; photos?: string[] }) => lb.id === selectedLookbookId);
+      const updatedPhotos = [...(lookbook?.photos || []), cdnImageUrl];
+      const response = await fetch(DB_QUERY_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          table: "lookbooks",
+          action: "update",
+          where: { id: selectedLookbookId },
+          data: { photos: updatedPhotos },
+        }),
+      });
+      if (response.ok) {
+        toast.success("Фото добавлено в лукбук!");
+        setShowSaveDialog(false);
+        setSelectedLookbookId("");
+        await refetchLookbooks();
+      } else {
+        throw new Error("Failed to save");
+      }
+    } catch {
+      toast.error("Ошибка сохранения");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveToNewLookbook = async () => {
+    if (!newLookbookName || !newLookbookPersonName || !user) return;
+    if (!cdnImageUrl) {
+      toast.error("Изображение ещё сохраняется, подождите...");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const response = await fetch(DB_QUERY_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          table: "lookbooks",
+          action: "insert",
+          data: {
+            user_id: user.id,
+            name: newLookbookName,
+            person_name: newLookbookPersonName,
+            photos: [cdnImageUrl],
+            color_palette: [],
+          },
+        }),
+      });
+      if (response.ok) {
+        toast.success("Лукбук создан!");
+        setShowSaveDialog(false);
+        setNewLookbookName("");
+        setNewLookbookPersonName("");
+        await refetchLookbooks();
+      } else {
+        throw new Error("Failed to create lookbook");
+      }
+    } catch {
+      toast.error("Ошибка создания лукбука");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -384,11 +486,26 @@ export default function CapsuleTemplate({
           isGenerating={isGenerating}
           generatedImage={generatedImage}
           handleDownloadImage={handleDownloadImage}
-          setShowSaveDialog={() => {}}
+          setShowSaveDialog={setShowSaveDialog}
           handleReset={handleReset}
           hasTimedOut={hasTimedOut}
         />
       </div>
+
+      <ReplicateSaveDialog
+        showSaveDialog={showSaveDialog}
+        setShowSaveDialog={setShowSaveDialog}
+        lookbooks={lookbooks || []}
+        selectedLookbookId={selectedLookbookId}
+        setSelectedLookbookId={setSelectedLookbookId}
+        handleSaveToExistingLookbook={handleSaveToExistingLookbook}
+        isSaving={isSaving}
+        newLookbookName={newLookbookName}
+        setNewLookbookName={setNewLookbookName}
+        newLookbookPersonName={newLookbookPersonName}
+        setNewLookbookPersonName={setNewLookbookPersonName}
+        handleSaveToNewLookbook={handleSaveToNewLookbook}
+      />
 
       {tempImageForCrop && (
         <ImageCropper
