@@ -13,7 +13,7 @@ function StandardIcon({ className }: { className?: string }) {
     <img
       src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/ec565def-be35-4c73-ac5f-8d9d0734f3aa.svg"
       alt="Примерка"
-      className={cn("w-10 h-10", className)}
+      className={cn("w-20 h-20", className)}
     />
   );
 }
@@ -23,7 +23,7 @@ function CapsuleIcon({ className }: { className?: string }) {
     <img
       src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/7cb0e0c3-d7c2-4d5e-828d-76618eb7d908.svg"
       alt="Капсула"
-      className={cn("w-12 h-10", className)}
+      className={cn("w-24 h-20", className)}
     />
   );
 }
@@ -33,7 +33,7 @@ function GridIcon({ className }: { className?: string }) {
     <img
       src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/c8a1fb69-d397-482f-bd61-1941de00a891.svg"
       alt="Лукбук-сетка"
-      className={cn("w-11 h-10", className)}
+      className={cn("w-[5.5rem] h-20", className)}
     />
   );
 }
