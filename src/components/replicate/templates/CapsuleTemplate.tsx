@@ -31,7 +31,7 @@ interface CapsuleTemplateProps {
 }
 
 const TEMPLATE_IMAGE_URL =
-  "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/e362f740-0659-4bd5-bf71-cd5d337ea176.jpg";
+  "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/8e1367bc-f288-47c2-b6f0-c75aadb13558.jpg";
 
 export default function CapsuleTemplate({
   user,
