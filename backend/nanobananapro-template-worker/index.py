@@ -582,7 +582,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     created_row = cursor.fetchone()
                     if created_row:
                         age_seconds = (datetime.utcnow() - created_row[0]).total_seconds()
-                        if age_seconds > 300:
+                        if age_seconds > 660:
                             print(f'[TemplateWorker] Task {task_id} stuck for {age_seconds}s, marking failed')
                             cursor.execute('''
                                 UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
@@ -689,7 +689,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 print(f'[TemplateWorker] Error processing stuck task {stuck_id}: {error_str}')
                 try:
                     age_seconds = (datetime.utcnow() - stuck_created).total_seconds()
-                    if age_seconds > 300:
+                    if age_seconds > 660:
                         print(f'[TemplateWorker] Stuck task {stuck_id} aged {age_seconds}s, marking failed')
                         cursor.execute('''
                             UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
