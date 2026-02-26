@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import Icon from "@/components/ui/icon";
 import { Link } from "react-router-dom";
 import ReplicateImageUpload from "@/components/replicate/ReplicateImageUpload";
@@ -43,7 +43,7 @@ export default function CapsuleTemplate({
   const [garments, setGarments] = useState<TemplateGarment[]>([]);
   const [title, setTitle] = useState("");
   const [prompt, setPrompt] = useState("");
-  const [showLabels, setShowLabels] = useState(true);
+
   const [modelOutfit, setModelOutfit] = useState<number[]>([]);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageForCrop, setTempImageForCrop] = useState<string | null>(null);
@@ -231,7 +231,7 @@ export default function CapsuleTemplate({
       })),
       title,
       prompt,
-      show_labels: showLabels,
+      show_labels: !!(title || garments.some((g) => g.label)),
       model_outfit: modelOutfit,
     });
   };
@@ -433,18 +433,6 @@ export default function CapsuleTemplate({
                 rows={3}
                 disabled={isGenerating}
               />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="show-labels"
-                checked={showLabels}
-                onCheckedChange={(v) => setShowLabels(!!v)}
-                disabled={isGenerating}
-              />
-              <label htmlFor="show-labels" className="text-sm cursor-pointer">
-                Подписи на изображении
-              </label>
             </div>
 
             <div className="space-y-3">

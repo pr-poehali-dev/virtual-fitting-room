@@ -98,13 +98,17 @@ def build_capsule_prompt(template_data: dict) -> str:
         base += "CRITICAL: The title text MUST be copied exactly character-by-character as specified above. Do NOT translate, rephrase, or modify the title in any way. "
 
     if show_labels:
-        base += "Each clothing item in the grid has a numbered label below it. "
-        base += "CRITICAL RULE — LABELS: Each label MUST be written EXACTLY as specified below, character-by-character. Do NOT translate, change, rephrase, or reorder any label. Copy them exactly: "
-        label_parts = []
-        for i, g in enumerate(garments):
-            label = g.get('label', f'Item {i+1}')
-            label_parts.append(f'{i+1}. {label}')
-        base += ', '.join(label_parts) + '. '
+        labeled_items = [(i, g.get('label', '')) for i, g in enumerate(garments) if g.get('label', '').strip()]
+        if labeled_items:
+            base += "CRITICAL RULE — LABELS: Show a numbered label ONLY for items that have a label specified below. Items without a label must have NO text under them. "
+            base += "Each label MUST be written EXACTLY as specified, character-by-character. Do NOT translate, change, rephrase, or reorder any label. Copy them exactly: "
+            label_parts = []
+            for i, label in labeled_items:
+                label_parts.append(f'{i+1}. {label}')
+            base += ', '.join(label_parts) + '. '
+            unlabeled_count = len(garments) - len(labeled_items)
+            if unlabeled_count > 0:
+                base += f"The remaining {unlabeled_count} item(s) must have NO label or number underneath. "
 
     base += "Keep the EXACT face and body shape from image_2 (person photo). Professional fashion lookbook style. Clean white or light background for the clothing grid. "
 
