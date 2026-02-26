@@ -90,7 +90,7 @@ export default function CapsuleClothingSlot({
           onChange={(e) => onUpdate(garment.id, { hint: e.target.value })}
           placeholder={
             garment.image
-              ? "Описание вещи (обязательно)"
+              ? "Описание вещи, которую взять с фото (обязательно)"
               : "Описание (напр: белая базовая футболка)"
           }
           className={`h-8 text-xs ${garment.image && !garment.hint ? "border-red-300" : ""}`}
