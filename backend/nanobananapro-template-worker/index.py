@@ -91,7 +91,7 @@ def build_capsule_prompt(template_data: dict) -> str:
     if text_garments:
         text_descs = [g.get('hint') or g.get('label', '') for g in text_garments]
         translated_text_grid = translate_to_english(', '.join(text_descs))
-        base += f"For items WITHOUT a photo (text-only) — GENERATE a realistic clothing image based on the text description and place it in the grid: {translated_text_grid}. "
+        base += f"For items WITHOUT a photo (text-only) — GENERATE a realistic clothing image based on the text description and place it in the grid ONLY (do NOT put it on the model unless it is explicitly listed in the model's outfit above): {translated_text_grid}. "
 
     if show_labels and title:
         base += f'Title at the top of the right side in bold font (Roboto or Montserrat): "{title}". '
