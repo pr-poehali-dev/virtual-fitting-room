@@ -31,7 +31,7 @@ interface LookbookGridTemplateProps {
 }
 
 const TEMPLATE_4_IMAGE_URL =
-  "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/ac0a22e6-dc47-441e-b026-d451ff4e7bb9.png";
+  "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/9e1e6506-7b95-4044-963e-42ae6c63d733.jpg";
 const TEMPLATE_8_IMAGE_URL =
   "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/ac0a22e6-dc47-441e-b026-d451ff4e7bb9.png";
 
@@ -82,7 +82,7 @@ export default function LookbookGridTemplate({
   const resizeImage = (
     file: File,
     maxW: number,
-    maxH: number
+    maxH: number,
   ): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -112,9 +112,7 @@ export default function LookbookGridTemplate({
     });
   };
 
-  const handlePersonUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handlePersonUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const validation = validateImageFile(file);
@@ -128,9 +126,11 @@ export default function LookbookGridTemplate({
       img.onload = () => {
         const ratio = img.width / img.height;
         if (Math.abs(ratio - 3 / 4) < 0.05) {
-          resizeImage(file, 1024, 1024).then(setPersonImage).catch(() => {
-            toast.error("Ошибка обработки");
-          });
+          resizeImage(file, 1024, 1024)
+            .then(setPersonImage)
+            .catch(() => {
+              toast.error("Ошибка обработки");
+            });
         } else {
           setTempImageForCrop(event.target?.result as string);
           setShowCropper(true);
@@ -156,15 +156,15 @@ export default function LookbookGridTemplate({
   const updateGarment = useCallback(
     (id: string, updates: Partial<TemplateGarment>) => {
       setGarments((prev) =>
-        prev.map((g) => (g.id === id ? { ...g, ...updates } : g))
+        prev.map((g) => (g.id === id ? { ...g, ...updates } : g)),
       );
     },
-    []
+    [],
   );
 
   const handleImageRemove = useCallback((id: string) => {
     setGarments((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, image: undefined } : g))
+      prev.map((g) => (g.id === id ? { ...g, image: undefined } : g)),
     );
   }, []);
 
@@ -182,16 +182,16 @@ export default function LookbookGridTemplate({
         toast.error("Ошибка загрузки");
       }
     },
-    [updateGarment]
+    [updateGarment],
   );
 
   const updateSlot = useCallback(
     (index: number, updates: Partial<GridSlotData>) => {
       setSlots((prev) =>
-        prev.map((s, i) => (i === index ? { ...s, ...updates } : s))
+        prev.map((s, i) => (i === index ? { ...s, ...updates } : s)),
       );
     },
-    []
+    [],
   );
 
   const filledGarments = garments.filter((g) => g.image || g.hint);
@@ -262,7 +262,7 @@ export default function LookbookGridTemplate({
         blob = await response.blob();
       } else {
         const proxyResponse = await fetch(
-          `${IMAGE_PROXY_API}?url=${encodeURIComponent(generatedImage)}`
+          `${IMAGE_PROXY_API}?url=${encodeURIComponent(generatedImage)}`,
         );
         if (!proxyResponse.ok) throw new Error("Failed to proxy image");
         const proxyData = await proxyResponse.json();
@@ -291,7 +291,9 @@ export default function LookbookGridTemplate({
     }
     setIsSaving(true);
     try {
-      const lookbook = lookbooks?.find((lb: { id: string; photos?: string[] }) => lb.id === selectedLookbookId);
+      const lookbook = lookbooks?.find(
+        (lb: { id: string; photos?: string[] }) => lb.id === selectedLookbookId,
+      );
       const updatedPhotos = [...(lookbook?.photos || []), cdnImageUrl];
       const response = await fetch(DB_QUERY_API, {
         method: "POST",
@@ -367,15 +369,28 @@ export default function LookbookGridTemplate({
             {!user && (
               <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
                 <div className="flex items-start gap-3">
-                  <Icon name="Info" className="text-primary mt-0.5 flex-shrink-0" size={20} />
+                  <Icon
+                    name="Info"
+                    className="text-primary mt-0.5 flex-shrink-0"
+                    size={20}
+                  />
                   <div>
-                    <p className="text-sm font-medium text-primary mb-1">Требуется авторизация</p>
+                    <p className="text-sm font-medium text-primary mb-1">
+                      Требуется авторизация
+                    </p>
                     <p className="text-sm text-muted-foreground mb-2">
-                      Для генерации необходимо войти и пополнить баланс минимум на {MIN_TOPUP}₽.
+                      Для генерации необходимо войти и пополнить баланс минимум
+                      на {MIN_TOPUP}₽.
                     </p>
                     <div className="flex gap-2">
-                      <Link to="/login"><Button size="sm">Войти</Button></Link>
-                      <Link to="/register"><Button size="sm" variant="outline">Регистрация</Button></Link>
+                      <Link to="/login">
+                        <Button size="sm">Войти</Button>
+                      </Link>
+                      <Link to="/register">
+                        <Button size="sm" variant="outline">
+                          Регистрация
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -385,13 +400,23 @@ export default function LookbookGridTemplate({
             {hasInsufficientBalance && (
               <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
                 <div className="flex items-start gap-3">
-                  <Icon name="Wallet" className="text-orange-600 mt-0.5" size={20} />
+                  <Icon
+                    name="Wallet"
+                    className="text-orange-600 mt-0.5"
+                    size={20}
+                  />
                   <div>
-                    <p className="text-sm font-medium text-orange-700">Пополните баланс</p>
+                    <p className="text-sm font-medium text-orange-700">
+                      Пополните баланс
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       Для генерации нужно минимум {GENERATION_COST}₽.
                     </p>
-                    <Link to="/profile/wallet"><Button size="sm" className="mt-2">Пополнить</Button></Link>
+                    <Link to="/profile/wallet">
+                      <Button size="sm" className="mt-2">
+                        Пополнить
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -412,7 +437,9 @@ export default function LookbookGridTemplate({
             />
 
             <div>
-              <Label className="text-sm font-semibold mb-2 block">Количество образов</Label>
+              <Label className="text-sm font-semibold mb-2 block">
+                Количество образов
+              </Label>
               <div className="flex gap-2">
                 <Button
                   variant={gridSize === 4 ? "default" : "outline"}
@@ -441,7 +468,9 @@ export default function LookbookGridTemplate({
             />
 
             <div>
-              <Label className="text-sm font-semibold mb-1.5 block">Общий стиль</Label>
+              <Label className="text-sm font-semibold mb-1.5 block">
+                Общий стиль
+              </Label>
               <Textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
@@ -466,7 +495,11 @@ export default function LookbookGridTemplate({
               >
                 {isGenerating ? (
                   <>
-                    <Icon name="Loader2" className="mr-2 animate-spin" size={20} />
+                    <Icon
+                      name="Loader2"
+                      className="mr-2 animate-spin"
+                      size={20}
+                    />
                     {generationStatus || "Генерация..."}
                   </>
                 ) : (
