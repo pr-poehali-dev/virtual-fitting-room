@@ -69,13 +69,6 @@ def build_prompt(garments: list, custom_prompt: str) -> str:
     
     base_prompt += "Keep the EXACT face, body shape, pose from first uploaded image. Change ONLY the clothes. "
 
-    keep_keywords = ['оставить', 'оставь', 'сохрани', 'не меняй', 'keep original', 'keep the original', 'keep her', 'keep his', 'don\'t change', 'do not change']
-    check_text = (custom_prompt or '').lower()
-    has_keep_instruction = any(kw in check_text for kw in keep_keywords)
-
-    if not has_keep_instruction:
-        base_prompt += "IMPORTANT: COMPLETELY REMOVE and REPLACE the original clothing from the person photo. The original outfit MUST NOT appear in the result. Show ONLY the new garments from the uploaded clothing images. "
-
     if custom_prompt:
         translated_prompt = translate_to_english(custom_prompt)
         base_prompt += f"Additional: {translated_prompt}"
