@@ -33,7 +33,7 @@ interface LookbookGridTemplateProps {
 const TEMPLATE_4_IMAGE_URL =
   "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/9e1e6506-7b95-4044-963e-42ae6c63d733.jpg";
 const TEMPLATE_8_IMAGE_URL =
-  "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/ac0a22e6-dc47-441e-b026-d451ff4e7bb9.png";
+  "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/39158af4-ac71-43d0-b31f-77fe0bd0a067.jpg";
 
 function createDefaultSlots(count: number): GridSlotData[] {
   return Array.from({ length: count }, () => ({
