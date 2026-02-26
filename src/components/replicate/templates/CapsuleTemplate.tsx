@@ -31,7 +31,7 @@ interface CapsuleTemplateProps {
 }
 
 const TEMPLATE_IMAGE_URL =
-  "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/36e35a4d-51b5-4912-8bd3-fd2d0ee9b93a.png";
+  "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/e362f740-0659-4bd5-bf71-cd5d337ea176.jpg";
 
 export default function CapsuleTemplate({
   user,
@@ -66,7 +66,7 @@ export default function CapsuleTemplate({
   const resizeImage = (
     file: File,
     maxW: number,
-    maxH: number
+    maxH: number,
   ): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -96,9 +96,7 @@ export default function CapsuleTemplate({
     });
   };
 
-  const handlePersonUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handlePersonUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const validation = validateImageFile(file);
@@ -112,9 +110,11 @@ export default function CapsuleTemplate({
       img.onload = () => {
         const ratio = img.width / img.height;
         if (Math.abs(ratio - 3 / 4) < 0.05) {
-          resizeImage(file, 1024, 1024).then(setPersonImage).catch(() => {
-            toast.error("Ошибка обработки");
-          });
+          resizeImage(file, 1024, 1024)
+            .then(setPersonImage)
+            .catch(() => {
+              toast.error("Ошибка обработки");
+            });
         } else {
           setTempImageForCrop(event.target?.result as string);
           setShowCropper(true);
@@ -156,35 +156,32 @@ export default function CapsuleTemplate({
         },
       ]);
     },
-    [garments]
+    [garments],
   );
 
   const updateGarment = useCallback(
     (id: string, updates: Partial<TemplateGarment>) => {
       setGarments((prev) =>
-        prev.map((g) => (g.id === id ? { ...g, ...updates } : g))
+        prev.map((g) => (g.id === id ? { ...g, ...updates } : g)),
       );
     },
-    []
+    [],
   );
 
-  const removeGarment = useCallback(
-    (id: string) => {
-      setGarments((prev) => {
-        const newList = prev.filter((g) => g.id !== id);
-        const removedIdx = prev.findIndex((g) => g.id === id);
-        if (removedIdx >= 0) {
-          setModelOutfit((mo) =>
-            mo
-              .filter((i) => i !== removedIdx)
-              .map((i) => (i > removedIdx ? i - 1 : i))
-          );
-        }
-        return newList;
-      });
-    },
-    []
-  );
+  const removeGarment = useCallback((id: string) => {
+    setGarments((prev) => {
+      const newList = prev.filter((g) => g.id !== id);
+      const removedIdx = prev.findIndex((g) => g.id === id);
+      if (removedIdx >= 0) {
+        setModelOutfit((mo) =>
+          mo
+            .filter((i) => i !== removedIdx)
+            .map((i) => (i > removedIdx ? i - 1 : i)),
+        );
+      }
+      return newList;
+    });
+  }, []);
 
   const handleGarmentImageUpload = useCallback(
     async (id: string, file: File) => {
@@ -200,7 +197,7 @@ export default function CapsuleTemplate({
         toast.error("Ошибка загрузки изображения");
       }
     },
-    [updateGarment]
+    [updateGarment],
   );
 
   const handleGenerate = async () => {
@@ -247,7 +244,7 @@ export default function CapsuleTemplate({
         blob = await response.blob();
       } else {
         const proxyResponse = await fetch(
-          `${IMAGE_PROXY_API}?url=${encodeURIComponent(generatedImage)}`
+          `${IMAGE_PROXY_API}?url=${encodeURIComponent(generatedImage)}`,
         );
         if (!proxyResponse.ok) throw new Error("Failed to proxy image");
         const proxyData = await proxyResponse.json();
@@ -276,7 +273,9 @@ export default function CapsuleTemplate({
     }
     setIsSaving(true);
     try {
-      const lookbook = lookbooks?.find((lb: { id: string; photos?: string[] }) => lb.id === selectedLookbookId);
+      const lookbook = lookbooks?.find(
+        (lb: { id: string; photos?: string[] }) => lb.id === selectedLookbookId,
+      );
       const updatedPhotos = [...(lookbook?.photos || []), cdnImageUrl];
       const response = await fetch(DB_QUERY_API, {
         method: "POST",
@@ -352,15 +351,28 @@ export default function CapsuleTemplate({
             {!user && (
               <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
                 <div className="flex items-start gap-3">
-                  <Icon name="Info" className="text-primary mt-0.5 flex-shrink-0" size={20} />
+                  <Icon
+                    name="Info"
+                    className="text-primary mt-0.5 flex-shrink-0"
+                    size={20}
+                  />
                   <div>
-                    <p className="text-sm font-medium text-primary mb-1">Требуется авторизация</p>
+                    <p className="text-sm font-medium text-primary mb-1">
+                      Требуется авторизация
+                    </p>
                     <p className="text-sm text-muted-foreground mb-2">
-                      Для генерации необходимо войти и пополнить баланс минимум на {MIN_TOPUP}₽.
+                      Для генерации необходимо войти и пополнить баланс минимум
+                      на {MIN_TOPUP}₽.
                     </p>
                     <div className="flex gap-2">
-                      <Link to="/login"><Button size="sm">Войти</Button></Link>
-                      <Link to="/register"><Button size="sm" variant="outline">Регистрация</Button></Link>
+                      <Link to="/login">
+                        <Button size="sm">Войти</Button>
+                      </Link>
+                      <Link to="/register">
+                        <Button size="sm" variant="outline">
+                          Регистрация
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -370,13 +382,23 @@ export default function CapsuleTemplate({
             {hasInsufficientBalance && (
               <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
                 <div className="flex items-start gap-3">
-                  <Icon name="Wallet" className="text-orange-600 mt-0.5" size={20} />
+                  <Icon
+                    name="Wallet"
+                    className="text-orange-600 mt-0.5"
+                    size={20}
+                  />
                   <div>
-                    <p className="text-sm font-medium text-orange-700">Пополните баланс</p>
+                    <p className="text-sm font-medium text-orange-700">
+                      Пополните баланс
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       Для генерации нужно минимум {GENERATION_COST}₽.
                     </p>
-                    <Link to="/profile/wallet"><Button size="sm" className="mt-2">Пополнить</Button></Link>
+                    <Link to="/profile/wallet">
+                      <Button size="sm" className="mt-2">
+                        Пополнить
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -408,7 +430,9 @@ export default function CapsuleTemplate({
             )}
 
             <div>
-              <Label className="text-sm font-semibold mb-1.5 block">Промт</Label>
+              <Label className="text-sm font-semibold mb-1.5 block">
+                Промт
+              </Label>
               <Textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
@@ -433,7 +457,11 @@ export default function CapsuleTemplate({
               >
                 {isGenerating ? (
                   <>
-                    <Icon name="Loader2" className="mr-2 animate-spin" size={20} />
+                    <Icon
+                      name="Loader2"
+                      className="mr-2 animate-spin"
+                      size={20}
+                    />
                     {generationStatus || "Генерация..."}
                   </>
                 ) : (
