@@ -66,6 +66,26 @@ const Contacts = () => {
                   </div>
                 </div>
 
+                <div className="flex items-start space-x-4 p-4 rounded-lg" style={{ backgroundColor: '#EBF3FF' }}>
+                  <img src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/94866264-dedc-40e9-9b98-c0dea0b19e58.svg" alt="VK" className="w-6 h-6 mt-1" />
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">
+                      ВКонтакте
+                    </h3>
+                    <a
+                      href="https://vk.com/styleselect_fashion"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:opacity-80 transition-opacity" style={{ color: '#0077FF' }}
+                    >
+                      styleselect_fashion
+                    </a>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Новости и обновления сервиса
+                    </p>
+                  </div>
+                </div>
+
                 <div className="flex items-start space-x-4 p-4 bg-blue-50 rounded-lg">
                   <Icon name="Clock" size={24} className="text-blue-600 mt-1" />
                   <div>

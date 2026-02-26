@@ -98,7 +98,15 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
+        <div className="border-t border-gray-800 mt-8 pt-8 text-sm flex flex-col items-center gap-4">
+          <div className="flex items-center gap-4">
+            <a href="https://t.me/styleselect_fashion" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+              <Icon name="MessageCircle" size={22} />
+            </a>
+            <a href="https://vk.com/styleselect_fashion" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+              <img src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/94866264-dedc-40e9-9b98-c0dea0b19e58.svg" alt="VK" className="w-[22px] h-[22px] opacity-60 hover:opacity-100 transition-opacity" />
+            </a>
+          </div>
           <p>&copy; {new Date().getFullYear()} StyleSelect. Все права защищены.</p>
         </div>
       </div>
