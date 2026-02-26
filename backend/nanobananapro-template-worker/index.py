@@ -120,12 +120,11 @@ def build_grid_prompt(template_data: dict) -> str:
     else:
         base = "Create a fashion lookbook collage with exactly 8 photos in a 2x4 grid layout (2 rows, 4 columns). "
 
-    base += f"CRITICAL RULE — PERSON: The {person_ref} is the person photo. Keep the EXACT face, body shape, physique, skin tone, hair, body proportions, and build from the {person_ref}. The model in ALL cells MUST look identical to the person in the {person_ref}. Do NOT generate, invent, or substitute a different face or body. Do NOT use faces or body features from the {template_ref} (template), clothing images, or any other source. The {person_ref} is the ONLY source for the person's appearance. Change ONLY the clothes. "
+    base += f"IMAGE ROLES: The {person_ref} is the PERSON photo — this is the model whose face, body, hair, skin tone, and physique must appear in every outfit cell. The {template_ref} is ONLY a GRID LAYOUT EXAMPLE — use it ONLY to understand how cells are arranged (rows, columns, spacing). Do NOT take ANY content from the {template_ref}: no clothing, no people, no faces, no accessories, no text, no colors, no backgrounds. The content of each cell is defined SOLELY by the cell descriptions below. "
 
-    base += f"CRITICAL RULE — TEMPLATE: The {template_ref} is ONLY a layout/structure reference. Use it ONLY to understand the grid composition and arrangement of cells. Do NOT take any clothing, accessories, person, face, or body from the {template_ref}. Ignore all garments and people shown in the template. "
+    base += f"CRITICAL RULE — PERSON IDENTITY: The model in ALL outfit cells MUST be the EXACT same person from the {person_ref}. Preserve the IDENTICAL face, body shape, physique, skin tone, hair color, hair style, and body proportions. Do NOT generate, invent, or substitute a different face or body. Do NOT use faces or body features from the {template_ref} or any clothing images. The {person_ref} is the ONLY source for the person's appearance. "
 
-    base += f"CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from the {template_ref} (template) or the {person_ref} (person photo) onto the model. The {template_ref} is ONLY for layout structure, the {person_ref} is ONLY for face and body shape. ONLY dress the model in the specific items listed for each cell. "
-    base += f"Each cell contains the same model from the {person_ref} but in a DIFFERENT outfit. "
+    base += f"CRITICAL RULE — CLOTHING FIDELITY: For each outfit cell, dress the model ONLY in the specific items listed in that cell's description. Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, shoes, or other items from the {template_ref} (template) or the {person_ref} (person photo). If shoes are specified — use ONLY those shoes. If shoes are NOT specified — generate appropriate shoes that match the outfit. "
 
     for i, slot in enumerate(slots):
         slot_type = slot.get('type', 'outfit')
@@ -151,32 +150,28 @@ def build_grid_prompt(template_data: dict) -> str:
             all_descs = outfit_photo_descs + outfit_text_descs
             if all_descs:
                 translated_items = translate_to_english(', '.join(all_descs))
-                base += f"Cell {cell_num}: Model from the {person_ref} wearing {translated_items}. "
+                base += f"Cell {cell_num} [OUTFIT]: Model from the {person_ref} wearing ONLY these items: {translated_items}. "
                 if outfit_image_refs:
                     refs_str = ', '.join([f'the {r}' for r in outfit_image_refs])
-                    base += f"For photo-based items, take clothing from: {refs_str}. Reproduce each item as a PIXEL-PERFECT copy — preserve the EXACT fabric, color, cut, construction, and all details. No reinterpretation, no style changes, no fabric substitution. "
+                    base += f"For photo-based items, take clothing appearance ONLY from: {refs_str}. Reproduce each item as a PIXEL-PERFECT copy — preserve the EXACT fabric, color, cut, construction, and all details. No reinterpretation, no style changes, no fabric substitution. "
                 if outfit_text_descs:
                     translated_text = translate_to_english(', '.join(outfit_text_descs))
                     base += f"For text-described items (no photo), GENERATE clothing based on description: {translated_text}. "
+                base += "Do NOT put any other items on the model that are not listed above. "
             if slot_prompt:
                 translated_slot = translate_to_english(slot_prompt)
                 base += f"Style/background for cell {cell_num}: {translated_slot}. "
-        elif slot_type == 'text':
-            text_content = slot.get('prompt', '')
-            if text_content:
-                base += f'Cell {cell_num}: Instead of a photo, display text in bold clean font (Roboto or Montserrat): "{text_content}". '
-                base += "CRITICAL: Copy this text exactly character-by-character, do NOT translate or modify it. "
-        elif slot_type == 'palette':
-            palette_desc = slot.get('prompt', '')
-            if palette_desc:
-                translated_palette = translate_to_english(palette_desc)
-                base += f"Cell {cell_num}: Instead of a photo, display a color palette: {translated_palette}. "
+        elif slot_type == 'other':
+            other_desc = slot.get('prompt', '')
+            if other_desc:
+                translated_other = translate_to_english(other_desc)
+                base += f"Cell {cell_num} [CUSTOM CONTENT]: Instead of an outfit photo, this cell should contain: {translated_other}. Generate this content exactly as described. Do NOT place a person in this cell unless explicitly requested. "
 
     if prompt:
         translated_prompt = translate_to_english(prompt)
         base += f"Overall style: {translated_prompt}. "
 
-    base += f"Keep the EXACT face, body shape, physique, skin tone, and hair from the {person_ref} (person photo) in all outfit cells. Professional fashion lookbook style. Same background style across all outfit cells for consistency. "
+    base += f"FINAL REMINDER: The person in ALL outfit cells must be IDENTICAL to the {person_ref}. The {template_ref} is ONLY for grid layout reference — ignore all its visual content. Professional fashion lookbook style. "
 
     return base
 

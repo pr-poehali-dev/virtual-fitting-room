@@ -3,7 +3,7 @@ import Icon from "@/components/ui/icon";
 import ClothingMultiSelect from "./ClothingMultiSelect";
 import type { TemplateGarment } from "./ClothingMultiSelect";
 
-export type SlotType = "outfit" | "text" | "palette";
+export type SlotType = "outfit" | "other";
 
 export interface GridSlotData {
   type: SlotType;
@@ -21,8 +21,7 @@ interface GridSlotProps {
 
 const slotTypes: { value: SlotType; label: string; icon: string }[] = [
   { value: "outfit", label: "Образ", icon: "User" },
-  { value: "text", label: "Текст", icon: "Type" },
-  { value: "palette", label: "Палитра", icon: "Palette" },
+  { value: "other", label: "Другое", icon: "LayoutGrid" },
 ];
 
 export default function GridSlot({
@@ -79,22 +78,11 @@ export default function GridSlot({
         </>
       )}
 
-      {slot.type === "text" && (
+      {slot.type === "other" && (
         <Textarea
           value={slot.prompt}
           onChange={(e) => onUpdate(index, { prompt: e.target.value })}
-          placeholder="Текст заголовка, который будет отображён в ячейке"
-          rows={2}
-          className="text-xs"
-          disabled={disabled}
-        />
-      )}
-
-      {slot.type === "palette" && (
-        <Textarea
-          value={slot.prompt}
-          onChange={(e) => onUpdate(index, { prompt: e.target.value })}
-          placeholder="Опишите палитру: цвета, номера Pantone, настроение..."
+          placeholder="Опишите что разместить: палитра цветов, текст, декоративный элемент..."
           rows={2}
           className="text-xs"
           disabled={disabled}
