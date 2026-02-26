@@ -47,20 +47,28 @@ def build_capsule_prompt(template_data: dict) -> str:
     base = "Create a fashion capsule wardrobe image exactly like the template/reference image layout. "
     base += "The image has TWO parts side by side: LEFT part is a full-body photo of the model, RIGHT part is a grid of clothing items with labels. "
 
-    outfit_items = []
+    base += "CRITICAL RULE — FACE: The model's face and body on the LEFT side MUST be taken ONLY from image_2 (the person photo). Do NOT use faces or body features from the template image, clothing images, or any other source. image_2 is the ONLY source for the person's appearance. "
+
+    outfit_image_refs = []
+    outfit_descs = []
     for idx in model_outfit:
         if idx < len(garments):
             g = garments[idx]
+            image_num = idx + 3
             hint = g.get('hint', '')
             label = g.get('label', '')
             desc = hint or label or f'item {idx+1}'
-            outfit_items.append(desc)
+            outfit_descs.append(desc)
+            if g.get('image'):
+                outfit_image_refs.append(f'image_{image_num}')
 
-    if outfit_items:
-        translated_outfit = translate_to_english(', '.join(outfit_items))
-        base += f"LEFT: The model from the person photo wearing these items together: {translated_outfit}. "
+    if outfit_descs:
+        translated_outfit = translate_to_english(', '.join(outfit_descs))
+        base += f"LEFT: The model from image_2 wearing ONLY these specific items together: {translated_outfit}. "
+        if outfit_image_refs:
+            base += f"Take clothing appearance ONLY from these images: {', '.join(outfit_image_refs)}. Do NOT put other clothing items on the model. "
     else:
-        base += "LEFT: The model from the person photo in a stylish outfit. "
+        base += "LEFT: The model from image_2 in a stylish outfit. "
 
     if prompt:
         translated_prompt = translate_to_english(prompt)
@@ -69,18 +77,19 @@ def build_capsule_prompt(template_data: dict) -> str:
     base += "RIGHT: A clean grid layout of all clothing items, each item neatly arranged. "
 
     if show_labels and title:
-        translated_title = translate_to_english(title)
-        base += f"Title at the top of the right side in bold font (Roboto or Montserrat): \"{translated_title}\". "
+        base += f'Title at the top of the right side in bold font (Roboto or Montserrat): "{title}". '
+        base += "CRITICAL: The title text MUST be copied exactly character-by-character as specified above. Do NOT translate, rephrase, or modify the title in any way. "
 
     if show_labels:
-        base += "Each clothing item in the grid has a numbered label below it in clean font (Roboto or Montserrat). Labels: "
+        base += "Each clothing item in the grid has a numbered label below it. "
+        base += "CRITICAL RULE — LABELS: Each label MUST be written EXACTLY as specified below, character-by-character. Do NOT translate, change, rephrase, or reorder any label. Copy them exactly: "
         label_parts = []
         for i, g in enumerate(garments):
             label = g.get('label', f'Item {i+1}')
-            label_parts.append(f"{i+1}. {label}")
+            label_parts.append(f'{i+1}. {label}')
         base += ', '.join(label_parts) + '. '
 
-    base += "Keep the EXACT face and body shape from the person photo. Professional fashion lookbook style. Clean white or light background for the clothing grid. "
+    base += "Keep the EXACT face and body shape from image_2 (person photo). Professional fashion lookbook style. Clean white or light background for the clothing grid. "
 
     return base
 
@@ -95,7 +104,8 @@ def build_grid_prompt(template_data: dict) -> str:
     else:
         base = "Create a fashion lookbook collage with exactly 8 photos in a 2x4 grid layout (2 rows, 4 columns). "
 
-    base += "Each cell contains the same model from the person photo but in a DIFFERENT outfit. "
+    base += "CRITICAL RULE — FACE: The model's face and body in ALL cells MUST be taken ONLY from image_2 (the person photo). Do NOT use faces from the template image, clothing images, or any other source. image_2 is the ONLY source for the person's appearance. "
+    base += "Each cell contains the same model from image_2 but in a DIFFERENT outfit. "
 
     for i, slot in enumerate(slots):
         slot_type = slot.get('type', 'outfit')
@@ -104,6 +114,7 @@ def build_grid_prompt(template_data: dict) -> str:
         if slot_type == 'outfit':
             outfit_indices = slot.get('outfit', [])
             outfit_desc_parts = []
+            outfit_image_refs = []
             for idx in outfit_indices:
                 if idx < len(garments):
                     g = garments[idx]
@@ -111,18 +122,22 @@ def build_grid_prompt(template_data: dict) -> str:
                     label = g.get('label', '')
                     desc = hint or label or f'item {idx+1}'
                     outfit_desc_parts.append(desc)
+                    if g.get('image'):
+                        outfit_image_refs.append(f'image_{idx + 3}')
             slot_prompt = slot.get('prompt', '')
             if outfit_desc_parts:
                 translated_items = translate_to_english(', '.join(outfit_desc_parts))
-                base += f"Cell {cell_num}: Model wearing {translated_items}. "
+                base += f"Cell {cell_num}: Model from image_2 wearing {translated_items}. "
+                if outfit_image_refs:
+                    base += f"Take clothing from {', '.join(outfit_image_refs)}. "
             if slot_prompt:
                 translated_slot = translate_to_english(slot_prompt)
                 base += f"Style/background for cell {cell_num}: {translated_slot}. "
         elif slot_type == 'text':
             text_content = slot.get('prompt', '')
             if text_content:
-                translated_text = translate_to_english(text_content)
-                base += f"Cell {cell_num}: Instead of a photo, display text in bold clean font (Roboto or Montserrat): \"{translated_text}\". "
+                base += f'Cell {cell_num}: Instead of a photo, display text in bold clean font (Roboto or Montserrat): "{text_content}". '
+                base += "CRITICAL: Copy this text exactly character-by-character, do NOT translate or modify it. "
         elif slot_type == 'palette':
             palette_desc = slot.get('prompt', '')
             if palette_desc:
@@ -133,7 +148,7 @@ def build_grid_prompt(template_data: dict) -> str:
         translated_prompt = translate_to_english(prompt)
         base += f"Overall style: {translated_prompt}. "
 
-    base += "Keep the EXACT face and body shape from the person photo in all outfit cells. Professional fashion lookbook style. Same background style across all outfit cells for consistency. "
+    base += "Keep the EXACT face and body shape from image_2 (person photo) in all outfit cells. Professional fashion lookbook style. Same background style across all outfit cells for consistency. "
 
     return base
 
