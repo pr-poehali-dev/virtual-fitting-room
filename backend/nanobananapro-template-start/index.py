@@ -100,23 +100,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'template_image is required'})
         }
 
-    photo_garments = [g for g in garments if g.get('image')]
-    text_garments = [g for g in garments if not g.get('image')]
-
-    if len(photo_garments) > 10:
+    if len(garments) > 12:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
             'isBase64Encoded': False,
-            'body': json.dumps({'error': 'Максимум 10 фото одежды'})
-        }
-
-    if len(text_garments) > 5:
-        return {
-            'statusCode': 400,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
-            'isBase64Encoded': False,
-            'body': json.dumps({'error': 'Максимум 5 описаний одежды без фото'})
+            'body': json.dumps({'error': 'Максимум 12 предметов одежды'})
         }
 
     if len(garments) == 0:

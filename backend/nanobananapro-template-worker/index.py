@@ -47,7 +47,7 @@ def build_capsule_prompt(template_data: dict) -> str:
 
     base += "CRITICAL RULE — TEMPLATE (image_1): image_1 is ONLY a layout/structure reference. Use it ONLY to understand the composition and arrangement of elements (model on the left, grid on the right). Do NOT take any clothing, accessories, person, face, or body from image_1. Ignore all garments and people shown in the template. "
 
-    base += "CRITICAL RULE — FACE: The model's face and body on the LEFT side MUST be taken ONLY from image_2 (the person photo). Do NOT use faces or body features from the template image, clothing images, or any other source. image_2 is the ONLY source for the person's appearance. "
+    base += "CRITICAL RULE — PERSON: Keep the EXACT face, body shape, physique, and pose from image_2 (the person photo). The model on the LEFT side MUST have the same face, skin tone, hair, body proportions, and build as the person in image_2. Do NOT generate, invent, or substitute a different face or body. Do NOT use faces or body features from the template image, clothing images, or any other source. image_2 is the ONLY source for the person's appearance. Change ONLY the clothes. "
 
     base += "CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from image_1 (template) or image_2 (person photo) onto the model in the result. image_1 is ONLY for layout structure, image_2 is ONLY for face and body shape. ONLY dress the model in the specific items listed below. If glasses or sunglasses are visible on the person in image_2, do NOT put them on the model unless explicitly requested. "
 
@@ -94,7 +94,7 @@ def build_capsule_prompt(template_data: dict) -> str:
         translated_text_grid = translate_to_english(', '.join(text_descs))
         base += f"For items WITHOUT a photo (text-only) — GENERATE a realistic clothing image based on the text description and place it in the grid ONLY (do NOT put it on the model unless it is explicitly listed in the model's outfit above): {translated_text_grid}. "
 
-    base += "Keep the EXACT face and body shape from image_2 (person photo). Professional fashion lookbook style. Clean white or light background for the clothing grid. "
+    base += "Keep the EXACT face, body shape, physique, skin tone, and hair from image_2 (person photo). Professional fashion lookbook style. Clean white or light background for the clothing grid. "
 
     return base
 
@@ -111,7 +111,7 @@ def build_grid_prompt(template_data: dict) -> str:
 
     base += "CRITICAL RULE — TEMPLATE (image_1): image_1 is ONLY a layout/structure reference. Use it ONLY to understand the grid composition and arrangement of cells. Do NOT take any clothing, accessories, person, face, or body from image_1. Ignore all garments and people shown in the template. "
 
-    base += "CRITICAL RULE — FACE: The model's face and body in ALL cells MUST be taken ONLY from image_2 (the person photo). Do NOT use faces from the template image, clothing images, or any other source. image_2 is the ONLY source for the person's appearance. "
+    base += "CRITICAL RULE — PERSON: Keep the EXACT face, body shape, physique, and pose from image_2 (the person photo). The model in ALL cells MUST have the same face, skin tone, hair, body proportions, and build as the person in image_2. Do NOT generate, invent, or substitute a different face or body. Do NOT use faces or body features from the template image, clothing images, or any other source. image_2 is the ONLY source for the person's appearance. Change ONLY the clothes. "
 
     base += "CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from image_1 (template) or image_2 (person photo) onto the model. image_1 is ONLY for layout structure, image_2 is ONLY for face and body shape. ONLY dress the model in the specific items listed for each cell. If glasses or sunglasses are visible on the person in image_2, do NOT put them on the model unless explicitly requested. "
     base += "Each cell contains the same model from image_2 but in a DIFFERENT outfit. "
@@ -163,7 +163,7 @@ def build_grid_prompt(template_data: dict) -> str:
         translated_prompt = translate_to_english(prompt)
         base += f"Overall style: {translated_prompt}. "
 
-    base += "Keep the EXACT face and body shape from image_2 (person photo) in all outfit cells. Professional fashion lookbook style. Same background style across all outfit cells for consistency. "
+    base += "Keep the EXACT face, body shape, physique, skin tone, and hair from image_2 (person photo) in all outfit cells. Professional fashion lookbook style. Same background style across all outfit cells for consistency. "
 
     return base
 

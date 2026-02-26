@@ -49,7 +49,13 @@ export default function LookbookGridTemplate({
   onRefetchHistory,
 }: LookbookGridTemplateProps) {
   const [personImage, setPersonImage] = useState<string | null>(null);
-  const [garments, setGarments] = useState<TemplateGarment[]>([]);
+  const [garments, setGarments] = useState<TemplateGarment[]>(() =>
+    Array.from({ length: 12 }, (_, i) => ({
+      id: `g-init-${i}`,
+      image: undefined,
+      hint: "",
+    })),
+  );
   const [gridSize, setGridSize] = useState<4 | 8>(4);
   const [slots, setSlots] = useState<GridSlotData[]>(createDefaultSlots(4));
   const [prompt, setPrompt] = useState("");
@@ -147,31 +153,6 @@ export default function LookbookGridTemplate({
     setSlots(createDefaultSlots(size));
   };
 
-  const addGarmentSlot = useCallback(
-    (withPhoto: boolean) => {
-      const photoCount = garments.filter((g) => !g.textOnly).length;
-      const textCount = garments.filter((g) => g.textOnly).length;
-      if (withPhoto && photoCount >= 10) {
-        toast.error("Максимум 10 фото одежды");
-        return;
-      }
-      if (!withPhoto && textCount >= 5) {
-        toast.error("Максимум 5 описаний без фото");
-        return;
-      }
-      setGarments((prev) => [
-        ...prev,
-        {
-          id: `g-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          image: undefined,
-          textOnly: !withPhoto,
-          hint: "",
-        },
-      ]);
-    },
-    [garments]
-  );
-
   const updateGarment = useCallback(
     (id: string, updates: Partial<TemplateGarment>) => {
       setGarments((prev) =>
@@ -181,26 +162,11 @@ export default function LookbookGridTemplate({
     []
   );
 
-  const removeGarment = useCallback(
-    (id: string) => {
-      setGarments((prev) => {
-        const removedIdx = prev.findIndex((g) => g.id === id);
-        const newList = prev.filter((g) => g.id !== id);
-        if (removedIdx >= 0) {
-          setSlots((prevSlots) =>
-            prevSlots.map((s) => ({
-              ...s,
-              outfit: s.outfit
-                .filter((i) => i !== removedIdx)
-                .map((i) => (i > removedIdx ? i - 1 : i)),
-            }))
-          );
-        }
-        return newList;
-      });
-    },
-    []
-  );
+  const handleImageRemove = useCallback((id: string) => {
+    setGarments((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, image: undefined } : g))
+    );
+  }, []);
 
   const handleGarmentImageUpload = useCallback(
     async (id: string, file: File) => {
@@ -228,13 +194,20 @@ export default function LookbookGridTemplate({
     []
   );
 
+  const filledGarments = garments.filter((g) => g.image || g.hint);
+
   const handleGenerate = async () => {
     if (!personImage) {
       toast.error("Загрузите фото человека");
       return;
     }
-    if (garments.length === 0) {
+    if (filledGarments.length === 0) {
       toast.error("Добавьте хотя бы одну вещь");
+      return;
+    }
+    const hasPhotoWithoutHint = filledGarments.some((g) => g.image && !g.hint);
+    if (hasPhotoWithoutHint) {
+      toast.error("Добавьте описание ко всем вещам с фото");
       return;
     }
 
@@ -252,7 +225,7 @@ export default function LookbookGridTemplate({
       mode: "lookbook_grid",
       person_image: personImage,
       template_image: templateImage,
-      garments: garments.map((g) => ({
+      garments: filledGarments.map((g) => ({
         image: g.image || null,
         hint: g.hint,
       })),
@@ -269,7 +242,13 @@ export default function LookbookGridTemplate({
   const handleReset = () => {
     reset();
     setPersonImage(null);
-    setGarments([]);
+    setGarments(
+      Array.from({ length: 12 }, (_, i) => ({
+        id: `g-reset-${i}-${Date.now()}`,
+        image: undefined,
+        hint: "",
+      })),
+    );
     setSlots(createDefaultSlots(gridSize));
     setPrompt("");
   };
@@ -427,10 +406,8 @@ export default function LookbookGridTemplate({
             <CapsuleClothingList
               garments={garments}
               onUpdate={updateGarment}
-              onRemove={removeGarment}
               onImageUpload={handleGarmentImageUpload}
-              onAddWithPhoto={() => addGarmentSlot(true)}
-              onAddTextOnly={() => addGarmentSlot(false)}
+              onImageRemove={handleImageRemove}
               disabled={isGenerating}
             />
 
@@ -458,7 +435,7 @@ export default function LookbookGridTemplate({
 
             <GridSlotList
               slots={slots}
-              garments={garments}
+              garments={filledGarments}
               onUpdateSlot={updateSlot}
               disabled={isGenerating}
             />
@@ -479,7 +456,7 @@ export default function LookbookGridTemplate({
                 onClick={handleGenerate}
                 disabled={
                   !personImage ||
-                  garments.length === 0 ||
+                  filledGarments.length === 0 ||
                   isGenerating ||
                   !user ||
                   (hasInsufficientBalance && !user?.unlimited_access)

@@ -39,7 +39,13 @@ export default function CapsuleTemplate({
   onRefetchHistory,
 }: CapsuleTemplateProps) {
   const [personImage, setPersonImage] = useState<string | null>(null);
-  const [garments, setGarments] = useState<TemplateGarment[]>([]);
+  const [garments, setGarments] = useState<TemplateGarment[]>(() =>
+    Array.from({ length: 12 }, (_, i) => ({
+      id: `g-init-${i}`,
+      image: undefined,
+      hint: "",
+    })),
+  );
   const [prompt, setPrompt] = useState("");
 
   const [modelOutfit, setModelOutfit] = useState<number[]>([]);
@@ -132,33 +138,6 @@ export default function CapsuleTemplate({
     toast.success("Фото обрезано и загружено");
   };
 
-  const addGarmentSlot = useCallback(
-    (withPhoto: boolean) => {
-      const photoCount = garments.filter((g) => !g.textOnly).length;
-      const textCount = garments.filter((g) => g.textOnly).length;
-
-      if (withPhoto && photoCount >= 10) {
-        toast.error("Максимум 10 фото одежды");
-        return;
-      }
-      if (!withPhoto && textCount >= 5) {
-        toast.error("Максимум 5 описаний без фото");
-        return;
-      }
-
-      setGarments((prev) => [
-        ...prev,
-        {
-          id: `g-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          image: undefined,
-          textOnly: !withPhoto,
-          hint: "",
-        },
-      ]);
-    },
-    [garments],
-  );
-
   const updateGarment = useCallback(
     (id: string, updates: Partial<TemplateGarment>) => {
       setGarments((prev) =>
@@ -168,19 +147,10 @@ export default function CapsuleTemplate({
     [],
   );
 
-  const removeGarment = useCallback((id: string) => {
-    setGarments((prev) => {
-      const newList = prev.filter((g) => g.id !== id);
-      const removedIdx = prev.findIndex((g) => g.id === id);
-      if (removedIdx >= 0) {
-        setModelOutfit((mo) =>
-          mo
-            .filter((i) => i !== removedIdx)
-            .map((i) => (i > removedIdx ? i - 1 : i)),
-        );
-      }
-      return newList;
-    });
+  const handleImageRemove = useCallback((id: string) => {
+    setGarments((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, image: undefined } : g)),
+    );
   }, []);
 
   const handleGarmentImageUpload = useCallback(
@@ -200,13 +170,20 @@ export default function CapsuleTemplate({
     [updateGarment],
   );
 
+  const filledGarments = garments.filter((g) => g.image || g.hint);
+
   const handleGenerate = async () => {
     if (!personImage) {
       toast.error("Загрузите фото человека");
       return;
     }
-    if (garments.length === 0) {
+    if (filledGarments.length === 0) {
       toast.error("Добавьте хотя бы одну вещь");
+      return;
+    }
+    const hasPhotoWithoutHint = filledGarments.some((g) => g.image && !g.hint);
+    if (hasPhotoWithoutHint) {
+      toast.error("Добавьте описание ко всем вещам с фото");
       return;
     }
     if (modelOutfit.length === 0) {
@@ -218,7 +195,7 @@ export default function CapsuleTemplate({
       mode: "capsule",
       person_image: personImage,
       template_image: TEMPLATE_IMAGE_URL,
-      garments: garments.map((g) => ({
+      garments: filledGarments.map((g) => ({
         image: g.image || null,
         hint: g.hint,
       })),
@@ -230,7 +207,13 @@ export default function CapsuleTemplate({
   const handleReset = () => {
     reset();
     setPersonImage(null);
-    setGarments([]);
+    setGarments(
+      Array.from({ length: 12 }, (_, i) => ({
+        id: `g-reset-${i}-${Date.now()}`,
+        image: undefined,
+        hint: "",
+      })),
+    );
     setPrompt("");
     setModelOutfit([]);
   };
@@ -413,16 +396,14 @@ export default function CapsuleTemplate({
             <CapsuleClothingList
               garments={garments}
               onUpdate={updateGarment}
-              onRemove={removeGarment}
               onImageUpload={handleGarmentImageUpload}
-              onAddWithPhoto={() => addGarmentSlot(true)}
-              onAddTextOnly={() => addGarmentSlot(false)}
+              onImageRemove={handleImageRemove}
               disabled={isGenerating}
             />
 
-            {garments.length > 0 && (
+            {filledGarments.length > 0 && (
               <ClothingMultiSelect
-                garments={garments}
+                garments={filledGarments}
                 selectedIndices={modelOutfit}
                 onSelectionChange={setModelOutfit}
                 label="Что надеть на модель (слева)"
@@ -447,7 +428,7 @@ export default function CapsuleTemplate({
                 onClick={handleGenerate}
                 disabled={
                   !personImage ||
-                  garments.length === 0 ||
+                  filledGarments.length === 0 ||
                   isGenerating ||
                   !user ||
                   (hasInsufficientBalance && !user?.unlimited_access)
