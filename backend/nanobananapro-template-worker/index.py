@@ -70,7 +70,7 @@ def build_capsule_prompt(template_data: dict) -> str:
         translated_outfit = translate_to_english(', '.join(all_descs))
         base += f"LEFT: The model from image_2 wearing ONLY these specific items together: {translated_outfit}. "
         if outfit_image_refs:
-            base += f"For photo-based items, take clothing appearance ONLY from: {', '.join(outfit_image_refs)}. "
+            base += f"For photo-based items, take clothing appearance ONLY from: {', '.join(outfit_image_refs)}. Reproduce each item as a PIXEL-PERFECT copy on the model — match the EXACT color, shape, texture, pattern, and all details from the original photo. "
         if outfit_text_descs:
             translated_text_items = translate_to_english(', '.join(outfit_text_descs))
             base += f"For text-described items (no photo reference), GENERATE and draw these clothing items on the model based on their description: {translated_text_items}. "
@@ -87,7 +87,7 @@ def build_capsule_prompt(template_data: dict) -> str:
 
     base += "RIGHT: A clean grid layout of all clothing items, each item neatly arranged. Do NOT add any text, labels, numbers, or titles to the grid — show only the clothing images. "
     if photo_garments:
-        base += "For items that have a photo reference — display them exactly as shown in their corresponding image. "
+        base += "CRITICAL RULE — EXACT CLOTHING REPRODUCTION: For items that have a photo reference — reproduce them as a PIXEL-PERFECT copy from their corresponding image. Match the EXACT color, shape, silhouette, texture, pattern, buttons, zippers, buckles, hardware, stitching, and every visible detail. Do NOT simplify, stylize, reinterpret, or change any aspect of the clothing item. The grid item must look identical to the original photo. "
     if text_garments:
         text_descs = [g.get('hint', '') for g in text_garments]
         translated_text_grid = translate_to_english(', '.join(text_descs))
@@ -140,7 +140,7 @@ def build_grid_prompt(template_data: dict) -> str:
                 translated_items = translate_to_english(', '.join(all_descs))
                 base += f"Cell {cell_num}: Model from image_2 wearing {translated_items}. "
                 if outfit_image_refs:
-                    base += f"For photo-based items, take clothing from: {', '.join(outfit_image_refs)}. "
+                    base += f"For photo-based items, take clothing from: {', '.join(outfit_image_refs)}. Reproduce each clothing item as a PIXEL-PERFECT copy — match the EXACT color, shape, silhouette, texture, pattern, buttons, zippers, buckles, hardware, and every visible detail from the original photo. "
                 if outfit_text_descs:
                     translated_text = translate_to_english(', '.join(outfit_text_descs))
                     base += f"For text-described items (no photo), GENERATE clothing based on description: {translated_text}. "
