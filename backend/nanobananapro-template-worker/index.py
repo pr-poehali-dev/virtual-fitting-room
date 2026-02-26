@@ -58,6 +58,15 @@ def build_capsule_prompt(template_data: dict) -> str:
 
     base += f"CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from the {template_ref} (template) or the {person_ref} (person photo) onto the model in the result. The {template_ref} is ONLY for layout structure, the {person_ref} is ONLY for face and body shape. ONLY dress the model in the specific items listed below. "
 
+    keep_keywords = ['оставить', 'оставь', 'сохрани', 'не меняй', 'keep original', 'keep the original', 'keep her', 'keep his', 'don\'t change', 'do not change']
+    all_text = (prompt or '').lower()
+    for g in garments:
+        all_text += ' ' + (g.get('hint', '') or '').lower()
+    has_keep_instruction = any(kw in all_text for kw in keep_keywords)
+
+    if not has_keep_instruction:
+        base += f"CRITICAL RULE — REMOVE ORIGINAL CLOTHING: COMPLETELY REMOVE and DISCARD all original clothing that the person is wearing in the {person_ref}. The person's original outfit MUST NOT appear on the model. Dress the model ONLY in the garments specified below. If an item is not listed, it MUST NOT be on the model. "
+
     outfit_image_refs = []
     outfit_photo_descs = []
     outfit_text_descs = []
@@ -125,6 +134,15 @@ def build_grid_prompt(template_data: dict) -> str:
     base += f"CRITICAL RULE — PERSON IDENTITY: The model in ALL outfit cells MUST be the EXACT same person from the {person_ref}. Preserve the IDENTICAL face, body shape, physique, skin tone, hair color, hair style, and body proportions. Do NOT generate, invent, or substitute a different face or body. Do NOT use faces or body features from the {template_ref} or any clothing images. The {person_ref} is the ONLY source for the person's appearance. "
 
     base += f"CRITICAL RULE — CLOTHING FIDELITY: For each outfit cell, dress the model ONLY in the specific items listed in that cell's description. Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, shoes, or other items from the {template_ref} (template) or the {person_ref} (person photo). If shoes are specified — use ONLY those shoes. If shoes are NOT specified — generate appropriate shoes that match the outfit. "
+
+    keep_keywords = ['оставить', 'оставь', 'сохрани', 'не меняй', 'keep original', 'keep the original', 'keep her', 'keep his', 'don\'t change', 'do not change']
+    all_text = (prompt or '').lower()
+    for g in garments:
+        all_text += ' ' + (g.get('hint', '') or '').lower()
+    has_keep_instruction = any(kw in all_text for kw in keep_keywords)
+
+    if not has_keep_instruction:
+        base += f"CRITICAL RULE — REMOVE ORIGINAL CLOTHING: COMPLETELY REMOVE and DISCARD all original clothing that the person is wearing in the {person_ref}. The person's original outfit MUST NOT appear in ANY outfit cell. Every outfit cell must show the model dressed ONLY in the garments specified in that cell's description. If an item is not listed in the cell description, it MUST NOT be on the model. "
 
     for i, slot in enumerate(slots):
         slot_type = slot.get('type', 'outfit')
