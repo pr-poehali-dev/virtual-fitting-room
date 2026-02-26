@@ -52,7 +52,7 @@ const Contacts = () => {
                     </h3>
                     <a
                       href="https://t.me/styleselect_fashion"
-                      className="text-pink-600 hover:text-pink-700"
+                      className="text-sky-500 hover:text-sky-600"
                     >
                       @styleselect_fashion
                     </a>
