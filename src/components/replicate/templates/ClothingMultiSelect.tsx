@@ -7,7 +7,6 @@ export interface TemplateGarment {
   image?: string;
   textOnly?: boolean;
   hint: string;
-  label: string;
 }
 
 interface ClothingMultiSelectProps {
@@ -62,7 +61,7 @@ export default function ClothingMultiSelect({
             {g.image ? (
               <img
                 src={g.image}
-                alt={g.label || `Вещь ${index + 1}`}
+                alt={g.hint || `Вещь ${index + 1}`}
                 className="w-8 h-8 object-cover rounded flex-shrink-0"
               />
             ) : (
@@ -71,7 +70,7 @@ export default function ClothingMultiSelect({
               </div>
             )}
             <span className="truncate">
-              {g.label || g.hint || `Вещь ${index + 1}`}
+              {g.hint || `Вещь ${index + 1}`}
             </span>
           </button>
         ))}

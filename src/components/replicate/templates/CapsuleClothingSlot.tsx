@@ -58,7 +58,7 @@ export default function CapsuleClothingSlot({
               >
                 <img
                   src={garment.image}
-                  alt={garment.label || `Вещь ${index + 1}`}
+                  alt={garment.hint || `Вещь ${index + 1}`}
                   className="w-full h-full object-cover"
                 />
               </label>
@@ -74,19 +74,10 @@ export default function CapsuleClothingSlot({
         )}
       </div>
 
-      <div className="flex-1 min-w-0 space-y-1.5">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-semibold text-purple-600 flex-shrink-0">
-            {index + 1}.
-          </span>
-          <Input
-            value={garment.label}
-            onChange={(e) => onUpdate(garment.id, { label: e.target.value })}
-            placeholder="Название / артикул"
-            className="h-7 text-xs"
-            disabled={disabled}
-          />
-        </div>
+      <div className="flex-1 min-w-0 flex items-center gap-1.5">
+        <span className="text-xs font-semibold text-purple-600 flex-shrink-0">
+          {index + 1}.
+        </span>
         <Input
           value={garment.hint}
           onChange={(e) => onUpdate(garment.id, { hint: e.target.value })}

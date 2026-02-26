@@ -128,12 +128,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
 
     if mode == 'capsule':
-        title = body_data.get('title', '')
-        show_labels = body_data.get('show_labels', True)
         model_outfit = body_data.get('model_outfit', [])
         template_data = {
-            'title': title,
-            'show_labels': show_labels,
             'model_outfit': model_outfit,
             'garments': garments,
             'prompt': prompt,

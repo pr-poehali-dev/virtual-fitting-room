@@ -39,15 +39,15 @@ def translate_to_english(text: str) -> str:
 
 def build_capsule_prompt(template_data: dict) -> str:
     garments = template_data.get('garments', [])
-    title = template_data.get('title', '')
-    show_labels = template_data.get('show_labels', True)
     model_outfit = template_data.get('model_outfit', [])
     prompt = template_data.get('prompt', '')
 
     base = "Create a fashion capsule wardrobe image exactly like the template/reference image layout. "
-    base += "The image has TWO parts side by side: LEFT part is a full-body photo of the model, RIGHT part is a grid of clothing items with labels. "
+    base += "The image has TWO parts side by side: LEFT part is a full-body photo of the model, RIGHT part is a grid of clothing items WITHOUT any text labels or numbers. "
 
     base += "CRITICAL RULE — FACE: The model's face and body on the LEFT side MUST be taken ONLY from image_2 (the person photo). Do NOT use faces or body features from the template image, clothing images, or any other source. image_2 is the ONLY source for the person's appearance. "
+
+    base += "CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from image_2 (the person photo) onto the model in the result. The person photo is ONLY a source for the face and body shape. ONLY dress the model in the specific items listed below. If glasses or sunglasses are visible on the person in image_2, do NOT put them on the model unless explicitly requested. "
 
     outfit_image_refs = []
     outfit_photo_descs = []
@@ -55,9 +55,7 @@ def build_capsule_prompt(template_data: dict) -> str:
     for idx in model_outfit:
         if idx < len(garments):
             g = garments[idx]
-            hint = g.get('hint', '')
-            label = g.get('label', '')
-            desc = hint or label or f'item {idx+1}'
+            desc = g.get('hint', '') or f'item {idx+1}'
             if g.get('image'):
                 image_num = idx + 3
                 outfit_image_refs.append(f'image_{image_num}')
@@ -74,7 +72,7 @@ def build_capsule_prompt(template_data: dict) -> str:
         if outfit_text_descs:
             translated_text_items = translate_to_english(', '.join(outfit_text_descs))
             base += f"For text-described items (no photo reference), GENERATE and draw these clothing items on the model based on their description: {translated_text_items}. "
-        base += "Do NOT put any other clothing items on the model that are not listed above. "
+        base += "Do NOT put any other clothing items, accessories, glasses, or bags on the model that are not listed above. "
     else:
         base += "LEFT: The model from image_2 in a stylish outfit. "
 
@@ -85,30 +83,13 @@ def build_capsule_prompt(template_data: dict) -> str:
     photo_garments = [g for g in garments if g.get('image')]
     text_garments = [g for g in garments if not g.get('image')]
 
-    base += "RIGHT: A clean grid layout of all clothing items, each item neatly arranged. "
+    base += "RIGHT: A clean grid layout of all clothing items, each item neatly arranged. Do NOT add any text, labels, numbers, or titles to the grid — show only the clothing images. "
     if photo_garments:
         base += "For items that have a photo reference — display them exactly as shown in their corresponding image. "
     if text_garments:
-        text_descs = [g.get('hint') or g.get('label', '') for g in text_garments]
+        text_descs = [g.get('hint', '') for g in text_garments]
         translated_text_grid = translate_to_english(', '.join(text_descs))
         base += f"For items WITHOUT a photo (text-only) — GENERATE a realistic clothing image based on the text description and place it in the grid ONLY (do NOT put it on the model unless it is explicitly listed in the model's outfit above): {translated_text_grid}. "
-
-    if show_labels and title:
-        base += f'Title at the top of the right side in bold font (Roboto or Montserrat): "{title}". '
-        base += "CRITICAL: The title text MUST be copied exactly character-by-character as specified above. Do NOT translate, rephrase, or modify the title in any way. "
-
-    if show_labels:
-        labeled_items = [(i, g.get('label', '')) for i, g in enumerate(garments) if g.get('label', '').strip()]
-        if labeled_items:
-            base += "CRITICAL RULE — LABELS: Show a numbered label ONLY for items that have a label specified below. Items without a label must have NO text under them. "
-            base += "Each label MUST be written EXACTLY as specified, character-by-character. Do NOT translate, change, rephrase, or reorder any label. Copy them exactly: "
-            label_parts = []
-            for i, label in labeled_items:
-                label_parts.append(f'{i+1}. {label}')
-            base += ', '.join(label_parts) + '. '
-            unlabeled_count = len(garments) - len(labeled_items)
-            if unlabeled_count > 0:
-                base += f"The remaining {unlabeled_count} item(s) must have NO label or number underneath. "
 
     base += "Keep the EXACT face and body shape from image_2 (person photo). Professional fashion lookbook style. Clean white or light background for the clothing grid. "
 
@@ -126,6 +107,7 @@ def build_grid_prompt(template_data: dict) -> str:
         base = "Create a fashion lookbook collage with exactly 8 photos in a 2x4 grid layout (2 rows, 4 columns). "
 
     base += "CRITICAL RULE — FACE: The model's face and body in ALL cells MUST be taken ONLY from image_2 (the person photo). Do NOT use faces from the template image, clothing images, or any other source. image_2 is the ONLY source for the person's appearance. "
+    base += "CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from image_2 (the person photo) onto the model. The person photo is ONLY a source for the face and body shape. ONLY dress the model in the specific items listed for each cell. If glasses or sunglasses are visible on the person in image_2, do NOT put them on the model unless explicitly requested. "
     base += "Each cell contains the same model from image_2 but in a DIFFERENT outfit. "
 
     for i, slot in enumerate(slots):
@@ -140,9 +122,7 @@ def build_grid_prompt(template_data: dict) -> str:
             for idx in outfit_indices:
                 if idx < len(garments):
                     g = garments[idx]
-                    hint = g.get('hint', '')
-                    label = g.get('label', '')
-                    desc = hint or label or f'item {idx+1}'
+                    desc = g.get('hint', '') or f'item {idx+1}'
                     if g.get('image'):
                         image_num = idx + 3
                         outfit_image_refs.append(f'image_{image_num}')

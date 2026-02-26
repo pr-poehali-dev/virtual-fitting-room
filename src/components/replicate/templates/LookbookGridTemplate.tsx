@@ -166,7 +166,6 @@ export default function LookbookGridTemplate({
           image: undefined,
           textOnly: !withPhoto,
           hint: "",
-          label: "",
         },
       ]);
     },
@@ -256,7 +255,6 @@ export default function LookbookGridTemplate({
       garments: garments.map((g) => ({
         image: g.image || null,
         hint: g.hint,
-        label: g.label,
       })),
       grid_size: gridSize,
       slots: slots.map((s) => ({

@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -41,7 +40,6 @@ export default function CapsuleTemplate({
 }: CapsuleTemplateProps) {
   const [personImage, setPersonImage] = useState<string | null>(null);
   const [garments, setGarments] = useState<TemplateGarment[]>([]);
-  const [title, setTitle] = useState("");
   const [prompt, setPrompt] = useState("");
 
   const [modelOutfit, setModelOutfit] = useState<number[]>([]);
@@ -155,7 +153,6 @@ export default function CapsuleTemplate({
           image: undefined,
           textOnly: !withPhoto,
           hint: "",
-          label: "",
         },
       ]);
     },
@@ -227,11 +224,8 @@ export default function CapsuleTemplate({
       garments: garments.map((g) => ({
         image: g.image || null,
         hint: g.hint,
-        label: g.label,
       })),
-      title,
       prompt,
-      show_labels: !!(title || garments.some((g) => g.label)),
       model_outfit: modelOutfit,
     });
   };
@@ -240,7 +234,6 @@ export default function CapsuleTemplate({
     reset();
     setPersonImage(null);
     setGarments([]);
-    setTitle("");
     setPrompt("");
     setModelOutfit([]);
   };
@@ -413,16 +406,6 @@ export default function CapsuleTemplate({
                 label="Что надеть на модель (слева)"
               />
             )}
-
-            <div>
-              <Label className="text-sm font-semibold mb-1.5 block">Заголовок капсулы</Label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="напр: PASTEL CITY CAPSULE"
-                disabled={isGenerating}
-              />
-            </div>
 
             <div>
               <Label className="text-sm font-semibold mb-1.5 block">Промт</Label>
