@@ -50,23 +50,31 @@ def build_capsule_prompt(template_data: dict) -> str:
     base += "CRITICAL RULE — FACE: The model's face and body on the LEFT side MUST be taken ONLY from image_2 (the person photo). Do NOT use faces or body features from the template image, clothing images, or any other source. image_2 is the ONLY source for the person's appearance. "
 
     outfit_image_refs = []
-    outfit_descs = []
+    outfit_photo_descs = []
+    outfit_text_descs = []
     for idx in model_outfit:
         if idx < len(garments):
             g = garments[idx]
-            image_num = idx + 3
             hint = g.get('hint', '')
             label = g.get('label', '')
             desc = hint or label or f'item {idx+1}'
-            outfit_descs.append(desc)
             if g.get('image'):
+                image_num = idx + 3
                 outfit_image_refs.append(f'image_{image_num}')
+                outfit_photo_descs.append(f'{desc} (from image_{image_num})')
+            else:
+                outfit_text_descs.append(desc)
 
-    if outfit_descs:
-        translated_outfit = translate_to_english(', '.join(outfit_descs))
+    if outfit_photo_descs or outfit_text_descs:
+        all_descs = outfit_photo_descs + outfit_text_descs
+        translated_outfit = translate_to_english(', '.join(all_descs))
         base += f"LEFT: The model from image_2 wearing ONLY these specific items together: {translated_outfit}. "
         if outfit_image_refs:
-            base += f"Take clothing appearance ONLY from these images: {', '.join(outfit_image_refs)}. Do NOT put other clothing items on the model. "
+            base += f"For photo-based items, take clothing appearance ONLY from: {', '.join(outfit_image_refs)}. "
+        if outfit_text_descs:
+            translated_text_items = translate_to_english(', '.join(outfit_text_descs))
+            base += f"For text-described items (no photo reference), GENERATE and draw these clothing items on the model based on their description: {translated_text_items}. "
+        base += "Do NOT put any other clothing items on the model that are not listed above. "
     else:
         base += "LEFT: The model from image_2 in a stylish outfit. "
 
@@ -74,7 +82,16 @@ def build_capsule_prompt(template_data: dict) -> str:
         translated_prompt = translate_to_english(prompt)
         base += f"Background and style: {translated_prompt}. "
 
+    photo_garments = [g for g in garments if g.get('image')]
+    text_garments = [g for g in garments if not g.get('image')]
+
     base += "RIGHT: A clean grid layout of all clothing items, each item neatly arranged. "
+    if photo_garments:
+        base += "For items that have a photo reference — display them exactly as shown in their corresponding image. "
+    if text_garments:
+        text_descs = [g.get('hint') or g.get('label', '') for g in text_garments]
+        translated_text_grid = translate_to_english(', '.join(text_descs))
+        base += f"For items WITHOUT a photo (text-only) — GENERATE a realistic clothing image based on the text description and place it in the grid: {translated_text_grid}. "
 
     if show_labels and title:
         base += f'Title at the top of the right side in bold font (Roboto or Montserrat): "{title}". '
@@ -113,7 +130,8 @@ def build_grid_prompt(template_data: dict) -> str:
 
         if slot_type == 'outfit':
             outfit_indices = slot.get('outfit', [])
-            outfit_desc_parts = []
+            outfit_photo_descs = []
+            outfit_text_descs = []
             outfit_image_refs = []
             for idx in outfit_indices:
                 if idx < len(garments):
@@ -121,15 +139,22 @@ def build_grid_prompt(template_data: dict) -> str:
                     hint = g.get('hint', '')
                     label = g.get('label', '')
                     desc = hint or label or f'item {idx+1}'
-                    outfit_desc_parts.append(desc)
                     if g.get('image'):
-                        outfit_image_refs.append(f'image_{idx + 3}')
+                        image_num = idx + 3
+                        outfit_image_refs.append(f'image_{image_num}')
+                        outfit_photo_descs.append(f'{desc} (from image_{image_num})')
+                    else:
+                        outfit_text_descs.append(desc)
             slot_prompt = slot.get('prompt', '')
-            if outfit_desc_parts:
-                translated_items = translate_to_english(', '.join(outfit_desc_parts))
+            all_descs = outfit_photo_descs + outfit_text_descs
+            if all_descs:
+                translated_items = translate_to_english(', '.join(all_descs))
                 base += f"Cell {cell_num}: Model from image_2 wearing {translated_items}. "
                 if outfit_image_refs:
-                    base += f"Take clothing from {', '.join(outfit_image_refs)}. "
+                    base += f"For photo-based items, take clothing from: {', '.join(outfit_image_refs)}. "
+                if outfit_text_descs:
+                    translated_text = translate_to_english(', '.join(outfit_text_descs))
+                    base += f"For text-described items (no photo), GENERATE clothing based on description: {translated_text}. "
             if slot_prompt:
                 translated_slot = translate_to_english(slot_prompt)
                 base += f"Style/background for cell {cell_num}: {translated_slot}. "
