@@ -45,9 +45,11 @@ def build_capsule_prompt(template_data: dict) -> str:
     base = "Create a fashion capsule wardrobe image exactly like the template/reference image layout. "
     base += "The image has TWO parts side by side: LEFT part is a full-body photo of the model, RIGHT part is a grid of clothing items WITHOUT any text labels or numbers. "
 
+    base += "CRITICAL RULE — TEMPLATE (image_1): image_1 is ONLY a layout/structure reference. Use it ONLY to understand the composition and arrangement of elements (model on the left, grid on the right). Do NOT take any clothing, accessories, person, face, or body from image_1. Ignore all garments and people shown in the template. "
+
     base += "CRITICAL RULE — FACE: The model's face and body on the LEFT side MUST be taken ONLY from image_2 (the person photo). Do NOT use faces or body features from the template image, clothing images, or any other source. image_2 is the ONLY source for the person's appearance. "
 
-    base += "CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from image_2 (the person photo) onto the model in the result. The person photo is ONLY a source for the face and body shape. ONLY dress the model in the specific items listed below. If glasses or sunglasses are visible on the person in image_2, do NOT put them on the model unless explicitly requested. "
+    base += "CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from image_1 (template) or image_2 (person photo) onto the model in the result. image_1 is ONLY for layout structure, image_2 is ONLY for face and body shape. ONLY dress the model in the specific items listed below. If glasses or sunglasses are visible on the person in image_2, do NOT put them on the model unless explicitly requested. "
 
     outfit_image_refs = []
     outfit_photo_descs = []
@@ -106,8 +108,11 @@ def build_grid_prompt(template_data: dict) -> str:
     else:
         base = "Create a fashion lookbook collage with exactly 8 photos in a 2x4 grid layout (2 rows, 4 columns). "
 
+    base += "CRITICAL RULE — TEMPLATE (image_1): image_1 is ONLY a layout/structure reference. Use it ONLY to understand the grid composition and arrangement of cells. Do NOT take any clothing, accessories, person, face, or body from image_1. Ignore all garments and people shown in the template. "
+
     base += "CRITICAL RULE — FACE: The model's face and body in ALL cells MUST be taken ONLY from image_2 (the person photo). Do NOT use faces from the template image, clothing images, or any other source. image_2 is the ONLY source for the person's appearance. "
-    base += "CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from image_2 (the person photo) onto the model. The person photo is ONLY a source for the face and body shape. ONLY dress the model in the specific items listed for each cell. If glasses or sunglasses are visible on the person in image_2, do NOT put them on the model unless explicitly requested. "
+
+    base += "CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from image_1 (template) or image_2 (person photo) onto the model. image_1 is ONLY for layout structure, image_2 is ONLY for face and body shape. ONLY dress the model in the specific items listed for each cell. If glasses or sunglasses are visible on the person in image_2, do NOT put them on the model unless explicitly requested. "
     base += "Each cell contains the same model from image_2 but in a DIFFERENT outfit. "
 
     for i, slot in enumerate(slots):
