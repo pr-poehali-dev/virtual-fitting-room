@@ -37,19 +37,26 @@ def translate_to_english(text: str) -> str:
         print(f'[Translate] Error: {e}, keeping original text')
         return text
 
+def ordinal_image_ref(n: int) -> str:
+    ordinals = {1: 'first', 2: 'second', 3: 'third', 4: 'fourth', 5: 'fifth', 6: 'sixth', 7: 'seventh', 8: 'eighth', 9: 'ninth', 10: 'tenth', 11: 'eleventh', 12: 'twelfth', 13: 'thirteenth', 14: 'fourteenth'}
+    return f'{ordinals.get(n, str(n)+"th")} uploaded image'
+
 def build_capsule_prompt(template_data: dict) -> str:
     garments = template_data.get('garments', [])
     model_outfit = template_data.get('model_outfit', [])
     prompt = template_data.get('prompt', '')
 
+    person_ref = ordinal_image_ref(1)
+    template_ref = ordinal_image_ref(2)
+
     base = "Create a fashion capsule wardrobe image exactly like the template/reference image layout. "
     base += "The image has TWO parts side by side: LEFT part is a full-body photo of the model, RIGHT part is a grid of clothing items WITHOUT any text labels or numbers. "
 
-    base += "CRITICAL RULE — PERSON (image_1): image_1 is the person photo. Keep the EXACT face, body shape, physique, skin tone, hair, body proportions, and build from image_1. The model on the LEFT side MUST look identical to the person in image_1. Do NOT generate, invent, or substitute a different face or body. Do NOT use faces or body features from image_2 (template), clothing images, or any other source. image_1 is the ONLY source for the person's appearance. Change ONLY the clothes. "
+    base += f"CRITICAL RULE — PERSON: The {person_ref} is the person photo. Keep the EXACT face, body shape, physique, skin tone, hair, body proportions, and build from the {person_ref}. The model on the LEFT side MUST look identical to the person in the {person_ref}. Do NOT generate, invent, or substitute a different face or body. Do NOT use faces or body features from the {template_ref} (template), clothing images, or any other source. The {person_ref} is the ONLY source for the person's appearance. Change ONLY the clothes. "
 
-    base += "CRITICAL RULE — TEMPLATE (image_2): image_2 is ONLY a layout/structure reference. Use it ONLY to understand the composition and arrangement of elements (model on the left, grid on the right). Do NOT take any clothing, accessories, person, face, or body from image_2. Ignore all garments and people shown in the template. "
+    base += f"CRITICAL RULE — TEMPLATE: The {template_ref} is ONLY a layout/structure reference. Use it ONLY to understand the composition and arrangement of elements (model on the left, grid on the right). Do NOT take any clothing, accessories, person, face, or body from the {template_ref}. Ignore all garments and people shown in the template. "
 
-    base += "CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from image_2 (template) or image_1 (person photo) onto the model in the result. image_2 is ONLY for layout structure, image_1 is ONLY for face and body shape. ONLY dress the model in the specific items listed below. If glasses or sunglasses are visible on the person in image_1, do NOT put them on the model unless explicitly requested. "
+    base += f"CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from the {template_ref} (template) or the {person_ref} (person photo) onto the model in the result. The {template_ref} is ONLY for layout structure, the {person_ref} is ONLY for face and body shape. ONLY dress the model in the specific items listed below. "
 
     outfit_image_refs = []
     outfit_photo_descs = []
@@ -60,23 +67,25 @@ def build_capsule_prompt(template_data: dict) -> str:
             desc = g.get('hint', '') or f'item {idx+1}'
             if g.get('image'):
                 image_num = idx + 3
-                outfit_image_refs.append(f'image_{image_num}')
-                outfit_photo_descs.append(f'{desc} (from image_{image_num})')
+                ref = ordinal_image_ref(image_num)
+                outfit_image_refs.append(ref)
+                outfit_photo_descs.append(f'{desc} (from {ref})')
             else:
                 outfit_text_descs.append(desc)
 
     if outfit_photo_descs or outfit_text_descs:
         all_descs = outfit_photo_descs + outfit_text_descs
         translated_outfit = translate_to_english(', '.join(all_descs))
-        base += f"LEFT: The model from image_1 wearing ONLY these specific items together: {translated_outfit}. "
+        base += f"LEFT: The model from the {person_ref} wearing ONLY these specific items together: {translated_outfit}. "
         if outfit_image_refs:
-            base += f"For photo-based items, take clothing appearance ONLY from: {', '.join(outfit_image_refs)}. Reproduce each item as a PIXEL-PERFECT copy on the model — preserve the EXACT fabric type, precise color with no hue shifts, cut, construction (seams, pockets, straps), and all details (embroidery, prints, hardware). No reinterpretation, no style changes, no fabric substitution. "
+            refs_str = ', '.join([f'the {r}' for r in outfit_image_refs])
+            base += f"For photo-based items, take clothing appearance ONLY from: {refs_str}. Reproduce each item as a PIXEL-PERFECT copy on the model — preserve the EXACT fabric type, precise color with no hue shifts, cut, construction, and all details. No reinterpretation, no style changes, no fabric substitution. "
         if outfit_text_descs:
             translated_text_items = translate_to_english(', '.join(outfit_text_descs))
             base += f"For text-described items (no photo reference), GENERATE and draw these clothing items on the model based on their description: {translated_text_items}. "
         base += "Do NOT put any other clothing items, accessories, glasses, or bags on the model that are not listed above. "
     else:
-        base += "LEFT: The model from image_1 in a stylish outfit. "
+        base += f"LEFT: The model from the {person_ref} in a stylish outfit. "
 
     if prompt:
         translated_prompt = translate_to_english(prompt)
@@ -87,14 +96,13 @@ def build_capsule_prompt(template_data: dict) -> str:
 
     base += "RIGHT: A clean grid layout of all clothing items, each item neatly arranged. Do NOT add any text, labels, numbers, or titles to the grid — show only the clothing images. "
     if photo_garments:
-        base += "CRITICAL RULE — EXACT CLOTHING REPRODUCTION: For items that have a photo reference — reproduce them as a PIXEL-PERFECT copy from their corresponding image. Preserve the EXACT original design: fabric type (satin, silk, denim, etc.), precise color with no hue shifts, cut (neckline, sleeves, waist structure), construction (seams, pockets, straps), and all details (embroidery, prints, hardware, buttons, zippers, buckles, stitching). No reinterpretation, no style changes, no fabric substitution. Faithful 1:1 reproduction only. "
-        base += "Lighting for grid items: even studio illumination, no harsh shadows (only minimal contact shadow beneath each item for grounding). No text, watermarks, logos, or borders. E-commerce ready product shot style. "
+        base += "For items with a photo reference — reproduce them as a PIXEL-PERFECT copy from their corresponding uploaded image. Preserve the EXACT original design: fabric, color, cut, construction, and all details. No reinterpretation. "
     if text_garments:
         text_descs = [g.get('hint', '') for g in text_garments]
         translated_text_grid = translate_to_english(', '.join(text_descs))
-        base += f"For items WITHOUT a photo (text-only) — GENERATE a realistic clothing image based on the text description and place it in the grid ONLY (do NOT put it on the model unless it is explicitly listed in the model's outfit above): {translated_text_grid}. "
+        base += f"For items WITHOUT a photo (text-only) — GENERATE a realistic clothing image based on the text description and place it in the grid: {translated_text_grid}. "
 
-    base += "Keep the EXACT face, body shape, physique, skin tone, and hair from image_1 (person photo). Professional fashion lookbook style. Clean white or light background for the clothing grid. "
+    base += f"Keep the EXACT face, body shape, physique, skin tone, and hair from the {person_ref} (person photo). Professional fashion lookbook style. Clean white or light background for the clothing grid. "
 
     return base
 
@@ -104,17 +112,20 @@ def build_grid_prompt(template_data: dict) -> str:
     garments = template_data.get('garments', [])
     prompt = template_data.get('prompt', '')
 
+    person_ref = ordinal_image_ref(1)
+    template_ref = ordinal_image_ref(2)
+
     if grid_size == 4:
         base = "Create a fashion lookbook collage with exactly 4 photos in a 2x2 grid layout. "
     else:
         base = "Create a fashion lookbook collage with exactly 8 photos in a 2x4 grid layout (2 rows, 4 columns). "
 
-    base += "CRITICAL RULE — PERSON (image_1): image_1 is the person photo. Keep the EXACT face, body shape, physique, skin tone, hair, body proportions, and build from image_1. The model in ALL cells MUST look identical to the person in image_1. Do NOT generate, invent, or substitute a different face or body. Do NOT use faces or body features from image_2 (template), clothing images, or any other source. image_1 is the ONLY source for the person's appearance. Change ONLY the clothes. "
+    base += f"CRITICAL RULE — PERSON: The {person_ref} is the person photo. Keep the EXACT face, body shape, physique, skin tone, hair, body proportions, and build from the {person_ref}. The model in ALL cells MUST look identical to the person in the {person_ref}. Do NOT generate, invent, or substitute a different face or body. Do NOT use faces or body features from the {template_ref} (template), clothing images, or any other source. The {person_ref} is the ONLY source for the person's appearance. Change ONLY the clothes. "
 
-    base += "CRITICAL RULE — TEMPLATE (image_2): image_2 is ONLY a layout/structure reference. Use it ONLY to understand the grid composition and arrangement of cells. Do NOT take any clothing, accessories, person, face, or body from image_2. Ignore all garments and people shown in the template. "
+    base += f"CRITICAL RULE — TEMPLATE: The {template_ref} is ONLY a layout/structure reference. Use it ONLY to understand the grid composition and arrangement of cells. Do NOT take any clothing, accessories, person, face, or body from the {template_ref}. Ignore all garments and people shown in the template. "
 
-    base += "CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from image_2 (template) or image_1 (person photo) onto the model. image_2 is ONLY for layout structure, image_1 is ONLY for face and body shape. ONLY dress the model in the specific items listed for each cell. If glasses or sunglasses are visible on the person in image_1, do NOT put them on the model unless explicitly requested. "
-    base += "Each cell contains the same model from image_1 but in a DIFFERENT outfit. "
+    base += f"CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from the {template_ref} (template) or the {person_ref} (person photo) onto the model. The {template_ref} is ONLY for layout structure, the {person_ref} is ONLY for face and body shape. ONLY dress the model in the specific items listed for each cell. "
+    base += f"Each cell contains the same model from the {person_ref} but in a DIFFERENT outfit. "
 
     for i, slot in enumerate(slots):
         slot_type = slot.get('type', 'outfit')
@@ -131,17 +142,19 @@ def build_grid_prompt(template_data: dict) -> str:
                     desc = g.get('hint', '') or f'item {idx+1}'
                     if g.get('image'):
                         image_num = idx + 3
-                        outfit_image_refs.append(f'image_{image_num}')
-                        outfit_photo_descs.append(f'{desc} (from image_{image_num})')
+                        ref = ordinal_image_ref(image_num)
+                        outfit_image_refs.append(ref)
+                        outfit_photo_descs.append(f'{desc} (from {ref})')
                     else:
                         outfit_text_descs.append(desc)
             slot_prompt = slot.get('prompt', '')
             all_descs = outfit_photo_descs + outfit_text_descs
             if all_descs:
                 translated_items = translate_to_english(', '.join(all_descs))
-                base += f"Cell {cell_num}: Model from image_1 wearing {translated_items}. "
+                base += f"Cell {cell_num}: Model from the {person_ref} wearing {translated_items}. "
                 if outfit_image_refs:
-                    base += f"For photo-based items, take clothing from: {', '.join(outfit_image_refs)}. Reproduce each item as a PIXEL-PERFECT copy — preserve the EXACT fabric type, precise color with no hue shifts, cut, construction (seams, pockets, straps), and all details (embroidery, prints, hardware). No reinterpretation, no style changes, no fabric substitution. "
+                    refs_str = ', '.join([f'the {r}' for r in outfit_image_refs])
+                    base += f"For photo-based items, take clothing from: {refs_str}. Reproduce each item as a PIXEL-PERFECT copy — preserve the EXACT fabric, color, cut, construction, and all details. No reinterpretation, no style changes, no fabric substitution. "
                 if outfit_text_descs:
                     translated_text = translate_to_english(', '.join(outfit_text_descs))
                     base += f"For text-described items (no photo), GENERATE clothing based on description: {translated_text}. "
@@ -163,7 +176,7 @@ def build_grid_prompt(template_data: dict) -> str:
         translated_prompt = translate_to_english(prompt)
         base += f"Overall style: {translated_prompt}. "
 
-    base += "Keep the EXACT face, body shape, physique, skin tone, and hair from image_1 (person photo) in all outfit cells. Professional fashion lookbook style. Same background style across all outfit cells for consistency. "
+    base += f"Keep the EXACT face, body shape, physique, skin tone, and hair from the {person_ref} (person photo) in all outfit cells. Professional fashion lookbook style. Same background style across all outfit cells for consistency. "
 
     return base
 
