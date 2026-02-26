@@ -45,11 +45,11 @@ def build_capsule_prompt(template_data: dict) -> str:
     base = "Create a fashion capsule wardrobe image exactly like the template/reference image layout. "
     base += "The image has TWO parts side by side: LEFT part is a full-body photo of the model, RIGHT part is a grid of clothing items WITHOUT any text labels or numbers. "
 
-    base += "CRITICAL RULE — TEMPLATE (image_1): image_1 is ONLY a layout/structure reference. Use it ONLY to understand the composition and arrangement of elements (model on the left, grid on the right). Do NOT take any clothing, accessories, person, face, or body from image_1. Ignore all garments and people shown in the template. "
+    base += "CRITICAL RULE — PERSON (image_1): image_1 is the person photo. Keep the EXACT face, body shape, physique, skin tone, hair, body proportions, and build from image_1. The model on the LEFT side MUST look identical to the person in image_1. Do NOT generate, invent, or substitute a different face or body. Do NOT use faces or body features from image_2 (template), clothing images, or any other source. image_1 is the ONLY source for the person's appearance. Change ONLY the clothes. "
 
-    base += "CRITICAL RULE — PERSON: Keep the EXACT face, body shape, physique, and pose from image_2 (the person photo). The model on the LEFT side MUST have the same face, skin tone, hair, body proportions, and build as the person in image_2. Do NOT generate, invent, or substitute a different face or body. Do NOT use faces or body features from the template image, clothing images, or any other source. image_2 is the ONLY source for the person's appearance. Change ONLY the clothes. "
+    base += "CRITICAL RULE — TEMPLATE (image_2): image_2 is ONLY a layout/structure reference. Use it ONLY to understand the composition and arrangement of elements (model on the left, grid on the right). Do NOT take any clothing, accessories, person, face, or body from image_2. Ignore all garments and people shown in the template. "
 
-    base += "CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from image_1 (template) or image_2 (person photo) onto the model in the result. image_1 is ONLY for layout structure, image_2 is ONLY for face and body shape. ONLY dress the model in the specific items listed below. If glasses or sunglasses are visible on the person in image_2, do NOT put them on the model unless explicitly requested. "
+    base += "CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from image_2 (template) or image_1 (person photo) onto the model in the result. image_2 is ONLY for layout structure, image_1 is ONLY for face and body shape. ONLY dress the model in the specific items listed below. If glasses or sunglasses are visible on the person in image_1, do NOT put them on the model unless explicitly requested. "
 
     outfit_image_refs = []
     outfit_photo_descs = []
@@ -68,7 +68,7 @@ def build_capsule_prompt(template_data: dict) -> str:
     if outfit_photo_descs or outfit_text_descs:
         all_descs = outfit_photo_descs + outfit_text_descs
         translated_outfit = translate_to_english(', '.join(all_descs))
-        base += f"LEFT: The model from image_2 wearing ONLY these specific items together: {translated_outfit}. "
+        base += f"LEFT: The model from image_1 wearing ONLY these specific items together: {translated_outfit}. "
         if outfit_image_refs:
             base += f"For photo-based items, take clothing appearance ONLY from: {', '.join(outfit_image_refs)}. Reproduce each item as a PIXEL-PERFECT copy on the model — preserve the EXACT fabric type, precise color with no hue shifts, cut, construction (seams, pockets, straps), and all details (embroidery, prints, hardware). No reinterpretation, no style changes, no fabric substitution. "
         if outfit_text_descs:
@@ -76,7 +76,7 @@ def build_capsule_prompt(template_data: dict) -> str:
             base += f"For text-described items (no photo reference), GENERATE and draw these clothing items on the model based on their description: {translated_text_items}. "
         base += "Do NOT put any other clothing items, accessories, glasses, or bags on the model that are not listed above. "
     else:
-        base += "LEFT: The model from image_2 in a stylish outfit. "
+        base += "LEFT: The model from image_1 in a stylish outfit. "
 
     if prompt:
         translated_prompt = translate_to_english(prompt)
@@ -94,7 +94,7 @@ def build_capsule_prompt(template_data: dict) -> str:
         translated_text_grid = translate_to_english(', '.join(text_descs))
         base += f"For items WITHOUT a photo (text-only) — GENERATE a realistic clothing image based on the text description and place it in the grid ONLY (do NOT put it on the model unless it is explicitly listed in the model's outfit above): {translated_text_grid}. "
 
-    base += "Keep the EXACT face, body shape, physique, skin tone, and hair from image_2 (person photo). Professional fashion lookbook style. Clean white or light background for the clothing grid. "
+    base += "Keep the EXACT face, body shape, physique, skin tone, and hair from image_1 (person photo). Professional fashion lookbook style. Clean white or light background for the clothing grid. "
 
     return base
 
@@ -109,12 +109,12 @@ def build_grid_prompt(template_data: dict) -> str:
     else:
         base = "Create a fashion lookbook collage with exactly 8 photos in a 2x4 grid layout (2 rows, 4 columns). "
 
-    base += "CRITICAL RULE — TEMPLATE (image_1): image_1 is ONLY a layout/structure reference. Use it ONLY to understand the grid composition and arrangement of cells. Do NOT take any clothing, accessories, person, face, or body from image_1. Ignore all garments and people shown in the template. "
+    base += "CRITICAL RULE — PERSON (image_1): image_1 is the person photo. Keep the EXACT face, body shape, physique, skin tone, hair, body proportions, and build from image_1. The model in ALL cells MUST look identical to the person in image_1. Do NOT generate, invent, or substitute a different face or body. Do NOT use faces or body features from image_2 (template), clothing images, or any other source. image_1 is the ONLY source for the person's appearance. Change ONLY the clothes. "
 
-    base += "CRITICAL RULE — PERSON: Keep the EXACT face, body shape, physique, and pose from image_2 (the person photo). The model in ALL cells MUST have the same face, skin tone, hair, body proportions, and build as the person in image_2. Do NOT generate, invent, or substitute a different face or body. Do NOT use faces or body features from the template image, clothing images, or any other source. image_2 is the ONLY source for the person's appearance. Change ONLY the clothes. "
+    base += "CRITICAL RULE — TEMPLATE (image_2): image_2 is ONLY a layout/structure reference. Use it ONLY to understand the grid composition and arrangement of cells. Do NOT take any clothing, accessories, person, face, or body from image_2. Ignore all garments and people shown in the template. "
 
-    base += "CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from image_1 (template) or image_2 (person photo) onto the model. image_1 is ONLY for layout structure, image_2 is ONLY for face and body shape. ONLY dress the model in the specific items listed for each cell. If glasses or sunglasses are visible on the person in image_2, do NOT put them on the model unless explicitly requested. "
-    base += "Each cell contains the same model from image_2 but in a DIFFERENT outfit. "
+    base += "CRITICAL RULE — NO EXTRA ITEMS: Do NOT copy, transfer, or add ANY clothing, accessories, glasses, sunglasses, bags, hats, scarves, jewelry, or other items from image_2 (template) or image_1 (person photo) onto the model. image_2 is ONLY for layout structure, image_1 is ONLY for face and body shape. ONLY dress the model in the specific items listed for each cell. If glasses or sunglasses are visible on the person in image_1, do NOT put them on the model unless explicitly requested. "
+    base += "Each cell contains the same model from image_1 but in a DIFFERENT outfit. "
 
     for i, slot in enumerate(slots):
         slot_type = slot.get('type', 'outfit')
@@ -139,7 +139,7 @@ def build_grid_prompt(template_data: dict) -> str:
             all_descs = outfit_photo_descs + outfit_text_descs
             if all_descs:
                 translated_items = translate_to_english(', '.join(all_descs))
-                base += f"Cell {cell_num}: Model from image_2 wearing {translated_items}. "
+                base += f"Cell {cell_num}: Model from image_1 wearing {translated_items}. "
                 if outfit_image_refs:
                     base += f"For photo-based items, take clothing from: {', '.join(outfit_image_refs)}. Reproduce each item as a PIXEL-PERFECT copy — preserve the EXACT fabric type, precise color with no hue shifts, cut, construction (seams, pockets, straps), and all details (embroidery, prints, hardware). No reinterpretation, no style changes, no fabric substitution. "
                 if outfit_text_descs:
@@ -163,7 +163,7 @@ def build_grid_prompt(template_data: dict) -> str:
         translated_prompt = translate_to_english(prompt)
         base += f"Overall style: {translated_prompt}. "
 
-    base += "Keep the EXACT face, body shape, physique, skin tone, and hair from image_2 (person photo) in all outfit cells. Professional fashion lookbook style. Same background style across all outfit cells for consistency. "
+    base += "Keep the EXACT face, body shape, physique, skin tone, and hair from image_1 (person photo) in all outfit cells. Professional fashion lookbook style. Same background style across all outfit cells for consistency. "
 
     return base
 
@@ -172,7 +172,7 @@ def submit_template_to_fal(person_image: str, template_image: str, garment_image
     if not fal_api_key:
         raise Exception('FAL_API_KEY not configured')
 
-    image_urls = [normalize_image_format(template_image), normalize_image_format(person_image)]
+    image_urls = [normalize_image_format(person_image), normalize_image_format(template_image)]
     for img in garment_images:
         image_urls.append(normalize_image_format(img))
 
@@ -184,7 +184,7 @@ def submit_template_to_fal(person_image: str, template_image: str, garment_image
         aspect_ratio = '3:4'
 
     print(f'[TemplateWorker] Mode: {mode}, aspect_ratio: {aspect_ratio}')
-    print(f'[TemplateWorker] Images: 1=template, 2=person, 3-{len(image_urls)}=clothes')
+    print(f'[TemplateWorker] Images: 1=person, 2=template, 3-{len(image_urls)}=clothes')
     print(f'[TemplateWorker] Prompt length: {len(prompt)} chars')
 
     headers = {
