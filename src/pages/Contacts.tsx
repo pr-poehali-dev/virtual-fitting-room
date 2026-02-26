@@ -45,11 +45,7 @@ const Contacts = () => {
                 </div>
 
                 <div className="flex items-start space-x-4 p-4 bg-pink-50 rounded-lg">
-                  <Icon
-                    name="MessageCircle"
-                    size={24}
-                    className="text-pink-600 mt-1"
-                  />
+                  <img src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/a3f7e278-8854-45e7-b6d7-5595197a0022.svg" alt="Telegram" className="w-6 h-6 mt-1" />
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">
                       Telegram
