@@ -232,6 +232,10 @@ def check_fal_status(response_url: str) -> Optional[dict]:
     response = requests.get(response_url, headers=headers, timeout=10)
     if response.status_code == 200:
         return response.json()
+    if response.status_code >= 500:
+        error_text = response.text[:200] if response.text else 'Unknown server error'
+        print(f'[check_fal_status] fal.ai returned {response.status_code}: {error_text}')
+        return {'status': 'FAILED', 'error': f'fal.ai server error {response.status_code}: {error_text}'}
     raise Exception(f'Failed to check status: {response.status_code} - {response.text}')
 
 def upload_to_s3(image_url: str, user_id: str, mode: str) -> str:
@@ -571,7 +575,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     print(f'[TemplateWorker] Task {task_id} still processing')
 
             except Exception as e:
-                print(f'[TemplateWorker] Status check error: {str(e)}')
+                error_str = str(e)
+                print(f'[TemplateWorker] Status check error: {error_str}')
+                try:
+                    cursor.execute('SELECT created_at FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks WHERE id = %s', (task_id,))
+                    created_row = cursor.fetchone()
+                    if created_row:
+                        age_seconds = (datetime.utcnow() - created_row[0]).total_seconds()
+                        if age_seconds > 300:
+                            print(f'[TemplateWorker] Task {task_id} stuck for {age_seconds}s, marking failed')
+                            cursor.execute('''
+                                UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                                SET status = 'failed', error_message = %s, updated_at = %s
+                                WHERE id = %s AND status = 'processing'
+                            ''', (f'Timeout after {int(age_seconds)}s: {error_str[:100]}', datetime.utcnow(), task_id))
+                            conn.commit()
+                            refund_balance_if_needed(conn, user_id, task_id)
+                except Exception as inner_e:
+                    print(f'[TemplateWorker] Error in fallback handler: {str(inner_e)}')
 
         print(f'[TemplateWorker] Checking for stuck tasks older than 4 minutes...')
         cursor.execute('''
@@ -664,7 +685,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     refund_balance_if_needed(conn, stuck_user_id, stuck_id)
 
             except Exception as e:
-                print(f'[TemplateWorker] Error processing stuck task {stuck_id}: {str(e)}')
+                error_str = str(e)
+                print(f'[TemplateWorker] Error processing stuck task {stuck_id}: {error_str}')
+                try:
+                    age_seconds = (datetime.utcnow() - stuck_created).total_seconds()
+                    if age_seconds > 300:
+                        print(f'[TemplateWorker] Stuck task {stuck_id} aged {age_seconds}s, marking failed')
+                        cursor.execute('''
+                            UPDATE t_p29007832_virtual_fitting_room.nanobananapro_tasks
+                            SET status = 'failed', error_message = %s, updated_at = %s
+                            WHERE id = %s AND status = 'processing'
+                        ''', (f'Timeout after {int(age_seconds)}s: {error_str[:100]}', datetime.utcnow(), stuck_id))
+                        conn.commit()
+                        refund_balance_if_needed(conn, stuck_user_id, stuck_id)
+                except Exception as inner_e:
+                    print(f'[TemplateWorker] Error in stuck fallback: {str(inner_e)}')
 
         try:
             cursor.execute('''
