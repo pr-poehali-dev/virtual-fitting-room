@@ -103,7 +103,14 @@ def build_capsule_prompt(template_data: dict) -> str:
     photo_garments = [g for g in garments if g.get('image')]
     text_garments = [g for g in garments if not g.get('image')]
 
-    base += "RIGHT: A clean grid layout of all clothing items, each item neatly arranged. Do NOT add any text, labels, numbers, or titles to the grid — show only the clothing images. "
+    total_count = len(garments)
+    all_item_descs = []
+    for i, g in enumerate(garments):
+        desc = g.get('hint', '') or f'item {i+1}'
+        all_item_descs.append(desc)
+    translated_items_list = translate_to_english(', '.join(all_item_descs))
+
+    base += f"RIGHT: A clean grid layout showing EXACTLY {total_count} clothing items — no more, no less. Each of these {total_count} items MUST appear separately in the grid: {translated_items_list}. Do NOT skip, merge, or omit any item. Do NOT add any text, labels, numbers, or titles to the grid — show only the clothing images. "
     if photo_garments:
         base += "For items with a photo reference — reproduce them as a PIXEL-PERFECT copy from their corresponding uploaded image. Preserve the EXACT original design: fabric, color, cut, construction, and all details. No reinterpretation. "
     if text_garments:
