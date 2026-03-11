@@ -35,10 +35,13 @@ export default function AdminCleanup() {
     setResult(null);
 
     try {
+      const adminToken = document.cookie.split('; ').find(c => c.startsWith('admin_token='))?.split('=')[1] || '';
       const response = await fetch(CLEANUP_API, {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        }
       });
 
       if (response.status === 401) {

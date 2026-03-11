@@ -41,8 +41,7 @@ def make_response(status, body, event):
         'statusCode': status,
         'headers': {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': get_cors_origin(event),
-            'Access-Control-Allow-Credentials': 'true'
+            'Access-Control-Allow-Origin': get_cors_origin(event)
         },
         'isBase64Encoded': False,
         'body': json.dumps(body) if isinstance(body, (dict, list)) else body
@@ -75,8 +74,7 @@ def handler(event, context):
             'headers': {
                 'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Credentials': 'true',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
                 'Access-Control-Max-Age': '86400'
             },
             'body': ''
@@ -86,13 +84,10 @@ def handler(event, context):
         return make_response(405, {'error': 'Method not allowed'}, event)
 
     headers = event.get('headers', {})
-    cookie_header = headers.get('x-cookie') or headers.get('X-Cookie') or headers.get('cookie') or headers.get('Cookie', '')
+    auth_header = headers.get('x-authorization') or headers.get('X-Authorization') or headers.get('authorization') or headers.get('Authorization', '')
     admin_token = None
-    if cookie_header:
-        for cookie in cookie_header.split('; '):
-            if cookie.startswith('admin_token='):
-                admin_token = cookie.split('=', 1)[1]
-                break
+    if auth_header.startswith('Bearer '):
+        admin_token = auth_header[7:]
 
     if not admin_token:
         return make_response(401, {'error': 'Unauthorized'}, event)
