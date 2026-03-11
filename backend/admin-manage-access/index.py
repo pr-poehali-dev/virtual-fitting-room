@@ -47,8 +47,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Credentials': 'true',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
                 'Access-Control-Max-Age': '86400'
             },
             'body': '',
@@ -56,22 +55,26 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     headers = event.get('headers', {})
-    cookie_header = headers.get('x-cookie') or headers.get('X-Cookie') or headers.get('cookie') or headers.get('Cookie', '')
     
     admin_token = None
-    if cookie_header:
-        cookies = cookie_header.split('; ')
-        for cookie in cookies:
-            if cookie.startswith('admin_token='):
-                admin_token = cookie.split('=', 1)[1]
-                break
+    auth_header = headers.get('x-authorization') or headers.get('X-Authorization') or headers.get('authorization') or headers.get('Authorization', '')
+    if auth_header.startswith('Bearer '):
+        admin_token = auth_header[7:]
+    
+    if not admin_token:
+        cookie_header = headers.get('x-cookie') or headers.get('X-Cookie') or headers.get('cookie') or headers.get('Cookie', '')
+        if cookie_header:
+            for cookie in cookie_header.split('; '):
+                if cookie.startswith('admin_token='):
+                    admin_token = cookie.split('=', 1)[1]
+                    break
     
     is_valid, error_msg = verify_admin_jwt(admin_token)
     
     if not is_valid:
         return {
             'statusCode': 403,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
             'isBase64Encoded': False,
             'body': json.dumps({'error': error_msg})
         }
@@ -100,7 +103,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             return {
                 'statusCode': 200,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                 'isBase64Encoded': False,
                 'body': json.dumps({'users': users})
             }
@@ -114,7 +117,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if not user_email:
                 return {
                     'statusCode': 400,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Требуется user_email'})
                 }
@@ -134,7 +137,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if not update_fields:
                 return {
                     'statusCode': 400,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Требуется хотя бы одно поле для обновления (unlimited_access или balance)'})
                 }
@@ -156,7 +159,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if not result:
                 return {
                     'statusCode': 404,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'Пользователь не найден'})
                 }
@@ -165,7 +168,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             return {
                 'statusCode': 200,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
                 'isBase64Encoded': False,
                 'body': json.dumps({
                     'success': True,
@@ -179,7 +182,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         return {
             'statusCode': 405,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'Метод не поддерживается'})
         }

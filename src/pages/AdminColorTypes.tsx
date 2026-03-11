@@ -9,6 +9,7 @@ import Layout from '@/components/Layout';
 import AdminMenu from '@/components/AdminMenu';
 
 const ADMIN_API = 'https://functions.poehali.dev/6667a30b-a520-41d8-b23a-e240a9aefb15';
+const getAdminToken = () => document.cookie.split('; ').find(c => c.startsWith('admin_token='))?.split('=')[1] || '';
 
 interface User {
   id: string;
@@ -58,7 +59,7 @@ export default function AdminColorTypes() {
 
     try {
       const response = await fetch(`${ADMIN_API}?action=users`, {
-        credentials: 'include'
+        headers: { 'Authorization': `Bearer ${getAdminToken()}` }
       });
 
       if (!response.ok) throw new Error('Failed to fetch users');
@@ -70,7 +71,6 @@ export default function AdminColorTypes() {
   };
 
   const fetchColorTypeHistory = async () => {
-    const adminToken = localStorage.getItem('admin_jwt');
     const params = new URLSearchParams({ action: 'colortype_history' });
     
     if (userFilter && userFilter !== 'all') params.append('user_id', userFilter);
@@ -80,7 +80,7 @@ export default function AdminColorTypes() {
 
     try {
       const response = await fetch(`${ADMIN_API}?${params.toString()}`, {
-        credentials: 'include'
+        headers: { 'Authorization': `Bearer ${getAdminToken()}` }
       });
 
       if (response.ok) {
@@ -105,12 +105,10 @@ export default function AdminColorTypes() {
   const handleDeleteConfirm = async () => {
     if (!itemToDelete) return;
 
-    const adminToken = localStorage.getItem('admin_jwt');
-    
     try {
       const response = await fetch(`${ADMIN_API}?action=delete_colortype&analysis_id=${itemToDelete.id}`, {
         method: 'DELETE',
-        credentials: 'include'
+        headers: { 'Authorization': `Bearer ${getAdminToken()}` }
       });
 
       if (response.ok) {

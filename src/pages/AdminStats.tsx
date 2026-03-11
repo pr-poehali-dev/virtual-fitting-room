@@ -7,6 +7,7 @@ import Layout from '@/components/Layout';
 import AdminMenu from '@/components/AdminMenu';
 
 const ADMIN_API = 'https://functions.poehali.dev/6667a30b-a520-41d8-b23a-e240a9aefb15';
+const getAdminToken = () => document.cookie.split('; ').find(c => c.startsWith('admin_token='))?.split('=')[1] || '';
 
 interface Stats {
   total_users: number;
@@ -45,7 +46,7 @@ export default function AdminStats() {
 
     try {
       const response = await fetch(`${ADMIN_API}?action=stats`, {
-        credentials: 'include'
+        headers: { 'Authorization': `Bearer ${getAdminToken()}` }
       });
 
       if (response.status === 401) {

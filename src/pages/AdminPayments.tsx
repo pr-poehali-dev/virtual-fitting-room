@@ -18,6 +18,7 @@ import AdminMenu from "@/components/AdminMenu";
 
 const ADMIN_API =
   "https://functions.poehali.dev/6667a30b-a520-41d8-b23a-e240a9aefb15";
+const getAdminToken = () => document.cookie.split('; ').find(c => c.startsWith('admin_token='))?.split('=')[1] || '';
 
 interface Payment {
   id: string;
@@ -92,7 +93,7 @@ export default function AdminPayments() {
       }
 
       const response = await fetch(url, {
-        credentials: "include",
+        headers: { "Authorization": `Bearer ${getAdminToken()}` },
       });
 
       if (response.status === 401) {
@@ -126,9 +127,9 @@ export default function AdminPayments() {
     try {
       const response = await fetch(`${ADMIN_API}?action=refund`, {
         method: "POST",
-        credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAdminToken()}`,
         },
         body: JSON.stringify({
           user_id: userId,
@@ -161,7 +162,7 @@ export default function AdminPayments() {
       const balanceResponse = await fetch(
         `${ADMIN_API}?action=get_user_balance&user_id=${userId}`,
         {
-          credentials: "include",
+          headers: { "Authorization": `Bearer ${getAdminToken()}` },
         },
       );
 
@@ -215,9 +216,9 @@ export default function AdminPayments() {
     try {
       const response = await fetch(`${ADMIN_API}?action=deduct_balance`, {
         method: "POST",
-        credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAdminToken()}`,
         },
         body: JSON.stringify({
           user_id: userId,

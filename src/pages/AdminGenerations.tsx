@@ -8,6 +8,7 @@ import Layout from '@/components/Layout';
 import AdminMenu from '@/components/AdminMenu';
 
 const ADMIN_API = 'https://functions.poehali.dev/6667a30b-a520-41d8-b23a-e240a9aefb15';
+const getAdminToken = () => document.cookie.split('; ').find(c => c.startsWith('admin_token='))?.split('=')[1] || '';
 
 interface User {
   id: string;
@@ -49,7 +50,7 @@ export default function AdminGenerations() {
   const fetchUsers = async () => {
     try {
       const response = await fetch(`${ADMIN_API}?action=users`, {
-        credentials: 'include'
+        headers: { 'Authorization': `Bearer ${getAdminToken()}` }
       });
 
       if (!response.ok) throw new Error('Failed to fetch users');
@@ -70,7 +71,7 @@ export default function AdminGenerations() {
 
     try {
       const response = await fetch(`${ADMIN_API}?${params.toString()}`, {
-        credentials: 'include'
+        headers: { 'Authorization': `Bearer ${getAdminToken()}` }
       });
 
       if (response.ok) {

@@ -10,6 +10,7 @@ import AdminMenu from '@/components/AdminMenu';
 
 const ADMIN_API = 'https://functions.poehali.dev/6667a30b-a520-41d8-b23a-e240a9aefb15';
 const ADMIN_MANAGE_ACCESS_API = 'https://functions.poehali.dev/15f28986-cce9-4e25-a05b-0860b1cf9cf7';
+const getAdminToken = () => document.cookie.split('; ').find(c => c.startsWith('admin_token='))?.split('=')[1] || '';
 
 interface User {
   id: string;
@@ -39,7 +40,7 @@ export default function AdminUsers() {
     try {
       const offset = (currentPage - 1) * usersPerPage;
       const response = await fetch(`${ADMIN_API}?action=users&limit=${usersPerPage}&offset=${offset}`, {
-        credentials: 'include'
+        headers: { 'Authorization': `Bearer ${getAdminToken()}` }
       });
 
       if (response.status === 401) {
@@ -64,9 +65,9 @@ export default function AdminUsers() {
     try {
       const response = await fetch(ADMIN_MANAGE_ACCESS_API, {
         method: 'POST',
-        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getAdminToken()}`
         },
         body: JSON.stringify({
           user_email: userEmail,

@@ -39,6 +39,7 @@ interface Filters {
 
 const CATALOG_API = 'https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc';
 const IMAGE_PREPROCESSING_API = 'https://functions.poehali.dev/3fe8c892-ab5f-4d26-a2c5-ae4166276334';
+const getAdminToken = () => document.cookie.split('; ').find(c => c.startsWith('admin_token='))?.split('=')[1] || '';
 
 export default function AdminCatalog() {
   const navigate = useNavigate();
@@ -125,9 +126,9 @@ export default function AdminCatalog() {
     try {
       const response = await fetch(CATALOG_API, {
         method: 'POST',
-        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getAdminToken()}`
         },
         body: JSON.stringify(newClothing)
       });
@@ -177,9 +178,9 @@ export default function AdminCatalog() {
 
       const response = await fetch(CATALOG_API, {
         method: 'PUT',
-        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getAdminToken()}`
         },
         body: JSON.stringify({
           id: editingClothing.id,
@@ -212,7 +213,7 @@ export default function AdminCatalog() {
     try {
       const response = await fetch(`${CATALOG_API}?action=delete&id=${id}`, {
         method: 'DELETE',
-        credentials: 'include'
+        headers: { 'Authorization': `Bearer ${getAdminToken()}` }
       });
 
       if (response.ok) {

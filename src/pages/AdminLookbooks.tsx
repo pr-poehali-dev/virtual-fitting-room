@@ -8,6 +8,7 @@ import Layout from '@/components/Layout';
 import AdminMenu from '@/components/AdminMenu';
 
 const ADMIN_API = 'https://functions.poehali.dev/6667a30b-a520-41d8-b23a-e240a9aefb15';
+const getAdminToken = () => document.cookie.split('; ').find(c => c.startsWith('admin_token='))?.split('=')[1] || '';
 
 interface User {
   id: string;
@@ -54,10 +55,10 @@ export default function AdminLookbooks() {
       const offset = (currentPage - 1) * lookbooksPerPage;
       const [usersRes, lookbooksRes] = await Promise.all([
         fetch(`${ADMIN_API}?action=users&limit=1000&offset=0`, {
-          credentials: 'include'
+          headers: { 'Authorization': `Bearer ${getAdminToken()}` }
         }),
         fetch(`${ADMIN_API}?action=lookbooks&limit=${lookbooksPerPage}&offset=${offset}`, {
-          credentials: 'include'
+          headers: { 'Authorization': `Bearer ${getAdminToken()}` }
         })
       ]);
 
