@@ -214,7 +214,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': get_cors_origin(event),
-    
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'success': True})
@@ -313,7 +312,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': get_cors_origin(event),
-
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({
@@ -387,7 +385,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': get_cors_origin(event),
-    
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps([{
@@ -486,7 +483,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': get_cors_origin(event),
-
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({
@@ -550,7 +546,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': get_cors_origin(event),
-
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({
@@ -570,7 +565,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': get_cors_origin(event),
-
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps([{
@@ -640,7 +634,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': get_cors_origin(event),
-    
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps([{
@@ -799,7 +792,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': get_cors_origin(event),
-
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({
@@ -1052,7 +1044,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': get_cors_origin(event),
-
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'success': True})
@@ -1081,7 +1072,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': get_cors_origin(event),
-
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'success': True})
@@ -1097,7 +1087,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': get_cors_origin(event),
-
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'success': True, 'deleted': deleted_count})
@@ -1126,7 +1115,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': get_cors_origin(event),
-
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'success': True})
@@ -1138,7 +1126,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': get_cors_origin(event),
-
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'error': 'Invalid action'})
@@ -1151,7 +1138,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': get_cors_origin(event),
-
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': str(e)})
