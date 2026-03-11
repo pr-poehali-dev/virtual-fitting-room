@@ -29,11 +29,12 @@ export default function AdminLogin() {
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify({ password })
       });
 
       if (response.ok) {
+        const data = await response.json();
+        document.cookie = `admin_token=${data.token}; path=/; max-age=86400; secure; samesite=strict`;
         toast.success('Вход выполнен');
         navigate('/vf-console/dashboard');
       } else {

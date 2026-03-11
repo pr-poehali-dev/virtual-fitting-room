@@ -93,12 +93,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': get_cors_origin(event),
-                'Access-Control-Allow-Credentials': 'true',
-                'X-Set-Cookie': f'admin_token={token}; HttpOnly; Secure; SameSite=None; Max-Age=86400; Path=/'
             },
             'body': json.dumps({
                 'success': True,
-                'message': 'Authenticated'
+                'message': 'Authenticated',
+                'token': token
             }),
             'isBase64Encoded': False
         }
