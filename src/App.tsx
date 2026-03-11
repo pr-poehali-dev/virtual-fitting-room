@@ -31,6 +31,7 @@ import AdminPayments from "./pages/AdminPayments";
 import AdminCatalog from "./pages/AdminCatalog";
 import AdminGenerations from "./pages/AdminGenerations";
 import AdminColorTypes from "./pages/AdminColorTypes";
+import AdminCleanup from "./pages/AdminCleanup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
@@ -99,6 +100,7 @@ const App = () => (
             <Route path="/vf-console/catalog" element={<AdminCatalog />} />
             <Route path="/vf-console/generations" element={<AdminGenerations />} />
             <Route path="/vf-console/colortypes" element={<AdminColorTypes />} />
+            <Route path="/vf-console/cleanup" element={<AdminCleanup />} />
             
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

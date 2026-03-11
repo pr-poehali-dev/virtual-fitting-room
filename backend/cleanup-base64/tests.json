@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS returns 200",
+      "method": "OPTIONS",
+      "path": "/",
+      "headers": {},
+      "expectedStatus": 200
+    },
+    {
+      "name": "POST without auth returns 401",
+      "method": "POST",
+      "path": "/",
+      "headers": {},
+      "expectedStatus": 401
+    },
+    {
+      "name": "GET returns 405",
+      "method": "GET",
+      "path": "/",
+      "headers": {},
+      "expectedStatus": 405
+    }
+  ]
+}

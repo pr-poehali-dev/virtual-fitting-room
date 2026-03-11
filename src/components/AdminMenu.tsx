@@ -13,6 +13,7 @@ const AdminMenu = () => {
     { path: '/vf-console/catalog', icon: 'Package', label: 'Каталог' },
     { path: '/vf-console/generations', icon: 'Sparkles', label: 'Генерации' },
     { path: '/vf-console/colortypes', icon: 'Palette', label: 'Цветотипы' },
+    { path: '/vf-console/cleanup', icon: 'HardDrive', label: 'Очистка БД' },
   ];
 
   return (
