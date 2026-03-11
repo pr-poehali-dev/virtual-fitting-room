@@ -380,14 +380,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             cursor.execute(query, filter_values)
             history = cursor.fetchall()
             
-            return {
-                'statusCode': 200,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event),
-                },
-                'isBase64Encoded': False,
-                'body': json.dumps([{
+            result_list = []
+            for h in history:
+                person_img = h['person_image'] or ''
+                if person_img.startswith('data:'):
+                    person_img = ''
+                result_list.append({
                     'id': str(h['id']),
                     'user_id': h['user_id'],
                     'user_email': h['user_email'],
@@ -395,12 +393,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'status': h['status'],
                     'color_type': h['color_type'],
                     'result_text': h['result_text'],
-                    'person_image': h['person_image'],
+                    'person_image': person_img,
                     'cdn_url': h['cdn_url'],
                     'cost': float(h['cost']) if h['cost'] else 0,
                     'refunded': h['refunded'],
                     'created_at': h['created_at'].isoformat() if h['created_at'] else None
-                } for h in history])
+                })
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps(result_list)
             }
         
         elif action == 'get_user_balance' and method == 'GET':
