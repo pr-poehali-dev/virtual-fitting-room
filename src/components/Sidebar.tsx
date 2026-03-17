@@ -1,13 +1,17 @@
 import { Link, useLocation } from "react-router-dom";
 import Icon from "@/components/ui/icon";
+import { useAuth } from "@/context/AuthContext";
 
 interface SidebarProps {
   isOpen: boolean;
   onToggle: () => void;
 }
 
+const OWNER_EMAIL = "apollinaria-b@yandex.ru";
+
 const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
   const location = useLocation();
+  const { user } = useAuth();
 
   const menuItems = [
     {
@@ -28,6 +32,16 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       icon: "Palette",
       label: "Определение цветотипа",
     },
+    ...(user?.email === OWNER_EMAIL
+      ? [
+          {
+            id: "ai-editor",
+            path: "/ai-editor",
+            icon: "Wand2",
+            label: "AI-редактор",
+          },
+        ]
+      : []),
   ];
 
   return (

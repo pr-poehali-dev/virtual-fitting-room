@@ -43,6 +43,7 @@ import Offer from "./pages/Offer";
 import Contacts from "./pages/Contacts";
 import Privacy from "./pages/Privacy";
 import PersonalData from "./pages/PersonalData";
+import AiEditor from "./pages/AiEditor";
 
 const APP_VERSION = "2.0.0";
 
@@ -79,6 +80,7 @@ const App = () => (
               <Route path="/virtualfitting" element={<ReplicateTryOn />} />
               <Route path="/replicate" element={<Navigate to="/virtualfitting" replace />} />
               <Route path="/colortype" element={<ColorType />} />
+            <Route path="/ai-editor" element={<AiEditor />} />
             
             {/* Profile Routes */}
             <Route path="/profile" element={<ProfileDashboard />} />
