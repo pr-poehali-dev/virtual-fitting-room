@@ -209,15 +209,18 @@ def process_task(task_id):
                 print(f'Task {task_id} not found or already processing')
                 return
         conn.commit()
+    finally:
+        conn.close()
 
-        _, mode, model, prompt, filename, file_content, archive_base64 = row
+    _, mode, model, prompt, filename, file_content, archive_base64 = row
 
-        ai_text = None
-        result_file_content = None
-        result_archive_base64 = None
-        files_count = None
-        error = None
+    ai_text = None
+    result_file_content = None
+    result_archive_base64 = None
+    files_count = None
+    error = None
 
+    try:
         if mode == 'chat':
             ai_text, error = call_openrouter(model, prompt)
 
@@ -240,9 +243,13 @@ def process_task(task_id):
                     result_zip = build_result_zip(zip_bytes, updated_files)
                     result_archive_base64 = base64.b64encode(result_zip).decode('utf-8')
                     files_count = len(text_files)
+    except Exception as e:
+        error = str(e)[:1000]
 
+    conn2 = get_db_connection()
+    try:
         now = datetime.utcnow()
-        with conn.cursor() as cur:
+        with conn2.cursor() as cur:
             if error:
                 cur.execute(
                     f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
@@ -258,24 +265,12 @@ def process_task(task_id):
                         WHERE id = %s""",
                     (ai_text, result_file_content, result_archive_base64, files_count, model, now, task_id)
                 )
-        conn.commit()
+        conn2.commit()
         print(f'Task {task_id} finished: {"failed" if error else "completed"}')
-
     except Exception as e:
-        print(f'Task {task_id} exception: {e}')
-        try:
-            with conn.cursor() as cur:
-                cur.execute(
-                    f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
-                        SET status = 'failed', error_message = %s, updated_at = %s
-                        WHERE id = %s""",
-                    (str(e)[:1000], datetime.utcnow(), task_id)
-                )
-            conn.commit()
-        except Exception:
-            pass
+        print(f'Task {task_id} save error: {e}')
     finally:
-        conn.close()
+        conn2.close()
 
 
 def handler(event, context):
