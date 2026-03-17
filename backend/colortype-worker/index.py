@@ -1505,7 +1505,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'task_id parameter is required'})
         }
     
-    print(f'[ColorType-Worker] Processing task: {task_id}')
+    print(f'[ColorType-Worker] Processing task: {task_id}, checking DATABASE_URL...')
     
     database_url = os.environ.get('DATABASE_URL')
     if not database_url:
