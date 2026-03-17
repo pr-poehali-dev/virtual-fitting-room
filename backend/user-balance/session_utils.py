@@ -1,6 +1,7 @@
 """
 Session validation utilities for secure authentication
 Used by protected endpoints to validate session tokens
+# redeploy: fix env secrets after timeout change
 """
 import os
 from datetime import datetime
