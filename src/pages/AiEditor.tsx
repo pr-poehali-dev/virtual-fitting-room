@@ -206,7 +206,7 @@ export default function AiEditor() {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
                   mode === m.id
                     ? "bg-purple-600 text-white"
-                    : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
+                    : "bg-gray-200 text-gray-600 hover:bg-gray-300 hover:text-gray-800"
                 }`}
               >
                 <Icon name={m.icon} size={18} />
@@ -215,11 +215,11 @@ export default function AiEditor() {
             ))}
           </div>
 
-          <Card className="bg-gray-900 border-gray-700">
+          <Card className="bg-white border-gray-200 shadow-sm">
             <CardContent className="pt-6 space-y-4">
               {mode !== "chat" && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     {mode === "archive" ? "ZIP-архив с проектом" : "Файл для редактирования"}
                   </label>
                   <input
@@ -231,7 +231,7 @@ export default function AiEditor() {
                   />
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-purple-500 transition-colors"
+                    className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-500 transition-colors bg-gray-50"
                   >
                     {file ? (
                       <div className="flex items-center justify-center gap-3">
@@ -240,8 +240,8 @@ export default function AiEditor() {
                           size={24}
                           className="text-purple-400"
                         />
-                        <span className="text-gray-200">{file.name}</span>
-                        <span className="text-gray-500 text-sm">
+                        <span className="text-gray-700">{file.name}</span>
+                        <span className="text-gray-400 text-sm">
                           ({file.size < 1024 ? `${file.size} Б` : `${(file.size / 1024).toFixed(1)} КБ`})
                         </span>
                         <button
@@ -250,15 +250,15 @@ export default function AiEditor() {
                             setFile(null);
                             if (fileInputRef.current) fileInputRef.current.value = "";
                           }}
-                          className="text-gray-500 hover:text-red-400 ml-2"
+                          className="text-gray-400 hover:text-red-500 ml-2"
                         >
                           <Icon name="X" size={18} />
                         </button>
                       </div>
                     ) : (
                       <div>
-                        <Icon name="Upload" size={36} className="mx-auto text-gray-500 mb-2" />
-                        <p className="text-gray-400">
+                        <Icon name="Upload" size={36} className="mx-auto text-gray-400 mb-2" />
+                        <p className="text-gray-500">
                           {mode === "archive"
                             ? "Нажмите для загрузки ZIP-архива (до 50 МБ)"
                             : "Нажмите для загрузки файла (до 1 МБ)"}
@@ -270,11 +270,11 @@ export default function AiEditor() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Модель
                 </label>
                 <Select value={model} onValueChange={setModel}>
-                  <SelectTrigger className="bg-gray-800 border-gray-600">
+                  <SelectTrigger className="bg-gray-50 border-gray-300 text-gray-700">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -285,13 +285,13 @@ export default function AiEditor() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-400 mt-1">
                   Цена за 1M токенов: вход / выход
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   {mode === "chat" ? "Вопрос" : "Что нужно сделать?"}
                 </label>
                 <Textarea
@@ -302,7 +302,7 @@ export default function AiEditor() {
                       ? "Задайте вопрос..."
                       : "Опишите, что нужно изменить, добавить или отредактировать..."
                   }
-                  className="bg-gray-800 border-gray-600 min-h-[120px] resize-y"
+                  className="bg-gray-50 border-gray-300 text-gray-700 min-h-[120px] resize-y placeholder:text-gray-400"
                 />
               </div>
 
@@ -328,24 +328,24 @@ export default function AiEditor() {
           </Card>
 
           {response && (
-            <Card className="bg-gray-900 border-gray-700">
+            <Card className="bg-white border-gray-200 shadow-sm">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Icon name="MessageSquare" size={20} className="text-purple-400" />
-                    <h3 className="font-medium">Ответ модели</h3>
+                    <Icon name="MessageSquare" size={20} className="text-purple-500" />
+                    <h3 className="font-medium text-gray-700">Ответ модели</h3>
                   </div>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(response);
                       toast.success("Скопировано!");
                     }}
-                    className="text-gray-500 hover:text-gray-300 transition-colors"
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     <Icon name="Copy" size={18} />
                   </button>
                 </div>
-                <pre className="bg-gray-800 rounded-lg p-4 text-sm text-gray-300 whitespace-pre-wrap overflow-x-auto max-h-[600px] overflow-y-auto">
+                <pre className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap overflow-x-auto max-h-[600px] overflow-y-auto">
                   {response}
                 </pre>
               </CardContent>
