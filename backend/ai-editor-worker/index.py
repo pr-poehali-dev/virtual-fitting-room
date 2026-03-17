@@ -34,7 +34,10 @@ MAX_TOTAL_TEXT = 400000
 
 
 def get_db_connection():
-    return psycopg2.connect(os.environ['DATABASE_URL'])
+    dsn = os.environ.get('DATABASE_URL', '')
+    if not dsn:
+        raise RuntimeError('DATABASE_URL not set — check function secrets binding')
+    return psycopg2.connect(dsn)
 
 
 def is_text_file(filename):
