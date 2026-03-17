@@ -15,10 +15,28 @@
       "bodyMatcher": "partial"
     },
     {
-      "name": "POST without body",
+      "name": "POST without prompt",
       "method": "POST",
       "path": "/",
-      "body": {},
+      "body": {"mode": "chat"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST file mode without content",
+      "method": "POST",
+      "path": "/",
+      "body": {"mode": "file", "prompt": "test", "file_content": ""},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST archive mode without archive",
+      "method": "POST",
+      "path": "/",
+      "body": {"mode": "archive", "prompt": "test"},
       "expectedStatus": 400,
       "expectedBody": {"error": "string"},
       "bodyMatcher": "partial"
