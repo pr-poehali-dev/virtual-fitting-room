@@ -1,4 +1,6 @@
-"""AI-редактор кода: чат с Claude, редактирование одного файла или ZIP-архива через OpenRouter."""
+"""AI-редактор кода: чат с Claude, редактирование одного файла или ZIP-архива через OpenRouter.
+# redeploy: timeout updated to 5min
+"""
 
 import json
 import os
