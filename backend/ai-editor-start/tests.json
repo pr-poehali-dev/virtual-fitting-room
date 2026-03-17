@@ -1,0 +1,45 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET not allowed",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 405,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST without prompt",
+      "method": "POST",
+      "path": "/",
+      "body": {"mode": "chat"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST file mode without content",
+      "method": "POST",
+      "path": "/",
+      "body": {"mode": "file", "prompt": "test", "file_content": ""},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST chat mode creates task",
+      "method": "POST",
+      "path": "/",
+      "body": {"mode": "chat", "prompt": "hello", "model": "anthropic/claude-sonnet-4.6"},
+      "expectedStatus": 200,
+      "expectedBody": {"task_id": "string", "status": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

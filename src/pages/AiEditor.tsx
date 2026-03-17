@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,7 +26,8 @@ const MODELS = [
   { id: "anthropic/claude-sonnet-4", label: "Sonnet 4 — $3/$15 за 1M" },
 ];
 
-const AI_EDITOR_API = "https://functions.poehali.dev/5289d2a6-e800-484c-9394-e26388888d13";
+const AI_EDITOR_START = "https://functions.poehali.dev/6ddfd93a-b3ac-445f-a1bf-3327d6ba01d7";
+const AI_EDITOR_STATUS = "https://functions.poehali.dev/487c8816-d661-4f43-a72d-112374006c7c";
 
 const TEXT_EXTENSIONS = [
   ".py", ".js", ".jsx", ".ts", ".tsx", ".html", ".css", ".scss", ".less",
@@ -48,8 +49,69 @@ export default function AiEditor() {
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState(MODELS[0].id);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [statusText, setStatusText] = useState("");
   const [response, setResponse] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPolling = useCallback(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  }, []);
+
+  const pollStatus = useCallback((taskId: string, currentFile: File | null, currentMode: Mode) => {
+    let elapsed = 0;
+    const interval = setInterval(async () => {
+      elapsed += 3;
+      setStatusText(`Обрабатываю... ${elapsed} сек`);
+
+      try {
+        const res = await fetch(`${AI_EDITOR_STATUS}?task_id=${taskId}`);
+        const data = await res.json();
+
+        if (data.status === "completed") {
+          clearInterval(interval);
+          pollingRef.current = null;
+          setIsProcessing(false);
+          setStatusText("");
+          setResponse(data.ai_response || "");
+
+          if (currentMode === "archive" && data.result_archive_base64 && currentFile) {
+            const bytes = Uint8Array.from(atob(data.result_archive_base64), (c) => c.charCodeAt(0));
+            downloadBlob(bytes, `edited_${currentFile.name}`, "application/zip");
+            toast.success("Архив скачан!");
+          } else if (currentMode === "file" && data.result_file_content && currentFile) {
+            const bytes = new TextEncoder().encode(data.result_file_content);
+            downloadBlob(bytes, `edited_${currentFile.name}`, "text/plain");
+            toast.success("Файл скачан!");
+          } else if (currentMode === "chat") {
+            toast.success("Ответ получен!");
+          } else {
+            toast.info("Ответ отображён ниже");
+          }
+        } else if (data.status === "failed") {
+          clearInterval(interval);
+          pollingRef.current = null;
+          setIsProcessing(false);
+          setStatusText("");
+          toast.error(data.error || "Ошибка обработки");
+        }
+
+        if (elapsed > 600) {
+          clearInterval(interval);
+          pollingRef.current = null;
+          setIsProcessing(false);
+          setStatusText("");
+          toast.error("Превышено время ожидания (10 мин)");
+        }
+      } catch {
+        // сетевая ошибка polling — продолжаем пробовать
+      }
+    }, 3000);
+    pollingRef.current = interval;
+  }, []);
 
   if (isLoading) return null;
   if (!user || user.email !== ALLOWED_EMAIL) {
@@ -129,6 +191,8 @@ export default function AiEditor() {
 
     setIsProcessing(true);
     setResponse("");
+    setStatusText("Отправляю задачу...");
+    stopPolling();
 
     try {
       const payload: Record<string, string> = {
@@ -145,7 +209,7 @@ export default function AiEditor() {
         payload.filename = file.name;
       }
 
-      const res = await fetch(AI_EDITOR_API, {
+      const res = await fetch(AI_EDITOR_START, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -154,29 +218,21 @@ export default function AiEditor() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Ошибка обработки");
+        throw new Error(data.error || "Ошибка отправки");
       }
 
-      setResponse(data.ai_response || "");
-
-      if (mode === "archive" && data.result_archive_base64) {
-        const bytes = Uint8Array.from(atob(data.result_archive_base64), (c) => c.charCodeAt(0));
-        downloadBlob(bytes, `edited_${file!.name}`, "application/zip");
-        toast.success("Архив скачан!");
-      } else if (mode === "file" && data.result_file_content) {
-        const bytes = new TextEncoder().encode(data.result_file_content);
-        downloadBlob(bytes, `edited_${file!.name}`, "text/plain");
-        toast.success("Файл скачан!");
-      } else if (mode === "chat") {
-        toast.success("Ответ получен!");
-      } else {
-        toast.info("Ответ отображён ниже");
+      const taskId = data.task_id;
+      if (!taskId) {
+        throw new Error("Не получен task_id");
       }
+
+      setStatusText("Обрабатываю... 0 сек");
+      pollStatus(taskId, file, mode);
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "Ошибка при обработке";
+      const msg = error instanceof Error ? error.message : "Ошибка при отправке";
       toast.error(msg);
-    } finally {
       setIsProcessing(false);
+      setStatusText("");
     }
   };
 
@@ -315,7 +371,7 @@ export default function AiEditor() {
                 {isProcessing ? (
                   <>
                     <Icon name="Loader2" size={20} className="mr-2 animate-spin" />
-                    Обрабатываю... не закрывайте страницу
+                    {statusText || "Обрабатываю..."}
                   </>
                 ) : (
                   <>
