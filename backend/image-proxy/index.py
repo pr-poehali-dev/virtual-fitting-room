@@ -26,6 +26,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-Session-Token',
+                'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Max-Age': '86400'
             },
             'body': ''
@@ -36,7 +37,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 405,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': get_cors_origin(event)
+                'Access-Control-Allow-Origin': get_cors_origin(event),
+                'Access-Control-Allow-Credentials': 'true'
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'Method not allowed'})
@@ -58,7 +60,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 400,
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': get_cors_origin(event)
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                    'Access-Control-Allow-Credentials': 'true'
                 },
                 'isBase64Encoded': False,
                 'body': json.dumps({'error': 'Missing url parameter'})
@@ -82,7 +85,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'headers': {
                         'Content-Type': content_type,
                         'Content-Disposition': f'attachment; filename="fitting-room-{context.request_id}.jpg"',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': True,
                     'body': base64_image
@@ -95,7 +99,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': get_cors_origin(event)
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                        'Access-Control-Allow-Credentials': 'true'
                     },
                     'isBase64Encoded': False,
                     'body': json.dumps({'data_url': data_url})
@@ -107,7 +112,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 502,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': get_cors_origin(event)
+                'Access-Control-Allow-Origin': get_cors_origin(event),
+                'Access-Control-Allow-Credentials': 'true'
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': f'Failed to fetch image: HTTP {e.code}'})
@@ -119,7 +125,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': get_cors_origin(event)
+                'Access-Control-Allow-Origin': get_cors_origin(event),
+                'Access-Control-Allow-Credentials': 'true'
             },
             'isBase64Encoded': False,
             'body': json.dumps({'error': str(e)})
