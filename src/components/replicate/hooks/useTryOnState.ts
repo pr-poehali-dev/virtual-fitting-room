@@ -141,7 +141,9 @@ export function useTryOnState() {
     if (!user) return;
     
     try {
+      const token = localStorage.getItem('session_token');
       const response = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
+        headers: token ? { 'X-Session-Token': token } : {},
         credentials: 'include'
       });
       
@@ -326,10 +328,12 @@ export function useTryOnState() {
     setGenerationStatus('Продолжаем генерацию...');
 
     try {
+      const token = localStorage.getItem('session_token');
       const response = await fetch('https://functions.poehali.dev/fdb150a0-d5ba-47ec-9d9a-e13595cd92d1', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'X-Session-Token': token } : {})
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -377,7 +381,9 @@ export function useTryOnState() {
   const startPolling = (id: string) => {
     const interval = setInterval(async () => {
       try {
+        const token = localStorage.getItem('session_token');
         const response = await fetch(`${REPLICATE_STATUS_API}?task_id=${id}`, {
+          headers: token ? { 'X-Session-Token': token } : {},
           credentials: 'include'
         });
 
@@ -429,7 +435,9 @@ export function useTryOnState() {
 
           const checker = setInterval(async () => {
             try {
+              const token = localStorage.getItem('session_token');
               const checkResponse = await fetch(`${REPLICATE_STATUS_API}?task_id=${id}`, {
+                headers: token ? { 'X-Session-Token': token } : {},
                 credentials: 'include'
               });
 
@@ -498,10 +506,12 @@ export function useTryOnState() {
         }))
       };
 
+      const token = localStorage.getItem('session_token');
       const response = await fetch(REPLICATE_START_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'X-Session-Token': token } : {})
         },
         credentials: 'include',
         body: JSON.stringify(requestBody)
@@ -540,10 +550,12 @@ export function useTryOnState() {
       let lookbookId = selectedLookbookId;
 
       if (selectedLookbookId === 'new') {
+        const token = localStorage.getItem('session_token');
         const createResponse = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...(token ? { 'X-Session-Token': token } : {})
           },
           credentials: 'include',
           body: JSON.stringify({
@@ -561,10 +573,12 @@ export function useTryOnState() {
         await fetchLookbooks();
       }
 
+      const tokenForAddImage = localStorage.getItem('session_token');
       const addImageResponse = await fetch('https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(tokenForAddImage ? { 'X-Session-Token': tokenForAddImage } : {})
         },
         credentials: 'include',
         body: JSON.stringify({

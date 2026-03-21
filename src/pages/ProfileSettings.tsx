@@ -71,10 +71,12 @@ export default function ProfileSettings() {
     setIsChangingPassword(true);
 
     try {
+      const token = localStorage.getItem('session_token');
       const response = await fetch(CHANGE_PASSWORD_API, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'X-Session-Token': token } : {}),
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -107,10 +109,12 @@ export default function ProfileSettings() {
     }
 
     try {
+      const token = localStorage.getItem('session_token');
       const response = await fetch(UPDATE_PROFILE_API, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'X-Session-Token': token } : {}),
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -146,8 +150,10 @@ export default function ProfileSettings() {
     if (!doubleConfirm) return;
 
     try {
+      const token = localStorage.getItem('session_token');
       const response = await fetch(DELETE_ACCOUNT_API, {
         method: 'DELETE',
+        headers: token ? { 'X-Session-Token': token } : {},
         credentials: 'include'
       });
 

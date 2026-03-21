@@ -27,7 +27,9 @@ export const checkReplicateBalance = async (
   const totalCost = steps * costPerStep;
 
   try {
+    const token = localStorage.getItem('session_token');
     const balanceCheck = await fetch('https://functions.poehali.dev/68409278-10ab-4733-b48d-b1b4360620a1', {
+      headers: token ? { 'X-Session-Token': token } : {},
       credentials: 'include'
     });
 
@@ -62,10 +64,12 @@ export const deductReplicateBalance = async (
   const totalCost = steps * costPerStep;
 
   try {
+    const token = localStorage.getItem('session_token');
     const deductResponse = await fetch('https://functions.poehali.dev/68409278-10ab-4733-b48d-b1b4360620a1', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(token ? { 'X-Session-Token': token } : {})
       },
       credentials: 'include',
       body: JSON.stringify({
@@ -106,10 +110,12 @@ export const refundReplicateBalance = async (
   }
 
   try {
+    const token = localStorage.getItem('session_token');
     const refundResponse = await fetch('https://functions.poehali.dev/68409278-10ab-4733-b48d-b1b4360620a1', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(token ? { 'X-Session-Token': token } : {})
       },
       credentials: 'include',
       body: JSON.stringify({
