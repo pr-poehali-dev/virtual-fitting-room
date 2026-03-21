@@ -6,6 +6,7 @@ from psycopg2.extras import RealDictCursor
 import boto3
 from botocore.config import Config
 from session_utils import validate_session
+# redeploy v2
 
 def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')

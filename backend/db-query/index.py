@@ -5,6 +5,7 @@ import boto3
 from botocore.config import Config
 from typing import Dict, Any, List, Optional
 from session_utils import validate_session
+# redeploy v2
 
 def delete_from_s3_if_orphaned(photo_url: str, user_id: str, cursor, schema: str) -> None: 
     '''

@@ -3,6 +3,7 @@
 import json
 import os
 import psycopg2
+# redeploy v2
 
 DB_SCHEMA = 't_p29007832_virtual_fitting_room'
 

@@ -3,6 +3,7 @@ import jwt
 import os
 from datetime import datetime, timedelta
 from typing import Dict, Any
+# redeploy v2
 
 SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'fitting-room-admin-2024')

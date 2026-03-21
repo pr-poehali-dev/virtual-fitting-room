@@ -7,6 +7,7 @@ import boto3
 from botocore.config import Config
 from pydantic import BaseModel, Field, field_validator
 from session_utils import validate_session
+# redeploy v2
 
 def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')

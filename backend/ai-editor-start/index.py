@@ -5,6 +5,7 @@ import os
 import psycopg2
 import uuid
 from datetime import datetime
+# redeploy v2
 
 DB_SCHEMA = 't_p29007832_virtual_fitting_room'
 

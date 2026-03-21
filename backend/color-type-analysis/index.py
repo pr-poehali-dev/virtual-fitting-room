@@ -2,6 +2,7 @@ import json
 import os
 import random
 from typing import Dict, Any
+# redeploy v2
 
 COLOR_TYPES = [
     'warm_spring',

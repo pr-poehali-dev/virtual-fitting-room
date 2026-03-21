@@ -14,6 +14,7 @@ from typing import Dict, Any
 from io import BytesIO
 import boto3
 from botocore.config import Config
+# redeploy v2
 
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:

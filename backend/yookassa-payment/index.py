@@ -5,6 +5,7 @@ import uuid
 from typing import Dict, Any
 import requests
 import base64
+# redeploy v2
 
 YOOKASSA_API = 'https://api.yookassa.ru/v3'
 MIN_TOPUP = 50

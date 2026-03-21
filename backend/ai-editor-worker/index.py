@@ -9,6 +9,7 @@ import re
 import requests
 import psycopg2
 from datetime import datetime
+# redeploy v2
 
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"

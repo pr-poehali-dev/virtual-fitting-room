@@ -5,6 +5,7 @@ import requests
 from io import BytesIO
 from PIL import Image
 import base64
+# redeploy v2
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''

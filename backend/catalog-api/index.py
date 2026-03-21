@@ -5,6 +5,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import requests
 import jwt
+# redeploy v2
 
 def verify_admin_jwt(provided_token: str) -> tuple[bool, str]:
     '''
