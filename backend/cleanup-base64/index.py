@@ -75,7 +75,7 @@ def handler(event, context):
             'headers': {
                 'Access-Control-Allow-Origin': get_cors_origin(event),
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Session-Token',
                 'Access-Control-Max-Age': '86400'
             },
             'body': ''
