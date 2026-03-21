@@ -255,8 +255,10 @@ export default function ColorType() {
 
   const pollTaskStatus = async (id: string) => {
     try {
+      const token = localStorage.getItem("session_token");
       const response = await fetch(
         `${COLORTYPE_STATUS_API}?task_id=${id}&force_check=true`,
+        { headers: token ? { "X-Session-Token": token } : {}, credentials: "include" },
       );
       const data = await response.json();
 
@@ -337,10 +339,12 @@ export default function ColorType() {
     setResult(null);
 
     try {
+      const token = localStorage.getItem("session_token");
       const response = await fetch(COLORTYPE_START_API, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { "X-Session-Token": token } : {}),
         },
         credentials: 'include',
         body: JSON.stringify({
