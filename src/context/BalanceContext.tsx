@@ -33,7 +33,11 @@ export function BalanceProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
     try {
+      const token = localStorage.getItem('session_token');
+      const headers: Record<string, string> = {};
+      if (token) headers['X-Session-Token'] = token;
       const response = await fetch(USER_BALANCE_API, {
+        headers,
         credentials: 'include'
       });
 

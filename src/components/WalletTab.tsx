@@ -71,7 +71,11 @@ export default function WalletTab() {
     if (!user) return;
 
     try {
+      const token = localStorage.getItem("session_token");
+      const headers: Record<string, string> = {};
+      if (token) headers["X-Session-Token"] = token;
       const response = await fetch(USER_BALANCE_API, {
+        headers,
         credentials: "include",
       });
 
@@ -93,8 +97,12 @@ export default function WalletTab() {
 
     try {
       const offset = (currentPage - 1) * transactionsPerPage;
+      const token = localStorage.getItem("session_token");
+      const historyHeaders: Record<string, string> = {};
+      if (token) historyHeaders["X-Session-Token"] = token;
       const response = await fetch(
         `${BALANCE_HISTORY_API}?user_id=${user.id}&limit=${transactionsPerPage}&offset=${offset}`,
+        { headers: historyHeaders, credentials: "include" },
       );
 
       if (response.ok) {
