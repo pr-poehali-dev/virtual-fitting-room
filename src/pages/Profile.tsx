@@ -102,10 +102,12 @@ export default function Profile() {
 
   const fetchLookbooks = async () => {
     try {
+      const token = localStorage.getItem('session_token');
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'X-Session-Token': token } : {})
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -148,10 +150,12 @@ export default function Profile() {
     }
 
     try {
+      const token = localStorage.getItem('session_token');
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'X-Session-Token': token } : {})
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -201,10 +205,12 @@ export default function Profile() {
     if (!editingLookbookId) return;
 
     try {
+      const token = localStorage.getItem('session_token');
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'X-Session-Token': token } : {})
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -250,10 +256,12 @@ export default function Profile() {
     if (!confirm('Удалить лукбук?\n\nВсе фото из лукбука также будут удалены из хранилища.')) return;
 
     try {
+      const token = localStorage.getItem('session_token');
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'X-Session-Token': token } : {})
         },
         credentials: 'include',
         body: JSON.stringify({

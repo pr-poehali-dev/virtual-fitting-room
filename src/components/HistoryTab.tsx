@@ -82,10 +82,12 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
 
       const updatedPhotos = [...lookbook.photos, ...selectedPhotos];
 
+      const token = localStorage.getItem('session_token');
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'X-Session-Token': token } : {})
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -116,10 +118,12 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
     if (!confirm('Удалить это фото из истории?')) return;
 
     try {
+      const token = localStorage.getItem('session_token');
       const response = await fetch(DB_QUERY_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'X-Session-Token': token } : {})
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -148,11 +152,13 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
     if (!confirm(`Удалить выбранные фото?\n\nВы собираетесь удалить ${count} ${photoWord} из истории примерок.\nЭто действие нельзя отменить.`)) return;
 
     try {
+      const token = localStorage.getItem('session_token');
       const deletePromises = selectedItems.map(id => 
         fetch(DB_QUERY_API, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...(token ? { 'X-Session-Token': token } : {})
           },
           credentials: 'include',
           body: JSON.stringify({
@@ -185,9 +191,14 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
         console.log('[HistoryTab] External URL detected, proxying for download...');
         const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
         
+        const sessionToken = localStorage.getItem('session_token');
         const proxyResponse = await fetch(IMAGE_PROXY_API, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(sessionToken ? { 'X-Session-Token': sessionToken } : {})
+          },
+          credentials: 'include',
           body: JSON.stringify({ image_url: imageUrl })
         });
         

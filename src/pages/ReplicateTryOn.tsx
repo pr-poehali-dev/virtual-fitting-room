@@ -88,8 +88,13 @@ const proxyFalImage = async (falUrl: string): Promise<string> => {
     }
 
     console.log("[ImageProxy] Proxying fal.ai image:", falUrl);
+    const token = localStorage.getItem('session_token');
     const response = await fetch(
       `${IMAGE_PROXY_API}?url=${encodeURIComponent(falUrl)}`,
+      {
+        headers: token ? { 'X-Session-Token': token } : {},
+        credentials: 'include',
+      },
     );
 
     if (!response.ok) {

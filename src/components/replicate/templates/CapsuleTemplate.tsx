@@ -226,8 +226,13 @@ export default function CapsuleTemplate({
         const response = await fetch(generatedImage);
         blob = await response.blob();
       } else {
+        const sessionToken = localStorage.getItem('session_token');
         const proxyResponse = await fetch(
           `${IMAGE_PROXY_API}?url=${encodeURIComponent(generatedImage)}`,
+          {
+            headers: sessionToken ? { 'X-Session-Token': sessionToken } : {},
+            credentials: 'include',
+          },
         );
         if (!proxyResponse.ok) throw new Error("Failed to proxy image");
         const proxyData = await proxyResponse.json();
@@ -256,13 +261,14 @@ export default function CapsuleTemplate({
     }
     setIsSaving(true);
     try {
+      const token = localStorage.getItem('session_token');
       const lookbook = lookbooks?.find(
         (lb: { id: string; photos?: string[] }) => lb.id === selectedLookbookId,
       );
       const updatedPhotos = [...(lookbook?.photos || []), cdnImageUrl];
       const response = await fetch(DB_QUERY_API, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token ? { 'X-Session-Token': token } : {}) },
         credentials: "include",
         body: JSON.stringify({
           table: "lookbooks",
@@ -294,9 +300,10 @@ export default function CapsuleTemplate({
     }
     setIsSaving(true);
     try {
+      const token = localStorage.getItem('session_token');
       const response = await fetch(DB_QUERY_API, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token ? { 'X-Session-Token': token } : {}) },
         credentials: "include",
         body: JSON.stringify({
           table: "lookbooks",
