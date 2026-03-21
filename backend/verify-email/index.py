@@ -12,7 +12,7 @@ except ImportError:
     from psycopg2cffi.extras import RealDictCursor
 
 def get_db_connection():
-    # Force redeploy
+    # Force redeploy v2
     dsn = os.environ.get('DATABASE_URL')
     if '?' in dsn:
         dsn += '&options=-c%20search_path%3Dt_p29007832_virtual_fitting_room'
