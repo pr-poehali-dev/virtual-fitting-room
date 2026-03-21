@@ -591,11 +591,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         elif action == 'validate':
-            # Read session token from X-Cookie header (mapped from Cookie by proxy)
-            cookie_header = event.get('headers', {}).get('x-cookie') or event.get('headers', {}).get('X-Cookie', '')
-            session_token = None
+            headers = event.get('headers', {})
+            cookie_header = headers.get('x-cookie') or headers.get('X-Cookie', '')
+            session_token = headers.get('x-session-token') or headers.get('X-Session-Token')
             
-            if cookie_header:
+            if not session_token and cookie_header:
                 for cookie in cookie_header.split(';'):
                     cookie = cookie.strip()
                     if cookie.startswith('session_token='):

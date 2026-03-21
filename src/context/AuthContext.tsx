@@ -33,9 +33,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const validateSession = async () => {
       try {
+        const savedToken = localStorage.getItem('session_token');
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (savedToken) {
+          headers['X-Session-Token'] = savedToken;
+        }
         const response = await fetch(AUTH_API, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           credentials: 'include',
           body: JSON.stringify({ action: 'validate' })
         });
