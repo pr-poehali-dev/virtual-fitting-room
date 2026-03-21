@@ -399,6 +399,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     print(f'[TemplateWorker] Processing task: {task_id}')
 
     database_url = os.environ.get('DATABASE_URL')
+    print(f'[TEMPLATE-WORKER] DATABASE_URL present: {bool(database_url)}')
     if not database_url:
         return {
             'statusCode': 500,

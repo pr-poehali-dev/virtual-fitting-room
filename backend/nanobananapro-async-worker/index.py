@@ -345,6 +345,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     print(f'[NanoBanana] Worker triggered for specific task: {task_id}')
     
     database_url = os.environ.get('DATABASE_URL')
+    print(f'[ASYNC-WORKER] DATABASE_URL present: {bool(database_url)}')
     if not database_url:
         return {
             'statusCode': 500,

@@ -50,6 +50,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     print(f'[START-{request_id}] Timestamp: {request_timestamp}')
     
     database_url = os.environ.get('DATABASE_URL')
+    print(f'[ASYNC-START] DATABASE_URL present: {bool(database_url)}')
     if not database_url:
         return {
             'statusCode': 500,
