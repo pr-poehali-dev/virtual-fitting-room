@@ -13,6 +13,7 @@ from session_utils import validate_session
 GENERATION_COST = 50
 COLORTYPE_COST = 50
 MIN_TOPUP = 50
+# redeploy v2
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     def get_cors_origin(event: Dict[str, Any]) -> str:

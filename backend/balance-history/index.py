@@ -2,6 +2,7 @@ import json
 import os
 import psycopg2
 from typing import Dict, Any
+# redeploy v2
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     def get_cors_origin(event: Dict[str, Any]) -> str:
