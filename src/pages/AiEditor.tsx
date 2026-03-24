@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,8 +10,23 @@ import Layout from "@/components/Layout";
 import { useAuth } from "@/context/AuthContext";
 
 const ALLOWED_EMAIL = "apollinaria-b@yandex.ru";
+const LS_KEY = "ai_editor_last_task";
 
 type Mode = "chat" | "file" | "archive";
+
+interface TaskInfo {
+  task_id: string;
+  status: string;
+  mode: Mode;
+  model_used?: string;
+  ai_response?: string;
+  result_file_content?: string;
+  result_archive_base64?: string;
+  files_count?: number;
+  error?: string;
+  filename?: string;
+  created_at?: string;
+}
 
 const MODES: { id: Mode; label: string; icon: string }[] = [
   { id: "chat", label: "Чат", icon: "MessageSquare" },
@@ -42,6 +57,32 @@ function isTextFile(name: string) {
   return TEXT_EXTENSIONS.some((ext) => lower.endsWith(ext));
 }
 
+function formatTime(iso?: string) {
+  if (!iso) return "—";
+  const d = new Date(iso + "Z");
+  return d.toLocaleString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function saveTaskToLS(task: { task_id: string; filename?: string; created_at: string }) {
+  localStorage.setItem(LS_KEY, JSON.stringify(task));
+}
+
+function loadTaskFromLS(): { task_id: string; filename?: string; created_at: string } | null {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 export default function AiEditor() {
   const { user, isLoading } = useAuth();
   const [mode, setMode] = useState<Mode>("chat");
@@ -54,12 +95,87 @@ export default function AiEditor() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const [lastTask, setLastTask] = useState<TaskInfo | null>(null);
+  const [isLoadingTask, setIsLoadingTask] = useState(false);
+  const [showResponseModal, setShowResponseModal] = useState(false);
+
   const stopPolling = useCallback(() => {
     if (pollingRef.current) {
       clearInterval(pollingRef.current);
       pollingRef.current = null;
     }
   }, []);
+
+  const downloadBlob = (data: Uint8Array, filename: string, type: string) => {
+    const blob = new Blob([data], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadFromTask = useCallback((task: TaskInfo) => {
+    if (task.mode === "archive" && task.result_archive_base64) {
+      const bytes = Uint8Array.from(atob(task.result_archive_base64), (c) => c.charCodeAt(0));
+      const fname = task.filename ? `edited_${task.filename}` : "edited_archive.zip";
+      const blob = new Blob([bytes], { type: "application/zip" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Архив скачан!");
+    } else if (task.mode === "file" && task.result_file_content) {
+      const bytes = new TextEncoder().encode(task.result_file_content);
+      const fname = task.filename ? `edited_${task.filename}` : "edited_file.txt";
+      const blob = new Blob([bytes], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Файл скачан!");
+    }
+  }, []);
+
+  const fetchTaskStatus = useCallback(async (taskId: string, filename?: string, createdAt?: string): Promise<TaskInfo | null> => {
+    try {
+      const res = await fetch(`${AI_EDITOR_STATUS}?task_id=${taskId}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return {
+        ...data,
+        task_id: taskId,
+        filename: filename || data.filename,
+        created_at: createdAt || data.created_at,
+      };
+    } catch {
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    const saved = loadTaskFromLS();
+    if (!saved) return;
+    setIsLoadingTask(true);
+    fetchTaskStatus(saved.task_id, saved.filename, saved.created_at).then((task) => {
+      if (task) {
+        setLastTask(task);
+        if (task.ai_response) setResponse(task.ai_response);
+      }
+      setIsLoadingTask(false);
+    });
+  }, [fetchTaskStatus]);
 
   const pollStatus = useCallback((taskId: string, currentFile: File | null, currentMode: Mode) => {
     let elapsed = 0;
@@ -77,6 +193,20 @@ export default function AiEditor() {
           setIsProcessing(false);
           setStatusText("");
           setResponse(data.ai_response || "");
+
+          const taskInfo: TaskInfo = {
+            task_id: taskId,
+            status: "completed",
+            mode: currentMode,
+            model_used: data.model_used,
+            ai_response: data.ai_response,
+            result_file_content: data.result_file_content,
+            result_archive_base64: data.result_archive_base64,
+            files_count: data.files_count,
+            filename: currentFile?.name,
+            created_at: new Date().toISOString().replace("Z", ""),
+          };
+          setLastTask(taskInfo);
 
           if (currentMode === "archive" && data.result_archive_base64 && currentFile) {
             const bytes = Uint8Array.from(atob(data.result_archive_base64), (c) => c.charCodeAt(0));
@@ -96,6 +226,16 @@ export default function AiEditor() {
           pollingRef.current = null;
           setIsProcessing(false);
           setStatusText("");
+
+          setLastTask({
+            task_id: taskId,
+            status: "failed",
+            mode: currentMode,
+            error: data.error,
+            filename: currentFile?.name,
+            created_at: new Date().toISOString().replace("Z", ""),
+          });
+
           toast.error(data.error || "Ошибка обработки");
         }
 
@@ -167,18 +307,6 @@ export default function AiEditor() {
     });
   };
 
-  const downloadBlob = (data: Uint8Array, filename: string, type: string) => {
-    const blob = new Blob([data], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
   const handleSubmit = async () => {
     if (!prompt.trim()) {
       toast.error("Напишите промпт");
@@ -226,6 +354,17 @@ export default function AiEditor() {
         throw new Error("Не получен task_id");
       }
 
+      const now = new Date().toISOString().replace("Z", "");
+      saveTaskToLS({ task_id: taskId, filename: file?.name, created_at: now });
+
+      setLastTask({
+        task_id: taskId,
+        status: "processing",
+        mode,
+        filename: file?.name,
+        created_at: now,
+      });
+
       setStatusText("Обрабатываю... 0 сек");
       pollStatus(taskId, file, mode);
     } catch (error) {
@@ -243,7 +382,50 @@ export default function AiEditor() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleRedownload = async () => {
+    if (!lastTask || lastTask.status !== "completed") return;
+
+    if (lastTask.result_archive_base64 || lastTask.result_file_content) {
+      downloadFromTask(lastTask);
+      return;
+    }
+
+    setIsLoadingTask(true);
+    const saved = loadTaskFromLS();
+    const task = await fetchTaskStatus(lastTask.task_id, saved?.filename, saved?.created_at);
+    setIsLoadingTask(false);
+
+    if (task && task.status === "completed") {
+      setLastTask(task);
+      downloadFromTask(task);
+    } else {
+      toast.error("Не удалось загрузить данные задачи");
+    }
+  };
+
   const canSubmit = prompt.trim() && !isProcessing && (mode === "chat" || file);
+
+  const modeLabel = (m: string) => {
+    if (m === "chat") return "Чат";
+    if (m === "file") return "Файл";
+    if (m === "archive") return "Архив";
+    return m;
+  };
+
+  const statusLabel = (s: string) => {
+    if (s === "completed") return "Готово";
+    if (s === "processing") return "В обработке...";
+    if (s === "pending") return "В очереди";
+    if (s === "failed") return "Ошибка";
+    return s;
+  };
+
+  const statusColor = (s: string) => {
+    if (s === "completed") return "text-green-600";
+    if (s === "processing" || s === "pending") return "text-yellow-600";
+    if (s === "failed") return "text-red-600";
+    return "text-gray-600";
+  };
 
   return (
     <Layout>
@@ -404,6 +586,105 @@ export default function AiEditor() {
                 <pre className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap overflow-x-auto max-h-[600px] overflow-y-auto">
                   {response}
                 </pre>
+              </CardContent>
+            </Card>
+          )}
+
+          {(lastTask || isLoadingTask) && (
+            <Card className="bg-white border-gray-200 shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Icon name="Clock" size={20} className="text-gray-500" />
+                  <h3 className="font-medium text-gray-700">Последняя задача</h3>
+                </div>
+
+                {isLoadingTask && !lastTask ? (
+                  <div className="flex items-center gap-2 text-gray-400 text-sm">
+                    <Icon name="Loader2" size={16} className="animate-spin" />
+                    Загружаю...
+                  </div>
+                ) : lastTask ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-2 px-3 text-gray-500 font-medium">Время</th>
+                          <th className="text-left py-2 px-3 text-gray-500 font-medium">Режим</th>
+                          <th className="text-left py-2 px-3 text-gray-500 font-medium">Статус</th>
+                          <th className="text-left py-2 px-3 text-gray-500 font-medium">Файл</th>
+                          <th className="text-right py-2 px-3 text-gray-500 font-medium">Действия</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b border-gray-100">
+                          <td className="py-3 px-3 text-gray-600 whitespace-nowrap">
+                            {formatTime(lastTask.created_at)}
+                          </td>
+                          <td className="py-3 px-3 text-gray-600">
+                            {modeLabel(lastTask.mode)}
+                          </td>
+                          <td className={`py-3 px-3 font-medium ${statusColor(lastTask.status)}`}>
+                            {lastTask.status === "processing" && (
+                              <Icon name="Loader2" size={14} className="inline mr-1 animate-spin" />
+                            )}
+                            {statusLabel(lastTask.status)}
+                          </td>
+                          <td className="py-3 px-3 text-gray-500 max-w-[200px] truncate">
+                            {lastTask.filename || "—"}
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              {lastTask.status === "completed" && lastTask.mode === "archive" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={handleRedownload}
+                                  disabled={isLoadingTask}
+                                  className="text-xs"
+                                >
+                                  <Icon name="Download" size={14} className="mr-1" />
+                                  Архив
+                                </Button>
+                              )}
+                              {lastTask.status === "completed" && lastTask.mode === "file" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={handleRedownload}
+                                  disabled={isLoadingTask}
+                                  className="text-xs"
+                                >
+                                  <Icon name="Download" size={14} className="mr-1" />
+                                  Файл
+                                </Button>
+                              )}
+                              {lastTask.status === "completed" && lastTask.ai_response && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setResponse(lastTask.ai_response || "");
+                                    setShowResponseModal(false);
+                                    toast.success("Ответ отображён выше");
+                                  }}
+                                  className="text-xs"
+                                >
+                                  <Icon name="Eye" size={14} className="mr-1" />
+                                  Ответ
+                                </Button>
+                              )}
+                              {lastTask.status === "failed" && lastTask.error && (
+                                <span className="text-xs text-red-500 max-w-[200px] truncate inline-block">
+                                  {lastTask.error}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
           )}
