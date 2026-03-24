@@ -2,8 +2,9 @@
 
 import json
 import os
+import base64
 import psycopg2
-# redeploy v2
+# redeploy v3
 
 DB_SCHEMA = 't_p29007832_virtual_fitting_room'
 
@@ -56,10 +57,19 @@ def handler(event, context):
     }
 
     if status == 'completed':
-        result['ai_response'] = ai_response or ''
+        if ai_response:
+            try:
+                result['ai_response'] = base64.b64decode(ai_response).decode('utf-8')
+            except Exception:
+                result['ai_response'] = ai_response
+        else:
+            result['ai_response'] = ''
         result['model_used'] = model_used or ''
         if mode == 'file' and result_file_content:
-            result['result_file_content'] = result_file_content
+            try:
+                result['result_file_content'] = base64.b64decode(result_file_content).decode('utf-8')
+            except Exception:
+                result['result_file_content'] = result_file_content
         if mode == 'archive' and result_archive_base64:
             result['result_archive_base64'] = result_archive_base64
             result['files_count'] = files_count

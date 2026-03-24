@@ -259,12 +259,14 @@ def process_task(task_id):
                     (error, now, task_id)
                 )
             else:
+                ai_response_b64 = base64.b64encode(ai_text.encode('utf-8')).decode('ascii') if ai_text else None
+                result_file_b64 = base64.b64encode(result_file_content.encode('utf-8')).decode('ascii') if result_file_content else None
                 cur.execute(
                     f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
                         SET status = 'completed', ai_response = %s, result_file_content = %s,
                             result_archive_base64 = %s, files_count = %s, model_used = %s, updated_at = %s
                         WHERE id = %s""",
-                    (ai_text, result_file_content, result_archive_base64, files_count, model, now, task_id)
+                    (ai_response_b64, result_file_b64, result_archive_base64, files_count, model, now, task_id)
                 )
         conn2.commit()
         print(f'Task {task_id} finished: {"failed" if error else "completed"}')
