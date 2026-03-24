@@ -148,16 +148,17 @@ export default function AiEditor() {
     }
   }, []);
 
-  const fetchTaskStatus = useCallback(async (taskId: string, filename?: string, createdAt?: string): Promise<TaskInfo | null> => {
+  const fetchTaskStatus = useCallback(async (taskId?: string): Promise<TaskInfo | null> => {
     try {
-      const res = await fetch(`${AI_EDITOR_STATUS}?task_id=${taskId}`);
+      const url = taskId
+        ? `${AI_EDITOR_STATUS}?task_id=${taskId}`
+        : `${AI_EDITOR_STATUS}?latest=true`;
+      const res = await fetch(url);
       if (!res.ok) return null;
       const data = await res.json();
       return {
         ...data,
-        task_id: taskId,
-        filename: filename || data.filename,
-        created_at: createdAt || data.created_at,
+        task_id: data.task_id || taskId,
       };
     } catch {
       return null;
@@ -165,13 +166,10 @@ export default function AiEditor() {
   }, []);
 
   useEffect(() => {
-    const saved = loadTaskFromLS();
-    if (!saved) return;
     setIsLoadingTask(true);
-    fetchTaskStatus(saved.task_id, saved.filename, saved.created_at).then((task) => {
+    fetchTaskStatus().then((task) => {
       if (task) {
         setLastTask(task);
-        if (task.ai_response) setResponse(task.ai_response);
       }
       setIsLoadingTask(false);
     });
@@ -391,8 +389,7 @@ export default function AiEditor() {
     }
 
     setIsLoadingTask(true);
-    const saved = loadTaskFromLS();
-    const task = await fetchTaskStatus(lastTask.task_id, saved?.filename, saved?.created_at);
+    const task = await fetchTaskStatus(lastTask.task_id);
     setIsLoadingTask(false);
 
     if (task && task.status === "completed") {

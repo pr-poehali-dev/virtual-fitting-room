@@ -7,7 +7,7 @@
       "expectedStatus": 200
     },
     {
-      "name": "GET without task_id",
+      "name": "GET without params",
       "method": "GET",
       "path": "/",
       "expectedStatus": 400,
@@ -20,6 +20,14 @@
       "path": "/?task_id=00000000-0000-0000-0000-000000000000",
       "expectedStatus": 404,
       "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "GET latest task",
+      "method": "GET",
+      "path": "/?latest=true",
+      "expectedStatus": 200,
+      "expectedBody": {"task_id": "string", "status": "string", "mode": "string"},
       "bodyMatcher": "partial"
     }
   ]
