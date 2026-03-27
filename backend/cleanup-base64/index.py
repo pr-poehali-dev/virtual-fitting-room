@@ -273,6 +273,21 @@ def handler(event, context):
         conn.commit()
     report.append({'table': 'color_type_history', 'column': 'person_image', 'cleaned': r['cnt'], 'saved_bytes': int(r['bytes'])})
 
+    # 12. ai_editor_tasks — удаление всех строк кроме последней
+    cursor.execute("""
+        SELECT COUNT(*) as cnt FROM ai_editor_tasks
+        WHERE id != (SELECT id FROM ai_editor_tasks ORDER BY created_at DESC LIMIT 1)
+    """)
+    r = cursor.fetchone()
+    ai_deleted = int(r['cnt'])
+    if ai_deleted > 0:
+        cursor.execute("""
+            DELETE FROM ai_editor_tasks
+            WHERE id != (SELECT id FROM ai_editor_tasks ORDER BY created_at DESC LIMIT 1)
+        """)
+        conn.commit()
+    report.append({'table': 'ai_editor_tasks', 'column': 'все строки (кроме последней)', 'cleaned': ai_deleted, 'saved_bytes': 0})
+
     cursor.close()
     conn.close()
 
