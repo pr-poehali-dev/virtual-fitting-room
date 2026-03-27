@@ -4,14 +4,27 @@ import json
 import os
 import psycopg2
 import uuid
+import base64
 from datetime import datetime
-# redeploy v2
 
 DB_SCHEMA = 't_p29007832_virtual_fitting_room'
 
 
 def get_db_connection():
     return psycopg2.connect(os.environ['DATABASE_URL'])
+
+
+def sql_escape(val):
+    if val is None:
+        return 'NULL'
+    return "'" + str(val).replace("'", "''") + "'"
+
+
+def sql_escape_b64(val):
+    if val is None:
+        return 'NULL'
+    encoded = base64.b64encode(val.encode('utf-8')).decode('ascii')
+    return "'" + encoded + "'"
 
 
 def handler(event, context):
@@ -58,28 +71,29 @@ def handler(event, context):
         return {'statusCode': 400, 'headers': cors_headers, 'body': json.dumps({'error': 'Нужен архив'})}
 
     task_id = str(uuid.uuid4())
-    now = datetime.utcnow()
+    now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+
+    file_content_val = body.get('file_content', '') if mode == 'file' else None
+    archive_val = body.get('archive_base64', '') if mode == 'archive' else None
+
+    prompt_b64 = sql_escape_b64(prompt)
+    file_content_b64 = sql_escape_b64(file_content_val) if file_content_val else 'NULL'
+    archive_b64 = sql_escape(archive_val) if archive_val else 'NULL'
 
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                f"""INSERT INTO {DB_SCHEMA}.ai_editor_tasks
+            sql = f"""INSERT INTO {DB_SCHEMA}.ai_editor_tasks
                     (id, status, mode, model, prompt, filename, file_content, archive_base64, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                (
-                    task_id,
-                    'pending',
-                    mode,
-                    model,
-                    prompt,
-                    body.get('filename', ''),
-                    body.get('file_content', '') if mode == 'file' else None,
-                    body.get('archive_base64', '') if mode == 'archive' else None,
-                    now,
-                    now,
-                )
-            )
+                    VALUES (
+                        {sql_escape(task_id)}, 'pending', {sql_escape(mode)}, {sql_escape(model)},
+                        convert_from(decode({prompt_b64}, 'base64'), 'UTF8'),
+                        {sql_escape(body.get('filename', ''))},
+                        {('convert_from(decode(' + file_content_b64 + ", 'base64'), 'UTF8')") if file_content_val else 'NULL'},
+                        {archive_b64},
+                        {sql_escape(now)}, {sql_escape(now)}
+                    )"""
+            cur.execute(sql)
         conn.commit()
     finally:
         conn.close()

@@ -9,7 +9,6 @@ import re
 import requests
 import psycopg2
 from datetime import datetime
-# redeploy v2
 
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -194,16 +193,23 @@ def call_openrouter(model, prompt_text):
     return ai_text, None
 
 
+def sql_escape(val):
+    if val is None:
+        return 'NULL'
+    return "'" + str(val).replace("'", "''") + "'"
+
+
 def process_task(task_id):
+    safe_id = str(task_id).replace("'", "''")
+    now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
             cur.execute(
                 f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
-                    SET status = 'processing', updated_at = %s
-                    WHERE id = %s AND status = 'pending'
-                    RETURNING id, mode, model, prompt, filename, file_content, archive_base64""",
-                (datetime.utcnow(), task_id)
+                    SET status = 'processing', updated_at = '{now}'
+                    WHERE id = '{safe_id}' AND status = 'pending'
+                    RETURNING id, mode, model, prompt, filename, file_content, archive_base64"""
             )
             row = cur.fetchone()
             if not row:
@@ -249,24 +255,25 @@ def process_task(task_id):
 
     conn2 = get_db_connection()
     try:
-        now = datetime.utcnow()
+        now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
         with conn2.cursor() as cur:
             if error:
                 cur.execute(
                     f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
-                        SET status = 'failed', error_message = %s, updated_at = %s
-                        WHERE id = %s""",
-                    (error, now, task_id)
+                        SET status = 'failed', error_message = {sql_escape(error)}, updated_at = '{now}'
+                        WHERE id = '{safe_id}'"""
                 )
             else:
                 ai_response_b64 = base64.b64encode(ai_text.encode('utf-8')).decode('ascii') if ai_text else None
                 result_file_b64 = base64.b64encode(result_file_content.encode('utf-8')).decode('ascii') if result_file_content else None
+                files_count_sql = str(int(files_count)) if files_count is not None else 'NULL'
                 cur.execute(
                     f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
-                        SET status = 'completed', ai_response = %s, result_file_content = %s,
-                            result_archive_base64 = %s, files_count = %s, model_used = %s, updated_at = %s
-                        WHERE id = %s""",
-                    (ai_response_b64, result_file_b64, result_archive_base64, files_count, model, now, task_id)
+                        SET status = 'completed', ai_response = {sql_escape(ai_response_b64)},
+                            result_file_content = {sql_escape(result_file_b64)},
+                            result_archive_base64 = {sql_escape(result_archive_base64)},
+                            files_count = {files_count_sql}, model_used = {sql_escape(model)}, updated_at = '{now}'
+                        WHERE id = '{safe_id}'"""
                 )
         conn2.commit()
         print(f'Task {task_id} finished: {"failed" if error else "completed"}')

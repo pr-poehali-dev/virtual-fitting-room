@@ -83,11 +83,11 @@ def handler(event, context):
                 found_id = row[0]
                 data_row = row[1:]
             else:
+                safe_id = str(task_id).replace("'", "''")
                 cur.execute(
                     f"""SELECT status, mode, ai_response, result_file_content, result_archive_base64,
                                files_count, model_used, error_message, filename, created_at
-                        FROM {DB_SCHEMA}.ai_editor_tasks WHERE id = %s""",
-                    (task_id,)
+                        FROM {DB_SCHEMA}.ai_editor_tasks WHERE id = '{safe_id}'"""
                 )
                 row = cur.fetchone()
                 if not row:
