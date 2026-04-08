@@ -220,6 +220,7 @@ def process_task(task_id):
         conn.close()
 
     _, mode, model, prompt, filename, file_content, archive_base64 = row
+    print(f'[{task_id}] Задача загружена: mode={mode}, model={model}, archive_size={len(archive_base64) if archive_base64 else 0}')
 
     ai_text = None
     result_file_content = None
@@ -229,22 +230,30 @@ def process_task(task_id):
 
     try:
         if mode == 'chat':
+            print(f'[{task_id}] Отправляю в OpenRouter (chat)...')
             ai_text, error = call_openrouter(model, prompt)
+            print(f'[{task_id}] OpenRouter ответил: error={error}, len={len(ai_text) if ai_text else 0}')
 
         elif mode == 'file':
             prompt_text = build_file_prompt(filename or 'file.txt', file_content or '', prompt)
+            print(f'[{task_id}] Отправляю в OpenRouter (file), prompt_len={len(prompt_text)}...')
             ai_text, error = call_openrouter(model, prompt_text)
+            print(f'[{task_id}] OpenRouter ответил: error={error}, len={len(ai_text) if ai_text else 0}')
             if ai_text:
                 result_file_content = parse_single_file_response(ai_text, filename or 'file.txt', file_content or '')
 
         elif mode == 'archive':
+            print(f'[{task_id}] Распаковка архива...')
             zip_bytes = base64.b64decode(archive_base64)
             text_files = extract_text_files(zip_bytes)
+            print(f'[{task_id}] Извлечено файлов: {len(text_files)}, общий размер: {sum(len(v) for v in text_files.values())} символов')
             if not text_files:
                 error = 'Не найдено текстовых файлов в архиве'
             else:
                 prompt_text = build_archive_prompt(text_files, prompt)
+                print(f'[{task_id}] Отправляю в OpenRouter (archive), prompt_len={len(prompt_text)}...')
                 ai_text, error = call_openrouter(model, prompt_text)
+                print(f'[{task_id}] OpenRouter ответил: error={error}, len={len(ai_text) if ai_text else 0}')
                 if ai_text:
                     updated_files = parse_ai_response(ai_text, text_files)
                     result_zip = build_result_zip(zip_bytes, updated_files)
