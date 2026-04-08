@@ -182,7 +182,7 @@ def call_openrouter(model, prompt_text):
             'messages': [{'role': 'user', 'content': prompt_text}],
             'max_tokens': 64000,
         },
-        timeout=280,
+        timeout=540,
     )
     if response.status_code != 200:
         return None, f'OpenRouter ошибка ({response.status_code}): {response.text[:500]}'
