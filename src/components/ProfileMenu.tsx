@@ -15,10 +15,11 @@ const ProfileMenu = () => {
 
   const historyItems = [
     { path: '/profile/history', icon: 'Shirt', label: 'История примерок' },
+    { path: '/profile/history-freegen', icon: 'Sparkles', label: 'История генераций' },
     { path: '/profile/history-colortypes', icon: 'Palette', label: 'История цветотипов' },
   ];
 
-  const isHistoryActive = location.pathname === '/profile/history' || location.pathname === '/profile/history-colortypes';
+  const isHistoryActive = location.pathname === '/profile/history' || location.pathname === '/profile/history-colortypes' || location.pathname === '/profile/history-freegen';
 
   return (
     <>

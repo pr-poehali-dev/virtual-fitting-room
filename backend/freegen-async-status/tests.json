@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "name": "Check task status (not found is OK)",
+      "method": "GET",
+      "path": "/?task_id=test-freegen-000",
+      "expectedStatus": 404,
+      "expectedBody": {
+        "error": "Task not found"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Missing task_id",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "task_id is required"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

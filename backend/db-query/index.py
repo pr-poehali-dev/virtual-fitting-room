@@ -136,7 +136,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'lookbooks',
             'clothing_catalog',
             'users',
-            'color_type_history'
+            'color_type_history',
+            'freegen_history',
+            'freegen_tasks'
         ]
         
         if table not in allowed_tables:

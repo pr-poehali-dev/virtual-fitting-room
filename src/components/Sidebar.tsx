@@ -27,6 +27,12 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       label: "Виртуальная примерочная",
     },
     {
+      id: "free-generation",
+      path: "/freegeneration",
+      icon: "Sparkles",
+      label: "Генерация изображений",
+    },
+    {
       id: "color-analysis",
       path: "/colortype",
       icon: "Palette",

@@ -1,4 +1,7 @@
 {
+  "freegen-async-status": "https://functions.poehali.dev/f706d708-5f17-4c11-864c-d13bf91cebce",
+  "freegen-async-start": "https://functions.poehali.dev/093c98ba-e711-4c78-b328-a7494005df42",
+  "freegen-async-worker": "https://functions.poehali.dev/8b34e115-88be-4740-887a-36c388980955",
   "ai-editor-worker": "https://functions.poehali.dev/d3e4e0ce-9999-45d3-82b4-15d3eeb45425",
   "ai-editor-status": "https://functions.poehali.dev/487c8816-d661-4f43-a72d-112374006c7c",
   "ai-editor-start": "https://functions.poehali.dev/6ddfd93a-b3ac-445f-a1bf-3327d6ba01d7",

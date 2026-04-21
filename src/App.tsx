@@ -16,6 +16,7 @@ import ProfileDashboard from "./pages/ProfileDashboard";
 import ProfileLookbooks from "./pages/ProfileLookbooks";
 import ProfileHistory from "./pages/ProfileHistory";
 import ProfileHistoryColortypes from "./pages/ProfileHistoryColortypes";
+import ProfileHistoryFreegen from "./pages/ProfileHistoryFreegen";
 import ProfileWallet from "./pages/ProfileWallet";
 import ProfileSettings from "./pages/ProfileSettings";
 import PalettePage from "./pages/PalettePage";
@@ -37,6 +38,7 @@ import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import RegistrationSuccess from "./pages/RegistrationSuccess";
 import ReplicateTryOn from "./pages/ReplicateTryOn";
+import FreeGeneration from "./pages/FreeGeneration";
 import NotFound from "./pages/NotFound";
 import Payment from "./pages/Payment";
 import Offer from "./pages/Offer";
@@ -79,6 +81,7 @@ const App = () => (
               <Route path="/" element={<Home />} />
               <Route path="/virtualfitting" element={<ReplicateTryOn />} />
               <Route path="/replicate" element={<Navigate to="/virtualfitting" replace />} />
+              <Route path="/freegeneration" element={<FreeGeneration />} />
               <Route path="/colortype" element={<ColorType />} />
             <Route path="/ai-editor" element={<AiEditor />} />
             
@@ -87,6 +90,7 @@ const App = () => (
             <Route path="/profile/lookbooks" element={<ProfileLookbooks />} />
             <Route path="/profile/history" element={<ProfileHistory />} />
             <Route path="/profile/history-colortypes" element={<ProfileHistoryColortypes />} />
+            <Route path="/profile/history-freegen" element={<ProfileHistoryFreegen />} />
             <Route path="/profile/wallet" element={<ProfileWallet />} />
             <Route path="/profile/settings" element={<ProfileSettings />} />
             <Route path="/profile-old" element={<Profile />} />

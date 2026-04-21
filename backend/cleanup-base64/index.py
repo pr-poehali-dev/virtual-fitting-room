@@ -273,6 +273,78 @@ def handler(event, context):
         conn.commit()
     report.append({'table': 'color_type_history', 'column': 'person_image', 'cleaned': r['cnt'], 'saved_bytes': int(r['bytes'])})
 
+    # 12a. freegen_tasks — references (JSON с base64)
+    cursor.execute("""
+        SELECT id, "references", LENGTH("references") as len
+        FROM freegen_tasks
+        WHERE status IN ('completed', 'failed') AND "references" LIKE '%%data:image%%'
+    """)
+    rows = cursor.fetchall()
+    fg_saved = 0
+    fg_count = 0
+    for row in rows:
+        try:
+            items = json.loads(row['references'])
+            changed = False
+            new_items = []
+            for item in items:
+                if isinstance(item, str) and item.startswith('data:'):
+                    new_items.append('Удалено')
+                    changed = True
+                elif isinstance(item, dict) and item.get('image', '').startswith('data:'):
+                    item['image'] = 'Удалено'
+                    changed = True
+                    new_items.append(item)
+                else:
+                    new_items.append(item)
+            if changed:
+                new_val = json.dumps(new_items, ensure_ascii=False)
+                saved = len(row['references']) - len(new_val)
+                cursor.execute('UPDATE freegen_tasks SET "references" = %s WHERE id = %s', (new_val, row['id']))
+                fg_saved += saved
+                fg_count += 1
+        except Exception:
+            pass
+    if fg_count > 0:
+        conn.commit()
+    report.append({'table': 'freegen_tasks', 'column': 'references', 'cleaned': fg_count, 'saved_bytes': fg_saved})
+
+    # 12b. freegen_history — references (JSON с base64)
+    cursor.execute("""
+        SELECT id, "references", LENGTH("references") as len
+        FROM freegen_history
+        WHERE "references" LIKE '%%data:image%%'
+    """)
+    rows = cursor.fetchall()
+    fh_saved = 0
+    fh_count = 0
+    for row in rows:
+        try:
+            items = json.loads(row['references'])
+            changed = False
+            new_items = []
+            for item in items:
+                if isinstance(item, str) and item.startswith('data:'):
+                    new_items.append('Удалено')
+                    changed = True
+                elif isinstance(item, dict) and item.get('image', '').startswith('data:'):
+                    item['image'] = 'Удалено'
+                    changed = True
+                    new_items.append(item)
+                else:
+                    new_items.append(item)
+            if changed:
+                new_val = json.dumps(new_items, ensure_ascii=False)
+                saved = len(row['references']) - len(new_val)
+                cursor.execute('UPDATE freegen_history SET "references" = %s WHERE id = %s', (new_val, row['id']))
+                fh_saved += saved
+                fh_count += 1
+        except Exception:
+            pass
+    if fh_count > 0:
+        conn.commit()
+    report.append({'table': 'freegen_history', 'column': 'references', 'cleaned': fh_count, 'saved_bytes': fh_saved})
+
     # 12. ai_editor_tasks — удаление всех строк кроме последней
     cursor.execute("""
         SELECT COUNT(*) as cnt FROM ai_editor_tasks
