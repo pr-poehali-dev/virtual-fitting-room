@@ -51,9 +51,10 @@ export default function ProfileHistoryFreegen() {
           columns: ['id', 'prompt', 'result_image', 'aspect_ratio', 'cost', 'created_at', 'removed_at'],
         }),
       });
-      const data = await res.json();
-      if (res.ok && Array.isArray(data.rows)) {
-        setItems(data.rows.filter((r: FreegenItem) => !r.removed_at));
+      const result = await res.json();
+      const rows = result.success && Array.isArray(result.data) ? result.data : [];
+      if (res.ok) {
+        setItems(rows.filter((r: FreegenItem) => !r.removed_at));
       }
     } catch (e) {
       console.error('[FreegenHistory]', e);
@@ -97,17 +98,27 @@ export default function ProfileHistoryFreegen() {
   };
 
   const handleDownload = async (url: string) => {
+    const filename = `freegen-${Date.now()}.png`;
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, { mode: 'cors', cache: 'no-store' });
+      if (!res.ok) throw new Error('fetch failed');
       const blob = await res.blob();
       const href = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = href;
-      a.download = `freegen-${Date.now()}.png`;
+      a.download = filename;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(href);
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(href), 1000);
     } catch {
-      window.open(url, '_blank');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   };
 

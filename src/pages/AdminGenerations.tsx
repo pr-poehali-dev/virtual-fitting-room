@@ -76,35 +76,66 @@ export default function AdminGenerations() {
 
   const fetchGenerationHistory = async () => {
     const isFreegen = genModelFilter === 'freegen';
-    const action = isFreegen ? 'freegen_history' : 'generation_history';
-    const params = new URLSearchParams({ action });
+    const isAll = genModelFilter === 'all';
 
-    if (genUserFilter && genUserFilter !== 'all') params.append('user_id', genUserFilter);
-    if (!isFreegen && genModelFilter && genModelFilter !== 'all') {
-      params.append('model', genModelFilter);
-    }
+    const buildParams = (action: string, model?: string) => {
+      const params = new URLSearchParams({ action });
+      if (genUserFilter && genUserFilter !== 'all') params.append('user_id', genUserFilter);
+      if (model) params.append('model', model);
+      return params;
+    };
+
+    const normalize = (
+      data: Array<Record<string, unknown>>,
+      fallbackModel: string,
+    ): GenerationHistory[] =>
+      data.map((h) => ({
+        id: String(h.id ?? ''),
+        user_id: String(h.user_id ?? ''),
+        user_email: String(h.user_email ?? ''),
+        user_name: String(h.user_name ?? ''),
+        model_used: String(h.model_used ?? fallbackModel),
+        cost: typeof h.cost === 'number' ? h.cost : 0,
+        result_image: String(h.result_image ?? ''),
+        created_at: String(h.created_at ?? ''),
+      }));
 
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${ADMIN_API}?${params.toString()}`, {
-        headers: { 'Authorization': `Bearer ${getAdminToken()}` }
-      });
+      const authHeaders = { 'Authorization': `Bearer ${getAdminToken()}` };
+
+      if (isAll) {
+        const [genRes, freeRes] = await Promise.all([
+          fetch(`${ADMIN_API}?${buildParams('generation_history').toString()}`, { headers: authHeaders }),
+          fetch(`${ADMIN_API}?${buildParams('freegen_history').toString()}`, { headers: authHeaders }),
+        ]);
+
+        if (!genRes.ok && !freeRes.ok) {
+          toast.error('Ошибка загрузки истории генераций');
+          return;
+        }
+
+        const genData = genRes.ok ? await genRes.json() : [];
+        const freeData = freeRes.ok ? await freeRes.json() : [];
+
+        const merged = [
+          ...normalize(genData, ''),
+          ...normalize(freeData, 'freegen'),
+        ].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+
+        setGenerationHistory(merged);
+        setCurrentPage(1);
+        return;
+      }
+
+      const action = isFreegen ? 'freegen_history' : 'generation_history';
+      const model = !isFreegen && genModelFilter && genModelFilter !== 'all' ? genModelFilter : undefined;
+      const response = await fetch(`${ADMIN_API}?${buildParams(action, model).toString()}`, { headers: authHeaders });
 
       if (response.ok) {
         const data = await response.json();
-        // Для freegen_history добавляем model_used='freegen', чтобы таблица отображалась одинаково
-        const normalized: GenerationHistory[] = (data as Array<Record<string, unknown>>).map((h) => ({
-          id: String(h.id ?? ''),
-          user_id: String(h.user_id ?? ''),
-          user_email: String(h.user_email ?? ''),
-          user_name: String(h.user_name ?? ''),
-          model_used: String(h.model_used ?? (isFreegen ? 'freegen' : '')),
-          cost: typeof h.cost === 'number' ? h.cost : 0,
-          result_image: String(h.result_image ?? ''),
-          created_at: String(h.created_at ?? ''),
-        }));
-        setGenerationHistory(normalized);
+        setGenerationHistory(normalize(data, isFreegen ? 'freegen' : ''));
         setCurrentPage(1);
       } else {
         toast.error('Ошибка загрузки истории генераций');
@@ -212,7 +243,7 @@ export default function AdminGenerations() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Все (примерочная)</SelectItem>
+                        <SelectItem value="all">Все модели</SelectItem>
                         <SelectItem value="replicate">Replicate</SelectItem>
                         <SelectItem value="seedream">SeeDream</SelectItem>
                         <SelectItem value="nanobananapro">NanoBananaPro</SelectItem>

@@ -26,17 +26,27 @@ export default function FreegenResultPanel({
 }: Props) {
   const handleDownload = async () => {
     if (!resultUrl) return;
+    const filename = `freegen-${Date.now()}.png`;
     try {
-      const res = await fetch(resultUrl);
+      const res = await fetch(resultUrl, { mode: 'cors', cache: 'no-store' });
+      if (!res.ok) throw new Error('fetch failed');
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `freegen-${Date.now()}.png`;
+      a.download = filename;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
-      window.open(resultUrl, '_blank');
+      const a = document.createElement('a');
+      a.href = resultUrl;
+      a.download = filename;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   };
 
