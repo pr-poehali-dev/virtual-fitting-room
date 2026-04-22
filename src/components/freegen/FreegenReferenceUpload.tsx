@@ -12,16 +12,59 @@ interface Props {
   disabled?: boolean;
 }
 
-const MAX_FILE_SIZE_MB = 5;
+const MAX_FILE_SIZE_MB = 15;
+const MAX_DIMENSION = 1920;
+const JPEG_QUALITY = 0.85;
 const UPLOAD_API = 'https://functions.poehali.dev/7d905cd8-a395-47b3-92d8-15fa95df1ddf';
 
-function fileToDataUrl(file: File): Promise<string> {
+function fileToDataUrl(file: File | Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+async function compressImage(file: File): Promise<string> {
+  // PNG с прозрачностью не трогаем, если он маленький — иначе тоже сжимаем в JPEG
+  const needsAlpha = file.type === 'image/png' && file.size < 1.5 * 1024 * 1024;
+  if (needsAlpha) {
+    return fileToDataUrl(file);
+  }
+
+  const originalUrl = await fileToDataUrl(file);
+  const img = await loadImage(originalUrl);
+
+  let { width, height } = img;
+  if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+    const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
+    width = Math.round(width * ratio);
+    height = Math.round(height * ratio);
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return originalUrl;
+  ctx.drawImage(img, 0, 0, width, height);
+
+  const blob: Blob | null = await new Promise((resolve) => {
+    canvas.toBlob((b) => resolve(b), 'image/jpeg', JPEG_QUALITY);
+  });
+  if (!blob) return originalUrl;
+
+  return fileToDataUrl(blob);
 }
 
 async function uploadToS3(dataUrl: string): Promise<string> {
@@ -81,7 +124,7 @@ export default function FreegenReferenceUpload({
 
     const uploadPromises = validFiles.map(async (f) => {
       try {
-        const dataUrl = await fileToDataUrl(f);
+        const dataUrl = await compressImage(f);
         const url = await uploadToS3(dataUrl);
         return url;
       } catch (e) {
