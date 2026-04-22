@@ -12,6 +12,7 @@ import base64
 
 GENERATION_COST = 50
 S3_BUCKET = os.environ.get('S3_BUCKET_NAME', 'fitting-room-images')
+WORKER_URL = 'https://functions.poehali.dev/8b34e115-88be-4740-887a-36c388980955'
 
 
 def translate_to_english(text: str) -> str:
@@ -491,6 +492,120 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             delete_tmp_references(task_id, len(references))
                 except Exception as ie:
                     print(f'[Freegen] Fallback error: {ie}')
+
+        # --- STUCK RECOVERY: добить зависшие processing-задачи других пользователей
+        try:
+            cursor.execute('''
+                SELECT id, fal_response_url, user_id, prompt, "references", aspect_ratio, saved_to_history, created_at
+                FROM t_p29007832_virtual_fitting_room.freegen_tasks
+                WHERE status = 'processing'
+                  AND fal_response_url IS NOT NULL
+                  AND updated_at < NOW() - INTERVAL '3 minutes'
+                  AND id != %s
+                ORDER BY created_at ASC
+                LIMIT 5
+            ''', (task_id,))
+            stuck_rows = cursor.fetchall()
+            print(f'[Freegen] Found {len(stuck_rows)} stuck tasks')
+
+            for stuck in stuck_rows:
+                s_id, s_response_url, s_user_id, s_prompt, s_refs_json, s_aspect, s_saved, s_created = stuck
+                try:
+                    s_refs = json.loads(s_refs_json) if s_refs_json else []
+                    s_age = (datetime.utcnow() - s_created).total_seconds() if s_created else 0
+                    s_data = check_fal_status(s_response_url)
+                    s_fal_status = s_data.get('status', s_data.get('state', 'UNKNOWN'))
+
+                    if s_fal_status.upper() == 'COMPLETED' or 'images' in s_data or 'image' in s_data:
+                        s_result_url = None
+                        if 'images' in s_data and len(s_data['images']) > 0:
+                            s_result_url = s_data['images'][0]['url']
+                        elif 'image' in s_data:
+                            s_result_url = s_data['image']['url'] if isinstance(s_data['image'], dict) else s_data['image']
+
+                        if s_result_url:
+                            try:
+                                s_cdn_url = upload_result_to_s3(s_result_url, s_user_id)
+                                cursor.execute('''
+                                    UPDATE t_p29007832_virtual_fitting_room.freegen_tasks
+                                    SET saved_to_history = true
+                                    WHERE id = %s AND saved_to_history = false
+                                    RETURNING id
+                                ''', (s_id,))
+                                s_atomic = cursor.fetchone()
+                                conn.commit()
+
+                                if s_atomic:
+                                    save_to_history(conn, s_user_id, s_cdn_url, s_prompt or '', s_refs_json, s_aspect or '1:1', s_id)
+
+                                cursor.execute('''
+                                    UPDATE t_p29007832_virtual_fitting_room.freegen_tasks
+                                    SET status = 'completed', result_url = %s, updated_at = %s
+                                    WHERE id = %s
+                                ''', (s_cdn_url, datetime.utcnow(), s_id))
+                                conn.commit()
+                                delete_tmp_references(s_id, len(s_refs))
+                                print(f'[Freegen] Stuck task {s_id} recovered -> completed')
+                            except Exception as up_err:
+                                print(f'[Freegen] Stuck {s_id} S3 save error: {up_err}')
+                                cursor.execute('''
+                                    UPDATE t_p29007832_virtual_fitting_room.freegen_tasks
+                                    SET status = 'completed', result_url = %s, updated_at = %s, error_message = %s
+                                    WHERE id = %s
+                                ''', (s_result_url, datetime.utcnow(), f'S3 save failed: {str(up_err)[:200]}', s_id))
+                                conn.commit()
+
+                    elif s_fal_status.upper() in ('FAILED', 'EXPIRED'):
+                        s_err_raw = s_data.get('error', 'Generation failed')
+                        s_err_msg = f'Ошибка генерации: {str(s_err_raw)[:200]}'
+                        cursor.execute('''
+                            UPDATE t_p29007832_virtual_fitting_room.freegen_tasks
+                            SET status = 'failed', error_message = %s, updated_at = %s
+                            WHERE id = %s
+                        ''', (s_err_msg, datetime.utcnow(), s_id))
+                        conn.commit()
+                        refund_balance_if_needed(conn, s_user_id, s_id)
+                        delete_tmp_references(s_id, len(s_refs))
+                        print(f'[Freegen] Stuck task {s_id} marked failed')
+
+                    elif s_age > 660:
+                        cursor.execute('''
+                            UPDATE t_p29007832_virtual_fitting_room.freegen_tasks
+                            SET status = 'failed', error_message = %s, updated_at = %s
+                            WHERE id = %s AND status = 'processing'
+                        ''', (f'Timeout after {int(s_age)}s (stuck recovery)', datetime.utcnow(), s_id))
+                        conn.commit()
+                        refund_balance_if_needed(conn, s_user_id, s_id)
+                        delete_tmp_references(s_id, len(s_refs))
+                        print(f'[Freegen] Stuck task {s_id} timed out, failed')
+                except Exception as se:
+                    print(f'[Freegen] Stuck {s_id} processing error: {se}')
+        except Exception as e:
+            print(f'[Freegen] Stuck scan error (non-critical): {e}')
+
+        # --- ORPHAN RECOVERY: триггернуть воркер для зависшей pending-задачи
+        try:
+            cursor.execute('''
+                SELECT id FROM t_p29007832_virtual_fitting_room.freegen_tasks
+                WHERE status = 'pending'
+                  AND fal_request_id IS NULL
+                  AND created_at < NOW() - INTERVAL '1 minute'
+                  AND id != %s
+                ORDER BY created_at ASC
+                LIMIT 1
+            ''', (task_id,))
+            orphan_row = cursor.fetchone()
+            if orphan_row:
+                orphan_id = orphan_row[0]
+                print(f'[Freegen] Found orphan pending task {orphan_id}, triggering worker')
+                try:
+                    import urllib.request
+                    req = urllib.request.Request(f'{WORKER_URL}?task_id={orphan_id}', method='GET')
+                    urllib.request.urlopen(req, timeout=2)
+                except Exception as te:
+                    print(f'[Freegen] Orphan trigger failed (non-critical): {te}')
+        except Exception as e:
+            print(f'[Freegen] Orphan scan error (non-critical): {e}')
 
         cursor.close()
         conn.close()
