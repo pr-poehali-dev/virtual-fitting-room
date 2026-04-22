@@ -105,24 +105,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 fal_status = fal_data.get('status', fal_data.get('state', 'UNKNOWN'))
 
                 if fal_status == 'COMPLETED' or 'images' in fal_data or 'image' in fal_data:
-                    new_result_url = None
-                    if 'images' in fal_data and len(fal_data['images']) > 0:
-                        new_result_url = fal_data['images'][0]['url']
-                    elif 'image' in fal_data:
-                        if isinstance(fal_data['image'], dict):
-                            new_result_url = fal_data['image']['url']
-                        else:
-                            new_result_url = fal_data['image']
-
-                    if new_result_url:
-                        cursor.execute('''
-                            UPDATE freegen_tasks
-                            SET status = 'completed', result_url = %s, updated_at = %s
-                            WHERE id = %s
-                        ''', (new_result_url, datetime.utcnow(), task_id))
-                        conn.commit()
-                        status = 'completed'
-                        result_url = new_result_url
+                    # Результат готов на fal.ai — но НЕ сохраняем fal URL в БД.
+                    # Триггерим worker: он скачает, загрузит в S3, обновит БД и сохранит в history.
+                    # Фронт в следующем polling получит S3 URL.
+                    try:
+                        import urllib.request
+                        worker_url = f'https://functions.poehali.dev/8b34e115-88be-4740-887a-36c388980955?task_id={task_id}'
+                        req = urllib.request.Request(worker_url, method='GET')
+                        urllib.request.urlopen(req, timeout=2)
+                        print(f'[Status] Worker triggered for completed fal task {task_id}')
+                    except Exception as we:
+                        print(f'[Status] Worker trigger failed: {we}')
+                    # Оставляем статус processing до тех пор, пока worker не запишет S3 URL
 
                 elif fal_status in ('FAILED', 'EXPIRED'):
                     error_msg = fal_data.get('error', 'Generation failed')
@@ -136,6 +130,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     error_message = str(error_msg)
             except Exception as e:
                 print(f'[Status] Force check error: {e}')
+
+        # Доп. защита: если в БД по ошибке оказался fal URL вместо S3 — не отдаём его фронту.
+        # Пусть фронт продолжит polling, пока worker не заменит URL на S3.
+        if result_url and isinstance(result_url, str):
+            if 'fal.media' in result_url or 'fal.run' in result_url or 'queue.fal.run' in result_url:
+                # Триггерим worker ещё раз — пусть доскачает в S3
+                try:
+                    import urllib.request
+                    worker_url = f'https://functions.poehali.dev/8b34e115-88be-4740-887a-36c388980955?task_id={task_id}'
+                    req = urllib.request.Request(worker_url, method='GET')
+                    urllib.request.urlopen(req, timeout=2)
+                except Exception:
+                    pass
+                # Временно откатываем статус на processing для фронта
+                status = 'processing'
+                result_url = None
 
         cursor.close()
         conn.close()

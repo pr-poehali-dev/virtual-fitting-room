@@ -87,8 +87,16 @@ export default function FreeGeneration() {
         const data = await res.json();
 
         if (data.status === 'completed' && data.result_url) {
+          // Защита: не показываем fal.ai URL, ждём пока worker сохранит в S3
+          const url = String(data.result_url);
+          const isFalUrl = url.includes('fal.media') || url.includes('fal.run');
+          if (isFalUrl) {
+            setStatusText('Сохранение...');
+            fetch(`${FREEGEN_WORKER_API}?task_id=${id}`).catch(() => {});
+            return;
+          }
           stopPolling();
-          setResultUrl(data.result_url);
+          setResultUrl(url);
           setIsGenerating(false);
           setStatusText('Готово!');
           refreshBalance();

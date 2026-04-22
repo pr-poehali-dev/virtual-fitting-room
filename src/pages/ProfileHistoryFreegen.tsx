@@ -130,9 +130,25 @@ export default function ProfileHistoryFreegen() {
           <ProfileMenu />
 
           <div className="flex-1">
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold mb-2">История генераций</h1>
-              <p className="text-muted-foreground">Ваши свободные генерации NanoBanana 2</p>
+            <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">История генераций</h1>
+                <p className="text-muted-foreground">Ваши свободные генерации NanoBanana 2</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={load}
+                disabled={isLoading}
+                className="gap-2"
+              >
+                <Icon
+                  name={isLoading ? 'Loader2' : 'RefreshCw'}
+                  size={14}
+                  className={isLoading ? 'animate-spin' : ''}
+                />
+                Обновить
+              </Button>
             </div>
 
             {isLoading ? (
