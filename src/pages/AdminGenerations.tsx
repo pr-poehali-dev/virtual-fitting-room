@@ -2,6 +2,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
@@ -37,6 +46,10 @@ export default function AdminGenerations() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
+  const [cleanupDialogOpen, setCleanupDialogOpen] = useState(false);
+  const [cleanupDays, setCleanupDays] = useState<string>('3');
+  const [isCleaningUp, setIsCleaningUp] = useState(false);
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -62,10 +75,14 @@ export default function AdminGenerations() {
   };
 
   const fetchGenerationHistory = async () => {
-    const params = new URLSearchParams({ action: 'generation_history' });
-    
+    const isFreegen = genModelFilter === 'freegen';
+    const action = isFreegen ? 'freegen_history' : 'generation_history';
+    const params = new URLSearchParams({ action });
+
     if (genUserFilter && genUserFilter !== 'all') params.append('user_id', genUserFilter);
-    if (genModelFilter && genModelFilter !== 'all') params.append('model', genModelFilter);
+    if (!isFreegen && genModelFilter && genModelFilter !== 'all') {
+      params.append('model', genModelFilter);
+    }
 
     setIsLoading(true);
 
@@ -76,7 +93,18 @@ export default function AdminGenerations() {
 
       if (response.ok) {
         const data = await response.json();
-        setGenerationHistory(data);
+        // Для freegen_history добавляем model_used='freegen', чтобы таблица отображалась одинаково
+        const normalized: GenerationHistory[] = (data as Array<Record<string, unknown>>).map((h) => ({
+          id: String(h.id ?? ''),
+          user_id: String(h.user_id ?? ''),
+          user_email: String(h.user_email ?? ''),
+          user_name: String(h.user_name ?? ''),
+          model_used: String(h.model_used ?? (isFreegen ? 'freegen' : '')),
+          cost: typeof h.cost === 'number' ? h.cost : 0,
+          result_image: String(h.result_image ?? ''),
+          created_at: String(h.created_at ?? ''),
+        }));
+        setGenerationHistory(normalized);
         setCurrentPage(1);
       } else {
         toast.error('Ошибка загрузки истории генераций');
@@ -85,6 +113,38 @@ export default function AdminGenerations() {
       toast.error('Ошибка загрузки истории генераций');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCleanupReferences = async () => {
+    const daysNum = parseInt(cleanupDays, 10);
+    if (isNaN(daysNum) || daysNum < 1) {
+      toast.error('Введите число дней больше 0');
+      return;
+    }
+    setIsCleaningUp(true);
+    try {
+      const res = await fetch(`${ADMIN_API}?action=cleanup_freegen_references`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${getAdminToken()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ days: daysNum }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      toast.success(
+        `Очищено: ${data.tasks_processed} задач, ${data.files_deleted} файлов. Ошибок: ${data.errors_count}`
+      );
+      setCleanupDialogOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Ошибка очистки');
+    } finally {
+      setIsCleaningUp(false);
     }
   };
 
@@ -109,11 +169,21 @@ export default function AdminGenerations() {
           <AdminMenu />
           
           <div className="flex-1">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold mb-2">Генерации</h1>
-              <p className="text-muted-foreground">
-                Всего генераций: {generationHistory.length} | Общая стоимость: {totalCost.toFixed(2)} ₽
-              </p>
+            <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">Генерации</h1>
+                <p className="text-muted-foreground">
+                  Всего генераций: {generationHistory.length} | Общая стоимость: {totalCost.toFixed(2)} ₽
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setCleanupDialogOpen(true)}
+                className="gap-2"
+              >
+                <Icon name="Trash2" size={16} />
+                Очистить референсы FreeGen
+              </Button>
             </div>
 
             <Card className="mb-6">
@@ -138,14 +208,15 @@ export default function AdminGenerations() {
                   <div className="flex items-center gap-2">
                     <label className="text-sm font-medium">Модель:</label>
                     <Select value={genModelFilter} onValueChange={setGenModelFilter}>
-                      <SelectTrigger className="w-[180px]">
+                      <SelectTrigger className="w-[200px]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Все</SelectItem>
+                        <SelectItem value="all">Все (примерочная)</SelectItem>
                         <SelectItem value="replicate">Replicate</SelectItem>
                         <SelectItem value="seedream">SeeDream</SelectItem>
                         <SelectItem value="nanobananapro">NanoBananaPro</SelectItem>
+                        <SelectItem value="freegen">FreeGen (NanoBanana 2)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -201,11 +272,17 @@ export default function AdminGenerations() {
                             {gen.id.substring(0, 8)}...
                           </td>
                           <td className="px-4 py-3">
-                            <img 
-                              src={gen.result_image} 
-                              alt="Result" 
-                              className="w-16 h-16 object-cover rounded"
-                            />
+                            {gen.result_image ? (
+                              <img 
+                                src={gen.result_image} 
+                                alt="Result" 
+                                className="w-16 h-16 object-cover rounded"
+                              />
+                            ) : (
+                              <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                                <Icon name="Image" size={20} className="text-gray-400" />
+                              </div>
+                            )}
                           </td>
                           <td className="px-4 py-3">
                             <div className="text-sm font-medium">{gen.user_name}</div>
@@ -226,6 +303,52 @@ export default function AdminGenerations() {
           </div>
         </div>
       </div>
+
+      <Dialog open={cleanupDialogOpen} onOpenChange={setCleanupDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Очистка референсов FreeGen</DialogTitle>
+            <DialogDescription>
+              Удалит файлы референсов из S3 для задач свободной генерации старше указанного количества дней.
+              Результаты генерации и история — не затрагиваются.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <label className="text-sm font-medium mb-2 block">Удалить референсы старше (дней):</label>
+            <Select value={cleanupDays} onValueChange={setCleanupDays}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 день</SelectItem>
+                <SelectItem value="3">3 дня (рекомендовано)</SelectItem>
+                <SelectItem value="7">7 дней</SelectItem>
+                <SelectItem value="14">14 дней</SelectItem>
+                <SelectItem value="30">30 дней</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCleanupDialogOpen(false)}
+              disabled={isCleaningUp}
+            >
+              Отмена
+            </Button>
+            <Button onClick={handleCleanupReferences} disabled={isCleaningUp}>
+              {isCleaningUp ? (
+                <>
+                  <Icon name="Loader2" size={16} className="mr-2 animate-spin" />
+                  Очистка…
+                </>
+              ) : (
+                'Очистить'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }

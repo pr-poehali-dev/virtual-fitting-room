@@ -657,6 +657,118 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 } for h in history])
             }
         
+        elif action == 'cleanup_freegen_references' and method == 'POST':
+            # Ручная очистка S3-референсов свободной генерации (админ).
+            # Удаляет файлы из S3 (папка images/freegeneration/refs/* и images/freegeneration/tmp/*)
+            # для задач старше N дней и помечает их как очищенные.
+            try:
+                body_params = json.loads(event.get('body', '{}')) if event.get('body') else {}
+            except Exception:
+                body_params = {}
+            try:
+                days = int(body_params.get('days') or query_params.get('days') or 3)
+            except (ValueError, TypeError):
+                days = 3
+            if days < 1:
+                days = 1
+            if days > 365:
+                days = 365
+
+            import re as _re
+            S3_URL_RE = _re.compile(r'^https?://storage\.yandexcloud\.net/[^/]+/(.+)$')
+
+            cursor.execute(
+                f'''
+                SELECT id, "references"
+                FROM freegen_tasks
+                WHERE created_at < NOW() - INTERVAL '{int(days)} days'
+                  AND references_cleaned_at IS NULL
+                  AND "references" IS NOT NULL
+                  AND "references" != '[]'
+                LIMIT 1000
+                '''
+            )
+            rows = cursor.fetchall()
+
+            tasks_processed = 0
+            files_deleted = 0
+            errors = []
+
+            if rows:
+                try:
+                    s3 = boto3.client(
+                        's3',
+                        endpoint_url='https://storage.yandexcloud.net',
+                        aws_access_key_id=os.environ.get('S3_ACCESS_KEY'),
+                        aws_secret_access_key=os.environ.get('S3_SECRET_KEY'),
+                        region_name='ru-central1',
+                        config=Config(signature_version='s3v4')
+                    )
+                    bucket = os.environ.get('S3_BUCKET_NAME', 'fitting-room-images')
+
+                    for row in rows:
+                        task_id = row['id']
+                        refs_raw = row['references']
+                        try:
+                            refs = json.loads(refs_raw) if isinstance(refs_raw, str) else refs_raw
+                        except Exception:
+                            refs = []
+                        if not isinstance(refs, list):
+                            refs = []
+
+                        for ref in refs:
+                            if not isinstance(ref, str):
+                                continue
+                            m = S3_URL_RE.match(ref.strip())
+                            if not m:
+                                continue
+                            key = m.group(1)
+                            if '/freegeneration/refs/' not in key and '/freegeneration/tmp/' not in key:
+                                continue
+                            try:
+                                s3.delete_object(Bucket=bucket, Key=key)
+                                files_deleted += 1
+                            except Exception as e:
+                                errors.append(f'{key}: {str(e)[:80]}')
+
+                        try:
+                            cursor.execute(
+                                'UPDATE freegen_tasks SET references_cleaned_at = NOW() WHERE id = %s',
+                                (task_id,)
+                            )
+                            tasks_processed += 1
+                        except Exception as e:
+                            errors.append(f'task {task_id}: {str(e)[:80]}')
+
+                    conn.commit()
+                except Exception as e:
+                    return {
+                        'statusCode': 500,
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': get_cors_origin(event),
+                        },
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'error': f'Cleanup failed: {str(e)}'})
+                    }
+
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps({
+                    'ok': True,
+                    'days': days,
+                    'tasks_processed': tasks_processed,
+                    'files_deleted': files_deleted,
+                    'errors_count': len(errors),
+                    'errors_sample': errors[:10],
+                })
+            }
+        
         elif action == 'freegen_history':
             # История свободной генерации (NanoBanana 2)
             filters = []

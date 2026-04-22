@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -12,7 +12,8 @@ interface Props {
   disabled?: boolean;
 }
 
-const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_MB = 5;
+const UPLOAD_API = 'https://functions.poehali.dev/7d905cd8-a395-47b3-92d8-15fa95df1ddf';
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -23,6 +24,25 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+async function uploadToS3(dataUrl: string): Promise<string> {
+  const token = localStorage.getItem('session_token');
+  const res = await fetch(UPLOAD_API, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'X-Session-Token': token } : {}),
+    },
+    body: JSON.stringify({ image: dataUrl }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  if (!data.url) throw new Error('Empty URL from server');
+  return data.url as string;
+}
+
 export default function FreegenReferenceUpload({
   references,
   onChange,
@@ -31,6 +51,7 @@ export default function FreegenReferenceUpload({
   disabled,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [uploadingCount, setUploadingCount] = useState(0);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -40,7 +61,8 @@ export default function FreegenReferenceUpload({
       return;
     }
     const arr = Array.from(files).slice(0, remaining);
-    const newRefs: string[] = [];
+
+    const validFiles: File[] = [];
     for (const f of arr) {
       if (!f.type.startsWith('image/')) {
         toast.error(`${f.name}: не изображение`);
@@ -50,15 +72,31 @@ export default function FreegenReferenceUpload({
         toast.error(`${f.name}: больше ${MAX_FILE_SIZE_MB} МБ`);
         continue;
       }
+      validFiles.push(f);
+    }
+
+    if (validFiles.length === 0) return;
+
+    setUploadingCount((c) => c + validFiles.length);
+
+    const uploadPromises = validFiles.map(async (f) => {
       try {
         const dataUrl = await fileToDataUrl(f);
-        newRefs.push(dataUrl);
-      } catch {
-        toast.error(`${f.name}: ошибка чтения`);
+        const url = await uploadToS3(dataUrl);
+        return url;
+      } catch (e) {
+        toast.error(`${f.name}: ${e instanceof Error ? e.message : 'ошибка загрузки'}`);
+        return null;
       }
-    }
-    if (newRefs.length > 0) {
-      onChange([...references, ...newRefs]);
+    });
+
+    const results = await Promise.all(uploadPromises);
+    const urls = results.filter((u): u is string => !!u);
+
+    setUploadingCount((c) => Math.max(0, c - validFiles.length));
+
+    if (urls.length > 0) {
+      onChange([...references, ...urls]);
     }
   };
 
@@ -66,10 +104,17 @@ export default function FreegenReferenceUpload({
     onChange(references.filter((_, i) => i !== index));
   };
 
+  const isUploading = uploadingCount > 0;
+
   return (
     <div>
       <Label className="mb-2 block">
         Референсы ({references.length}/{max})
+        {isUploading && (
+          <span className="ml-2 text-xs text-muted-foreground">
+            загрузка {uploadingCount}…
+          </span>
+        )}
       </Label>
 
       <input
@@ -78,7 +123,7 @@ export default function FreegenReferenceUpload({
         accept="image/*"
         multiple
         className="hidden"
-        disabled={disabled}
+        disabled={disabled || isUploading}
         onChange={(e) => {
           handleFiles(e.target.files);
           if (inputRef.current) inputRef.current.value = '';
@@ -117,11 +162,21 @@ export default function FreegenReferenceUpload({
           </div>
         ))}
 
-        {references.length < max && !disabled && (
+        {isUploading && Array.from({ length: uploadingCount }).map((_, i) => (
+          <div
+            key={`uploading-${i}`}
+            className="relative aspect-square rounded-lg border overflow-hidden bg-muted flex items-center justify-center"
+          >
+            <Icon name="Loader2" size={24} className="animate-spin text-muted-foreground" />
+          </div>
+        ))}
+
+        {references.length + uploadingCount < max && !disabled && (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="aspect-square rounded-lg border border-dashed flex flex-col items-center justify-center gap-1 hover:bg-muted transition-colors text-muted-foreground"
+            disabled={isUploading}
+            className="aspect-square rounded-lg border border-dashed flex flex-col items-center justify-center gap-1 hover:bg-muted transition-colors text-muted-foreground disabled:opacity-50"
           >
             <Icon name="Plus" size={20} />
             <span className="text-xs">Добавить</span>

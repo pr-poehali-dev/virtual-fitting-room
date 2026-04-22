@@ -1,4 +1,6 @@
 {
+  "freegen-cleanup": "https://functions.poehali.dev/61d6cc7e-025a-491f-a7ac-c1e8f410d160",
+  "upload-reference": "https://functions.poehali.dev/7d905cd8-a395-47b3-92d8-15fa95df1ddf",
   "freegen-async-status": "https://functions.poehali.dev/f706d708-5f17-4c11-864c-d13bf91cebce",
   "freegen-async-start": "https://functions.poehali.dev/093c98ba-e711-4c78-b328-a7494005df42",
   "freegen-async-worker": "https://functions.poehali.dev/8b34e115-88be-4740-887a-36c388980955",

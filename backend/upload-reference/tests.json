@@ -1,0 +1,23 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Method not allowed",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 405
+    },
+    {
+      "name": "Unauthorized without session",
+      "method": "POST",
+      "path": "/",
+      "body": {"image": "data:image/png;base64,iVBORw0KGgo="},
+      "expectedStatus": 401
+    }
+  ]
+}
