@@ -25,6 +25,7 @@ import {
   refundReplicateBalance,
 } from "@/utils/replicateBalanceUtils";
 import { validateImageFile } from "@/utils/fileValidation";
+import { compressDataUrl } from "@/utils/compressImage";
 import {
   Accordion,
   AccordionContent,
@@ -260,7 +261,8 @@ export default function ReplicateTryOn() {
 
   const handleCropComplete = async (croppedImage: string) => {
     try {
-      setUploadedImage(croppedImage);
+      const compressed = await compressDataUrl(croppedImage);
+      setUploadedImage(compressed);
       setShowCropper(false);
       setTempImageForCrop(null);
       toast.success("Фото обрезано и загружено");

@@ -17,6 +17,7 @@ import type { GridSlotData } from "./GridSlot";
 import { useTemplateGeneration } from "@/hooks/useTemplateGeneration";
 import { useData } from "@/context/DataContext";
 import { validateImageFile } from "@/utils/fileValidation";
+import { compressDataUrl } from "@/utils/compressImage";
 import { GENERATION_COST, MIN_TOPUP } from "@/config/prices";
 
 const IMAGE_PROXY_API =
@@ -141,8 +142,9 @@ export default function LookbookGridTemplate({
     reader.readAsDataURL(file);
   };
 
-  const handleCropComplete = (cropped: string) => {
-    setPersonImage(cropped);
+  const handleCropComplete = async (cropped: string) => {
+    const compressed = await compressDataUrl(cropped);
+    setPersonImage(compressed);
     setShowCropper(false);
     setTempImageForCrop(null);
     toast.success("Фото обрезано и загружено");

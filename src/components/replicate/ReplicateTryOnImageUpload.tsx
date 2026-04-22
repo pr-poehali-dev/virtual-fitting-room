@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import ImageCropper from '@/components/ImageCropper';
 import { validateImageFile } from '@/utils/fileValidation';
+import { compressDataUrl } from '@/utils/compressImage';
 
 interface ReplicateTryOnImageUploadProps {
   uploadedImage: string | null;
@@ -100,7 +101,8 @@ export default function ReplicateTryOnImageUpload({
 
   const handleCropComplete = async (croppedImage: string) => {
     try {
-      onImageChange(croppedImage);
+      const compressed = await compressDataUrl(croppedImage);
+      onImageChange(compressed);
       setShowCropper(false);
       setTempImageForCrop(null);
       toast.success('Фото обрезано и загружено');
