@@ -81,9 +81,8 @@ export default function ProfileHistoryFreegen() {
         },
         body: JSON.stringify({
           table: 'freegen_history',
-          action: 'update',
+          action: 'delete',
           where: { id, user_id: user.id },
-          data: { removed_at: new Date().toISOString() },
         }),
       });
       if (res.ok) {
@@ -97,28 +96,44 @@ export default function ProfileHistoryFreegen() {
     }
   };
 
-  const handleDownload = async (url: string) => {
-    const filename = `freegen-${Date.now()}.png`;
+  const handleDownload = async (imageUrl: string, historyId: string) => {
+    const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
     try {
-      const res = await fetch(url, { mode: 'cors', cache: 'no-store' });
-      if (!res.ok) throw new Error('fetch failed');
-      const blob = await res.blob();
-      const href = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = href;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(href), 1000);
-    } catch {
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.rel = 'noopener';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      let blob: Blob;
+      const needsProxy = !imageUrl.includes('cdn.poehali.dev');
+
+      if (needsProxy) {
+        const sessionToken = localStorage.getItem('session_token');
+        const proxyResponse = await fetch(IMAGE_PROXY_API, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(sessionToken ? { 'X-Session-Token': sessionToken } : {}),
+          },
+          credentials: 'include',
+          body: JSON.stringify({ image_url: imageUrl }),
+        });
+        if (!proxyResponse.ok) throw new Error('Failed to proxy image for download');
+        const proxyData = await proxyResponse.json();
+        const response = await fetch(proxyData.data_url);
+        blob = await response.blob();
+      } else {
+        const response = await fetch(imageUrl);
+        blob = await response.blob();
+      }
+
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `freegen-${historyId}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      toast.success('Фото скачано');
+    } catch (error) {
+      console.error('Failed to download image:', error);
+      toast.error('Ошибка скачивания');
     }
   };
 
@@ -204,7 +219,7 @@ export default function ProfileHistoryFreegen() {
                           size="sm"
                           variant="outline"
                           className="flex-1 h-7 text-xs"
-                          onClick={() => handleDownload(it.result_image)}
+                          onClick={() => handleDownload(it.result_image, it.id)}
                         >
                           <Icon name="Download" size={12} className="mr-1" />
                           Скачать

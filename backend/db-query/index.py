@@ -282,6 +282,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             # Используем user_id от session token (строка 97)
             # Для try_on_history - сохраняем result_image перед удалением
             photos_to_check = []
+            photos_to_force_delete = []
             if table == 'try_on_history' and user_id:
                 where_parts = []
                 params = []
@@ -323,6 +324,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if row and row[0]:
                     photos_to_check.append(row[0])
             
+            # Для freegen_history - сохраняем result_image перед удалением (удаляем из S3 безусловно)
+            elif table == 'freegen_history' and user_id:
+                where_parts = []
+                params = []
+                for key, value in where.items():
+                    where_parts.append(f'{key} = %s')
+                    params.append(value)
+                
+                select_query = f'SELECT result_image FROM {full_table} WHERE {" AND ".join(where_parts)}'
+                cursor.execute(select_query, params)
+                row = cursor.fetchone()
+                if row and row[0]:
+                    photos_to_force_delete.append(row[0])
+            
             # Выполняем DELETE
             where_parts = []
             params = []
@@ -339,10 +354,35 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             conn.commit()
             
-            # Проверяем и удаляем фото из S3
+            # Проверяем и удаляем фото из S3 (с проверкой, используется ли где-то ещё)
             if user_id and photos_to_check:
                 for photo_url in photos_to_check:
                     delete_from_s3_if_orphaned(photo_url, user_id, cursor, schema)
+            
+            # Удаляем фото из S3 безусловно (для freegen — нет привязок к лукбукам)
+            if photos_to_force_delete:
+                s3_bucket_name = os.environ.get('S3_BUCKET_NAME', 'fitting-room-images')
+                s3_url_prefix = f'https://storage.yandexcloud.net/{s3_bucket_name}/'
+                try:
+                    s3_client = boto3.client(
+                        's3',
+                        endpoint_url='https://storage.yandexcloud.net',
+                        aws_access_key_id=os.environ.get('S3_ACCESS_KEY'),
+                        aws_secret_access_key=os.environ.get('S3_SECRET_KEY'),
+                        region_name='ru-central1',
+                        config=Config(signature_version='s3v4')
+                    )
+                    for photo_url in photos_to_force_delete:
+                        if not photo_url or not photo_url.startswith(s3_url_prefix):
+                            continue
+                        try:
+                            s3_key = photo_url.replace(s3_url_prefix, '')
+                            s3_client.delete_object(Bucket=s3_bucket_name, Key=s3_key)
+                            print(f'[S3] Force-deleted freegen photo: {s3_key}')
+                        except Exception as e:
+                            print(f'[S3] Failed to delete {photo_url}: {e}')
+                except Exception as e:
+                    print(f'[S3] Client init failed: {e}')
         
         else:
             raise Exception(f'Unknown action: {action}')

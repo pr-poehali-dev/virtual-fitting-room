@@ -27,26 +27,41 @@ export default function FreegenResultPanel({
   const handleDownload = async () => {
     if (!resultUrl) return;
     const filename = `freegen-${Date.now()}.png`;
+    const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
     try {
-      const res = await fetch(resultUrl, { mode: 'cors', cache: 'no-store' });
-      if (!res.ok) throw new Error('fetch failed');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch {
-      const a = document.createElement('a');
-      a.href = resultUrl;
-      a.download = filename;
-      a.rel = 'noopener';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      let blob: Blob;
+      const needsProxy = !resultUrl.includes('cdn.poehali.dev');
+
+      if (needsProxy) {
+        const sessionToken = localStorage.getItem('session_token');
+        const proxyResponse = await fetch(IMAGE_PROXY_API, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(sessionToken ? { 'X-Session-Token': sessionToken } : {}),
+          },
+          credentials: 'include',
+          body: JSON.stringify({ image_url: resultUrl }),
+        });
+        if (!proxyResponse.ok) throw new Error('Failed to proxy image for download');
+        const proxyData = await proxyResponse.json();
+        const response = await fetch(proxyData.data_url);
+        blob = await response.blob();
+      } else {
+        const response = await fetch(resultUrl);
+        blob = await response.blob();
+      }
+
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+    } catch (error) {
+      console.error('Failed to download image:', error);
     }
   };
 
