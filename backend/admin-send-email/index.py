@@ -115,14 +115,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': get_cors_origin(event),
-                'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Authorization',
                 'Access-Control-Max-Age': '86400',
             },
             'body': '',
         }
 
-    if method != 'POST':
+    if method not in ('GET', 'POST'):
         return {
             'statusCode': 405,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
@@ -160,6 +160,69 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': err}),
         }
 
+    # --- GET: история писем пользователя с пагинацией ---
+    if method == 'GET':
+        qp = event.get('queryStringParameters') or {}
+        user_id_q = qp.get('user_id')
+        if not user_id_q:
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                'isBase64Encoded': False,
+                'body': json.dumps({'error': 'user_id is required'}),
+            }
+        try:
+            limit = max(1, min(100, int(qp.get('limit', '10'))))
+            offset = max(0, int(qp.get('offset', '0')))
+        except ValueError:
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                'isBase64Encoded': False,
+                'body': json.dumps({'error': 'Invalid limit/offset'}),
+            }
+
+        conn_h = get_db_connection()
+        cursor_h = conn_h.cursor(cursor_factory=RealDictCursor)
+        try:
+            cursor_h.execute(
+                'SELECT COUNT(*) AS cnt FROM admin_emails_log WHERE user_id = %s',
+                (str(user_id_q),),
+            )
+            total_row = cursor_h.fetchone()
+            total = int(total_row['cnt']) if total_row else 0
+
+            cursor_h.execute(
+                '''SELECT id, subject, body_text, status, error_message, sent_at
+                   FROM admin_emails_log
+                   WHERE user_id = %s
+                   ORDER BY sent_at DESC
+                   LIMIT %s OFFSET %s''',
+                (str(user_id_q), limit, offset),
+            )
+            rows = cursor_h.fetchall()
+            emails = []
+            for r in rows:
+                emails.append({
+                    'id': str(r['id']),
+                    'subject': r['subject'],
+                    'body_text': r['body_text'],
+                    'status': r['status'],
+                    'error_message': r['error_message'],
+                    'sent_at': r['sent_at'].isoformat() if r['sent_at'] else None,
+                })
+
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                'isBase64Encoded': False,
+                'body': json.dumps({'emails': emails, 'total': total}),
+            }
+        finally:
+            cursor_h.close()
+            conn_h.close()
+
+    # --- POST: отправка нового письма ---
     try:
         body = json.loads(event.get('body') or '{}')
     except Exception:

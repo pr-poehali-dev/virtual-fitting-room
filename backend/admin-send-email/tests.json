@@ -1,9 +1,19 @@
 {
   "tests": [
     {
-      "name": "Requires admin token",
+      "name": "POST requires admin token",
       "method": "POST",
       "path": "/",
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "Unauthorized: Token required"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "GET requires admin token",
+      "method": "GET",
+      "path": "/?user_id=test",
       "expectedStatus": 401,
       "expectedBody": {
         "error": "Unauthorized: Token required"

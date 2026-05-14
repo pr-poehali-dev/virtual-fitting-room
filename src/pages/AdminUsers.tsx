@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
@@ -77,6 +78,49 @@ export default function AdminUsers() {
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailTab, setEmailTab] = useState<'new' | 'history'>('new');
+
+  interface EmailLogItem {
+    id: string;
+    subject: string;
+    body_text: string;
+    status: string;
+    error_message: string | null;
+    sent_at: string | null;
+  }
+  const [historyItems, setHistoryItems] = useState<EmailLogItem[]>([]);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
+  const historyPerPage = 10;
+
+  const fetchHistory = async (userId: string, page: number) => {
+    setIsLoadingHistory(true);
+    try {
+      const offset = (page - 1) * historyPerPage;
+      const response = await fetch(
+        `${ADMIN_SEND_EMAIL_API}?user_id=${encodeURIComponent(userId)}&limit=${historyPerPage}&offset=${offset}`,
+        { headers: { 'Authorization': `Bearer ${getAdminToken()}` } },
+      );
+      if (!response.ok) throw new Error('Failed to fetch history');
+      const data = await response.json();
+      setHistoryItems(data.emails || []);
+      setHistoryTotal(data.total || 0);
+    } catch {
+      toast.error('Не удалось загрузить историю писем');
+      setHistoryItems([]);
+      setHistoryTotal(0);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    if (emailDialogUser && emailTab === 'history') {
+      fetchHistory(emailDialogUser.id, historyPage);
+    }
+  }, [emailDialogUser, emailTab, historyPage]);
 
   const openEmailDialog = (user: User) => {
     const tpl = EMAIL_TEMPLATES.refund;
@@ -84,6 +128,11 @@ export default function AdminUsers() {
     setEmailTemplateKey('refund');
     setEmailSubject(tpl.subject);
     setEmailBody(tpl.body(user.name));
+    setEmailTab('new');
+    setHistoryItems([]);
+    setHistoryTotal(0);
+    setHistoryPage(1);
+    setExpandedEmailId(null);
   };
 
   const handleTemplateChange = (key: EmailTemplateKey) => {
@@ -118,6 +167,11 @@ export default function AdminUsers() {
       const data = await response.json().catch(() => ({}));
       if (response.ok && data.success) {
         toast.success(`Письмо отправлено на ${data.to_email || emailDialogUser.email}`);
+        if (historyPage === 1) {
+          fetchHistory(emailDialogUser.id, 1);
+        } else {
+          setHistoryPage(1);
+        }
         setEmailDialogUser(null);
       } else {
         toast.error(`Ошибка отправки: ${data.error || 'неизвестная ошибка'}`);
@@ -126,6 +180,18 @@ export default function AdminUsers() {
       toast.error('Ошибка соединения');
     } finally {
       setIsSendingEmail(false);
+    }
+  };
+
+  const formatDateTime = (iso: string | null) => {
+    if (!iso) return '';
+    try {
+      return new Date(iso).toLocaleString('ru-RU', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      });
+    } catch {
+      return iso;
     }
   };
 
@@ -301,7 +367,7 @@ export default function AdminUsers() {
       </div>
 
       <Dialog open={!!emailDialogUser} onOpenChange={(open) => !open && setEmailDialogUser(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Письмо пользователю</DialogTitle>
             <DialogDescription>
@@ -309,63 +375,158 @@ export default function AdminUsers() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Шаблон</Label>
-              <Select value={emailTemplateKey} onValueChange={(v) => handleTemplateChange(v as EmailTemplateKey)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(EMAIL_TEMPLATES) as EmailTemplateKey[]).map((key) => (
-                    <SelectItem key={key} value={key}>{EMAIL_TEMPLATES[key].label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <Tabs value={emailTab} onValueChange={(v) => setEmailTab(v as 'new' | 'history')} className="mt-2">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="new">Новое письмо</TabsTrigger>
+              <TabsTrigger value="history">
+                История{historyTotal > 0 ? ` (${historyTotal})` : ''}
+              </TabsTrigger>
+            </TabsList>
 
-            <div className="space-y-2">
-              <Label>Тема</Label>
-              <Input
-                value={emailSubject}
-                onChange={(e) => setEmailSubject(e.target.value)}
-                placeholder="Например: Возврат средств"
-                maxLength={200}
-              />
-            </div>
+            <TabsContent value="new" className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label>Шаблон</Label>
+                <Select value={emailTemplateKey} onValueChange={(v) => handleTemplateChange(v as EmailTemplateKey)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(EMAIL_TEMPLATES) as EmailTemplateKey[]).map((key) => (
+                      <SelectItem key={key} value={key}>{EMAIL_TEMPLATES[key].label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label>Текст письма</Label>
-              <Textarea
-                value={emailBody}
-                onChange={(e) => setEmailBody(e.target.value)}
-                rows={10}
-                placeholder="Текст письма..."
-                maxLength={20000}
-              />
-              <p className="text-xs text-muted-foreground">
-                Подпись «С уважением, команда Fitting Room» добавляется автоматически.
-              </p>
-            </div>
-          </div>
+              <div className="space-y-2">
+                <Label>Тема</Label>
+                <Input
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  placeholder="Например: Возврат средств"
+                  maxLength={200}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Текст письма</Label>
+                <Textarea
+                  value={emailBody}
+                  onChange={(e) => setEmailBody(e.target.value)}
+                  rows={10}
+                  placeholder="Текст письма..."
+                  maxLength={20000}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Подпись «С уважением, команда Fitting Room» добавляется автоматически.
+                </p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="history" className="py-2">
+              {isLoadingHistory ? (
+                <div className="flex items-center justify-center py-8">
+                  <Icon name="Loader2" className="animate-spin" size={24} />
+                </div>
+              ) : historyItems.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Письма этому пользователю ещё не отправлялись
+                </p>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    {historyItems.map((item) => {
+                      const isOpen = expandedEmailId === item.id;
+                      return (
+                        <div key={item.id} className="border rounded-md">
+                          <button
+                            type="button"
+                            className="w-full text-left px-3 py-2 flex items-start justify-between gap-3 hover:bg-gray-50"
+                            onClick={() => setExpandedEmailId(isOpen ? null : item.id)}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-medium text-sm truncate">{item.subject}</span>
+                                {item.status === 'sent' ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">
+                                    <Icon name="Check" size={11} />
+                                    Отправлено
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs">
+                                    <Icon name="X" size={11} />
+                                    Ошибка
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500 mt-0.5">{formatDateTime(item.sent_at)}</p>
+                            </div>
+                            <Icon name={isOpen ? 'ChevronUp' : 'ChevronDown'} size={16} className="mt-1 text-gray-400" />
+                          </button>
+                          {isOpen && (
+                            <div className="px-3 pb-3 pt-1 border-t bg-gray-50">
+                              <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans">{item.body_text}</pre>
+                              {item.error_message && (
+                                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                                  <span className="font-semibold">Ошибка: </span>{item.error_message}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {historyTotal > historyPerPage && (
+                    <div className="flex items-center justify-center gap-2 mt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                        disabled={historyPage === 1 || isLoadingHistory}
+                      >
+                        <Icon name="ChevronLeft" size={14} />
+                        Назад
+                      </Button>
+                      <span className="text-xs text-muted-foreground px-2">
+                        Страница {historyPage} из {Math.ceil(historyTotal / historyPerPage)}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setHistoryPage((p) => Math.min(Math.ceil(historyTotal / historyPerPage), p + 1))}
+                        disabled={historyPage >= Math.ceil(historyTotal / historyPerPage) || isLoadingHistory}
+                      >
+                        Вперёд
+                        <Icon name="ChevronRight" size={14} />
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </TabsContent>
+          </Tabs>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setEmailDialogUser(null)} disabled={isSendingEmail}>
-              Отмена
+              {emailTab === 'new' ? 'Отмена' : 'Закрыть'}
             </Button>
-            <Button onClick={handleSendEmail} disabled={isSendingEmail}>
-              {isSendingEmail ? (
-                <>
-                  <Icon name="Loader2" className="animate-spin mr-2" size={16} />
-                  Отправка...
-                </>
-              ) : (
-                <>
-                  <Icon name="Send" className="mr-2" size={16} />
-                  Отправить
-                </>
-              )}
-            </Button>
+            {emailTab === 'new' && (
+              <Button onClick={handleSendEmail} disabled={isSendingEmail}>
+                {isSendingEmail ? (
+                  <>
+                    <Icon name="Loader2" className="animate-spin mr-2" size={16} />
+                    Отправка...
+                  </>
+                ) : (
+                  <>
+                    <Icon name="Send" className="mr-2" size={16} />
+                    Отправить
+                  </>
+                )}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
