@@ -384,15 +384,26 @@ def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str
     if not s3_access_key or not s3_secret_key:
         raise Exception('S3 credentials not configured (S3_ACCESS_KEY, S3_SECRET_KEY)')
     
-    # Decode base64 if needed
+    # Detect real format from data URI
+    content_type = 'image/jpeg'
+    ext = 'jpg'
     if image_data.startswith('data:image'):
-        image_data = image_data.split(',', 1)[1]
+        header, image_data = image_data.split(',', 1)
+        if 'image/png' in header:
+            content_type = 'image/png'
+            ext = 'png'
+        elif 'image/webp' in header:
+            content_type = 'image/webp'
+            ext = 'webp'
+        elif 'image/jpeg' in header or 'image/jpg' in header:
+            content_type = 'image/jpeg'
+            ext = 'jpg'
     
     image_bytes = base64.b64decode(image_data)
-    print(f'[Yandex] Decoded {len(image_bytes)} bytes')
+    print(f'[Yandex] Decoded {len(image_bytes)} bytes, content_type={content_type}')
     
-    # Generate filename: images/colortypes/{user_id}/{task_id}.jpg
-    s3_key = f'images/colortypes/{user_id}/{task_id}.jpg'
+    # Generate filename with correct extension
+    s3_key = f'images/colortypes/{user_id}/{task_id}.{ext}'
     
     print(f'[Yandex] Uploading to: {s3_key}')
     
@@ -407,7 +418,7 @@ def upload_to_yandex_storage(image_data: str, user_id: str, task_id: str) -> str
         Bucket=s3_bucket,
         Key=s3_key,
         Body=image_bytes,
-        ContentType='image/jpeg'
+        ContentType=content_type
     )
     
     # Build Yandex Cloud Storage URL
@@ -1544,12 +1555,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     UPDATE color_type_history
                     SET status = 'failed', result_text = %s, updated_at = %s
                     WHERE id = %s
-                ''', ('Не удалось получить результат анализа. Попробуйте повторить запрос с другим фото. Если фото отвечает критериям, но результат не получен, обратитесь в техподдержку.', datetime.utcnow(), stuck_id))
+                ''', ('Анализ занял слишком много времени. Деньги возвращены на баланс. Попробуйте позже.', datetime.utcnow(), stuck_id))
                 conn.commit()
                 
-                # NO REFUND - OpenRouter API was called and tokens were spent
-                # This is a technical timeout, not a service failure
-                print(f'[ColorType-Worker] Stuck OpenAI task {stuck_id} marked as failed (NO REFUND - API called)')
+                # Возврат — пользователь результата не получил
+                refund_balance_if_needed(conn, stuck_user_id, stuck_id)
+                print(f'[ColorType-Worker] Stuck OpenAI task {stuck_id} marked as failed and refunded')
                 
             except Exception as e:
                 print(f'[ColorType-Worker] Error handling stuck OpenAI task {stuck_id}: {str(e)}')
@@ -1623,7 +1634,31 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 # Submit to OpenAI GPT-4 Vision (synchronous - returns immediately)
                 print(f'[ColorType-Worker] Submitting to OpenAI GPT-4o Vision with user eye_color: {eye_color}')
                 try:
-                    openai_result = submit_to_openai(cdn_url, eye_color)
+                    # Retry up to 2 times on image-fetch errors (CDN/provider delays)
+                    openai_result = None
+                    last_err = None
+                    for attempt in range(3):
+                        try:
+                            openai_result = submit_to_openai(cdn_url, eye_color)
+                            break
+                        except Exception as retry_err:
+                            last_err = retry_err
+                            err_lower = str(retry_err).lower()
+                            is_fetch_err = (
+                                'invalid_image_url' in err_lower
+                                or 'timeout while downloading' in err_lower
+                                or 'error while downloading' in err_lower
+                                or "couldn't fetch" in err_lower
+                                or 'failed to fetch' in err_lower
+                            )
+                            if is_fetch_err and attempt < 2:
+                                pause = 2 * (attempt + 1)
+                                print(f'[ColorType-Worker] Image fetch error on attempt {attempt+1}, retrying in {pause}s: {str(retry_err)[:200]}')
+                                time.sleep(pause)
+                                continue
+                            raise
+                    if openai_result is None:
+                        raise last_err if last_err else Exception('Unknown OpenAI error')
                     raw_result = openai_result.get('output', '')
                     
                     print(f'[ColorType-Worker] OpenAI response: {raw_result[:200]}...')
@@ -1743,15 +1778,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     
                 except Exception as e:
                     error_msg = str(e).lower()
+                    is_image_fetch_error = (
+                        'invalid_image_url' in error_msg
+                        or 'timeout while downloading' in error_msg
+                        or 'error while downloading' in error_msg
+                        or "couldn't fetch" in error_msg
+                        or 'failed to fetch' in error_msg
+                    )
                     is_timeout = 'timeout' in error_msg or 'timed out' in error_msg
                     
-                    print(f'[ColorType-Worker] OpenAI API error: {str(e)} (timeout: {is_timeout})')
+                    print(f'[ColorType-Worker] OpenAI API error: {str(e)} (image_fetch_error: {is_image_fetch_error}, timeout: {is_timeout})')
                     
-                    # User-friendly message
-                    if is_timeout:
-                        user_msg = 'Не удалось получить результат анализа. Попробуйте повторить запрос с другим фото. Если фото отвечает критериям, но результат не получен, обратитесь в техподдержку.'
+                    # User-friendly message — все случаи с возвратом средств
+                    if is_image_fetch_error:
+                        user_msg = 'Не удалось загрузить ваше фото для анализа. Деньги возвращены на баланс. Пожалуйста, попробуйте ещё раз.'
+                    elif is_timeout:
+                        user_msg = 'Анализ занял слишком много времени. Деньги возвращены на баланс. Попробуйте позже.'
                     else:
-                        user_msg = f'Ошибка сервиса анализа. Попробуйте позже. Деньги возвращены.'
+                        user_msg = 'Ошибка сервиса анализа. Деньги возвращены на баланс. Попробуйте позже.'
                     
                     cursor.execute('''
                         UPDATE color_type_history
@@ -1760,12 +1804,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     ''', (user_msg, datetime.utcnow(), task_id))
                     conn.commit()
                     
-                    # Refund balance ONLY if NOT timeout (timeout = API was called, tokens spent)
-                    if not is_timeout:
-                        refund_balance_if_needed(conn, user_id, task_id)
-                        print(f'[ColorType-Worker] Refunded due to real API error')
-                    else:
-                        print(f'[ColorType-Worker] NO REFUND - timeout (API called, tokens spent)')
+                    # Возврат во всех случаях ошибки — результата пользователь не получил
+                    refund_balance_if_needed(conn, user_id, task_id)
+                    print(f'[ColorType-Worker] Refunded due to error (image_fetch={is_image_fetch_error}, timeout={is_timeout})')
                     
                     cursor.close()
                     conn.close()

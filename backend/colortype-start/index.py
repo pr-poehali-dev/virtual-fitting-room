@@ -83,6 +83,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'person_image is required'})
         }
     
+    # Страховочный лимит размера base64 (~6 МБ декодированных)
+    if len(person_image) > 8_000_000:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+            'isBase64Encoded': False,
+            'body': json.dumps({'error': 'Фото слишком большое. Попробуйте уменьшить размер изображения.'})
+        }
+    
     try:
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
