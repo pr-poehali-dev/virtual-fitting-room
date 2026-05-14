@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
@@ -10,7 +14,45 @@ import AdminMenu from '@/components/AdminMenu';
 
 const ADMIN_API = 'https://functions.poehali.dev/6667a30b-a520-41d8-b23a-e240a9aefb15';
 const ADMIN_MANAGE_ACCESS_API = 'https://functions.poehali.dev/15f28986-cce9-4e25-a05b-0860b1cf9cf7';
+const ADMIN_SEND_EMAIL_API = 'https://functions.poehali.dev/40705a9e-619c-4d94-9aa9-cea003516795';
 const getAdminToken = () => document.cookie.split('; ').find(c => c.startsWith('admin_token='))?.split('=')[1] || '';
+
+type EmailTemplateKey = 'refund' | 'maintenance' | 'thanks' | 'custom';
+
+const EMAIL_TEMPLATES: Record<EmailTemplateKey, { label: string; subject: string; body: (name: string) => string }> = {
+  refund: {
+    label: 'Возврат средств за технический сбой',
+    subject: 'Возврат средств на ваш баланс',
+    body: (name) => `Здравствуйте, ${name || 'пользователь'}!
+
+Мы вернули вам {сумма}₽ на баланс в Виртуальной примерочной. Это компенсация за технические сбои на стороне сервиса, из-за которых несколько ваших запросов не завершились корректно.
+
+Приносим извинения за неудобства. Если возникнут вопросы — напишите нам в поддержку.`,
+  },
+  maintenance: {
+    label: 'Технические работы',
+    subject: 'Технические работы на сервисе',
+    body: (name) => `Здравствуйте, ${name || 'пользователь'}!
+
+Сообщаем, что на сервисе Виртуальной примерочной проводятся технические работы. Возможны кратковременные перебои в работе. Мы стараемся завершить их как можно быстрее.
+
+Спасибо за понимание!`,
+  },
+  thanks: {
+    label: 'Благодарность',
+    subject: 'Спасибо, что вы с нами!',
+    body: (name) => `Здравствуйте, ${name || 'пользователь'}!
+
+Спасибо, что пользуетесь Виртуальной примерочной! Мы рады, что вы с нами.
+
+Если есть пожелания или идеи, как сделать сервис лучше — будем рады услышать.`,
+  },
+  custom: {
+    label: 'Свой текст',
+    subject: '',
+    body: () => '',
+  },
+};
 
 interface User {
   id: string;
@@ -29,6 +71,63 @@ export default function AdminUsers() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
   const usersPerPage = 50;
+
+  const [emailDialogUser, setEmailDialogUser] = useState<User | null>(null);
+  const [emailTemplateKey, setEmailTemplateKey] = useState<EmailTemplateKey>('refund');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+
+  const openEmailDialog = (user: User) => {
+    const tpl = EMAIL_TEMPLATES.refund;
+    setEmailDialogUser(user);
+    setEmailTemplateKey('refund');
+    setEmailSubject(tpl.subject);
+    setEmailBody(tpl.body(user.name));
+  };
+
+  const handleTemplateChange = (key: EmailTemplateKey) => {
+    setEmailTemplateKey(key);
+    const tpl = EMAIL_TEMPLATES[key];
+    setEmailSubject(tpl.subject);
+    setEmailBody(tpl.body(emailDialogUser?.name || ''));
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailDialogUser) return;
+    const subject = emailSubject.trim();
+    const body = emailBody.trim();
+    if (!subject || !body) {
+      toast.error('Заполните тему и текст письма');
+      return;
+    }
+    setIsSendingEmail(true);
+    try {
+      const response = await fetch(ADMIN_SEND_EMAIL_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getAdminToken()}`,
+        },
+        body: JSON.stringify({
+          user_id: emailDialogUser.id,
+          subject,
+          body_text: body,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok && data.success) {
+        toast.success(`Письмо отправлено на ${data.to_email || emailDialogUser.email}`);
+        setEmailDialogUser(null);
+      } else {
+        toast.error(`Ошибка отправки: ${data.error || 'неизвестная ошибка'}`);
+      }
+    } catch (e) {
+      toast.error('Ошибка соединения');
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -146,13 +245,23 @@ export default function AdminUsers() {
                             {new Date(user.created_at).toLocaleDateString()}
                           </td>
                           <td className="px-4 py-3">
-                            <Button
-                              size="sm"
-                              variant={user.unlimited_access ? "outline" : "default"}
-                              onClick={() => handleToggleUnlimitedAccess(user.email, user.unlimited_access || false)}
-                            >
-                              {user.unlimited_access ? 'Отключить безлимит' : 'Включить безлимит'}
-                            </Button>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                variant={user.unlimited_access ? "outline" : "default"}
+                                onClick={() => handleToggleUnlimitedAccess(user.email, user.unlimited_access || false)}
+                              >
+                                {user.unlimited_access ? 'Отключить безлимит' : 'Включить безлимит'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openEmailDialog(user)}
+                                title="Отправить письмо"
+                              >
+                                <Icon name="Mail" size={16} />
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -190,6 +299,76 @@ export default function AdminUsers() {
           </div>
         </div>
       </div>
+
+      <Dialog open={!!emailDialogUser} onOpenChange={(open) => !open && setEmailDialogUser(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Письмо пользователю</DialogTitle>
+            <DialogDescription>
+              {emailDialogUser ? `${emailDialogUser.name || 'Без имени'} (${emailDialogUser.email})` : ''}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Шаблон</Label>
+              <Select value={emailTemplateKey} onValueChange={(v) => handleTemplateChange(v as EmailTemplateKey)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(EMAIL_TEMPLATES) as EmailTemplateKey[]).map((key) => (
+                    <SelectItem key={key} value={key}>{EMAIL_TEMPLATES[key].label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Тема</Label>
+              <Input
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                placeholder="Например: Возврат средств"
+                maxLength={200}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Текст письма</Label>
+              <Textarea
+                value={emailBody}
+                onChange={(e) => setEmailBody(e.target.value)}
+                rows={10}
+                placeholder="Текст письма..."
+                maxLength={20000}
+              />
+              <p className="text-xs text-muted-foreground">
+                Подпись «С уважением, команда Fitting Room» добавляется автоматически.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailDialogUser(null)} disabled={isSendingEmail}>
+              Отмена
+            </Button>
+            <Button onClick={handleSendEmail} disabled={isSendingEmail}>
+              {isSendingEmail ? (
+                <>
+                  <Icon name="Loader2" className="animate-spin mr-2" size={16} />
+                  Отправка...
+                </>
+              ) : (
+                <>
+                  <Icon name="Send" className="mr-2" size={16} />
+                  Отправить
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
