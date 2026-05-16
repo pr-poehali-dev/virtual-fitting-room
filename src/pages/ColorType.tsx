@@ -7,6 +7,7 @@ import Layout from "@/components/Layout";
 import ImageCropper from "@/components/ImageCropper";
 import EyeColorSelector from "@/components/EyeColorSelector";
 import { validateImageFile } from "@/utils/fileValidation";
+import LockedFormOverlay from "@/components/LockedFormOverlay";
 import { useAuth } from "@/context/AuthContext";
 import { COLORTYPE_COST, MIN_TOPUP } from "@/config/prices";
 import { useData } from "@/context/DataContext";
@@ -532,6 +533,7 @@ export default function ColorType() {
                   </div>
                 )}
 
+                <LockedFormOverlay cost={COST}>
                 <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium mb-3">
@@ -654,6 +656,7 @@ export default function ColorType() {
                     </p>
                   )}
                 </div>
+                </LockedFormOverlay>
               </CardContent>
             </Card>
 

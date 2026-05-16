@@ -10,6 +10,7 @@ import Icon from '@/components/ui/icon';
 import FreegenReferenceUpload from '@/components/freegen/FreegenReferenceUpload';
 import FreegenAspectSelector from '@/components/freegen/FreegenAspectSelector';
 import FreegenResultPanel from '@/components/freegen/FreegenResultPanel';
+import LockedFormOverlay from '@/components/LockedFormOverlay';
 import {
   checkReplicateBalance,
   deductReplicateBalance,
@@ -203,6 +204,7 @@ export default function FreeGeneration() {
 
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-4">
+            <LockedFormOverlay cost={GENERATION_COST}>
             <Card>
               <CardContent className="pt-6 space-y-4">
                 <div>
@@ -252,6 +254,7 @@ export default function FreeGeneration() {
                 </Button>
               </CardContent>
             </Card>
+            </LockedFormOverlay>
           </div>
 
           <div>

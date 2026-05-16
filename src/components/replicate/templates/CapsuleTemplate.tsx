@@ -13,6 +13,7 @@ import ReplicateSaveDialog from "@/components/replicate/ReplicateSaveDialog";
 import ImageCropper from "@/components/ImageCropper";
 import CapsuleClothingList from "./CapsuleClothingList";
 import ClothingMultiSelect from "./ClothingMultiSelect";
+import LockedFormOverlay from "@/components/LockedFormOverlay";
 import type { TemplateGarment } from "./ClothingMultiSelect";
 import { useTemplateGeneration } from "@/hooks/useTemplateGeneration";
 import { useData } from "@/context/DataContext";
@@ -338,6 +339,7 @@ export default function CapsuleTemplate({
   return (
     <>
       <div className="grid lg:grid-cols-2 gap-8 mb-12">
+        <LockedFormOverlay cost={GENERATION_COST}>
         <Card className="animate-scale-in">
           <CardContent className="p-6 space-y-5">
             {!user && (
@@ -470,6 +472,7 @@ export default function CapsuleTemplate({
             </div>
           </CardContent>
         </Card>
+        </LockedFormOverlay>
 
         <ReplicateResultPanel
           isGenerating={isGenerating}

@@ -18,6 +18,7 @@ import TemplateModeTabs, {
 } from "@/components/replicate/TemplateModeTabs";
 import CapsuleTemplate from "@/components/replicate/templates/CapsuleTemplate";
 import LookbookGridTemplate from "@/components/replicate/templates/LookbookGridTemplate";
+import LockedFormOverlay from "@/components/LockedFormOverlay";
 import ImageCropper from "@/components/ImageCropper";
 import {
   checkReplicateBalance,
@@ -907,6 +908,7 @@ export default function ReplicateTryOn() {
 
           {activeMode === "standard" && (<>
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
+            <LockedFormOverlay cost={GENERATION_COST}>
             <Card className="animate-scale-in">
               <CardContent className="p-8">
                 {!user && (
@@ -1085,6 +1087,7 @@ export default function ReplicateTryOn() {
                 </div>
               </CardContent>
             </Card>
+            </LockedFormOverlay>
 
             <ReplicateResultPanel
               isGenerating={isGenerating}

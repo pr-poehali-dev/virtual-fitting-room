@@ -12,6 +12,7 @@ import ReplicateSaveDialog from "@/components/replicate/ReplicateSaveDialog";
 import ImageCropper from "@/components/ImageCropper";
 import CapsuleClothingList from "./CapsuleClothingList";
 import GridSlotList from "./GridSlotList";
+import LockedFormOverlay from "@/components/LockedFormOverlay";
 import type { TemplateGarment } from "./ClothingMultiSelect";
 import type { GridSlotData } from "./GridSlot";
 import { useTemplateGeneration } from "@/hooks/useTemplateGeneration";
@@ -373,6 +374,7 @@ export default function LookbookGridTemplate({
   return (
     <>
       <div className="grid lg:grid-cols-2 gap-8 mb-12">
+        <LockedFormOverlay cost={GENERATION_COST}>
         <Card className="animate-scale-in">
           <CardContent className="p-6 space-y-5">
             {!user && (
@@ -527,6 +529,7 @@ export default function LookbookGridTemplate({
             </div>
           </CardContent>
         </Card>
+        </LockedFormOverlay>
 
         <ReplicateResultPanel
           isGenerating={isGenerating}
