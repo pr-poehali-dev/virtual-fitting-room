@@ -34,8 +34,8 @@ const LockedFormOverlay = ({ cost, children, className = "" }: LockedFormOverlay
         {children}
       </div>
 
-      <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/50 backdrop-blur-md">
-        <div className="mx-4 max-w-sm rounded-2xl bg-white/90 p-6 text-center shadow-lg ring-1 ring-black/5">
+      <div className="absolute inset-0 z-10 flex items-start justify-center rounded-xl bg-white/50 backdrop-blur-md">
+        <div className="mx-4 mt-6 max-w-sm rounded-2xl bg-white/90 p-6 text-center shadow-lg ring-1 ring-black/5">
           {isAuthLocked ? (
             <>
               <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-purple-100">
