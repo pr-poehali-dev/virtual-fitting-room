@@ -46,6 +46,7 @@ import Contacts from "./pages/Contacts";
 import Privacy from "./pages/Privacy";
 import PersonalData from "./pages/PersonalData";
 import AiEditor from "./pages/AiEditor";
+import ScrollToTop from "./components/ScrollToTop";
 
 const APP_VERSION = "2.0.0";
 
@@ -77,6 +78,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+            <ScrollToTop />
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/virtualfitting" element={<ReplicateTryOn />} />
