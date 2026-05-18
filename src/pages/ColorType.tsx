@@ -476,38 +476,6 @@ export default function ColorType() {
             {/* Left Panel - Upload */}
             <Card className="animate-scale-in">
               <CardContent className="p-8">
-                {!user && (
-                  <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <Icon
-                        name="Info"
-                        className="text-primary mt-0.5 flex-shrink-0"
-                        size={20}
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-primary mb-1">
-                          Требуется авторизация
-                        </p>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Для генерации изображений необходимо войти в аккаунт и пополнить баланс минимум на {MIN_TOPUP} рублей.
-                        </p>
-                        <div className="flex gap-2">
-                          <Link to="/login">
-                            <Button size="sm" variant="default">
-                              Войти
-                            </Button>
-                          </Link>
-                          <Link to="/register">
-                            <Button size="sm" variant="outline">
-                              Регистрация
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 <LockedFormOverlay cost={COST}>
                 <div className="space-y-6">
                   <div>
