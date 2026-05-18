@@ -11,7 +11,11 @@ interface LockedFormOverlayProps {
   className?: string;
 }
 
-const LockedFormOverlay = ({ cost, children, className = "" }: LockedFormOverlayProps) => {
+const LockedFormOverlay = ({
+  cost,
+  children,
+  className = "",
+}: LockedFormOverlayProps) => {
   const { user, isLoading: authLoading } = useAuth();
   const { balanceInfo } = useBalance();
   const navigate = useNavigate();
@@ -45,7 +49,10 @@ const LockedFormOverlay = ({ cost, children, className = "" }: LockedFormOverlay
                 Войдите, чтобы продолжить
               </h3>
               <p className="mb-4 text-sm text-gray-600">
-                Нужен аккаунт и баланс от {cost} ₽ на счёте
+                Нужен аккаунт и баланс от {cost} ₽ на счёте. Для генерации
+                изображений необходимо зарегистрироваться, если еще не
+                регистрировали аккаунт, войти в аккаунт и пополнить баланс
+                минимум на {cost} рублей.
               </p>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Button
