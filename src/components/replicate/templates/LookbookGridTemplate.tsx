@@ -408,31 +408,6 @@ export default function LookbookGridTemplate({
               </div>
             )}
 
-            {hasInsufficientBalance && (
-              <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <Icon
-                    name="Wallet"
-                    className="text-orange-600 mt-0.5"
-                    size={20}
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-orange-700">
-                      Пополните баланс
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Для генерации нужно минимум {GENERATION_COST}₽.
-                    </p>
-                    <Link to="/profile/wallet">
-                      <Button size="sm" className="mt-2">
-                        Пополнить
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            )}
-
             <ReplicateImageUpload
               uploadedImage={personImage}
               handleImageUpload={handlePersonUpload}

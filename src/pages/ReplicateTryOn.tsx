@@ -944,31 +944,6 @@ export default function ReplicateTryOn() {
                   </div>
                 )}
 
-                {hasInsufficientBalance && (
-                  <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <Icon
-                        name="Wallet"
-                        className="text-orange-600 mt-0.5 flex-shrink-0"
-                        size={20}
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-orange-700 mb-1">
-                          Недостаточно средств
-                        </p>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Пополните баланс для генерации. Стоимость: {GENERATION_COST}₽
-                        </p>
-                        <Link to="/profile/wallet">
-                          <Button size="sm" variant="default">
-                            Пополнить баланс
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 <div className="space-y-6">
                   <ReplicateImageUpload
                     uploadedImage={uploadedImage}

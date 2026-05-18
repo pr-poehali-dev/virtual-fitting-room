@@ -45,7 +45,7 @@ const LockedFormOverlay = ({ cost, children, className = "" }: LockedFormOverlay
                 Войдите, чтобы продолжить
               </h3>
               <p className="mb-4 text-sm text-gray-600">
-                Для использования функции нужен аккаунт
+                Нужен аккаунт и баланс от {cost} ₽ на счёте
               </p>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Button
