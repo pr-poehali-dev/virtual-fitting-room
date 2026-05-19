@@ -507,7 +507,7 @@ def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
     })
     
     payload = {
-        'model': 'openai/gpt-4o',  # OpenRouter format: provider/model
+        'model': 'google/gemini-2.5-flash',  # OpenRouter format: provider/model
         'messages': [
             {
                 'role': 'user',
@@ -519,12 +519,7 @@ def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
             }
         ],
         'max_tokens': 600,
-        'temperature': 0.3,  # Lower temperature for more consistent analysis
-        'provider': {
-            'ignore': ['OpenAI', 'Azure'],
-            'allow_fallbacks': True,
-            'require_parameters': True
-        }
+        'temperature': 0.3  # Lower temperature for more consistent analysis
     }
     
     # Debug: count images in request
