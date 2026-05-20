@@ -1663,6 +1663,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     
                     print(f'[ColorType-Worker] OpenAI response: {raw_result[:200]}...')
                     
+                    # Defensive defaults — avoid UnboundLocalError in outer except / DB write
+                    gpt_suggested_type = None
+                    color_type = None
+                    result_text_value = raw_result
+                    
                     # Parse JSON from response
                     try:
                         # Extract JSON from markdown code blocks if present
@@ -1676,9 +1681,56 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         json_str = json_str.replace('\\\\_', '_')
                         json_str = json_str.replace('\\_', '_')
                         
+                        # Robust extraction: find the first valid JSON object by brace matching.
+                        # Some models (e.g. Gemini) ignore the assistant-prefill and start their
+                        # own JSON, which leads to "Extra data" errors when json.loads sees two
+                        # concatenated objects. We scan for the first balanced {...} block.
+                        def _extract_first_json_object(s: str) -> str:
+                            start = s.find('{')
+                            if start == -1:
+                                return s
+                            depth = 0
+                            in_str = False
+                            escape = False
+                            for i in range(start, len(s)):
+                                ch = s[i]
+                                if in_str:
+                                    if escape:
+                                        escape = False
+                                    elif ch == '\\':
+                                        escape = True
+                                    elif ch == '"':
+                                        in_str = False
+                                else:
+                                    if ch == '"':
+                                        in_str = True
+                                    elif ch == '{':
+                                        depth += 1
+                                    elif ch == '}':
+                                        depth -= 1
+                                        if depth == 0:
+                                            return s[start:i+1]
+                            return s[start:]
+                        
+                        json_str = _extract_first_json_object(json_str)
+                        
+                        # If the model ignored the assistant-prefill, the prefill fragment
+                        # `{"suggested_colortype": "` may appear at the start without a closing
+                        # quote, breaking parsing. If we can't parse, try a fallback that
+                        # strips a leading broken prefill line.
                         print(f'[ColorType-Worker] Cleaned JSON: {json_str[:300]}...')
                         
-                        analysis = json.loads(json_str)
+                        try:
+                            analysis = json.loads(json_str)
+                        except json.JSONDecodeError:
+                            # Fallback: search for a fresh balanced object after the broken prefill
+                            second_start = json_str.find('{', 1)
+                            if second_start != -1:
+                                fallback = _extract_first_json_object(json_str[second_start:])
+                                print(f'[ColorType-Worker] Fallback JSON: {fallback[:300]}...')
+                                analysis = json.loads(fallback)
+                            else:
+                                raise
                         
                         # Override eye_color with user's choice
                         analysis['eye_color'] = eye_color
