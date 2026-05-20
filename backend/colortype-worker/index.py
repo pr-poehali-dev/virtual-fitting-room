@@ -550,8 +550,28 @@ def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
                 print(f'[OpenRouter] ERROR: Invalid response structure: {result}')
                 raise Exception('OpenRouter response missing "choices" field')
             
-            content = result['choices'][0]['message']['content']
-            print(f'[OpenRouter] Got response: {content[:200]}...')
+            choice = result['choices'][0]
+            message = choice.get('message') or {}
+            finish_reason = choice.get('finish_reason') or choice.get('native_finish_reason')
+            content = message.get('content')
+            
+            # Diagnostic: log finish_reason and full message shape when content is missing
+            if not content:
+                reasoning = message.get('reasoning')
+                refusal = message.get('refusal')
+                print(f'[OpenRouter] DIAG: content is empty. finish_reason={finish_reason}, refusal={refusal}, has_reasoning={bool(reasoning)}')
+                print(f'[OpenRouter] DIAG: message keys={list(message.keys())}')
+                print(f'[OpenRouter] DIAG: choice keys={list(choice.keys())}')
+                print(f'[OpenRouter] DIAG: full message: {json.dumps(message)[:1500]}')
+                if reasoning:
+                    print(f'[OpenRouter] DIAG: reasoning preview: {reasoning[:500]}')
+                # Fallback: some models put answer into "reasoning" instead of "content"
+                if reasoning:
+                    content = reasoning
+                else:
+                    raise Exception(f'OpenRouter returned empty content (finish_reason={finish_reason}, refusal={refusal})')
+            
+            print(f'[OpenRouter] Got response (finish_reason={finish_reason}): {content[:200]}...')
             return {'status': 'succeeded', 'output': content}
         except (KeyError, IndexError, json.JSONDecodeError) as e:
             print(f'[OpenRouter] ERROR parsing response: {str(e)}. Response: {response.text[:300]}')
