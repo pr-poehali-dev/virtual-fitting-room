@@ -512,14 +512,11 @@ def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
             {
                 'role': 'user',
                 'content': content
-            },
-            {
-                'role': 'assistant',
-                'content': '{"suggested_colortype": "}'  # Prefill to bypass refusals
             }
         ],
         'max_tokens': 600,
-        'temperature': 0.3  # Lower temperature for more consistent analysis
+        'temperature': 0.3,  # Lower temperature for more consistent analysis
+        'response_format': {'type': 'json_object'}  # Force structured JSON output
     }
     
     # Debug: count images in request
