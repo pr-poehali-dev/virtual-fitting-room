@@ -55,8 +55,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
         )
         prefix = f'colortype-schemes/{slug}/guide/'
-        response = s3.list_objects_v2(Bucket='files', Prefix=prefix)
-        objects = response.get('Contents', [])
 
         groups = {
             'hair': [],
@@ -67,24 +65,57 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'other': []
         }
 
-        for obj in objects:
-            key = obj['Key']
-            if key.endswith('/'):
-                continue
-            filename = key.rsplit('/', 1)[-1].lower()
-            url = f'https://cdn.poehali.dev/projects/{aws_key}/bucket/{key}'
-            if filename.startswith('hair'):
+        def classify(filename: str, url: str):
+            fn = filename.lower()
+            if fn.startswith('hair'):
                 groups['hair'].append(url)
-            elif filename.startswith('makeup'):
+            elif fn.startswith('makeup'):
                 groups['makeup'].append(url)
-            elif filename.startswith('outfit'):
+            elif fn.startswith('outfit'):
                 groups['outfit'].append(url)
-            elif filename.startswith('jewelry'):
+            elif fn.startswith('jewelry'):
                 groups['jewelry'].append(url)
-            elif filename.startswith('texture'):
+            elif fn.startswith('texture'):
                 groups['texture'].append(url)
             else:
                 groups['other'].append(url)
+
+        # Попытка 1: листинг S3
+        try:
+            response = s3.list_objects_v2(Bucket='files', Prefix=prefix)
+            objects = response.get('Contents', [])
+            for obj in objects:
+                key = obj['Key']
+                if key.endswith('/'):
+                    continue
+                filename = key.rsplit('/', 1)[-1]
+                url = f'https://cdn.poehali.dev/projects/{aws_key}/bucket/{key}'
+                classify(filename, url)
+            print(f'[GUIDE-IMAGES] list_objects_v2 found {len(objects)} objects for {slug}')
+        except Exception as list_err:
+            print(f'[GUIDE-IMAGES] list_objects_v2 failed: {list_err}')
+
+        # Попытка 2: fallback — проверяем заранее известные имена через head_object
+        # Это покрывает базовый набор картинок, который я загрузил
+        total_found = sum(len(v) for v in groups.values())
+        if total_found == 0:
+            print(f'[GUIDE-IMAGES] Fallback: probing known filenames for {slug}')
+            fallback_files = [
+                'jewelry-1.jpg', 'jewelry-2.jpg', 'jewelry-3.jpg',
+                'outfit-1.jpg', 'outfit-2.jpg', 'outfit-3.jpg', 'outfit-4.jpg',
+                'texture-1.jpg', 'texture-2.jpg',
+                'makeup-1.jpg', 'makeup-2.jpg',
+                'hair-1.jpg', 'hair-2.jpg', 'hair-3.jpg'
+            ]
+            for fname in fallback_files:
+                key = f'{prefix}{fname}'
+                try:
+                    s3.head_object(Bucket='files', Key=key)
+                    url = f'https://cdn.poehali.dev/projects/{aws_key}/bucket/{key}'
+                    classify(fname, url)
+                except Exception:
+                    pass
+            print(f'[GUIDE-IMAGES] Fallback found {sum(len(v) for v in groups.values())} files')
 
         for k in groups:
             groups[k].sort()
