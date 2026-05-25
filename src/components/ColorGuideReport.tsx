@@ -6,6 +6,23 @@ import { toast } from "sonner";
 import html2canvas from "html2canvas";
 
 const GUIDE_IMAGES_API = "https://functions.poehali.dev/6df158f5-ce47-4f8c-9fad-c312c737757e";
+const IMAGE_PROXY_API = "https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90";
+
+async function fetchAsDataUrl(url: string): Promise<string> {
+  try {
+    const response = await fetch(IMAGE_PROXY_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image_url: url }),
+    });
+    if (!response.ok) throw new Error("proxy fetch failed");
+    const data = await response.json();
+    return data.data_url || url;
+  } catch (e) {
+    console.error("[ColorGuide] Proxy error for", url, e);
+    return url;
+  }
+}
 
 export interface ColorGuideResult {
   colortype_slug: string;
@@ -51,18 +68,57 @@ interface GuideImages {
 
 export default function ColorGuideReport({ result, photoUrl }: ColorGuideReportProps) {
   const [images, setImages] = useState<GuideImages | null>(null);
+  const [photoDataUrl, setPhotoDataUrl] = useState<string>(photoUrl);
   const [isDownloading, setIsDownloading] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
 
+  // Proxy user photo through image-proxy to bypass CORS
+  useEffect(() => {
+    let cancelled = false;
+    if (!photoUrl) return;
+    // data: URLs пропускаем — это локально загруженное фото перед обработкой
+    if (photoUrl.startsWith("data:")) {
+      setPhotoDataUrl(photoUrl);
+      return;
+    }
+    fetchAsDataUrl(photoUrl).then((dataUrl) => {
+      if (!cancelled) setPhotoDataUrl(dataUrl);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [photoUrl]);
+
+  // Load guide images list and proxy each one
   useEffect(() => {
     let cancelled = false;
     fetch(`${GUIDE_IMAGES_API}?slug=${encodeURIComponent(result.colortype_slug)}`)
       .then((r) => r.json())
-      .then((data) => {
+      .then(async (data) => {
         if (cancelled) return;
-        if (data && data.images) {
-          setImages(data.images);
-        }
+        if (!data || !data.images) return;
+        const src: GuideImages = data.images;
+        // Proxy only the images we actually display (limits to avoid 10+ requests)
+        const proxyList = async (urls: string[], limit: number) => {
+          const sliced = urls.slice(0, limit);
+          return Promise.all(sliced.map((u) => fetchAsDataUrl(u)));
+        };
+        const [outfit, texture, makeup, jewelry, hair] = await Promise.all([
+          proxyList(src.outfit || [], 4),
+          proxyList(src.texture || [], 2),
+          proxyList(src.makeup || [], 1),
+          proxyList(src.jewelry || [], 1),
+          proxyList(src.hair || [], 0),
+        ]);
+        if (cancelled) return;
+        setImages({
+          outfit,
+          texture,
+          makeup,
+          jewelry,
+          hair,
+          other: [],
+        });
       })
       .catch((e) => {
         console.error("[ColorGuide] Failed to load guide images:", e);
@@ -80,7 +136,9 @@ export default function ColorGuideReport({ result, photoUrl }: ColorGuideReportP
         backgroundColor: "#ffffff",
         scale: 2,
         useCORS: true,
+        allowTaint: false,
         logging: false,
+        imageTimeout: 15000,
       });
       const link = document.createElement("a");
       link.download = `color-guide-${result.colortype_slug}.png`;
@@ -119,8 +177,7 @@ export default function ColorGuideReport({ result, photoUrl }: ColorGuideReportP
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
             <div className="flex-shrink-0">
               <img
-                src={photoUrl}
-                crossOrigin="anonymous"
+                src={photoDataUrl}
                 alt="Фото"
                 className="w-40 h-52 object-cover rounded-xl border-4 border-white shadow-lg"
               />
@@ -209,7 +266,6 @@ export default function ColorGuideReport({ result, photoUrl }: ColorGuideReportP
                   <img
                     key={i}
                     src={url}
-                    crossOrigin="anonymous"
                     alt={`Образ ${i + 1}`}
                     className="w-full aspect-square object-cover rounded-xl border border-gray-200"
                   />
@@ -228,7 +284,6 @@ export default function ColorGuideReport({ result, photoUrl }: ColorGuideReportP
                   <img
                     key={i}
                     src={url}
-                    crossOrigin="anonymous"
                     alt={`Текстура ${i + 1}`}
                     className="w-full aspect-[16/9] object-cover rounded-xl border border-gray-200"
                   />
@@ -253,7 +308,6 @@ export default function ColorGuideReport({ result, photoUrl }: ColorGuideReportP
                     <img
                       key={i}
                       src={url}
-                      crossOrigin="anonymous"
                       alt={`Косметика ${i + 1}`}
                       className="w-full aspect-[16/9] object-cover rounded-xl border border-gray-200"
                     />
@@ -298,7 +352,6 @@ export default function ColorGuideReport({ result, photoUrl }: ColorGuideReportP
                     <img
                       key={i}
                       src={url}
-                      crossOrigin="anonymous"
                       alt={`Украшения ${i + 1}`}
                       className="w-full aspect-[16/9] object-cover rounded-xl border border-gray-200"
                     />

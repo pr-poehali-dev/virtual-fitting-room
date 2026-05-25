@@ -140,14 +140,15 @@ export default function AdminColorGuide() {
 
   return (
     <Layout>
-      <section className="py-8 px-4">
-        <div className="container mx-auto max-w-7xl">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
           <AdminMenu />
 
-          <div className="mb-6">
-            <h2 className="text-3xl font-light mb-2">Гид по цвету — задачи</h2>
-            <p className="text-muted-foreground">Все запросы пользователей на персональный гид по цвету</p>
-          </div>
+          <div className="flex-1 min-w-0">
+            <div className="mb-6">
+              <h2 className="text-3xl font-light mb-2">Гид по цвету — задачи</h2>
+              <p className="text-muted-foreground">Все запросы пользователей на персональный гид по цвету</p>
+            </div>
 
           <Card className="mb-4">
             <CardContent className="p-4 flex flex-col sm:flex-row gap-3">
@@ -276,8 +277,9 @@ export default function AdminColorGuide() {
               )}
             </>
           )}
+          </div>
         </div>
-      </section>
+      </div>
 
       {/* Detail Dialog */}
       <Dialog open={!!selectedDetail || isLoadingDetail} onOpenChange={() => setSelectedDetail(null)}>

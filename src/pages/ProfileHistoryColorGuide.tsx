@@ -133,14 +133,15 @@ export default function ProfileHistoryColorGuide() {
 
   return (
     <Layout>
-      <section className="py-10 px-4">
-        <div className="container mx-auto max-w-6xl">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
           <ProfileMenu />
 
-          <div className="mb-8">
-            <h2 className="text-3xl md:text-4xl font-light mb-2">История гидов по цвету</h2>
-            <p className="text-muted-foreground">Все ваши персональные отчёты</p>
-          </div>
+          <div className="flex-1 min-w-0">
+            <div className="mb-8">
+              <h2 className="text-3xl md:text-4xl font-light mb-2">История гидов по цвету</h2>
+              <p className="text-muted-foreground">Все ваши персональные отчёты</p>
+            </div>
 
           {isLoading ? (
             <div className="flex justify-center py-20">
@@ -218,8 +219,9 @@ export default function ProfileHistoryColorGuide() {
               ))}
             </div>
           )}
+          </div>
         </div>
-      </section>
+      </div>
     </Layout>
   );
 }
