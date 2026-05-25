@@ -38,6 +38,12 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       icon: "Palette",
       label: "Определение цветотипа",
     },
+    {
+      id: "color-guide",
+      path: "/color-guide",
+      icon: "BookOpen",
+      label: "Ваш гид по цвету",
+    },
     ...(user?.email === OWNER_EMAIL
       ? [
           {

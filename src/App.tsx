@@ -11,6 +11,7 @@ import { useEffect } from "react";
 
 import Home from "./pages/Home";
 import ColorType from "./pages/ColorType";
+import ColorGuide from "./pages/ColorGuide";
 import Profile from "./pages/Profile";
 import ProfileDashboard from "./pages/ProfileDashboard";
 import ProfileLookbooks from "./pages/ProfileLookbooks";
@@ -85,6 +86,7 @@ const App = () => (
               <Route path="/replicate" element={<Navigate to="/virtualfitting" replace />} />
               <Route path="/freegeneration" element={<FreeGeneration />} />
               <Route path="/colortype" element={<ColorType />} />
+            <Route path="/color-guide" element={<ColorGuide />} />
             <Route path="/ai-editor" element={<AiEditor />} />
             
             {/* Profile Routes */}

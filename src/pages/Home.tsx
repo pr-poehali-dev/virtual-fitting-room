@@ -39,6 +39,16 @@ const Home = () => {
       icon: "Palette",
       path: "/colortype",
     },
+    {
+      id: "color-guide",
+      title: "Ваш гид по цвету",
+      description:
+        "Полный персональный отчёт: палитра, макияж, украшения, цвета волос и капсульные образы. Можно скачать в PNG",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/colortype-schemes/vivid-autumn/guide/outfit-1.jpg",
+      icon: "BookOpen",
+      path: "/color-guide",
+    },
   ];
 
   return (
