@@ -163,7 +163,7 @@ def get_db_connection():
 
 
 def upload_to_s3(image_data_url: str, task_id: str, user_id: str) -> str:
-    """Загружает base64 фото в S3, возвращает CDN URL"""
+    """Загружает base64 фото в Яндекс Object Storage, возвращает CDN URL"""
     match = re.match(r'data:image/(\w+);base64,(.+)', image_data_url)
     if not match:
         raise ValueError('Invalid image data URL')
@@ -172,17 +172,20 @@ def upload_to_s3(image_data_url: str, task_id: str, user_id: str) -> str:
         ext = 'jpg'
     image_bytes = base64.b64decode(match.group(2))
 
-    aws_key = os.environ['AWS_ACCESS_KEY_ID']
+    s3_access_key = os.environ.get('S3_ACCESS_KEY')
+    s3_secret_key = os.environ.get('S3_SECRET_KEY')
+    s3_bucket = os.environ.get('S3_BUCKET_NAME', 'fitting-room-images')
+
     s3 = boto3.client(
         's3',
-        endpoint_url='https://bucket.poehali.dev',
-        aws_access_key_id=aws_key,
-        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
+        endpoint_url='https://storage.yandexcloud.net',
+        aws_access_key_id=s3_access_key,
+        aws_secret_access_key=s3_secret_key
     )
-    key = f'colorguide/{user_id}/{task_id}.{ext}'
+    s3_key = f'images/colorguide/{user_id}/{task_id}.{ext}'
     content_type = f'image/{ext if ext != "jpg" else "jpeg"}'
-    s3.put_object(Bucket='files', Key=key, Body=image_bytes, ContentType=content_type)
-    return f'https://cdn.poehali.dev/projects/{aws_key}/bucket/{key}'
+    s3.put_object(Bucket=s3_bucket, Key=s3_key, Body=image_bytes, ContentType=content_type)
+    return f'https://storage.yandexcloud.net/{s3_bucket}/{s3_key}'
 
 
 def call_gemini(image_url: str) -> Dict[str, Any]:
@@ -244,6 +247,35 @@ def call_gemini(image_url: str) -> Dict[str, Any]:
     return data
 
 
+def refund_user(cursor, task_id: str, user_id, cost: int, reason: str):
+    """Возвращает деньги пользователю и помечает задачу refunded=TRUE"""
+    if not cost or cost <= 0:
+        return False
+    try:
+        cursor.execute('SELECT balance FROM users WHERE id = %s', (user_id,))
+        row = cursor.fetchone()
+        if not row:
+            return False
+        balance_before = float(row[0])
+        balance_after = balance_before + cost
+
+        cursor.execute('UPDATE users SET balance = balance + %s WHERE id = %s', (cost, user_id))
+        cursor.execute('''
+            INSERT INTO balance_transactions
+            (user_id, type, amount, balance_before, balance_after, description)
+            VALUES (%s, 'refund', %s, %s, %s, %s)
+        ''', (user_id, cost, balance_before, balance_after, f'Возврат: Гид по цвету ({reason})'))
+        cursor.execute(
+            'UPDATE color_guide_tasks SET refunded = TRUE WHERE id = %s',
+            (task_id,)
+        )
+        print(f'[COLORGUIDE-WORKER] Refunded {cost} to user {user_id} for task {task_id}')
+        return True
+    except Exception as e:
+        print(f'[COLORGUIDE-WORKER] Refund failed: {e}')
+        return False
+
+
 def process_task(task_id: str):
     """Главная логика обработки задачи"""
     print(f'[COLORGUIDE-WORKER] Processing task {task_id}')
@@ -252,14 +284,14 @@ def process_task(task_id: str):
 
     try:
         cursor.execute(
-            'SELECT user_id, person_image, status FROM color_guide_tasks WHERE id = %s',
+            'SELECT user_id, person_image, status, cost, refunded FROM color_guide_tasks WHERE id = %s',
             (task_id,)
         )
         row = cursor.fetchone()
         if not row:
             print(f'[COLORGUIDE-WORKER] Task {task_id} not found')
             return
-        user_id, person_image, status = row
+        user_id, person_image, status, cost, refunded = row
         if status not in ('pending', 'processing'):
             print(f'[COLORGUIDE-WORKER] Task {task_id} already in status {status}')
             return
@@ -282,12 +314,34 @@ def process_task(task_id: str):
         raw_slug = result.get('colortype_slug', '')
         slug = normalize_slug(raw_slug, result.get('colortype_name', ''))
         if not slug:
-            print(f'[COLORGUIDE-WORKER] WARNING: Invalid slug "{raw_slug}", fallback to soft-summer')
-            slug = 'soft-summer'
+            print(f'[COLORGUIDE-WORKER] WARNING: Invalid slug "{raw_slug}"')
+            # No valid slug — treat as failure and refund
+            if not refunded and cost and cost > 0:
+                refund_user(cursor, task_id, user_id, cost, 'не удалось определить цветотип')
+            cursor.execute(
+                "UPDATE color_guide_tasks SET status = 'failed', error_message = %s, updated_at = %s WHERE id = %s",
+                ('Не удалось определить цветотип по этому фото. Попробуйте другое фото.', datetime.utcnow(), task_id)
+            )
+            conn.commit()
+            return
         result['colortype_slug'] = slug
         print(f'[COLORGUIDE-WORKER] Final slug: {slug}')
 
-        # 4. Save result
+        # 4. Validate result has minimum required fields
+        required_fields = ['main_palette', 'avoid_palette', 'makeup', 'metals', 'hair_colors', 'capsules', 'tips']
+        missing = [f for f in required_fields if f not in result or not result.get(f)]
+        if missing:
+            print(f'[COLORGUIDE-WORKER] WARNING: Missing fields in result: {missing}')
+            if not refunded and cost and cost > 0:
+                refund_user(cursor, task_id, user_id, cost, f'неполный ответ Gemini: {",".join(missing)}')
+            cursor.execute(
+                "UPDATE color_guide_tasks SET status = 'failed', error_message = %s, updated_at = %s WHERE id = %s",
+                (f'Не удалось сформировать полный отчёт. Попробуйте ещё раз.', datetime.utcnow(), task_id)
+            )
+            conn.commit()
+            return
+
+        # 5. Save result
         cursor.execute('''
             UPDATE color_guide_tasks
             SET status = 'completed',
@@ -304,6 +358,17 @@ def process_task(task_id: str):
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR: {e}')
         try:
+            # Refund money on error
+            cursor.execute(
+                'SELECT user_id, cost, refunded FROM color_guide_tasks WHERE id = %s',
+                (task_id,)
+            )
+            r = cursor.fetchone()
+            if r:
+                u_id, t_cost, t_refunded = r
+                if not t_refunded and t_cost and t_cost > 0:
+                    refund_user(cursor, task_id, u_id, t_cost, f'ошибка обработки')
+
             cursor.execute(
                 "UPDATE color_guide_tasks SET status = 'failed', error_message = %s, updated_at = %s WHERE id = %s",
                 (str(e)[:500], datetime.utcnow(), task_id)

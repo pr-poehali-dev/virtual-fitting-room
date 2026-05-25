@@ -12,6 +12,9 @@ import { useEffect } from "react";
 import Home from "./pages/Home";
 import ColorType from "./pages/ColorType";
 import ColorGuide from "./pages/ColorGuide";
+import ColorGuideDetail from "./pages/ColorGuideDetail";
+import ProfileHistoryColorGuide from "./pages/ProfileHistoryColorGuide";
+import AdminColorGuide from "./pages/AdminColorGuide";
 import Profile from "./pages/Profile";
 import ProfileDashboard from "./pages/ProfileDashboard";
 import ProfileLookbooks from "./pages/ProfileLookbooks";
@@ -87,6 +90,7 @@ const App = () => (
               <Route path="/freegeneration" element={<FreeGeneration />} />
               <Route path="/colortype" element={<ColorType />} />
             <Route path="/color-guide" element={<ColorGuide />} />
+            <Route path="/color-guide/:id" element={<ColorGuideDetail />} />
             <Route path="/ai-editor" element={<AiEditor />} />
             
             {/* Profile Routes */}
@@ -94,6 +98,7 @@ const App = () => (
             <Route path="/profile/lookbooks" element={<ProfileLookbooks />} />
             <Route path="/profile/history" element={<ProfileHistory />} />
             <Route path="/profile/history-colortypes" element={<ProfileHistoryColortypes />} />
+            <Route path="/profile/history-colorguide" element={<ProfileHistoryColorGuide />} />
             <Route path="/profile/history-freegen" element={<ProfileHistoryFreegen />} />
             <Route path="/profile/wallet" element={<ProfileWallet />} />
             <Route path="/profile/settings" element={<ProfileSettings />} />
@@ -110,6 +115,7 @@ const App = () => (
             <Route path="/vf-console/catalog" element={<AdminCatalog />} />
             <Route path="/vf-console/generations" element={<AdminGenerations />} />
             <Route path="/vf-console/colortypes" element={<AdminColorTypes />} />
+            <Route path="/vf-console/colorguides" element={<AdminColorGuide />} />
             <Route path="/vf-console/cleanup" element={<AdminCleanup />} />
             
             <Route path="/login" element={<Login />} />

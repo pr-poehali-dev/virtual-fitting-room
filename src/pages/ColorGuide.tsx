@@ -276,10 +276,14 @@ export default function ColorGuide() {
           {result && photoUrl ? (
             <div className="space-y-6">
               <ColorGuideReport result={result} photoUrl={photoUrl} />
-              <div className="flex justify-center">
+              <div className="flex flex-wrap justify-center gap-3">
                 <Button onClick={handleReset} variant="outline" size="lg">
                   <Icon name="RotateCcw" className="mr-2" size={18} />
                   Создать новый гид
+                </Button>
+                <Button onClick={() => navigate("/profile/history-colorguide")} variant="default" size="lg">
+                  <Icon name="History" className="mr-2" size={18} />
+                  В историю гидов
                 </Button>
               </div>
             </div>

@@ -410,7 +410,157 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False,
                 'body': json.dumps(result_list)
             }
-        
+
+        elif action == 'colorguide_history':
+            # Список задач Гида по цвету для админки
+            filters = []
+            filter_values = []
+
+            user_id_filter = query_params.get('user_id')
+            status_filter = query_params.get('status')
+
+            if user_id_filter:
+                filters.append("g.user_id::text = %s")
+                filter_values.append(user_id_filter)
+            if status_filter:
+                filters.append("g.status = %s")
+                filter_values.append(status_filter)
+
+            where_clause = " AND ".join(filters) if filters else "1=1"
+
+            query = f"""
+                SELECT
+                    g.id,
+                    g.user_id,
+                    u.email as user_email,
+                    u.name as user_name,
+                    g.status,
+                    g.colortype_slug,
+                    g.result_json,
+                    g.cdn_url,
+                    g.cost,
+                    g.refunded,
+                    g.error_message,
+                    g.created_at
+                FROM color_guide_tasks g
+                LEFT JOIN users u ON g.user_id = u.id
+                WHERE {where_clause}
+                ORDER BY g.created_at DESC
+                LIMIT 500
+            """
+
+            cursor.execute(query, filter_values)
+            history = cursor.fetchall()
+
+            result_list = []
+            for h in history:
+                colortype_name = None
+                rj = h.get('result_json')
+                if rj:
+                    if isinstance(rj, str):
+                        try:
+                            rj = json.loads(rj)
+                        except Exception:
+                            rj = None
+                    if isinstance(rj, dict):
+                        colortype_name = rj.get('colortype_name')
+                result_list.append({
+                    'id': str(h['id']),
+                    'user_id': str(h['user_id']) if h['user_id'] else None,
+                    'user_email': h['user_email'],
+                    'user_name': h['user_name'],
+                    'status': h['status'],
+                    'colortype_slug': h['colortype_slug'],
+                    'colortype_name': colortype_name,
+                    'cdn_url': h['cdn_url'],
+                    'cost': float(h['cost']) if h['cost'] else 0,
+                    'refunded': h['refunded'],
+                    'error_message': h.get('error_message'),
+                    'created_at': h['created_at'].isoformat() if h['created_at'] else None
+                })
+
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps(result_list, ensure_ascii=False)
+            }
+
+        elif action == 'colorguide_detail':
+            task_id = query_params.get('task_id')
+            if not task_id:
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'task_id required'})
+                }
+
+            cursor.execute('''
+                SELECT g.id, g.user_id, u.email as user_email, u.name as user_name,
+                       g.status, g.colortype_slug, g.result_json, g.cdn_url, g.cost,
+                       g.refunded, g.error_message, g.created_at
+                FROM color_guide_tasks g
+                LEFT JOIN users u ON g.user_id = u.id
+                WHERE g.id::text = %s
+            ''', (task_id,))
+            row = cursor.fetchone()
+            if not row:
+                return {
+                    'statusCode': 404,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Not found'})
+                }
+
+            rj = row.get('result_json')
+            if rj and isinstance(rj, str):
+                try:
+                    rj = json.loads(rj)
+                except Exception:
+                    rj = None
+
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                'isBase64Encoded': False,
+                'body': json.dumps({
+                    'id': str(row['id']),
+                    'user_id': str(row['user_id']) if row['user_id'] else None,
+                    'user_email': row['user_email'],
+                    'user_name': row['user_name'],
+                    'status': row['status'],
+                    'colortype_slug': row['colortype_slug'],
+                    'cdn_url': row['cdn_url'],
+                    'cost': float(row['cost']) if row['cost'] else 0,
+                    'refunded': row['refunded'],
+                    'error_message': row.get('error_message'),
+                    'created_at': row['created_at'].isoformat() if row['created_at'] else None,
+                    'result': rj
+                }, ensure_ascii=False)
+            }
+
+        elif action == 'delete_colorguide' and method == 'DELETE':
+            task_id = query_params.get('task_id')
+            if not task_id:
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'task_id required'})
+                }
+            cursor.execute('DELETE FROM color_guide_tasks WHERE id::text = %s', (task_id,))
+            conn.commit()
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                'isBase64Encoded': False,
+                'body': json.dumps({'ok': True, 'deleted': cursor.rowcount})
+            }
+
         elif action == 'get_user_balance' and method == 'GET':
             user_id = query_params.get('user_id')
             
