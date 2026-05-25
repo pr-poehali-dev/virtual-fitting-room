@@ -142,15 +142,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor.close()
         conn.close()
 
-        # Trigger worker asynchronously
-        worker_url = os.environ.get('COLORGUIDE_WORKER_URL', '')
-        if worker_url:
-            try:
-                import urllib.request
-                req = urllib.request.Request(f'{worker_url}?task_id={task_id}', method='GET')
-                urllib.request.urlopen(req, timeout=1)
-            except Exception as e:
-                print(f'[COLORGUIDE-START-{request_id}] Worker trigger info: {e}')
+        # Trigger worker asynchronously (fire-and-forget)
+        worker_url = 'https://functions.poehali.dev/12f108e3-fe83-4618-9e8b-48411bb69390'
+        try:
+            import urllib.request
+            req = urllib.request.Request(f'{worker_url}?task_id={task_id}', method='GET')
+            urllib.request.urlopen(req, timeout=1)
+        except Exception as e:
+            # Expected: short timeout because worker runs longer than 1s
+            print(f'[COLORGUIDE-START-{request_id}] Worker trigger info: {e}')
 
         return {
             'statusCode': 200,
