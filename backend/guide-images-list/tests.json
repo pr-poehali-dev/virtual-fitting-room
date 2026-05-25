@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Returns 400 for invalid slug",
+      "method": "GET",
+      "path": "/?slug=invalid",
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
