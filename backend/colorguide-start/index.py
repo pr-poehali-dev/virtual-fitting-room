@@ -137,6 +137,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 (user_id, type, amount, balance_before, balance_after, description)
                 VALUES (%s, 'charge', %s, %s, %s, 'Гид по цвету')
             ''', (user_id, -cost, balance, balance_after))
+            print(f'[COLORGUIDE-START-{request_id}] Recorded balance transaction: -{cost} rubles')
+        elif unlimited_access:
+            cursor.execute('''
+                INSERT INTO balance_transactions
+                (user_id, type, amount, balance_before, balance_after, description)
+                VALUES (%s, 'charge', 0, %s, %s, 'Гид по цвету (безлимитный доступ)')
+            ''', (user_id, balance, balance))
+            print(f'[COLORGUIDE-START-{request_id}] Recorded balance transaction: 0 rubles (unlimited)')
 
         conn.commit()
         cursor.close()
