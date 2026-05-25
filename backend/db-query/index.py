@@ -138,7 +138,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'users',
             'color_type_history',
             'freegen_history',
-            'freegen_tasks'
+            'freegen_tasks',
+            'color_guide_tasks'
         ]
         
         if table not in allowed_tables:
@@ -337,6 +338,30 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 row = cursor.fetchone()
                 if row and row[0]:
                     photos_to_force_delete.append(row[0])
+
+            # Для color_guide_tasks - сохраняем cdn_url перед удалением (фото гида нигде больше не используется)
+            elif table == 'color_guide_tasks' and user_id:
+                where_parts = []
+                params = []
+                for key, value in where.items():
+                    where_parts.append(f'{key} = %s')
+                    params.append(value)
+
+                # Проверяем владельца: задачу может удалить только её владелец
+                select_query = f'SELECT cdn_url, user_id FROM {full_table} WHERE {" AND ".join(where_parts)}'
+                cursor.execute(select_query, params)
+                row = cursor.fetchone()
+                if row:
+                    cdn_url_val, owner_id = row[0], row[1]
+                    if str(owner_id) != str(user_id):
+                        return {
+                            'statusCode': 403,
+                            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                            'isBase64Encoded': False,
+                            'body': json.dumps({'error': 'Forbidden'})
+                        }
+                    if cdn_url_val:
+                        photos_to_force_delete.append(cdn_url_val)
             
             # Выполняем DELETE
             where_parts = []

@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
 const COLORGUIDE_HISTORY_API = "https://functions.poehali.dev/d894b5d6-acf1-4b38-ae86-4c3c1ad3397f";
+const DB_QUERY_API = "https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9";
 
 interface GuideTask {
   id: string;
@@ -27,6 +28,7 @@ export default function ProfileHistoryColorGuide() {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<GuideTask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -61,6 +63,45 @@ export default function ProfileHistoryColorGuide() {
       fetchHistory();
     }
   }, [user]);
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+
+    if (!confirm("Удалить этот гид по цвету? Изображение также будет удалено из хранилища.")) {
+      return;
+    }
+
+    setDeletingId(id);
+    try {
+      const token = localStorage.getItem("session_token");
+      const response = await fetch(DB_QUERY_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "X-Session-Token": token } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          table: "color_guide_tasks",
+          action: "delete",
+          where: { id },
+        }),
+      });
+      const result = await response.json();
+      if (result.success || response.ok) {
+        toast.success("Гид удалён");
+        setTasks((prev) => prev.filter((t) => t.id !== id));
+      } else {
+        toast.error(result.error || "Ошибка удаления");
+      }
+    } catch (err) {
+      console.error("[History] Delete error:", err);
+      toast.error("Ошибка удаления");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const formatDate = (iso: string) => {
     try {
@@ -145,6 +186,18 @@ export default function ProfileHistoryColorGuide() {
                       </div>
                     )}
                     <div className="absolute top-3 right-3">{getStatusBadge(task)}</div>
+                    <button
+                      onClick={(e) => handleDelete(task.id, e)}
+                      disabled={deletingId === task.id}
+                      className="absolute top-3 left-3 w-8 h-8 flex items-center justify-center rounded-full bg-white/90 hover:bg-red-50 text-red-600 shadow-sm transition-colors disabled:opacity-50"
+                      title="Удалить гид"
+                    >
+                      {deletingId === task.id ? (
+                        <Icon name="Loader2" className="animate-spin" size={16} />
+                      ) : (
+                        <Icon name="Trash2" size={16} />
+                      )}
+                    </button>
                   </div>
                   <CardContent className="p-4">
                     <h3 className="font-medium text-base mb-1 truncate">

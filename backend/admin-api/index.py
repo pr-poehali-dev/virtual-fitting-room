@@ -552,8 +552,35 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False,
                     'body': json.dumps({'error': 'task_id required'})
                 }
+
+            # Получаем cdn_url, чтобы потом удалить фото из Яндекс Облака
+            cursor.execute('SELECT cdn_url FROM color_guide_tasks WHERE id::text = %s', (task_id,))
+            row = cursor.fetchone()
+            photo_url_to_delete = row['cdn_url'] if row and row.get('cdn_url') else None
+
             cursor.execute('DELETE FROM color_guide_tasks WHERE id::text = %s', (task_id,))
             conn.commit()
+
+            # Удаляем фото из Яндекс Облака
+            if photo_url_to_delete:
+                try:
+                    import boto3
+                    s3_bucket_name = os.environ.get('S3_BUCKET_NAME', 'fitting-room-images')
+                    s3_url_prefix = f'https://storage.yandexcloud.net/{s3_bucket_name}/'
+                    if photo_url_to_delete.startswith(s3_url_prefix):
+                        s3_key = photo_url_to_delete.replace(s3_url_prefix, '')
+                        s3_client = boto3.client(
+                            's3',
+                            endpoint_url='https://storage.yandexcloud.net',
+                            aws_access_key_id=os.environ.get('S3_ACCESS_KEY'),
+                            aws_secret_access_key=os.environ.get('S3_SECRET_KEY'),
+                            region_name='ru-central1'
+                        )
+                        s3_client.delete_object(Bucket=s3_bucket_name, Key=s3_key)
+                        print(f'[ADMIN] Deleted guide photo from S3: {s3_key}')
+                except Exception as s3_err:
+                    print(f'[ADMIN] Failed to delete photo from S3: {s3_err}')
+
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
