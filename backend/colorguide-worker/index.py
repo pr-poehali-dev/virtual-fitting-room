@@ -180,8 +180,35 @@ def upload_to_s3(image_data_url: str, task_id: str, user_id: str) -> str:
     return f'https://storage.yandexcloud.net/{s3_bucket}/{s3_key}'
 
 
-def call_gemini(image_url: str) -> Dict[str, Any]:
-    """Вызывает Gemini 2.5 Flash через OpenRouter, возвращает распарсенный JSON"""
+def try_repair_json(content: str) -> Dict[str, Any]:
+    """Пытается починить распространённые ошибки в JSON-ответе LLM"""
+    # 1. Удаляем trailing commas перед } и ]
+    repaired = re.sub(r',\s*([}\]])', r'\1', content)
+
+    # 2. Добавляем недостающие запятые между } { или ] [ или " " на разных строках
+    repaired = re.sub(r'(["\]}])\s*\n\s*(["\[{])', r'\1,\n\2', repaired)
+
+    # 3. Удаляем лишние запятые в начале объектов {,
+    repaired = re.sub(r'([{\[])\s*,', r'\1', repaired)
+
+    try:
+        return json.loads(repaired)
+    except json.JSONDecodeError:
+        # 4. Если ответ обрезан — пробуем закрыть открытые скобки
+        open_braces = repaired.count('{') - repaired.count('}')
+        open_brackets = repaired.count('[') - repaired.count(']')
+        if open_braces > 0 or open_brackets > 0:
+            # Убираем последнюю незавершённую запись (запятую и неполный фрагмент)
+            last_comma = repaired.rfind(',')
+            if last_comma > 0:
+                truncated = repaired[:last_comma]
+                truncated += ']' * open_brackets + '}' * open_braces
+                return json.loads(truncated)
+        raise
+
+
+def call_gemini_once(image_url: str, prompt: str) -> Dict[str, Any]:
+    """Один запрос к Gemini с парсингом и ремонтом JSON"""
     api_key = os.environ.get('OPENROUTER_API_KEY')
     if not api_key:
         raise RuntimeError('OPENROUTER_API_KEY not configured')
@@ -193,11 +220,11 @@ def call_gemini(image_url: str) -> Dict[str, Any]:
                 'role': 'user',
                 'content': [
                     {'type': 'image_url', 'image_url': {'url': image_url}},
-                    {'type': 'text', 'text': PROMPT_TEMPLATE}
+                    {'type': 'text', 'text': prompt}
                 ]
             }
         ],
-        'max_tokens': 4000,
+        'max_tokens': 6000,
         'temperature': 0.3,
         'response_format': {'type': 'json_object'}
     }
@@ -225,18 +252,43 @@ def call_gemini(image_url: str) -> Dict[str, Any]:
         content = re.sub(r'^```(?:json)?\s*', '', content)
         content = re.sub(r'\s*```$', '', content)
 
+    # Попытка 1: прямой парсинг
     try:
-        data = json.loads(content)
+        return json.loads(content)
     except json.JSONDecodeError as e:
-        print(f'[COLORGUIDE-WORKER] JSON parse error: {e}')
-        # Try to extract JSON block
-        match = re.search(r'\{[\s\S]*\}', content)
-        if match:
-            data = json.loads(match.group(0))
-        else:
-            raise
+        print(f'[COLORGUIDE-WORKER] JSON parse error: {e}, trying repair...')
 
-    return data
+    # Попытка 2: ремонт JSON
+    try:
+        data = try_repair_json(content)
+        print(f'[COLORGUIDE-WORKER] JSON repaired successfully')
+        return data
+    except json.JSONDecodeError as e2:
+        print(f'[COLORGUIDE-WORKER] JSON repair failed: {e2}')
+
+    # Попытка 3: извлечь самый большой JSON-блок и попытаться починить
+    match = re.search(r'\{[\s\S]*\}', content)
+    if match:
+        block = match.group(0)
+        try:
+            return json.loads(block)
+        except json.JSONDecodeError:
+            try:
+                return try_repair_json(block)
+            except json.JSONDecodeError:
+                pass
+
+    raise json.JSONDecodeError('All parse attempts failed', content, 0)
+
+
+def call_gemini(image_url: str) -> Dict[str, Any]:
+    """Вызывает Gemini с авто-ретраем на случай битого JSON"""
+    try:
+        return call_gemini_once(image_url, PROMPT_TEMPLATE)
+    except json.JSONDecodeError as e:
+        print(f'[COLORGUIDE-WORKER] First attempt failed ({e}), retrying...')
+        # Авто-ретрай с тем же промптом
+        return call_gemini_once(image_url, PROMPT_TEMPLATE)
 
 
 def refund_user(cursor, task_id: str, user_id, cost: int, reason: str):
