@@ -92,53 +92,24 @@ export default function ColorGuideReport({ result, photoUrl }: ColorGuideReportP
   // Load guide images list and proxy each one
   useEffect(() => {
     let cancelled = false;
-    console.log("[ColorGuide DEBUG] useEffect images for slug:", result.colortype_slug);
     fetch(`${GUIDE_IMAGES_API}?slug=${encodeURIComponent(result.colortype_slug)}`)
-      .then((r) => {
-        console.log("[ColorGuide DEBUG] guide-images-list status:", r.status);
-        return r.json();
-      })
+      .then((r) => r.json())
       .then(async (data) => {
         if (cancelled) return;
-        console.log("[ColorGuide DEBUG] guide-images-list response:", data);
-        if (!data || !data.images) {
-          console.warn("[ColorGuide DEBUG] No data.images in response");
-          return;
-        }
+        if (!data || !data.images) return;
         const src: GuideImages = data.images;
-        console.log("[ColorGuide DEBUG] Source images counts:", {
-          outfit: (src.outfit || []).length,
-          texture: (src.texture || []).length,
-          makeup: (src.makeup || []).length,
-          jewelry: (src.jewelry || []).length,
-        });
-        const proxyList = async (urls: string[], limit: number, label: string) => {
+        const proxyList = async (urls: string[], limit: number) => {
           const sliced = urls.slice(0, limit);
-          console.log(`[ColorGuide DEBUG] Proxying ${label}: ${sliced.length} URLs`);
-          const results = await Promise.all(
-            sliced.map(async (u, idx) => {
-              const proxied = await fetchAsDataUrl(u);
-              const isDataUrl = proxied.startsWith("data:");
-              console.log(`[ColorGuide DEBUG] ${label}[${idx}] -> ${isDataUrl ? "DATA_URL (" + proxied.length + " chars)" : "FALLBACK URL: " + proxied}`);
-              return proxied;
-            }),
-          );
-          return results;
+          return Promise.all(sliced.map((u) => fetchAsDataUrl(u)));
         };
         const [outfit, texture, makeup, jewelry, hair] = await Promise.all([
-          proxyList(src.outfit || [], 4, "outfit"),
-          proxyList(src.texture || [], 2, "texture"),
-          proxyList(src.makeup || [], 1, "makeup"),
-          proxyList(src.jewelry || [], 1, "jewelry"),
-          proxyList(src.hair || [], 0, "hair"),
+          proxyList(src.outfit || [], 4),
+          proxyList(src.texture || [], 2),
+          proxyList(src.makeup || [], 1),
+          proxyList(src.jewelry || [], 1),
+          proxyList(src.hair || [], 0),
         ]);
         if (cancelled) return;
-        console.log("[ColorGuide DEBUG] Final images set:", {
-          outfit: outfit.length,
-          texture: texture.length,
-          makeup: makeup.length,
-          jewelry: jewelry.length,
-        });
         setImages({
           outfit,
           texture,
@@ -149,7 +120,7 @@ export default function ColorGuideReport({ result, photoUrl }: ColorGuideReportP
         });
       })
       .catch((e) => {
-        console.error("[ColorGuide DEBUG] Failed to load guide images:", e);
+        console.error("[ColorGuide] Failed to load guide images:", e);
       });
     return () => {
       cancelled = true;
