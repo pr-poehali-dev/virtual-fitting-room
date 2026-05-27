@@ -274,17 +274,17 @@ export default function ColorGuide() {
               <Card className="mt-4 bg-amber-500/10 border-amber-500/40">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-3">
-                    <Icon name="TriangleAlert" className="text-amber-500 mt-0.5 flex-shrink-0" size={20} />
+                    <Icon name="TriangleAlert" className="text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" size={20} />
                     <div className="text-sm space-y-2">
-                      <p className="font-medium text-amber-200">
+                      <p className="font-semibold text-amber-900 dark:text-amber-200">
                         Сервис работает в тестовом режиме
                       </p>
-                      <p className="text-amber-100/80">
+                      <p className="text-amber-800 dark:text-amber-100/80">
                         Сейчас сервис находится в разработке и тестируется — результат не гарантирован и может быть неточным.
                         Для более точного определения цветотипа воспользуйтесь сервисом{" "}
                         <a
                           href="https://fitting-room.ru/colortype"
-                          className="underline font-medium text-amber-200 hover:text-amber-100"
+                          className="underline font-semibold text-amber-900 hover:text-amber-700 dark:text-amber-200 dark:hover:text-amber-100"
                         >
                           fitting-room.ru/colortype
                         </a>
