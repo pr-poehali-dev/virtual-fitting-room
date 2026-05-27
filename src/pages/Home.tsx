@@ -179,12 +179,18 @@ const Home = () => {
                   onClick={() => navigate(service.path)}
                   className="group cursor-pointer bg-gray-800/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-gray-700 hover:border-purple-500 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20"
                 >
-                  <div className="aspect-video overflow-hidden">
+                  <div className="aspect-video overflow-hidden relative">
                     <img
                       src={service.image}
                       alt={service.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
+                    {service.id === "color-guide" && (
+                      <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-amber-500/95 backdrop-blur-sm text-white text-xs font-medium px-2.5 py-1.5 rounded-lg shadow-lg">
+                        <Icon name="TriangleAlert" size={14} />
+                        <span>Тестовый режим • точность ~70%</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-6 lg:p-8">
