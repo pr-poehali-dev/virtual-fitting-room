@@ -367,89 +367,12 @@ def refund_user(cursor, task_id: str, user_id, cost: int, reason: str):
         return False
 
 
-def process_task(task_id: str):
-    """Главная логика обработки задачи"""
-    print(f'[COLORGUIDE-WORKER] Processing task {task_id}')
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
+def mark_failed_and_refund(task_id: str, error_message: str, refund_reason: str):
+    """Открывает свежее соединение, помечает задачу failed и при необходимости возвращает деньги."""
     try:
-        cursor.execute(
-            'SELECT user_id, person_image, status, cost, refunded FROM color_guide_tasks WHERE id = %s',
-            (task_id,)
-        )
-        row = cursor.fetchone()
-        if not row:
-            print(f'[COLORGUIDE-WORKER] Task {task_id} not found')
-            return
-        user_id, person_image, status, cost, refunded = row
-        if status not in ('pending', 'processing'):
-            print(f'[COLORGUIDE-WORKER] Task {task_id} already in status {status}')
-            return
-
-        cursor.execute(
-            "UPDATE color_guide_tasks SET status = 'processing', updated_at = %s WHERE id = %s",
-            (datetime.utcnow(), task_id)
-        )
-        conn.commit()
-
-        # 1. Upload to S3
-        cdn_url = upload_to_s3(person_image, task_id, str(user_id))
-        print(f'[COLORGUIDE-WORKER] Uploaded to {cdn_url}')
-
-        # 2. Call Gemini
-        result = call_gemini(cdn_url)
-        print(f'[COLORGUIDE-WORKER] Gemini returned keys: {list(result.keys())}')
-
-        # 3. Validate slug
-        raw_slug = result.get('colortype_slug', '')
-        slug = normalize_slug(raw_slug, result.get('colortype_name', ''))
-        if not slug:
-            print(f'[COLORGUIDE-WORKER] WARNING: Invalid slug "{raw_slug}"')
-            # No valid slug — treat as failure and refund
-            if not refunded and cost and cost > 0:
-                refund_user(cursor, task_id, user_id, cost, 'не удалось определить цветотип')
-            cursor.execute(
-                "UPDATE color_guide_tasks SET status = 'failed', error_message = %s, updated_at = %s WHERE id = %s",
-                ('Не удалось определить цветотип по этому фото. Попробуйте другое фото.', datetime.utcnow(), task_id)
-            )
-            conn.commit()
-            return
-        result['colortype_slug'] = slug
-        print(f'[COLORGUIDE-WORKER] Final slug: {slug}')
-
-        # 4. Validate result has minimum required fields
-        required_fields = ['main_palette', 'avoid_palette', 'makeup', 'metals', 'hair_colors', 'capsules', 'tips']
-        missing = [f for f in required_fields if f not in result or not result.get(f)]
-        if missing:
-            print(f'[COLORGUIDE-WORKER] WARNING: Missing fields in result: {missing}')
-            if not refunded and cost and cost > 0:
-                refund_user(cursor, task_id, user_id, cost, f'неполный ответ Gemini: {",".join(missing)}')
-            cursor.execute(
-                "UPDATE color_guide_tasks SET status = 'failed', error_message = %s, updated_at = %s WHERE id = %s",
-                (f'Не удалось сформировать полный отчёт. Попробуйте ещё раз.', datetime.utcnow(), task_id)
-            )
-            conn.commit()
-            return
-
-        # 5. Save result
-        cursor.execute('''
-            UPDATE color_guide_tasks
-            SET status = 'completed',
-                colortype_slug = %s,
-                result_json = %s,
-                cdn_url = %s,
-                person_image = NULL,
-                updated_at = %s
-            WHERE id = %s
-        ''', (slug, json.dumps(result, ensure_ascii=False), cdn_url, datetime.utcnow(), task_id))
-        conn.commit()
-        print(f'[COLORGUIDE-WORKER] Task {task_id} completed successfully')
-
-    except Exception as e:
-        print(f'[COLORGUIDE-WORKER] ERROR: {e}')
+        conn = get_db_connection()
+        cursor = conn.cursor()
         try:
-            # Refund money on error
             cursor.execute(
                 'SELECT user_id, cost, refunded FROM color_guide_tasks WHERE id = %s',
                 (task_id,)
@@ -458,18 +381,116 @@ def process_task(task_id: str):
             if r:
                 u_id, t_cost, t_refunded = r
                 if not t_refunded and t_cost and t_cost > 0:
-                    refund_user(cursor, task_id, u_id, t_cost, f'ошибка обработки')
-
+                    refund_user(cursor, task_id, u_id, t_cost, refund_reason)
             cursor.execute(
                 "UPDATE color_guide_tasks SET status = 'failed', error_message = %s, updated_at = %s WHERE id = %s",
-                (str(e)[:500], datetime.utcnow(), task_id)
+                (error_message[:500], datetime.utcnow(), task_id)
             )
             conn.commit()
-        except Exception as e2:
-            print(f'[COLORGUIDE-WORKER] Failed to save error: {e2}')
-    finally:
-        cursor.close()
-        conn.close()
+        finally:
+            cursor.close()
+            conn.close()
+    except Exception as e:
+        print(f'[COLORGUIDE-WORKER] Failed to save error state: {e}')
+
+
+def process_task(task_id: str):
+    """Главная логика обработки задачи. Соединение с БД открывается короткими сегментами,
+    чтобы не держать idle-коннект во время долгого вызова Gemini."""
+    print(f'[COLORGUIDE-WORKER] Processing task {task_id}')
+
+    # Сегмент 1: читаем задачу и помечаем processing
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'SELECT user_id, person_image, status, cost, refunded FROM color_guide_tasks WHERE id = %s',
+                (task_id,)
+            )
+            row = cursor.fetchone()
+            if not row:
+                print(f'[COLORGUIDE-WORKER] Task {task_id} not found')
+                return
+            user_id, person_image, status, cost, refunded = row
+            if status not in ('pending', 'processing'):
+                print(f'[COLORGUIDE-WORKER] Task {task_id} already in status {status}')
+                return
+
+            cursor.execute(
+                "UPDATE color_guide_tasks SET status = 'processing', updated_at = %s WHERE id = %s",
+                (datetime.utcnow(), task_id)
+            )
+            conn.commit()
+        finally:
+            cursor.close()
+            conn.close()
+    except Exception as e:
+        print(f'[COLORGUIDE-WORKER] ERROR (read task): {e}')
+        mark_failed_and_refund(task_id, f'Ошибка чтения задачи: {e}', 'ошибка обработки')
+        return
+
+    # Сегмент 2 (без открытого коннекта): S3 + Gemini — долгая часть
+    try:
+        cdn_url = upload_to_s3(person_image, task_id, str(user_id))
+        print(f'[COLORGUIDE-WORKER] Uploaded to {cdn_url}')
+
+        result = call_gemini(cdn_url)
+        print(f'[COLORGUIDE-WORKER] Gemini returned keys: {list(result.keys())}')
+    except Exception as e:
+        print(f'[COLORGUIDE-WORKER] ERROR (Gemini/S3): {e}')
+        mark_failed_and_refund(task_id, str(e), 'ошибка обработки')
+        return
+
+    # Валидация slug
+    raw_slug = result.get('colortype_slug', '')
+    slug = normalize_slug(raw_slug, result.get('colortype_name', ''))
+    if not slug:
+        print(f'[COLORGUIDE-WORKER] WARNING: Invalid slug "{raw_slug}"')
+        mark_failed_and_refund(
+            task_id,
+            'Не удалось определить цветотип по этому фото. Попробуйте другое фото.',
+            'не удалось определить цветотип'
+        )
+        return
+    result['colortype_slug'] = slug
+    print(f'[COLORGUIDE-WORKER] Final slug: {slug}')
+
+    # Валидация обязательных полей
+    required_fields = ['main_palette', 'avoid_palette', 'makeup', 'metals', 'hair_colors', 'capsules', 'tips']
+    missing = [f for f in required_fields if f not in result or not result.get(f)]
+    if missing:
+        print(f'[COLORGUIDE-WORKER] WARNING: Missing fields in result: {missing}')
+        mark_failed_and_refund(
+            task_id,
+            'Не удалось сформировать полный отчёт. Попробуйте ещё раз.',
+            f'неполный ответ Gemini: {",".join(missing)}'
+        )
+        return
+
+    # Сегмент 3: сохраняем результат свежим коннектом
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                UPDATE color_guide_tasks
+                SET status = 'completed',
+                    colortype_slug = %s,
+                    result_json = %s,
+                    cdn_url = %s,
+                    person_image = NULL,
+                    updated_at = %s
+                WHERE id = %s
+            ''', (slug, json.dumps(result, ensure_ascii=False), cdn_url, datetime.utcnow(), task_id))
+            conn.commit()
+            print(f'[COLORGUIDE-WORKER] Task {task_id} completed successfully')
+        finally:
+            cursor.close()
+            conn.close()
+    except Exception as e:
+        print(f'[COLORGUIDE-WORKER] ERROR (save result): {e}')
+        mark_failed_and_refund(task_id, f'Ошибка сохранения результата: {e}', 'ошибка обработки')
 
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
