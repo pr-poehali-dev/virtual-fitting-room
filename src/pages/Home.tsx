@@ -45,7 +45,7 @@ const Home = () => {
       description:
         "Полный персональный отчёт: палитра, макияж, украшения, цвета волос и капсульные образы. Можно скачать в PNG",
       image:
-        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/19cac874-8548-4b8b-86ab-10c66dc57f01.jpg",
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/fee34fa0-c3d9-4189-b35e-f804bf38844c.jpg",
       icon: "BookOpen",
       path: "/color-guide",
     },
@@ -55,7 +55,7 @@ const Home = () => {
       description:
         "Создавайте уникальные изображения по текстовому описанию — превращайте идеи в готовые картинки за секунды",
       image:
-        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/8d2651ff-8118-4a1e-9f54-8d18e31df4cb.jpg",
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/1a386bbe-2098-4e52-ae9c-6ea2394ad03a.jpg",
       icon: "Sparkles",
       path: "/freegeneration",
     },
