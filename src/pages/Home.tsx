@@ -49,6 +49,16 @@ const Home = () => {
       icon: "BookOpen",
       path: "/color-guide",
     },
+    {
+      id: "free-generation",
+      title: "Генерация изображений",
+      description:
+        "Создавайте уникальные изображения по текстовому описанию — превращайте идеи в готовые картинки за секунды",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/1c068189-627d-4237-bb2c-89c235c16032.jpg",
+      icon: "Sparkles",
+      path: "/freegeneration",
+    },
   ];
 
   return (
