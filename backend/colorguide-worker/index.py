@@ -99,61 +99,20 @@ PROMPT_TEMPLATE = '''Ты профессиональный имидж-стили
 
 Опирайся ТОЛЬКО на свои знания и фото — не выдумывай того, чего не видно. Анализируй: подтон кожи (тёплый/холодный/нейтральный), насыщенность пигмента (яркий/приглушённый), глубину (светлый/тёмный), контраст между кожей, волосами и глазами.
 
-Составь полный персональный гид по цвету.
-
-ВАЖНО: верни СТРОГО валидный JSON в следующем формате (без markdown, без комментариев, только JSON):
-
-{
-  "colortype_slug": "<один из 12 разрешённых slug, СКОПИРУЙ БУКВА В БУКВУ>",
-  "colortype_name": "<название цветотипа на русском, например: Мягкое лето>",
-  "short_description": "<2-3 предложения характеристики внешности: подтон, светлота, контраст>",
-  "appearance": {
-    "undertone": "<холодный/тёплый/нейтральный>",
-    "contrast": "<низкий/средний/высокий>",
-    "characteristics": ["<3-5 коротких характеристик: например, мягкие черты, холодный подтон, средний контраст>"]
-  },
-  "main_palette": [
-    {"name": "<название цвета на русском>", "hex": "#XXXXXX"}
-  ],
-  "avoid_palette": [
-    {"name": "<название цвета на русском>", "hex": "#XXXXXX"}
-  ],
-  "makeup": {
-    "lipstick": [{"name": "<название>", "hex": "#XXXXXX"}],
-    "blush": [{"name": "<название>", "hex": "#XXXXXX"}],
-    "eyeshadow": [{"name": "<название>", "hex": "#XXXXXX"}]
-  },
-  "metals": {
-    "recommended": ["<золото/серебро/розовое золото — что подходит>"],
-    "avoid": ["<что не подходит>"]
-  },
-  "hair_colors": [
-    {"name": "<название оттенка волос>", "hex": "#XXXXXX", "description": "<короткое описание>"}
-  ],
-  "capsules": [
-    {"name": "<название образа, например: Повседневный>", "colors": ["#XXXXXX", "#XXXXXX", "#XXXXXX", "#XXXXXX"]}
-  ],
-  "tips": {
-    "wear": ["<5-7 коротких советов: что носить, какие фасоны, ткани, принты>"],
-    "avoid": ["<3-5 коротких советов: чего избегать>"]
-  }
-}
-
-colortype_slug — выбери одно из 12 значений (копируй БУКВА В БУКВУ):
-bright-spring, bright-winter, dusty-summer, fiery-autumn, gentle-autumn, gentle-spring, soft-summer, soft-winter, vibrant-spring, vivid-autumn, vivid-summer, vivid-winter
-
-ТРЕБОВАНИЯ К ОТВЕТУ:
-- main_palette: ровно 12 цветов
-- avoid_palette: ровно 6 цветов
-- makeup.lipstick, makeup.blush, makeup.eyeshadow: по 3 цвета в каждом
-- hair_colors: 3-4 оттенка волос
-- capsules: 4-6 капсульных сочетаний по 3-4 цвета в каждом
-- Все hex-цвета в формате #RRGGBB
-- Тексты на русском языке
-- ЗАПРЕЩЕНО: переводить slug, склонять, менять регистр, добавлять пробелы. ТОЛЬКО один из 12 значений выше.
+Составь полный персональный гид по цвету. Все тексты — на русском языке.
 
 ВАЖНО для hair_colors (цвета волос):
 Волосы бывают только в естественной гамме: блонд, русый, шатен, каштан, чёрный, рыжий, седой. НЕ используй зелёные, синие, фиолетовые или серо-зелёные оттенки в hex для волос — это противоречит реальности.
+
+Подсказки:
+- appearance.undertone: "холодный", "тёплый" или "нейтральный"
+- appearance.contrast: "низкий", "средний" или "высокий"
+- main_palette: 12 цветов одежды, идущих цветотипу
+- avoid_palette: 6 цветов одежды, которых избегать
+- makeup: по 3 оттенка помады, румян, теней
+- metals.recommended/avoid: золото / серебро / розовое золото / медь
+- capsules: 4-6 готовых образов (например, "Повседневный", "Деловой", "Вечерний"), в каждом 3-4 цвета
+- tips.wear: 5-7 советов что носить (фасоны, ткани, принты), tips.avoid: 3-5 чего избегать
 '''
 
 
@@ -206,35 +165,124 @@ def upload_to_s3(image_data_url: str, task_id: str, user_id: str) -> str:
     return f'https://storage.yandexcloud.net/{s3_bucket}/{s3_key}'
 
 
-def try_repair_json(content: str) -> Dict[str, Any]:
-    """Пытается починить распространённые ошибки в JSON-ответе LLM"""
-    # 1. Удаляем trailing commas перед } и ]
-    repaired = re.sub(r',\s*([}\]])', r'\1', content)
+HEX_PATTERN = '^#[0-9A-Fa-f]{6}$'
 
-    # 2. Добавляем недостающие запятые между } { или ] [ или " " на разных строках
-    repaired = re.sub(r'(["\]}])\s*\n\s*(["\[{])', r'\1,\n\2', repaired)
+COLOR_ITEM_SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'name': {'type': 'string'},
+        'hex': {'type': 'string', 'pattern': HEX_PATTERN}
+    },
+    'required': ['name', 'hex'],
+    'additionalProperties': False
+}
 
-    # 3. Удаляем лишние запятые в начале объектов {,
-    repaired = re.sub(r'([{\[])\s*,', r'\1', repaired)
-
-    try:
-        return json.loads(repaired)
-    except json.JSONDecodeError:
-        # 4. Если ответ обрезан — пробуем закрыть открытые скобки
-        open_braces = repaired.count('{') - repaired.count('}')
-        open_brackets = repaired.count('[') - repaired.count(']')
-        if open_braces > 0 or open_brackets > 0:
-            # Убираем последнюю незавершённую запись (запятую и неполный фрагмент)
-            last_comma = repaired.rfind(',')
-            if last_comma > 0:
-                truncated = repaired[:last_comma]
-                truncated += ']' * open_brackets + '}' * open_braces
-                return json.loads(truncated)
-        raise
+RESPONSE_SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'colortype_slug': {'type': 'string', 'enum': ALLOWED_SLUGS},
+        'colortype_name': {'type': 'string'},
+        'short_description': {'type': 'string'},
+        'appearance': {
+            'type': 'object',
+            'properties': {
+                'undertone': {'type': 'string'},
+                'contrast': {'type': 'string'},
+                'characteristics': {
+                    'type': 'array',
+                    'items': {'type': 'string'},
+                    'minItems': 3,
+                    'maxItems': 5
+                }
+            },
+            'required': ['undertone', 'contrast', 'characteristics'],
+            'additionalProperties': False
+        },
+        'main_palette': {
+            'type': 'array',
+            'items': COLOR_ITEM_SCHEMA,
+            'minItems': 12,
+            'maxItems': 12
+        },
+        'avoid_palette': {
+            'type': 'array',
+            'items': COLOR_ITEM_SCHEMA,
+            'minItems': 6,
+            'maxItems': 6
+        },
+        'makeup': {
+            'type': 'object',
+            'properties': {
+                'lipstick': {'type': 'array', 'items': COLOR_ITEM_SCHEMA, 'minItems': 3, 'maxItems': 3},
+                'blush': {'type': 'array', 'items': COLOR_ITEM_SCHEMA, 'minItems': 3, 'maxItems': 3},
+                'eyeshadow': {'type': 'array', 'items': COLOR_ITEM_SCHEMA, 'minItems': 3, 'maxItems': 3}
+            },
+            'required': ['lipstick', 'blush', 'eyeshadow'],
+            'additionalProperties': False
+        },
+        'metals': {
+            'type': 'object',
+            'properties': {
+                'recommended': {'type': 'array', 'items': {'type': 'string'}, 'minItems': 1},
+                'avoid': {'type': 'array', 'items': {'type': 'string'}, 'minItems': 1}
+            },
+            'required': ['recommended', 'avoid'],
+            'additionalProperties': False
+        },
+        'hair_colors': {
+            'type': 'array',
+            'items': {
+                'type': 'object',
+                'properties': {
+                    'name': {'type': 'string'},
+                    'hex': {'type': 'string', 'pattern': HEX_PATTERN},
+                    'description': {'type': 'string'}
+                },
+                'required': ['name', 'hex', 'description'],
+                'additionalProperties': False
+            },
+            'minItems': 3,
+            'maxItems': 4
+        },
+        'capsules': {
+            'type': 'array',
+            'items': {
+                'type': 'object',
+                'properties': {
+                    'name': {'type': 'string'},
+                    'colors': {
+                        'type': 'array',
+                        'items': {'type': 'string', 'pattern': HEX_PATTERN},
+                        'minItems': 3,
+                        'maxItems': 4
+                    }
+                },
+                'required': ['name', 'colors'],
+                'additionalProperties': False
+            },
+            'minItems': 4,
+            'maxItems': 6
+        },
+        'tips': {
+            'type': 'object',
+            'properties': {
+                'wear': {'type': 'array', 'items': {'type': 'string'}, 'minItems': 5, 'maxItems': 7},
+                'avoid': {'type': 'array', 'items': {'type': 'string'}, 'minItems': 3, 'maxItems': 5}
+            },
+            'required': ['wear', 'avoid'],
+            'additionalProperties': False
+        }
+    },
+    'required': [
+        'colortype_slug', 'colortype_name', 'short_description', 'appearance',
+        'main_palette', 'avoid_palette', 'makeup', 'metals', 'hair_colors', 'capsules', 'tips'
+    ],
+    'additionalProperties': False
+}
 
 
 def call_gemini_once(image_url: str, prompt: str) -> Dict[str, Any]:
-    """Один запрос к Gemini с парсингом и ремонтом JSON"""
+    """Один запрос к Gemini через OpenRouter с строгой JSON-схемой"""
     api_key = os.environ.get('OPENROUTER_API_KEY')
     if not api_key:
         raise RuntimeError('OPENROUTER_API_KEY not configured')
@@ -252,7 +300,14 @@ def call_gemini_once(image_url: str, prompt: str) -> Dict[str, Any]:
         ],
         'max_tokens': 6000,
         'temperature': 0.3,
-        'response_format': {'type': 'json_object'}
+        'response_format': {
+            'type': 'json_schema',
+            'json_schema': {
+                'name': 'color_guide_result',
+                'strict': True,
+                'schema': RESPONSE_SCHEMA
+            }
+        }
     }
 
     req = urllib.request.Request(
@@ -272,49 +327,15 @@ def call_gemini_once(image_url: str, prompt: str) -> Dict[str, Any]:
     content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
     print(f'[COLORGUIDE-WORKER] Gemini raw response length: {len(content)}')
 
-    # Strip markdown wrapper if present
-    content = content.strip()
-    if content.startswith('```'):
-        content = re.sub(r'^```(?:json)?\s*', '', content)
-        content = re.sub(r'\s*```$', '', content)
+    if not content or not content.strip():
+        raise ValueError('Empty response from Gemini')
 
-    # Попытка 1: прямой парсинг
-    try:
-        return json.loads(content)
-    except json.JSONDecodeError as e:
-        print(f'[COLORGUIDE-WORKER] JSON parse error: {e}, trying repair...')
-
-    # Попытка 2: ремонт JSON
-    try:
-        data = try_repair_json(content)
-        print(f'[COLORGUIDE-WORKER] JSON repaired successfully')
-        return data
-    except json.JSONDecodeError as e2:
-        print(f'[COLORGUIDE-WORKER] JSON repair failed: {e2}')
-
-    # Попытка 3: извлечь самый большой JSON-блок и попытаться починить
-    match = re.search(r'\{[\s\S]*\}', content)
-    if match:
-        block = match.group(0)
-        try:
-            return json.loads(block)
-        except json.JSONDecodeError:
-            try:
-                return try_repair_json(block)
-            except json.JSONDecodeError:
-                pass
-
-    raise json.JSONDecodeError('All parse attempts failed', content, 0)
+    return json.loads(content)
 
 
 def call_gemini(image_url: str) -> Dict[str, Any]:
-    """Вызывает Gemini с авто-ретраем на случай битого JSON"""
-    try:
-        return call_gemini_once(image_url, PROMPT_TEMPLATE)
-    except json.JSONDecodeError as e:
-        print(f'[COLORGUIDE-WORKER] First attempt failed ({e}), retrying...')
-        # Авто-ретрай с тем же промптом
-        return call_gemini_once(image_url, PROMPT_TEMPLATE)
+    """Вызывает Gemini. Strict json_schema гарантирует валидный JSON, retry не нужен."""
+    return call_gemini_once(image_url, PROMPT_TEMPLATE)
 
 
 def refund_user(cursor, task_id: str, user_id, cost: int, reason: str):
