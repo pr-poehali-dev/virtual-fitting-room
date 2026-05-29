@@ -288,7 +288,7 @@ def call_gemini_once(image_url: str, prompt: str) -> Dict[str, Any]:
         raise RuntimeError('OPENROUTER_API_KEY not configured')
 
     payload = {
-        'model': 'openai/gpt-4o',
+        'model': 'google/gemini-2.5-flash',
         'messages': [
             {
                 'role': 'user',
