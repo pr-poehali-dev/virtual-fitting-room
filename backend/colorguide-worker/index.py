@@ -283,7 +283,7 @@ RESPONSE_SCHEMA = {
 
 def call_gemini_once(image_url: str, prompt: str) -> Dict[str, Any]:
     """Один запрос к Gemini через OpenRouter с строгой JSON-схемой"""
-    api_key = os.environ.get('OPENROUTER_API_KEY')
+    api_key = os.environ.get('OPENROUTER_API_KEY_NEW') or os.environ.get('OPENROUTER_API_KEY')
     if not api_key:
         raise RuntimeError('OPENROUTER_API_KEY not configured')
 

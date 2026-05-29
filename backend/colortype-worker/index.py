@@ -436,7 +436,7 @@ def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
     '''
     from urllib.parse import quote
     
-    openrouter_api_key = os.environ.get('OPENROUTER_API_KEY')
+    openrouter_api_key = os.environ.get('OPENROUTER_API_KEY_NEW') or os.environ.get('OPENROUTER_API_KEY')
     if not openrouter_api_key:
         raise Exception('OPENROUTER_API_KEY not configured')
     
