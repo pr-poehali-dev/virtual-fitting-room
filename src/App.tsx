@@ -43,6 +43,7 @@ import VerifyEmail from "./pages/VerifyEmail";
 import RegistrationSuccess from "./pages/RegistrationSuccess";
 import ReplicateTryOn from "./pages/ReplicateTryOn";
 import FreeGeneration from "./pages/FreeGeneration";
+import StyleAnalysis from "./pages/StyleAnalysis";
 import NotFound from "./pages/NotFound";
 import Payment from "./pages/Payment";
 import Offer from "./pages/Offer";
@@ -90,6 +91,7 @@ const App = () => (
               <Route path="/freegeneration" element={<FreeGeneration />} />
               <Route path="/colortype" element={<ColorType />} />
             <Route path="/color-guide" element={<ColorGuide />} />
+            <Route path="/style-analysis" element={<StyleAnalysis />} />
             <Route path="/color-guide/:id" element={<ColorGuideDetail />} />
             <Route path="/ai-editor" element={<AiEditor />} />
             

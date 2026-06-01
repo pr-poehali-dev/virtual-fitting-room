@@ -49,7 +49,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = psycopg2.connect(dsn)
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT status, colortype_slug, result_json, cdn_url, error_message
+            SELECT status, colortype_slug, result_json, cdn_url, error_message, service_type
             FROM color_guide_tasks WHERE id = %s
         ''', (task_id,))
         row = cursor.fetchone()
@@ -64,13 +64,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Task not found'})
             }
 
-        status, colortype_slug, result_json, cdn_url, error_message = row
+        status, colortype_slug, result_json, cdn_url, error_message, service_type = row
 
         response_body = {
             'task_id': task_id,
             'status': status,
             'colortype_slug': colortype_slug,
-            'cdn_url': cdn_url
+            'cdn_url': cdn_url,
+            'service_type': service_type
         }
         if result_json:
             if isinstance(result_json, str):

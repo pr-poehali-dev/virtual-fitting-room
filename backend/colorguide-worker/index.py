@@ -2,12 +2,15 @@ import json
 import os
 import base64
 import re
+import time
 import urllib.request
 import urllib.error
 from typing import Dict, Any
 from datetime import datetime
 import psycopg2
 import boto3
+
+import registry
 
 
 ALLOWED_SLUGS = [
@@ -338,6 +341,178 @@ def call_gemini(image_url: str) -> Dict[str, Any]:
     return call_gemini_once(image_url, PROMPT_TEMPLATE)
 
 
+def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_name: str) -> Dict[str, Any]:
+    """Запрос к Gemini с произвольной JSON-схемой (для картиночных сервисов)."""
+    api_key = os.environ.get('OPENROUTER_API_KEY_NEW') or os.environ.get('OPENROUTER_API_KEY')
+    if not api_key:
+        raise RuntimeError('OPENROUTER_API_KEY not configured')
+
+    payload = {
+        'model': 'google/gemini-2.5-flash',
+        'messages': [
+            {
+                'role': 'user',
+                'content': [
+                    {'type': 'image_url', 'image_url': {'url': image_url}},
+                    {'type': 'text', 'text': prompt}
+                ]
+            }
+        ],
+        'max_tokens': 4000,
+        'temperature': 0.4,
+        'response_format': {
+            'type': 'json_schema',
+            'json_schema': {'name': schema_name, 'strict': True, 'schema': schema}
+        }
+    }
+    req = urllib.request.Request(
+        'https://openrouter.ai/api/v1/chat/completions',
+        data=json.dumps(payload).encode('utf-8'),
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://fitting-room.ru',
+            'X-Title': 'Style Analysis'
+        },
+        method='POST'
+    )
+    with urllib.request.urlopen(req, timeout=90) as response:
+        result = json.loads(response.read().decode('utf-8'))
+    content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+    if not content or not content.strip():
+        raise ValueError('Empty response from Gemini')
+    return json.loads(content)
+
+
+def fal_submit(prompt: str, image_urls: list, aspect_ratio: str) -> str:
+    """Отправить задачу в очередь fal.ai nano-banana-2/edit, вернуть response_url для поллинга."""
+    fal_api_key = os.environ.get('FAL_API_KEY')
+    if not fal_api_key:
+        raise RuntimeError('FAL_API_KEY not configured')
+
+    payload = {
+        'image_urls': image_urls,
+        'prompt': prompt,
+        'aspect_ratio': aspect_ratio,
+        'num_images': 1,
+        'resolution': '1K',
+        'output_format': 'png',
+    }
+    req = urllib.request.Request(
+        'https://queue.fal.run/fal-ai/nano-banana-2/edit',
+        data=json.dumps(payload).encode('utf-8'),
+        headers={'Authorization': f'Key {fal_api_key}', 'Content-Type': 'application/json'},
+        method='POST'
+    )
+    with urllib.request.urlopen(req, timeout=30) as response:
+        result = json.loads(response.read().decode('utf-8'))
+    response_url = result.get('response_url')
+    if not response_url:
+        raise RuntimeError(f'fal.ai submit failed: {result}')
+    return response_url
+
+
+def fal_poll_result(response_url: str, max_wait_seconds: int = 150) -> str:
+    """Опрашивать fal.ai до готовности, вернуть URL готовой картинки."""
+    fal_api_key = os.environ.get('FAL_API_KEY')
+    headers = {'Authorization': f'Key {fal_api_key}', 'Content-Type': 'application/json'}
+    deadline = time.time() + max_wait_seconds
+    while time.time() < deadline:
+        time.sleep(5)
+        req = urllib.request.Request(response_url, headers=headers, method='GET')
+        try:
+            with urllib.request.urlopen(req, timeout=15) as response:
+                data = json.loads(response.read().decode('utf-8'))
+        except urllib.error.HTTPError as e:
+            if e.code == 202:
+                continue
+            raise
+        status = data.get('status')
+        if status == 'COMPLETED' or data.get('images'):
+            images = data.get('images') or []
+            if images and images[0].get('url'):
+                return images[0]['url']
+            raise RuntimeError('fal.ai completed without image')
+        if status == 'FAILED' or status == 'ERROR':
+            raise RuntimeError(f'fal.ai generation failed: {data}')
+    raise RuntimeError('fal.ai generation timeout')
+
+
+def upload_result_to_s3(image_url: str, task_id: str, user_id: str) -> str:
+    """Скачать готовую картинку с fal.ai и загрузить в Яндекс Object Storage."""
+    req = urllib.request.Request(image_url, method='GET')
+    with urllib.request.urlopen(req, timeout=60) as response:
+        image_bytes = response.read()
+
+    s3_access_key = os.environ.get('S3_ACCESS_KEY')
+    s3_secret_key = os.environ.get('S3_SECRET_KEY')
+    s3_bucket = os.environ.get('S3_BUCKET_NAME', 'fitting-room-images')
+    s3 = boto3.client(
+        's3',
+        endpoint_url='https://storage.yandexcloud.net',
+        aws_access_key_id=s3_access_key,
+        aws_secret_access_key=s3_secret_key
+    )
+    s3_key = f'images/styleanalysis/{user_id}/{task_id}.png'
+    s3.put_object(Bucket=s3_bucket, Key=s3_key, Body=image_bytes, ContentType='image/png')
+    return f'https://storage.yandexcloud.net/{s3_bucket}/{s3_key}'
+
+
+def process_image_service(task_id: str, service_type: str, person_image: str, user_id, height):
+    """Обработка картиночного сервиса: Gemini-анализ -> nano-banana-2 -> S3."""
+    service = registry.get_service(service_type)
+    print(f'[COLORGUIDE-WORKER] Image service "{service_type}" for task {task_id}')
+
+    # Сегмент: S3 загрузка фото клиента + Gemini + fal.ai (долгая часть, без коннекта к БД)
+    try:
+        person_url = upload_to_s3(person_image, task_id, str(user_id))
+        print(f'[COLORGUIDE-WORKER] Person uploaded to {person_url}')
+
+        analysis = call_gemini_with_schema(
+            person_url, service.GEMINI_PROMPT, service.RESPONSE_SCHEMA, f'{service_type}_result'
+        )
+        missing = [f for f in service.REQUIRED_FIELDS if not analysis.get(f)]
+        if missing:
+            raise RuntimeError(f'неполный ответ Gemini: {",".join(missing)}')
+
+        image_prompt = service.build_image_prompt(analysis, height)
+        response_url = fal_submit(
+            image_prompt,
+            [person_url, service.TEMPLATE_IMAGE_URL],
+            service.ASPECT_RATIO
+        )
+        result_image_url = fal_poll_result(response_url)
+        cdn_url = upload_result_to_s3(result_image_url, task_id, str(user_id))
+        print(f'[COLORGUIDE-WORKER] Result image saved: {cdn_url}')
+    except Exception as e:
+        print(f'[COLORGUIDE-WORKER] ERROR (image service): {e}')
+        mark_failed_and_refund(task_id, str(e), 'ошибка генерации')
+        return
+
+    # Сегмент: сохраняем результат
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                UPDATE color_guide_tasks
+                SET status = 'completed',
+                    result_json = %s,
+                    cdn_url = %s,
+                    person_image = NULL,
+                    updated_at = %s
+                WHERE id = %s
+            ''', (json.dumps(analysis, ensure_ascii=False), cdn_url, datetime.utcnow(), task_id))
+            conn.commit()
+            print(f'[COLORGUIDE-WORKER] Task {task_id} ({service_type}) completed')
+        finally:
+            cursor.close()
+            conn.close()
+    except Exception as e:
+        print(f'[COLORGUIDE-WORKER] ERROR (save image result): {e}')
+        mark_failed_and_refund(task_id, f'Ошибка сохранения результата: {e}', 'ошибка обработки')
+
+
 def refund_user(cursor, task_id: str, user_id, cost: int, reason: str):
     """Возвращает деньги пользователю и помечает задачу refunded=TRUE"""
     if not cost or cost <= 0:
@@ -405,14 +580,14 @@ def process_task(task_id: str):
         cursor = conn.cursor()
         try:
             cursor.execute(
-                'SELECT user_id, person_image, status, cost, refunded FROM color_guide_tasks WHERE id = %s',
+                'SELECT user_id, person_image, status, cost, refunded, service_type, height FROM color_guide_tasks WHERE id = %s',
                 (task_id,)
             )
             row = cursor.fetchone()
             if not row:
                 print(f'[COLORGUIDE-WORKER] Task {task_id} not found')
                 return
-            user_id, person_image, status, cost, refunded = row
+            user_id, person_image, status, cost, refunded, service_type, height = row
             if status not in ('pending', 'processing'):
                 print(f'[COLORGUIDE-WORKER] Task {task_id} already in status {status}')
                 return
@@ -428,6 +603,11 @@ def process_task(task_id: str):
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (read task): {e}')
         mark_failed_and_refund(task_id, f'Ошибка чтения задачи: {e}', 'ошибка обработки')
+        return
+
+    # Картиночные сервисы (стиль, причёски и т.д.) идут отдельной веткой
+    if registry.is_image_service(service_type or 'colorguide'):
+        process_image_service(task_id, service_type, person_image, user_id, height)
         return
 
     # Сегмент 2 (без открытого коннекта): S3 + Gemini — долгая часть

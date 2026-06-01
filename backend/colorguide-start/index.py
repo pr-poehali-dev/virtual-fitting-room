@@ -8,6 +8,12 @@ from session_utils import validate_session
 
 COLORGUIDE_COST = 50
 
+ALLOWED_SERVICE_TYPES = ['colorguide', 'style']
+SERVICE_LABELS = {
+    'colorguide': 'Гид по цвету',
+    'style': 'Стилевой анализ внешности',
+}
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
     Запуск создания персонального Гида по цвету: анализ внешности и подробные рекомендации
@@ -70,6 +76,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     body_data = json.loads(event.get('body', '{}'))
     person_image = body_data.get('person_image')
+    service_type = body_data.get('service_type', 'colorguide')
+    if service_type not in ALLOWED_SERVICE_TYPES:
+        service_type = 'colorguide'
+    height = body_data.get('height')
+    try:
+        height = int(height) if height not in (None, '') else None
+        if height is not None and (height < 100 or height > 250):
+            height = None
+    except (ValueError, TypeError):
+        height = None
+    service_label = SERVICE_LABELS.get(service_type, 'Гид по цвету')
 
     if not person_image:
         return {
@@ -126,24 +143,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print(f'[COLORGUIDE-START-{request_id}] Creating task {task_id}')
 
         cursor.execute('''
-            INSERT INTO color_guide_tasks (id, user_id, status, person_image, cost, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        ''', (task_id, user_id, 'pending', person_image, cost, datetime.utcnow()))
+            INSERT INTO color_guide_tasks (id, user_id, status, person_image, cost, created_at, service_type, height)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (task_id, user_id, 'pending', person_image, cost, datetime.utcnow(), service_type, height))
 
         if cost > 0:
             balance_after = balance - cost
             cursor.execute('''
                 INSERT INTO balance_transactions
                 (user_id, type, amount, balance_before, balance_after, description)
-                VALUES (%s, 'charge', %s, %s, %s, 'Гид по цвету')
-            ''', (user_id, -cost, balance, balance_after))
+                VALUES (%s, 'charge', %s, %s, %s, %s)
+            ''', (user_id, -cost, balance, balance_after, service_label))
             print(f'[COLORGUIDE-START-{request_id}] Recorded balance transaction: -{cost} rubles')
         elif unlimited_access:
             cursor.execute('''
                 INSERT INTO balance_transactions
                 (user_id, type, amount, balance_before, balance_after, description)
-                VALUES (%s, 'charge', 0, %s, %s, 'Гид по цвету (безлимитный доступ)')
-            ''', (user_id, balance, balance))
+                VALUES (%s, 'charge', 0, %s, %s, %s)
+            ''', (user_id, balance, balance, f'{service_label} (безлимитный доступ)'))
             print(f'[COLORGUIDE-START-{request_id}] Recorded balance transaction: 0 rubles (unlimited)')
 
         conn.commit()
@@ -167,7 +184,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({
                 'task_id': task_id,
                 'status': 'pending',
-                'estimated_time_seconds': 45
+                'service_type': service_type,
+                'estimated_time_seconds': 120 if service_type != 'colorguide' else 45
             })
         }
 
