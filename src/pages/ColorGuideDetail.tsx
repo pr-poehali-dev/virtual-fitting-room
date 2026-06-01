@@ -21,6 +21,49 @@ export default function ColorGuideDetail() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
 
+  const handleDownload = async () => {
+    if (!imageUrl) return;
+    const filename = `style-analysis-${Date.now()}.png`;
+    const IMAGE_PROXY_API = "https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90";
+    try {
+      let blob: Blob;
+      const needsProxy = !imageUrl.includes("cdn.poehali.dev");
+
+      if (needsProxy) {
+        const sessionToken = localStorage.getItem("session_token");
+        const proxyResponse = await fetch(IMAGE_PROXY_API, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(sessionToken ? { "X-Session-Token": sessionToken } : {}),
+          },
+          credentials: "include",
+          body: JSON.stringify({ image_url: imageUrl }),
+        });
+        if (!proxyResponse.ok) throw new Error("Failed to proxy image for download");
+        const proxyData = await proxyResponse.json();
+        const response = await fetch(proxyData.data_url);
+        blob = await response.blob();
+      } else {
+        const response = await fetch(imageUrl);
+        blob = await response.blob();
+      }
+
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      toast.success("Фото скачано");
+    } catch (error) {
+      console.error("Failed to download image:", error);
+      toast.error("Ошибка скачивания");
+    }
+  };
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/login");
@@ -122,11 +165,9 @@ export default function ColorGuideDetail() {
                 </CardContent>
               </Card>
               <div className="flex justify-center">
-                <Button asChild size="lg">
-                  <a href={imageUrl} download="style-analysis.png" target="_blank" rel="noreferrer">
-                    <Icon name="Download" className="mr-2" size={18} />
-                    Скачать
-                  </a>
+                <Button size="lg" onClick={handleDownload}>
+                  <Icon name="Download" className="mr-2" size={18} />
+                  Скачать
                 </Button>
               </div>
             </div>
