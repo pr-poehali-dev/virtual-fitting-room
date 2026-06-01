@@ -376,8 +376,13 @@ def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_na
         },
         method='POST'
     )
-    with urllib.request.urlopen(req, timeout=90) as response:
-        result = json.loads(response.read().decode('utf-8'))
+    try:
+        with urllib.request.urlopen(req, timeout=90) as response:
+            result = json.loads(response.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode('utf-8', errors='replace')[:500]
+        print(f'[COLORGUIDE-WORKER] Gemini HTTP {e.code}: {err_body}')
+        raise RuntimeError(f'Gemini error {e.code}: {err_body}')
     content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
     if not content or not content.strip():
         raise ValueError('Empty response from Gemini')
@@ -404,8 +409,13 @@ def fal_submit(prompt: str, image_urls: list, aspect_ratio: str) -> str:
         headers={'Authorization': f'Key {fal_api_key}', 'Content-Type': 'application/json'},
         method='POST'
     )
-    with urllib.request.urlopen(req, timeout=30) as response:
-        result = json.loads(response.read().decode('utf-8'))
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            result = json.loads(response.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode('utf-8', errors='replace')[:500]
+        print(f'[COLORGUIDE-WORKER] fal.ai HTTP {e.code}: {err_body}')
+        raise RuntimeError(f'fal.ai error {e.code}: {err_body}')
     response_url = result.get('response_url')
     if not response_url:
         raise RuntimeError(f'fal.ai submit failed: {result}')
