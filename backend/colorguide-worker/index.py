@@ -478,22 +478,31 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
         person_url = upload_to_s3(person_image, task_id, str(user_id))
         print(f'[COLORGUIDE-WORKER] Person uploaded to {person_url}')
 
+        print('[COLORGUIDE-WORKER] STEP gemini start')
         analysis = call_gemini_with_schema(
             person_url, service.GEMINI_PROMPT, service.RESPONSE_SCHEMA, f'{service_type}_result'
         )
+        print(f'[COLORGUIDE-WORKER] STEP gemini done, keys: {list(analysis.keys())}')
         missing = [f for f in service.REQUIRED_FIELDS if not analysis.get(f)]
         if missing:
             raise RuntimeError(f'неполный ответ Gemini: {",".join(missing)}')
 
         image_prompt = service.build_image_prompt(analysis, height)
+        print(f'[COLORGUIDE-WORKER] STEP fal submit, prompt len={len(image_prompt)}')
         response_url = fal_submit(
             image_prompt,
             [person_url, service.TEMPLATE_IMAGE_URL],
             service.ASPECT_RATIO
         )
+        print(f'[COLORGUIDE-WORKER] STEP fal submitted: {response_url}')
         result_image_url = fal_poll_result(response_url)
         cdn_url = upload_result_to_s3(result_image_url, task_id, str(user_id))
         print(f'[COLORGUIDE-WORKER] Result image saved: {cdn_url}')
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode('utf-8', errors='replace')[:600] if hasattr(e, 'read') else ''
+        print(f'[COLORGUIDE-WORKER] ERROR (image service) HTTP {e.code}: {err_body}')
+        mark_failed_and_refund(task_id, f'HTTP {e.code}: {err_body}', 'ошибка генерации')
+        return
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (image service): {e}')
         mark_failed_and_refund(task_id, str(e), 'ошибка генерации')
