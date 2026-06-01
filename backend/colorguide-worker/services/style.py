@@ -8,8 +8,10 @@
 # чтобы модель не копировала чужие фото с шаблона. Можем вернуть позже.
 # TEMPLATE_IMAGE_URL = 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/627be02b-4c57-49f8-9df7-337fb254d238.png'
 
-# Логотип fitting-room для вставки в шапку постера (вход-картинка для nano-banana-2)
-LOGO_IMAGE_URL = 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/logo-fitting-room-1.svg'
+# Логотип fitting-room для вставки в шапку постера (вход-картинка для nano-banana-2).
+# Временно отключён: модель не принимает SVG (ошибка 422). Подставим PNG/JPG-ссылку.
+LOGO_IMAGE_URL = None
+# LOGO_IMAGE_URL = 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/logo-fitting-room-1.svg'
 
 # Соотношение сторон итоговой картинки (вертикальный постер)
 ASPECT_RATIO = '3:4'
@@ -70,6 +72,13 @@ def build_image_prompt(data: dict, height: int = None) -> str:
 
     height_line = f'Рост модели: {height} см. ' if height else ''
 
+    if LOGO_IMAGE_URL:
+        logo_instruction = 'LOGO: place the logo from the SECOND image into the top-left of the header, keep it undistorted.\n\n'
+        logo_header = 'слева логотип (со второго изображения)'
+    else:
+        logo_instruction = ''
+        logo_header = 'слева логотип-надпись "fitting-room" аккуратным тонким шрифтом'
+
     prompt = f'''CRITICAL: EVERY text label on the image MUST be written in RUSSIAN (Cyrillic letters only). NO English words anywhere — only the exact Russian text given below.
 
 Create a vertical fashion-magazine infographic poster titled "СТИЛЕВОЙ АНАЛИЗ ВНЕШНОСТИ".
@@ -78,11 +87,9 @@ LAYOUT: soft beige/cream background, clean editorial typography, modular grid. T
 
 PERSON: use ONLY the FIRST image as the person — keep this exact real face, body and proportions in the central portrait and in every outfit photo. Do NOT invent or add any other people or faces. {height_line}
 
-LOGO: place the logo from the SECOND image into the top-left of the header, keep it undistorted.
+{logo_instruction}Fill the poster with EXACTLY this Russian text:
 
-Fill the poster with EXACTLY this Russian text:
-
-ШАПКА: слева логотип (со второго изображения), справа надпись "fitting-room.ru", по центру заголовок "СТИЛЕВОЙ АНАЛИЗ ВНЕШНОСТИ".
+ШАПКА: {logo_header}, справа надпись "fitting-room.ru", по центру заголовок "СТИЛЕВОЙ АНАЛИЗ ВНЕШНОСТИ".
 
 ТВОЙ ВАЙБ: {lst('vibe')}.
 
