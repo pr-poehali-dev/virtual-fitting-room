@@ -8,10 +8,8 @@
 # чтобы модель не копировала чужие фото с шаблона. Можем вернуть позже.
 # TEMPLATE_IMAGE_URL = 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/627be02b-4c57-49f8-9df7-337fb254d238.png'
 
-# Логотип fitting-room для вставки в шапку постера (вход-картинка для nano-banana-2).
-# Временно отключён: модель не принимает SVG (ошибка 422). Подставим PNG/JPG-ссылку.
-LOGO_IMAGE_URL = None
-# LOGO_IMAGE_URL = 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/logo-fitting-room-1.svg'
+# Логотип fitting-room для вставки в шапку постера (вход-картинка для nano-banana-2). PNG.
+LOGO_IMAGE_URL = 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/3347378c-362c-486f-bc47-39edb5beb913.png'
 
 # Соотношение сторон итоговой картинки (вертикальный постер)
 ASPECT_RATIO = '3:4'
