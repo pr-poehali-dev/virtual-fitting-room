@@ -44,6 +44,12 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       icon: "BookOpen",
       label: "Ваш гид по цвету",
     },
+    {
+      id: "style-analysis",
+      path: "/style-analysis",
+      icon: "Wand2",
+      label: "Стилевой анализ внешности",
+    },
     ...(user?.email === OWNER_EMAIL
       ? [
           {
