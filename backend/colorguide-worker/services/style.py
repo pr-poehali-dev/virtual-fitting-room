@@ -83,7 +83,7 @@ def build_image_prompt(data: dict, height: int = None) -> str:
 
 Create a vertical fashion-magazine infographic poster titled "СТИЛЕВОЙ АНАЛИЗ ВНЕШНОСТИ".
 
-LAYOUT: soft beige/cream background, clean editorial typography, modular grid. Top header bar; left column with text blocks; large central photo of the person; right column with palette and items; a row of full-body outfit photos near the bottom; a big centered title at the very bottom.
+LAYOUT: soft beige/cream background, clean editorial typography, modular grid. Top header bar; left column with text blocks; a compact central photo of the person (moderate size, do NOT make it dominate the poster); right column with palette and items; a row of full-body outfit photos near the bottom; a big centered title at the very bottom.
 
 PERSON: in the central block place the FIRST image EXACTLY AS IS — same crop, same pose, same outfit, same real face. Do NOT redraw, retouch, restyle, re-crop or regenerate this photo, do NOT turn it into a studio portrait. Keep the identical real face and proportions in every outfit photo below. Do NOT invent or add any other people or faces. {height_line}
 
