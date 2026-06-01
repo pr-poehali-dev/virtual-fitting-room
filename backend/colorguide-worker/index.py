@@ -389,8 +389,9 @@ def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_na
     return json.loads(content)
 
 
-def fal_submit(prompt: str, image_urls: list, aspect_ratio: str) -> str:
-    """Отправить задачу в очередь fal.ai nano-banana-2/edit, вернуть response_url для поллинга."""
+def fal_submit(prompt: str, image_urls: list, aspect_ratio: str):
+    """Отправить задачу в очередь fal.ai nano-banana-2/edit.
+    Возвращает (status_url, response_url)."""
     fal_api_key = os.environ.get('FAL_API_KEY')
     if not fal_api_key:
         raise RuntimeError('FAL_API_KEY not configured')
@@ -417,33 +418,40 @@ def fal_submit(prompt: str, image_urls: list, aspect_ratio: str) -> str:
         print(f'[COLORGUIDE-WORKER] fal.ai HTTP {e.code}: {err_body}')
         raise RuntimeError(f'fal.ai error {e.code}: {err_body}')
     response_url = result.get('response_url')
+    status_url = result.get('status_url') or (response_url + '/status' if response_url else None)
     if not response_url:
         raise RuntimeError(f'fal.ai submit failed: {result}')
-    return response_url
+    return status_url, response_url
 
 
-def fal_poll_result(response_url: str, max_wait_seconds: int = 150) -> str:
-    """Опрашивать fal.ai до готовности, вернуть URL готовой картинки."""
+def _fal_get(url: str) -> dict:
+    """GET к fal.ai; 400 'still in progress' трактуем как 'ещё не готово'."""
     fal_api_key = os.environ.get('FAL_API_KEY')
     headers = {'Authorization': f'Key {fal_api_key}', 'Content-Type': 'application/json'}
+    req = urllib.request.Request(url, headers=headers, method='GET')
+    try:
+        with urllib.request.urlopen(req, timeout=15) as response:
+            return json.loads(response.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        if e.code in (202, 400):
+            return {'status': 'IN_PROGRESS'}
+        raise
+
+
+def fal_poll_result(status_url: str, response_url: str, max_wait_seconds: int = 180) -> str:
+    """Опрашивать status_url до COMPLETED, затем забрать картинку с response_url."""
     deadline = time.time() + max_wait_seconds
     while time.time() < deadline:
         time.sleep(5)
-        req = urllib.request.Request(response_url, headers=headers, method='GET')
-        try:
-            with urllib.request.urlopen(req, timeout=15) as response:
-                data = json.loads(response.read().decode('utf-8'))
-        except urllib.error.HTTPError as e:
-            if e.code == 202:
-                continue
-            raise
+        data = _fal_get(status_url)
         status = data.get('status')
-        if status == 'COMPLETED' or data.get('images'):
-            images = data.get('images') or []
+        if status == 'COMPLETED':
+            result = _fal_get(response_url)
+            images = result.get('images') or []
             if images and images[0].get('url'):
                 return images[0]['url']
             raise RuntimeError('fal.ai completed without image')
-        if status == 'FAILED' or status == 'ERROR':
+        if status in ('FAILED', 'ERROR'):
             raise RuntimeError(f'fal.ai generation failed: {data}')
     raise RuntimeError('fal.ai generation timeout')
 
@@ -489,13 +497,13 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
 
         image_prompt = service.build_image_prompt(analysis, height)
         print(f'[COLORGUIDE-WORKER] STEP fal submit, prompt len={len(image_prompt)}')
-        response_url = fal_submit(
+        status_url, response_url = fal_submit(
             image_prompt,
             [person_url, service.TEMPLATE_IMAGE_URL],
             service.ASPECT_RATIO
         )
-        print(f'[COLORGUIDE-WORKER] STEP fal submitted: {response_url}')
-        result_image_url = fal_poll_result(response_url)
+        print(f'[COLORGUIDE-WORKER] STEP fal submitted: {status_url}')
+        result_image_url = fal_poll_result(status_url, response_url)
         cdn_url = upload_result_to_s3(result_image_url, task_id, str(user_id))
         print(f'[COLORGUIDE-WORKER] Result image saved: {cdn_url}')
     except urllib.error.HTTPError as e:
