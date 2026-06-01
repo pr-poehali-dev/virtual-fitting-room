@@ -4,8 +4,12 @@
 данные подставляются в промпт для nano-banana-2 -> одна картинка-инфографика.
 """
 
-# Картинка-образец инфографики (референс лайаута для nano-banana-2)
-TEMPLATE_IMAGE_URL = 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/627be02b-4c57-49f8-9df7-337fb254d238.png'
+# Картинка-образец инфографики (референс лайаута) — пока не используем,
+# чтобы модель не копировала чужие фото с шаблона. Можем вернуть позже.
+# TEMPLATE_IMAGE_URL = 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/627be02b-4c57-49f8-9df7-337fb254d238.png'
+
+# Логотип fitting-room для вставки в шапку постера (вход-картинка для nano-banana-2)
+LOGO_IMAGE_URL = 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/logo-fitting-room-1.svg'
 
 # Соотношение сторон итоговой картинки (вертикальный постер)
 ASPECT_RATIO = '3:4'
@@ -66,16 +70,19 @@ def build_image_prompt(data: dict, height: int = None) -> str:
 
     height_line = f'Рост модели: {height} см. ' if height else ''
 
-    prompt = f'''Create a vertical fashion-magazine style infographic poster titled "СТИЛЕВОЙ АНАЛИЗ ВНЕШНОСТИ".
+    prompt = f'''CRITICAL: EVERY text label on the image MUST be written in RUSSIAN (Cyrillic letters only). NO English words anywhere — only the exact Russian text given below.
 
-CRITICAL: ALL text on the image MUST be in RUSSIAN language (Cyrillic only). NO English words anywhere.
+Create a vertical fashion-magazine infographic poster titled "СТИЛЕВОЙ АНАЛИЗ ВНЕШНОСТИ".
 
-Use the SECOND reference image as the exact LAYOUT TEMPLATE — copy its structure, blocks, grid, soft beige/cream background and clean editorial typography.
-Use the FIRST reference image as the PERSON — keep the real face, body and proportions of this person in the central large portrait and in the outfit photos. {height_line}
+LAYOUT: soft beige/cream background, clean editorial typography, modular grid. Top header bar; left column with text blocks; large central portrait; right column with palette and items; a row of full-body outfit photos near the bottom; a big centered title at the very bottom.
 
-Fill the poster with these blocks and EXACTLY this Russian text:
+PERSON: use ONLY the FIRST image as the person — keep this exact real face, body and proportions in the central portrait and in every outfit photo. Do NOT invent or add any other people or faces. {height_line}
 
-ШАПКА: слева логотип "fitting-room", справа "fitting-room.ru", по центру заголовок "СТИЛЕВОЙ АНАЛИЗ ВНЕШНОСТИ".
+LOGO: place the logo from the SECOND image into the top-left of the header, keep it undistorted.
+
+Fill the poster with EXACTLY this Russian text:
+
+ШАПКА: слева логотип (со второго изображения), справа надпись "fitting-room.ru", по центру заголовок "СТИЛЕВОЙ АНАЛИЗ ВНЕШНОСТИ".
 
 ТВОЙ ВАЙБ: {lst('vibe')}.
 
@@ -83,20 +90,20 @@ Fill the poster with these blocks and EXACTLY this Russian text:
 
 МЕНЕЕ ПОДХОДИТ: {lst('avoid_styles')}.
 
-ТВОЯ ПАЛИТРА — лучшие цвета: {lst('palette_best')}; цвета, которых избегать: {lst('palette_avoid')}. Покажи их образцами-квадратиками с подписями.
+ТВОЯ ПАЛИТРА — лучшие цвета: {lst('palette_best')}; цвета, которых избегать: {lst('palette_avoid')}. Покажи цветными образцами-квадратиками с подписями.
 
 ВЫИГРЫШНЫЕ СИЛУЭТЫ: {lst('silhouettes')}.
 
-КЛЮЧЕВЫЕ ВЕЩИ: {lst('key_items')}. Покажи аккуратными иконками одежды.
+КЛЮЧЕВЫЕ ВЕЩИ: {lst('key_items')}. Покажи как фотореалистичные предметы одежды на нейтральном фоне (не иконки, не рисунки).
 
-АКСЕССУАРЫ: {lst('accessories')}. Покажи иконками.
+АКСЕССУАРЫ: {lst('accessories')}. Покажи как фотореалистичные предметы на нейтральном фоне.
 
-ТЫ В СВОИХ СТИЛЯХ: 4 фото этого человека в разных рекомендованных образах.
+ТЫ В СВОИХ СТИЛЯХ: 4 фотореалистичных снимка ЭТОГО ЖЕ человека (с первого изображения) в разных рекомендованных образах.
 
 СТИЛЕВЫЕ ЗАМЕТКИ: {lst('tips')}.
 
 ВНИЗУ крупно по центру: "{data.get('identity', '')}".
 
-Style: minimalism, high readability, professional fashion typography, clean modular grid, neutral beige palette. Photorealistic outfit photos of the same person. Remember: every text label is in RUSSIAN.'''
+Style: minimalism, high readability, professional fashion typography, neutral beige palette, photorealistic clothing and outfit photos. Reminder: every text label is in RUSSIAN.'''
 
     return prompt

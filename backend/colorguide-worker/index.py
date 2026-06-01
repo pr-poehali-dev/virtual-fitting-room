@@ -497,9 +497,13 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
 
         image_prompt = service.build_image_prompt(analysis, height)
         print(f'[COLORGUIDE-WORKER] STEP fal submit, prompt len={len(image_prompt)}')
+        image_inputs = [person_url]
+        logo_url = getattr(service, 'LOGO_IMAGE_URL', None)
+        if logo_url:
+            image_inputs.append(logo_url)
         status_url, response_url = fal_submit(
             image_prompt,
-            [person_url, service.TEMPLATE_IMAGE_URL],
+            image_inputs,
             service.ASPECT_RATIO
         )
         print(f'[COLORGUIDE-WORKER] STEP fal submitted: {status_url}')
