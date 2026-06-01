@@ -57,7 +57,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = psycopg2.connect(dsn)
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute('''
-            SELECT id, status, colortype_slug, result_json, cdn_url, created_at, cost, refunded, error_message
+            SELECT id, status, colortype_slug, result_json, cdn_url, created_at, cost, refunded, error_message, service_type
             FROM color_guide_tasks
             WHERE user_id = %s
             ORDER BY created_at DESC
@@ -67,9 +67,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor.close()
         conn.close()
 
+        service_labels = {'colorguide': 'Гид по цвету', 'style': 'Стилевой анализ'}
+
         tasks = []
         for row in rows:
-            colortype_name = None
+            service_type = row.get('service_type') or 'colorguide'
+            display_name = None
             result_json = row.get('result_json')
             if result_json:
                 if isinstance(result_json, str):
@@ -78,13 +81,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     except Exception:
                         result_json = None
                 if isinstance(result_json, dict):
-                    colortype_name = result_json.get('colortype_name')
+                    # colorguide -> colortype_name, прочие сервисы -> identity
+                    display_name = result_json.get('colortype_name') or result_json.get('identity')
+            if not display_name and service_type != 'colorguide':
+                display_name = service_labels.get(service_type, 'Анализ')
 
             tasks.append({
                 'id': str(row['id']),
                 'status': row['status'],
+                'service_type': service_type,
                 'colortype_slug': row['colortype_slug'],
-                'colortype_name': colortype_name,
+                'colortype_name': display_name,
                 'cdn_url': row['cdn_url'],
                 'cost': row['cost'],
                 'refunded': row['refunded'],

@@ -14,6 +14,7 @@ const DB_QUERY_API = "https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-8844
 interface GuideTask {
   id: string;
   status: string;
+  service_type?: string | null;
   colortype_slug: string | null;
   colortype_name: string | null;
   cdn_url: string | null;

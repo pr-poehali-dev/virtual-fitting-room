@@ -17,6 +17,8 @@ export default function ColorGuideDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [result, setResult] = useState<ColorGuideResult | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [serviceType, setServiceType] = useState<string>("colorguide");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,6 +50,18 @@ export default function ColorGuideDetail() {
           }
           return;
         }
+        const svc = data.service_type || "colorguide";
+        setServiceType(svc);
+
+        if (svc !== "colorguide") {
+          if (data.status !== "completed" || !data.cdn_url) {
+            setErrorText(data.error_message || "Отчёт ещё не готов или не удался");
+            return;
+          }
+          setImageUrl(data.cdn_url);
+          return;
+        }
+
         if (data.status !== "completed" || !data.result) {
           setErrorText(
             data.error_message || "Отчёт ещё не готов или не удался",
@@ -100,6 +114,22 @@ export default function ColorGuideDetail() {
                 </Button>
               </CardContent>
             </Card>
+          ) : serviceType !== "colorguide" && imageUrl ? (
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="p-4 md:p-6">
+                  <img src={imageUrl} alt="Стилевой анализ" className="w-full rounded-lg" />
+                </CardContent>
+              </Card>
+              <div className="flex justify-center">
+                <Button asChild size="lg">
+                  <a href={imageUrl} download="style-analysis.png" target="_blank" rel="noreferrer">
+                    <Icon name="Download" className="mr-2" size={18} />
+                    Скачать
+                  </a>
+                </Button>
+              </div>
+            </div>
           ) : result && photoUrl ? (
             <ColorGuideReport result={result} photoUrl={photoUrl} />
           ) : null}

@@ -23,6 +23,7 @@ interface GuideItem {
   user_email: string;
   user_name: string;
   status: string;
+  service_type?: string | null;
   colortype_slug: string | null;
   colortype_name: string | null;
   cdn_url: string | null;

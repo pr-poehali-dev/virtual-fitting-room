@@ -441,7 +441,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     g.cost,
                     g.refunded,
                     g.error_message,
-                    g.created_at
+                    g.created_at,
+                    g.service_type
                 FROM color_guide_tasks g
                 LEFT JOIN users u ON g.user_id = u.id
                 WHERE {where_clause}
@@ -452,8 +453,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             cursor.execute(query, filter_values)
             history = cursor.fetchall()
 
+            cg_service_labels = {'colorguide': 'Гид по цвету', 'style': 'Стилевой анализ'}
             result_list = []
             for h in history:
+                service_type = h.get('service_type') or 'colorguide'
                 colortype_name = None
                 rj = h.get('result_json')
                 if rj:
@@ -463,13 +466,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         except Exception:
                             rj = None
                     if isinstance(rj, dict):
-                        colortype_name = rj.get('colortype_name')
+                        colortype_name = rj.get('colortype_name') or rj.get('identity')
+                if not colortype_name and service_type != 'colorguide':
+                    colortype_name = cg_service_labels.get(service_type, 'Анализ')
                 result_list.append({
                     'id': str(h['id']),
                     'user_id': str(h['user_id']) if h['user_id'] else None,
                     'user_email': h['user_email'],
                     'user_name': h['user_name'],
                     'status': h['status'],
+                    'service_type': service_type,
                     'colortype_slug': h['colortype_slug'],
                     'colortype_name': colortype_name,
                     'cdn_url': h['cdn_url'],

@@ -61,7 +61,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute('''
             SELECT id, user_id, status, colortype_slug, result_json, cdn_url, error_message,
-                   cost, refunded, created_at
+                   cost, refunded, created_at, service_type
             FROM color_guide_tasks WHERE id = %s
         ''', (task_id,))
         row = cursor.fetchone()
@@ -98,6 +98,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({
                 'task_id': str(row['id']),
                 'status': row['status'],
+                'service_type': row.get('service_type') or 'colorguide',
                 'colortype_slug': row['colortype_slug'],
                 'cdn_url': row['cdn_url'],
                 'cost': row['cost'],
