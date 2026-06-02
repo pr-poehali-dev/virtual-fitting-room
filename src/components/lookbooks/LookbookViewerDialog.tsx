@@ -62,12 +62,24 @@ export default function LookbookViewerDialog({ lookbook, onClose, imageProxyApi 
       let yPos = margin + 35;
       
       const colorSize = 8;
-      lookbook.color_palette.forEach((color, i) => {
-        pdf.setFillColor(parseInt(color.slice(1, 3), 16), parseInt(color.slice(3, 5), 16), parseInt(color.slice(5, 7), 16));
-        pdf.rect(margin + i * (colorSize + 2), yPos, colorSize, colorSize, 'F');
+      const colorGap = 2;
+      let colorX = margin;
+      lookbook.color_palette.forEach((color) => {
+        if (colorX + colorSize > pageWidth - margin) {
+          colorX = margin;
+          yPos += colorSize + colorGap;
+        }
+        const hex = color.replace('#', '').slice(0, 6);
+        pdf.setFillColor(
+          parseInt(hex.slice(0, 2), 16),
+          parseInt(hex.slice(2, 4), 16),
+          parseInt(hex.slice(4, 6), 16)
+        );
+        pdf.rect(colorX, yPos, colorSize, colorSize, 'F');
+        colorX += colorSize + colorGap;
       });
       
-      yPos += 20;
+      yPos += colorSize + 12;
       
       const loadImage = async (url: string): Promise<string> => {
         console.log('[PDF] Loading image:', url);
