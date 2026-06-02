@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { STYLE_ANALYSIS_COST } from "@/config/prices";
 import { useBalance } from "@/context/BalanceContext";
 import { useNavigate } from "react-router-dom";
+import StyleAnalysisReport, { StyleAnalysisResult } from "@/components/StyleAnalysisReport";
 
 const START_API = "https://functions.poehali.dev/1551f3e9-8029-441b-ac77-2dc9cf164bdc";
 const STATUS_API = "https://functions.poehali.dev/ce27daee-90c0-4dd7-9369-a6b079895493";
@@ -48,6 +49,7 @@ export default function StyleAnalysis() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisStatus, setAnalysisStatus] = useState<string>("");
   const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [resultData, setResultData] = useState<StyleAnalysisResult | null>(null);
 
   const handleDownload = async () => {
     if (!resultUrl) return;
@@ -163,6 +165,7 @@ export default function StyleAnalysis() {
           return;
         }
         setResultUrl(data.cdn_url);
+        if (data.result) setResultData(data.result as StyleAnalysisResult);
         setIsAnalyzing(false);
         setAnalysisStatus("");
         toast.success("Ваш анализ готов!");
@@ -255,6 +258,7 @@ export default function StyleAnalysis() {
 
   const handleReset = () => {
     setResultUrl(null);
+    setResultData(null);
     setUploadedImage(null);
     setHeight("");
   };
@@ -392,28 +396,36 @@ export default function StyleAnalysis() {
             </Card>
           )}
 
-          {resultUrl && (
+          {resultData ? (
             <div className="space-y-6 animate-fade-in">
-              <Card>
-                <CardContent className="p-4 md:p-6">
-                  <img
-                    src={resultUrl}
-                    alt="Стилевой анализ"
-                    className="w-full rounded-lg"
-                  />
-                </CardContent>
-              </Card>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button size="lg" variant="default" onClick={handleDownload}>
-                  <Icon name="Download" size={18} className="mr-2" />
-                  Скачать
-                </Button>
+              <StyleAnalysisReport result={resultData} imageUrl={resultUrl} />
+              <div className="flex justify-center">
                 <Button size="lg" variant="outline" onClick={handleReset}>
                   <Icon name="RotateCcw" size={18} className="mr-2" />
                   Новый анализ
                 </Button>
               </div>
             </div>
+          ) : (
+            resultUrl && (
+              <div className="space-y-6 animate-fade-in">
+                <Card>
+                  <CardContent className="p-4 md:p-6">
+                    <img src={resultUrl} alt="Стилевой анализ" className="w-full rounded-lg" />
+                  </CardContent>
+                </Card>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button size="lg" variant="default" onClick={handleDownload}>
+                    <Icon name="Download" size={18} className="mr-2" />
+                    Скачать
+                  </Button>
+                  <Button size="lg" variant="outline" onClick={handleReset}>
+                    <Icon name="RotateCcw" size={18} className="mr-2" />
+                    Новый анализ
+                  </Button>
+                </div>
+              </div>
+            )
           )}
         </div>
       </section>
