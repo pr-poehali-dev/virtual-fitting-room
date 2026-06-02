@@ -95,6 +95,14 @@ export default function LookbookViewerDialog({ lookbook, onClose, imageProxyApi 
         }
       };
       
+      const getImageSize = (dataUrl: string): Promise<{ width: number; height: number }> =>
+        new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+          img.onerror = () => resolve({ width: 5, height: 7 });
+          img.src = dataUrl;
+        });
+
       const photos = lookbook.photos;
       const cellWidth = usableWidth / 3;
       const gap = 3;
@@ -115,7 +123,16 @@ export default function LookbookViewerDialog({ lookbook, onClose, imageProxyApi 
         
         try {
           const imgData = await loadImage(photos[i]);
-          pdf.addImage(imgData, 'JPEG', currentX, currentY, imageWidth, imageHeight, undefined, 'FAST');
+          const { width: natW, height: natH } = await getImageSize(imgData);
+
+          // Вписываем картинку в ячейку с сохранением пропорций (contain), центрируем
+          const scale = Math.min(imageWidth / natW, imageHeight / natH);
+          const drawW = natW * scale;
+          const drawH = natH * scale;
+          const offsetX = currentX + (imageWidth - drawW) / 2;
+          const offsetY = currentY + (imageHeight - drawH) / 2;
+
+          pdf.addImage(imgData, 'JPEG', offsetX, offsetY, drawW, drawH, undefined, 'FAST');
         } catch (e) {
           console.error('Failed to load image:', e);
         }
