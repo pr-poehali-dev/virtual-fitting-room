@@ -55,7 +55,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
           {
             id: "ai-editor",
             path: "/ai-editor",
-            icon: "Wand2",
+            icon: "PenTool",
             label: "AI-редактор",
           },
         ]
