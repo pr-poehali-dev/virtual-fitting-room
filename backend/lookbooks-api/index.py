@@ -472,7 +472,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             old_lookbook = cursor.fetchone()
             old_photos = old_lookbook['photos'] if old_lookbook else []
             
-            removed_photos = [p for p in old_photos if p not in saved_photos]
+            # Если photos не переданы (например, обновляем только палитру) — фото не трогаем
+            if saved_photos is None:
+                removed_photos = []
+            else:
+                removed_photos = [p for p in old_photos if p not in saved_photos]
             
             cursor.execute(
                 """
