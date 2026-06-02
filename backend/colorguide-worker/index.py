@@ -348,7 +348,7 @@ def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_na
         raise RuntimeError('OPENROUTER_API_KEY not configured')
 
     payload = {
-        'model': 'openai/gpt-4o',
+        'model': 'google/gemini-2.5-flash',
         'messages': [
             {
                 'role': 'user',
@@ -365,28 +365,38 @@ def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_na
             'json_schema': {'name': schema_name, 'strict': True, 'schema': schema}
         }
     }
-    req = urllib.request.Request(
-        'https://openrouter.ai/api/v1/chat/completions',
-        data=json.dumps(payload).encode('utf-8'),
-        headers={
-            'Authorization': f'Bearer {api_key}',
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://fitting-room.ru',
-            'X-Title': 'Style Analysis'
-        },
-        method='POST'
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=90) as response:
-            result = json.loads(response.read().decode('utf-8'))
-    except urllib.error.HTTPError as e:
-        err_body = e.read().decode('utf-8', errors='replace')[:500]
-        print(f'[COLORGUIDE-WORKER] Gemini HTTP {e.code}: {err_body}')
-        raise RuntimeError(f'Gemini error {e.code}: {err_body}')
-    content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
-    if not content or not content.strip():
-        raise ValueError('Empty response from Gemini')
-    return json.loads(content)
+
+    last_error = None
+    for attempt in range(3):
+        req = urllib.request.Request(
+            'https://openrouter.ai/api/v1/chat/completions',
+            data=json.dumps(payload).encode('utf-8'),
+            headers={
+                'Authorization': f'Bearer {api_key}',
+                'Content-Type': 'application/json',
+                'HTTP-Referer': 'https://fitting-room.ru',
+                'X-Title': 'Style Analysis'
+            },
+            method='POST'
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=90) as response:
+                result = json.loads(response.read().decode('utf-8'))
+            content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+            if not content or not content.strip():
+                raise ValueError('Empty response from Gemini')
+            return json.loads(content)
+        except urllib.error.HTTPError as e:
+            err_body = e.read().decode('utf-8', errors='replace')[:500]
+            print(f'[COLORGUIDE-WORKER] Gemini HTTP {e.code} (attempt {attempt + 1}): {err_body}')
+            last_error = RuntimeError(f'Gemini error {e.code}: {err_body}')
+        except Exception as e:
+            print(f'[COLORGUIDE-WORKER] Gemini error (attempt {attempt + 1}): {e}')
+            last_error = e
+        if attempt < 2:
+            time.sleep(3)
+
+    raise last_error if last_error else RuntimeError('Gemini request failed')
 
 
 def fal_submit(prompt: str, image_urls: list, aspect_ratio: str):
