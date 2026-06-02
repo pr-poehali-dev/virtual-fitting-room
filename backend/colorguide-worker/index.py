@@ -358,8 +358,8 @@ def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_na
                 ]
             }
         ],
-        'max_tokens': 4000,
-        'temperature': 0.4,
+        'max_tokens': 6000,
+        'temperature': 0.7,
         'response_format': {
             'type': 'json_schema',
             'json_schema': {'name': schema_name, 'strict': True, 'schema': schema}
