@@ -39,11 +39,32 @@ export default function ProfileDashboard() {
       color: 'bg-purple-100 text-purple-700'
     },
     {
-      title: 'История',
-      description: 'Просмотр истории генераций',
-      icon: 'History',
+      title: 'История примерок',
+      description: 'Все ваши виртуальные примерки',
+      icon: 'Shirt',
       path: '/profile/history',
       color: 'bg-blue-100 text-blue-700'
+    },
+    {
+      title: 'История генераций',
+      description: 'Все сгенерированные изображения',
+      icon: 'Sparkles',
+      path: '/profile/history-freegen',
+      color: 'bg-pink-100 text-pink-700'
+    },
+    {
+      title: 'История цветотипов',
+      description: 'Все ваши анализы цветотипа',
+      icon: 'Palette',
+      path: '/profile/history-colortypes',
+      color: 'bg-amber-100 text-amber-700'
+    },
+    {
+      title: 'Гиды по цвету и стилевые анализы',
+      description: 'Все ваши гиды по цвету и стилевые анализы',
+      icon: 'BookOpen',
+      path: '/profile/history-colorguide',
+      color: 'bg-rose-100 text-rose-700'
     },
     {
       title: 'Кошелёк',
