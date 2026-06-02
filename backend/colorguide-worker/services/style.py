@@ -34,8 +34,8 @@ GEMINI_PROMPT = '''Ты — топовый персональный стилис
 - vibe: 5-7 прилагательных-характеристик вайба (например, "Уверенная", "Женственная").
 - best_styles: массив из 3-5 объектов {name, reason}. name — название стиля; reason — почему он подходит этой внешности/фигуре/вайбу (1 предложение).
 - avoid_styles: 2-3 названия менее подходящих стилей (строки).
-- silhouettes: массив из 3-4 объектов {name, reason}. name — выигрышный силуэт; reason — почему он работает на этой фигуре.
-- key_items: массив из 5-6 объектов {name, reason}. name — ключевая вещь гардероба; reason — почему она идёт (фигура/колорит/вайб). Учитывай подходящие ткани, не копируй ткани с фото.
+- silhouettes: массив из 3-4 объектов {name, reason}. name — выигрышный силуэт; reason — почему он работает на этой фигуре. Силуэты должны быть СОВРЕМЕННЫМИ и актуальными в этом году. Подбирай крой именно под фигуру: если фигуре выгоднее широкий/прямой/oversize крой — рекомендуй его, а не узкий по умолчанию.
+- key_items: массив из 5-6 объектов {name, reason}. name — ключевая вещь гардероба; reason — почему она идёт (фигура/колорит/вайб). ВАЖНО: предлагай только СОВРЕМЕННЫЕ, актуальные в этом году фасоны (по текущим модным тенденциям), без устаревших кроёв прошлых десятилетий. Фасон каждой вещи подбирай под тип фигуры человека (например, ширину и посадку брюк — широкие/прямые/зауженные — выбирай по тому, что реально выгоднее этой фигуре, а не ставь узкие "по инерции"). Учитывай подходящие ткани, не копируй ткани с фото.
 - accessories: 3 подходящих аксессуара на русском (строки).
 - palette_best: массив из 6 объектов {name, hex, reason}. name — название цвета; hex — точный HEX-код (например "#7C6A4E"); reason — почему этот цвет идёт колориту (1 короткая фраза).
 - palette_avoid: массив из 6 объектов {name, hex, reason}. name — цвет, которого избегать; hex — HEX-код; reason — почему не идёт.
@@ -135,7 +135,9 @@ def build_image_prompt(data: dict, height: int = None) -> str:
 
 Create a vertical fashion-magazine infographic poster titled "СТИЛЕВОЙ АНАЛИЗ ВНЕШНОСТИ".
 
-LAYOUT: soft beige/cream background, clean editorial typography, modular grid. Top header bar; left column with text blocks; a compact central photo of the person (moderate size, do NOT make it dominate the poster); right column with palette and items; a row of full-body outfit photos near the bottom; a big centered title at the very bottom.
+LAYOUT: soft beige/cream background, refined modern editorial typography, modular grid. Top header bar; left column with text blocks; a compact central photo of the person (moderate size, do NOT make it dominate the poster); right column with palette and items; a row of full-body outfit photos near the bottom; a big centered title at the very bottom.
+
+TYPOGRAPHY & COLOR: make the design look more elegant and premium. Section HEADINGS use an elegant high-fashion serif font (like Vogue/Harper's Bazaar magazine titles); body text uses a clean modern sans-serif. Do NOT use pure black (#000000) for any text — use a soft warm dark tone (deep taupe / warm charcoal brown, around #4A3F35) for body and headings, and a refined muted accent (dusty terracotta / soft mauve) for section titles. Keep everything harmonious with the warm beige palette, high contrast for readability.
 
 PERSON: in the central block place the FIRST image EXACTLY AS IS — same crop, same pose, same outfit, same real face. Do NOT redraw, retouch, restyle, re-crop or regenerate this photo, do NOT turn it into a studio portrait. Keep the identical real face and proportions in every outfit photo below. Do NOT invent or add any other people or faces. {height_line}
 
@@ -157,7 +159,7 @@ PERSON: in the central block place the FIRST image EXACTLY AS IS — same crop, 
 
 АКСЕССУАРЫ: {lst('accessories')}. Покажи как фотореалистичные предметы на нейтральном фоне. КРИТИЧНО: в этом блоке показывай ТОЛЬКО аксессуары — украшения, сумку, ремень, обувь, очки, шарф/платок, шляпу. НИКАКОЙ одежды (никаких пальто, тренчей, плащей, курток, джинсов, брюк, платьев, рубашек) в блоке аксессуаров быть НЕ должно. Текстовый список под предметами НЕ добавляй — только сами фотографии аксессуаров.
 
-ТЫ В СВОИХ СТИЛЯХ: 4 фотореалистичных снимка ЭТОГО ЖЕ человека (с первого изображения) в разных рекомендованных образах. Образы должны быть СОВРЕМЕННЫМИ и актуальными по моде наших дней — никаких устаревших фасонов прошлых десятилетий; современный крой, актуальные пропорции и стилизация.
+ТЫ В СВОИХ СТИЛЯХ: 4 фотореалистичных снимка ЭТОГО ЖЕ человека (с первого изображения) в разных рекомендованных образах. Образы должны быть СОВРЕМЕННЫМИ и актуальными по моде ИМЕННО ЭТОГО ГОДА (текущие модные тенденции) — категорически никаких устаревших фасонов прошлых десятилетий (например, узких брюк "из 2010-х"). Крой и посадку каждой вещи подбирай под фигуру человека так, чтобы она смотрелась максимально выгодно (если фигуре идут широкие/прямые брюки — показывай именно их, а не зауженные). Современный крой, актуальные пропорции и стилизация.
 
 СТИЛЕВЫЕ ЗАМЕТКИ: {lst('tips')}.
 
@@ -165,6 +167,6 @@ PERSON: in the central block place the FIRST image EXACTLY AS IS — same crop, 
 
 КРИТИЧНО ПРО ТЕКСТ: каждую надпись, заголовок и название показывай РОВНО ОДИН раз. НЕ дублируй текст, не повторяй один и тот же заголовок или название в двух местах, не подписывай предметы повторно.
 
-Style: minimalism, high readability, professional fashion typography, neutral beige palette, photorealistic and MODERN clothing and outfit photos (current fashion, not outdated cuts). Reminder: every text label is in RUSSIAN (Cyrillic only).'''
+Style: elegant premium fashion-magazine aesthetic, minimalism, high readability, refined serif headings + clean sans-serif body, warm beige palette, NO pure black text (use warm dark taupe + muted terracotta/mauve accents), photorealistic and MODERN clothing and outfit photos (current-year fashion, not outdated cuts). Reminder: every text label is in RUSSIAN (Cyrillic only).'''
 
     return prompt
