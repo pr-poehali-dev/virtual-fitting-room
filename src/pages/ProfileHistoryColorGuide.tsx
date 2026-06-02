@@ -140,7 +140,7 @@ export default function ProfileHistoryColorGuide() {
 
           <div className="flex-1 min-w-0">
             <div className="mb-8">
-              <h2 className="text-3xl md:text-4xl font-light mb-2">История гидов по цвету</h2>
+              <h2 className="text-3xl md:text-4xl font-light mb-2">История гидов по цвету и стилевых анализов</h2>
               <p className="text-muted-foreground">Все ваши персональные отчёты</p>
             </div>
 
