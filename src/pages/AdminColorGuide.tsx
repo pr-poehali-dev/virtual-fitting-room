@@ -147,8 +147,8 @@ export default function AdminColorGuide() {
 
           <div className="flex-1 min-w-0">
             <div className="mb-6">
-              <h2 className="text-3xl font-light mb-2">Гид по цвету — задачи</h2>
-              <p className="text-muted-foreground">Все запросы пользователей на персональный гид по цвету</p>
+              <h2 className="text-3xl font-light mb-2">Гиды по цвету и стилевые анализы — задачи</h2>
+              <p className="text-muted-foreground">Все запросы пользователей на гид по цвету и стилевой анализ</p>
             </div>
 
           <Card className="mb-4">
