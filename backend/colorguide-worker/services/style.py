@@ -11,8 +11,8 @@
 # Логотип больше не нужен: картинка теперь — чистая сетка 2x2 из образов без шапки.
 LOGO_IMAGE_URL = None
 
-# Соотношение сторон итоговой картинки (квадрат под сетку 2x2 образов)
-ASPECT_RATIO = '1:1'
+# Соотношение сторон итоговой картинки (широкий ряд из 4 образов)
+ASPECT_RATIO = '16:9'
 
 # Промпт для Gemini: глубокий профессиональный анализ стиля. Все тексты на русском.
 GEMINI_PROMPT = '''Ты — топовый персональный стилист-имиджмейкер с 15-летним опытом. К тебе пришёл клиент за индивидуальным стилевым разбором. Работай как настоящий профессионал: сначала ВНИМАТЕЛЬНО изучи самого человека на фото, а потом выстрой рекомендации, вытекающие из его природных данных.
@@ -118,7 +118,7 @@ def _names(items):
 
 
 def build_image_prompt(data: dict, height: int = None) -> str:
-    """Промпт для nano-banana-2: сетка 2x2 из 4 фотореалистичных образов человека по описаниям looks."""
+    """Промпт для nano-banana-2: горизонтальный ряд из 4 фотореалистичных образов по описаниям looks."""
     height_line = f'The person height is about {height} cm. ' if height else ''
 
     looks = data.get('looks') or []
@@ -131,12 +131,14 @@ def build_image_prompt(data: dict, height: int = None) -> str:
             title, desc = '', str(look)
         looks_block += f'OUTFIT {i} ("{title}"): {desc}\n\n'
 
-    prompt = f'''Create ONE photorealistic image that is a clean 2x2 grid (four equal cells, no gaps text or borders) showing FOUR full-body fashion looks of the SAME real woman.
+    prompt = f'''Create ONE wide photorealistic image: a single horizontal ROW of EXACTLY 4 cells side by side (1 row x 4 columns), showing FOUR full-body fashion looks of the SAME real woman.
 
-PERSON: take the woman from the provided photo and keep her EXACT real face, hair, skin tone and body proportions in all four cells. It must clearly be the same real person, photorealistic, not illustrated, not a different face. {height_line}Each cell is a separate full-body studio fashion photo on a soft neutral light-grey/beige seamless background, natural soft lighting, modern editorial lookbook style.
+CRITICAL COMPOSITION: exactly 4 cells in ONE horizontal row, ONE outfit per cell, ONE single frontal full-body photo per cell. Do NOT make a 2x2 grid, do NOT add a second row, do NOT show two angles or two photos of the same outfit in one cell — strictly 4 photos total, one per look. No gaps, no borders, no text.
 
-Dress her in these FOUR DIFFERENT complete outfits, one per cell, exactly as described (modern current-year fashion, flattering cuts for her figure). Render every garment, shoes, bag, accessories and JEWELRY described, in realistic detail:
+PERSON: take the woman from the provided photo and keep her EXACT real face, hair, skin tone and body proportions in all four cells. It must clearly be the same real person, photorealistic, not illustrated, not a different face. {height_line}Each cell is a separate full-body studio fashion photo on a soft neutral light-grey/beige seamless background, natural soft lighting, modern editorial lookbook style, the woman standing facing the camera.
 
-{looks_block}REQUIREMENTS: four DISTINCT outfits (do not repeat the same look), each shown head-to-toe, contemporary and stylish, fit and silhouette flattering to her body. Photorealistic fashion photography quality. NO text, NO captions, NO labels, NO logos, NO color swatches anywhere on the image — only the four outfit photos in a 2x2 grid.'''
+Dress her in these FOUR DIFFERENT complete outfits, one per cell, in order from left to right, exactly as described (modern current-year fashion, flattering cuts for her figure). Render every garment, shoes, bag, accessories and JEWELRY described, in realistic detail:
+
+{looks_block}REQUIREMENTS: four DISTINCT outfits (do not repeat the same look), each shown head-to-toe once, contemporary and stylish, fit and silhouette flattering to her body. Photorealistic fashion photography quality. NO text, NO captions, NO labels, NO logos, NO color swatches anywhere on the image — only the four outfit photos in one horizontal row.'''
 
     return prompt

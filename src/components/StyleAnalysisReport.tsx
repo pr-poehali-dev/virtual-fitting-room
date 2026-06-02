@@ -162,7 +162,6 @@ export default function StyleAnalysisReport({ result, imageUrl }: Props) {
             <img
               src={imgDataUrl || imageUrl}
               alt="Образы"
-              crossOrigin="anonymous"
               className="w-full rounded-lg shadow-sm"
             />
             {looks && looks.length > 0 && (
