@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { seasonalPalettes, ColorPalette } from '@/data/seasonalPalettes';
 import { colorTypeRules, ColorTypeName, getPalettesForColorType } from '@/data/colorTypeRules';
+import AddColorsToLookbookDialog from '@/components/AddColorsToLookbookDialog';
 
 const colorTypeNamesMap: Record<string, ColorTypeName> = {
   'SOFT WINTER': 'SOFT_WINTER',
@@ -45,6 +46,7 @@ export default function PalettePage() {
   const [allColors, setAllColors] = useState<Array<{ name: string; hex: string; paletteNum: number }>>([]);
   const [activeSource, setActiveSource] = useState<'formula' | 'ai'>('formula');
   const [overrideColorType, setOverrideColorType] = useState<ColorTypeName | null>(null);
+  const [showLookbookDialog, setShowLookbookDialog] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -240,6 +242,16 @@ export default function PalettePage() {
                 </div>
               )}
             </div>
+
+            {allColors.length > 0 && (
+              <Button
+                className="w-full"
+                onClick={() => setShowLookbookDialog(true)}
+              >
+                <Icon name="BookmarkPlus" size={18} className="mr-2" />
+                Добавить цвета в лукбук
+              </Button>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -279,6 +291,12 @@ export default function PalettePage() {
           </div>
         </div>
       </div>
+
+      <AddColorsToLookbookDialog
+        open={showLookbookDialog}
+        onOpenChange={setShowLookbookDialog}
+        colors={allColors.map((c) => c.hex)}
+      />
     </div>
   );
 }

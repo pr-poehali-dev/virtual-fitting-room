@@ -318,7 +318,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 name: str = Field(..., min_length=1, max_length=100)
                 person_name: str = Field(..., min_length=1, max_length=100)
                 photos: List[str] = Field(default_factory=list)
-                color_palette: List[str] = Field(default_factory=list, max_length=10)
+                color_palette: List[str] = Field(default_factory=list, max_length=36)
             
             try:
                 validated = LookbookCreate(**body_data)
@@ -423,6 +423,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             person_name = body_data.get('person_name')
             photos = body_data.get('photos')
             color_palette = body_data.get('color_palette')
+            if isinstance(color_palette, list):
+                color_palette = color_palette[:36]
             is_public = body_data.get('is_public')
             share_token = body_data.get('share_token')
             

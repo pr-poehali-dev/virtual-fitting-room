@@ -8,6 +8,8 @@ import ProfileMenu from '@/components/ProfileMenu';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import AddColorsToLookbookDialog from '@/components/AddColorsToLookbookDialog';
+import { getColorsForColorTypeName } from '@/utils/getColorTypePalette';
 
 const colorTypeNames: Record<string, string> = {
   'SOFT WINTER': 'Мягкая Зима',
@@ -40,6 +42,18 @@ export default function ProfileHistoryColortypes() {
   const { colorTypeHistory, isLoading: dataLoading, hasMoreColorType, isLoadingMoreColorType, refetchColorTypeHistory, loadMoreColorType } = useData();
   const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [lookbookColors, setLookbookColors] = useState<string[]>([]);
+  const [showLookbookDialog, setShowLookbookDialog] = useState(false);
+
+  const handleAddColorsToLookbook = (colorType: string) => {
+    const colors = getColorsForColorTypeName(colorType).map((c) => c.hex);
+    if (colors.length === 0) {
+      toast.error('Для этого цветотипа палитра недоступна');
+      return;
+    }
+    setLookbookColors(colors);
+    setShowLookbookDialog(true);
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -180,15 +194,26 @@ export default function ProfileHistoryColortypes() {
                           {item.result_text}
                         </p>
                       )}
-                      <Button
-                        className="w-full"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/palette/${item.id}`)}
-                      >
-                        <Icon name="Palette" className="mr-2" size={16} />
-                        Смотреть палитру
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          className="flex-1"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/palette/${item.id}`)}
+                        >
+                          <Icon name="Palette" className="mr-2" size={16} />
+                          Палитра
+                        </Button>
+                        <Button
+                          className="flex-1"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddColorsToLookbook(item.color_type)}
+                        >
+                          <Icon name="BookmarkPlus" className="mr-2" size={16} />
+                          В лукбук
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                   ))}
@@ -220,6 +245,12 @@ export default function ProfileHistoryColortypes() {
           </div>
         </div>
       </div>
+
+      <AddColorsToLookbookDialog
+        open={showLookbookDialog}
+        onOpenChange={setShowLookbookDialog}
+        colors={lookbookColors}
+      />
     </Layout>
   );
 }
