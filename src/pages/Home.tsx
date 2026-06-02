@@ -55,7 +55,7 @@ const Home = () => {
       description:
         "Персональная инфографика по фото: подходящие стили, палитра цветов, образы и рекомендации стилиста. Можно скачать",
       image:
-        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/2ba0c577-9f1f-4e14-8ded-53c6f2317eb0.jpg",
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/d1d9e448-a118-4a9c-b9f1-3aabf68ac64a.png",
       icon: "Wand2",
       path: "/style-analysis",
     },
