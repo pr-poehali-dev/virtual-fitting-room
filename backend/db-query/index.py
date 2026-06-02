@@ -284,6 +284,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             # Для try_on_history - сохраняем result_image перед удалением
             photos_to_check = []
             photos_to_force_delete = []
+            prefixes_to_force_delete = []
             if table == 'try_on_history' and user_id:
                 where_parts = []
                 params = []
@@ -362,7 +363,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         }
                     if cdn_url_val:
                         photos_to_force_delete.append(cdn_url_val)
-            
+                    # Исходное загруженное фото лежит в другой папке (images/colorguide/{user_id}/{task_id}.*)
+                    # расширение заранее неизвестно — удаляем по префиксу
+                    task_id_val = where.get('id')
+                    if task_id_val:
+                        prefixes_to_force_delete.append(f'images/colorguide/{owner_id}/{task_id_val}')
+
             # Выполняем DELETE
             where_parts = []
             params = []
@@ -385,7 +391,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     delete_from_s3_if_orphaned(photo_url, user_id, cursor, schema)
             
             # Удаляем фото из S3 безусловно (для freegen — нет привязок к лукбукам)
-            if photos_to_force_delete:
+            if photos_to_force_delete or prefixes_to_force_delete:
                 s3_bucket_name = os.environ.get('S3_BUCKET_NAME', 'fitting-room-images')
                 s3_url_prefix = f'https://storage.yandexcloud.net/{s3_bucket_name}/'
                 try:
@@ -403,9 +409,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         try:
                             s3_key = photo_url.replace(s3_url_prefix, '')
                             s3_client.delete_object(Bucket=s3_bucket_name, Key=s3_key)
-                            print(f'[S3] Force-deleted freegen photo: {s3_key}')
+                            print(f'[S3] Force-deleted photo: {s3_key}')
                         except Exception as e:
                             print(f'[S3] Failed to delete {photo_url}: {e}')
+                    # Удаляем по префиксу (исходное фото, расширение неизвестно)
+                    for prefix in prefixes_to_force_delete:
+                        if not prefix:
+                            continue
+                        try:
+                            listed = s3_client.list_objects_v2(Bucket=s3_bucket_name, Prefix=prefix)
+                            for obj in listed.get('Contents', []):
+                                s3_client.delete_object(Bucket=s3_bucket_name, Key=obj['Key'])
+                                print(f'[S3] Force-deleted source photo: {obj["Key"]}')
+                        except Exception as e:
+                            print(f'[S3] Failed to delete by prefix {prefix}: {e}')
                 except Exception as e:
                     print(f'[S3] Client init failed: {e}')
         

@@ -80,7 +80,7 @@ const ProfileMenu = () => {
                           : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
-                      <Icon name={item.icon} size={18} />
+                      <Icon name={item.icon} size={18} className="shrink-0" />
                       <span className="text-sm font-medium">{item.label}</span>
                     </Link>
                   );
@@ -106,7 +106,7 @@ const ProfileMenu = () => {
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                <Icon name={item.icon} size={18} />
+                <Icon name={item.icon} size={18} className="shrink-0" />
                 <span className="text-sm font-medium">{item.label}</span>
               </Link>
             );
@@ -125,7 +125,7 @@ const ProfileMenu = () => {
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                <Icon name={item.icon} size={18} />
+                <Icon name={item.icon} size={18} className="shrink-0" />
                 <span className="text-sm font-medium">{item.label}</span>
               </Link>
             );

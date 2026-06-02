@@ -505,6 +505,8 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
         if missing:
             raise RuntimeError(f'неполный ответ Gemini: {",".join(missing)}')
 
+        analysis['source_image'] = person_url
+
         image_prompt = service.build_image_prompt(analysis, height)
         print(f'[COLORGUIDE-WORKER] STEP fal submit, prompt len={len(image_prompt)}')
         image_inputs = [person_url]

@@ -35,6 +35,7 @@ export interface StyleAnalysisResult {
   accessories?: string[];
   tips?: string[];
   looks?: LookItem[];
+  source_image?: string;
 }
 
 interface Props {
@@ -130,6 +131,7 @@ export default function StyleAnalysisReport({ result, imageUrl }: Props) {
     accessories,
     tips,
     looks,
+    source_image,
   } = result;
 
   return (
@@ -152,6 +154,13 @@ export default function StyleAnalysisReport({ result, imageUrl }: Props) {
           </p>
           {identity && (
             <h2 className="mt-2 font-serif text-3xl md:text-4xl text-[#5a4636]">{identity}</h2>
+          )}
+          {source_image && (
+            <img
+              src={source_image}
+              alt="Исходное фото"
+              className="mt-4 mx-auto w-28 h-28 object-cover rounded-full shadow-sm border border-[#e7ddd0]"
+            />
           )}
         </div>
 
