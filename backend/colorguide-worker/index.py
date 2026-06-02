@@ -348,7 +348,7 @@ def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_na
         raise RuntimeError('OPENROUTER_API_KEY not configured')
 
     payload = {
-        'model': 'google/gemini-2.5-pro',
+        'model': 'openai/gpt-4o',
         'messages': [
             {
                 'role': 'user',
@@ -377,7 +377,7 @@ def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_na
         method='POST'
     )
     try:
-        with urllib.request.urlopen(req, timeout=180) as response:
+        with urllib.request.urlopen(req, timeout=90) as response:
             result = json.loads(response.read().decode('utf-8'))
     except urllib.error.HTTPError as e:
         err_body = e.read().decode('utf-8', errors='replace')[:500]
