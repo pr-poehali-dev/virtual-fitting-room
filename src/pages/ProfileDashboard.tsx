@@ -30,55 +30,75 @@ export default function ProfileDashboard() {
     return null;
   }
 
-  const dashboardCards = [
+  const dashboardSections = [
     {
-      title: 'Лукбуки',
-      description: 'Управляйте лукбуками и историей примерок',
-      icon: 'Album',
-      path: '/profile/lookbooks',
-      color: 'bg-purple-100 text-purple-700'
+      heading: 'Гардероб и образ',
+      cards: [
+        {
+          title: 'Лукбуки',
+          description: 'Управляйте лукбуками и историей примерок',
+          icon: 'Album',
+          path: '/profile/lookbooks',
+          color: 'bg-purple-100 text-purple-700'
+        },
+        {
+          title: 'История примерок',
+          description: 'Все ваши виртуальные примерки',
+          icon: 'Shirt',
+          path: '/profile/history',
+          color: 'bg-blue-100 text-blue-700'
+        },
+        {
+          title: 'История цветотипов',
+          description: 'Все ваши анализы цветотипа',
+          icon: 'Palette',
+          path: '/profile/history-colortypes',
+          color: 'bg-amber-100 text-amber-700'
+        }
+      ]
     },
     {
-      title: 'История примерок',
-      description: 'Все ваши виртуальные примерки',
-      icon: 'Shirt',
-      path: '/profile/history',
-      color: 'bg-blue-100 text-blue-700'
+      heading: 'Генерация изображений',
+      cards: [
+        {
+          title: 'История генераций',
+          description: 'Все сгенерированные изображения',
+          icon: 'Sparkles',
+          path: '/profile/history-freegen',
+          color: 'bg-pink-100 text-pink-700'
+        }
+      ]
     },
     {
-      title: 'История генераций',
-      description: 'Все сгенерированные изображения',
-      icon: 'Sparkles',
-      path: '/profile/history-freegen',
-      color: 'bg-pink-100 text-pink-700'
+      heading: 'Стиль и анализ внешности',
+      cards: [
+        {
+          title: 'Гиды по цвету и стилевые анализы',
+          description: 'Все ваши гиды по цвету и стилевые анализы',
+          icon: 'BookOpen',
+          path: '/profile/history-colorguide',
+          color: 'bg-rose-100 text-rose-700'
+        }
+      ]
     },
     {
-      title: 'История цветотипов',
-      description: 'Все ваши анализы цветотипа',
-      icon: 'Palette',
-      path: '/profile/history-colortypes',
-      color: 'bg-amber-100 text-amber-700'
-    },
-    {
-      title: 'Гиды по цвету и стилевые анализы',
-      description: 'Все ваши гиды по цвету и стилевые анализы',
-      icon: 'BookOpen',
-      path: '/profile/history-colorguide',
-      color: 'bg-rose-100 text-rose-700'
-    },
-    {
-      title: 'Кошелёк',
-      description: 'Управление балансом и платежами',
-      icon: 'Wallet',
-      path: '/profile/wallet',
-      color: 'bg-green-100 text-green-700'
-    },
-    {
-      title: 'Настройки',
-      description: 'Настройки профиля и безопасности',
-      icon: 'Settings',
-      path: '/profile/settings',
-      color: 'bg-gray-100 text-gray-700'
+      heading: 'Аккаунт',
+      cards: [
+        {
+          title: 'Кошелёк',
+          description: 'Управление балансом и платежами',
+          icon: 'Wallet',
+          path: '/profile/wallet',
+          color: 'bg-green-100 text-green-700'
+        },
+        {
+          title: 'Настройки',
+          description: 'Настройки профиля и безопасности',
+          icon: 'Settings',
+          path: '/profile/settings',
+          color: 'bg-gray-100 text-gray-700'
+        }
+      ]
     }
   ];
 
@@ -94,21 +114,28 @@ export default function ProfileDashboard() {
               <p className="text-muted-foreground">Управляйте лукбуками и историей примерок</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {dashboardCards.map((card) => (
-                <Link key={card.path} to={card.path}>
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-                    <CardHeader>
-                      <div className={`w-12 h-12 rounded-lg ${card.color} flex items-center justify-center mb-4`}>
-                        <Icon name={card.icon} size={24} />
-                      </div>
-                      <CardTitle>{card.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-muted-foreground">{card.description}</p>
-                    </CardContent>
-                  </Card>
-                </Link>
+            <div className="space-y-8">
+              {dashboardSections.map((section) => (
+                <div key={section.heading} className="rounded-2xl border bg-muted/30 p-5">
+                  <h2 className="text-lg font-semibold mb-4">{section.heading}</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {section.cards.map((card) => (
+                      <Link key={card.path} to={card.path}>
+                        <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+                          <CardHeader>
+                            <div className={`w-12 h-12 rounded-lg ${card.color} flex items-center justify-center mb-4`}>
+                              <Icon name={card.icon} size={24} />
+                            </div>
+                            <CardTitle>{card.title}</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-muted-foreground">{card.description}</p>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
