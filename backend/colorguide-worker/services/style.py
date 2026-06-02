@@ -131,7 +131,7 @@ def build_image_prompt(data: dict, height: int = None) -> str:
         logo_instruction = ''
         logo_header = 'слева логотип-надпись "fitting-room" аккуратным тонким шрифтом'
 
-    prompt = f'''CRITICAL: EVERY text label on the image MUST be written in RUSSIAN (Cyrillic letters only). NO English words anywhere — only the exact Russian text given below.
+    prompt = f'''CRITICAL: EVERY text label on the image MUST be written in RUSSIAN (Cyrillic letters only). NO English/Latin letters anywhere, and NEVER mix Latin and Cyrillic inside one word — copy the Russian words below EXACTLY, letter by letter, without inventing or transliterating anything.
 
 Create a vertical fashion-magazine infographic poster titled "СТИЛЕВОЙ АНАЛИЗ ВНЕШНОСТИ".
 
@@ -149,20 +149,20 @@ PERSON: in the central block place the FIRST image EXACTLY AS IS — same crop, 
 
 МЕНЕЕ ПОДХОДИТ: {lst('avoid_styles')}.
 
-ТВОЯ ПАЛИТРА — лучшие цвета: {palette_with_hex('palette_best')}; цвета, которых избегать: {palette_with_hex('palette_avoid')}. Покажи цветными образцами-квадратиками с подписями (используй указанные HEX-коды для точного цвета образца, но HEX-коды на постере не подписывай — только названия).
+ТВОЯ ПАЛИТРА — лучшие цвета: {palette_with_hex('palette_best')}; цвета, которых избегать: {palette_with_hex('palette_avoid')}. Покажи цветными образцами-квадратиками с подписями. КРИТИЧНО: каждый квадратик закрашивай ТОЧНО в указанный HEX-код, чтобы цвет образца строго соответствовал своему названию. HEX-коды на постере НЕ подписывай — только русские названия.
 
 ВЫИГРЫШНЫЕ СИЛУЭТЫ: {lst('silhouettes')}.
 
-КЛЮЧЕВЫЕ ВЕЩИ: {lst('key_items')}. Покажи как фотореалистичные предметы одежды на нейтральном фоне (не иконки, не рисунки).
+КЛЮЧЕВЫЕ ВЕЩИ: {lst('key_items')}. Покажи как фотореалистичные предметы ОДЕЖДЫ на нейтральном фоне (не иконки, не рисунки). Это блок про одежду — НЕ добавляй сюда украшения, сумки, обувь.
 
-АКСЕССУАРЫ: {lst('accessories')}. Покажи как фотореалистичные предметы на нейтральном фоне.
+АКСЕССУАРЫ: {lst('accessories')}. Покажи как фотореалистичные предметы на нейтральном фоне. КРИТИЧНО: в этом блоке показывай ТОЛЬКО аксессуары — украшения, сумку, ремень, обувь, очки, шарф/платок, шляпу. НИКАКОЙ одежды (никаких пальто, тренчей, плащей, курток, джинсов, брюк, платьев, рубашек) в блоке аксессуаров быть НЕ должно.
 
-ТЫ В СВОИХ СТИЛЯХ: 4 фотореалистичных снимка ЭТОГО ЖЕ человека (с первого изображения) в разных рекомендованных образах.
+ТЫ В СВОИХ СТИЛЯХ: 4 фотореалистичных снимка ЭТОГО ЖЕ человека (с первого изображения) в разных рекомендованных образах. Образы должны быть СОВРЕМЕННЫМИ и актуальными по моде наших дней — никаких устаревших фасонов прошлых десятилетий; современный крой, актуальные пропорции и стилизация.
 
 СТИЛЕВЫЕ ЗАМЕТКИ: {lst('tips')}.
 
 ВНИЗУ крупно по центру: "{data.get('identity', '')}".
 
-Style: minimalism, high readability, professional fashion typography, neutral beige palette, photorealistic clothing and outfit photos. Reminder: every text label is in RUSSIAN.'''
+Style: minimalism, high readability, professional fashion typography, neutral beige palette, photorealistic and MODERN clothing and outfit photos (current fashion, not outdated cuts). Reminder: every text label is in RUSSIAN (Cyrillic only).'''
 
     return prompt
