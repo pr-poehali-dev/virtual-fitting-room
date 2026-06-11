@@ -60,6 +60,16 @@ const Home = () => {
       path: "/style-analysis",
     },
     {
+      id: "kibbe-test",
+      title: "Определение типажа по Кибби",
+      description:
+        "Бесплатный тест: ответьте на вопросы о фигуре и узнайте свой типаж из 10 по системе Дэвида Кибби",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/093af219-f0e0-48f3-a4ad-c0702c19d22a.jpg",
+      icon: "Ruler",
+      path: "/kibbe-test",
+    },
+    {
       id: "free-generation",
       title: "Генерация изображений",
       description:
