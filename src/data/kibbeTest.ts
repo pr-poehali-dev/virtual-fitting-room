@@ -3,6 +3,11 @@ export type KibbeLetter = 'А' | 'Б' | 'В' | 'Г' | 'Д';
 export interface KibbeOption {
   letter: KibbeLetter;
   text: string;
+  disabled?: boolean;
+  // Для комбинированного первого вопроса (рост < 168):
+  // к какой ветке относится вариант и какая буква этой ветки соответствует выбору
+  dominance?: 'Вертикаль' | 'Изогнутая';
+  branchLetter?: KibbeLetter;
 }
 
 export interface KibbeQuestion {
@@ -10,7 +15,9 @@ export interface KibbeQuestion {
   title: string;
   description?: string;
   image?: string;
+  images?: string[];
   options: KibbeOption[];
+  combined?: boolean;
 }
 
 export interface KibbeTypeInfo {
@@ -373,8 +380,91 @@ export const KIBBE_TYPES: Record<string, KibbeTypeInfo> = {
   },
 };
 
+// Комбинированный первый вопрос для роста < 168 см.
+// Показываем обе картинки. Варианты A, B, C из вертикального блока недоступны
+// (это высокие типажи). Доступны: D, E (Вертикаль) и все варианты изогнутого блока.
+// Выбор варианта определяет доминанту и первую букву соответствующей ветки.
+export const COMBINED_FIRST_QUESTION: KibbeQuestion = {
+  id: 'combined',
+  combined: true,
+  title: 'Тест с тканью (сравнение с картинкой)',
+  description:
+    'Представьте шифон, накинутый на плечи и свободно падающий вниз. Посмотрите на обе схемы и выберите силуэт, который больше всего похож на ваш. При вашем росте варианты A, B и C недоступны.',
+  images: [SILHOUETTE_IMAGE_VERTICAL, SILHOUETTE_IMAGE_CURVED],
+  options: [
+    {
+      letter: 'А',
+      disabled: true,
+      dominance: 'Вертикаль',
+      branchLetter: 'А',
+      text: 'Силуэт A — УЗКАЯ (недоступно при вашем росте).',
+    },
+    {
+      letter: 'Б',
+      disabled: true,
+      dominance: 'Вертикаль',
+      branchLetter: 'Б',
+      text: 'Силуэт B — ШИРИНА (недоступно при вашем росте).',
+    },
+    {
+      letter: 'В',
+      disabled: true,
+      dominance: 'Вертикаль',
+      branchLetter: 'В',
+      text: 'Силуэт C — ИЗОГНУТАЯ (недоступно при вашем росте).',
+    },
+    {
+      letter: 'Г',
+      dominance: 'Вертикаль',
+      branchLetter: 'Г',
+      text: 'Силуэт D — БАЛАНС: ткань падает ровно и умеренно, нет резкого сужения или расширения, всё пропорционально.',
+    },
+    {
+      letter: 'Д',
+      dominance: 'Вертикаль',
+      branchLetter: 'Д',
+      text: 'Силуэт E — МИНИАТЮРНАЯ: визуально фигура выглядит компактной и «собранной», конечности не кажутся длинными.',
+    },
+    {
+      letter: 'А',
+      dominance: 'Изогнутая',
+      branchLetter: 'А',
+      text: 'Силуэт F — ДВОЙНОЙ ИЗГИБ: ткань образует два явных «эллипса» (грудь и бёдра) с чёткой узкой талией между ними. Силуэт как «восьмёрка».',
+    },
+    {
+      letter: 'Б',
+      dominance: 'Изогнутая',
+      branchLetter: 'Б',
+      text: 'Силуэт G — УЗКАЯ: ткань идёт прямо вниз, силуэт узкий и стройный, фигура выглядит вытянутой и изящной.',
+    },
+    {
+      letter: 'В',
+      dominance: 'Изогнутая',
+      branchLetter: 'В',
+      text: 'Силуэт H — ШИРИНА: ткань расширяется в плечах и верхней части тела, грудь может быть большой. Переход от талии к бёдрам невыраженный.',
+    },
+    {
+      letter: 'Г',
+      dominance: 'Изогнутая',
+      branchLetter: 'Г',
+      text: 'Силуэт I — БАЛАНС: ткань падает ровно, всё умеренно и пропорционально, нет доминирующих зон.',
+    },
+    {
+      letter: 'Д',
+      dominance: 'Изогнутая',
+      branchLetter: 'Д',
+      text: 'Силуэт J — МИНИАТЮРНАЯ: фигура очень компактная, всё «сжато» в маленькую рамку, впечатление хрупкости и миниатюрности.',
+    },
+  ],
+};
+
 export function getQuestions(dominance: 'Вертикаль' | 'Изогнутая'): KibbeQuestion[] {
   return dominance === 'Вертикаль' ? VERTICAL_QUESTIONS : CURVED_QUESTIONS;
+}
+
+// Остальные вопросы ветки без первого (с тканью)
+export function getBranchTailQuestions(dominance: 'Вертикаль' | 'Изогнутая'): KibbeQuestion[] {
+  return getQuestions(dominance).slice(1);
 }
 
 export interface KibbeCalcResult {

@@ -10,8 +10,11 @@ import { useAuth } from '@/context/AuthContext';
 import { useData } from '@/context/DataContext';
 import {
   KibbeLetter,
+  KibbeQuestion,
   getQuestions,
+  getBranchTailQuestions,
   calculateKibbeResult,
+  COMBINED_FIRST_QUESTION,
   KIBBE_TYPES,
   HEIGHT_THRESHOLD,
 } from '@/data/kibbeTest';
@@ -28,14 +31,29 @@ export default function KibbeTest() {
   const [step, setStep] = useState<Step>('intro');
   const [name, setName] = useState('');
   const [height, setHeight] = useState('');
-  const [dominance, setDominance] = useState<'Вертикаль' | 'Изогнутая'>('Вертикаль');
+  const [dominance, setDominance] = useState<'Вертикаль' | 'Изогнутая' | null>(null);
+  const [useCombined, setUseCombined] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, KibbeLetter>>({});
   const [resultTypeKey, setResultTypeKey] = useState<string | null>(null);
   const [resultLetter, setResultLetter] = useState<KibbeLetter | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const questions = getQuestions(dominance);
+  // Список вопросов текущего прохождения.
+  // - Рост >= 168: обычная вертикальная ветка (9 вопросов).
+  // - Рост < 168: первый вопрос комбинированный (обе картинки), а хвост (3–10)
+  //   подставляется после выбора доминанты.
+  let questions: KibbeQuestion[];
+  if (useCombined) {
+    questions = dominance
+      ? [COMBINED_FIRST_QUESTION, ...getBranchTailQuestions(dominance)]
+      : [COMBINED_FIRST_QUESTION];
+  } else {
+    questions = getQuestions(dominance || 'Вертикаль');
+  }
+
+  // Всего вопросов в любой ветке — 9 (для стабильного прогресс-бара)
+  const totalQuestions = 9;
 
   if (authLoading) {
     return (
@@ -95,15 +113,40 @@ export default function KibbeTest() {
       toast.error('Введите корректный рост (в см)');
       return;
     }
-    const dom = h >= HEIGHT_THRESHOLD ? 'Вертикаль' : 'Изогнутая';
-    setDominance(dom);
     setAnswers({});
     setCurrentIndex(0);
+
+    if (h >= HEIGHT_THRESHOLD) {
+      // Высокий рост — однозначно Вертикаль, обычная ветка
+      setUseCombined(false);
+      setDominance('Вертикаль');
+    } else {
+      // Низкий рост — доминанта определится после первого (комбинированного) вопроса
+      setUseCombined(true);
+      setDominance(null);
+    }
     setStep('questions');
   };
 
-  const handleAnswer = (letter: KibbeLetter) => {
+  const handleAnswer = (letter: KibbeLetter, optionIndex: number) => {
     const q = questions[currentIndex];
+
+    // Комбинированный первый вопрос (рост < 168): определяем доминанту по варианту
+    if (q.combined) {
+      const opt = q.options[optionIndex];
+      if (opt.disabled || !opt.dominance || !opt.branchLetter) return;
+
+      const chosenDominance = opt.dominance;
+      const branchQuestions = getQuestions(chosenDominance);
+      const firstBranchId = branchQuestions[0].id; // '2V' или '2I'
+
+      const newAnswers = { ...answers, [firstBranchId]: opt.branchLetter };
+      setDominance(chosenDominance);
+      setAnswers(newAnswers);
+      setCurrentIndex(1);
+      return;
+    }
+
     const newAnswers = { ...answers, [q.id]: letter };
     setAnswers(newAnswers);
 
@@ -115,7 +158,8 @@ export default function KibbeTest() {
   };
 
   const finishTest = async (finalAnswers: Record<string, KibbeLetter>) => {
-    const { winningLetter, typeKey } = calculateKibbeResult(dominance, finalAnswers);
+    const dom = dominance || 'Вертикаль';
+    const { winningLetter, typeKey } = calculateKibbeResult(dom, finalAnswers);
     setResultLetter(winningLetter);
     setResultTypeKey(typeKey);
     setStep('result');
@@ -145,7 +189,7 @@ export default function KibbeTest() {
             user_id: user.id,
             user_name: name.trim(),
             height: parseInt(height, 10),
-            dominance,
+            dominance: dominance || 'Вертикаль',
             winning_letter: winningLetter,
             kibbe_type: typeInfo?.name || '',
             answers: JSON.stringify(finalAnswers),
@@ -169,12 +213,18 @@ export default function KibbeTest() {
     setHeight('');
     setAnswers({});
     setCurrentIndex(0);
+    setUseCombined(false);
+    setDominance(null);
     setResultTypeKey(null);
     setResultLetter(null);
   };
 
   const handleBack = () => {
     if (currentIndex > 0) {
+      // Возврат на комбинированный первый вопрос — сбрасываем выбранную доминанту
+      if (useCombined && currentIndex === 1) {
+        setDominance(null);
+      }
       setCurrentIndex(currentIndex - 1);
     } else {
       setStep('intro');
@@ -213,8 +263,8 @@ export default function KibbeTest() {
                     placeholder="Например, 165"
                   />
                   <p className="text-sm text-muted-foreground mt-2">
-                    По росту мы автоматически определим вашу доминанту: 168 см и выше — Вертикаль,
-                    ниже 168 см — Изогнутая.
+                    Рост помогает определить вашу доминанту. При росте 168 см и выше — это Вертикаль.
+                    При меньшем росте доминанту уточним по первому вопросу.
                   </p>
                 </div>
                 <Button
@@ -234,14 +284,14 @@ export default function KibbeTest() {
                 <div>
                   <div className="flex items-center justify-between mb-2 text-sm text-muted-foreground">
                     <span>
-                      Вопрос {currentIndex + 1} из {questions.length}
+                      Вопрос {currentIndex + 1} из {totalQuestions}
                     </span>
-                    <span>Доминанта: {dominance}</span>
+                    {dominance && <span>Доминанта: {dominance}</span>}
                   </div>
                   <div className="h-2 w-full rounded-full bg-muted">
                     <div
                       className="h-2 rounded-full bg-purple-600 transition-all"
-                      style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+                      style={{ width: `${((currentIndex + 1) / totalQuestions) * 100}%` }}
                     />
                   </div>
                 </div>
@@ -253,6 +303,18 @@ export default function KibbeTest() {
                       {questions[currentIndex].description}
                     </p>
                   )}
+                  {questions[currentIndex].images && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                      {questions[currentIndex].images!.map((img, i) => (
+                        <img
+                          key={i}
+                          src={img}
+                          alt="Схема силуэтов"
+                          className="w-full rounded-xl border"
+                        />
+                      ))}
+                    </div>
+                  )}
                   {questions[currentIndex].image && (
                     <img
                       src={questions[currentIndex].image}
@@ -263,13 +325,21 @@ export default function KibbeTest() {
                 </div>
 
                 <div className="space-y-3">
-                  {questions[currentIndex].options.map((opt) => {
-                    const selected = answers[questions[currentIndex].id] === opt.letter;
+                  {questions[currentIndex].options.map((opt, optIndex) => {
+                    const isCombined = questions[currentIndex].combined;
+                    const selected =
+                      !isCombined && answers[questions[currentIndex].id] === opt.letter;
+                    const isDisabled = !!opt.disabled;
                     return (
                       <button
-                        key={opt.letter}
-                        onClick={() => handleAnswer(opt.letter)}
-                        className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors hover:border-purple-400 hover:bg-purple-50 ${
+                        key={optIndex}
+                        disabled={isDisabled}
+                        onClick={() => handleAnswer(opt.letter, optIndex)}
+                        className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors ${
+                          isDisabled
+                            ? 'cursor-not-allowed opacity-40'
+                            : 'hover:border-purple-400 hover:bg-purple-50'
+                        } ${
                           selected ? 'border-purple-600 bg-purple-50 ring-1 ring-purple-600' : ''
                         }`}
                       >
