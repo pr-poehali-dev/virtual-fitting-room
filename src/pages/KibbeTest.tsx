@@ -336,7 +336,14 @@ export default function KibbeTest() {
                     const isCombined = questions[currentIndex].combined;
                     const selected =
                       !isCombined && answers[questions[currentIndex].id] === opt.letter;
-                    const isDisabled = !!opt.disabled;
+                    // При высоком росте (>=168, ветка «Вертикаль» без комбинированного вопроса)
+                    // в «Тесте с тканью» доступны только первые 3 силуэта (А, Б, В)
+                    const isTallVerticalSilhouette =
+                      !useCombined &&
+                      dominance === 'Вертикаль' &&
+                      questions[currentIndex].id === '2V';
+                    const isDisabled =
+                      !!opt.disabled || (isTallVerticalSilhouette && optIndex > 2);
                     return (
                       <button
                         key={optIndex}
