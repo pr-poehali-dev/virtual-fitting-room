@@ -361,7 +361,7 @@ export default function KibbeTest() {
                         className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors ${
                           isDisabled
                             ? 'cursor-not-allowed opacity-40'
-                            : 'hover:border-purple-400 hover:bg-purple-50'
+                            : '[@media(hover:hover)]:hover:border-purple-400 [@media(hover:hover)]:hover:bg-purple-50'
                         } ${
                           selected ? 'border-purple-600 bg-purple-50 ring-1 ring-purple-600' : ''
                         }`}
