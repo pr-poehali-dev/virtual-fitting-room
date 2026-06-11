@@ -344,11 +344,11 @@ export default function KibbeTest() {
                       dominance === 'Вертикаль' &&
                       questions[currentIndex].id === '2V';
                     const disabledByTallVertical = isTallVerticalSilhouette && optIndex > 2;
-                    // В комбинированном вопросе при росте > 166 см силуэт J (миниатюрная
+                    // В комбинированном вопросе при росте от 166 см силуэт J (миниатюрная
                     // изогнутая) недоступен
                     const disabledByTallCurved =
                       isCombined &&
-                      heightCm > 166 &&
+                      heightCm >= 166 &&
                       opt.dominance === 'Изогнутая' &&
                       opt.branchLetter === 'Д';
                     const isDisabled =
@@ -379,7 +379,7 @@ export default function KibbeTest() {
                   const heightCm = parseInt(height, 10) || 0;
                   const q = questions[currentIndex];
                   const tallVerticalHint = !useCombined && dominance === 'Вертикаль' && q.id === '2V';
-                  const tallCurvedHint = !!q.combined && heightCm > 166;
+                  const tallCurvedHint = !!q.combined && heightCm >= 166;
                   if (!tallVerticalHint && !tallCurvedHint) return null;
                   return (
                     <p className="flex items-start gap-2 rounded-lg bg-purple-50 px-3 py-2 text-sm text-muted-foreground">
