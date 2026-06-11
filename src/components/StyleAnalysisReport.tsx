@@ -159,7 +159,7 @@ export default function StyleAnalysisReport({ result, imageUrl }: Props) {
             <img
               src={source_image}
               alt="Исходное фото"
-              className="mt-4 mx-auto w-28 h-28 object-cover rounded-full shadow-sm border border-[#e7ddd0]"
+              className="mt-4 mx-auto w-28 h-28 object-cover object-top rounded-full shadow-sm border border-[#e7ddd0]"
             />
           )}
         </div>
