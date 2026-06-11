@@ -298,7 +298,8 @@ export default function StyleAnalysis() {
                               }
                             }}
                             className={`relative flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all ${
-                              (s.testLink && showKibbeInfo) || (!s.testLink && serviceType === s.id)
+                              (s.testLink && showKibbeInfo) ||
+                              (!s.testLink && !showKibbeInfo && serviceType === s.id)
                                 ? "border-primary bg-primary/5 ring-1 ring-primary"
                                 : "border-border hover:border-primary/40"
                             } ${!s.available && !s.testLink ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
@@ -342,6 +343,8 @@ export default function StyleAnalysis() {
                       )}
                     </div>
 
+                    {!showKibbeInfo && (
+                    <>
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
                         <p className="font-medium mb-3">Ваше фото</p>
@@ -412,6 +415,8 @@ export default function StyleAnalysis() {
                         <>Анализировать за {COST} ₽</>
                       )}
                     </Button>
+                    </>
+                    )}
                   </CardContent>
                 </Card>
               </LockedFormOverlay>
