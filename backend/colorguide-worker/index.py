@@ -536,8 +536,16 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
         print(f'[COLORGUIDE-WORKER] Person uploaded to {person_url}')
 
         print('[COLORGUIDE-WORKER] STEP gemini start')
+        gemini_prompt = service.GEMINI_PROMPT
+        if height:
+            gemini_prompt += (
+                f'\n\nРОСТ КЛИЕНТА: примерно {height} см. Обязательно учитывай рост при подборе: '
+                'длину вещей и низа, пропорции, высоту посадки, длину юбок/брюк, тип и высоту обуви, '
+                'визуальный баланс силуэта. Рекомендации по длине и пропорциям должны подходить именно '
+                'этому росту.'
+            )
         analysis = call_gemini_with_schema(
-            person_url, service.GEMINI_PROMPT, service.RESPONSE_SCHEMA, f'{service_type}_result'
+            person_url, gemini_prompt, service.RESPONSE_SCHEMA, f'{service_type}_result'
         )
         print(f'[COLORGUIDE-WORKER] STEP gemini done, keys: {list(analysis.keys())}')
         missing = [f for f in service.REQUIRED_FIELDS if not analysis.get(f)]
