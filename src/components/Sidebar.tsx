@@ -50,6 +50,12 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       icon: "Wand2",
       label: "Стилевой анализ внешности",
     },
+    {
+      id: "kibbe-test",
+      path: "/kibbe-test",
+      icon: "Ruler",
+      label: "Типаж по Кибби",
+    },
     ...(user?.email === OWNER_EMAIL
       ? [
           {

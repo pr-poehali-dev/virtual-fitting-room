@@ -44,6 +44,10 @@ import RegistrationSuccess from "./pages/RegistrationSuccess";
 import ReplicateTryOn from "./pages/ReplicateTryOn";
 import FreeGeneration from "./pages/FreeGeneration";
 import StyleAnalysis from "./pages/StyleAnalysis";
+import KibbeTest from "./pages/KibbeTest";
+import KibbeResultDetail from "./pages/KibbeResultDetail";
+import ProfileHistoryKibbe from "./pages/ProfileHistoryKibbe";
+import AdminKibbe from "./pages/AdminKibbe";
 import NotFound from "./pages/NotFound";
 import Payment from "./pages/Payment";
 import Offer from "./pages/Offer";
@@ -92,6 +96,8 @@ const App = () => (
               <Route path="/colortype" element={<ColorType />} />
             <Route path="/color-guide" element={<ColorGuide />} />
             <Route path="/style-analysis" element={<StyleAnalysis />} />
+            <Route path="/kibbe-test" element={<KibbeTest />} />
+            <Route path="/kibbe-result/:id" element={<KibbeResultDetail />} />
             <Route path="/color-guide/:id" element={<ColorGuideDetail />} />
             <Route path="/ai-editor" element={<AiEditor />} />
             
@@ -102,6 +108,7 @@ const App = () => (
             <Route path="/profile/history-colortypes" element={<ProfileHistoryColortypes />} />
             <Route path="/profile/history-colorguide" element={<ProfileHistoryColorGuide />} />
             <Route path="/profile/history-freegen" element={<ProfileHistoryFreegen />} />
+            <Route path="/profile/history-kibbe" element={<ProfileHistoryKibbe />} />
             <Route path="/profile/wallet" element={<ProfileWallet />} />
             <Route path="/profile/settings" element={<ProfileSettings />} />
             <Route path="/profile-old" element={<Profile />} />
@@ -118,6 +125,7 @@ const App = () => (
             <Route path="/vf-console/generations" element={<AdminGenerations />} />
             <Route path="/vf-console/colortypes" element={<AdminColorTypes />} />
             <Route path="/vf-console/colorguides" element={<AdminColorGuide />} />
+            <Route path="/vf-console/kibbe" element={<AdminKibbe />} />
             <Route path="/vf-console/cleanup" element={<AdminCleanup />} />
             
             <Route path="/login" element={<Login />} />

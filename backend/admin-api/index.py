@@ -411,6 +411,73 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps(result_list)
             }
 
+        elif action == 'kibbe_history':
+            # Список прошедших тест Кибби для админки
+            filters = []
+            filter_values = []
+
+            user_id_filter = query_params.get('user_id')
+            if user_id_filter:
+                filters.append("k.user_id = %s")
+                filter_values.append(user_id_filter)
+
+            where_clause = " AND ".join(filters) if filters else "1=1"
+
+            query = f"""
+                SELECT
+                    k.id,
+                    k.user_id,
+                    u.email as user_email,
+                    u.name as account_name,
+                    k.user_name,
+                    k.height,
+                    k.dominance,
+                    k.winning_letter,
+                    k.kibbe_type,
+                    k.answers,
+                    k.created_at
+                FROM kibbe_test_history k
+                LEFT JOIN users u ON k.user_id::uuid = u.id
+                WHERE {where_clause}
+                ORDER BY k.created_at DESC
+                LIMIT 500
+            """
+
+            cursor.execute(query, filter_values)
+            history = cursor.fetchall()
+
+            result_list = []
+            for h in history:
+                answers_val = h['answers']
+                if isinstance(answers_val, str):
+                    try:
+                        answers_val = json.loads(answers_val)
+                    except Exception:
+                        answers_val = {}
+                result_list.append({
+                    'id': str(h['id']),
+                    'user_id': h['user_id'],
+                    'user_email': h['user_email'],
+                    'account_name': h['account_name'],
+                    'user_name': h['user_name'],
+                    'height': h['height'],
+                    'dominance': h['dominance'],
+                    'winning_letter': h['winning_letter'],
+                    'kibbe_type': h['kibbe_type'],
+                    'answers': answers_val,
+                    'created_at': h['created_at'].isoformat() if h['created_at'] else None
+                })
+
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps(result_list)
+            }
+
         elif action == 'colorguide_history':
             # Список задач Гида по цвету для админки
             filters = []

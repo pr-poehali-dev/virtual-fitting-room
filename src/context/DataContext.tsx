@@ -31,23 +31,40 @@ interface ColorTypeHistory {
   status: string;
 }
 
+interface KibbeHistory {
+  id: string;
+  user_name: string;
+  height: number;
+  dominance: string;
+  winning_letter: string;
+  kibbe_type: string;
+  answers?: Record<string, string>;
+  created_at: string;
+  status: string;
+}
+
 interface DataContextType {
   lookbooks: Lookbook[];
   history: HistoryItem[];
   colorTypeHistory: ColorTypeHistory[];
+  kibbeHistory: KibbeHistory[];
   isLoading: boolean;
   hasMoreHistory: boolean;
   isLoadingMoreHistory: boolean;
   hasMoreColorType: boolean;
   isLoadingMoreColorType: boolean;
+  hasMoreKibbe: boolean;
+  isLoadingMoreKibbe: boolean;
   hasMoreLookbooks: boolean;
   isLoadingMoreLookbooks: boolean;
   refetchLookbooks: () => Promise<void>;
   refetchHistory: () => Promise<void>;
   loadMoreHistory: () => Promise<void>;
   loadMoreColorType: () => Promise<void>;
+  loadMoreKibbe: () => Promise<void>;
   loadMoreLookbooks: () => Promise<void>;
   refetchColorTypeHistory: () => Promise<void>;
+  refetchKibbeHistory: () => Promise<void>;
   refetchAll: () => Promise<void>;
 }
 
@@ -57,6 +74,7 @@ const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-8844
 
 const HISTORY_PAGE_SIZE = 15;
 const COLOR_TYPE_PAGE_SIZE = 15;
+const KIBBE_PAGE_SIZE = 15;
 const LOOKBOOKS_PAGE_SIZE = 15;
 
 export function DataProvider({ children }: { children: ReactNode }) {
@@ -64,16 +82,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [lookbooks, setLookbooks] = useState<Lookbook[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [colorTypeHistory, setColorTypeHistory] = useState<ColorTypeHistory[]>([]);
+  const [kibbeHistory, setKibbeHistory] = useState<KibbeHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasFetchedLookbooks, setHasFetchedLookbooks] = useState(false);
   const [hasFetchedHistory, setHasFetchedHistory] = useState(false);
   const [hasFetchedColorTypeHistory, setHasFetchedColorTypeHistory] = useState(false);
+  const [hasFetchedKibbeHistory, setHasFetchedKibbeHistory] = useState(false);
   const [hasMoreHistory, setHasMoreHistory] = useState(true);
   const [isLoadingMoreHistory, setIsLoadingMoreHistory] = useState(false);
   const [historyOffset, setHistoryOffset] = useState(0);
   const [hasMoreColorType, setHasMoreColorType] = useState(true);
   const [isLoadingMoreColorType, setIsLoadingMoreColorType] = useState(false);
   const [colorTypeOffset, setColorTypeOffset] = useState(0);
+  const [hasMoreKibbe, setHasMoreKibbe] = useState(true);
+  const [isLoadingMoreKibbe, setIsLoadingMoreKibbe] = useState(false);
+  const [kibbeOffset, setKibbeOffset] = useState(0);
   const [hasMoreLookbooks, setHasMoreLookbooks] = useState(true);
   const [isLoadingMoreLookbooks, setIsLoadingMoreLookbooks] = useState(false);
   const [lookbooksOffset, setLookbooksOffset] = useState(0);
@@ -269,19 +292,78 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setIsLoadingMoreColorType(false);
   };
 
+  const fetchKibbeHistory = async (reset = false) => {
+    if (!user?.id) {
+      setKibbeHistory([]);
+      return;
+    }
+
+    const offset = reset ? 0 : kibbeOffset;
+
+    try {
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({
+          table: 'kibbe_test_history',
+          action: 'select',
+          columns: ['id', 'user_name', 'height', 'dominance', 'winning_letter', 'kibbe_type', 'created_at', 'status'],
+          where: { user_id: user.id, status: 'completed' },
+          order_by: 'created_at DESC',
+          limit: KIBBE_PAGE_SIZE + 1,
+          offset: offset
+        })
+      });
+      const result = await response.json();
+      const data = result.success && Array.isArray(result.data) ? result.data : [];
+
+      const hasMore = data.length > KIBBE_PAGE_SIZE;
+      const items = hasMore ? data.slice(0, KIBBE_PAGE_SIZE) : data;
+
+      if (reset) {
+        setKibbeHistory(items);
+        setKibbeOffset(KIBBE_PAGE_SIZE);
+      } else {
+        setKibbeHistory(prev => [...prev, ...items]);
+        setKibbeOffset(prev => prev + KIBBE_PAGE_SIZE);
+      }
+
+      setHasMoreKibbe(hasMore);
+      setHasFetchedKibbeHistory(true);
+    } catch (error) {
+      console.error('Error fetching kibbe history:', error);
+      if (reset) {
+        setKibbeHistory([]);
+      }
+    }
+  };
+
+  const refetchKibbeHistory = async () => {
+    await fetchKibbeHistory(true);
+  };
+
+  const loadMoreKibbe = async () => {
+    if (!hasMoreKibbe || isLoadingMoreKibbe) return;
+
+    setIsLoadingMoreKibbe(true);
+    await fetchKibbeHistory(false);
+    setIsLoadingMoreKibbe(false);
+  };
+
   const refetchAll = async () => {
-    await Promise.all([fetchLookbooks(), fetchHistory(), fetchColorTypeHistory()]);
+    await Promise.all([fetchLookbooks(), fetchHistory(), fetchColorTypeHistory(), fetchKibbeHistory()]);
   };
 
   useEffect(() => {
     if (user) {
       const loadInitialData = async () => {
         setIsLoading(true);
-        await Promise.all([fetchLookbooks(), fetchHistory(), fetchColorTypeHistory()]);
+        await Promise.all([fetchLookbooks(), fetchHistory(), fetchColorTypeHistory(), fetchKibbeHistory()]);
         setIsLoading(false);
       };
       
-      if (!hasFetchedLookbooks || !hasFetchedHistory || !hasFetchedColorTypeHistory) {
+      if (!hasFetchedLookbooks || !hasFetchedHistory || !hasFetchedColorTypeHistory || !hasFetchedKibbeHistory) {
         loadInitialData();
       } else {
         setIsLoading(false);
@@ -290,9 +372,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setLookbooks([]);
       setHistory([]);
       setColorTypeHistory([]);
+      setKibbeHistory([]);
       setHasFetchedLookbooks(false);
       setHasFetchedHistory(false);
       setHasFetchedColorTypeHistory(false);
+      setHasFetchedKibbeHistory(false);
       setIsLoading(false);
     }
   }, [user?.id]);
@@ -303,19 +387,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
         lookbooks,
         history,
         colorTypeHistory,
+        kibbeHistory,
         isLoading,
         hasMoreHistory,
         isLoadingMoreHistory,
         hasMoreColorType,
         isLoadingMoreColorType,
+        hasMoreKibbe,
+        isLoadingMoreKibbe,
         hasMoreLookbooks,
         isLoadingMoreLookbooks,
         refetchLookbooks,
         refetchHistory,
         loadMoreHistory,
         loadMoreColorType,
+        loadMoreKibbe,
         loadMoreLookbooks,
         refetchColorTypeHistory,
+        refetchKibbeHistory,
         refetchAll
       }}
     >

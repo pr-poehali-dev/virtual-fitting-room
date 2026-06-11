@@ -25,6 +25,7 @@ type Service = {
   name: string;
   icon: string;
   available: boolean;
+  testLink?: boolean;
 };
 
 const SERVICES: Service[] = [
@@ -34,7 +35,7 @@ const SERVICES: Service[] = [
   { id: "face", name: "Анализ лица", icon: "ScanFace", available: false },
   { id: "colortype", name: "Цветотип", icon: "Palette", available: false },
   { id: "archetype", name: "Архетип по Юнгу", icon: "Brain", available: false },
-  { id: "kibbe", name: "Типаж по Кибби", icon: "User", available: false },
+  { id: "kibbe", name: "Типаж по Кибби", icon: "Ruler", available: true, testLink: true },
 ];
 
 export default function StyleAnalysis() {
@@ -50,6 +51,7 @@ export default function StyleAnalysis() {
   const [analysisStatus, setAnalysisStatus] = useState<string>("");
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [resultData, setResultData] = useState<StyleAnalysisResult | null>(null);
+  const [showKibbeInfo, setShowKibbeInfo] = useState(false);
 
   const handleDownload = async () => {
     if (!resultUrl) return;
@@ -286,24 +288,58 @@ export default function StyleAnalysis() {
                           <button
                             key={s.id}
                             type="button"
-                            disabled={!s.available || isAnalyzing}
-                            onClick={() => s.available && setServiceType(s.id)}
+                            disabled={(!s.available && !s.testLink) || isAnalyzing}
+                            onClick={() => {
+                              if (s.testLink) {
+                                setShowKibbeInfo((prev) => !prev);
+                              } else if (s.available) {
+                                setServiceType(s.id);
+                                setShowKibbeInfo(false);
+                              }
+                            }}
                             className={`relative flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all ${
-                              serviceType === s.id
+                              (s.testLink && showKibbeInfo) || (!s.testLink && serviceType === s.id)
                                 ? "border-primary bg-primary/5 ring-1 ring-primary"
                                 : "border-border hover:border-primary/40"
-                            } ${!s.available ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                            } ${!s.available && !s.testLink ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                           >
                             <Icon name={s.icon} size={24} className="text-primary" />
                             <span className="text-sm font-medium leading-tight">{s.name}</span>
-                            {!s.available && (
+                            {!s.available && !s.testLink && (
                               <span className="absolute top-1.5 right-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
                                 скоро
+                              </span>
+                            )}
+                            {s.testLink && (
+                              <span className="absolute top-1.5 right-1.5 text-[10px] uppercase tracking-wide text-purple-600">
+                                тест
                               </span>
                             )}
                           </button>
                         ))}
                       </div>
+
+                      {showKibbeInfo && (
+                        <div className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
+                          <div className="flex items-start gap-3">
+                            <Icon name="Info" size={20} className="mt-0.5 shrink-0 text-purple-600" />
+                            <div>
+                              <p className="text-sm text-gray-700">
+                                Определение типажа по Кибби по фото пока в разработке. Но вы уже
+                                можете бесплатно пройти тест и узнать свой типаж из 10 по системе
+                                Дэвида Кибби.
+                              </p>
+                              <Button
+                                type="button"
+                                className="mt-3 bg-purple-600 text-white hover:bg-purple-700"
+                                onClick={() => navigate("/kibbe-test")}
+                              >
+                                Пройти бесплатный тест
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-6">

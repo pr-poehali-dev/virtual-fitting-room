@@ -18,9 +18,10 @@ const ProfileMenu = () => {
     { path: '/profile/history-freegen', icon: 'Sparkles', label: 'История генераций' },
     { path: '/profile/history-colortypes', icon: 'Palette', label: 'История цветотипов' },
     { path: '/profile/history-colorguide', icon: 'BookOpen', label: 'История гидов по цвету и стилевых анализов' },
+    { path: '/profile/history-kibbe', icon: 'Ruler', label: 'История тестов Кибби' },
   ];
 
-  const isHistoryActive = location.pathname === '/profile/history' || location.pathname === '/profile/history-colortypes' || location.pathname === '/profile/history-freegen' || location.pathname === '/profile/history-colorguide';
+  const isHistoryActive = location.pathname === '/profile/history' || location.pathname === '/profile/history-colortypes' || location.pathname === '/profile/history-freegen' || location.pathname === '/profile/history-colorguide' || location.pathname === '/profile/history-kibbe';
 
   return (
     <>

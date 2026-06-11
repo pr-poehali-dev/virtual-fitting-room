@@ -78,6 +78,13 @@ export default function ProfileDashboard() {
           icon: 'BookOpen',
           path: '/profile/history-colorguide',
           color: 'bg-rose-100 text-rose-700'
+        },
+        {
+          title: 'История тестов Кибби',
+          description: 'Все ваши результаты теста «Типаж по Кибби»',
+          icon: 'Ruler',
+          path: '/profile/history-kibbe',
+          color: 'bg-indigo-100 text-indigo-700'
         }
       ]
     },

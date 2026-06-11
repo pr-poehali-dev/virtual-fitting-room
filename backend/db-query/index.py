@@ -139,7 +139,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'color_type_history',
             'freegen_history',
             'freegen_tasks',
-            'color_guide_tasks'
+            'color_guide_tasks',
+            'kibbe_test_history'
         ]
         
         if table not in allowed_tables:
@@ -368,6 +369,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     task_id_val = where.get('id')
                     if task_id_val:
                         prefixes_to_force_delete.append(f'images/colorguide/{owner_id}/{task_id_val}')
+
+            # Для kibbe_test_history - проверяем владельца перед удалением
+            if table == 'kibbe_test_history' and user_id:
+                rec_id = where.get('id')
+                if rec_id:
+                    cursor.execute(
+                        f'SELECT user_id FROM {full_table} WHERE id = %s',
+                        (rec_id,)
+                    )
+                    owner_row = cursor.fetchone()
+                    if owner_row and str(owner_row[0]) != str(user_id):
+                        cursor.close()
+                        conn.close()
+                        return {
+                            'statusCode': 403,
+                            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                            'isBase64Encoded': False,
+                            'body': json.dumps({'error': 'Forbidden'})
+                        }
 
             # Выполняем DELETE
             where_parts = []

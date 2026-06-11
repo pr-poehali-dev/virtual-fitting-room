@@ -14,6 +14,7 @@ const AdminMenu = () => {
     { path: '/vf-console/generations', icon: 'Sparkles', label: 'Генерации' },
     { path: '/vf-console/colortypes', icon: 'Palette', label: 'Цветотипы' },
     { path: '/vf-console/colorguides', icon: 'BookOpen', label: 'Гиды по цвету и стилевые анализы' },
+    { path: '/vf-console/kibbe', icon: 'Ruler', label: 'Тесты Кибби' },
     { path: '/vf-console/cleanup', icon: 'HardDrive', label: 'Очистка БД' },
   ];
 
