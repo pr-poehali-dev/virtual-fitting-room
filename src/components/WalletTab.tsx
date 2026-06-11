@@ -216,7 +216,7 @@ export default function WalletTab() {
               Выберите сумму для пополнения баланса
             </p>
             <div className="space-y-3">
-              {[MIN_TOPUP, 300, 500, 1500, 3000].map((amount) => (
+              {[MIN_TOPUP, 150, 300, 500, 1500, 3000].map((amount) => (
                 <Button
                   key={amount}
                   className="w-full justify-between"
