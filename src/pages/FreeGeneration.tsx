@@ -200,6 +200,16 @@ export default function FreeGeneration() {
           <p className="text-sm text-muted-foreground">
             Опиши что нарисовать. При желании — добавь до {MAX_REFERENCES} референсов и ссылайся на них через <code className="px-1 rounded bg-muted">@ref1</code>, <code className="px-1 rounded bg-muted">@ref2</code>…
           </p>
+          <div className="mt-3 rounded-xl border border-purple-200 bg-purple-50 p-4">
+            <p className="flex items-start gap-2 text-sm text-gray-700">
+              <Icon name="Wand2" size={18} className="mt-0.5 shrink-0 text-purple-600" />
+              <span>
+                Это самый универсальный сервис — здесь всё зависит от вашей фантазии и промта
+                (описания того, что вы хотите получить на изображении). Можно создавать инфографику
+                и любые изображения: от фотореалистичных до иллюстративных.
+              </span>
+            </p>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
