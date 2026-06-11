@@ -336,14 +336,23 @@ export default function KibbeTest() {
                     const isCombined = questions[currentIndex].combined;
                     const selected =
                       !isCombined && answers[questions[currentIndex].id] === opt.letter;
+                    const heightCm = parseInt(height, 10) || 0;
                     // При высоком росте (>=168, ветка «Вертикаль» без комбинированного вопроса)
                     // в «Тесте с тканью» доступны только первые 3 силуэта (А, Б, В)
                     const isTallVerticalSilhouette =
                       !useCombined &&
                       dominance === 'Вертикаль' &&
                       questions[currentIndex].id === '2V';
+                    const disabledByTallVertical = isTallVerticalSilhouette && optIndex > 2;
+                    // В комбинированном вопросе при росте > 166 см силуэт J (миниатюрная
+                    // изогнутая) недоступен
+                    const disabledByTallCurved =
+                      isCombined &&
+                      heightCm > 166 &&
+                      opt.dominance === 'Изогнутая' &&
+                      opt.branchLetter === 'Д';
                     const isDisabled =
-                      !!opt.disabled || (isTallVerticalSilhouette && optIndex > 2);
+                      !!opt.disabled || disabledByTallVertical || disabledByTallCurved;
                     return (
                       <button
                         key={optIndex}
@@ -365,6 +374,23 @@ export default function KibbeTest() {
                     );
                   })}
                 </div>
+
+                {(() => {
+                  const heightCm = parseInt(height, 10) || 0;
+                  const q = questions[currentIndex];
+                  const tallVerticalHint = !useCombined && dominance === 'Вертикаль' && q.id === '2V';
+                  const tallCurvedHint = !!q.combined && heightCm > 166;
+                  if (!tallVerticalHint && !tallCurvedHint) return null;
+                  return (
+                    <p className="flex items-start gap-2 rounded-lg bg-purple-50 px-3 py-2 text-sm text-muted-foreground">
+                      <Icon name="Info" size={16} className="mt-0.5 shrink-0 text-purple-600" />
+                      <span>
+                        Некоторые силуэты недоступны: при вашем росте они подходят только для более
+                        низких фигур.
+                      </span>
+                    </p>
+                  );
+                })()}
 
                 <Button variant="ghost" onClick={handleBack}>
                   <Icon name="ChevronLeft" size={18} className="mr-1" />
