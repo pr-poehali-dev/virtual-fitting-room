@@ -5,6 +5,8 @@ import re
 import time
 import urllib.request
 import urllib.error
+import ssl
+import socket
 from typing import Dict, Any
 from datetime import datetime
 import psycopg2
@@ -434,18 +436,41 @@ def fal_submit(prompt: str, image_urls: list, aspect_ratio: str):
     return status_url, response_url
 
 
+def _is_transient_network_error(exc: Exception) -> bool:
+    """Временные сетевые сбои, на которых имеет смысл повторить запрос
+    (обрывы TLS, EOF, таймауты, сбросы соединения)."""
+    if isinstance(exc, (ssl.SSLError, socket.timeout, EOFError, ConnectionError)):
+        return True
+    if isinstance(exc, urllib.error.URLError):
+        reason = getattr(exc, 'reason', None)
+        if isinstance(reason, (ssl.SSLError, socket.timeout, EOFError, ConnectionError)):
+            return True
+        return True
+    return False
+
+
 def _fal_get(url: str) -> dict:
-    """GET к fal.ai; 400 'still in progress' трактуем как 'ещё не готово'."""
+    """GET к fal.ai; 400 'still in progress' трактуем как 'ещё не готово'.
+    На временных сетевых сбоях (обрыв TLS/EOF/таймаут) повторяем запрос."""
     fal_api_key = os.environ.get('FAL_API_KEY')
     headers = {'Authorization': f'Key {fal_api_key}', 'Content-Type': 'application/json'}
-    req = urllib.request.Request(url, headers=headers, method='GET')
-    try:
-        with urllib.request.urlopen(req, timeout=15) as response:
-            return json.loads(response.read().decode('utf-8'))
-    except urllib.error.HTTPError as e:
-        if e.code in (202, 400):
-            return {'status': 'IN_PROGRESS'}
-        raise
+    last_error = None
+    for attempt in range(4):
+        req = urllib.request.Request(url, headers=headers, method='GET')
+        try:
+            with urllib.request.urlopen(req, timeout=15) as response:
+                return json.loads(response.read().decode('utf-8'))
+        except urllib.error.HTTPError as e:
+            if e.code in (202, 400):
+                return {'status': 'IN_PROGRESS'}
+            raise
+        except Exception as e:
+            if not _is_transient_network_error(e):
+                raise
+            last_error = e
+            print(f'[COLORGUIDE-WORKER] fal.ai GET network error (attempt {attempt + 1}): {e}')
+            time.sleep(3)
+    raise last_error if last_error else RuntimeError('fal.ai GET failed')
 
 
 def fal_poll_result(status_url: str, response_url: str, max_wait_seconds: int = 180) -> str:
@@ -467,10 +492,24 @@ def fal_poll_result(status_url: str, response_url: str, max_wait_seconds: int = 
 
 
 def upload_result_to_s3(image_url: str, task_id: str, user_id: str) -> str:
-    """Скачать готовую картинку с fal.ai и загрузить в Яндекс Object Storage."""
-    req = urllib.request.Request(image_url, method='GET')
-    with urllib.request.urlopen(req, timeout=60) as response:
-        image_bytes = response.read()
+    """Скачать готовую картинку с fal.ai и загрузить в Яндекс Object Storage.
+    На временных сетевых сбоях (обрыв TLS/EOF/таймаут) повторяем скачивание."""
+    image_bytes = None
+    last_error = None
+    for attempt in range(4):
+        req = urllib.request.Request(image_url, method='GET')
+        try:
+            with urllib.request.urlopen(req, timeout=60) as response:
+                image_bytes = response.read()
+            break
+        except Exception as e:
+            if not _is_transient_network_error(e):
+                raise
+            last_error = e
+            print(f'[COLORGUIDE-WORKER] download result network error (attempt {attempt + 1}): {e}')
+            time.sleep(3)
+    if image_bytes is None:
+        raise last_error if last_error else RuntimeError('failed to download result image')
 
     s3_access_key = os.environ.get('S3_ACCESS_KEY')
     s3_secret_key = os.environ.get('S3_SECRET_KEY')
