@@ -128,7 +128,14 @@ export default function KibbeTest() {
     setStep('questions');
   };
 
-  const handleAnswer = (letter: KibbeLetter, optionIndex: number) => {
+  const handleAnswer = (
+    letter: KibbeLetter,
+    optionIndex: number,
+    event?: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    // Снимаем фокус, чтобы на мобильных не подсвечивалась кнопка
+    // с тем же индексом в следующем вопросе
+    event?.currentTarget.blur();
     const q = questions[currentIndex];
 
     // Комбинированный первый вопрос (рост < 168): определяем доминанту по варианту
@@ -334,7 +341,7 @@ export default function KibbeTest() {
                       <button
                         key={optIndex}
                         disabled={isDisabled}
-                        onClick={() => handleAnswer(opt.letter, optIndex)}
+                        onClick={(e) => handleAnswer(opt.letter, optIndex, e)}
                         className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors ${
                           isDisabled
                             ? 'cursor-not-allowed opacity-40'
@@ -377,7 +384,48 @@ export default function KibbeTest() {
                   </p>
                 </div>
 
-                <p className="text-left">{KIBBE_TYPES[resultTypeKey].shortDescription}</p>
+                {KIBBE_TYPES[resultTypeKey].images &&
+                  KIBBE_TYPES[resultTypeKey].images!.length > 0 && (
+                    <div
+                      className={`grid gap-4 ${
+                        KIBBE_TYPES[resultTypeKey].images!.length > 1
+                          ? 'grid-cols-1 sm:grid-cols-2'
+                          : 'grid-cols-1'
+                      }`}
+                    >
+                      {KIBBE_TYPES[resultTypeKey].images!.map((img, i) => (
+                        <img
+                          key={i}
+                          src={img}
+                          alt={KIBBE_TYPES[resultTypeKey].name}
+                          className="w-full rounded-xl border"
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                <div className="text-left">
+                  <h3 className="mb-2 flex items-center gap-2 font-semibold">
+                    <Icon name="Info" size={20} className="text-purple-600" />
+                    Описание типажа
+                  </h3>
+                  <p className="whitespace-pre-line text-muted-foreground">
+                    {KIBBE_TYPES[resultTypeKey].detailedDescription ||
+                      KIBBE_TYPES[resultTypeKey].shortDescription}
+                  </p>
+                </div>
+
+                {KIBBE_TYPES[resultTypeKey].silhouette && (
+                  <div className="text-left">
+                    <h3 className="mb-2 flex items-center gap-2 font-semibold">
+                      <Icon name="Shapes" size={20} className="text-purple-600" />
+                      Силуэт
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {KIBBE_TYPES[resultTypeKey].silhouette}
+                    </p>
+                  </div>
+                )}
 
                 <div className="flex flex-wrap justify-center gap-2">
                   {KIBBE_TYPES[resultTypeKey].keywords.map((kw) => (
