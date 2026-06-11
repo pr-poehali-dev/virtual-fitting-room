@@ -128,14 +128,7 @@ export default function KibbeTest() {
     setStep('questions');
   };
 
-  const handleAnswer = (
-    letter: KibbeLetter,
-    optionIndex: number,
-    event?: React.MouseEvent<HTMLButtonElement>,
-  ) => {
-    // Снимаем фокус, чтобы на мобильных не подсвечивалась кнопка
-    // с тем же индексом в следующем вопросе
-    event?.currentTarget.blur();
+  const handleAnswer = (letter: KibbeLetter, optionIndex: number) => {
     const q = questions[currentIndex];
 
     // Комбинированный первый вопрос (рост < 168): определяем доминанту по варианту
@@ -357,7 +350,7 @@ export default function KibbeTest() {
                       <button
                         key={optIndex}
                         disabled={isDisabled}
-                        onClick={(e) => handleAnswer(opt.letter, optIndex, e)}
+                        onClick={() => handleAnswer(opt.letter, optIndex)}
                         className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors ${
                           isDisabled
                             ? 'cursor-not-allowed opacity-40'
