@@ -140,7 +140,11 @@ export default function KibbeResultDetail() {
               {typeInfo ? (
                 <>
                   {typeInfo.images && typeInfo.images.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div
+                      className={`grid gap-4 ${
+                        typeInfo.images.length > 1 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'
+                      }`}
+                    >
                       {typeInfo.images.map((img, i) => (
                         <img
                           key={i}
