@@ -185,7 +185,7 @@ const Home = () => {
           <div className="container mx-auto px-4 py-12">
             <div className="mb-12">
               <h1 className="text-4xl lg:text-4xl font-bold text-white mb-4">
-                Создайте Ваш идеальный стиль с технологиями ИИ
+                Ваш идеальный стиль с технологиями ИИ
               </h1>
               <p className="text-gray-300 text-lg mb-3">
                 Узнайте Ваш архитип, типаж по Дэвиду Кибби, цветотип и примерьте
