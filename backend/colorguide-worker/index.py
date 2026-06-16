@@ -682,6 +682,14 @@ def process_task(task_id: str):
                 print(f'[COLORGUIDE-WORKER] Task {task_id} already in status {status}')
                 return
 
+            # Единая очередь: если глобально уже обрабатывается задача — ждём
+            if status == 'pending':
+                from queue_guard import count_global_active, GLOBAL_CONCURRENCY
+                active_count = count_global_active(cursor)
+                if active_count >= GLOBAL_CONCURRENCY:
+                    print(f'[COLORGUIDE-WORKER] Task {task_id}: {active_count} active task(s) globally, staying pending')
+                    return
+
             cursor.execute(
                 "UPDATE color_guide_tasks SET status = 'processing', updated_at = %s WHERE id = %s",
                 (datetime.utcnow(), task_id)
@@ -793,6 +801,35 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
 
     process_task(task_id)
+
+    # Единая очередь: после завершения своей задачи будим следующую pending (FIFO)
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                SELECT id FROM color_guide_tasks
+                WHERE status = 'pending'
+                  AND id != %s
+                ORDER BY created_at ASC
+                LIMIT 1
+            ''', (task_id,))
+            next_row = cursor.fetchone()
+        finally:
+            cursor.close()
+            conn.close()
+        if next_row:
+            next_id = next_row[0]
+            print(f'[COLORGUIDE-WORKER] Waking next pending task {next_id}')
+            try:
+                worker_url = f'https://functions.poehali.dev/12f108e3-fe83-4618-9e8b-48411bb69390?task_id={next_id}'
+                req = urllib.request.Request(worker_url, method='GET')
+                urllib.request.urlopen(req, timeout=2)
+            except Exception as te:
+                print(f'[COLORGUIDE-WORKER] Wake-next trigger failed (non-critical): {te}')
+    except Exception as e:
+        print(f'[COLORGUIDE-WORKER] Wake-next scan error (non-critical): {e}')
+
     return {
         'statusCode': 200,
         'headers': cors_headers(event),

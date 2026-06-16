@@ -455,15 +455,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         if task_status == 'pending':
             if not fal_request_id:
-                cursor.execute('''
-                    SELECT COUNT(*) FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
-                    WHERE status = 'processing'
-                      AND fal_request_id IS NOT NULL
-                      AND mode IN ('capsule', 'lookbook_grid')
-                      AND created_at > NOW() - INTERVAL '3 minutes'
-                ''')
-                active_count = cursor.fetchone()[0]
-                if active_count > 0:
+                # Единая очередь: считаем активные задачи по ВСЕМ сервисам nanobanana2
+                from queue_guard import count_global_active, GLOBAL_CONCURRENCY
+                active_count = count_global_active(cursor)
+                if active_count >= GLOBAL_CONCURRENCY:
                     print(f'[TemplateWorker] {active_count} active template task(s), staying pending')
                     cursor.close()
                     conn.close()

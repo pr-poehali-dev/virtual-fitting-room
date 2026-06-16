@@ -396,16 +396,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Process pending task
         if task_status == 'pending':
             if not fal_request_id:
-                # FIFO: check if another fresh task is already being processed
-                cursor.execute('''
-                    SELECT COUNT(*) FROM t_p29007832_virtual_fitting_room.nanobananapro_tasks
-                    WHERE status = 'processing'
-                      AND fal_request_id IS NOT NULL
-                      AND created_at > NOW() - INTERVAL '2 minutes'
-                ''')
-                active_count = cursor.fetchone()[0]
+                # Единая очередь: считаем активные задачи по ВСЕМ сервисам nanobanana2
+                from queue_guard import count_global_active, GLOBAL_CONCURRENCY
+                active_count = count_global_active(cursor)
                 
-                if active_count > 0:
+                if active_count >= GLOBAL_CONCURRENCY:
                     print(f'[NanoBanana] Task {task_id}: {active_count} active task(s) in queue, staying pending')
                     cursor.close()
                     conn.close()

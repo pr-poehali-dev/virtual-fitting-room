@@ -66,6 +66,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         status, colortype_slug, result_json, cdn_url, error_message, service_type = row
 
+        # Единая очередь: если задача всё ещё ждёт — будим воркер (он сам решит, стартовать или ждать слот)
+        if status == 'pending':
+            try:
+                import urllib.request
+                worker_url = f'https://functions.poehali.dev/12f108e3-fe83-4618-9e8b-48411bb69390?task_id={task_id}'
+                req = urllib.request.Request(worker_url, method='GET')
+                urllib.request.urlopen(req, timeout=1)
+            except Exception:
+                pass
+
         response_body = {
             'task_id': task_id,
             'status': status,

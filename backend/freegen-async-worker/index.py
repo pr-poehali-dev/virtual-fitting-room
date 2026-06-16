@@ -359,6 +359,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # --- PENDING: отправить в fal.ai
         if task_status == 'pending':
             if not fal_request_id:
+                # Единая очередь: если глобально уже обрабатывается задача — ждём
+                from queue_guard import count_global_active, GLOBAL_CONCURRENCY
+                active_count = count_global_active(cursor)
+                if active_count >= GLOBAL_CONCURRENCY:
+                    print(f'[Freegen] Task {task_id}: {active_count} active task(s) globally, staying pending')
+                    cursor.close()
+                    conn.close()
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'status': 'queued', 'active_tasks': active_count}),
+                    }
+
                 cursor.execute('''
                     UPDATE t_p29007832_virtual_fitting_room.freegen_tasks
                     SET status = 'processing', updated_at = %s
