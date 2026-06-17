@@ -40,6 +40,30 @@ function leadersTitle(scores: unknown, fallback: string): string {
   );
 }
 
+// Топ-архетипы как в подробных карточках на странице результата:
+// первые 3 + все, у кого балл равен баллу 3-го места (от 3 до 12 имён).
+function topCardsNames(scores: unknown, fallback: string): string {
+  let obj: Record<string, number> = {};
+  if (scores) {
+    obj =
+      typeof scores === 'string'
+        ? (JSON.parse(scores) as Record<string, number>)
+        : (scores as Record<string, number>);
+  }
+  const sorted = ARCHETYPE_ORDER.map((key) => ({
+    key,
+    score: obj[key] || 0,
+  })).sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return ARCHETYPE_ORDER.indexOf(a.key) - ARCHETYPE_ORDER.indexOf(b.key);
+  });
+  const maxScore = sorted[0]?.score ?? 0;
+  if (maxScore <= 0) return fallback;
+  const thirdScore = sorted[2]?.score ?? 0;
+  const top = sorted.filter((s, i) => i < 3 || s.score === thirdScore);
+  return top.map((t) => ARCHETYPES[t.key].name).join(', ');
+}
+
 const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
 
 export default function ProfileHistoryArchetype() {
@@ -206,9 +230,9 @@ export default function ProfileHistoryArchetype() {
                           {leadersTitle(item.scores, item.top_archetype_name)}
                         </h3>
                         <p className="text-sm text-muted-foreground mt-1">{item.user_name}</p>
-                        {item.top_names && (
-                          <p className="text-xs text-muted-foreground mt-1">{item.top_names}</p>
-                        )}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {topCardsNames(item.scores, item.top_names)}
+                        </p>
                         <p className="text-xs text-muted-foreground mt-2">
                           {new Date(item.created_at).toLocaleDateString('ru-RU', {
                             day: 'numeric',
