@@ -85,6 +85,13 @@ export default function ProfileDashboard() {
           icon: 'Ruler',
           path: '/profile/history-kibbe',
           color: 'bg-indigo-100 text-indigo-700'
+        },
+        {
+          title: 'История тестов на архетип',
+          description: 'Все ваши результаты теста «Архетип по Юнгу»',
+          icon: 'Brain',
+          path: '/profile/history-archetype',
+          color: 'bg-violet-100 text-violet-700'
         }
       ]
     },

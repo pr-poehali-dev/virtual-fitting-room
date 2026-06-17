@@ -43,11 +43,22 @@ interface KibbeHistory {
   status: string;
 }
 
+interface ArchetypeHistory {
+  id: string;
+  user_name: string;
+  top_archetype: string;
+  top_archetype_name: string;
+  top_names: string;
+  created_at: string;
+  status: string;
+}
+
 interface DataContextType {
   lookbooks: Lookbook[];
   history: HistoryItem[];
   colorTypeHistory: ColorTypeHistory[];
   kibbeHistory: KibbeHistory[];
+  archetypeHistory: ArchetypeHistory[];
   isLoading: boolean;
   hasMoreHistory: boolean;
   isLoadingMoreHistory: boolean;
@@ -55,6 +66,8 @@ interface DataContextType {
   isLoadingMoreColorType: boolean;
   hasMoreKibbe: boolean;
   isLoadingMoreKibbe: boolean;
+  hasMoreArchetype: boolean;
+  isLoadingMoreArchetype: boolean;
   hasMoreLookbooks: boolean;
   isLoadingMoreLookbooks: boolean;
   refetchLookbooks: () => Promise<void>;
@@ -62,9 +75,11 @@ interface DataContextType {
   loadMoreHistory: () => Promise<void>;
   loadMoreColorType: () => Promise<void>;
   loadMoreKibbe: () => Promise<void>;
+  loadMoreArchetype: () => Promise<void>;
   loadMoreLookbooks: () => Promise<void>;
   refetchColorTypeHistory: () => Promise<void>;
   refetchKibbeHistory: () => Promise<void>;
+  refetchArchetypeHistory: () => Promise<void>;
   refetchAll: () => Promise<void>;
 }
 
@@ -75,6 +90,7 @@ const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-8844
 const HISTORY_PAGE_SIZE = 15;
 const COLOR_TYPE_PAGE_SIZE = 15;
 const KIBBE_PAGE_SIZE = 15;
+const ARCHETYPE_PAGE_SIZE = 15;
 const LOOKBOOKS_PAGE_SIZE = 15;
 
 export function DataProvider({ children }: { children: ReactNode }) {
@@ -83,11 +99,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [colorTypeHistory, setColorTypeHistory] = useState<ColorTypeHistory[]>([]);
   const [kibbeHistory, setKibbeHistory] = useState<KibbeHistory[]>([]);
+  const [archetypeHistory, setArchetypeHistory] = useState<ArchetypeHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasFetchedLookbooks, setHasFetchedLookbooks] = useState(false);
   const [hasFetchedHistory, setHasFetchedHistory] = useState(false);
   const [hasFetchedColorTypeHistory, setHasFetchedColorTypeHistory] = useState(false);
   const [hasFetchedKibbeHistory, setHasFetchedKibbeHistory] = useState(false);
+  const [hasFetchedArchetypeHistory, setHasFetchedArchetypeHistory] = useState(false);
   const [hasMoreHistory, setHasMoreHistory] = useState(true);
   const [isLoadingMoreHistory, setIsLoadingMoreHistory] = useState(false);
   const [historyOffset, setHistoryOffset] = useState(0);
@@ -97,6 +115,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [hasMoreKibbe, setHasMoreKibbe] = useState(true);
   const [isLoadingMoreKibbe, setIsLoadingMoreKibbe] = useState(false);
   const [kibbeOffset, setKibbeOffset] = useState(0);
+  const [hasMoreArchetype, setHasMoreArchetype] = useState(true);
+  const [isLoadingMoreArchetype, setIsLoadingMoreArchetype] = useState(false);
+  const [archetypeOffset, setArchetypeOffset] = useState(0);
   const [hasMoreLookbooks, setHasMoreLookbooks] = useState(true);
   const [isLoadingMoreLookbooks, setIsLoadingMoreLookbooks] = useState(false);
   const [lookbooksOffset, setLookbooksOffset] = useState(0);
@@ -351,19 +372,78 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setIsLoadingMoreKibbe(false);
   };
 
+  const fetchArchetypeHistory = async (reset = false) => {
+    if (!user?.id) {
+      setArchetypeHistory([]);
+      return;
+    }
+
+    const offset = reset ? 0 : archetypeOffset;
+
+    try {
+      const response = await fetch(DB_QUERY_API, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({
+          table: 'archetype_test_history',
+          action: 'select',
+          columns: ['id', 'user_name', 'top_archetype', 'top_archetype_name', 'top_names', 'created_at', 'status'],
+          where: { user_id: user.id, status: 'completed' },
+          order_by: 'created_at DESC',
+          limit: ARCHETYPE_PAGE_SIZE + 1,
+          offset: offset
+        })
+      });
+      const result = await response.json();
+      const data = result.success && Array.isArray(result.data) ? result.data : [];
+
+      const hasMore = data.length > ARCHETYPE_PAGE_SIZE;
+      const items = hasMore ? data.slice(0, ARCHETYPE_PAGE_SIZE) : data;
+
+      if (reset) {
+        setArchetypeHistory(items);
+        setArchetypeOffset(ARCHETYPE_PAGE_SIZE);
+      } else {
+        setArchetypeHistory(prev => [...prev, ...items]);
+        setArchetypeOffset(prev => prev + ARCHETYPE_PAGE_SIZE);
+      }
+
+      setHasMoreArchetype(hasMore);
+      setHasFetchedArchetypeHistory(true);
+    } catch (error) {
+      console.error('Error fetching archetype history:', error);
+      if (reset) {
+        setArchetypeHistory([]);
+      }
+    }
+  };
+
+  const refetchArchetypeHistory = async () => {
+    await fetchArchetypeHistory(true);
+  };
+
+  const loadMoreArchetype = async () => {
+    if (!hasMoreArchetype || isLoadingMoreArchetype) return;
+
+    setIsLoadingMoreArchetype(true);
+    await fetchArchetypeHistory(false);
+    setIsLoadingMoreArchetype(false);
+  };
+
   const refetchAll = async () => {
-    await Promise.all([fetchLookbooks(), fetchHistory(), fetchColorTypeHistory(), fetchKibbeHistory()]);
+    await Promise.all([fetchLookbooks(), fetchHistory(), fetchColorTypeHistory(), fetchKibbeHistory(), fetchArchetypeHistory()]);
   };
 
   useEffect(() => {
     if (user) {
       const loadInitialData = async () => {
         setIsLoading(true);
-        await Promise.all([fetchLookbooks(), fetchHistory(), fetchColorTypeHistory(), fetchKibbeHistory()]);
+        await Promise.all([fetchLookbooks(), fetchHistory(), fetchColorTypeHistory(), fetchKibbeHistory(), fetchArchetypeHistory()]);
         setIsLoading(false);
       };
       
-      if (!hasFetchedLookbooks || !hasFetchedHistory || !hasFetchedColorTypeHistory || !hasFetchedKibbeHistory) {
+      if (!hasFetchedLookbooks || !hasFetchedHistory || !hasFetchedColorTypeHistory || !hasFetchedKibbeHistory || !hasFetchedArchetypeHistory) {
         loadInitialData();
       } else {
         setIsLoading(false);
@@ -373,10 +453,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setHistory([]);
       setColorTypeHistory([]);
       setKibbeHistory([]);
+      setArchetypeHistory([]);
       setHasFetchedLookbooks(false);
       setHasFetchedHistory(false);
       setHasFetchedColorTypeHistory(false);
       setHasFetchedKibbeHistory(false);
+      setHasFetchedArchetypeHistory(false);
       setIsLoading(false);
     }
   }, [user?.id]);
@@ -388,6 +470,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         history,
         colorTypeHistory,
         kibbeHistory,
+        archetypeHistory,
         isLoading,
         hasMoreHistory,
         isLoadingMoreHistory,
@@ -395,6 +478,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         isLoadingMoreColorType,
         hasMoreKibbe,
         isLoadingMoreKibbe,
+        hasMoreArchetype,
+        isLoadingMoreArchetype,
         hasMoreLookbooks,
         isLoadingMoreLookbooks,
         refetchLookbooks,
@@ -402,9 +487,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
         loadMoreHistory,
         loadMoreColorType,
         loadMoreKibbe,
+        loadMoreArchetype,
         loadMoreLookbooks,
         refetchColorTypeHistory,
         refetchKibbeHistory,
+        refetchArchetypeHistory,
         refetchAll
       }}
     >

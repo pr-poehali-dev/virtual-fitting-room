@@ -48,6 +48,10 @@ import KibbeTest from "./pages/KibbeTest";
 import KibbeResultDetail from "./pages/KibbeResultDetail";
 import ProfileHistoryKibbe from "./pages/ProfileHistoryKibbe";
 import AdminKibbe from "./pages/AdminKibbe";
+import ArchetypeTest from "./pages/ArchetypeTest";
+import ArchetypeResultDetail from "./pages/ArchetypeResultDetail";
+import ProfileHistoryArchetype from "./pages/ProfileHistoryArchetype";
+import AdminArchetype from "./pages/AdminArchetype";
 import NotFound from "./pages/NotFound";
 import Payment from "./pages/Payment";
 import Offer from "./pages/Offer";
@@ -98,6 +102,8 @@ const App = () => (
             <Route path="/style-analysis" element={<StyleAnalysis />} />
             <Route path="/kibbe-test" element={<KibbeTest />} />
             <Route path="/kibbe-result/:id" element={<KibbeResultDetail />} />
+            <Route path="/archetype-test" element={<ArchetypeTest />} />
+            <Route path="/archetype-result/:id" element={<ArchetypeResultDetail />} />
             <Route path="/color-guide/:id" element={<ColorGuideDetail />} />
             <Route path="/ai-editor" element={<AiEditor />} />
             
@@ -109,6 +115,7 @@ const App = () => (
             <Route path="/profile/history-colorguide" element={<ProfileHistoryColorGuide />} />
             <Route path="/profile/history-freegen" element={<ProfileHistoryFreegen />} />
             <Route path="/profile/history-kibbe" element={<ProfileHistoryKibbe />} />
+            <Route path="/profile/history-archetype" element={<ProfileHistoryArchetype />} />
             <Route path="/profile/wallet" element={<ProfileWallet />} />
             <Route path="/profile/settings" element={<ProfileSettings />} />
             <Route path="/profile-old" element={<Profile />} />
@@ -126,6 +133,7 @@ const App = () => (
             <Route path="/vf-console/colortypes" element={<AdminColorTypes />} />
             <Route path="/vf-console/colorguides" element={<AdminColorGuide />} />
             <Route path="/vf-console/kibbe" element={<AdminKibbe />} />
+            <Route path="/vf-console/archetype" element={<AdminArchetype />} />
             <Route path="/vf-console/cleanup" element={<AdminCleanup />} />
             
             <Route path="/login" element={<Login />} />

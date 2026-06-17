@@ -56,6 +56,12 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       icon: "Ruler",
       label: "Типаж по Кибби",
     },
+    {
+      id: "archetype-test",
+      path: "/archetype-test",
+      icon: "Brain",
+      label: "Архетип по Юнгу",
+    },
     ...(user?.email === OWNER_EMAIL
       ? [
           {

@@ -26,6 +26,8 @@ type Service = {
   icon: string;
   available: boolean;
   testLink?: boolean;
+  testPath?: string;
+  testInfo?: string;
 };
 
 const SERVICES: Service[] = [
@@ -34,8 +36,26 @@ const SERVICES: Service[] = [
   { id: "makeup", name: "Макияж", icon: "Sparkles", available: false },
   { id: "face", name: "Анализ лица", icon: "ScanFace", available: false },
   { id: "colortype", name: "Цветотип", icon: "Palette", available: false },
-  { id: "archetype", name: "Архетип по Юнгу", icon: "Brain", available: false },
-  { id: "kibbe", name: "Типаж по Кибби", icon: "Ruler", available: true, testLink: true },
+  {
+    id: "archetype",
+    name: "Архетип по Юнгу",
+    icon: "Brain",
+    available: true,
+    testLink: true,
+    testPath: "/archetype-test",
+    testInfo:
+      "Определение архетипа по фото пока в разработке. Но вы уже можете бесплатно пройти тест из 36 вопросов и узнать свой ведущий архетип из 12 по системе Карла Юнга.",
+  },
+  {
+    id: "kibbe",
+    name: "Типаж по Кибби",
+    icon: "Ruler",
+    available: true,
+    testLink: true,
+    testPath: "/kibbe-test",
+    testInfo:
+      "Определение типажа по Кибби по фото пока в разработке. Но вы уже можете бесплатно пройти тест и узнать свой типаж из 10 по системе Дэвида Кибби.",
+  },
 ];
 
 export default function StyleAnalysis() {
@@ -51,7 +71,7 @@ export default function StyleAnalysis() {
   const [analysisStatus, setAnalysisStatus] = useState<string>("");
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [resultData, setResultData] = useState<StyleAnalysisResult | null>(null);
-  const [showKibbeInfo, setShowKibbeInfo] = useState(false);
+  const [activeTestLink, setActiveTestLink] = useState<string | null>(null);
 
   const handleDownload = async () => {
     if (!resultUrl) return;
@@ -291,15 +311,15 @@ export default function StyleAnalysis() {
                             disabled={(!s.available && !s.testLink) || isAnalyzing}
                             onClick={() => {
                               if (s.testLink) {
-                                setShowKibbeInfo((prev) => !prev);
+                                setActiveTestLink((prev) => (prev === s.id ? null : s.id));
                               } else if (s.available) {
                                 setServiceType(s.id);
-                                setShowKibbeInfo(false);
+                                setActiveTestLink(null);
                               }
                             }}
                             className={`relative flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all ${
-                              (s.testLink && showKibbeInfo) ||
-                              (!s.testLink && !showKibbeInfo && serviceType === s.id)
+                              (s.testLink && activeTestLink === s.id) ||
+                              (!s.testLink && !activeTestLink && serviceType === s.id)
                                 ? "border-primary bg-primary/5 ring-1 ring-primary"
                                 : "border-border hover:border-primary/40"
                             } ${!s.available && !s.testLink ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
@@ -320,30 +340,30 @@ export default function StyleAnalysis() {
                         ))}
                       </div>
 
-                      {showKibbeInfo && (
-                        <div className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
-                          <div className="flex items-start gap-3">
-                            <Icon name="Info" size={20} className="mt-0.5 shrink-0 text-purple-600" />
-                            <div>
-                              <p className="text-sm text-gray-700">
-                                Определение типажа по Кибби по фото пока в разработке. Но вы уже
-                                можете бесплатно пройти тест и узнать свой типаж из 10 по системе
-                                Дэвида Кибби.
-                              </p>
-                              <Button
-                                type="button"
-                                className="mt-3 bg-purple-600 text-white hover:bg-purple-700"
-                                onClick={() => navigate("/kibbe-test")}
-                              >
-                                Пройти бесплатный тест
-                              </Button>
+                      {activeTestLink && (() => {
+                        const activeService = SERVICES.find((s) => s.id === activeTestLink);
+                        if (!activeService?.testPath) return null;
+                        return (
+                          <div className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
+                            <div className="flex items-start gap-3">
+                              <Icon name="Info" size={20} className="mt-0.5 shrink-0 text-purple-600" />
+                              <div>
+                                <p className="text-sm text-gray-700">{activeService.testInfo}</p>
+                                <Button
+                                  type="button"
+                                  className="mt-3 bg-purple-600 text-white hover:bg-purple-700"
+                                  onClick={() => navigate(activeService.testPath!)}
+                                >
+                                  Пройти бесплатный тест
+                                </Button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
 
-                    {!showKibbeInfo && (
+                    {!activeTestLink && (
                     <>
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>

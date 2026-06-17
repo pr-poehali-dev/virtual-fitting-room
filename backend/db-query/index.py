@@ -140,7 +140,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'freegen_history',
             'freegen_tasks',
             'color_guide_tasks',
-            'kibbe_test_history'
+            'kibbe_test_history',
+            'archetype_test_history'
         ]
         
         if table not in allowed_tables:
