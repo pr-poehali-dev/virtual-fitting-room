@@ -47,9 +47,18 @@ export default function ArchetypeTopCard({
       </div>
 
       {showDetailed && (
-        <p className="mt-3 whitespace-pre-line text-sm text-muted-foreground">
-          {detailed || info.description}
-        </p>
+        <>
+          {info.image && (
+            <img
+              src={info.image}
+              alt={name}
+              className="mt-3 w-full rounded-xl border object-cover"
+            />
+          )}
+          <p className="mt-3 whitespace-pre-line text-sm text-muted-foreground">
+            {detailed || info.description}
+          </p>
+        </>
       )}
 
       {!isPrimary && (

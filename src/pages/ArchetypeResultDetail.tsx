@@ -152,7 +152,19 @@ export default function ArchetypeResultDetail() {
                 </div>
                 <p className="text-muted-foreground mb-1">{record.user_name}, ваш результат:</p>
                 <h1 className="text-3xl font-bold text-purple-700">
-                  {record.top_archetype_name}
+                  {tied.length >= 2
+                    ? tied
+                        .map((t) => t.name)
+                        .reduce(
+                          (acc, name, i, arr) =>
+                            i === 0
+                              ? name
+                              : i === arr.length - 1
+                                ? `${acc} и ${name}`
+                                : `${acc}, ${name}`,
+                          '',
+                        )
+                    : record.top_archetype_name}
                 </h1>
                 {tied.length >= 2 ? (
                   <p className="mt-2 text-muted-foreground">
@@ -190,6 +202,21 @@ export default function ArchetypeResultDetail() {
                     </span>
                   </div>
                 )}
+                <div className="grid grid-cols-2 gap-3">
+                  {top.map((t) => (
+                    <div key={t.key} className="rounded-xl border p-2 text-center">
+                      {ARCHETYPES[t.key]?.image && (
+                        <img
+                          src={ARCHETYPES[t.key].image}
+                          alt={t.name}
+                          className="mb-2 aspect-square w-full rounded-lg border object-cover"
+                        />
+                      )}
+                      <div className="text-sm font-semibold text-purple-700">{t.name}</div>
+                      <div className="text-xs text-muted-foreground">{t.percent}%</div>
+                    </div>
+                  ))}
+                </div>
                 {top.map((t, i) => (
                   <ArchetypeTopCard
                     key={t.key}
