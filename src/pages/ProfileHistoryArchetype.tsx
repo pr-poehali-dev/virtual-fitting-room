@@ -10,8 +10,8 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { ARCHETYPES, ArchetypeKey, ARCHETYPE_ORDER } from '@/data/archetypeTest';
 
-// Имена ведущих архетипов (с максимальным баллом) через «, » и «и»
-function leadersTitle(scores: unknown, fallback: string): string {
+// Ключи ведущих архетипов (с максимальным баллом)
+function leaderKeys(scores: unknown): ArchetypeKey[] {
   let obj: Record<string, number> = {};
   if (scores) {
     obj =
@@ -20,12 +20,19 @@ function leadersTitle(scores: unknown, fallback: string): string {
         : (scores as Record<string, number>);
   }
   const entries = ARCHETYPE_ORDER.map((key) => ({
-    name: ARCHETYPES[key].name,
+    key,
     score: obj[key] || 0,
   }));
   const max = Math.max(...entries.map((e) => e.score));
-  if (max <= 0) return fallback;
-  const names = entries.filter((e) => e.score === max).map((e) => e.name);
+  if (max <= 0) return [];
+  return entries.filter((e) => e.score === max).map((e) => e.key);
+}
+
+// Имена ведущих архетипов (с максимальным баллом) через «, » и «и»
+function leadersTitle(scores: unknown, fallback: string): string {
+  const keys = leaderKeys(scores);
+  if (keys.length === 0) return fallback;
+  const names = keys.map((k) => ARCHETYPES[k].name);
   return names.reduce(
     (acc, n, i, arr) =>
       i === 0 ? n : i === arr.length - 1 ? `${acc} и ${n}` : `${acc}, ${n}`,
@@ -152,17 +159,35 @@ export default function ProfileHistoryArchetype() {
                     >
                       <CardContent className="p-5">
                         <div className="flex items-start justify-between gap-2 mb-3">
-                          {ARCHETYPES[item.top_archetype as ArchetypeKey]?.image ? (
-                            <img
-                              src={ARCHETYPES[item.top_archetype as ArchetypeKey].image}
-                              alt={item.top_archetype_name}
-                              className="h-12 w-12 shrink-0 rounded-xl border object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-100">
-                              <Icon name="Sparkles" size={24} className="text-purple-700" />
-                            </div>
-                          )}
+                          {(() => {
+                            const keys = leaderKeys(item.scores);
+                            const showKeys =
+                              keys.length > 0
+                                ? keys
+                                : ([item.top_archetype as ArchetypeKey].filter(
+                                    Boolean,
+                                  ) as ArchetypeKey[]);
+                            const withImage = showKeys.filter((k) => ARCHETYPES[k]?.image);
+                            if (withImage.length === 0) {
+                              return (
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-100">
+                                  <Icon name="Sparkles" size={24} className="text-purple-700" />
+                                </div>
+                              );
+                            }
+                            return (
+                              <div className="flex flex-wrap gap-2">
+                                {withImage.map((k) => (
+                                  <img
+                                    key={k}
+                                    src={ARCHETYPES[k].image}
+                                    alt={ARCHETYPES[k].name}
+                                    className="h-12 w-12 shrink-0 rounded-xl border object-cover"
+                                  />
+                                ))}
+                              </div>
+                            );
+                          })()}
                           <Button
                             size="sm"
                             variant="ghost"

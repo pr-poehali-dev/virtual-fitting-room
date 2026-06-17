@@ -330,7 +330,7 @@ export default function ArchetypeTest() {
                             <img
                               src={ARCHETYPES[t.key].image}
                               alt={t.name}
-                              className="mb-2 aspect-square w-full rounded-lg border object-cover"
+                              className="mb-2 w-full rounded-lg border object-contain"
                             />
                           )}
                           <div className="text-sm font-semibold text-purple-700">{t.name}</div>
