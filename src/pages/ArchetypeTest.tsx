@@ -289,7 +289,22 @@ export default function ArchetypeTest() {
                     <Icon name="Sparkles" size={32} className="text-purple-600" />
                   </div>
                   <p className="text-muted-foreground mb-1 mt-4">{name}, ваш результат:</p>
-                  <h2 className="text-3xl font-bold text-purple-700">{result.top[0]?.name}</h2>
+                  <h2 className="text-3xl font-bold text-purple-700">
+                    {result.tiedTop
+                      ? result.scores
+                          .filter((s) => s.score === result.scores[0].score)
+                          .map((t) => t.name)
+                          .reduce(
+                            (acc, n, i, arr) =>
+                              i === 0
+                                ? n
+                                : i === arr.length - 1
+                                  ? `${acc} и ${n}`
+                                  : `${acc}, ${n}`,
+                            '',
+                          )
+                      : result.top[0]?.name}
+                  </h2>
                   {renderResultHeadline(result)}
                 </div>
 
@@ -314,6 +329,21 @@ export default function ArchetypeTest() {
                       </span>
                     </div>
                   )}
+                  <div className="grid grid-cols-2 gap-3">
+                    {result.top.map((t) => (
+                      <div key={t.key} className="rounded-xl border p-2 text-center">
+                        {ARCHETYPES[t.key]?.image && (
+                          <img
+                            src={ARCHETYPES[t.key].image}
+                            alt={t.name}
+                            className="mb-2 aspect-square w-full rounded-lg border object-cover"
+                          />
+                        )}
+                        <div className="text-sm font-semibold text-purple-700">{t.name}</div>
+                        <div className="text-xs text-muted-foreground">{t.percent}%</div>
+                      </div>
+                    ))}
+                  </div>
                   {result.top.map((t, i) => (
                     <ArchetypeTopCard
                       key={t.key}
