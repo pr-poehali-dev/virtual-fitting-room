@@ -713,9 +713,10 @@ export interface ArchetypeScore {
 
 export interface ArchetypeResult {
   scores: ArchetypeScore[]; // все 12, отсортированы по убыванию (tie-break по ARCHETYPE_ORDER)
-  top: ArchetypeScore[]; // топ-3
+  top: ArchetypeScore[]; // топ-3, но без обрезания равных на границе 3-го места
   tiedTop: boolean; // true, если у нескольких архетипов в топе одинаковый максимум
   tiedCount: number; // сколько архетипов делят максимум
+  allEqual: boolean; // true, если у всех 12 архетипов одинаковый балл (редкое сочетание)
 }
 
 // Подсчёт результата. answers: { q1: 'A', ... }
@@ -757,10 +758,18 @@ export function calculateArchetypeResult(
     return orderIndex(a.key) - orderIndex(b.key);
   });
 
-  const top = scores.slice(0, 3);
+  // Топ-3, но не обрезаем архетипы, равные по баллу с 3-м местом.
+  // Например: 16.7, 16.7, 13.9, 13.9 → в топ попадут все 4.
+  const thirdScore = scores[2]?.score ?? 0;
+  const top = scores.filter((s, i) => i < 3 || s.score === thirdScore);
+
   const maxScore = scores[0]?.score ?? 0;
   const tiedCount = scores.filter((s) => s.score === maxScore && maxScore > 0).length;
   const tiedTop = tiedCount >= 2;
 
-  return { scores, top, tiedTop, tiedCount };
+  // Все 12 архетипов с одинаковым баллом — редкое сочетание.
+  const allEqual =
+    scores.length > 0 && scores.every((s) => s.score === scores[0].score);
+
+  return { scores, top, tiedTop, tiedCount, allEqual };
 }

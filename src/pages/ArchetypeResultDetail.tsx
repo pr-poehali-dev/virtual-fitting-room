@@ -126,7 +126,10 @@ export default function ArchetypeResultDetail() {
 
   const maxScore = sorted[0]?.score ?? 0;
   const tied = sorted.filter((s) => s.score === maxScore && maxScore > 0);
-  const top = sorted.slice(0, 3);
+  const thirdScore = sorted[2]?.score ?? 0;
+  const top = sorted.filter((s, i) => i < 3 || s.score === thirdScore);
+  const allEqual =
+    sorted.length > 0 && sorted.every((s) => s.score === sorted[0].score);
 
   return (
     <Layout>
@@ -179,6 +182,14 @@ export default function ArchetypeResultDetail() {
                   <Icon name="Info" size={20} className="text-purple-600" />
                   {tied.length >= 2 ? 'Ваши ведущие архетипы' : 'Ваш топ-3 архетипов'}
                 </h3>
+                {allEqual && (
+                  <div className="flex items-start gap-2 rounded-xl border border-purple-200 bg-purple-50 p-3 text-sm text-purple-700">
+                    <Icon name="Sparkles" size={18} className="mt-0.5 shrink-0" />
+                    <span>
+                      У вас редкое сочетание всех архетипов — они выражены поровну.
+                    </span>
+                  </div>
+                )}
                 {top.map((t, i) => (
                   <ArchetypeTopCard
                     key={t.key}

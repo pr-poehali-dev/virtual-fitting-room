@@ -306,6 +306,14 @@ export default function ArchetypeTest() {
                     <Icon name="Info" size={20} className="text-purple-600" />
                     {result.tiedTop ? 'Ваши ведущие архетипы' : 'Ваш топ-3 архетипов'}
                   </h3>
+                  {result.allEqual && (
+                    <div className="flex items-start gap-2 rounded-xl border border-purple-200 bg-purple-50 p-3 text-sm text-purple-700">
+                      <Icon name="Sparkles" size={18} className="mt-0.5 shrink-0" />
+                      <span>
+                        У вас редкое сочетание всех архетипов — они выражены поровну.
+                      </span>
+                    </div>
+                  )}
                   {result.top.map((t, i) => (
                     <ArchetypeTopCard
                       key={t.key}
