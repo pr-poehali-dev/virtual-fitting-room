@@ -292,20 +292,37 @@ export default function ArchetypeTest() {
                   {renderResultHeadline(result)}
                 </div>
 
+                {result.top[0] && ARCHETYPES[result.top[0].key].image && (
+                  <img
+                    src={ARCHETYPES[result.top[0].key].image}
+                    alt={result.top[0].name}
+                    className="mx-auto w-full max-w-sm rounded-xl border"
+                  />
+                )}
+
                 <div className="space-y-3">
                   <h3 className="flex items-center gap-2 font-semibold">
                     <Icon name="Info" size={20} className="text-purple-600" />
                     {result.tiedTop ? 'Ваши ведущие архетипы' : 'Ваш топ-3 архетипов'}
                   </h3>
                   {result.top.map((t) => (
-                    <div key={t.key} className="rounded-xl border p-4">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-semibold text-purple-700">{t.name}</span>
-                        <span className="text-sm text-muted-foreground">{t.percent}%</span>
+                    <div key={t.key} className="flex items-start gap-3 rounded-xl border p-4">
+                      {ARCHETYPES[t.key].image && (
+                        <img
+                          src={ARCHETYPES[t.key].image}
+                          alt={t.name}
+                          className="h-16 w-16 shrink-0 rounded-lg border object-cover"
+                        />
+                      )}
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-semibold text-purple-700">{t.name}</span>
+                          <span className="text-sm text-muted-foreground">{t.percent}%</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {ARCHETYPES[t.key].description}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {ARCHETYPES[t.key].description}
-                      </p>
                     </div>
                   ))}
                 </div>

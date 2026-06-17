@@ -34,6 +34,7 @@ export interface ArchetypeInfo {
   key: ArchetypeKey;
   name: string;
   description: string;
+  image?: string;
 }
 
 export const TOTAL_QUESTIONS = 36;
@@ -60,72 +61,96 @@ export const ARCHETYPES: Record<ArchetypeKey, ArchetypeInfo> = {
     name: 'Невинный',
     description:
       'Вы видите мир через призму доверия и оптимизма. Ваша вера в лучшее вдохновляет окружающих и помогает сохранять надежду даже в трудные времена.',
+    image:
+      'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/af103178-5f4f-4751-9bb8-8090cefdeb4d.jpg',
   },
   explorer: {
     key: 'explorer',
     name: 'Искатель',
     description:
       'Вами движет жажда открытий и стремление к свободе. Вы не боитесь выходить из зоны комфорта и всегда ищете новый опыт и более глубокое понимание себя.',
+    image:
+      'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/7eed0118-6b10-4d47-9829-4c8b60b2d891.jpg',
   },
   sage: {
     key: 'sage',
     name: 'Мудрец',
     description:
       'Вы цените знание и истину. Ваша способность анализировать, видеть суть и делиться мудростью делает вас ценным советником и наставником.',
+    image:
+      'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/e33b7077-9964-45e4-b5b7-7f5c12562e89.jpg',
   },
   hero: {
     key: 'hero',
     name: 'Герой',
     description:
       'Вы обладаете решительностью и мужеством. Вы готовы преодолевать любые препятствия ради достижения цели и защиты тех, кто вам дорог.',
+    image:
+      'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/27c9e7ca-3d75-4749-a8bd-5d5f020331c7.jpg',
   },
   rebel: {
     key: 'rebel',
     name: 'Бунтарь',
     description:
       'Вы не принимаете несправедливость и готовы бросить вызов устоявшимся нормам. Ваша энергия направлена на разрушение старого и создание нового, более честного порядка.',
+    image:
+      'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/1297bfdb-6dc1-4c32-9c50-f92e6ecb4b26.jpg',
   },
   magician: {
     key: 'magician',
     name: 'Маг',
     description:
       'Вы умеете видеть скрытые связи и трансформировать реальность. Ваша интуиция и вера в чудо помогают находить неожиданные решения и вдохновлять окружающих.',
+    image:
+      'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/fdeaa55c-6430-44d9-bfc9-a4f0e0905e48.png',
   },
   everyman: {
     key: 'everyman',
     name: 'Славный малый',
     description:
       'Вы цените равенство, дружбу и принадлежность. Люди тянутся к вам за вашу искренность, эмпатию и умение быть надёжным другом.',
+    image:
+      'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/3e070bb4-6ad1-427e-b59e-9015993e792f.jpg',
   },
   lover: {
     key: 'lover',
     name: 'Любовник',
     description:
       'Вы живёте страстями и чувствами. Красота, близость и эмоциональная глубина — движущие силы вашей жизни. Вы умеете ценить прекрасное.',
+    image:
+      'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/dc517426-c2c3-48a2-bd22-e3d5683c96c3.jpg',
   },
   jester: {
     key: 'jester',
     name: 'Шут',
     description:
       'Вы несёте в мир радость, юмор и лёгкость. Ваша способность видеть смешное и наслаждаться моментом делает вас душой компании и источником позитива.',
+    image:
+      'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/887c4ad3-ee49-4c5f-adae-2fd7f6d087c0.jpg',
   },
   caregiver: {
     key: 'caregiver',
     name: 'Заботливый',
     description:
       'Вами движет желание помогать и оберегать. Вы щедры, внимательны к потребностям других и находите смысл в том, чтобы делать жизнь близких лучше.',
+    image:
+      'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/6aedaa19-482e-40a4-9772-980015005839.jpg',
   },
   creator: {
     key: 'creator',
     name: 'Творец',
     description:
       'Вы рождены создавать. Ваше воображение и стремление к самовыражению помогают вам воплощать идеи в реальность и оставлять уникальный след в мире.',
+    image:
+      'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/a254ca14-bf98-41d1-9721-b12e4d15049b.jpg',
   },
   ruler: {
     key: 'ruler',
     name: 'Правитель',
     description:
       'Вы стремитесь к порядку, стабильности и влиянию. Ваша способность организовывать, управлять и нести ответственность делает вас прирождённым лидером.',
+    image:
+      'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/fa71346a-b957-4c82-bb68-38b39b8b3391.jpg',
   },
 };
 

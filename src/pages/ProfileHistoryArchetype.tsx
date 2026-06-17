@@ -8,6 +8,7 @@ import ProfileMenu from '@/components/ProfileMenu';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { ARCHETYPES, ArchetypeKey } from '@/data/archetypeTest';
 
 const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
 
@@ -128,9 +129,17 @@ export default function ProfileHistoryArchetype() {
                     >
                       <CardContent className="p-5">
                         <div className="flex items-start justify-between gap-2 mb-3">
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-100">
-                            <Icon name="Sparkles" size={24} className="text-purple-700" />
-                          </div>
+                          {ARCHETYPES[item.top_archetype as ArchetypeKey]?.image ? (
+                            <img
+                              src={ARCHETYPES[item.top_archetype as ArchetypeKey].image}
+                              alt={item.top_archetype_name}
+                              className="h-12 w-12 shrink-0 rounded-xl border object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-100">
+                              <Icon name="Sparkles" size={24} className="text-purple-700" />
+                            </div>
+                          )}
                           <Button
                             size="sm"
                             variant="ghost"
