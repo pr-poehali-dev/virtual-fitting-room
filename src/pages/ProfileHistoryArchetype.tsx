@@ -8,7 +8,30 @@ import ProfileMenu from '@/components/ProfileMenu';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { ARCHETYPES, ArchetypeKey } from '@/data/archetypeTest';
+import { ARCHETYPES, ArchetypeKey, ARCHETYPE_ORDER } from '@/data/archetypeTest';
+
+// Имена ведущих архетипов (с максимальным баллом) через «, » и «и»
+function leadersTitle(scores: unknown, fallback: string): string {
+  let obj: Record<string, number> = {};
+  if (scores) {
+    obj =
+      typeof scores === 'string'
+        ? (JSON.parse(scores) as Record<string, number>)
+        : (scores as Record<string, number>);
+  }
+  const entries = ARCHETYPE_ORDER.map((key) => ({
+    name: ARCHETYPES[key].name,
+    score: obj[key] || 0,
+  }));
+  const max = Math.max(...entries.map((e) => e.score));
+  if (max <= 0) return fallback;
+  const names = entries.filter((e) => e.score === max).map((e) => e.name);
+  return names.reduce(
+    (acc, n, i, arr) =>
+      i === 0 ? n : i === arr.length - 1 ? `${acc} и ${n}` : `${acc}, ${n}`,
+    '',
+  );
+}
 
 const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
 
@@ -155,7 +178,7 @@ export default function ProfileHistoryArchetype() {
                           </Button>
                         </div>
                         <h3 className="font-semibold text-lg text-purple-700">
-                          {item.top_archetype_name}
+                          {leadersTitle(item.scores, item.top_archetype_name)}
                         </h3>
                         <p className="text-sm text-muted-foreground mt-1">{item.user_name}</p>
                         {item.top_names && (

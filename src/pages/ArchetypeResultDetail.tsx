@@ -126,6 +126,8 @@ export default function ArchetypeResultDetail() {
 
   const maxScore = sorted[0]?.score ?? 0;
   const tied = sorted.filter((s) => s.score === maxScore && maxScore > 0);
+  // Ведущие — архетипы с максимальным баллом (минимум один)
+  const leaders = tied.length > 0 ? tied : sorted.slice(0, 1);
   const thirdScore = sorted[2]?.score ?? 0;
   const top = sorted.filter((s, i) => i < 3 || s.score === thirdScore);
   const allEqual =
@@ -181,14 +183,6 @@ export default function ArchetypeResultDetail() {
                 )}
               </div>
 
-              {top[0] && ARCHETYPES[top[0].key]?.image && (
-                <img
-                  src={ARCHETYPES[top[0].key].image}
-                  alt={top[0].name}
-                  className="mx-auto w-full max-w-sm rounded-xl border"
-                />
-              )}
-
               <div className="space-y-3">
                 <h3 className="flex items-center gap-2 font-semibold">
                   <Icon name="Info" size={20} className="text-purple-600" />
@@ -203,7 +197,7 @@ export default function ArchetypeResultDetail() {
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-3">
-                  {top.map((t) => (
+                  {leaders.map((t) => (
                     <div key={t.key} className="rounded-xl border p-2 text-center">
                       {ARCHETYPES[t.key]?.image && (
                         <img

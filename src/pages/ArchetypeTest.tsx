@@ -308,14 +308,6 @@ export default function ArchetypeTest() {
                   {renderResultHeadline(result)}
                 </div>
 
-                {result.top[0] && ARCHETYPES[result.top[0].key].image && (
-                  <img
-                    src={ARCHETYPES[result.top[0].key].image}
-                    alt={result.top[0].name}
-                    className="mx-auto w-full max-w-sm rounded-xl border"
-                  />
-                )}
-
                 <div className="space-y-3">
                   <h3 className="flex items-center gap-2 font-semibold">
                     <Icon name="Info" size={20} className="text-purple-600" />
@@ -330,19 +322,21 @@ export default function ArchetypeTest() {
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-3">
-                    {result.top.map((t) => (
-                      <div key={t.key} className="rounded-xl border p-2 text-center">
-                        {ARCHETYPES[t.key]?.image && (
-                          <img
-                            src={ARCHETYPES[t.key].image}
-                            alt={t.name}
-                            className="mb-2 aspect-square w-full rounded-lg border object-cover"
-                          />
-                        )}
-                        <div className="text-sm font-semibold text-purple-700">{t.name}</div>
-                        <div className="text-xs text-muted-foreground">{t.percent}%</div>
-                      </div>
-                    ))}
+                    {result.scores
+                      .filter((s) => s.score === result.scores[0].score)
+                      .map((t) => (
+                        <div key={t.key} className="rounded-xl border p-2 text-center">
+                          {ARCHETYPES[t.key]?.image && (
+                            <img
+                              src={ARCHETYPES[t.key].image}
+                              alt={t.name}
+                              className="mb-2 aspect-square w-full rounded-lg border object-cover"
+                            />
+                          )}
+                          <div className="text-sm font-semibold text-purple-700">{t.name}</div>
+                          <div className="text-xs text-muted-foreground">{t.percent}%</div>
+                        </div>
+                      ))}
                   </div>
                   {result.top.map((t, i) => (
                     <ArchetypeTopCard
