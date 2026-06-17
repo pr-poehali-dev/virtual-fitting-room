@@ -5,6 +5,7 @@ import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
+import ArchetypeTopCard from '@/components/ArchetypeTopCard';
 import { ARCHETYPES, ARCHETYPE_ORDER, ArchetypeKey, TOTAL_QUESTIONS } from '@/data/archetypeTest';
 
 const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
@@ -178,25 +179,14 @@ export default function ArchetypeResultDetail() {
                   <Icon name="Info" size={20} className="text-purple-600" />
                   {tied.length >= 2 ? 'Ваши ведущие архетипы' : 'Ваш топ-3 архетипов'}
                 </h3>
-                {top.map((t) => (
-                  <div key={t.key} className="flex items-start gap-3 rounded-xl border p-4">
-                    {ARCHETYPES[t.key].image && (
-                      <img
-                        src={ARCHETYPES[t.key].image}
-                        alt={t.name}
-                        className="h-16 w-16 shrink-0 rounded-lg border object-cover"
-                      />
-                    )}
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-semibold text-purple-700">{t.name}</span>
-                        <span className="text-sm text-muted-foreground">{t.percent}%</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {ARCHETYPES[t.key].description}
-                      </p>
-                    </div>
-                  </div>
+                {top.map((t, i) => (
+                  <ArchetypeTopCard
+                    key={t.key}
+                    archetypeKey={t.key}
+                    name={t.name}
+                    percent={t.percent}
+                    index={i}
+                  />
                 ))}
               </div>
 

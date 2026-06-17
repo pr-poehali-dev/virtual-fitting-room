@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import ArchetypeTopCard from '@/components/ArchetypeTopCard';
 import { useAuth } from '@/context/AuthContext';
 import { useData } from '@/context/DataContext';
 import {
@@ -305,25 +306,14 @@ export default function ArchetypeTest() {
                     <Icon name="Info" size={20} className="text-purple-600" />
                     {result.tiedTop ? 'Ваши ведущие архетипы' : 'Ваш топ-3 архетипов'}
                   </h3>
-                  {result.top.map((t) => (
-                    <div key={t.key} className="flex items-start gap-3 rounded-xl border p-4">
-                      {ARCHETYPES[t.key].image && (
-                        <img
-                          src={ARCHETYPES[t.key].image}
-                          alt={t.name}
-                          className="h-16 w-16 shrink-0 rounded-lg border object-cover"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-semibold text-purple-700">{t.name}</span>
-                          <span className="text-sm text-muted-foreground">{t.percent}%</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {ARCHETYPES[t.key].description}
-                        </p>
-                      </div>
-                    </div>
+                  {result.top.map((t, i) => (
+                    <ArchetypeTopCard
+                      key={t.key}
+                      archetypeKey={t.key}
+                      name={t.name}
+                      percent={t.percent}
+                      index={i}
+                    />
                   ))}
                 </div>
 
