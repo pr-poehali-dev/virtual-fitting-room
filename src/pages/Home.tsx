@@ -75,7 +75,7 @@ const Home = () => {
       description:
         "Бесплатный тест: ответьте на 36 вопросов и узнайте свой ведущий архетип из 12 по системе Карла Юнга",
       image:
-        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/dcfe3efd-ef57-4feb-b9c0-7d3dcda6d302.jpg",
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/d16fa4cd-bace-430f-81dc-1652d9dc85ce.png",
       icon: "Brain",
       path: "/archetype-test",
     },
