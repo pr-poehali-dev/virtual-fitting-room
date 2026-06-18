@@ -115,7 +115,7 @@ const Home = () => {
                 className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 lg:mr-auto flex items-center hover:opacity-80 transition-opacity"
               >
                 <img
-                  src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/56a723da-c764-4c1d-86b2-3e18cafa66d1.svg"
+                  src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/0e895228-ee30-4440-9da9-38571eff51ec.svg"
                   alt="StyleSelect"
                   className="h-8 md:h-10"
                 />
