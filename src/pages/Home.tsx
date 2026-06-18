@@ -113,7 +113,7 @@ const Home = () => {
                 >
                   <Icon name="Menu" size={24} className="text-white" />
                 </button>
-                {user && <HeaderBalance />}
+                {user && <HeaderBalance variant="light" />}
               </div>
 
               <Link
@@ -130,7 +130,7 @@ const Home = () => {
                 {user ? (
                   <>
                     <div className="hidden lg:block">
-                      <HeaderBalance />
+                      <HeaderBalance variant="light" />
                     </div>
                     <div className="hidden lg:flex items-center gap-2">
                       <Avatar className="h-8 w-8">

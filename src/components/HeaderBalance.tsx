@@ -1,14 +1,23 @@
 import Icon from '@/components/ui/icon';
 import { useBalance } from '@/context/BalanceContext';
 
-export default function HeaderBalance() {
+interface HeaderBalanceProps {
+  variant?: 'default' | 'light';
+}
+
+export default function HeaderBalance({ variant = 'default' }: HeaderBalanceProps) {
   const { balanceInfo } = useBalance();
 
   if (!balanceInfo) return null;
 
+  const isLight = variant === 'light';
+  const iconClass = isLight ? 'text-white' : 'text-muted-foreground';
+  const labelClass = isLight ? 'text-white' : 'text-muted-foreground';
+  const valueClass = isLight ? 'text-white' : '';
+
   if (balanceInfo.unlimited_access) {
     return (
-      <div className="flex items-center gap-1.5 text-primary">
+      <div className={`flex items-center gap-1.5 ${isLight ? 'text-white' : 'text-primary'}`}>
         <Icon name="Infinity" size={20} className="hidden lg:inline" />
         <Icon name="Infinity" size={18} className="lg:hidden" />
         <span className="text-sm font-medium hidden lg:inline">Безлимит</span>
@@ -18,11 +27,11 @@ export default function HeaderBalance() {
 
   return (
     <div className="flex items-center gap-1.5">
-      <Icon name="Wallet" size={20} className="hidden lg:inline text-muted-foreground" />
-      <Icon name="Wallet" size={18} className="lg:hidden text-muted-foreground" />
+      <Icon name="Wallet" size={20} className={`hidden lg:inline ${iconClass}`} />
+      <Icon name="Wallet" size={18} className={`lg:hidden ${iconClass}`} />
       <div className="flex items-center gap-1">
-        <span className="text-sm text-muted-foreground hidden lg:inline">Баланс</span>
-        <span className="text-sm font-medium">{balanceInfo.balance.toFixed(0)} ₽</span>
+        <span className={`text-sm hidden lg:inline ${labelClass}`}>Баланс</span>
+        <span className={`text-sm font-medium ${valueClass}`}>{balanceInfo.balance.toFixed(0)} ₽</span>
       </div>
     </div>
   );
