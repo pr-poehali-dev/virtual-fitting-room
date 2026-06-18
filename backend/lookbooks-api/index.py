@@ -18,6 +18,31 @@ def get_db_connection():
         dsn += '?options=-c%20search_path%3Dt_p29007832_virtual_fitting_room'
     return psycopg2.connect(dsn)
 
+def extract_s3_key(photo_url: str, bucket_name: str) -> Optional[str]:
+    '''
+    Extract S3 object key from a stored photo URL, supporting both URL formats:
+      1) https://storage.yandexcloud.net/{bucket}/{key}
+      2) https://{bucket}.storage.yandexcloud.net/{key}
+    Works for nested paths too (e.g. .../lookbooks/{user}/capsule/file.jpg).
+    Returns the key or None if URL does not belong to our bucket.
+    '''
+    if not photo_url:
+        return None
+
+    path_style_prefix = f'https://storage.yandexcloud.net/{bucket_name}/'
+    if photo_url.startswith(path_style_prefix):
+        return photo_url[len(path_style_prefix):]
+
+    virtual_style_prefix = f'https://{bucket_name}.storage.yandexcloud.net/'
+    if photo_url.startswith(virtual_style_prefix):
+        return photo_url[len(virtual_style_prefix):]
+
+    cdn_marker = '/bucket/'
+    if 'cdn.poehali.dev' in photo_url and cdn_marker in photo_url:
+        return photo_url.split(cdn_marker, 1)[1]
+
+    return None
+
 def get_fitting_prefix(model_used: str) -> str:
     '''Get fitting room prefix based on model name'''
     if model_used == 'replicate':
@@ -526,10 +551,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             # Delete from S3 if photo is NOT in history AND NOT in any other lookbook
             if removed_photos:
                 s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
-                s3_url_prefix = f'https://{s3_bucket_name}.storage.yandexcloud.net/'
                 
                 for photo_url in removed_photos:
-                    if not photo_url.startswith(s3_url_prefix):
+                    s3_key = extract_s3_key(photo_url, s3_bucket_name)
+                    if not s3_key:
                         continue
                     
                     # Check if in history (PUT method)
@@ -549,8 +574,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     # Delete from S3 only if NOT in history and NOT in other lookbooks
                     if history_count == 0 and other_lookbooks_count == 0:
                         try:
-                            s3_key = photo_url.replace(s3_url_prefix, '')
-                            
                             s3_client = boto3.client(
                                 's3',
                                 endpoint_url='https://storage.yandexcloud.net',
@@ -662,10 +685,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             # Delete from S3 if photo is NOT in history AND NOT in any other lookbook
             if photos_to_check:
                 s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
-                s3_url_prefix = f'https://{s3_bucket_name}.storage.yandexcloud.net/'
                 
                 for photo_url in photos_to_check:
-                    if not photo_url.startswith(s3_url_prefix):
+                    s3_key = extract_s3_key(photo_url, s3_bucket_name)
+                    if not s3_key:
                         continue
                     
                     # Check if in history (DELETE method)
@@ -685,8 +708,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     # Delete from S3 only if NOT in history and NOT in other lookbooks
                     if history_count == 0 and other_lookbooks_count == 0:
                         try:
-                            s3_key = photo_url.replace(s3_url_prefix, '')
-                            
                             s3_client = boto3.client(
                                 's3',
                                 endpoint_url='https://storage.yandexcloud.net',
