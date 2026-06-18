@@ -7,11 +7,14 @@ import Icon from "@/components/ui/icon";
 import { useAuth } from "@/context/AuthContext";
 import Footer from "@/components/Footer";
 import CookieBanner from "@/components/CookieBanner";
+import HeaderBalance from "@/components/HeaderBalance";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const Home = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const userInitial = user?.name?.charAt(0).toUpperCase() || "U";
 
   const handleLogout = () => {
     logout();
@@ -102,13 +105,16 @@ const Home = () => {
         <header className="border-b border-gray-700/50 sticky top-0 bg-gray-900/50 backdrop-blur z-40">
           <div className="container mx-auto px-4 py-4">
             <nav className="flex items-center justify-between lg:justify-end">
-              <button
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="lg:hidden p-2 hover:bg-gray-700 rounded-lg transition-colors z-[60]"
-                aria-label="Toggle menu"
-              >
-                <Icon name="Menu" size={24} className="text-white" />
-              </button>
+              <div className="flex items-center gap-2 lg:hidden">
+                <button
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="p-2 hover:bg-gray-700 rounded-lg transition-colors z-[60]"
+                  aria-label="Toggle menu"
+                >
+                  <Icon name="Menu" size={24} className="text-white" />
+                </button>
+                {user && <HeaderBalance />}
+              </div>
 
               <Link
                 to="/"
@@ -123,9 +129,22 @@ const Home = () => {
               <div className="flex items-center gap-2">
                 {user ? (
                   <>
-                    <span className="text-sm text-gray-300 hidden lg:inline">
-                      {user.name}
-                    </span>
+                    <div className="hidden lg:block">
+                      <HeaderBalance />
+                    </div>
+                    <div className="hidden lg:flex items-center gap-2">
+                      <Avatar className="h-8 w-8">
+                        {user.avatar_url ? (
+                          <AvatarImage src={user.avatar_url} alt={user.name} />
+                        ) : null}
+                        <AvatarFallback className="bg-purple-100 text-purple-700 text-sm font-medium">
+                          {userInitial}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm text-gray-300">
+                        {user.name}
+                      </span>
+                    </div>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -137,10 +156,17 @@ const Home = () => {
                     </Button>
                     <button
                       onClick={() => navigate("/profile")}
-                      className="lg:hidden p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                      className="lg:hidden p-1 hover:bg-gray-700 rounded-lg transition-colors"
                       aria-label="Profile"
                     >
-                      <Icon name="User" size={24} className="text-white" />
+                      <Avatar className="h-8 w-8">
+                        {user.avatar_url ? (
+                          <AvatarImage src={user.avatar_url} alt={user.name} />
+                        ) : null}
+                        <AvatarFallback className="bg-purple-100 text-purple-700 text-sm font-medium">
+                          {userInitial}
+                        </AvatarFallback>
+                      </Avatar>
                     </button>
                     <Button
                       variant="outline"
