@@ -41,6 +41,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import RegistrationSuccess from "./pages/RegistrationSuccess";
+import VkCallback from "./pages/VkCallback";
 import ReplicateTryOn from "./pages/ReplicateTryOn";
 import FreeGeneration from "./pages/FreeGeneration";
 import StyleAnalysis from "./pages/StyleAnalysis";
@@ -143,6 +144,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/registration-success" element={<RegistrationSuccess />} />
+            <Route path="/auth/vk/callback" element={<VkCallback />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/offer" element={<Offer />} />
             <Route path="/contacts" element={<Contacts />} />

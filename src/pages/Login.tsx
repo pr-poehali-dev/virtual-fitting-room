@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import Captcha from '@/components/ui/captcha';
+import VkAuthButton from '@/components/VkAuthButton';
 
 const RESEND_API = 'https://functions.poehali.dev/cf48d1a6-141c-4ecb-befe-6203d8292d89';
 
@@ -127,6 +128,12 @@ export default function Login() {
                 {isResending ? 'Отправка...' : 'Отправить письмо подтверждения повторно'}
               </Button>
             )}
+            <div className="my-4 flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted-foreground">или</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <VkAuthButton className="flex justify-center" />
             <div className="mt-4 text-center text-sm text-muted-foreground">
               Нет аккаунта?{' '}
               <Link to="/register" className="text-primary hover:underline">

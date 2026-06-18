@@ -1,0 +1,19 @@
+{
+  "tests": [
+    {
+      "name": "CORS preflight OPTIONS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Missing access_token returns 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "vk_login"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

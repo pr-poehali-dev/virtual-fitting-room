@@ -13,6 +13,7 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
+  vkLogin: (accessToken: string, extra?: { email?: string; phone?: string }) => Promise<void>;
   logout: () => void;
   updateUser: (userData: User) => void;
   isLoading: boolean;
@@ -21,6 +22,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AUTH_API = 'https://functions.poehali.dev/589c58eb-91b4-4f2a-923c-6a91ed722a82';
+const VK_AUTH_API = 'https://functions.poehali.dev/1caa31ab-9a11-4b09-9be1-57f9d35f0973';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -90,6 +92,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSessionChecked(true);
   };
 
+  const vkLogin = async (accessToken: string, extra?: { email?: string; phone?: string }) => {
+    const response = await fetch(VK_AUTH_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ action: 'vk_login', access_token: accessToken, ...extra })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'VK login failed');
+    }
+
+    if (data.session_token) {
+      localStorage.setItem('session_token', data.session_token);
+    }
+
+    setUser(data.user);
+    setSessionChecked(true);
+  };
+
   const register = async (email: string, password: string, name: string) => {
     const response = await fetch(AUTH_API, {
       method: 'POST',
@@ -126,7 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, updateUser, isLoading }}>
+    <AuthContext.Provider value={{ user, login, register, vkLogin, logout, updateUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import Captcha from '@/components/ui/captcha';
 import Icon from '@/components/ui/icon';
+import VkAuthButton from '@/components/VkAuthButton';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -203,6 +204,22 @@ export default function Register() {
                 {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
               </Button>
             </form>
+            <div className="my-4 flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted-foreground">или</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <VkAuthButton className="flex justify-center" />
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              Входя через ВКонтакте, вы соглашаетесь с{' '}
+              <Link to="/privacy" target="_blank" className="text-purple-600 hover:underline">
+                Политикой конфиденциальности
+              </Link>{' '}
+              и{' '}
+              <Link to="/personal-data" target="_blank" className="text-purple-600 hover:underline">
+                обработкой персональных данных
+              </Link>
+            </p>
             <div className="mt-4 text-center text-sm text-muted-foreground">
               Уже есть аккаунт?{' '}
               <Link to="/login" className="text-primary hover:underline">
