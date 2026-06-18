@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import AdminMenu from '@/components/AdminMenu';
@@ -298,19 +299,29 @@ export default function AdminUsers() {
                       {users.map((user) => (
                         <tr key={user.id} className="border-b hover:bg-gray-50">
                           <td className="px-4 py-3 text-sm">
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-2">
-                                {user.is_vk && (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
-                                    <Icon name="MessageCircle" size={12} />
-                                    VK
-                                  </span>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-9 w-9 shrink-0">
+                                {user.avatar_url ? (
+                                  <AvatarImage src={user.avatar_url} alt={user.name} />
+                                ) : null}
+                                <AvatarFallback className="bg-purple-100 text-purple-700 text-sm font-medium">
+                                  {(user.name?.trim()?.charAt(0) || '?').toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                  {user.is_vk && (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                      <Icon name="MessageCircle" size={12} />
+                                      VK
+                                    </span>
+                                  )}
+                                  <span>{user.email || <span className="text-gray-400">— без email</span>}</span>
+                                </div>
+                                {user.phone && (
+                                  <span className="text-xs text-gray-500">{user.phone}</span>
                                 )}
-                                <span>{user.email || <span className="text-gray-400">— без email</span>}</span>
                               </div>
-                              {user.phone && (
-                                <span className="text-xs text-gray-500">{user.phone}</span>
-                              )}
                             </div>
                           </td>
                           <td className="px-4 py-3 text-sm">{user.name}</td>
