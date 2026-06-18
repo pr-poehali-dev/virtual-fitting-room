@@ -132,7 +132,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     try:
         cursor.execute(
-            "SELECT id, email, name, created_at, email_verified, balance, unlimited_access FROM users WHERE vk_id = %s",
+            "SELECT id, email, name, created_at, email_verified, balance, unlimited_access, avatar_url FROM users WHERE vk_id = %s",
             (vk_id,)
         )
         user = cursor.fetchone()
@@ -150,7 +150,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 """
                 INSERT INTO users (email, password_hash, name, email_verified, vk_id, oauth_provider, phone, avatar_url)
                 VALUES (%s, %s, %s, true, %s, 'vk', %s, %s)
-                RETURNING id, email, name, created_at, email_verified, balance, unlimited_access
+                RETURNING id, email, name, created_at, email_verified, balance, unlimited_access, avatar_url
                 """,
                 (placeholder_email, random_hash, full_name, vk_id, vk_phone, avatar_url)
             )
@@ -183,7 +183,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'created_at': user['created_at'].isoformat() if user.get('created_at') else None,
                 'email_verified': bool(user.get('email_verified', True)),
                 'balance': float(user['balance']) if user.get('balance') else 0.0,
-                'unlimited_access': bool(user.get('unlimited_access', False))
+                'unlimited_access': bool(user.get('unlimited_access', False)),
+                'avatar_url': user.get('avatar_url') or ''
             }
         }, event, cookie=cookie_value)
     finally:

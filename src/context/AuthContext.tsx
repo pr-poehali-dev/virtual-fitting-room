@@ -7,6 +7,7 @@ interface User {
   email_verified?: boolean;
   balance?: number;
   unlimited_access?: boolean;
+  avatar_url?: string;
 }
 
 interface AuthContextType {

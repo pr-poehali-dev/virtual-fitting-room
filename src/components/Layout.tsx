@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import CookieBanner from "@/components/CookieBanner";
 import Sidebar from "@/components/Sidebar";
 import HeaderBalance from "@/components/HeaderBalance";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -18,6 +19,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     logout();
     navigate("/");
   };
+
+  const userInitial = (user?.name?.trim()?.charAt(0) || "?").toUpperCase();
 
   return (
     <div className="min-h-screen bg-background">
@@ -57,9 +60,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <div className="hidden lg:block">
                       <HeaderBalance />
                     </div>
-                    <span className="text-sm text-muted-foreground hidden lg:inline">
-                      {user.name}
-                    </span>
+                    <div className="hidden lg:flex items-center gap-2">
+                      <Avatar className="h-8 w-8">
+                        {user.avatar_url ? (
+                          <AvatarImage src={user.avatar_url} alt={user.name} />
+                        ) : null}
+                        <AvatarFallback className="bg-purple-100 text-purple-700 text-sm font-medium">
+                          {userInitial}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm text-muted-foreground">
+                        {user.name}
+                      </span>
+                    </div>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -76,10 +89,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </Button>
                     <button
                       onClick={() => navigate("/profile")}
-                      className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
+                      className="lg:hidden p-1 hover:bg-muted rounded-lg transition-colors"
                       aria-label="Profile"
                     >
-                      <Icon name="User" size={24} />
+                      <Avatar className="h-8 w-8">
+                        {user.avatar_url ? (
+                          <AvatarImage src={user.avatar_url} alt={user.name} />
+                        ) : null}
+                        <AvatarFallback className="bg-purple-100 text-purple-700 text-sm font-medium">
+                          {userInitial}
+                        </AvatarFallback>
+                      </Avatar>
                     </button>
                     <Button
                       variant="outline"

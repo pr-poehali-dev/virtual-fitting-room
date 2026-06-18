@@ -438,7 +438,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             # Get user with password hash
             cursor.execute(
-                "SELECT id, email, name, created_at, email_verified, password_hash, balance, unlimited_access FROM users WHERE email = %s",
+                "SELECT id, email, name, created_at, email_verified, password_hash, balance, unlimited_access, avatar_url FROM users WHERE email = %s",
                 (email,)
             )
             
@@ -545,7 +545,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'created_at': user['created_at'].isoformat(),
                         'email_verified': user['email_verified'],
                         'balance': float(user['balance']) if user.get('balance') else 0.0,
-                        'unlimited_access': bool(user.get('unlimited_access', False))
+                        'unlimited_access': bool(user.get('unlimited_access', False)),
+                        'avatar_url': user.get('avatar_url') or ''
                     }
                 })
             }
@@ -633,7 +634,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             # Get user data
             cursor.execute(
-                "SELECT id, email, name, created_at, email_verified, balance, unlimited_access FROM users WHERE id = %s",
+                "SELECT id, email, name, created_at, email_verified, balance, unlimited_access, avatar_url FROM users WHERE id = %s",
                 (user_id,)
             )
             
@@ -665,12 +666,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'session_token': session_token,
                     'user': {
                         'id': str(user['id']),
-                        'email': user['email'],
+                        'email': '' if (isinstance(user['email'], str) and user['email'].endswith('@vk.local')) else user['email'],
                         'name': user['name'],
                         'created_at': user['created_at'].isoformat(),
                         'email_verified': user['email_verified'],
                         'balance': float(user['balance']) if user.get('balance') else 0.0,
-                        'unlimited_access': bool(user.get('unlimited_access', False))
+                        'unlimited_access': bool(user.get('unlimited_access', False)),
+                        'avatar_url': user.get('avatar_url') or ''
                     }
                 })
             }
