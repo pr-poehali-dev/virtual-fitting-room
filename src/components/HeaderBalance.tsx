@@ -11,13 +11,13 @@ export default function HeaderBalance({ variant = 'default' }: HeaderBalanceProp
   if (!balanceInfo) return null;
 
   const isLight = variant === 'light';
-  const iconClass = isLight ? 'text-white' : 'text-muted-foreground';
-  const labelClass = isLight ? 'text-white' : 'text-muted-foreground';
-  const valueClass = isLight ? 'text-white' : '';
+  const iconClass = isLight ? 'text-purple-300' : 'text-muted-foreground';
+  const labelClass = isLight ? 'text-purple-300' : 'text-muted-foreground';
+  const valueClass = isLight ? 'text-purple-300' : '';
 
   if (balanceInfo.unlimited_access) {
     return (
-      <div className={`flex items-center gap-1.5 ${isLight ? 'text-white' : 'text-primary'}`}>
+      <div className={`flex items-center gap-1.5 ${isLight ? 'text-purple-300' : 'text-primary'}`}>
         <Icon name="Infinity" size={20} className="hidden lg:inline" />
         <Icon name="Infinity" size={18} className="lg:hidden" />
         <span className="text-sm font-medium hidden lg:inline">Безлимит</span>
