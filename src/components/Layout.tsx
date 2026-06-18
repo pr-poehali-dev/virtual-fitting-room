@@ -46,7 +46,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 lg:mr-auto flex items-center hover:opacity-80 transition-opacity"
               >
                 <img
-                  src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/1e32b38b-7801-4485-8b11-5e21ee46e348.svg"
+                  src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/4c377f97-3905-40e7-a1ec-d23bf5a6e3bc.svg"
                   alt="Virtual Fitting"
                   className="h-8 md:h-10"
                 />
