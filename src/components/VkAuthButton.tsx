@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 
 const VK_APP_ID = 54642627;
 const VK_REDIRECT_URL = 'https://fitting-room.ru/auth/vk/callback';
-const VK_SDK_SRC = 'https://unpkg.com/@vkid/sdk@^3.0.0/dist-sdk/umd/index.js';
+const VK_SDK_SRC = 'https://unpkg.com/@vkid/sdk@^2.0.0/dist-sdk/umd/index.js';
 
 interface VkExchangeData {
   access_token: string;
@@ -112,8 +112,8 @@ const VkAuthButton = ({ className = '' }: VkAuthButtonProps) => {
               });
           });
       })
-      .catch(() => {
-        /* SDK не загрузился — кнопка просто не появится */
+      .catch((error) => {
+        console.error('VK ID SDK не загрузился:', error);
       });
 
     return () => {
