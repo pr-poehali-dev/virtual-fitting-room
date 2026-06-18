@@ -58,11 +58,15 @@ const EMAIL_TEMPLATES: Record<EmailTemplateKey, { label: string; subject: string
 interface User {
   id: string;
   email: string;
+  raw_email?: string;
   name: string;
   balance?: number;
   free_tries_used?: number;
   unlimited_access?: boolean;
   created_at: string;
+  is_vk?: boolean;
+  phone?: string;
+  avatar_url?: string;
 }
 
 export default function AdminUsers() {
@@ -293,7 +297,22 @@ export default function AdminUsers() {
                     <tbody>
                       {users.map((user) => (
                         <tr key={user.id} className="border-b hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm">{user.email}</td>
+                          <td className="px-4 py-3 text-sm">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                {user.is_vk && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                    <Icon name="MessageCircle" size={12} />
+                                    VK
+                                  </span>
+                                )}
+                                <span>{user.email || <span className="text-gray-400">— без email</span>}</span>
+                              </div>
+                              {user.phone && (
+                                <span className="text-xs text-gray-500">{user.phone}</span>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-4 py-3 text-sm">{user.name}</td>
                           <td className="px-4 py-3 text-sm">{user.balance?.toFixed(2)} ₽</td>
                           <td className="px-4 py-3 text-sm">{user.free_tries_used || 0} / 3</td>
@@ -315,7 +334,7 @@ export default function AdminUsers() {
                               <Button
                                 size="sm"
                                 variant={user.unlimited_access ? "outline" : "default"}
-                                onClick={() => handleToggleUnlimitedAccess(user.email, user.unlimited_access || false)}
+                                onClick={() => handleToggleUnlimitedAccess(user.raw_email || user.email, user.unlimited_access || false)}
                               >
                                 {user.unlimited_access ? 'Отключить безлимит' : 'Включить безлимит'}
                               </Button>
@@ -323,7 +342,8 @@ export default function AdminUsers() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => openEmailDialog(user)}
-                                title="Отправить письмо"
+                                disabled={!user.email}
+                                title={user.email ? 'Отправить письмо' : 'Нет email — письмо отправить нельзя'}
                               >
                                 <Icon name="Mail" size={16} />
                               </Button>

@@ -803,10 +803,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             total = cursor.fetchone()['total']
             
             cursor.execute(
-                "SELECT id, email, name, balance, free_tries_used, unlimited_access, created_at FROM users ORDER BY created_at DESC LIMIT %s OFFSET %s",
+                "SELECT id, email, name, balance, free_tries_used, unlimited_access, created_at, vk_id, oauth_provider, phone, avatar_url FROM users ORDER BY created_at DESC LIMIT %s OFFSET %s",
                 (limit, offset)
             )
             users = cursor.fetchall()
+            
+            def display_email(raw):
+                if isinstance(raw, str) and raw.endswith('@vk.local'):
+                    return ''
+                return raw
             
             return {
                 'statusCode': 200,
@@ -818,12 +823,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({
                     'users': [{
                         'id': u['id'],
-                        'email': u['email'],
+                        'email': display_email(u['email']),
+                        'raw_email': u['email'],
                         'name': u['name'],
                         'balance': float(u['balance']) if u['balance'] else 0,
                         'free_tries_used': u['free_tries_used'] or 0,
                         'unlimited_access': u['unlimited_access'] or False,
-                        'created_at': u['created_at'].isoformat()
+                        'created_at': u['created_at'].isoformat(),
+                        'is_vk': bool(u.get('vk_id')),
+                        'oauth_provider': u.get('oauth_provider') or '',
+                        'phone': u.get('phone') or '',
+                        'avatar_url': u.get('avatar_url') or ''
                     } for u in users],
                     'total': total
                 })

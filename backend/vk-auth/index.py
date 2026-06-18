@@ -137,12 +137,39 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         )
         user = cursor.fetchone()
 
+        if not user and vk_email:
+            # Пользователь уже регистрировался по этому email — привязываем ВК к его аккаунту,
+            # чтобы не создавать дубль
+            cursor.execute(
+                "SELECT id, email, name, created_at, email_verified, balance, unlimited_access, avatar_url FROM users WHERE email = %s",
+                (vk_email,)
+            )
+            existing = cursor.fetchone()
+            if existing:
+                cursor.execute(
+                    """
+                    UPDATE users
+                    SET vk_id = %s,
+                        oauth_provider = COALESCE(oauth_provider, 'vk'),
+                        phone = COALESCE(%s, phone),
+                        avatar_url = COALESCE(NULLIF(%s, ''), avatar_url),
+                        email_verified = true,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s
+                    RETURNING id, email, name, created_at, email_verified, balance, unlimited_access, avatar_url
+                    """,
+                    (vk_id, vk_phone, avatar_url, existing['id'])
+                )
+                user = cursor.fetchone()
+                conn.commit()
+
         if not user:
-            placeholder_email = vk_email if vk_email else f'vk{vk_id}@vk.local'
-            cursor.execute("SELECT id FROM users WHERE email = %s", (placeholder_email,))
+            # Реальный email от ВК сохраняем как есть, иначе ставим техническую заглушку
+            new_email = vk_email if vk_email else f'vk{vk_id}@vk.local'
+            cursor.execute("SELECT id FROM users WHERE email = %s", (new_email,))
             email_conflict = cursor.fetchone()
             if email_conflict:
-                placeholder_email = f'vk{vk_id}@vk.local'
+                new_email = f'vk{vk_id}@vk.local'
 
             random_hash = bcrypt.hashpw(secrets.token_urlsafe(24).encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
@@ -152,7 +179,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 VALUES (%s, %s, %s, true, %s, 'vk', %s, %s)
                 RETURNING id, email, name, created_at, email_verified, balance, unlimited_access, avatar_url
                 """,
-                (placeholder_email, random_hash, full_name, vk_id, vk_phone, avatar_url)
+                (new_email, random_hash, full_name, vk_id, vk_phone, avatar_url)
             )
             user = cursor.fetchone()
             conn.commit()
