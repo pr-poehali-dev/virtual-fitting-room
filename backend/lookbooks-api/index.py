@@ -526,7 +526,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             # Delete from S3 if photo is NOT in history AND NOT in any other lookbook
             if removed_photos:
                 s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
-                s3_url_prefix = f'https://{s3_bucket_name}.storage.yandexcloud.net/'
+                s3_url_prefix = f'https://storage.yandexcloud.net/{s3_bucket_name}/'
                 
                 for photo_url in removed_photos:
                     if not photo_url.startswith(s3_url_prefix):
@@ -662,7 +662,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             # Delete from S3 if photo is NOT in history AND NOT in any other lookbook
             if photos_to_check:
                 s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
-                s3_url_prefix = f'https://{s3_bucket_name}.storage.yandexcloud.net/'
+                s3_url_prefix = f'https://storage.yandexcloud.net/{s3_bucket_name}/'
                 
                 for photo_url in photos_to_check:
                     if not photo_url.startswith(s3_url_prefix):
