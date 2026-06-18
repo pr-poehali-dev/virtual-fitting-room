@@ -2,63 +2,12 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-
-const VK_APP_ID = 54642627;
-const VK_REDIRECT_URL = 'https://fitting-room.ru/auth/vk/callback';
-const VK_SDK_SRC = 'https://unpkg.com/@vkid/sdk@^2.0.0/dist-sdk/umd/index.js';
-
-interface VkExchangeData {
-  access_token: string;
-  email?: string;
-  phone?: string;
-}
-
-interface VkLoginPayload {
-  code: string;
-  device_id: string;
-}
-
-interface VkOneTap {
-  render: (options: { container: HTMLElement; showAlternativeLogin: boolean }) => VkOneTap;
-  on: (event: unknown, cb: (payload: VkLoginPayload) => void) => VkOneTap;
-}
-
-interface VkIdSdk {
-  Config: { init: (config: Record<string, unknown>) => void };
-  ConfigResponseMode: { Callback: unknown };
-  ConfigSource: { LOWCODE: unknown };
-  WidgetEvents: { ERROR: unknown };
-  OneTapInternalEvents: { LOGIN_SUCCESS: unknown };
-  OneTap: new () => VkOneTap;
-  Auth: { exchangeCode: (code: string, deviceId: string) => Promise<VkExchangeData> };
-}
-
-declare global {
-  interface Window {
-    VKIDSDK?: VkIdSdk;
-  }
-}
-
-let sdkPromise: Promise<VkIdSdk> | null = null;
-
-function loadVkSdk(): Promise<VkIdSdk> {
-  if (window.VKIDSDK) return Promise.resolve(window.VKIDSDK);
-  if (sdkPromise) return sdkPromise;
-
-  sdkPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = VK_SDK_SRC;
-    script.async = true;
-    script.onload = () => {
-      if (window.VKIDSDK) resolve(window.VKIDSDK);
-      else reject(new Error('VK ID SDK не загрузился'));
-    };
-    script.onerror = () => reject(new Error('Не удалось загрузить VK ID SDK'));
-    document.head.appendChild(script);
-  });
-
-  return sdkPromise;
-}
+import {
+  loadVkSdk,
+  initVkConfig,
+  type VkExchangeData,
+  type VkLoginPayload,
+} from '@/lib/vkid';
 
 interface VkAuthButtonProps {
   className?: string;
@@ -78,13 +27,7 @@ const VkAuthButton = ({ className = '' }: VkAuthButtonProps) => {
         if (cancelled || !containerRef.current || renderedRef.current) return;
         renderedRef.current = true;
 
-        VKID.Config.init({
-          app: VK_APP_ID,
-          redirectUrl: VK_REDIRECT_URL,
-          responseMode: VKID.ConfigResponseMode.Callback,
-          source: VKID.ConfigSource.LOWCODE,
-          scope: 'email phone',
-        });
+        initVkConfig(VKID);
 
         const oneTap = new VKID.OneTap();
 
