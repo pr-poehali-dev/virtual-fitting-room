@@ -138,7 +138,7 @@ export default function ProfileSettings() {
 
   const handleDeleteAccount = async () => {
     const confirmed = window.confirm(
-      'Вы уверены, что хотите удалить аккаунт?\n\nЭто действие нельзя отменить. Все ваши данные (лукбуки, история примерок) будут удалены безвозвратно.'
+      '⚠️ ВНИМАНИЕ! Удаление аккаунта НЕОБРАТИМО.\n\nБудут НАВСЕГДА удалены ВСЕ ваши данные:\n• все генерации и образы (лукбуки)\n• вся история примерок\n• результаты тестов (Kibbe, архетипы)\n• текущий баланс и история операций\n\nВосстановить ничего будет нельзя. Продолжить?'
     );
 
     if (!confirmed) return;
@@ -321,9 +321,15 @@ export default function ProfileSettings() {
                   <CardTitle className="text-red-700">Опасная зона</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    После удаления аккаунта все ваши данные будут безвозвратно удалены. Это действие нельзя отменить.
+                  <p className="text-sm text-destructive font-semibold mb-2">
+                    Удаление аккаунта НЕОБРАТИМО удалит ВСЕ ваши данные:
                   </p>
+                  <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1 mb-4">
+                    <li>Все генерации и образы (лукбуки)</li>
+                    <li>Вся история примерок</li>
+                    <li>Результаты тестов (Kibbe, архетипы)</li>
+                    <li>Текущий баланс и история операций</li>
+                  </ul>
                   <Button 
                     variant="destructive"
                     onClick={handleDeleteAccount}

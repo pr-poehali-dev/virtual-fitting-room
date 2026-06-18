@@ -525,7 +525,7 @@ export default function Profile() {
 
   const handleDeleteAccount = async () => {
     const confirmed = window.confirm(
-      'Вы уверены, что хотите удалить аккаунт?\n\nЭто действие нельзя отменить. Все ваши данные (лукбуки, история примерок) будут удалены безвозвратно.'
+      '⚠️ ВНИМАНИЕ! Удаление аккаунта НЕОБРАТИМО.\n\nБудут НАВСЕГДА удалены ВСЕ ваши данные:\n• все генерации и образы (лукбуки)\n• вся история примерок\n• результаты тестов (Kibbe, архетипы)\n• текущий баланс и история операций\n\nВосстановить ничего будет нельзя. Продолжить?'
     );
 
     if (!confirmed) return;
@@ -1053,16 +1053,18 @@ export default function Profile() {
                   <CardContent>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Удаление аккаунта навсегда удалит все ваши данные:
+                        <p className="text-sm text-destructive font-semibold mb-2">
+                          Удаление аккаунта навсегда удалит ВСЕ ваши данные:
                         </p>
                         <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                          <li>Все лукбуки</li>
-                          <li>История примерок</li>
+                          <li>Все генерации и образы (лукбуки)</li>
+                          <li>Вся история примерок</li>
+                          <li>Результаты тестов (Kibbe, архетипы)</li>
+                          <li>Текущий баланс и история операций</li>
                           <li>Настройки профиля</li>
                         </ul>
-                        <p className="text-sm text-destructive font-medium mt-3">
-                          Это действие нельзя отменить!
+                        <p className="text-sm text-destructive font-bold mt-3">
+                          Это действие НЕОБРАТИМО — восстановить данные будет невозможно!
                         </p>
                       </div>
                       <Button

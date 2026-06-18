@@ -142,16 +142,40 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'User not found'})
             }
         
-        cursor.execute("DELETE FROM try_on_history WHERE user_id = %s", (user_id,))
-        cursor.execute("DELETE FROM lookbooks WHERE user_id = %s", (user_id,))
+        # Динамически находим все таблицы, ссылающиеся на users.id,
+        # чтобы при добавлении новых таблиц удаление не ломалось.
+        cursor.execute(
+            """
+            SELECT tc.table_name, kcu.column_name
+            FROM information_schema.table_constraints tc
+            JOIN information_schema.key_column_usage kcu
+              ON tc.constraint_name = kcu.constraint_name
+             AND tc.table_schema = kcu.table_schema
+            JOIN information_schema.constraint_column_usage ccu
+              ON ccu.constraint_name = tc.constraint_name
+             AND ccu.table_schema = tc.table_schema
+            WHERE tc.constraint_type = 'FOREIGN KEY'
+              AND tc.table_schema = 't_p29007832_virtual_fitting_room'
+              AND ccu.table_name = 'users'
+            """
+        )
+        related_tables = cursor.fetchall()
+
+        for row in related_tables:
+            table_name = row['table_name']
+            column_name = row['column_name']
+            cursor.execute(
+                'DELETE FROM "{}" WHERE "{}" = %s'.format(table_name, column_name),
+                (user_id,)
+            )
+
+        # Таблицы, привязанные к пользователю по email или без FK на users
         cursor.execute("DELETE FROM email_verifications WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM password_reset_tokens WHERE user_id = %s", (user_id,))
-        cursor.execute("DELETE FROM payment_transactions WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM nanobananapro_tasks WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM replicate_tasks WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM seedream_tasks WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM history_api_debug_log WHERE user_id = %s", (user_id,))
-        cursor.execute("DELETE FROM sessions WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM login_attempts WHERE email = (SELECT email FROM users WHERE id = %s)", (user_id,))
         cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
         
