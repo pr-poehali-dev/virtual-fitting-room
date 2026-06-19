@@ -42,6 +42,8 @@ export default function AdminGenerations() {
   const [generationHistory, setGenerationHistory] = useState<GenerationHistory[]>([]);
   const [genUserFilter, setGenUserFilter] = useState<string>('all');
   const [genModelFilter, setGenModelFilter] = useState<string>('all');
+  const [showPaid, setShowPaid] = useState(true);
+  const [showUnlimited, setShowUnlimited] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
@@ -59,6 +61,10 @@ export default function AdminGenerations() {
       fetchGenerationHistory();
     }
   }, [genUserFilter, genModelFilter, users]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [showPaid, showUnlimited]);
 
   const fetchUsers = async () => {
     try {
@@ -179,7 +185,14 @@ export default function AdminGenerations() {
     }
   };
 
-  const totalCost = generationHistory.reduce((sum, gen) => sum + (gen.cost || 0), 0);
+  const filteredHistory = generationHistory.filter((gen) => {
+    if (showPaid && showUnlimited) return true;
+    if (!showPaid && !showUnlimited) return true;
+    if (showPaid) return gen.cost > 0;
+    return gen.cost === 0;
+  });
+
+  const totalCost = filteredHistory.reduce((sum, gen) => sum + (gen.cost || 0), 0);
 
   if (isLoading) {
     return (
@@ -204,7 +217,7 @@ export default function AdminGenerations() {
               <div>
                 <h1 className="text-3xl font-bold mb-2">Генерации</h1>
                 <p className="text-muted-foreground">
-                  Всего генераций: {generationHistory.length} | Общая стоимость: {totalCost.toFixed(2)} ₽
+                  Всего генераций: {filteredHistory.length} | Общая стоимость: {totalCost.toFixed(2)} ₽
                 </p>
               </div>
               <Button
@@ -251,13 +264,33 @@ export default function AdminGenerations() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-primary cursor-pointer"
+                        checked={showPaid}
+                        onChange={(e) => setShowPaid(e.target.checked)}
+                      />
+                      За деньги
+                    </label>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-primary cursor-pointer"
+                        checked={showUnlimited}
+                        onChange={(e) => setShowUnlimited(e.target.checked)}
+                      />
+                      Безлимитные
+                    </label>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
             <div className="mb-6 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Показано {Math.min((currentPage - 1) * itemsPerPage + 1, generationHistory.length)}-{Math.min(currentPage * itemsPerPage, generationHistory.length)} из {generationHistory.length}
+                Показано {Math.min((currentPage - 1) * itemsPerPage + 1, filteredHistory.length)}-{Math.min(currentPage * itemsPerPage, filteredHistory.length)} из {filteredHistory.length}
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -269,11 +302,11 @@ export default function AdminGenerations() {
                   Назад
                 </button>
                 <span className="text-sm">
-                  Страница {currentPage} из {Math.ceil(generationHistory.length / itemsPerPage)}
+                  Страница {currentPage} из {Math.ceil(filteredHistory.length / itemsPerPage)}
                 </span>
                 <button
-                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(generationHistory.length / itemsPerPage), prev + 1))}
-                  disabled={currentPage >= Math.ceil(generationHistory.length / itemsPerPage)}
+                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredHistory.length / itemsPerPage), prev + 1))}
+                  disabled={currentPage >= Math.ceil(filteredHistory.length / itemsPerPage)}
                   className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100"
                 >
                   Вперёд
@@ -297,7 +330,7 @@ export default function AdminGenerations() {
                       </tr>
                     </thead>
                     <tbody>
-                      {generationHistory.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((gen) => (
+                      {filteredHistory.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((gen) => (
                         <tr key={gen.id} className="border-b hover:bg-gray-50">
                           <td className="px-4 py-3 text-sm font-mono">
                             {gen.id.substring(0, 8)}...

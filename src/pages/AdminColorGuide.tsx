@@ -42,6 +42,8 @@ export default function AdminColorGuide() {
   const [items, setItems] = useState<GuideItem[]>([]);
   const [userFilter, setUserFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [showPaid, setShowPaid] = useState(true);
+  const [showUnlimited, setShowUnlimited] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDetail, setSelectedDetail] = useState<GuideDetail | null>(null);
@@ -59,6 +61,10 @@ export default function AdminColorGuide() {
       fetchHistory();
     }
   }, [userFilter, statusFilter, users.length]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [showPaid, showUnlimited]);
 
   const fetchUsers = async () => {
     try {
@@ -136,8 +142,14 @@ export default function AdminColorGuide() {
     return <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-700">Ожидает</span>;
   };
 
-  const totalPages = Math.ceil(items.length / itemsPerPage);
-  const paginated = items.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const filteredItems = items.filter((it) => {
+    if (showPaid && showUnlimited) return true;
+    if (!showPaid && !showUnlimited) return true;
+    if (showPaid) return it.cost > 0;
+    return it.cost === 0;
+  });
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const paginated = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <Layout>
@@ -182,6 +194,26 @@ export default function AdminColorGuide() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex items-center gap-4 sm:gap-3 flex-wrap">
+                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-primary cursor-pointer"
+                    checked={showPaid}
+                    onChange={(e) => setShowPaid(e.target.checked)}
+                  />
+                  За деньги
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-primary cursor-pointer"
+                    checked={showUnlimited}
+                    onChange={(e) => setShowUnlimited(e.target.checked)}
+                  />
+                  Безлимитные
+                </label>
+              </div>
             </CardContent>
           </Card>
 
@@ -189,7 +221,7 @@ export default function AdminColorGuide() {
             <div className="flex justify-center py-20">
               <Icon name="Loader2" className="animate-spin text-primary" size={40} />
             </div>
-          ) : items.length === 0 ? (
+          ) : filteredItems.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center text-muted-foreground">
                 Нет задач для отображения

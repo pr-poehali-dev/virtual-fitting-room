@@ -38,6 +38,8 @@ export default function AdminColorTypes() {
   const [colorTypeHistory, setColorTypeHistory] = useState<ColorTypeHistory[]>([]);
   const [userFilter, setUserFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [showPaid, setShowPaid] = useState(true);
+  const [showUnlimited, setShowUnlimited] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedItem, setSelectedItem] = useState<ColorTypeHistory | null>(null);
@@ -54,6 +56,10 @@ export default function AdminColorTypes() {
       fetchColorTypeHistory();
     }
   }, [userFilter, statusFilter, users]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [showPaid, showUnlimited]);
 
   const fetchUsers = async () => {
 
@@ -141,7 +147,14 @@ export default function AdminColorTypes() {
     );
   };
 
-  const paginatedHistory = colorTypeHistory.slice(
+  const filteredHistory = colorTypeHistory.filter((item) => {
+    if (showPaid && showUnlimited) return true;
+    if (!showPaid && !showUnlimited) return true;
+    if (showPaid) return item.cost > 0;
+    return item.cost === 0;
+  });
+
+  const paginatedHistory = filteredHistory.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -205,13 +218,34 @@ export default function AdminColorTypes() {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-primary cursor-pointer"
+                        checked={showPaid}
+                        onChange={(e) => setShowPaid(e.target.checked)}
+                      />
+                      За деньги
+                    </label>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-primary cursor-pointer"
+                        checked={showUnlimited}
+                        onChange={(e) => setShowUnlimited(e.target.checked)}
+                      />
+                      Безлимитные
+                    </label>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
             <div className="mb-6 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Показано {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, colorTypeHistory.length)} из {colorTypeHistory.length}
+                Показано {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, filteredHistory.length)} из {filteredHistory.length}
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -223,11 +257,11 @@ export default function AdminColorTypes() {
                   Назад
                 </button>
                 <span className="text-sm">
-                  Страница {currentPage} из {Math.ceil(colorTypeHistory.length / itemsPerPage)}
+                  Страница {currentPage} из {Math.ceil(filteredHistory.length / itemsPerPage)}
                 </span>
                 <button
-                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(colorTypeHistory.length / itemsPerPage), prev + 1))}
-                  disabled={currentPage >= Math.ceil(colorTypeHistory.length / itemsPerPage)}
+                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredHistory.length / itemsPerPage), prev + 1))}
+                  disabled={currentPage >= Math.ceil(filteredHistory.length / itemsPerPage)}
                   className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100"
                 >
                   Вперёд
