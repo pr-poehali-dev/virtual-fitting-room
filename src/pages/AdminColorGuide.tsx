@@ -162,7 +162,7 @@ export default function AdminColorGuide() {
                     <SelectItem value="all">Все пользователи</SelectItem>
                     {users.map((u) => (
                       <SelectItem key={u.id} value={u.id}>
-                        {u.name || u.email}
+                        {u.email} ({u.name})
                       </SelectItem>
                     ))}
                   </SelectContent>
