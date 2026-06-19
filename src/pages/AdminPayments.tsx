@@ -58,7 +58,7 @@ export default function AdminPayments() {
   const [yookassaFilter, setYookassaFilter] = useState<string>("all");
   const [userFilter, setUserFilter] = useState<string>("all");
   const [deletedOnly, setDeletedOnly] = useState(false);
-  const [hideUnlimited, setHideUnlimited] = useState(false);
+  const [hideUnlimited, setHideUnlimited] = useState(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const paymentsPerPage = 50;
 
