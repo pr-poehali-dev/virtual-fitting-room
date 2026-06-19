@@ -122,6 +122,8 @@ export default function AdminPayments() {
 
       if (deletedOnly) {
         url += `&deleted_only=true`;
+      } else {
+        url += `&hide_deleted=true`;
       }
 
       if (hideUnlimited) {

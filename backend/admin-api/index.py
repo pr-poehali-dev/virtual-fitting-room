@@ -1180,6 +1180,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             has_yookassa_id = query_params.get('has_yookassa_id')
             user_id_filter = query_params.get('user_id')
             deleted_only = query_params.get('deleted_only')
+            hide_deleted = query_params.get('hide_deleted')
             hide_unlimited = query_params.get('hide_unlimited')
             
             try:
@@ -1226,6 +1227,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             if deleted_only == 'true':
                 count_query += " AND bt.user_id IS NULL"
+            elif hide_deleted == 'true':
+                count_query += " AND bt.user_id IS NOT NULL"
             
             if hide_unlimited == 'true':
                 count_query += " AND NOT (bt.type = 'charge' AND bt.amount = 0)"
@@ -1293,6 +1296,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             if deleted_only == 'true':
                 query += " AND bt.user_id IS NULL"
+            elif hide_deleted == 'true':
+                query += " AND bt.user_id IS NOT NULL"
             
             if hide_unlimited == 'true':
                 query += " AND NOT (bt.type = 'charge' AND bt.amount = 0)"
