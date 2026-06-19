@@ -1178,6 +1178,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             date_to = query_params.get('date_to')
             search = query_params.get('search', '').strip()
             has_yookassa_id = query_params.get('has_yookassa_id')
+            user_id_filter = query_params.get('user_id')
+            deleted_only = query_params.get('deleted_only')
+            hide_unlimited = query_params.get('hide_unlimited')
             
             try:
                 limit = int(limit)
@@ -1208,14 +1211,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 count_params.append(date_to)
             
             if search:
-                count_query += " AND (LOWER(u.email) LIKE LOWER(%s) OR LOWER(u.name) LIKE LOWER(%s) OR LOWER(bt.yookassa_payment_id) LIKE LOWER(%s) OR LOWER(bt.description) LIKE LOWER(%s))"
+                count_query += " AND (LOWER(u.email) LIKE LOWER(%s) OR LOWER(u.name) LIKE LOWER(%s) OR LOWER(bt.yookassa_payment_id) LIKE LOWER(%s) OR LOWER(bt.description) LIKE LOWER(%s) OR LOWER(bt.removed_user_email) LIKE LOWER(%s) OR LOWER(bt.removed_user_name) LIKE LOWER(%s))"
                 search_pattern = f'%{search}%'
-                count_params.extend([search_pattern, search_pattern, search_pattern, search_pattern])
+                count_params.extend([search_pattern, search_pattern, search_pattern, search_pattern, search_pattern, search_pattern])
             
             if has_yookassa_id == 'true':
                 count_query += " AND bt.yookassa_payment_id IS NOT NULL"
             elif has_yookassa_id == 'false':
                 count_query += " AND bt.yookassa_payment_id IS NULL"
+            
+            if user_id_filter:
+                count_query += " AND bt.user_id = %s"
+                count_params.append(user_id_filter)
+            
+            if deleted_only == 'true':
+                count_query += " AND bt.user_id IS NULL"
+            
+            if hide_unlimited == 'true':
+                count_query += " AND NOT (bt.type = 'charge' AND bt.amount = 0)"
             
             cursor.execute(count_query, count_params)
             total = cursor.fetchone()['total']
@@ -1238,6 +1251,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     bt.yookassa_payment_id,
                     u.email,
                     u.name,
+                    bt.removed_user_email,
+                    bt.removed_user_name,
                     u.balance as user_current_balance,
                     th.removed_at AS try_on_removed,
                     th.saved_to_lookbook,
@@ -1263,14 +1278,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 params.append(date_to)
             
             if search:
-                query += " AND (LOWER(u.email) LIKE LOWER(%s) OR LOWER(u.name) LIKE LOWER(%s) OR LOWER(bt.yookassa_payment_id) LIKE LOWER(%s) OR LOWER(bt.description) LIKE LOWER(%s))"
+                query += " AND (LOWER(u.email) LIKE LOWER(%s) OR LOWER(u.name) LIKE LOWER(%s) OR LOWER(bt.yookassa_payment_id) LIKE LOWER(%s) OR LOWER(bt.description) LIKE LOWER(%s) OR LOWER(bt.removed_user_email) LIKE LOWER(%s) OR LOWER(bt.removed_user_name) LIKE LOWER(%s))"
                 search_pattern = f'%{search}%'
-                params.extend([search_pattern, search_pattern, search_pattern, search_pattern])
+                params.extend([search_pattern, search_pattern, search_pattern, search_pattern, search_pattern, search_pattern])
             
             if has_yookassa_id == 'true':
                 query += " AND bt.yookassa_payment_id IS NOT NULL"
             elif has_yookassa_id == 'false':
                 query += " AND bt.yookassa_payment_id IS NULL"
+            
+            if user_id_filter:
+                query += " AND bt.user_id = %s"
+                params.append(user_id_filter)
+            
+            if deleted_only == 'true':
+                query += " AND bt.user_id IS NULL"
+            
+            if hide_unlimited == 'true':
+                query += " AND NOT (bt.type = 'charge' AND bt.amount = 0)"
             
             query += " ORDER BY bt.created_at DESC LIMIT %s OFFSET %s"
             params.extend([limit, offset])
@@ -1290,11 +1315,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 elif t['color_type_id'] and t['color_removed']:
                     display_description = 'Определение цветотипа [УДАЛЕНО ИЗ ИСТОРИИ]'
                 
+                account_deleted = t['user_id'] is None
+                effective_email = t['email'] if t['email'] else t['removed_user_email']
+                effective_name = t['name'] if t['name'] else t['removed_user_name']
+
                 result_transactions.append({
                     'id': str(t['id']),
                     'user_id': t['user_id'],
-                    'user_email': t['email'],
-                    'user_name': t['name'],
+                    'user_email': effective_email,
+                    'user_name': effective_name,
+                    'account_deleted': account_deleted,
                     'type': t['type'],
                     'amount': float(t['amount']),
                     'balance_before': float(t['balance_before']),

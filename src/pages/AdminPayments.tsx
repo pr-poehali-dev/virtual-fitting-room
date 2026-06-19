@@ -20,11 +20,18 @@ const ADMIN_API =
   "https://functions.poehali.dev/6667a30b-a520-41d8-b23a-e240a9aefb15";
 const getAdminToken = () => document.cookie.split('; ').find(c => c.startsWith('admin_token='))?.split('=')[1] || '';
 
+interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
 interface Payment {
   id: string;
-  user_id: string;
+  user_id: string | null;
   user_email: string;
   user_name: string;
+  account_deleted?: boolean;
   type: "deposit" | "charge" | "refund";
   amount: number;
   balance_before: number;
@@ -41,6 +48,7 @@ interface Payment {
 export default function AdminPayments() {
   const navigate = useNavigate();
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPayments, setTotalPayments] = useState(0);
@@ -48,12 +56,32 @@ export default function AdminPayments() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
   const [yookassaFilter, setYookassaFilter] = useState<string>("all");
+  const [userFilter, setUserFilter] = useState<string>("all");
+  const [deletedOnly, setDeletedOnly] = useState(false);
+  const [hideUnlimited, setHideUnlimited] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const paymentsPerPage = 50;
 
   useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
     fetchPayments();
-  }, [currentPage, typeFilter, dateFilter, yookassaFilter, searchQuery]);
+  }, [currentPage, typeFilter, dateFilter, yookassaFilter, userFilter, deletedOnly, hideUnlimited, searchQuery]);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch(`${ADMIN_API}?action=users`, {
+        headers: { "Authorization": `Bearer ${getAdminToken()}` },
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      setUsers(data.users || data);
+    } catch {
+      /* список пользователей не критичен для работы страницы */
+    }
+  };
 
   const fetchPayments = async () => {
     setIsLoading(true);
@@ -86,6 +114,18 @@ export default function AdminPayments() {
 
       if (yookassaFilter !== "all") {
         url += `&has_yookassa_id=${yookassaFilter}`;
+      }
+
+      if (userFilter !== "all") {
+        url += `&user_id=${userFilter}`;
+      }
+
+      if (deletedOnly) {
+        url += `&deleted_only=true`;
+      }
+
+      if (hideUnlimited) {
+        url += `&hide_unlimited=true`;
       }
 
       if (searchQuery.trim()) {
@@ -382,11 +422,66 @@ export default function AdminPayments() {
                       )}
                     </div>
                   </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      Пользователь
+                    </label>
+                    <Select
+                      value={userFilter}
+                      onValueChange={(value) => {
+                        setUserFilter(value);
+                        setCurrentPage(1);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Все" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Все</SelectItem>
+                        {users.map((u) => (
+                          <SelectItem key={u.id} value={u.id}>
+                            {u.email} ({u.name})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center gap-4">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-primary cursor-pointer"
+                      checked={deletedOnly}
+                      onChange={(e) => {
+                        setDeletedOnly(e.target.checked);
+                        setCurrentPage(1);
+                      }}
+                    />
+                    Только удалённые
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-primary cursor-pointer"
+                      checked={hideUnlimited}
+                      onChange={(e) => {
+                        setHideUnlimited(e.target.checked);
+                        setCurrentPage(1);
+                      }}
+                    />
+                    Скрыть безлимитные (0 ₽)
+                  </label>
                 </div>
 
                 {(typeFilter !== "all" ||
                   dateFilter !== "all" ||
                   yookassaFilter !== "all" ||
+                  userFilter !== "all" ||
+                  deletedOnly ||
+                  hideUnlimited ||
                   searchQuery) && (
                   <div className="mt-4 flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">
@@ -399,6 +494,9 @@ export default function AdminPayments() {
                         setTypeFilter("all");
                         setDateFilter("all");
                         setYookassaFilter("all");
+                        setUserFilter("all");
+                        setDeletedOnly(false);
+                        setHideUnlimited(false);
                         setSearchQuery("");
                         setCurrentPage(1);
                       }}
@@ -454,11 +552,17 @@ export default function AdminPayments() {
                         >
                           <td className="px-4 py-3">
                             <div className="text-sm font-medium">
-                              {payment.user_name}
+                              {payment.user_name || "—"}
                             </div>
                             <div className="text-xs text-gray-500">
-                              {payment.user_email}
+                              {payment.user_email || "—"}
                             </div>
+                            {payment.account_deleted && (
+                              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded text-xs bg-orange-100 text-orange-700">
+                                <Icon name="UserX" size={12} />
+                                Аккаунт удалён
+                              </span>
+                            )}
                           </td>
                           <td className="px-4 py-3">
                             <span
