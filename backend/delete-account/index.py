@@ -166,9 +166,29 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         )
         related_tables = cursor.fetchall()
 
+        # Сохраняем финансовый след: вписываем email/имя в транзакции пользователя,
+        # чтобы после удаления аккаунта было видно, чьи это операции.
+        # Сами транзакции НЕ удаляем — при удалении пользователя их user_id
+        # обнулится автоматически (ON DELETE SET NULL).
+        cursor.execute(
+            """
+            UPDATE balance_transactions bt
+            SET removed_user_email = u.email,
+                removed_user_name = u.name
+            FROM users u
+            WHERE bt.user_id = u.id AND bt.user_id = %s
+            """,
+            (user_id,)
+        )
+
+        # Таблицы с FK на users удаляем динамически, КРОМЕ balance_transactions —
+        # её сохраняем для финансовой отчётности.
+        preserve_tables = {'balance_transactions'}
         for row in related_tables:
             table_name = row['table_name']
             column_name = row['column_name']
+            if table_name in preserve_tables:
+                continue
             cursor.execute(
                 'DELETE FROM "{}" WHERE "{}" = %s'.format(table_name, column_name),
                 (user_id,)
@@ -180,6 +200,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor.execute("DELETE FROM nanobananapro_tasks WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM replicate_tasks WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM seedream_tasks WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM freegen_tasks WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM color_guide_tasks WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM history_api_debug_log WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM login_attempts WHERE email = (SELECT email FROM users WHERE id = %s)", (user_id,))
         cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
