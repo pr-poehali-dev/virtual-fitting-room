@@ -7,7 +7,13 @@ import uuid
 import base64
 from datetime import datetime
 
+from session_utils import validate_session
+from lenormand import build_lenormand_prompt
+
 DB_SCHEMA = 't_p29007832_virtual_fitting_room'
+
+LENORMAND_COST = 50
+LENORMAND_MODELS = {'anthropic/claude-sonnet-4.6', 'google/gemini-2.5-flash'}
 
 
 def get_db_connection():
@@ -27,6 +33,97 @@ def sql_escape_b64(val):
     return "'" + encoded + "'"
 
 
+def trigger_worker(task_id):
+    try:
+        import urllib.request
+        worker_url = 'https://functions.poehali.dev/d3e4e0ce-9999-45d3-82b4-15d3eeb45425'
+        req = urllib.request.Request(f'{worker_url}?task_id={task_id}', method='GET')
+        urllib.request.urlopen(req, timeout=2)
+    except Exception as e:
+        print(f'Worker trigger (non-critical): {e}')
+
+
+def handle_lenormand(event, body, cors_headers):
+    """Создаёт задачу гадания Ленорман: проверяет авторизацию, списывает баланс,
+    собирает промпт и сохраняет задачу в ai_editor_tasks."""
+
+    is_valid, user_id, error_msg = validate_session(event)
+    if not is_valid:
+        return {'statusCode': 401, 'headers': cors_headers,
+                'body': json.dumps({'error': error_msg or 'Unauthorized'})}
+
+    model = body.get('model', 'anthropic/claude-sonnet-4.6')
+    if model not in LENORMAND_MODELS:
+        model = 'anthropic/claude-sonnet-4.6'
+
+    meta = body.get('divination_meta') or {}
+    meta['system'] = 'lenormand'
+    layout = meta.get('layout') or []
+    filled = [c for c in layout if isinstance(c, str) and c.strip()]
+    if not filled:
+        return {'statusCode': 400, 'headers': cors_headers,
+                'body': json.dumps({'error': 'Не выбраны карты для расклада'})}
+
+    prompt = build_lenormand_prompt(meta)
+    task_id = str(uuid.uuid4())
+    now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+
+    conn = psycopg2.connect(os.environ['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT balance, unlimited_access FROM users WHERE id = %s', (user_id,))
+            user_row = cur.fetchone()
+            if not user_row:
+                return {'statusCode': 404, 'headers': cors_headers,
+                        'body': json.dumps({'error': 'User not found'})}
+
+            balance = float(user_row[0])
+            unlimited_access = user_row[1]
+            cost = 0 if unlimited_access else LENORMAND_COST
+
+            if not unlimited_access and balance < cost:
+                return {'statusCode': 402, 'headers': cors_headers,
+                        'body': json.dumps({'error': 'Insufficient balance',
+                                            'required': cost, 'current': balance})}
+
+            if cost > 0:
+                cur.execute('UPDATE users SET balance = balance - %s WHERE id = %s', (cost, user_id))
+
+            meta_json = json.dumps(meta, ensure_ascii=False)
+            cur.execute(
+                f"""INSERT INTO {DB_SCHEMA}.ai_editor_tasks
+                    (id, status, mode, model, prompt, task_type, user_id, cost,
+                     refunded, divination_meta, created_at, updated_at)
+                    VALUES (%s, 'pending', 'chat', %s, %s, 'lenormand', %s, %s,
+                            false, %s::jsonb, %s, %s)""",
+                (task_id, model, prompt, user_id, cost, meta_json, now, now)
+            )
+
+            if cost > 0:
+                balance_after = balance - cost
+                cur.execute(
+                    """INSERT INTO balance_transactions
+                       (user_id, type, amount, balance_before, balance_after, description)
+                       VALUES (%s, 'charge', %s, %s, %s, %s)""",
+                    (user_id, -cost, balance, balance_after, 'Расклад Ленорман')
+                )
+            elif unlimited_access:
+                cur.execute(
+                    """INSERT INTO balance_transactions
+                       (user_id, type, amount, balance_before, balance_after, description)
+                       VALUES (%s, 'charge', 0, %s, %s, %s)""",
+                    (user_id, balance, balance, 'Расклад Ленорман (безлимитный доступ)')
+                )
+        conn.commit()
+    finally:
+        conn.close()
+
+    trigger_worker(task_id)
+
+    return {'statusCode': 200, 'headers': cors_headers,
+            'body': json.dumps({'task_id': task_id, 'status': 'pending'})}
+
+
 def handler(event, context):
     """Создаёт задачу AI-редактирования и возвращает task_id мгновенно."""
 
@@ -44,6 +141,11 @@ def handler(event, context):
         return {'statusCode': 405, 'headers': cors_headers, 'body': json.dumps({'error': 'POST only'})}
 
     body = json.loads(event.get('body', '{}') or '{}')
+    task_type = body.get('task_type', 'editor')
+
+    if task_type == 'lenormand':
+        return handle_lenormand(event, body, cors_headers)
+
     mode = body.get('mode', 'chat')
     model = body.get('model', 'anthropic/claude-sonnet-4.6')
     prompt = body.get('prompt', '').strip()

@@ -40,6 +40,15 @@
       "expectedStatus": 200,
       "expectedBody": {"task_id": "string", "status": "string"},
       "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST lenormand without auth returns 401",
+      "method": "POST",
+      "path": "/",
+      "body": {"task_type": "lenormand", "divination_meta": {"layout": ["Луна"]}},
+      "expectedStatus": 401,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
     }
   ]
 }

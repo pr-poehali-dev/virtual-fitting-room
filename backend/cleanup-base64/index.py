@@ -345,20 +345,26 @@ def handler(event, context):
         conn.commit()
     report.append({'table': 'freegen_history', 'column': 'references', 'cleaned': fh_count, 'saved_bytes': fh_saved})
 
-    # 12. ai_editor_tasks — удаление всех строк кроме последней
-    cursor.execute("""
+    # 12. ai_editor_tasks — оставляем последнюю строку каждого пользователя.
+    # Для строк без user_id (старый AI-редактор) оставляем одну общую последнюю.
+    keep_ids_sql = """
+        SELECT DISTINCT ON (COALESCE(user_id::text, '__anon__')) id
+        FROM ai_editor_tasks
+        ORDER BY COALESCE(user_id::text, '__anon__'), created_at DESC
+    """
+    cursor.execute(f"""
         SELECT COUNT(*) as cnt FROM ai_editor_tasks
-        WHERE id != (SELECT id FROM ai_editor_tasks ORDER BY created_at DESC LIMIT 1)
+        WHERE id NOT IN ({keep_ids_sql})
     """)
     r = cursor.fetchone()
     ai_deleted = int(r['cnt'])
     if ai_deleted > 0:
-        cursor.execute("""
+        cursor.execute(f"""
             DELETE FROM ai_editor_tasks
-            WHERE id != (SELECT id FROM ai_editor_tasks ORDER BY created_at DESC LIMIT 1)
+            WHERE id NOT IN ({keep_ids_sql})
         """)
         conn.commit()
-    report.append({'table': 'ai_editor_tasks', 'column': 'все строки (кроме последней)', 'cleaned': ai_deleted, 'saved_bytes': 0})
+    report.append({'table': 'ai_editor_tasks', 'column': 'все строки кроме последней у каждого пользователя', 'cleaned': ai_deleted, 'saved_bytes': 0})
 
     cursor.close()
     conn.close()

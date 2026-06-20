@@ -13,7 +13,9 @@ def get_db_connection():
 
 
 def build_result(task_id, row):
-    status, mode, ai_response, result_file_content, result_archive_base64, files_count, model_used, error_message, filename, created_at = row
+    (status, mode, ai_response, result_file_content, result_archive_base64,
+     files_count, model_used, error_message, filename, created_at,
+     task_type, divination_meta) = row
 
     result = {
         'task_id': str(task_id),
@@ -21,7 +23,11 @@ def build_result(task_id, row):
         'mode': mode,
         'filename': filename or '',
         'created_at': created_at.isoformat() if created_at else '',
+        'task_type': task_type or 'editor',
     }
+
+    if divination_meta is not None:
+        result['divination_meta'] = divination_meta
 
     if status == 'completed':
         if ai_response:
@@ -72,7 +78,8 @@ def handler(event, context):
             if latest == 'true':
                 cur.execute(
                     f"""SELECT id, status, mode, ai_response, result_file_content, result_archive_base64,
-                               files_count, model_used, error_message, filename, created_at
+                               files_count, model_used, error_message, filename, created_at,
+                               task_type, divination_meta
                         FROM {DB_SCHEMA}.ai_editor_tasks
                         WHERE status IN ('completed', 'failed', 'processing')
                         ORDER BY created_at DESC LIMIT 1"""
@@ -86,7 +93,8 @@ def handler(event, context):
                 safe_id = str(task_id).replace("'", "''")
                 cur.execute(
                     f"""SELECT status, mode, ai_response, result_file_content, result_archive_base64,
-                               files_count, model_used, error_message, filename, created_at
+                               files_count, model_used, error_message, filename, created_at,
+                               task_type, divination_meta
                         FROM {DB_SCHEMA}.ai_editor_tasks WHERE id = '{safe_id}'"""
                 )
                 row = cur.fetchone()

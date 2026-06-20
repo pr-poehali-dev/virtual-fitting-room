@@ -60,6 +60,7 @@ import Contacts from "./pages/Contacts";
 import Privacy from "./pages/Privacy";
 import PersonalData from "./pages/PersonalData";
 import AiEditor from "./pages/AiEditor";
+import LenormandDivination from "./pages/LenormandDivination";
 import ScrollToTop from "./components/ScrollToTop";
 
 const APP_VERSION = "2.0.0";
@@ -107,6 +108,7 @@ const App = () => (
             <Route path="/archetype-result/:id" element={<ArchetypeResultDetail />} />
             <Route path="/color-guide/:id" element={<ColorGuideDetail />} />
             <Route path="/ai-editor" element={<AiEditor />} />
+            <Route path="/divination" element={<LenormandDivination />} />
             
             {/* Profile Routes */}
             <Route path="/profile" element={<ProfileDashboard />} />

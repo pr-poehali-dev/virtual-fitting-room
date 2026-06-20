@@ -199,6 +199,50 @@ def sql_escape(val):
     return "'" + str(val).replace("'", "''") + "'"
 
 
+def refund_lenormand(task_id):
+    """Возвращает деньги пользователю за неудавшийся расклад Ленорман.
+    Идемпотентно: возврат происходит только если refunded=false и cost>0."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""SELECT user_id, cost, refunded, task_type
+                    FROM {DB_SCHEMA}.ai_editor_tasks WHERE id = %s""",
+                (task_id,)
+            )
+            row = cur.fetchone()
+            if not row:
+                return
+            user_id, cost, refunded, task_type = row
+            if task_type != 'lenormand' or refunded or not cost or cost <= 0 or not user_id:
+                return
+
+            cur.execute('SELECT balance FROM users WHERE id = %s', (user_id,))
+            brow = cur.fetchone()
+            if not brow:
+                return
+            balance_before = float(brow[0])
+            balance_after = balance_before + cost
+
+            cur.execute('UPDATE users SET balance = balance + %s WHERE id = %s', (cost, user_id))
+            cur.execute(
+                """INSERT INTO balance_transactions
+                   (user_id, type, amount, balance_before, balance_after, description)
+                   VALUES (%s, 'refund', %s, %s, %s, %s)""",
+                (user_id, cost, balance_before, balance_after, 'Возврат: Расклад Ленорман (ошибка обработки)')
+            )
+            cur.execute(
+                f"UPDATE {DB_SCHEMA}.ai_editor_tasks SET refunded = true WHERE id = %s",
+                (task_id,)
+            )
+        conn.commit()
+        print(f'[{task_id}] Refunded {cost} for failed lenormand task')
+    except Exception as e:
+        print(f'[{task_id}] Refund failed: {e}')
+    finally:
+        conn.close()
+
+
 def process_task(task_id):
     safe_id = str(task_id).replace("'", "''")
     now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
@@ -263,6 +307,7 @@ def process_task(task_id):
         error = str(e)[:1000]
 
     conn2 = get_db_connection()
+    _is_lenormand = False
     try:
         now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
         with conn2.cursor() as cur:
@@ -272,6 +317,11 @@ def process_task(task_id):
                         SET status = 'failed', error_message = {sql_escape(error)}, updated_at = '{now}'
                         WHERE id = '{safe_id}'"""
                 )
+                cur.execute(
+                    f"SELECT task_type FROM {DB_SCHEMA}.ai_editor_tasks WHERE id = '{safe_id}'"
+                )
+                _tt = cur.fetchone()
+                _is_lenormand = bool(_tt and _tt[0] == 'lenormand')
             else:
                 ai_response_b64 = base64.b64encode(ai_text.encode('utf-8')).decode('ascii') if ai_text else None
                 result_file_b64 = base64.b64encode(result_file_content.encode('utf-8')).decode('ascii') if result_file_content else None
@@ -290,6 +340,9 @@ def process_task(task_id):
         print(f'Task {task_id} save error: {e}')
     finally:
         conn2.close()
+
+    if error and _is_lenormand:
+        refund_lenormand(task_id)
 
 
 def handler(event, context):
