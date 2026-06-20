@@ -73,9 +73,42 @@ export default function LenormandDivination() {
   const [resultDate, setResultDate] = useState<string>("");
   const [downloaded, setDownloaded] = useState(true);
   const [showWarning, setShowWarning] = useState(false);
+  const [warningAction, setWarningAction] = useState<"start" | "new">("start");
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultCardRef = useRef<HTMLDivElement>(null);
+
+  const FORM_STORAGE_KEY = "lenormand_form_v1";
+
+  // Восстановление полей формы при загрузке
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(FORM_STORAGE_KEY);
+      if (saved) {
+        const d = JSON.parse(saved);
+        if (d.period) setPeriod(d.period);
+        if (d.gender) setGender(d.gender);
+        if (Array.isArray(d.spheres)) setSpheres(d.spheres);
+        if (typeof d.comment === "string") setComment(d.comment);
+        if (d.model) setModel(d.model);
+        if (Array.isArray(d.layout) && d.layout.length === 36) setLayout(d.layout);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }, []);
+
+  // Автосохранение полей формы
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        FORM_STORAGE_KEY,
+        JSON.stringify({ period, gender, spheres, comment, model, layout })
+      );
+    } catch (e) {
+      /* ignore */
+    }
+  }, [period, gender, spheres, comment, model, layout]);
 
   useEffect(() => {
     return () => {
@@ -134,6 +167,25 @@ export default function LenormandDivination() {
   const clearLayout = () => {
     setLayout(EMPTY_LAYOUT());
     setActiveHouse(0);
+  };
+
+  const doNewReading = () => {
+    setLayout(EMPTY_LAYOUT());
+    setActiveHouse(0);
+    setComment("");
+    setResult(null);
+    setResultLayout([]);
+    setResultDate("");
+    setDownloaded(true);
+  };
+
+  const newReading = () => {
+    if (result && !downloaded) {
+      setWarningAction("new");
+      setShowWarning(true);
+      return;
+    }
+    doNewReading();
   };
 
   const startReading = useCallback(async () => {
@@ -244,6 +296,7 @@ export default function LenormandDivination() {
 
   const onSubmitClick = () => {
     if (result && !downloaded) {
+      setWarningAction("start");
       setShowWarning(true);
       return;
     }
@@ -497,6 +550,9 @@ export default function LenormandDivination() {
         {result && (
           <div className="mt-8">
             <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+              <Button variant="outline" onClick={newReading}>
+                <Icon name="RotateCcw" size={16} className="mr-1" /> Новый расклад
+              </Button>
               <Button variant="outline" onClick={copyText}>
                 <Icon name="Copy" size={16} className="mr-1" /> Скопировать
               </Button>
@@ -559,7 +615,11 @@ export default function LenormandDivination() {
             <AlertDialogAction
               onClick={() => {
                 setShowWarning(false);
-                startReading();
+                if (warningAction === "new") {
+                  doNewReading();
+                } else {
+                  startReading();
+                }
               }}
             >
               Всё равно продолжить
