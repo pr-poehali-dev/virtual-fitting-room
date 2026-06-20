@@ -45,8 +45,8 @@ const AI_EDITOR_STATUS =
   "https://functions.poehali.dev/487c8816-d661-4f43-a72d-112374006c7c";
 
 const MODELS = [
-  { value: "anthropic/claude-sonnet-4.6", label: "Claude Sonnet (подробный)" },
-  { value: "google/gemini-2.5-flash", label: "Gemini Flash (быстрый)" },
+  { value: "anthropic/claude-sonnet-4.6", label: "Гадалка CS (подробная)" },
+  { value: "google/gemini-2.5-flash", label: "Гадалка GF (быстрая)" },
 ];
 
 const POLLING_INTERVAL = 5000;
@@ -883,6 +883,10 @@ export default function LenormandDivination() {
             ответа нейросети.
           </p>
         </div>
+
+        <p className="mt-6 text-center text-sm font-medium text-purple-500">
+          fitting-room.ru
+        </p>
       </div>
 
       {/* Скрытая копия карточки для скачивания PNG (всегда в DOM, пока есть результат) */}
@@ -929,6 +933,15 @@ export default function LenormandDivination() {
             </div>
             <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-gray-800">
               {result}
+            </div>
+            <div className="mt-6 border-t border-purple-200 pt-4 text-center text-xs text-purple-400">
+              <p>
+                Трактовки раскладов носят
+                развлекательно-информационно-рекомендательный характер,
+                создаются нейросетью, мы не несём ответственность за текст ответа
+                нейросети.
+              </p>
+              <p className="mt-1 font-medium text-purple-500">fitting-room.ru</p>
             </div>
           </div>
         </div>
