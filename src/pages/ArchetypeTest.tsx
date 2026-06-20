@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
+import VkAuthButton from '@/components/VkAuthButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -26,6 +27,8 @@ export default function ArchetypeTest() {
   const { user, isLoading: authLoading } = useAuth();
   const { refetchArchetypeHistory } = useData();
   const navigate = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname + location.search;
 
   const [step, setStep] = useState<Step>('intro');
   const [name, setName] = useState('');
@@ -74,6 +77,16 @@ export default function ArchetypeTest() {
                     Зарегистрироваться
                   </Button>
                 </div>
+
+                <div className="my-4 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-xs text-muted-foreground">или</span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+                <VkAuthButton
+                  className="flex justify-center"
+                  redirectTo={currentPath}
+                />
               </CardContent>
             </Card>
           </div>
