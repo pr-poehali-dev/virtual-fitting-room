@@ -212,7 +212,8 @@ export default function LenormandDivination() {
     };
   }, []);
 
-  const hasPrevResult = !!result;
+  // Есть любой предыдущий результат: свежий (из сессии) или подтянутый из базы
+  const hasPrevResult = !!result || !!prevResult;
 
   // Перехват первого касания формы нового расклада, пока есть старый результат
   const guardTouch = (): boolean => {
@@ -352,8 +353,33 @@ export default function LenormandDivination() {
     setResultLayout([]);
     setResultDate("");
     setDownloaded(true);
+    setPrevResult(null);
+    setPrevLayout([]);
+    setPrevDate("");
     setPrevOpen(false);
     setTouchAck(false);
+  };
+
+  // Скачать показанный результат: свежий (из сессии) или из базы
+  const downloadShownPng = () => {
+    if (result) {
+      downloadPng();
+    } else if (prevResult) {
+      downloadPrevPng();
+    }
+  };
+
+  // «Очистить форму и начать новый расклад» — всё обновляет (до перезагрузки)
+  const startNewReadingNow = () => {
+    if (isProcessing) return;
+    dropPrevResult();
+    setPeriod("now");
+    setGender("female");
+    setSpheres(["all"]);
+    setComment("");
+    setModel(MODELS[0].value);
+    resetTable();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const startReading = useCallback(async () => {
@@ -913,7 +939,7 @@ export default function LenormandDivination() {
               <h2 className="text-xl font-semibold text-purple-800">
                 Толкование расклада
               </h2>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button variant="outline" onClick={copyText}>
                   <Icon name="Copy" size={16} className="mr-1" /> Скопировать
                 </Button>
@@ -922,6 +948,10 @@ export default function LenormandDivination() {
                   className="bg-purple-600 text-white hover:bg-purple-700"
                 >
                   <Icon name="Download" size={16} className="mr-1" /> Скачать PNG
+                </Button>
+                <Button variant="outline" onClick={startNewReadingNow}>
+                  <Icon name="RotateCcw" size={16} className="mr-1" /> Очистить
+                  форму и начать новый расклад
                 </Button>
               </div>
             </div>
@@ -1050,7 +1080,6 @@ export default function LenormandDivination() {
                 </div>
 
                 <div
-                  ref={dbPrevCardRef}
                   className="rounded-2xl border border-purple-100 p-6 shadow-sm"
                   style={{
                     background:
@@ -1177,6 +1206,66 @@ export default function LenormandDivination() {
         </div>
       )}
 
+      {/* Скрытая копия предыдущего расклада из базы для скачивания PNG */}
+      {prevResult && !result && (
+        <div
+          aria-hidden
+          style={{
+            position: "fixed",
+            left: "-10000px",
+            top: 0,
+            width: "900px",
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            ref={dbPrevCardRef}
+            className="rounded-2xl border border-purple-100 p-6 shadow-sm"
+            style={{
+              background: "linear-gradient(180deg, #faf7ff 0%, #f3eefc 100%)",
+            }}
+          >
+            <div className="mb-4 text-center">
+              <h3 className="text-2xl font-semibold text-purple-800">
+                Большой расклад Ленорман 9 × 4
+              </h3>
+              <p className="mt-1 text-sm text-purple-500">{prevDate}</p>
+            </div>
+            {prevLayout.length === 36 && (
+              <div className="mb-6 grid grid-cols-9 gap-1.5">
+                {prevLayout.map((card, idx) =>
+                  card ? (
+                    <div
+                      key={idx}
+                      className="rounded-md border border-purple-200 bg-white/70 p-1.5 text-center"
+                    >
+                      <div className="text-xs text-purple-400">
+                        {idx + 1}. дом {HOUSE_NAMES[idx]}
+                      </div>
+                      <div className="text-sm font-semibold text-purple-800">
+                        карта {card}
+                      </div>
+                    </div>
+                  ) : null
+                )}
+              </div>
+            )}
+            <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-gray-800">
+              {prevResult}
+            </div>
+            <div className="mt-6 border-t border-purple-200 pt-4 text-center text-xs text-purple-400">
+              <p>
+                Трактовки раскладов носят
+                развлекательно-информационно-рекомендательный характер,
+                создаются нейросетью, мы не несём ответственность за текст ответа
+                нейросети.
+              </p>
+              <p className="mt-1 font-medium text-purple-500">fitting-room.ru</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Модалка при первом касании нового расклада */}
       <AlertDialog open={showTouchWarning} onOpenChange={setShowTouchWarning}>
         <AlertDialogContent>
@@ -1202,7 +1291,7 @@ export default function LenormandDivination() {
               onClick={() => {
                 setShowTouchWarning(false);
                 setTouchAck(true);
-                downloadPng();
+                downloadShownPng();
               }}
             >
               Скачать
