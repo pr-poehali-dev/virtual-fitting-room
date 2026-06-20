@@ -449,24 +449,23 @@ export default function LenormandDivination() {
                     Карты колоды
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {CARD_NAMES.map((card) => {
-                      const used = usedCardsSet.has(card);
-                      return (
+                    {CARD_NAMES.filter((card) => !usedCardsSet.has(card)).map(
+                      (card) => (
                         <button
                           key={card}
                           type="button"
-                          disabled={used}
                           onClick={() => placeCard(card)}
-                          className={`rounded-full border px-2.5 py-1 text-xs transition ${
-                            used
-                              ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-300 line-through"
-                              : "border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100"
-                          }`}
+                          className="rounded-full border border-purple-300 bg-purple-50 px-2.5 py-1 text-xs text-purple-700 transition hover:bg-purple-100"
                         >
                           {card}
                         </button>
-                      );
-                    })}
+                      )
+                    )}
+                    {usedCardsSet.size === CARD_NAMES.length && (
+                      <span className="text-xs text-gray-400">
+                        Все карты разложены
+                      </span>
+                    )}
                   </div>
                 </div>
 
