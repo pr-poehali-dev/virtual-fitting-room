@@ -1,9 +1,10 @@
 import { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useBalance } from "@/context/BalanceContext";
 import { Button } from "@/components/ui/button";
 import Icon from "@/components/ui/icon";
+import VkAuthButton from "@/components/VkAuthButton";
 
 interface LockedFormOverlayProps {
   cost: number;
@@ -19,6 +20,8 @@ const LockedFormOverlay = ({
   const { user, isLoading: authLoading } = useAuth();
   const { balanceInfo } = useBalance();
   const navigate = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname + location.search;
 
   const isAuthLocked = !authLoading && !user;
 
@@ -68,6 +71,16 @@ const LockedFormOverlay = ({
                   Зарегистрироваться
                 </Button>
               </div>
+
+              <div className="my-4 flex items-center gap-3">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-xs text-muted-foreground">или</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+              <VkAuthButton
+                className="flex justify-center"
+                redirectTo={currentPath}
+              />
             </>
           ) : (
             <>

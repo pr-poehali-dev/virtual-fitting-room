@@ -11,9 +11,10 @@ import {
 
 interface VkAuthButtonProps {
   className?: string;
+  redirectTo?: string;
 }
 
-const VkAuthButton = ({ className = '' }: VkAuthButtonProps) => {
+const VkAuthButton = ({ className = '', redirectTo = '/profile' }: VkAuthButtonProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { vkLogin } = useAuth();
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ const VkAuthButton = ({ className = '' }: VkAuthButtonProps) => {
                 try {
                   await vkLogin(data.access_token, { email: data.email, phone: data.phone });
                   toast.success('Вы вошли через ВКонтакте!');
-                  navigate('/profile');
+                  navigate(redirectTo);
                 } catch (e) {
                   toast.error(e instanceof Error ? e.message : 'Ошибка входа');
                 }
@@ -62,7 +63,7 @@ const VkAuthButton = ({ className = '' }: VkAuthButtonProps) => {
     return () => {
       cancelled = true;
     };
-  }, [vkLogin, navigate]);
+  }, [vkLogin, navigate, redirectTo]);
 
   return <div ref={containerRef} className={className} />;
 };
