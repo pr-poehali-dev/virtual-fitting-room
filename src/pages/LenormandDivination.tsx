@@ -43,6 +43,8 @@ const AI_EDITOR_START =
   "https://functions.poehali.dev/6ddfd93a-b3ac-445f-a1bf-3327d6ba01d7";
 const AI_EDITOR_STATUS =
   "https://functions.poehali.dev/487c8816-d661-4f43-a72d-112374006c7c";
+const LENORMAND_LAST =
+  "https://functions.poehali.dev/9d61578b-0a21-4bba-9fcc-37dbd5a4454d";
 
 const MODELS = [
   { value: "anthropic/claude-sonnet-4.6", label: "Гадалка CS (подробная)" },
@@ -94,9 +96,15 @@ export default function LenormandDivination() {
   // Аккордион «Предыдущий расклад»
   const [prevOpen, setPrevOpen] = useState(false);
 
+  // Предыдущий расклад из базы (последний завершённый) — для показа после перезагрузки
+  const [prevResult, setPrevResult] = useState<string | null>(null);
+  const [prevLayout, setPrevLayout] = useState<string[]>([]);
+  const [prevDate, setPrevDate] = useState<string>("");
+
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultCardRef = useRef<HTMLDivElement>(null);
   const prevCardRef = useRef<HTMLDivElement>(null);
+  const dbPrevCardRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
 
   const FORM_STORAGE_KEY = "lenormand_form_v1";
@@ -134,6 +142,44 @@ export default function LenormandDivination() {
   useEffect(() => {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, []);
+
+  // Загрузка последнего завершённого расклада из базы (показ в аккордионе после перезагрузки)
+  useEffect(() => {
+    const token = localStorage.getItem("session_token");
+    if (!token) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(LENORMAND_LAST, {
+          headers: { "X-Session-Token": token },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled || data.empty || !data.ai_response) return;
+        const meta = data.divination_meta || {};
+        const layoutArr =
+          Array.isArray(meta.layout) && meta.layout.length === 36
+            ? meta.layout
+            : [];
+        setPrevResult(data.ai_response);
+        setPrevLayout(layoutArr);
+        setPrevDate(
+          data.created_at
+            ? new Date(data.created_at).toLocaleDateString("ru-RU", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })
+            : ""
+        );
+      } catch (e) {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
     };
   }, []);
 
@@ -346,6 +392,8 @@ export default function LenormandDivination() {
           if (pollRef.current) clearInterval(pollRef.current);
           setIsProcessing(false);
           setStatusText("");
+          // Появился свежий результат — прячем «предыдущий из базы»
+          setPrevResult(null);
           setResult(data.ai_response || "");
           setResultLayout(submittedLayout);
           setResultDate(
@@ -406,6 +454,30 @@ export default function LenormandDivination() {
   const copyText = () => {
     if (result) {
       navigator.clipboard.writeText(result);
+      toast.success("Текст скопирован");
+    }
+  };
+
+  // Скачивание/копирование для «предыдущего расклада из базы»
+  const downloadPrevPng = async () => {
+    if (!dbPrevCardRef.current) return;
+    try {
+      const canvas = await html2canvas(dbPrevCardRef.current, {
+        backgroundColor: "#faf7ff",
+        scale: 2,
+      });
+      const link = document.createElement("a");
+      link.download = `lenormand-${Date.now()}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } catch (e) {
+      toast.error("Не удалось сохранить картинку");
+    }
+  };
+
+  const copyPrevText = () => {
+    if (prevResult) {
+      navigator.clipboard.writeText(prevResult);
       toast.success("Текст скопирован");
     }
   };
@@ -871,6 +943,98 @@ export default function LenormandDivination() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Предыдущий расклад из базы (после перезагрузки, пока нет свежего) */}
+        {prevResult && !result && !isProcessing && (
+          <div className="mt-8 rounded-2xl border border-purple-100">
+            <button
+              type="button"
+              onClick={() => setPrevOpen((o) => !o)}
+              className="flex w-full items-center justify-between px-5 py-3 text-left"
+            >
+              <span className="font-medium text-gray-900">Предыдущий расклад</span>
+              <Icon
+                name={prevOpen ? "ChevronUp" : "ChevronDown"}
+                size={20}
+                className="text-gray-500"
+              />
+            </button>
+            {prevOpen && (
+              <div className="border-t border-purple-100 p-5">
+                <div className="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+                  <Icon name="TriangleAlert" size={18} className="mt-0.5 shrink-0" />
+                  <span>
+                    Этот расклад удалится, как только вы запустите новый.
+                    Рекомендуем скачать картинку или скопировать текст к себе.
+                  </span>
+                </div>
+                <div className="mb-3 flex gap-2">
+                  <Button variant="outline" size="sm" onClick={copyPrevText}>
+                    <Icon name="Copy" size={16} className="mr-1" /> Скопировать
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={downloadPrevPng}
+                    className="bg-purple-600 text-white hover:bg-purple-700"
+                  >
+                    <Icon name="Download" size={16} className="mr-1" /> Скачать PNG
+                  </Button>
+                </div>
+
+                <div
+                  ref={dbPrevCardRef}
+                  className="rounded-2xl border border-purple-100 p-6 shadow-sm"
+                  style={{
+                    background:
+                      "linear-gradient(180deg, #faf7ff 0%, #f3eefc 100%)",
+                  }}
+                >
+                  <div className="mb-4 text-center">
+                    <h3 className="text-2xl font-semibold text-purple-800">
+                      Большой расклад Ленорман 9 × 4
+                    </h3>
+                    <p className="mt-1 text-sm text-purple-500">{prevDate}</p>
+                  </div>
+
+                  {prevLayout.length === 36 && (
+                    <div className="mb-6 grid grid-cols-3 gap-1.5 sm:grid-cols-6 lg:grid-cols-9">
+                      {prevLayout.map((card, idx) =>
+                        card ? (
+                          <div
+                            key={idx}
+                            className="rounded-md border border-purple-200 bg-white/70 p-1.5 text-center"
+                          >
+                            <div className="text-xs text-purple-400">
+                              {idx + 1}. дом {HOUSE_NAMES[idx]}
+                            </div>
+                            <div className="text-sm font-semibold text-purple-800">
+                              карта {card}
+                            </div>
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+                  )}
+
+                  <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-gray-800">
+                    {prevResult}
+                  </div>
+                  <div className="mt-6 border-t border-purple-200 pt-4 text-center text-xs text-purple-400">
+                    <p>
+                      Трактовки раскладов носят
+                      развлекательно-информационно-рекомендательный характер,
+                      создаются нейросетью, мы не несём ответственность за текст
+                      ответа нейросети.
+                    </p>
+                    <p className="mt-1 font-medium text-purple-500">
+                      fitting-room.ru
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
