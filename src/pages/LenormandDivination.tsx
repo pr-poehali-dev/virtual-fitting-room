@@ -417,7 +417,7 @@ export default function LenormandDivination() {
                   <Textarea
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder="Например: отношения с загаданным мужчиной — будет ли инициатива с его стороны…"
+                    placeholder="Например: стоит ли обновить гардероб этой весной и каким будет мой новый образ…"
                     rows={4}
                   />
                 </div>
