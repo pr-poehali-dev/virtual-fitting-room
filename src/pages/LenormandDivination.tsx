@@ -873,6 +873,16 @@ export default function LenormandDivination() {
             </div>
           </div>
         )}
+
+        {/* Дисклеймер */}
+        <div className="mt-10 flex items-start gap-3 rounded-xl border-2 border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          <Icon name="Info" size={20} className="mt-0.5 shrink-0 text-amber-600" />
+          <p>
+            Трактовки раскладов носят развлекательно-информационно-рекомендательный
+            характер, создаются нейросетью, мы не несём ответственность за текст
+            ответа нейросети.
+          </p>
+        </div>
       </div>
 
       {/* Скрытая копия карточки для скачивания PNG (всегда в DOM, пока есть результат) */}
