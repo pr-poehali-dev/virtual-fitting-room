@@ -1,4 +1,5 @@
 import Icon from '@/components/ui/icon';
+import { Link } from 'react-router-dom';
 import { useBalance } from '@/context/BalanceContext';
 
 interface HeaderBalanceProps {
@@ -17,22 +18,28 @@ export default function HeaderBalance({ variant = 'default' }: HeaderBalanceProp
 
   if (balanceInfo.unlimited_access) {
     return (
-      <div className={`flex items-center gap-1.5 ${isLight ? 'text-purple-300' : 'text-primary'}`}>
+      <Link
+        to="/profile/wallet"
+        className={`flex items-center gap-1.5 rounded-lg px-1 transition-opacity hover:opacity-80 ${isLight ? 'text-purple-300' : 'text-primary'}`}
+      >
         <Icon name="Infinity" size={20} className="hidden lg:inline" />
         <Icon name="Infinity" size={18} className="lg:hidden" />
         <span className="text-sm font-medium hidden lg:inline">Безлимит</span>
-      </div>
+      </Link>
     );
   }
 
   return (
-    <div className="flex items-center gap-1.5">
+    <Link
+      to="/profile/wallet"
+      className="flex items-center gap-1.5 rounded-lg px-1 transition-opacity hover:opacity-80"
+    >
       <Icon name="Wallet" size={20} className={`hidden lg:inline ${iconClass}`} />
       <Icon name="Wallet" size={18} className={`lg:hidden ${iconClass}`} />
       <div className="flex items-center gap-1">
         <span className={`text-sm hidden lg:inline ${labelClass}`}>Баланс</span>
         <span className={`text-sm font-medium ${valueClass}`}>{balanceInfo.balance.toFixed(0)} ₽</span>
       </div>
-    </div>
+    </Link>
   );
 }

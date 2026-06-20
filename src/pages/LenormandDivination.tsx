@@ -87,11 +87,17 @@ export default function LenormandDivination() {
   const [resultLayout, setResultLayout] = useState<string[]>([]);
   const [resultDate, setResultDate] = useState<string>("");
   const [downloaded, setDownloaded] = useState(true);
-  const [showWarning, setShowWarning] = useState(false);
-  const [warningAction, setWarningAction] = useState<"start" | "new">("start");
+
+  // Модалка «первое касание нового расклада, пока есть старый результат»
+  const [showTouchWarning, setShowTouchWarning] = useState(false);
+  const [touchAck, setTouchAck] = useState(false);
+  // Аккордион «Предыдущий расклад»
+  const [prevOpen, setPrevOpen] = useState(false);
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultCardRef = useRef<HTMLDivElement>(null);
+  const prevCardRef = useRef<HTMLDivElement>(null);
+  const loaderRef = useRef<HTMLDivElement>(null);
 
   const FORM_STORAGE_KEY = "lenormand_form_v1";
 
@@ -131,7 +137,20 @@ export default function LenormandDivination() {
     };
   }, []);
 
+  const hasPrevResult = !!result;
+
+  // Перехват первого касания формы нового расклада, пока есть старый результат
+  const guardTouch = (): boolean => {
+    if (hasPrevResult && !touchAck) {
+      setShowTouchWarning(true);
+      return true; // блокируем действие
+    }
+    return false;
+  };
+
   const toggleSphere = (key: SphereKey) => {
+    if (isProcessing) return;
+    if (guardTouch()) return;
     setSpheres((prev) =>
       prev.includes(key) ? prev.filter((s) => s !== key) : [...prev, key]
     );
@@ -152,6 +171,8 @@ export default function LenormandDivination() {
 
   // Реальный расклад: клик по тегу карты
   const placeCard = (card: string) => {
+    if (isProcessing) return;
+    if (guardTouch()) return;
     if (usedCardsSet.has(card)) return;
     setLayout((prev) => {
       const next = [...prev];
@@ -166,12 +187,12 @@ export default function LenormandDivination() {
 
   // Онлайн-расклад: перемешать колоду (подготовка перед раскладом)
   const shuffleDeck = () => {
+    if (isProcessing) return;
+    if (guardTouch()) return;
     const remaining = CARD_NAMES.filter((c) => !usedCardsSet.has(c));
     setDeck(shuffleArray(remaining));
     setShuffled(true);
-    if (!layout[activeHouse]) {
-      // оставить текущий активный дом, если он пуст
-    } else {
+    if (layout[activeHouse]) {
       const e = nextEmptyHouse(0, layout);
       setActiveHouse(e === -1 ? 0 : e);
     }
@@ -180,6 +201,8 @@ export default function LenormandDivination() {
 
   // Онлайн-расклад: тянем карту вслепую (берём верхнюю из колоды)
   const drawBlindCard = () => {
+    if (isProcessing) return;
+    if (guardTouch()) return;
     if (!shuffled) {
       toast.info("Сначала перемешайте карты");
       return;
@@ -200,6 +223,8 @@ export default function LenormandDivination() {
 
   // Клик по дому
   const onHouseClick = (houseIdx: number) => {
+    if (isProcessing) return;
+    if (guardTouch()) return;
     if (mode === "online" && !shuffled) {
       toast.info("Сначала перемешайте карты");
       return;
@@ -220,32 +245,27 @@ export default function LenormandDivination() {
     }
   };
 
-  const clearLayout = () => {
+  const resetTable = () => {
     setLayout(EMPTY_LAYOUT());
     setActiveHouse(0);
     setDeck(shuffleArray(CARD_NAMES));
     setShuffled(false);
   };
 
-  const doNewReading = () => {
-    setLayout(EMPTY_LAYOUT());
-    setActiveHouse(0);
-    setComment("");
+  const clearLayout = () => {
+    if (isProcessing) return;
+    if (guardTouch()) return;
+    resetTable();
+  };
+
+  // Полный сброс старого результата (после запуска нового расклада)
+  const dropPrevResult = () => {
     setResult(null);
     setResultLayout([]);
     setResultDate("");
     setDownloaded(true);
-    setDeck(shuffleArray(CARD_NAMES));
-    setShuffled(false);
-  };
-
-  const newReading = () => {
-    if (result && !downloaded) {
-      setWarningAction("new");
-      setShowWarning(true);
-      return;
-    }
-    doNewReading();
+    setPrevOpen(false);
+    setTouchAck(false);
   };
 
   const startReading = useCallback(async () => {
@@ -254,9 +274,16 @@ export default function LenormandDivination() {
       return;
     }
 
+    // Запуск нового расклада — старый результат удаляется безвозвратно
+    dropPrevResult();
+
     setIsProcessing(true);
     setStatusText("Отправляю расклад...");
-    setResult(null);
+
+    // Скролл к лоадеру
+    setTimeout(() => {
+      loaderRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 60);
 
     const meta = {
       system: "lenormand",
@@ -331,6 +358,12 @@ export default function LenormandDivination() {
           setDownloaded(false);
           refreshBalance();
           toast.success("Расклад готов!");
+          setTimeout(() => {
+            resultCardRef.current?.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }, 80);
         } else if (data.status === "failed") {
           if (pollRef.current) clearInterval(pollRef.current);
           setIsProcessing(false);
@@ -353,19 +386,10 @@ export default function LenormandDivination() {
     }, POLLING_INTERVAL);
   };
 
-  const onSubmitClick = () => {
-    if (result && !downloaded) {
-      setWarningAction("start");
-      setShowWarning(true);
-      return;
-    }
-    startReading();
-  };
-
   const downloadPng = async () => {
-    if (!resultCardRef.current) return;
+    if (!prevCardRef.current) return;
     try {
-      const canvas = await html2canvas(resultCardRef.current, {
+      const canvas = await html2canvas(prevCardRef.current, {
         backgroundColor: "#faf7ff",
         scale: 2,
       });
@@ -387,12 +411,15 @@ export default function LenormandDivination() {
   };
 
   const switchMode = (m: Mode) => {
+    if (isProcessing) return;
     if (m === mode) return;
+    if (guardTouch()) return;
     setMode(m);
-    clearLayout();
+    resetTable();
   };
 
   const houseLocked = mode === "online" && !shuffled;
+  const formDisabled = isProcessing;
 
   return (
     <Layout>
@@ -413,100 +440,105 @@ export default function LenormandDivination() {
           {/* Фильтры — сверху на всю ширину */}
           <Card className="mb-6">
             <CardContent className="p-5">
-              <div className="grid gap-5 md:grid-cols-3">
-                <div>
+              <fieldset
+                disabled={formDisabled}
+                className={formDisabled ? "pointer-events-none opacity-60" : ""}
+              >
+                <div className="grid gap-5 md:grid-cols-3">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                      Период
+                    </label>
+                    <Select value={period} onValueChange={(v) => { if (guardTouch()) return; setPeriod(v as PeriodKey); }}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PERIODS.map((p) => (
+                          <SelectItem key={p.key} value={p.key}>
+                            {p.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                      Кто спрашивает
+                    </label>
+                    <Select value={gender} onValueChange={(v) => { if (guardTouch()) return; setGender(v as GenderKey); }}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {GENDERS.map((g) => (
+                          <SelectItem key={g.key} value={g.key}>
+                            {g.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                      Толкование
+                    </label>
+                    <Select value={model} onValueChange={(v) => { if (guardTouch()) return; setModel(v); }}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MODELS.map((m) => (
+                          <SelectItem key={m.value} value={m.value}>
+                            {m.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="mt-5">
                   <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                    Период
+                    Сферы (можно несколько)
                   </label>
-                  <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PERIODS.map((p) => (
-                        <SelectItem key={p.key} value={p.key}>
-                          {p.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex flex-wrap gap-2">
+                    {SPHERES.map((s) => (
+                      <button
+                        key={s.key}
+                        type="button"
+                        onClick={() => toggleSphere(s.key)}
+                        className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
+                          spheres.includes(s.key)
+                            ? "border-purple-500 bg-purple-50 text-purple-800"
+                            : "border-gray-200 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        <Icon
+                          name={spheres.includes(s.key) ? "CheckCircle2" : "Circle"}
+                          size={16}
+                          className={spheres.includes(s.key) ? "text-purple-600" : "text-gray-400"}
+                        />
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <div>
+                <div className="mt-5">
                   <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                    Кто спрашивает
+                    Комментарий (необязательно)
                   </label>
-                  <Select value={gender} onValueChange={(v) => setGender(v as GenderKey)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {GENDERS.map((g) => (
-                        <SelectItem key={g.key} value={g.key}>
-                          {g.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Textarea
+                    value={comment}
+                    onChange={(e) => { if (guardTouch()) return; setComment(e.target.value); }}
+                    placeholder="Например: стоит ли обновить гардероб этой весной и каким будет мой новый образ…"
+                    rows={3}
+                  />
                 </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                    Толкование
-                  </label>
-                  <Select value={model} onValueChange={setModel}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MODELS.map((m) => (
-                        <SelectItem key={m.value} value={m.value}>
-                          {m.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="mt-5">
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Сферы (можно несколько)
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {SPHERES.map((s) => (
-                    <button
-                      key={s.key}
-                      type="button"
-                      onClick={() => toggleSphere(s.key)}
-                      className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
-                        spheres.includes(s.key)
-                          ? "border-purple-500 bg-purple-50 text-purple-800"
-                          : "border-gray-200 text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      <Icon
-                        name={spheres.includes(s.key) ? "CheckCircle2" : "Circle"}
-                        size={16}
-                        className={spheres.includes(s.key) ? "text-purple-600" : "text-gray-400"}
-                      />
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-5">
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Комментарий (необязательно)
-                </label>
-                <Textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Например: стоит ли обновить гардероб этой весной и каким будет мой новый образ…"
-                  rows={3}
-                />
-              </div>
+              </fieldset>
             </CardContent>
           </Card>
 
@@ -521,7 +553,12 @@ export default function LenormandDivination() {
                   <span className="text-sm text-gray-500">
                     Заполнено: {filledCount}/36
                   </span>
-                  <Button variant="ghost" size="sm" onClick={clearLayout}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearLayout}
+                    disabled={formDisabled}
+                  >
                     <Icon name="Eraser" size={16} className="mr-1" /> Очистить
                   </Button>
                 </div>
@@ -532,7 +569,8 @@ export default function LenormandDivination() {
                 <button
                   type="button"
                   onClick={() => switchMode("online")}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                  disabled={formDisabled}
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50 ${
                     mode === "online"
                       ? "bg-purple-600 text-white"
                       : "text-gray-600 hover:bg-gray-50"
@@ -543,7 +581,8 @@ export default function LenormandDivination() {
                 <button
                   type="button"
                   onClick={() => switchMode("real")}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                  disabled={formDisabled}
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50 ${
                     mode === "real"
                       ? "bg-purple-600 text-white"
                       : "text-gray-600 hover:bg-gray-50"
@@ -551,6 +590,44 @@ export default function LenormandDivination() {
                 >
                   Реальный расклад
                 </button>
+              </div>
+
+              {/* УПРАВЛЕНИЕ И ПОДСКАЗКИ — НАД СТОЛОМ */}
+              <div
+                className={`mb-4 rounded-xl border border-purple-100 bg-purple-50/40 p-4 ${
+                  formDisabled ? "pointer-events-none opacity-60" : ""
+                }`}
+              >
+                {mode === "online" ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Button
+                      size="lg"
+                      onClick={shuffleDeck}
+                      disabled={formDisabled}
+                      className="bg-purple-600 px-8 py-6 text-base text-white hover:bg-purple-700"
+                    >
+                      <Icon name="Shuffle" size={22} className="mr-2" />
+                      Перемешать карты
+                    </Button>
+                    {shuffled ? (
+                      <p className="text-center text-sm text-gray-600">
+                        Активный дом: «{activeHouse + 1}. {HOUSE_NAMES[activeHouse]}».
+                        Кликните любую карту-рубашку <b>в колоде ниже</b> — она
+                        ляжет в дом.
+                      </p>
+                    ) : (
+                      <p className="text-center text-sm text-gray-600">
+                        Перемешайте карты, чтобы начать. Колода рубашками —{" "}
+                        <b>ниже под столом</b>.
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-center text-sm text-gray-600">
+                    Выберите дом, затем кликните карту, которая выпала в реальном
+                    раскладе. Список карт — <b>ниже под столом</b>.
+                  </p>
+                )}
               </div>
 
               {/* Дома-плитки */}
@@ -563,13 +640,14 @@ export default function LenormandDivination() {
                       key={idx}
                       type="button"
                       onClick={() => onHouseClick(idx)}
-                      className={`flex min-h-[64px] flex-col rounded-lg border p-1.5 text-left transition ${
+                      disabled={formDisabled}
+                      className={`flex min-h-[64px] flex-col rounded-lg border p-1.5 text-left transition disabled:cursor-not-allowed ${
                         isActive
                           ? "border-purple-500 ring-2 ring-purple-300"
                           : card
                           ? "border-purple-200 bg-white"
                           : "border-dashed border-gray-300 bg-gray-50 hover:border-purple-300"
-                      } ${houseLocked ? "opacity-60" : ""}`}
+                      } ${houseLocked || formDisabled ? "opacity-60" : ""}`}
                     >
                       <span className="text-xs leading-tight text-purple-400">
                         {idx + 1}. дом {house}
@@ -586,62 +664,43 @@ export default function LenormandDivination() {
                 })}
               </div>
 
-              {/* ОНЛАЙН-РЕЖИМ: колода рубашкой вверх */}
-              {mode === "online" && (
-                <div className="mt-6">
-                  <div className="mb-3 flex justify-center">
-                    <Button
-                      size="lg"
-                      onClick={shuffleDeck}
-                      className="bg-purple-600 px-8 py-6 text-base text-white hover:bg-purple-700"
-                    >
-                      <Icon name="Shuffle" size={22} className="mr-2" />
-                      Перемешать карты
-                    </Button>
+              {/* ОНЛАЙН: колода рубашкой вверх (под столом) */}
+              {mode === "online" && shuffled && (
+                <div
+                  className={`mt-6 ${formDisabled ? "pointer-events-none opacity-60" : ""}`}
+                >
+                  <div className="mb-2 text-sm font-medium text-gray-700">
+                    Колода (рубашкой вверх)
                   </div>
-
-                  {shuffled ? (
-                    <>
-                      <p className="mb-2 text-center text-sm text-gray-500">
-                        Дом «{activeHouse + 1}. {HOUSE_NAMES[activeHouse]}» —
-                        выберите карту, кликнув по любой рубашке
-                      </p>
-                      <div className="flex flex-wrap justify-center gap-1.5">
-                        {deck.map((card, i) => (
-                          <button
-                            key={`${card}-${i}`}
-                            type="button"
-                            onClick={drawBlindCard}
-                            title="Вытянуть карту"
-                            className="h-16 w-11 rounded-md border border-purple-300 shadow-sm transition hover:-translate-y-1"
-                            style={{
-                              background:
-                                "repeating-linear-gradient(45deg, #7c3aed 0, #7c3aed 4px, #a78bfa 4px, #a78bfa 8px)",
-                            }}
-                          />
-                        ))}
-                        {deck.length === 0 && (
-                          <span className="text-sm text-gray-400">
-                            Все карты разложены
-                          </span>
-                        )}
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-center text-sm text-gray-500">
-                      Перемешайте карты, чтобы начать расклад
-                    </p>
-                  )}
+                  <div className="flex flex-wrap justify-center gap-1.5">
+                    {deck.map((card, i) => (
+                      <button
+                        key={`${card}-${i}`}
+                        type="button"
+                        onClick={drawBlindCard}
+                        disabled={formDisabled}
+                        title="Вытянуть карту"
+                        className="h-16 w-11 rounded-md border border-purple-300 shadow-sm transition hover:-translate-y-1"
+                        style={{
+                          background:
+                            "repeating-linear-gradient(45deg, #7c3aed 0, #7c3aed 4px, #a78bfa 4px, #a78bfa 8px)",
+                        }}
+                      />
+                    ))}
+                    {deck.length === 0 && (
+                      <span className="text-sm text-gray-400">
+                        Все карты разложены
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
 
-              {/* РЕАЛЬНЫЙ РЕЖИМ: теги карт */}
+              {/* РЕАЛЬНЫЙ: теги карт (под столом) */}
               {mode === "real" && (
-                <div className="mt-6">
-                  <p className="mb-2 text-sm text-gray-500">
-                    Выберите дом, затем кликните карту, которая выпала в реальном
-                    раскладе.
-                  </p>
+                <div
+                  className={`mt-6 ${formDisabled ? "pointer-events-none opacity-60" : ""}`}
+                >
                   <div className="mb-2 text-sm font-medium text-gray-700">
                     Карты колоды
                   </div>
@@ -651,6 +710,7 @@ export default function LenormandDivination() {
                         key={card}
                         type="button"
                         onClick={() => placeCard(card)}
+                        disabled={formDisabled}
                         className="rounded-full border border-purple-300 bg-purple-50 px-2.5 py-1 text-sm text-purple-700 transition hover:bg-purple-100"
                       >
                         {card}
@@ -667,7 +727,7 @@ export default function LenormandDivination() {
 
               <div className="mt-6 flex items-center gap-3">
                 <Button
-                  onClick={onSubmitClick}
+                  onClick={startReading}
                   disabled={isProcessing}
                   className="bg-purple-600 text-white hover:bg-purple-700"
                 >
@@ -686,85 +746,213 @@ export default function LenormandDivination() {
               </div>
             </CardContent>
           </Card>
+
+          {/* ЛОАДЕР под столом во время обработки */}
+          {isProcessing && (
+            <div
+              ref={loaderRef}
+              className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-purple-100 bg-purple-50/40 py-12"
+            >
+              <Icon
+                name="Loader2"
+                size={40}
+                className="mb-4 animate-spin text-purple-500"
+              />
+              <p className="text-base font-medium text-purple-700">
+                {statusText || "Карты раскрываются…"}
+              </p>
+              <p className="mt-1 text-sm text-gray-500">
+                Это может занять до минуты. Не закрывайте страницу.
+              </p>
+            </div>
+          )}
         </LockedFormOverlay>
 
-        {/* Результат */}
-        {result && (
-          <div className="mt-8">
-            <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
-              <Button variant="outline" onClick={newReading}>
-                <Icon name="RotateCcw" size={16} className="mr-1" /> Новый расклад
-              </Button>
-              <Button variant="outline" onClick={copyText}>
-                <Icon name="Copy" size={16} className="mr-1" /> Скопировать
-              </Button>
-              <Button
-                onClick={downloadPng}
-                className="bg-purple-600 text-white hover:bg-purple-700"
-              >
-                <Icon name="Download" size={16} className="mr-1" /> Скачать PNG
-              </Button>
+        {/* ТОЛЬКО ТЕКСТ результата под столом */}
+        {result && !isProcessing && (
+          <div className="mt-8" ref={resultCardRef}>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-xl font-semibold text-purple-800">
+                Толкование расклада
+              </h2>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={copyText}>
+                  <Icon name="Copy" size={16} className="mr-1" /> Скопировать
+                </Button>
+                <Button
+                  onClick={downloadPng}
+                  className="bg-purple-600 text-white hover:bg-purple-700"
+                >
+                  <Icon name="Download" size={16} className="mr-1" /> Скачать PNG
+                </Button>
+              </div>
             </div>
-
-            <div
-              ref={resultCardRef}
-              className="rounded-2xl border border-purple-100 p-6 shadow-sm"
-              style={{ background: "linear-gradient(180deg, #faf7ff 0%, #f3eefc 100%)" }}
-            >
-              <div className="mb-4 text-center">
-                <h2 className="text-2xl font-semibold text-purple-800">
-                  Большой расклад Ленорман 9 × 4
-                </h2>
-                <p className="mt-1 text-sm text-purple-500">{resultDate}</p>
-              </div>
-
-              <div className="mb-6 grid grid-cols-3 gap-1.5 sm:grid-cols-6 lg:grid-cols-9">
-                {resultLayout.map((card, idx) =>
-                  card ? (
-                    <div
-                      key={idx}
-                      className="rounded-md border border-purple-200 bg-white/70 p-1.5 text-center"
-                    >
-                      <div className="text-xs text-purple-400">
-                        {idx + 1}. дом {HOUSE_NAMES[idx]}
-                      </div>
-                      <div className="text-sm font-semibold text-purple-800">
-                        карта {card}
-                      </div>
-                    </div>
-                  ) : null
-                )}
-              </div>
-
+            <div className="rounded-2xl border border-purple-100 bg-white p-6 shadow-sm">
+              <p className="mb-3 text-sm text-purple-500">{resultDate}</p>
               <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-gray-800">
                 {result}
               </div>
+            </div>
+
+            {/* Аккордион «Предыдущий расклад» (картинка для скачивания) */}
+            <div className="mt-4 rounded-2xl border border-purple-100">
+              <button
+                type="button"
+                onClick={() => setPrevOpen((o) => !o)}
+                className="flex w-full items-center justify-between px-5 py-3 text-left"
+              >
+                <span className="font-medium text-gray-900">
+                  Предыдущий расклад
+                </span>
+                <Icon
+                  name={prevOpen ? "ChevronUp" : "ChevronDown"}
+                  size={20}
+                  className="text-gray-500"
+                />
+              </button>
+              {prevOpen && (
+                <div className="border-t border-purple-100 p-5">
+                  <div className="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+                    <Icon name="TriangleAlert" size={18} className="mt-0.5 shrink-0" />
+                    <span>
+                      Этот расклад удалится, как только вы запустите новый.
+                      Рекомендуем скачать картинку или скопировать текст к себе.
+                    </span>
+                  </div>
+                  <div className="mb-3 flex gap-2">
+                    <Button variant="outline" size="sm" onClick={copyText}>
+                      <Icon name="Copy" size={16} className="mr-1" /> Скопировать
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={downloadPng}
+                      className="bg-purple-600 text-white hover:bg-purple-700"
+                    >
+                      <Icon name="Download" size={16} className="mr-1" /> Скачать PNG
+                    </Button>
+                  </div>
+
+                  <div
+                    className="rounded-2xl border border-purple-100 p-6 shadow-sm"
+                    style={{
+                      background:
+                        "linear-gradient(180deg, #faf7ff 0%, #f3eefc 100%)",
+                    }}
+                  >
+                    <div className="mb-4 text-center">
+                      <h3 className="text-2xl font-semibold text-purple-800">
+                        Большой расклад Ленорман 9 × 4
+                      </h3>
+                      <p className="mt-1 text-sm text-purple-500">{resultDate}</p>
+                    </div>
+
+                    <div className="mb-6 grid grid-cols-3 gap-1.5 sm:grid-cols-6 lg:grid-cols-9">
+                      {resultLayout.map((card, idx) =>
+                        card ? (
+                          <div
+                            key={idx}
+                            className="rounded-md border border-purple-200 bg-white/70 p-1.5 text-center"
+                          >
+                            <div className="text-xs text-purple-400">
+                              {idx + 1}. дом {HOUSE_NAMES[idx]}
+                            </div>
+                            <div className="text-sm font-semibold text-purple-800">
+                              карта {card}
+                            </div>
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+
+                    <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-gray-800">
+                      {result}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
       </div>
 
-      <AlertDialog open={showWarning} onOpenChange={setShowWarning}>
+      {/* Скрытая копия карточки для скачивания PNG (всегда в DOM, пока есть результат) */}
+      {result && (
+        <div
+          aria-hidden
+          style={{
+            position: "fixed",
+            left: "-10000px",
+            top: 0,
+            width: "900px",
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            ref={prevCardRef}
+            className="rounded-2xl border border-purple-100 p-6 shadow-sm"
+            style={{
+              background: "linear-gradient(180deg, #faf7ff 0%, #f3eefc 100%)",
+            }}
+          >
+            <div className="mb-4 text-center">
+              <h3 className="text-2xl font-semibold text-purple-800">
+                Большой расклад Ленорман 9 × 4
+              </h3>
+              <p className="mt-1 text-sm text-purple-500">{resultDate}</p>
+            </div>
+            <div className="mb-6 grid grid-cols-9 gap-1.5">
+              {resultLayout.map((card, idx) =>
+                card ? (
+                  <div
+                    key={idx}
+                    className="rounded-md border border-purple-200 bg-white/70 p-1.5 text-center"
+                  >
+                    <div className="text-xs text-purple-400">
+                      {idx + 1}. дом {HOUSE_NAMES[idx]}
+                    </div>
+                    <div className="text-sm font-semibold text-purple-800">
+                      карта {card}
+                    </div>
+                  </div>
+                ) : null
+              )}
+            </div>
+            <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-gray-800">
+              {result}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модалка при первом касании нового расклада */}
+      <AlertDialog open={showTouchWarning} onOpenChange={setShowTouchWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Сохраните предыдущий расклад</AlertDialogTitle>
+            <AlertDialogTitle>Вы начинаете новый расклад</AlertDialogTitle>
             <AlertDialogDescription>
-              Скачай, чтоб не потерять предыдущий расклад, иначе он не сохранится.
+              Старый результат удалится, как только вы запустите новый. Рекомендуем
+              скачать его. Можно скачать прямо сейчас или начать новый расклад без
+              сохранения.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction
+            <AlertDialogCancel
               onClick={() => {
-                setShowWarning(false);
-                if (warningAction === "new") {
-                  doNewReading();
-                } else {
-                  startReading();
-                }
+                setShowTouchWarning(false);
+                setTouchAck(true);
+                dropPrevResult();
               }}
             >
-              Всё равно продолжить
+              Начать новый расклад
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowTouchWarning(false);
+                setTouchAck(true);
+                downloadPng();
+              }}
+            >
+              Скачать
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
