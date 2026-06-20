@@ -217,16 +217,16 @@ def refund_lenormand(task_id):
             if task_type != 'lenormand' or refunded or not cost or cost <= 0 or not user_id:
                 return
 
-            cur.execute('SELECT balance FROM users WHERE id = %s', (user_id,))
+            cur.execute(f'SELECT balance FROM {DB_SCHEMA}.users WHERE id = %s', (user_id,))
             brow = cur.fetchone()
             if not brow:
                 return
             balance_before = float(brow[0])
             balance_after = balance_before + cost
 
-            cur.execute('UPDATE users SET balance = balance + %s WHERE id = %s', (cost, user_id))
+            cur.execute(f'UPDATE {DB_SCHEMA}.users SET balance = balance + %s WHERE id = %s', (cost, user_id))
             cur.execute(
-                """INSERT INTO balance_transactions
+                f"""INSERT INTO {DB_SCHEMA}.balance_transactions
                    (user_id, type, amount, balance_before, balance_after, description)
                    VALUES (%s, 'refund', %s, %s, %s, %s)""",
                 (user_id, cost, balance_before, balance_after, 'Возврат: Расклад Ленорман (ошибка обработки)')

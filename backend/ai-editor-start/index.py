@@ -20,6 +20,15 @@ def get_db_connection():
     return psycopg2.connect(os.environ['DATABASE_URL'])
 
 
+def get_db_connection_schema():
+    dsn = os.environ['DATABASE_URL']
+    if '?' in dsn:
+        dsn += '&options=-c%20search_path%3Dt_p29007832_virtual_fitting_room'
+    else:
+        dsn += '?options=-c%20search_path%3Dt_p29007832_virtual_fitting_room'
+    return psycopg2.connect(dsn)
+
+
 def sql_escape(val):
     if val is None:
         return 'NULL'
@@ -68,55 +77,60 @@ def handle_lenormand(event, body, cors_headers):
     task_id = str(uuid.uuid4())
     now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
 
-    conn = psycopg2.connect(os.environ['DATABASE_URL'])
     try:
-        with conn.cursor() as cur:
-            cur.execute('SELECT balance, unlimited_access FROM users WHERE id = %s', (user_id,))
-            user_row = cur.fetchone()
-            if not user_row:
-                return {'statusCode': 404, 'headers': cors_headers,
-                        'body': json.dumps({'error': 'User not found'})}
+        conn = get_db_connection_schema()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT balance, unlimited_access FROM users WHERE id = %s', (user_id,))
+                user_row = cur.fetchone()
+                if not user_row:
+                    return {'statusCode': 404, 'headers': cors_headers,
+                            'body': json.dumps({'error': 'User not found'})}
 
-            balance = float(user_row[0])
-            unlimited_access = user_row[1]
-            cost = 0 if unlimited_access else LENORMAND_COST
+                balance = float(user_row[0])
+                unlimited_access = user_row[1]
+                cost = 0 if unlimited_access else LENORMAND_COST
 
-            if not unlimited_access and balance < cost:
-                return {'statusCode': 402, 'headers': cors_headers,
-                        'body': json.dumps({'error': 'Insufficient balance',
-                                            'required': cost, 'current': balance})}
+                if not unlimited_access and balance < cost:
+                    return {'statusCode': 402, 'headers': cors_headers,
+                            'body': json.dumps({'error': 'Insufficient balance',
+                                                'required': cost, 'current': balance})}
 
-            if cost > 0:
-                cur.execute('UPDATE users SET balance = balance - %s WHERE id = %s', (cost, user_id))
+                if cost > 0:
+                    cur.execute('UPDATE users SET balance = balance - %s WHERE id = %s', (cost, user_id))
 
-            meta_json = json.dumps(meta, ensure_ascii=False)
-            cur.execute(
-                f"""INSERT INTO {DB_SCHEMA}.ai_editor_tasks
-                    (id, status, mode, model, prompt, task_type, user_id, cost,
-                     refunded, divination_meta, created_at, updated_at)
-                    VALUES (%s, 'pending', 'chat', %s, %s, 'lenormand', %s, %s,
-                            false, %s::jsonb, %s, %s)""",
-                (task_id, model, prompt, user_id, cost, meta_json, now, now)
-            )
-
-            if cost > 0:
-                balance_after = balance - cost
+                meta_json = json.dumps(meta, ensure_ascii=False)
                 cur.execute(
-                    """INSERT INTO balance_transactions
-                       (user_id, type, amount, balance_before, balance_after, description)
-                       VALUES (%s, 'charge', %s, %s, %s, %s)""",
-                    (user_id, -cost, balance, balance_after, 'Расклад Ленорман')
+                    """INSERT INTO ai_editor_tasks
+                        (id, status, mode, model, prompt, task_type, user_id, cost,
+                         refunded, divination_meta, created_at, updated_at)
+                        VALUES (%s, 'pending', 'chat', %s, %s, 'lenormand', %s, %s,
+                                false, %s::jsonb, %s, %s)""",
+                    (task_id, model, prompt, user_id, cost, meta_json, now, now)
                 )
-            elif unlimited_access:
-                cur.execute(
-                    """INSERT INTO balance_transactions
-                       (user_id, type, amount, balance_before, balance_after, description)
-                       VALUES (%s, 'charge', 0, %s, %s, %s)""",
-                    (user_id, balance, balance, 'Расклад Ленорман (безлимитный доступ)')
-                )
-        conn.commit()
-    finally:
-        conn.close()
+
+                if cost > 0:
+                    balance_after = balance - cost
+                    cur.execute(
+                        """INSERT INTO balance_transactions
+                           (user_id, type, amount, balance_before, balance_after, description)
+                           VALUES (%s, 'charge', %s, %s, %s, %s)""",
+                        (user_id, -cost, balance, balance_after, 'Расклад Ленорман')
+                    )
+                elif unlimited_access:
+                    cur.execute(
+                        """INSERT INTO balance_transactions
+                           (user_id, type, amount, balance_before, balance_after, description)
+                           VALUES (%s, 'charge', 0, %s, %s, %s)""",
+                        (user_id, balance, balance, 'Расклад Ленорман (безлимитный доступ)')
+                    )
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f'[LENORMAND-START] ERROR: {e}')
+        return {'statusCode': 500, 'headers': cors_headers,
+                'body': json.dumps({'error': f'Ошибка создания расклада: {str(e)[:300]}'})}
 
     trigger_worker(task_id)
 
