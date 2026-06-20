@@ -216,7 +216,6 @@ export default function LenormandDivination() {
           "Content-Type": "application/json",
           ...(token ? { "X-Session-Token": token } : {}),
         },
-        credentials: "include",
         body: JSON.stringify({
           task_type: "lenormand",
           model,

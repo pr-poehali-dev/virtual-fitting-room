@@ -16,6 +16,28 @@ LENORMAND_COST = 50
 LENORMAND_MODELS = {'anthropic/claude-sonnet-4.6', 'google/gemini-2.5-flash'}
 
 
+ALLOWED_ORIGINS = [
+    'https://fitting-room.ru',
+    'https://preview--virtual-fitting-room.poehali.dev',
+]
+
+
+def get_cors_origin(event):
+    headers = event.get('headers', {}) or {}
+    origin = headers.get('origin') or headers.get('Origin', '')
+    return origin if origin in ALLOWED_ORIGINS else 'https://fitting-room.ru'
+
+
+def make_cors_headers(event):
+    return {
+        'Access-Control-Allow-Origin': get_cors_origin(event),
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Session-Token',
+        'Access-Control-Allow-Credentials': 'true',
+        'Content-Type': 'application/json',
+    }
+
+
 def get_db_connection():
     return psycopg2.connect(os.environ['DATABASE_URL'])
 
@@ -141,12 +163,7 @@ def handle_lenormand(event, body, cors_headers):
 def handler(event, context):
     """Создаёт задачу AI-редактирования и возвращает task_id мгновенно."""
 
-    cors_headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, X-Session-Token',
-        'Content-Type': 'application/json',
-    }
+    cors_headers = make_cors_headers(event)
 
     if event.get('httpMethod') == 'OPTIONS':
         return {'statusCode': 200, 'headers': cors_headers, 'body': ''}
