@@ -304,6 +304,19 @@ export default function LenormandDivination() {
     resetTable();
   };
 
+  // Очистить фильтры — полный сброс всей формы к значениям по умолчанию
+  const clearFilters = () => {
+    if (isProcessing) return;
+    if (guardTouch()) return;
+    setPeriod("now");
+    setGender("female");
+    setSpheres(["all"]);
+    setComment("");
+    setModel(MODELS[0].value);
+    resetTable();
+    toast.success("Форма очищена");
+  };
+
   // Полный сброс старого результата (после запуска нового расклада)
   const dropPrevResult = () => {
     setResult(null);
@@ -509,6 +522,18 @@ export default function LenormandDivination() {
         </div>
 
         <LockedFormOverlay cost={LENORMAND_COST}>
+          {/* Кнопка очистки всей формы */}
+          <div className="mb-3 flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearFilters}
+              disabled={formDisabled}
+            >
+              <Icon name="Eraser" size={16} className="mr-1" /> Очистить фильтры
+            </Button>
+          </div>
+
           {/* Фильтры — сверху на всю ширину */}
           <Card className="mb-6">
             <CardContent className="p-5">
@@ -631,7 +656,7 @@ export default function LenormandDivination() {
                     onClick={clearLayout}
                     disabled={formDisabled}
                   >
-                    <Icon name="Eraser" size={16} className="mr-1" /> Очистить
+                    <Icon name="Eraser" size={16} className="mr-1" /> Очистить расклад
                   </Button>
                 </div>
               </div>
