@@ -64,6 +64,7 @@ export default function LenormandDivination() {
   const [comment, setComment] = useState("");
   const [model, setModel] = useState(MODELS[0].value);
   const [layout, setLayout] = useState<string[]>(EMPTY_LAYOUT());
+  const [activeHouse, setActiveHouse] = useState<number>(0);
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusText, setStatusText] = useState("");
@@ -88,20 +89,52 @@ export default function LenormandDivination() {
     );
   };
 
-  const setCard = (houseIdx: number, card: string) => {
+  const filledCount = layout.filter((c) => c).length;
+
+  const usedCardsSet = new Set(layout.filter(Boolean));
+
+  const nextEmptyHouse = (from: number, current: string[]) => {
+    for (let i = from; i < current.length; i++) {
+      if (!current[i]) return i;
+    }
+    for (let i = 0; i < current.length; i++) {
+      if (!current[i]) return i;
+    }
+    return -1;
+  };
+
+  // Клик по тегу карты: вставляем карту в активный дом, фокус на следующий пустой
+  const placeCard = (card: string) => {
+    if (usedCardsSet.has(card)) return;
     setLayout((prev) => {
       const next = [...prev];
-      next[houseIdx] = card;
+      const target = !prev[activeHouse] ? activeHouse : nextEmptyHouse(0, prev);
+      if (target === -1) return prev;
+      next[target] = card;
+      const after = nextEmptyHouse(target + 1, next);
+      setActiveHouse(after === -1 ? target : after);
       return next;
     });
   };
 
-  const filledCount = layout.filter((c) => c).length;
+  // Клик по дому: если есть карта — очищаем её, иначе делаем дом активным
+  const onHouseClick = (houseIdx: number) => {
+    if (layout[houseIdx]) {
+      setLayout((prev) => {
+        const next = [...prev];
+        next[houseIdx] = "";
+        return next;
+      });
+      setActiveHouse(houseIdx);
+    } else {
+      setActiveHouse(houseIdx);
+    }
+  };
 
-  const usedCards = (exceptIdx: number) =>
-    new Set(layout.filter((c, i) => c && i !== exceptIdx));
-
-  const clearLayout = () => setLayout(EMPTY_LAYOUT());
+  const clearLayout = () => {
+    setLayout(EMPTY_LAYOUT());
+    setActiveHouse(0);
+  };
 
   const startReading = useCallback(async () => {
     if (filledCount === 0) {
@@ -373,42 +406,68 @@ export default function LenormandDivination() {
                   </div>
                 </div>
                 <p className="mb-4 text-sm text-gray-500">
-                  Укажите, какая карта выпала в каждом доме (как в реальном раскладе).
+                  Выберите дом (он подсветится), затем кликните карту из списка ниже.
+                  Клик по заполненному дому очищает его.
                 </p>
 
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+                {/* Дома-плитки */}
+                <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6 lg:grid-cols-9">
                   {HOUSE_NAMES.map((house, idx) => {
-                    const used = usedCards(idx);
+                    const card = layout[idx];
+                    const isActive = activeHouse === idx;
                     return (
-                      <div
+                      <button
                         key={idx}
-                        className="rounded-lg border border-purple-100 bg-purple-50/40 p-2"
+                        type="button"
+                        onClick={() => onHouseClick(idx)}
+                        className={`flex min-h-[58px] flex-col rounded-lg border p-1.5 text-left transition ${
+                          isActive
+                            ? "border-purple-500 ring-2 ring-purple-300"
+                            : card
+                            ? "border-purple-200 bg-white"
+                            : "border-dashed border-gray-300 bg-gray-50 hover:border-purple-300"
+                        }`}
                       >
-                        <div className="mb-1 text-[11px] font-medium leading-tight text-purple-700">
-                          {idx + 1}. дом {house}
-                        </div>
-                        <Select
-                          value={layout[idx] || undefined}
-                          onValueChange={(v) => setCard(idx, v)}
+                        <span className="text-[10px] leading-tight text-purple-400">
+                          {idx + 1}. {house}
+                        </span>
+                        <span
+                          className={`mt-auto text-xs font-medium ${
+                            card ? "text-purple-800" : "text-gray-300"
+                          }`}
                         >
-                          <SelectTrigger className="h-8 text-xs">
-                            <SelectValue placeholder="карта…" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {CARD_NAMES.map((card) => (
-                              <SelectItem
-                                key={card}
-                                value={card}
-                                disabled={used.has(card)}
-                              >
-                                {card}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                          {card || "—"}
+                        </span>
+                      </button>
                     );
                   })}
+                </div>
+
+                {/* Теги карт */}
+                <div className="mt-5">
+                  <div className="mb-2 text-sm font-medium text-gray-700">
+                    Карты колоды
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CARD_NAMES.map((card) => {
+                      const used = usedCardsSet.has(card);
+                      return (
+                        <button
+                          key={card}
+                          type="button"
+                          disabled={used}
+                          onClick={() => placeCard(card)}
+                          className={`rounded-full border px-2.5 py-1 text-xs transition ${
+                            used
+                              ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-300 line-through"
+                              : "border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100"
+                          }`}
+                        >
+                          {card}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div className="mt-5 flex items-center gap-3">
