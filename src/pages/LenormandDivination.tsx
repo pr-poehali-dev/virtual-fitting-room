@@ -108,9 +108,12 @@ export default function LenormandDivination() {
   const loaderRef = useRef<HTMLDivElement>(null);
 
   const FORM_STORAGE_KEY = "lenormand_form_v1";
+  // Восстанавливать форму из localStorage можно только после проверки наличия
+  // предыдущего результата (если он есть — форма должна стартовать чистой).
+  const [formReady, setFormReady] = useState(false);
 
-  // Восстановление полей формы при загрузке
-  useEffect(() => {
+  // Восстановление полей формы из localStorage
+  const restoreFormFromStorage = () => {
     try {
       const saved = localStorage.getItem(FORM_STORAGE_KEY);
       if (saved) {
@@ -125,10 +128,11 @@ export default function LenormandDivination() {
     } catch (e) {
       /* ignore */
     }
-  }, []);
+  };
 
-  // Автосохранение полей формы
+  // Автосохранение полей формы (только после первичной инициализации)
   useEffect(() => {
+    if (!formReady) return;
     try {
       localStorage.setItem(
         FORM_STORAGE_KEY,
@@ -137,7 +141,7 @@ export default function LenormandDivination() {
     } catch (e) {
       /* ignore */
     }
-  }, [period, gender, spheres, comment, model, layout]);
+  }, [formReady, period, gender, spheres, comment, model, layout]);
 
   useEffect(() => {
     return () => {
@@ -147,17 +151,35 @@ export default function LenormandDivination() {
 
   // Загрузка последнего завершённого расклада из базы (показ в аккордионе после перезагрузки)
   useEffect(() => {
-    const token = localStorage.getItem("session_token");
-    if (!token) return;
     let cancelled = false;
+    const token = localStorage.getItem("session_token");
+
+    const finishWithEmpty = () => {
+      if (cancelled) return;
+      restoreFormFromStorage();
+      setFormReady(true);
+    };
+
+    if (!token) {
+      finishWithEmpty();
+      return;
+    }
+
     (async () => {
       try {
         const res = await fetch(LENORMAND_LAST, {
           headers: { "X-Session-Token": token },
         });
-        if (!res.ok) return;
+        if (!res.ok) {
+          finishWithEmpty();
+          return;
+        }
         const data = await res.json();
-        if (cancelled || data.empty || !data.ai_response) return;
+        if (cancelled) return;
+        if (data.empty || !data.ai_response) {
+          finishWithEmpty();
+          return;
+        }
         const meta = data.divination_meta || {};
         const layoutArr =
           Array.isArray(meta.layout) && meta.layout.length === 36
@@ -174,8 +196,15 @@ export default function LenormandDivination() {
               })
             : ""
         );
+        // Есть предыдущий результат — форма стартует чистой, очищаем сохранённое
+        try {
+          localStorage.removeItem(FORM_STORAGE_KEY);
+        } catch (e) {
+          /* ignore */
+        }
+        setFormReady(true);
       } catch (e) {
-        /* ignore */
+        finishWithEmpty();
       }
     })();
     return () => {
@@ -659,6 +688,18 @@ export default function LenormandDivination() {
                     <Icon name="Eraser" size={16} className="mr-1" /> Очистить расклад
                   </Button>
                 </div>
+              </div>
+
+              {/* Пояснения над вкладками */}
+              <div className="mb-3 space-y-1 text-sm text-gray-600">
+                <p>
+                  <b className="text-gray-800">Онлайн-расклад</b> — перемешайте
+                  колоду и тяните карты рубашкой вверх прямо на экране.
+                </p>
+                <p>
+                  <b className="text-gray-800">Реальный расклад</b> — у вас уже
+                  разложены настоящие карты, вы просто переносите их в дома.
+                </p>
               </div>
 
               {/* Переключатель режимов */}
