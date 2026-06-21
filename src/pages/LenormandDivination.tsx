@@ -38,6 +38,10 @@ import {
   GenderKey,
   SphereKey,
 } from "@/data/lenormand";
+import {
+  CARD_BACK_IMAGE,
+  getCardImageByName,
+} from "@/data/lenormandImages";
 
 const AI_EDITOR_START =
   "https://functions.poehali.dev/6ddfd93a-b3ac-445f-a1bf-3327d6ba01d7";
@@ -508,6 +512,7 @@ export default function LenormandDivination() {
       const canvas = await html2canvas(prevCardRef.current, {
         backgroundColor: "#faf7ff",
         scale: 2,
+        useCORS: true,
       });
       const link = document.createElement("a");
       link.download = `lenormand-${Date.now()}.png`;
@@ -533,6 +538,7 @@ export default function LenormandDivination() {
       const canvas = await html2canvas(dbPrevCardRef.current, {
         backgroundColor: "#faf7ff",
         scale: 2,
+        useCORS: true,
       });
       const link = document.createElement("a");
       link.download = `lenormand-${Date.now()}.png`;
@@ -816,6 +822,14 @@ export default function LenormandDivination() {
                       <span className="text-xs leading-tight text-purple-400">
                         {idx + 1}. дом {house}
                       </span>
+                      {card && getCardImageByName(card) && (
+                        <img
+                          src={getCardImageByName(card)}
+                          alt={card}
+                          className="mx-auto mt-1 h-12 w-auto rounded object-contain"
+                          loading="lazy"
+                        />
+                      )}
                       <span
                         className={`mt-auto text-sm font-semibold ${
                           card ? "text-purple-800" : "text-gray-300"
@@ -844,12 +858,15 @@ export default function LenormandDivination() {
                         onClick={drawBlindCard}
                         disabled={formDisabled}
                         title="Вытянуть карту"
-                        className="h-16 w-11 rounded-md border border-purple-300 shadow-sm transition hover:-translate-y-1"
-                        style={{
-                          background:
-                            "repeating-linear-gradient(45deg, #7c3aed 0, #7c3aed 4px, #a78bfa 4px, #a78bfa 8px)",
-                        }}
-                      />
+                        className="h-16 w-11 overflow-hidden rounded-md border border-purple-300 shadow-sm transition hover:-translate-y-1"
+                      >
+                        <img
+                          src={CARD_BACK_IMAGE}
+                          alt="Рубашка карты"
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      </button>
                     ))}
                     {deck.length === 0 && (
                       <span className="text-sm text-gray-400">
@@ -875,8 +892,16 @@ export default function LenormandDivination() {
                         type="button"
                         onClick={() => placeCard(card)}
                         disabled={formDisabled}
-                        className="rounded-full border border-purple-300 bg-purple-50 px-2.5 py-1 text-sm text-purple-700 transition hover:bg-purple-100"
+                        className="flex items-center gap-1.5 rounded-full border border-purple-300 bg-purple-50 py-1 pl-1 pr-2.5 text-sm text-purple-700 transition hover:bg-purple-100"
                       >
+                        {getCardImageByName(card) && (
+                          <img
+                            src={getCardImageByName(card)}
+                            alt={card}
+                            className="h-6 w-6 rounded-full object-cover"
+                            loading="lazy"
+                          />
+                        )}
                         {card}
                       </button>
                     ))}
@@ -1026,6 +1051,14 @@ export default function LenormandDivination() {
                             <div className="text-xs text-purple-400">
                               {idx + 1}. дом {HOUSE_NAMES[idx]}
                             </div>
+                            {getCardImageByName(card) && (
+                              <img
+                                src={getCardImageByName(card)}
+                                alt={card}
+                                className="mx-auto my-1 h-14 w-auto rounded object-contain"
+                                loading="lazy"
+                              />
+                            )}
                             <div className="text-sm font-semibold text-purple-800">
                               карта {card}
                             </div>
@@ -1105,6 +1138,14 @@ export default function LenormandDivination() {
                     <div className="text-xs text-purple-400">
                       {idx + 1}. дом {HOUSE_NAMES[idx]}
                     </div>
+                    {getCardImageByName(card) && (
+                      <img
+                        src={getCardImageByName(card)}
+                        alt={card}
+                        crossOrigin="anonymous"
+                        className="mx-auto my-1 h-14 w-auto rounded object-contain"
+                      />
+                    )}
                     <div className="text-sm font-semibold text-purple-800">
                       карта {card}
                     </div>
@@ -1164,6 +1205,14 @@ export default function LenormandDivination() {
                       <div className="text-xs text-purple-400">
                         {idx + 1}. дом {HOUSE_NAMES[idx]}
                       </div>
+                      {getCardImageByName(card) && (
+                        <img
+                          src={getCardImageByName(card)}
+                          alt={card}
+                          crossOrigin="anonymous"
+                          className="mx-auto my-1 h-14 w-auto rounded object-contain"
+                        />
+                      )}
                       <div className="text-sm font-semibold text-purple-800">
                         карта {card}
                       </div>
