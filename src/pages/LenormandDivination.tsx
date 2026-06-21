@@ -828,19 +828,19 @@ export default function LenormandDivination() {
                           : "border-dashed border-gray-300 bg-white/40 hover:border-purple-300"
                       } ${houseLocked || formDisabled ? "opacity-60" : ""}`}
                     >
-                      <span className="text-[10px] leading-tight text-purple-700 sm:text-xs">
+                      <span className="text-[10px] leading-tight text-purple-700">
                         {idx + 1}. дом {house}
                       </span>
                       {card && getCardImageByName(card) && (
                         <img
                           src={getCardImageByName(card)}
                           alt={card}
-                          className="mx-auto mt-1 h-20 w-14 rounded object-cover"
+                          className="mx-auto mt-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px]"
                           loading="lazy"
                         />
                       )}
                       <span
-                        className={`mt-auto text-xs font-semibold sm:text-sm ${
+                        className={`mt-auto flex min-h-[28px] items-end text-[11px] font-semibold leading-tight sm:text-xs ${
                           card ? "text-purple-900" : "text-gray-400"
                         }`}
                       >
@@ -874,12 +874,12 @@ export default function LenormandDivination() {
                         onClick={drawBlindCard}
                         disabled={formDisabled}
                         title="Вытянуть карту"
-                        className="h-20 w-14 overflow-hidden rounded-md border border-purple-300 shadow-sm transition hover:-translate-y-1"
+                        className="h-24 w-[62px] overflow-hidden rounded-md border border-purple-300 shadow-sm transition hover:-translate-y-1 sm:h-32 sm:w-[82px]"
                       >
                         <img
                           src={CARD_BACK_IMAGE}
                           alt="Рубашка карты"
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-contain"
                           loading="lazy"
                         />
                       </button>
@@ -1073,18 +1073,18 @@ export default function LenormandDivination() {
                               key={idx}
                               className="rounded-md border border-purple-200 bg-white/60 p-1.5 text-center"
                             >
-                              <div className="text-[10px] text-purple-700 sm:text-xs">
+                              <div className="text-[10px] leading-tight text-purple-700">
                                 {idx + 1}. дом {HOUSE_NAMES[idx]}
                               </div>
                               {getCardImageByName(card) && (
                                 <img
                                   src={getCardImageByName(card)}
                                   alt={card}
-                                  className="mx-auto my-1 h-20 w-14 rounded object-cover"
+                                  className="mx-auto my-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px]"
                                   loading="lazy"
                                 />
                               )}
-                              <div className="text-xs font-semibold text-purple-900 sm:text-sm">
+                              <div className="text-[11px] font-semibold leading-tight text-purple-900 sm:text-xs">
                                 карта {card}
                               </div>
                             </div>
@@ -1177,7 +1177,7 @@ export default function LenormandDivination() {
                         src={getCardImageByName(card)}
                         alt={card}
                         crossOrigin="anonymous"
-                        className="mx-auto my-1 h-20 w-14 rounded object-cover"
+                        className="mx-auto my-1 h-32 w-[82px] rounded object-contain"
                       />
                     )}
                     <div className="text-sm font-semibold text-purple-900">
@@ -1252,7 +1252,7 @@ export default function LenormandDivination() {
                           src={getCardImageByName(card)}
                           alt={card}
                           crossOrigin="anonymous"
-                          className="mx-auto my-1 h-20 w-14 rounded object-cover"
+                          className="mx-auto my-1 h-32 w-[82px] rounded object-contain"
                         />
                       )}
                       <div className="text-sm font-semibold text-purple-900">
