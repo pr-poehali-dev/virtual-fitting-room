@@ -852,6 +852,12 @@ export default function LenormandDivination() {
                 </div>
               </div>
 
+              <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-gray-400 lg:hidden">
+                <Icon name="ArrowLeft" size={14} />
+                <span>Листайте стол вбок, чтобы увидеть все 36 домов</span>
+                <Icon name="ArrowRight" size={14} />
+              </div>
+
               {/* ОНЛАЙН: колода рубашкой вверх (под столом) */}
               {mode === "online" && shuffled && (
                 <div

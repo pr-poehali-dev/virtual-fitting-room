@@ -30,11 +30,19 @@ export const GENDERS: { key: GenderKey; label: string }[] = [
   { key: 'male', label: 'Мужчина' },
 ];
 
-export type SphereKey = 'outfit' | 'relationships' | 'career' | 'all';
+export type SphereKey =
+  | 'outfit'
+  | 'relationships'
+  | 'career'
+  | 'finance'
+  | 'beauty'
+  | 'all';
 
 export const SPHERES: { key: SphereKey; label: string }[] = [
   { key: 'outfit', label: 'Как одеваться, какой стиль выбирать' },
   { key: 'relationships', label: 'Личные отношения' },
   { key: 'career', label: 'Профессиональная деятельность' },
+  { key: 'finance', label: 'Финансы' },
+  { key: 'beauty', label: 'Персональные советы по моде и красоте' },
   { key: 'all', label: 'Все сферы' },
 ];
