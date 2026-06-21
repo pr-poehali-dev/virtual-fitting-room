@@ -49,6 +49,43 @@ const AI_EDITOR_STATUS =
   "https://functions.poehali.dev/487c8816-d661-4f43-a72d-112374006c7c";
 const LENORMAND_LAST =
   "https://functions.poehali.dev/9d61578b-0a21-4bba-9fcc-37dbd5a4454d";
+const IMAGE_PROXY =
+  "https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90";
+
+// Кэш data-url картинок карт (чтобы не дёргать прокси повторно при скачивании)
+const cardDataUrlCache = new Map<string, string>();
+
+// Возвращает картинку как data-url через прокси (с CORS), кэширует результат
+const fetchCardDataUrl = async (url: string): Promise<string | null> => {
+  if (cardDataUrlCache.has(url)) return cardDataUrlCache.get(url)!;
+  try {
+    const res = await fetch(`${IMAGE_PROXY}?url=${encodeURIComponent(url)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.data_url) {
+      cardDataUrlCache.set(url, data.data_url);
+      return data.data_url;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+// Перед снимком PNG заменяем src карт на data-url (через прокси),
+// чтобы html2canvas мог их захватить без CORS-ошибки.
+const inlineCardImages = async (root: HTMLElement) => {
+  const imgs = Array.from(
+    root.querySelectorAll<HTMLImageElement>('img[data-card-img="1"]')
+  );
+  await Promise.all(
+    imgs.map(async (img) => {
+      if (img.src.startsWith("data:")) return;
+      const dataUrl = await fetchCardDataUrl(img.src);
+      if (dataUrl) img.src = dataUrl;
+    })
+  );
+};
 
 const MODELS = [
   { value: "anthropic/claude-sonnet-4.6", label: "Гадалка CS (подробная)" },
@@ -528,6 +565,7 @@ export default function LenormandDivination() {
   const downloadPng = async () => {
     if (!prevCardRef.current) return;
     try {
+      await inlineCardImages(prevCardRef.current);
       await waitForImages(prevCardRef.current);
       const canvas = await html2canvas(prevCardRef.current, {
         backgroundColor: "#faf7ff",
@@ -556,6 +594,7 @@ export default function LenormandDivination() {
   const downloadPrevPng = async () => {
     if (!dbPrevCardRef.current) return;
     try {
+      await inlineCardImages(dbPrevCardRef.current);
       await waitForImages(dbPrevCardRef.current);
       const canvas = await html2canvas(dbPrevCardRef.current, {
         backgroundColor: "#faf7ff",
@@ -1274,7 +1313,7 @@ export default function LenormandDivination() {
                         <img
                           src={getCardImageByName(card)}
                           alt={card}
-                          crossOrigin="anonymous"
+                          data-card-img="1"
                           className="mx-auto my-1 h-32 w-[82px] rounded object-contain"
                         />
                       )}
