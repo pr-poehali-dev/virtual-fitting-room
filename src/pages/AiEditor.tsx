@@ -44,6 +44,11 @@ const MODELS = [
 const AI_EDITOR_START = "https://functions.poehali.dev/6ddfd93a-b3ac-445f-a1bf-3327d6ba01d7";
 const AI_EDITOR_STATUS = "https://functions.poehali.dev/487c8816-d661-4f43-a72d-112374006c7c";
 
+const authHeaders = (): Record<string, string> => {
+  const token = localStorage.getItem("session_token");
+  return token ? { "X-Session-Token": token } : {};
+};
+
 const TEXT_EXTENSIONS = [
   ".py", ".js", ".jsx", ".ts", ".tsx", ".html", ".css", ".scss", ".less",
   ".json", ".xml", ".yaml", ".yml", ".toml", ".ini", ".md", ".txt",
@@ -153,9 +158,10 @@ export default function AiEditor() {
       const url = taskId
         ? `${AI_EDITOR_STATUS}?task_id=${taskId}`
         : `${AI_EDITOR_STATUS}?latest=true`;
-      const res = await fetch(url);
+      const res = await fetch(url, { headers: authHeaders() });
       if (!res.ok) return null;
       const data = await res.json();
+      if (data.empty) return null;
       return {
         ...data,
         task_id: data.task_id || taskId,
@@ -337,7 +343,7 @@ export default function AiEditor() {
 
       const res = await fetch(AI_EDITOR_START, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify(payload),
       });
 

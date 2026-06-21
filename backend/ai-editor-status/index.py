@@ -5,6 +5,8 @@ import os
 import base64
 import psycopg2
 
+from session_utils import validate_session
+
 DB_SCHEMA = 't_p29007832_virtual_fitting_room'
 
 
@@ -76,17 +78,27 @@ def handler(event, context):
     try:
         with conn.cursor() as cur:
             if latest == 'true':
+                # «Последняя задача» — строго своя и только AI-редактора.
+                # Гостям (без сессии) ничего не показываем.
+                is_valid, user_id, _ = validate_session(event)
+                if not is_valid:
+                    return {'statusCode': 200, 'headers': cors_headers,
+                            'body': json.dumps({'empty': True})}
+                safe_uid = str(user_id).replace("'", "''")
                 cur.execute(
                     f"""SELECT id, status, mode, ai_response, result_file_content, result_archive_base64,
                                files_count, model_used, error_message, filename, created_at,
                                task_type, divination_meta
                         FROM {DB_SCHEMA}.ai_editor_tasks
                         WHERE status IN ('completed', 'failed', 'processing')
+                          AND user_id = '{safe_uid}'
+                          AND task_type = 'editor'
                         ORDER BY created_at DESC LIMIT 1"""
                 )
                 row = cur.fetchone()
                 if not row:
-                    return {'statusCode': 404, 'headers': cors_headers, 'body': json.dumps({'error': 'Нет задач'})}
+                    return {'statusCode': 200, 'headers': cors_headers,
+                            'body': json.dumps({'empty': True})}
                 found_id = row[0]
                 data_row = row[1:]
             else:

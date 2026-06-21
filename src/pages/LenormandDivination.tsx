@@ -506,13 +506,34 @@ export default function LenormandDivination() {
     }, POLLING_INTERVAL);
   };
 
+  // Дожидаемся полной загрузки всех картинок внутри блока,
+  // иначе html2canvas сделает снимок без изображений карт.
+  const waitForImages = async (root: HTMLElement) => {
+    const imgs = Array.from(root.querySelectorAll("img"));
+    await Promise.all(
+      imgs.map(
+        (img) =>
+          new Promise<void>((resolve) => {
+            if (img.complete && img.naturalWidth > 0) {
+              resolve();
+              return;
+            }
+            img.addEventListener("load", () => resolve(), { once: true });
+            img.addEventListener("error", () => resolve(), { once: true });
+          })
+      )
+    );
+  };
+
   const downloadPng = async () => {
     if (!prevCardRef.current) return;
     try {
+      await waitForImages(prevCardRef.current);
       const canvas = await html2canvas(prevCardRef.current, {
         backgroundColor: "#faf7ff",
         scale: 2,
         useCORS: true,
+        imageTimeout: 15000,
       });
       const link = document.createElement("a");
       link.download = `lenormand-${Date.now()}.png`;
@@ -535,10 +556,12 @@ export default function LenormandDivination() {
   const downloadPrevPng = async () => {
     if (!dbPrevCardRef.current) return;
     try {
+      await waitForImages(dbPrevCardRef.current);
       const canvas = await html2canvas(dbPrevCardRef.current, {
         backgroundColor: "#faf7ff",
         scale: 2,
         useCORS: true,
+        imageTimeout: 15000,
       });
       const link = document.createElement("a");
       link.download = `lenormand-${Date.now()}.png`;

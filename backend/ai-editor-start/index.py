@@ -203,6 +203,11 @@ def handler(event, context):
     if mode == 'archive' and not body.get('archive_base64'):
         return {'statusCode': 400, 'headers': cors_headers, 'body': json.dumps({'error': 'Нужен архив'})}
 
+    # Привязываем задачу к пользователю, если он залогинен (для приватности
+    # блока «Последняя задача»). Для гостей user_id остаётся NULL.
+    is_valid, user_id, _ = validate_session(event)
+    current_user_id = user_id if is_valid else None
+
     task_id = str(uuid.uuid4())
     now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
 
@@ -217,13 +222,15 @@ def handler(event, context):
     try:
         with conn.cursor() as cur:
             sql = f"""INSERT INTO {DB_SCHEMA}.ai_editor_tasks
-                    (id, status, mode, model, prompt, filename, file_content, archive_base64, created_at, updated_at)
+                    (id, status, mode, model, prompt, filename, file_content, archive_base64,
+                     task_type, user_id, created_at, updated_at)
                     VALUES (
                         {sql_escape(task_id)}, 'pending', {sql_escape(mode)}, {sql_escape(model)},
                         convert_from(decode({prompt_b64}, 'base64'), 'UTF8'),
                         {sql_escape(body.get('filename', ''))},
                         {('convert_from(decode(' + file_content_b64 + ", 'base64'), 'UTF8')") if file_content_val else 'NULL'},
                         {archive_b64},
+                        'editor', {sql_escape(current_user_id)},
                         {sql_escape(now)}, {sql_escape(now)}
                     )"""
             cur.execute(sql)

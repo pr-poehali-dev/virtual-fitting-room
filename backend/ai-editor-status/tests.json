@@ -23,11 +23,11 @@
       "bodyMatcher": "partial"
     },
     {
-      "name": "GET latest task",
+      "name": "GET latest task without auth returns empty",
       "method": "GET",
       "path": "/?latest=true",
       "expectedStatus": 200,
-      "expectedBody": {"task_id": "string", "status": "string", "mode": "string"},
+      "expectedBody": {"empty": true},
       "bodyMatcher": "partial"
     }
   ]
