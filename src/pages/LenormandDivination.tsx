@@ -800,9 +800,18 @@ export default function LenormandDivination() {
                 )}
               </div>
 
-              {/* Дома-плитки */}
-              <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6 lg:grid-cols-9">
-                {HOUSE_NAMES.map((house, idx) => {
+              {/* Дома-плитки на «столе гадалки» */}
+              <div
+                className="overflow-x-auto rounded-2xl p-3 shadow-inner sm:p-4"
+                style={{
+                  background:
+                    "radial-gradient(120% 100% at 50% 0%, #1f5c45 0%, #14402f 55%, #0c2c20 100%)",
+                  boxShadow:
+                    "inset 0 0 60px rgba(0,0,0,0.55), inset 0 0 8px rgba(0,0,0,0.4)",
+                }}
+              >
+                <div className="grid min-w-[760px] grid-cols-9 gap-1.5">
+                  {HOUSE_NAMES.map((house, idx) => {
                   const card = layout[idx];
                   const isActive = activeHouse === idx && !houseLocked;
                   return (
@@ -839,7 +848,8 @@ export default function LenormandDivination() {
                       </span>
                     </button>
                   );
-                })}
+                  })}
+                </div>
               </div>
 
               {/* ОНЛАЙН: колода рубашкой вверх (под столом) */}
@@ -1041,30 +1051,40 @@ export default function LenormandDivination() {
                   </div>
 
                   {prevLayout.length === 36 && (
-                    <div className="mb-6 grid grid-cols-3 gap-1.5 sm:grid-cols-6 lg:grid-cols-9">
-                      {prevLayout.map((card, idx) =>
-                        card ? (
-                          <div
-                            key={idx}
-                            className="rounded-md border border-purple-200 bg-white/70 p-1.5 text-center"
-                          >
-                            <div className="text-xs text-purple-400">
-                              {idx + 1}. дом {HOUSE_NAMES[idx]}
+                    <div
+                      className="mb-6 overflow-x-auto rounded-2xl p-3 shadow-inner sm:p-4"
+                      style={{
+                        background:
+                          "radial-gradient(120% 100% at 50% 0%, #1f5c45 0%, #14402f 55%, #0c2c20 100%)",
+                        boxShadow:
+                          "inset 0 0 60px rgba(0,0,0,0.55), inset 0 0 8px rgba(0,0,0,0.4)",
+                      }}
+                    >
+                      <div className="grid min-w-[760px] grid-cols-9 gap-1.5">
+                        {prevLayout.map((card, idx) =>
+                          card ? (
+                            <div
+                              key={idx}
+                              className="rounded-md border border-purple-200 bg-white/70 p-1.5 text-center"
+                            >
+                              <div className="text-xs text-purple-400">
+                                {idx + 1}. дом {HOUSE_NAMES[idx]}
+                              </div>
+                              {getCardImageByName(card) && (
+                                <img
+                                  src={getCardImageByName(card)}
+                                  alt={card}
+                                  className="mx-auto my-1 h-14 w-auto rounded object-contain"
+                                  loading="lazy"
+                                />
+                              )}
+                              <div className="text-sm font-semibold text-purple-800">
+                                карта {card}
+                              </div>
                             </div>
-                            {getCardImageByName(card) && (
-                              <img
-                                src={getCardImageByName(card)}
-                                alt={card}
-                                className="mx-auto my-1 h-14 w-auto rounded object-contain"
-                                loading="lazy"
-                              />
-                            )}
-                            <div className="text-sm font-semibold text-purple-800">
-                              карта {card}
-                            </div>
-                          </div>
-                        ) : null
-                      )}
+                          ) : null
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -1128,7 +1148,15 @@ export default function LenormandDivination() {
               </h3>
               <p className="mt-1 text-sm text-purple-500">{resultDate}</p>
             </div>
-            <div className="mb-6 grid grid-cols-9 gap-1.5">
+            <div
+              className="mb-6 grid grid-cols-9 gap-1.5 rounded-2xl p-4"
+              style={{
+                background:
+                  "radial-gradient(120% 100% at 50% 0%, #1f5c45 0%, #14402f 55%, #0c2c20 100%)",
+                boxShadow:
+                  "inset 0 0 60px rgba(0,0,0,0.55), inset 0 0 8px rgba(0,0,0,0.4)",
+              }}
+            >
               {resultLayout.map((card, idx) =>
                 card ? (
                   <div
@@ -1195,7 +1223,15 @@ export default function LenormandDivination() {
               <p className="mt-1 text-sm text-purple-500">{prevDate}</p>
             </div>
             {prevLayout.length === 36 && (
-              <div className="mb-6 grid grid-cols-9 gap-1.5">
+              <div
+                className="mb-6 grid grid-cols-9 gap-1.5 rounded-2xl p-4"
+                style={{
+                  background:
+                    "radial-gradient(120% 100% at 50% 0%, #1f5c45 0%, #14402f 55%, #0c2c20 100%)",
+                  boxShadow:
+                    "inset 0 0 60px rgba(0,0,0,0.55), inset 0 0 8px rgba(0,0,0,0.4)",
+                }}
+              >
                 {prevLayout.map((card, idx) =>
                   card ? (
                     <div
