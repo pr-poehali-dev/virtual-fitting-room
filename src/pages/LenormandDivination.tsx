@@ -1199,7 +1199,7 @@ export default function LenormandDivination() {
                       <img
                         src={getCardImageByName(card)}
                         alt={card}
-                        crossOrigin="anonymous"
+                        data-card-img="1"
                         className="mx-auto my-1 h-32 w-[82px] rounded object-contain"
                       />
                     )}
