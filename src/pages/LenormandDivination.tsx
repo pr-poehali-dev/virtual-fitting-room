@@ -802,12 +802,12 @@ export default function LenormandDivination() {
 
               {/* Дома-плитки на «столе гадалки» */}
               <div
-                className="overflow-x-auto rounded-2xl p-3 shadow-inner sm:p-4"
+                className="overflow-x-auto rounded-2xl border border-purple-200 p-3 sm:p-4"
                 style={{
                   background:
-                    "radial-gradient(120% 100% at 50% 0%, #1f5c45 0%, #14402f 55%, #0c2c20 100%)",
+                    "radial-gradient(120% 100% at 50% 0%, #ede9fe 0%, #ddd6fe 55%, #c7bdf4 100%)",
                   boxShadow:
-                    "inset 0 0 60px rgba(0,0,0,0.55), inset 0 0 8px rgba(0,0,0,0.4)",
+                    "inset 0 0 50px rgba(124,58,237,0.18), inset 0 0 6px rgba(124,58,237,0.12)",
                 }}
               >
                 <div className="grid min-w-[760px] grid-cols-9 gap-1.5">
@@ -1058,12 +1058,12 @@ export default function LenormandDivination() {
 
                   {prevLayout.length === 36 && (
                     <div
-                      className="mb-6 overflow-x-auto rounded-2xl p-3 shadow-inner sm:p-4"
+                      className="mb-6 overflow-x-auto rounded-2xl border border-purple-200 p-3 sm:p-4"
                       style={{
                         background:
-                          "radial-gradient(120% 100% at 50% 0%, #1f5c45 0%, #14402f 55%, #0c2c20 100%)",
+                          "radial-gradient(120% 100% at 50% 0%, #ede9fe 0%, #ddd6fe 55%, #c7bdf4 100%)",
                         boxShadow:
-                          "inset 0 0 60px rgba(0,0,0,0.55), inset 0 0 8px rgba(0,0,0,0.4)",
+                          "inset 0 0 50px rgba(124,58,237,0.18), inset 0 0 6px rgba(124,58,237,0.12)",
                       }}
                     >
                       <div className="grid min-w-[760px] grid-cols-9 gap-1.5">
@@ -1155,12 +1155,12 @@ export default function LenormandDivination() {
               <p className="mt-1 text-sm text-purple-500">{resultDate}</p>
             </div>
             <div
-              className="mb-6 grid grid-cols-9 gap-1.5 rounded-2xl p-4"
+              className="mb-6 grid grid-cols-9 gap-1.5 rounded-2xl border border-purple-200 p-4"
               style={{
                 background:
-                  "radial-gradient(120% 100% at 50% 0%, #1f5c45 0%, #14402f 55%, #0c2c20 100%)",
+                  "radial-gradient(120% 100% at 50% 0%, #ede9fe 0%, #ddd6fe 55%, #c7bdf4 100%)",
                 boxShadow:
-                  "inset 0 0 60px rgba(0,0,0,0.55), inset 0 0 8px rgba(0,0,0,0.4)",
+                  "inset 0 0 50px rgba(124,58,237,0.18), inset 0 0 6px rgba(124,58,237,0.12)",
               }}
             >
               {resultLayout.map((card, idx) =>
@@ -1230,12 +1230,12 @@ export default function LenormandDivination() {
             </div>
             {prevLayout.length === 36 && (
               <div
-                className="mb-6 grid grid-cols-9 gap-1.5 rounded-2xl p-4"
+                className="mb-6 grid grid-cols-9 gap-1.5 rounded-2xl border border-purple-200 p-4"
                 style={{
                   background:
-                    "radial-gradient(120% 100% at 50% 0%, #1f5c45 0%, #14402f 55%, #0c2c20 100%)",
+                    "radial-gradient(120% 100% at 50% 0%, #ede9fe 0%, #ddd6fe 55%, #c7bdf4 100%)",
                   boxShadow:
-                    "inset 0 0 60px rgba(0,0,0,0.55), inset 0 0 8px rgba(0,0,0,0.4)",
+                    "inset 0 0 50px rgba(124,58,237,0.18), inset 0 0 6px rgba(124,58,237,0.12)",
                 }}
               >
                 {prevLayout.map((card, idx) =>
