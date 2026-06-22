@@ -113,6 +113,8 @@ const WIZARD_TITLES = [
 const WIZARD_STEPS_COUNT = WIZARD_TITLES.length;
 const TAROT_BACK_IMAGE =
   "https://storage.yandexcloud.net/fitting-room-images/images/tarot/000.png";
+const LENORMAND_BACK_IMAGE =
+  "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/85cd2949-eca2-4aaf-9ca6-515907635509.png";
 
 type Mode = "online" | "real";
 
@@ -748,26 +750,26 @@ export default function LenormandDivination() {
 
           {/* МАСТЕР НАСТРОЙКИ РАСКЛАДА (показывается, пока не завершён) */}
           {!wizardDone && (
-            <Card className="mb-6">
-              <CardContent className="p-5">
-                <div className="mb-4">
+            <Card className="mb-6 overflow-hidden border-0 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500 text-white shadow-xl">
+              <CardContent className="p-6">
+                <div className="mb-5">
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-medium text-purple-600">
+                    <span className="text-sm font-medium text-white/90">
                       Шаг {wizardStep + 1} из {WIZARD_STEPS_COUNT}
                     </span>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-white/70">
                       {wizardStep + 1}/{WIZARD_STEPS_COUNT}
                     </span>
                   </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/25">
                     <div
-                      className="h-full rounded-full bg-purple-600 transition-all"
+                      className="h-full rounded-full bg-white transition-all"
                       style={{
                         width: `${((wizardStep + 1) / WIZARD_STEPS_COUNT) * 100}%`,
                       }}
                     />
                   </div>
-                  <h2 className="mt-3 text-lg font-semibold text-gray-900">
+                  <h2 className="mt-3 text-xl font-semibold text-white">
                     {WIZARD_TITLES[wizardStep]}
                   </h2>
                 </div>
@@ -779,15 +781,15 @@ export default function LenormandDivination() {
                   {/* Шаг 0: Способ расклада (Онлайн/Реальный) */}
                   {wizardStep === 0 && (
                     <div>
-                      <div className="mb-4 inline-flex rounded-lg border border-gray-200 p-1">
+                      <div className="mb-4 grid gap-3 sm:grid-cols-2">
                         <button
                           type="button"
                           onClick={() => switchMode("online")}
                           disabled={formDisabled}
-                          className={`rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50 ${
+                          className={`rounded-xl border-2 px-4 py-3 text-sm font-semibold transition disabled:opacity-50 ${
                             mode === "online"
-                              ? "bg-purple-600 text-white"
-                              : "text-gray-600 hover:bg-gray-50"
+                              ? "border-white bg-white/15 text-white"
+                              : "border-white/40 text-white/80 hover:border-white hover:text-white"
                           }`}
                         >
                           Онлайн-расклад
@@ -796,22 +798,22 @@ export default function LenormandDivination() {
                           type="button"
                           onClick={() => switchMode("real")}
                           disabled={formDisabled}
-                          className={`rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50 ${
+                          className={`rounded-xl border-2 px-4 py-3 text-sm font-semibold transition disabled:opacity-50 ${
                             mode === "real"
-                              ? "bg-purple-600 text-white"
-                              : "text-gray-600 hover:bg-gray-50"
+                              ? "border-white bg-white/15 text-white"
+                              : "border-white/40 text-white/80 hover:border-white hover:text-white"
                           }`}
                         >
                           Реальный расклад
                         </button>
                       </div>
-                      <div className="space-y-1 text-sm text-gray-600">
+                      <div className="space-y-1.5 text-sm text-white/90">
                         <p>
-                          <b className="text-gray-800">Онлайн-расклад</b> — перемешайте
+                          <b className="text-white">Онлайн-расклад</b> — перемешайте
                           колоду и тяните карты рубашкой вверх прямо на экране.
                         </p>
                         <p>
-                          <b className="text-gray-800">Реальный расклад</b> — у вас уже
+                          <b className="text-white">Реальный расклад</b> — у вас уже
                           разложены настоящие карты, вы просто переносите их в дома.
                         </p>
                       </div>
@@ -823,37 +825,42 @@ export default function LenormandDivination() {
                     <div className="grid gap-3 sm:grid-cols-2">
                       <button
                         type="button"
-                        onClick={() => setDivSystem("lenormand")}
-                        className={`flex flex-col items-center gap-2 rounded-xl border p-5 text-center transition ${
+                        onClick={() => { if (guardTouch()) return; setDivSystem("lenormand"); }}
+                        className={`flex flex-col items-center gap-2 rounded-xl border-2 p-5 text-center transition ${
                           divSystem === "lenormand"
-                            ? "border-purple-500 bg-purple-50"
-                            : "border-gray-200 hover:bg-gray-50"
+                            ? "border-white bg-white/15"
+                            : "border-white/40 hover:border-white"
                         }`}
                       >
-                        <Icon name="Sparkles" size={28} className="text-purple-600" />
-                        <span className="font-semibold text-gray-900">Ленорман</span>
-                        <span className="text-xs text-gray-500">
+                        <img
+                          src={LENORMAND_BACK_IMAGE}
+                          alt="Ленорман"
+                          className="h-16 w-auto rounded object-contain"
+                          loading="lazy"
+                        />
+                        <span className="font-semibold text-white">Ленорман</span>
+                        <span className="text-xs text-white/80">
                           36 карт, большой расклад 9 × 4
                         </span>
                       </button>
                       <button
                         type="button"
                         disabled
-                        className="flex cursor-not-allowed flex-col items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 p-5 text-center opacity-70"
+                        className="flex cursor-not-allowed flex-col items-center gap-2 rounded-xl border-2 border-white/25 bg-white/5 p-5 text-center opacity-70"
                       >
                         <img
                           src={TAROT_BACK_IMAGE}
                           alt="Таро"
-                          className="h-14 w-auto rounded object-contain"
+                          className="h-16 w-auto rounded object-contain"
                           loading="lazy"
                         />
-                        <span className="flex items-center gap-2 font-semibold text-gray-600">
+                        <span className="flex items-center gap-2 font-semibold text-white/80">
                           Таро
-                          <span className="rounded bg-gray-200 px-2 py-0.5 text-xs text-gray-600">
+                          <span className="rounded bg-white/20 px-2 py-0.5 text-xs text-white">
                             Скоро
                           </span>
                         </span>
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-white/60">
                           Скоро будет доступно
                         </span>
                       </button>
@@ -865,11 +872,11 @@ export default function LenormandDivination() {
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => setDivSpread("big9x4")}
-                        className={`rounded-lg border px-4 py-3 text-sm font-medium transition ${
+                        onClick={() => { if (guardTouch()) return; setDivSpread("big9x4"); }}
+                        className={`rounded-xl border-2 px-4 py-3 text-sm font-semibold transition ${
                           divSpread === "big9x4"
-                            ? "border-purple-500 bg-purple-50 text-purple-800"
-                            : "border-gray-200 text-gray-700 hover:bg-gray-50"
+                            ? "border-white bg-white/15 text-white"
+                            : "border-white/40 text-white/80 hover:border-white hover:text-white"
                         }`}
                       >
                         Большой 9 × 4
@@ -879,10 +886,10 @@ export default function LenormandDivination() {
                           key={label}
                           type="button"
                           disabled
-                          className="flex cursor-not-allowed items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-500 opacity-70"
+                          className="flex cursor-not-allowed items-center gap-2 rounded-xl border-2 border-white/25 bg-white/5 px-4 py-3 text-sm font-semibold text-white/70 opacity-70"
                         >
                           {label}
-                          <span className="rounded bg-gray-200 px-2 py-0.5 text-xs text-gray-600">
+                          <span className="rounded bg-white/20 px-2 py-0.5 text-xs text-white">
                             Скоро
                           </span>
                         </button>
@@ -893,33 +900,52 @@ export default function LenormandDivination() {
                   {/* Шаг 3: Нейросеть-гадалка */}
                   {wizardStep === 3 && (
                     <div>
-                      <Select value={model} onValueChange={(v) => { if (guardTouch()) return; setModel(v); }}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {MODELS.map((m) => {
-                            const price = getDivinationPrice(LENORMAND_SPREAD, m.value);
-                            const affordable = isModelAffordable(m.value);
-                            return (
-                              <SelectItem
-                                key={m.value}
-                                value={m.value}
-                                disabled={!affordable}
-                              >
-                                <span className="flex flex-col">
-                                  <span>
-                                    {m.label} — {price} ₽
-                                    {!affordable && " (не хватает баланса)"}
-                                  </span>
-                                  <span className="text-xs text-gray-500">{m.desc}</span>
+                      <div
+                        role="radiogroup"
+                        className="grid gap-2.5 sm:grid-cols-3"
+                      >
+                        {MODELS.map((m) => {
+                          const price = getDivinationPrice(LENORMAND_SPREAD, m.value);
+                          const affordable = isModelAffordable(m.value);
+                          const selected = model === m.value;
+                          return (
+                            <button
+                              key={m.value}
+                              type="button"
+                              role="radio"
+                              aria-checked={selected}
+                              disabled={!affordable}
+                              onClick={() => { if (guardTouch()) return; setModel(m.value); }}
+                              className={`flex flex-col gap-1.5 rounded-xl border-2 p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                                selected
+                                  ? "border-white bg-white/15"
+                                  : "border-white/40 hover:border-white"
+                              }`}
+                            >
+                              <span className="flex items-center justify-between gap-2">
+                                <span className="font-semibold text-white">
+                                  {m.label}
                                 </span>
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                      <p className="mt-1.5 text-xs text-gray-500">
+                                <Icon
+                                  name={selected ? "CircleDot" : "Circle"}
+                                  size={18}
+                                  className="shrink-0 text-white"
+                                />
+                              </span>
+                              <span className="text-sm font-medium text-white/90">
+                                {price} ₽
+                              </span>
+                              <span className="text-xs text-white/75">{m.desc}</span>
+                              {!affordable && (
+                                <span className="text-xs text-white/90">
+                                  не хватает баланса
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="mt-2.5 text-xs text-white/80">
                         3 нейросети-гадалки — цена расклада от {LENORMAND_MIN_COST} до{" "}
                         {getDivinationPrice(LENORMAND_SPREAD, MODELS[MODELS.length - 1].value)} ₽
                       </p>
@@ -929,7 +955,7 @@ export default function LenormandDivination() {
                   {/* Шаг 4: Пол */}
                   {wizardStep === 4 && (
                     <Select value={gender} onValueChange={(v) => { if (guardTouch()) return; setGender(v as GenderKey); }}>
-                      <SelectTrigger>
+                      <SelectTrigger className="border-2 border-white/50 bg-transparent text-white focus:ring-white/40 [&>svg]:text-white">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -945,7 +971,7 @@ export default function LenormandDivination() {
                   {/* Шаг 5: Период */}
                   {wizardStep === 5 && (
                     <Select value={period} onValueChange={(v) => { if (guardTouch()) return; setPeriod(v as PeriodKey); }}>
-                      <SelectTrigger>
+                      <SelectTrigger className="border-2 border-white/50 bg-transparent text-white focus:ring-white/40 [&>svg]:text-white">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -966,16 +992,16 @@ export default function LenormandDivination() {
                           key={s.key}
                           type="button"
                           onClick={() => toggleSphere(s.key)}
-                          className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
+                          className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-left text-sm font-medium transition ${
                             spheres.includes(s.key)
-                              ? "border-purple-500 bg-purple-50 text-purple-800"
-                              : "border-gray-200 text-gray-700 hover:bg-gray-50"
+                              ? "border-white bg-white/15 text-white"
+                              : "border-white/40 text-white/80 hover:border-white hover:text-white"
                           }`}
                         >
                           <Icon
                             name={spheres.includes(s.key) ? "CheckCircle2" : "Circle"}
                             size={16}
-                            className={spheres.includes(s.key) ? "text-purple-600" : "text-gray-400"}
+                            className="text-white"
                           />
                           {s.label}
                         </button>
@@ -990,40 +1016,44 @@ export default function LenormandDivination() {
                       onChange={(e) => { if (guardTouch()) return; setComment(e.target.value); }}
                       placeholder="Например: стоит ли обновить гардероб этой весной и каким будет мой новый образ…"
                       rows={3}
+                      className="border-2 border-white/50 bg-transparent text-white placeholder:text-white/60 focus-visible:ring-white/40"
                     />
                   )}
                 </fieldset>
 
                 {/* Навигация мастера */}
                 <div className="mt-6 flex items-center justify-between">
-                  <Button
-                    variant="outline"
+                  <button
+                    type="button"
                     onClick={() => setWizardStep((s) => Math.max(0, s - 1))}
                     disabled={wizardStep === 0 || formDisabled}
+                    className="inline-flex items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
                   >
                     <Icon name="ArrowLeft" size={16} className="mr-1.5" />
                     Назад
-                  </Button>
+                  </button>
                   {wizardStep === WIZARD_STEPS_COUNT - 1 ? (
-                    <Button
+                    <button
+                      type="button"
                       onClick={() => setWizardDone(true)}
                       disabled={formDisabled}
-                      className="bg-purple-600 text-white hover:bg-purple-700"
+                      className="inline-flex items-center rounded-xl border-2 border-white px-5 py-2 text-sm font-semibold text-white transition hover:bg-white/15 disabled:opacity-40"
                     >
                       <Icon name="Check" size={16} className="mr-1.5" />
                       Готово
-                    </Button>
+                    </button>
                   ) : (
-                    <Button
+                    <button
+                      type="button"
                       onClick={() =>
                         setWizardStep((s) => Math.min(WIZARD_STEPS_COUNT - 1, s + 1))
                       }
                       disabled={formDisabled}
-                      className="bg-purple-600 text-white hover:bg-purple-700"
+                      className="inline-flex items-center rounded-xl border-2 border-white px-5 py-2 text-sm font-semibold text-white transition hover:bg-white/15 disabled:opacity-40"
                     >
                       Далее
                       <Icon name="ArrowRight" size={16} className="ml-1.5" />
-                    </Button>
+                    </button>
                   )}
                 </div>
               </CardContent>
@@ -1033,80 +1063,68 @@ export default function LenormandDivination() {
           {/* СВОДКА + СТОЛ РАСКЛАДА (после завершения мастера) */}
           {wizardDone && (
           <>
-          <Card className="mb-6">
-            <CardContent className="p-5">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900">
+          <Card className="mb-6 overflow-hidden border-0 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500 text-white shadow-xl">
+            <CardContent className="p-6">
+              <h2 className="mb-4 text-xl font-semibold text-white">
                 Параметры расклада
               </h2>
-              <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-                <div className="flex flex-col">
-                  <dt className="text-xs text-gray-500">Способ</dt>
-                  <dd className="text-sm font-medium text-gray-900">
-                    {mode === "online" ? "Онлайн-расклад" : "Реальный расклад"}
-                  </dd>
-                </div>
-                <div className="flex flex-col">
-                  <dt className="text-xs text-gray-500">Система</dt>
-                  <dd className="text-sm font-medium text-gray-900">Ленорман</dd>
-                </div>
-                <div className="flex flex-col">
-                  <dt className="text-xs text-gray-500">Расклад</dt>
-                  <dd className="text-sm font-medium text-gray-900">Большой 9 × 4</dd>
-                </div>
-                <div className="flex flex-col">
-                  <dt className="text-xs text-gray-500">Гадалка</dt>
-                  <dd className="text-sm font-medium text-gray-900">
-                    {MODELS.find((m) => m.value === model)?.label} —{" "}
-                    {getDivinationPrice(LENORMAND_SPREAD, model)} ₽
-                  </dd>
-                </div>
-                <div className="flex flex-col">
-                  <dt className="text-xs text-gray-500">Пол</dt>
-                  <dd className="text-sm font-medium text-gray-900">
-                    {GENDERS.find((g) => g.key === gender)?.label}
-                  </dd>
-                </div>
-                <div className="flex flex-col">
-                  <dt className="text-xs text-gray-500">Период</dt>
-                  <dd className="text-sm font-medium text-gray-900">
-                    {PERIODS.find((p) => p.key === period)?.label}
-                  </dd>
-                </div>
-                <div className="flex flex-col sm:col-span-2">
-                  <dt className="text-xs text-gray-500">Сферы</dt>
-                  <dd className="text-sm font-medium text-gray-900">
-                    {SPHERES.filter((s) => spheres.includes(s.key))
-                      .map((s) => s.label)
-                      .join(", ")}
-                  </dd>
-                </div>
-                <div className="flex flex-col sm:col-span-2">
-                  <dt className="text-xs text-gray-500">Комментарий</dt>
-                  <dd className="whitespace-pre-wrap text-sm font-medium text-gray-900">
-                    {comment.trim() || "—"}
-                  </dd>
-                </div>
-              </dl>
+              <div className="space-y-1.5 text-[15px] leading-relaxed text-white">
+                <p>
+                  <span className="text-white/70">Способ:</span>{" "}
+                  {mode === "online" ? "Онлайн-расклад" : "Реальный расклад"}
+                </p>
+                <p>
+                  <span className="text-white/70">Система:</span> Ленорман
+                </p>
+                <p>
+                  <span className="text-white/70">Расклад:</span> Ленорман 9 × 4
+                </p>
+                <p>
+                  <span className="text-white/70">Гадалка:</span>{" "}
+                  {MODELS.find((m) => m.value === model)?.label} —{" "}
+                  {getDivinationPrice(LENORMAND_SPREAD, model)} ₽
+                </p>
+                <p>
+                  <span className="text-white/70">Пол:</span>{" "}
+                  {GENDERS.find((g) => g.key === gender)?.label}
+                </p>
+                <p>
+                  <span className="text-white/70">Период:</span>{" "}
+                  {PERIODS.find((p) => p.key === period)?.label}
+                </p>
+                <p>
+                  <span className="text-white/70">Сферы:</span>{" "}
+                  {SPHERES.filter((s) => spheres.includes(s.key))
+                    .map((s) => s.label)
+                    .join(", ")}
+                </p>
+                <p className="whitespace-pre-wrap">
+                  <span className="text-white/70">Комментарий:</span>{" "}
+                  {comment.trim() || "—"}
+                </p>
+              </div>
               <div className="mt-5 flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
+                <button
+                  type="button"
                   onClick={() => {
                     setWizardDone(false);
                     setWizardStep(0);
                   }}
                   disabled={formDisabled}
+                  className="inline-flex items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
                 >
                   <Icon name="Pencil" size={16} className="mr-1.5" />
                   Редактировать
-                </Button>
-                <Button
-                  variant="outline"
+                </button>
+                <button
+                  type="button"
                   onClick={clearAll}
                   disabled={formDisabled}
+                  className="inline-flex items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
                 >
                   <Icon name="RotateCcw" size={16} className="mr-1.5" />
                   Очистить и начать заново
-                </Button>
+                </button>
               </div>
             </CardContent>
           </Card>
@@ -1133,44 +1151,10 @@ export default function LenormandDivination() {
                 </div>
               </div>
 
-              {/* Пояснения над вкладками */}
-              <div className="mb-3 space-y-1 text-sm text-gray-600">
-                <p>
-                  <b className="text-gray-800">Онлайн-расклад</b> — перемешайте
-                  колоду и тяните карты рубашкой вверх прямо на экране.
-                </p>
-                <p>
-                  <b className="text-gray-800">Реальный расклад</b> — у вас уже
-                  разложены настоящие карты, вы просто переносите их в дома.
-                </p>
-              </div>
-
-              {/* Переключатель режимов */}
-              <div className="mb-4 inline-flex rounded-lg border border-gray-200 p-1">
-                <button
-                  type="button"
-                  onClick={() => switchMode("online")}
-                  disabled={formDisabled}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50 ${
-                    mode === "online"
-                      ? "bg-purple-600 text-white"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  Онлайн-расклад
-                </button>
-                <button
-                  type="button"
-                  onClick={() => switchMode("real")}
-                  disabled={formDisabled}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50 ${
-                    mode === "real"
-                      ? "bg-purple-600 text-white"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  Реальный расклад
-                </button>
+              {/* Выбранный способ (задаётся в мастере) */}
+              <div className="mb-4 inline-flex items-center gap-2 rounded-lg bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-800">
+                <Icon name="Sparkles" size={15} className="text-purple-600" />
+                {mode === "online" ? "Онлайн-расклад" : "Реальный расклад"}
               </div>
 
               {/* УПРАВЛЕНИЕ И ПОДСКАЗКИ — НАД СТОЛОМ */}
