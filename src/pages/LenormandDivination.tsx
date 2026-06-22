@@ -726,7 +726,7 @@ export default function LenormandDivination() {
             <Icon name="Sparkles" size={28} className="text-purple-600" />
           </div>
           <h1 className="text-3xl font-semibold text-gray-900">
-            Гадания на картах Ленорман
+            Гадания на картах онлайн с ИИ
           </h1>
           <p className="mt-2 text-gray-600">
             Большой расклад 9 × 4 — медитативный взгляд на вашу ситуацию
