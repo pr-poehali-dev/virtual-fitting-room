@@ -49,6 +49,15 @@
       "expectedStatus": 401,
       "expectedBody": {"error": "string"},
       "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST lenormand opus model without auth returns 401",
+      "method": "POST",
+      "path": "/",
+      "body": {"task_type": "lenormand", "model": "anthropic/claude-opus-4.6", "divination_meta": {"layout": ["Луна"]}},
+      "expectedStatus": 401,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
     }
   ]
 }

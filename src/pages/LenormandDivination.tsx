@@ -26,7 +26,12 @@ import LockedFormOverlay from "@/components/LockedFormOverlay";
 import { useAuth } from "@/context/AuthContext";
 import { useBalance } from "@/context/BalanceContext";
 import { useNavigate } from "react-router-dom";
-import { LENORMAND_COST } from "@/config/prices";
+import {
+  LENORMAND_AI,
+  LENORMAND_SPREAD,
+  getDivinationPrice,
+  getDivinationMinPrice,
+} from "@/config/prices";
 import html2canvas from "html2canvas";
 import {
   HOUSE_NAMES,
@@ -87,10 +92,8 @@ const inlineCardImages = async (root: HTMLElement) => {
   );
 };
 
-const MODELS = [
-  { value: "anthropic/claude-sonnet-4.6", label: "Гадалка CS (подробная)" },
-  { value: "google/gemini-2.5-flash", label: "Гадалка GF (быстрая)" },
-];
+const MODELS = LENORMAND_AI;
+const LENORMAND_MIN_COST = getDivinationMinPrice(LENORMAND_SPREAD);
 
 const POLLING_INTERVAL = 5000;
 const TIMEOUT_SECONDS = 600;
@@ -109,14 +112,24 @@ const shuffleArray = <T,>(arr: T[]): T[] => {
 
 export default function LenormandDivination() {
   const { user } = useAuth();
-  const { refreshBalance } = useBalance();
+  const { refreshBalance, balanceInfo } = useBalance();
   const navigate = useNavigate();
+
+  // Доступность модели по балансу: безлимит — всё доступно;
+  // иначе модель доступна, если её цены хватает на балансе.
+  const hasUnlimited = balanceInfo?.unlimited_access === true;
+  const currentBalance = balanceInfo?.balance ?? 0;
+  const isModelAffordable = (modelValue: string) => {
+    if (hasUnlimited) return true;
+    return currentBalance >= getDivinationPrice(LENORMAND_SPREAD, modelValue);
+  };
 
   const [period, setPeriod] = useState<PeriodKey>("now");
   const [gender, setGender] = useState<GenderKey>("female");
   const [spheres, setSpheres] = useState<SphereKey[]>(["all"]);
   const [comment, setComment] = useState("");
   const [model, setModel] = useState(MODELS[0].value);
+  const selectedCost = getDivinationPrice(LENORMAND_SPREAD, model);
   const [layout, setLayout] = useState<string[]>(EMPTY_LAYOUT());
   const [activeHouse, setActiveHouse] = useState<number>(0);
 
@@ -183,6 +196,18 @@ export default function LenormandDivination() {
       /* ignore */
     }
   }, [formReady, period, gender, spheres, comment, model, layout]);
+
+  // Если выбранная гадалка стала недоступна по балансу — переключаем на
+  // самую дешёвую доступную (первая в списке — самая дешёвая).
+  useEffect(() => {
+    if (!balanceInfo || hasUnlimited) return;
+    if (isModelAffordable(model)) return;
+    const affordable = MODELS.find((m) => isModelAffordable(m.value));
+    if (affordable && affordable.value !== model) {
+      setModel(affordable.value);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [balanceInfo, model]);
 
   useEffect(() => {
     return () => {
@@ -483,7 +508,7 @@ export default function LenormandDivination() {
           toast.error("Войдите, чтобы сделать расклад");
           navigate("/login");
         } else if (res.status === 402) {
-          toast.error(`Недостаточно средств. Нужно ${LENORMAND_COST} ₽`);
+          toast.error(`Недостаточно средств. Нужно ${selectedCost} ₽`);
           navigate("/profile/wallet");
         } else {
           toast.error(data.error || "Ошибка запуска");
@@ -498,7 +523,7 @@ export default function LenormandDivination() {
       setIsProcessing(false);
       toast.error("Ошибка соединения");
     }
-  }, [filledCount, period, gender, spheres, comment, model, layout, navigate, refreshBalance]);
+  }, [filledCount, period, gender, spheres, comment, model, layout, navigate, refreshBalance, selectedCost]);
 
   const pollStatus = (taskId: string, submittedLayout: string[]) => {
     let elapsed = 0;
@@ -656,7 +681,7 @@ export default function LenormandDivination() {
           </p>
         </div>
 
-        <LockedFormOverlay cost={LENORMAND_COST}>
+        <LockedFormOverlay cost={LENORMAND_MIN_COST}>
           {/* Кнопка очистки всей формы и начала нового расклада */}
           <div className="mb-4 flex justify-center">
             <Button
@@ -715,20 +740,38 @@ export default function LenormandDivination() {
 
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Толкование
+                      Нейросеть-гадалка
                     </label>
                     <Select value={model} onValueChange={(v) => { if (guardTouch()) return; setModel(v); }}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {MODELS.map((m) => (
-                          <SelectItem key={m.value} value={m.value}>
-                            {m.label}
-                          </SelectItem>
-                        ))}
+                        {MODELS.map((m) => {
+                          const price = getDivinationPrice(LENORMAND_SPREAD, m.value);
+                          const affordable = isModelAffordable(m.value);
+                          return (
+                            <SelectItem
+                              key={m.value}
+                              value={m.value}
+                              disabled={!affordable}
+                            >
+                              <span className="flex flex-col">
+                                <span>
+                                  {m.label} — {price} ₽
+                                  {!affordable && " (не хватает баланса)"}
+                                </span>
+                                <span className="text-xs text-gray-500">{m.desc}</span>
+                              </span>
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
+                    <p className="mt-1.5 text-xs text-gray-500">
+                      3 нейросети-гадалки — цена расклада от {LENORMAND_MIN_COST} до{" "}
+                      {getDivinationPrice(LENORMAND_SPREAD, MODELS[MODELS.length - 1].value)} ₽
+                    </p>
                   </div>
                 </div>
 
@@ -1018,7 +1061,7 @@ export default function LenormandDivination() {
                   ) : (
                     <>
                       <Icon name="Sparkles" size={18} className="mr-2" />
-                      Разложить ({LENORMAND_COST} ₽)
+                      Разложить ({selectedCost} ₽)
                     </>
                   )}
                 </Button>

@@ -13,7 +13,23 @@ from lenormand import build_lenormand_prompt
 DB_SCHEMA = 't_p29007832_virtual_fitting_room'
 
 LENORMAND_COST = 50
-LENORMAND_MODELS = {'anthropic/claude-sonnet-4.6', 'google/gemini-2.5-flash'}
+
+# Матрица цен расклада Ленорман по моделям (источник правды для бэкенда).
+# Цену НИКОГДА не берём с фронта — только отсюда.
+LENORMAND_PRICES = {
+    'google/gemini-2.5-flash': 50,
+    'anthropic/claude-sonnet-4.6': 100,
+    'anthropic/claude-opus-4.6': 150,
+}
+LENORMAND_MODELS = set(LENORMAND_PRICES.keys())
+DEFAULT_LENORMAND_MODEL = 'google/gemini-2.5-flash'
+
+# Короткие коды моделей для описания транзакции
+LENORMAND_MODEL_CODES = {
+    'google/gemini-2.5-flash': 'GF',
+    'anthropic/claude-sonnet-4.6': 'CS',
+    'anthropic/claude-opus-4.6': 'CO',
+}
 
 
 ALLOWED_ORIGINS = [
@@ -83,9 +99,9 @@ def handle_lenormand(event, body, cors_headers):
         return {'statusCode': 401, 'headers': cors_headers,
                 'body': json.dumps({'error': error_msg or 'Unauthorized'})}
 
-    model = body.get('model', 'anthropic/claude-sonnet-4.6')
+    model = body.get('model', DEFAULT_LENORMAND_MODEL)
     if model not in LENORMAND_MODELS:
-        model = 'anthropic/claude-sonnet-4.6'
+        model = DEFAULT_LENORMAND_MODEL
 
     meta = body.get('divination_meta') or {}
     meta['system'] = 'lenormand'
@@ -111,7 +127,8 @@ def handle_lenormand(event, body, cors_headers):
 
                 balance = float(user_row[0])
                 unlimited_access = user_row[1]
-                cost = 0 if unlimited_access else LENORMAND_COST
+                model_price = LENORMAND_PRICES.get(model, LENORMAND_COST)
+                cost = 0 if unlimited_access else model_price
 
                 if not unlimited_access and balance < cost:
                     return {'statusCode': 402, 'headers': cors_headers,
@@ -131,20 +148,22 @@ def handle_lenormand(event, body, cors_headers):
                     (task_id, model, prompt, user_id, cost, meta_json, now, now)
                 )
 
+                model_code = LENORMAND_MODEL_CODES.get(model, '')
+                code_suffix = f' ({model_code})' if model_code else ''
                 if cost > 0:
                     balance_after = balance - cost
                     cur.execute(
                         """INSERT INTO balance_transactions
                            (user_id, type, amount, balance_before, balance_after, description)
                            VALUES (%s, 'charge', %s, %s, %s, %s)""",
-                        (user_id, -cost, balance, balance_after, 'Расклад Ленорман')
+                        (user_id, -cost, balance, balance_after, f'Расклад Ленорман{code_suffix}')
                     )
                 elif unlimited_access:
                     cur.execute(
                         """INSERT INTO balance_transactions
                            (user_id, type, amount, balance_before, balance_after, description)
                            VALUES (%s, 'charge', 0, %s, %s, %s)""",
-                        (user_id, balance, balance, 'Расклад Ленорман (безлимитный доступ)')
+                        (user_id, balance, balance, f'Расклад Ленорман{code_suffix} (безлимитный доступ)')
                     )
             conn.commit()
         finally:
