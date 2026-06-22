@@ -777,43 +777,48 @@ export default function LenormandDivination() {
                   <div className="w-full">
                   {/* Шаг 0: Способ расклада (Онлайн/Реальный) */}
                   {wizardStep === 0 && (
-                    <div>
-                      <div className="mb-4 grid gap-3 sm:grid-cols-2">
-                        <button
-                          type="button"
-                          onClick={() => switchMode("online")}
-                          disabled={formDisabled}
-                          className={`rounded-xl border-2 px-4 py-3 text-sm font-semibold transition disabled:opacity-50 ${
-                            mode === "online"
-                              ? "border-white bg-white/15 text-white"
-                              : "border-white/40 text-white/80 hover:border-white hover:text-white"
-                          }`}
-                        >
-                          Онлайн-расклад
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => switchMode("real")}
-                          disabled={formDisabled}
-                          className={`rounded-xl border-2 px-4 py-3 text-sm font-semibold transition disabled:opacity-50 ${
-                            mode === "real"
-                              ? "border-white bg-white/15 text-white"
-                              : "border-white/40 text-white/80 hover:border-white hover:text-white"
-                          }`}
-                        >
-                          Реальный расклад
-                        </button>
-                      </div>
-                      <div className="space-y-1.5 text-sm text-white/90">
-                        <p>
-                          <b className="text-white">Онлайн-расклад</b> — перемешайте
-                          колоду и тяните карты рубашкой вверх прямо на экране.
-                        </p>
-                        <p>
-                          <b className="text-white">Реальный расклад</b> — у вас уже
-                          разложены настоящие карты, вы просто переносите их в дома.
-                        </p>
-                      </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {[
+                        {
+                          key: "online" as Mode,
+                          title: "Онлайн-расклад",
+                          desc: "Перемешайте колоду и тяните карты рубашкой вверх прямо на экране.",
+                        },
+                        {
+                          key: "real" as Mode,
+                          title: "Реальный расклад",
+                          desc: "У вас уже разложены настоящие карты — вы просто переносите их в дома.",
+                        },
+                      ].map((opt) => {
+                        const active = mode === opt.key;
+                        return (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => switchMode(opt.key)}
+                            disabled={formDisabled}
+                            className={`flex flex-col gap-1.5 rounded-xl border-2 p-4 text-left transition disabled:opacity-50 ${
+                              active
+                                ? "border-white bg-white/15"
+                                : "border-white/40 hover:border-white"
+                            }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <Icon
+                                name={active ? "CircleDot" : "Circle"}
+                                size={16}
+                                className="shrink-0 text-white"
+                              />
+                              <span className="font-semibold text-white">
+                                {opt.title}
+                              </span>
+                            </span>
+                            <span className="text-xs leading-relaxed text-white/75">
+                              {opt.desc}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
 
