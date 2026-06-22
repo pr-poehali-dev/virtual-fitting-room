@@ -1433,6 +1433,45 @@ export default function LenormandDivination() {
             </div>
             <div className="rounded-2xl border border-purple-100 bg-white p-6 shadow-sm">
               <p className="mb-3 text-sm text-purple-500">{resultDate}</p>
+
+              {resultLayout.length === 36 && (
+                <div
+                  className="mb-6 overflow-x-auto rounded-2xl border border-purple-200 p-3 sm:p-4"
+                  style={{
+                    background:
+                      "radial-gradient(120% 100% at 50% 0%, #ede9fe 0%, #ddd6fe 55%, #c7bdf4 100%)",
+                    boxShadow:
+                      "inset 0 0 50px rgba(124,58,237,0.18), inset 0 0 6px rgba(124,58,237,0.12)",
+                  }}
+                >
+                  <div className="grid min-w-[760px] grid-cols-9 gap-1.5">
+                    {resultLayout.map((card, idx) =>
+                      card ? (
+                        <div
+                          key={idx}
+                          className="rounded-md border border-purple-200 bg-white/60 p-1.5 text-center"
+                        >
+                          <div className="text-[10px] leading-tight text-purple-700">
+                            {idx + 1}. дом {HOUSE_NAMES[idx]}
+                          </div>
+                          {getCardImageByName(card) && (
+                            <img
+                              src={getCardImageByName(card)}
+                              alt={card}
+                              className="mx-auto my-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px]"
+                              loading="lazy"
+                            />
+                          )}
+                          <div className="text-[11px] font-semibold leading-tight text-purple-900 sm:text-xs">
+                            карта {card}
+                          </div>
+                        </div>
+                      ) : null
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-gray-800">
                 {result}
               </div>
