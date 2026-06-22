@@ -124,6 +124,11 @@ export default function LenormandDivination() {
     return currentBalance >= getDivinationPrice(LENORMAND_SPREAD, modelValue);
   };
 
+  // Форма заблокирована балансовым/авторизационным оверлеем (как в LockedFormOverlay):
+  // нет пользователя ИЛИ не безлимит и баланса не хватает на минимальную цену.
+  const isLockedByBalanceOrAuth =
+    !user || (!hasUnlimited && currentBalance < LENORMAND_MIN_COST);
+
   const [period, setPeriod] = useState<PeriodKey>("now");
   const [gender, setGender] = useState<GenderKey>("female");
   const [spheres, setSpheres] = useState<SphereKey[]>(["all"]);
@@ -702,8 +707,10 @@ export default function LenormandDivination() {
 
         <LockedFormOverlay cost={LENORMAND_MIN_COST}>
           <div className="relative">
-          {/* Блокировка всей формы, пока есть несохранённый прошлый результат */}
-          {hasPrevResult && !touchAck && (
+          {/* Блокировка всей формы, пока есть несохранённый прошлый результат.
+              Если форма уже закрыта балансовым/авторизационным оверлеем —
+              наш оверлей не показываем (новый расклад без баланса всё равно нельзя). */}
+          {hasPrevResult && !touchAck && !isLockedByBalanceOrAuth && (
             <div className="absolute inset-0 z-20 flex items-start justify-center rounded-2xl bg-white/60 backdrop-blur-sm">
               <div className="mx-4 mt-10 max-w-sm rounded-2xl bg-white/95 p-6 text-center shadow-xl ring-1 ring-purple-100">
                 <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-purple-100">
