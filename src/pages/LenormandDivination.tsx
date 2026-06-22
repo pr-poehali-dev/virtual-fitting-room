@@ -774,7 +774,7 @@ export default function LenormandDivination() {
                     formDisabled ? "pointer-events-none opacity-60" : ""
                   }`}
                 >
-                  <div className="w-full">
+                  <div key={wizardStep} className="w-full animate-fade-in">
                   {/* Шаг 0: Способ расклада (Онлайн/Реальный) */}
                   {wizardStep === 0 && (
                     <div className="grid gap-3 sm:grid-cols-2">
