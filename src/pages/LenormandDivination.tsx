@@ -99,6 +99,21 @@ const POLLING_INTERVAL = 5000;
 const TIMEOUT_SECONDS = 600;
 const EMPTY_LAYOUT = () => Array(36).fill("");
 
+// Заголовки шагов мастера настройки расклада
+const WIZARD_TITLES = [
+  "Способ расклада",
+  "Система карт",
+  "Расклад",
+  "Нейросеть-гадалка",
+  "Пол",
+  "Период",
+  "Сферы",
+  "Комментарий",
+];
+const WIZARD_STEPS_COUNT = WIZARD_TITLES.length;
+const TAROT_BACK_IMAGE =
+  "https://storage.yandexcloud.net/fitting-room-images/images/tarot/000.png";
+
 type Mode = "online" | "real";
 
 const shuffleArray = <T,>(arr: T[]): T[] => {
@@ -136,6 +151,12 @@ export default function LenormandDivination() {
   const [mode, setMode] = useState<Mode>("online");
   const [deck, setDeck] = useState<string[]>(() => shuffleArray(CARD_NAMES));
   const [shuffled, setShuffled] = useState(false);
+
+  // Пошаговый мастер настройки расклада
+  const [wizardStep, setWizardStep] = useState(0);
+  const [wizardDone, setWizardDone] = useState(false);
+  const [divSystem, setDivSystem] = useState<"lenormand" | "tarot">("lenormand");
+  const [divSpread, setDivSpread] = useState("big9x4");
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusText, setStatusText] = useState("");
@@ -178,6 +199,10 @@ export default function LenormandDivination() {
         if (typeof d.comment === "string") setComment(d.comment);
         if (d.model) setModel(d.model);
         if (Array.isArray(d.layout) && d.layout.length === 36) setLayout(d.layout);
+        if (typeof d.wizardStep === "number") setWizardStep(d.wizardStep);
+        if (typeof d.wizardDone === "boolean") setWizardDone(d.wizardDone);
+        if (d.divSystem === "lenormand" || d.divSystem === "tarot") setDivSystem(d.divSystem);
+        if (typeof d.divSpread === "string") setDivSpread(d.divSpread);
       }
     } catch (e) {
       /* ignore */
@@ -190,12 +215,35 @@ export default function LenormandDivination() {
     try {
       localStorage.setItem(
         FORM_STORAGE_KEY,
-        JSON.stringify({ period, gender, spheres, comment, model, layout })
+        JSON.stringify({
+          period,
+          gender,
+          spheres,
+          comment,
+          model,
+          layout,
+          wizardStep,
+          wizardDone,
+          divSystem,
+          divSpread,
+        })
       );
     } catch (e) {
       /* ignore */
     }
-  }, [formReady, period, gender, spheres, comment, model, layout]);
+  }, [
+    formReady,
+    period,
+    gender,
+    spheres,
+    comment,
+    model,
+    layout,
+    wizardStep,
+    wizardDone,
+    divSystem,
+    divSpread,
+  ]);
 
   // Если выбранная гадалка стала недоступна по балансу — переключаем на
   // самую дешёвую доступную (первая в списке — самая дешёвая).
@@ -407,6 +455,10 @@ export default function LenormandDivination() {
     setComment("");
     setModel(MODELS[0].value);
     resetTable();
+    setWizardStep(0);
+    setWizardDone(false);
+    setDivSystem("lenormand");
+    setDivSpread("big9x4");
     setTouchAck(false);
     setShowTouchWarning(false);
     setResult(null);
@@ -694,36 +746,188 @@ export default function LenormandDivination() {
             </Button>
           </div>
 
-          {/* Фильтры — сверху на всю ширину */}
-          <Card className="mb-6">
-            <CardContent className="p-5">
-              <fieldset
-                disabled={formDisabled}
-                className={formDisabled ? "pointer-events-none opacity-60" : ""}
-              >
-                <div className="grid gap-5 md:grid-cols-3">
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Период
-                    </label>
-                    <Select value={period} onValueChange={(v) => { if (guardTouch()) return; setPeriod(v as PeriodKey); }}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PERIODS.map((p) => (
-                          <SelectItem key={p.key} value={p.key}>
-                            {p.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+          {/* МАСТЕР НАСТРОЙКИ РАСКЛАДА (показывается, пока не завершён) */}
+          {!wizardDone && (
+            <Card className="mb-6">
+              <CardContent className="p-5">
+                <div className="mb-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-sm font-medium text-purple-600">
+                      Шаг {wizardStep + 1} из {WIZARD_STEPS_COUNT}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {wizardStep + 1}/{WIZARD_STEPS_COUNT}
+                    </span>
                   </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                    <div
+                      className="h-full rounded-full bg-purple-600 transition-all"
+                      style={{
+                        width: `${((wizardStep + 1) / WIZARD_STEPS_COUNT) * 100}%`,
+                      }}
+                    />
+                  </div>
+                  <h2 className="mt-3 text-lg font-semibold text-gray-900">
+                    {WIZARD_TITLES[wizardStep]}
+                  </h2>
+                </div>
 
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Кто спрашивает
-                    </label>
+                <fieldset
+                  disabled={formDisabled}
+                  className={formDisabled ? "pointer-events-none opacity-60" : ""}
+                >
+                  {/* Шаг 0: Способ расклада (Онлайн/Реальный) */}
+                  {wizardStep === 0 && (
+                    <div>
+                      <div className="mb-4 inline-flex rounded-lg border border-gray-200 p-1">
+                        <button
+                          type="button"
+                          onClick={() => switchMode("online")}
+                          disabled={formDisabled}
+                          className={`rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50 ${
+                            mode === "online"
+                              ? "bg-purple-600 text-white"
+                              : "text-gray-600 hover:bg-gray-50"
+                          }`}
+                        >
+                          Онлайн-расклад
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => switchMode("real")}
+                          disabled={formDisabled}
+                          className={`rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50 ${
+                            mode === "real"
+                              ? "bg-purple-600 text-white"
+                              : "text-gray-600 hover:bg-gray-50"
+                          }`}
+                        >
+                          Реальный расклад
+                        </button>
+                      </div>
+                      <div className="space-y-1 text-sm text-gray-600">
+                        <p>
+                          <b className="text-gray-800">Онлайн-расклад</b> — перемешайте
+                          колоду и тяните карты рубашкой вверх прямо на экране.
+                        </p>
+                        <p>
+                          <b className="text-gray-800">Реальный расклад</b> — у вас уже
+                          разложены настоящие карты, вы просто переносите их в дома.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Шаг 1: Система карт */}
+                  {wizardStep === 1 && (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={() => setDivSystem("lenormand")}
+                        className={`flex flex-col items-center gap-2 rounded-xl border p-5 text-center transition ${
+                          divSystem === "lenormand"
+                            ? "border-purple-500 bg-purple-50"
+                            : "border-gray-200 hover:bg-gray-50"
+                        }`}
+                      >
+                        <Icon name="Sparkles" size={28} className="text-purple-600" />
+                        <span className="font-semibold text-gray-900">Ленорман</span>
+                        <span className="text-xs text-gray-500">
+                          36 карт, большой расклад 9 × 4
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled
+                        className="flex cursor-not-allowed flex-col items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 p-5 text-center opacity-70"
+                      >
+                        <img
+                          src={TAROT_BACK_IMAGE}
+                          alt="Таро"
+                          className="h-14 w-auto rounded object-contain"
+                          loading="lazy"
+                        />
+                        <span className="flex items-center gap-2 font-semibold text-gray-600">
+                          Таро
+                          <span className="rounded bg-gray-200 px-2 py-0.5 text-xs text-gray-600">
+                            Скоро
+                          </span>
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          Скоро будет доступно
+                        </span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Шаг 2: Расклад */}
+                  {wizardStep === 2 && (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setDivSpread("big9x4")}
+                        className={`rounded-lg border px-4 py-3 text-sm font-medium transition ${
+                          divSpread === "big9x4"
+                            ? "border-purple-500 bg-purple-50 text-purple-800"
+                            : "border-gray-200 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        Большой 9 × 4
+                      </button>
+                      {["1 карта", "3 карты", "Большой 8×4+4"].map((label) => (
+                        <button
+                          key={label}
+                          type="button"
+                          disabled
+                          className="flex cursor-not-allowed items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-500 opacity-70"
+                        >
+                          {label}
+                          <span className="rounded bg-gray-200 px-2 py-0.5 text-xs text-gray-600">
+                            Скоро
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Шаг 3: Нейросеть-гадалка */}
+                  {wizardStep === 3 && (
+                    <div>
+                      <Select value={model} onValueChange={(v) => { if (guardTouch()) return; setModel(v); }}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MODELS.map((m) => {
+                            const price = getDivinationPrice(LENORMAND_SPREAD, m.value);
+                            const affordable = isModelAffordable(m.value);
+                            return (
+                              <SelectItem
+                                key={m.value}
+                                value={m.value}
+                                disabled={!affordable}
+                              >
+                                <span className="flex flex-col">
+                                  <span>
+                                    {m.label} — {price} ₽
+                                    {!affordable && " (не хватает баланса)"}
+                                  </span>
+                                  <span className="text-xs text-gray-500">{m.desc}</span>
+                                </span>
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                      <p className="mt-1.5 text-xs text-gray-500">
+                        3 нейросети-гадалки — цена расклада от {LENORMAND_MIN_COST} до{" "}
+                        {getDivinationPrice(LENORMAND_SPREAD, MODELS[MODELS.length - 1].value)} ₽
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Шаг 4: Пол */}
+                  {wizardStep === 4 && (
                     <Select value={gender} onValueChange={(v) => { if (guardTouch()) return; setGender(v as GenderKey); }}>
                       <SelectTrigger>
                         <SelectValue />
@@ -736,84 +940,174 @@ export default function LenormandDivination() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
+                  )}
 
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Нейросеть-гадалка
-                    </label>
-                    <Select value={model} onValueChange={(v) => { if (guardTouch()) return; setModel(v); }}>
+                  {/* Шаг 5: Период */}
+                  {wizardStep === 5 && (
+                    <Select value={period} onValueChange={(v) => { if (guardTouch()) return; setPeriod(v as PeriodKey); }}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {MODELS.map((m) => {
-                          const price = getDivinationPrice(LENORMAND_SPREAD, m.value);
-                          const affordable = isModelAffordable(m.value);
-                          return (
-                            <SelectItem
-                              key={m.value}
-                              value={m.value}
-                              disabled={!affordable}
-                            >
-                              <span className="flex flex-col">
-                                <span>
-                                  {m.label} — {price} ₽
-                                  {!affordable && " (не хватает баланса)"}
-                                </span>
-                                <span className="text-xs text-gray-500">{m.desc}</span>
-                              </span>
-                            </SelectItem>
-                          );
-                        })}
+                        {PERIODS.map((p) => (
+                          <SelectItem key={p.key} value={p.key}>
+                            {p.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
-                    <p className="mt-1.5 text-xs text-gray-500">
-                      3 нейросети-гадалки — цена расклада от {LENORMAND_MIN_COST} до{" "}
-                      {getDivinationPrice(LENORMAND_SPREAD, MODELS[MODELS.length - 1].value)} ₽
-                    </p>
-                  </div>
-                </div>
+                  )}
 
-                <div className="mt-5">
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                    Сферы (можно несколько)
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {SPHERES.map((s) => (
-                      <button
-                        key={s.key}
-                        type="button"
-                        onClick={() => toggleSphere(s.key)}
-                        className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
-                          spheres.includes(s.key)
-                            ? "border-purple-500 bg-purple-50 text-purple-800"
-                            : "border-gray-200 text-gray-700 hover:bg-gray-50"
-                        }`}
-                      >
-                        <Icon
-                          name={spheres.includes(s.key) ? "CheckCircle2" : "Circle"}
-                          size={16}
-                          className={spheres.includes(s.key) ? "text-purple-600" : "text-gray-400"}
-                        />
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                  {/* Шаг 6: Сферы */}
+                  {wizardStep === 6 && (
+                    <div className="flex flex-wrap gap-2">
+                      {SPHERES.map((s) => (
+                        <button
+                          key={s.key}
+                          type="button"
+                          onClick={() => toggleSphere(s.key)}
+                          className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
+                            spheres.includes(s.key)
+                              ? "border-purple-500 bg-purple-50 text-purple-800"
+                              : "border-gray-200 text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          <Icon
+                            name={spheres.includes(s.key) ? "CheckCircle2" : "Circle"}
+                            size={16}
+                            className={spheres.includes(s.key) ? "text-purple-600" : "text-gray-400"}
+                          />
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
-                <div className="mt-5">
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                    Комментарий (необязательно)
-                  </label>
-                  <Textarea
-                    value={comment}
-                    onChange={(e) => { if (guardTouch()) return; setComment(e.target.value); }}
-                    placeholder="Например: стоит ли обновить гардероб этой весной и каким будет мой новый образ…"
-                    rows={3}
-                  />
+                  {/* Шаг 7: Комментарий */}
+                  {wizardStep === 7 && (
+                    <Textarea
+                      value={comment}
+                      onChange={(e) => { if (guardTouch()) return; setComment(e.target.value); }}
+                      placeholder="Например: стоит ли обновить гардероб этой весной и каким будет мой новый образ…"
+                      rows={3}
+                    />
+                  )}
+                </fieldset>
+
+                {/* Навигация мастера */}
+                <div className="mt-6 flex items-center justify-between">
+                  <Button
+                    variant="outline"
+                    onClick={() => setWizardStep((s) => Math.max(0, s - 1))}
+                    disabled={wizardStep === 0 || formDisabled}
+                  >
+                    <Icon name="ArrowLeft" size={16} className="mr-1.5" />
+                    Назад
+                  </Button>
+                  {wizardStep === WIZARD_STEPS_COUNT - 1 ? (
+                    <Button
+                      onClick={() => setWizardDone(true)}
+                      disabled={formDisabled}
+                      className="bg-purple-600 text-white hover:bg-purple-700"
+                    >
+                      <Icon name="Check" size={16} className="mr-1.5" />
+                      Готово
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() =>
+                        setWizardStep((s) => Math.min(WIZARD_STEPS_COUNT - 1, s + 1))
+                      }
+                      disabled={formDisabled}
+                      className="bg-purple-600 text-white hover:bg-purple-700"
+                    >
+                      Далее
+                      <Icon name="ArrowRight" size={16} className="ml-1.5" />
+                    </Button>
+                  )}
                 </div>
-              </fieldset>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* СВОДКА + СТОЛ РАСКЛАДА (после завершения мастера) */}
+          {wizardDone && (
+          <>
+          <Card className="mb-6">
+            <CardContent className="p-5">
+              <h2 className="mb-4 text-lg font-semibold text-gray-900">
+                Параметры расклада
+              </h2>
+              <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+                <div className="flex flex-col">
+                  <dt className="text-xs text-gray-500">Способ</dt>
+                  <dd className="text-sm font-medium text-gray-900">
+                    {mode === "online" ? "Онлайн-расклад" : "Реальный расклад"}
+                  </dd>
+                </div>
+                <div className="flex flex-col">
+                  <dt className="text-xs text-gray-500">Система</dt>
+                  <dd className="text-sm font-medium text-gray-900">Ленорман</dd>
+                </div>
+                <div className="flex flex-col">
+                  <dt className="text-xs text-gray-500">Расклад</dt>
+                  <dd className="text-sm font-medium text-gray-900">Большой 9 × 4</dd>
+                </div>
+                <div className="flex flex-col">
+                  <dt className="text-xs text-gray-500">Гадалка</dt>
+                  <dd className="text-sm font-medium text-gray-900">
+                    {MODELS.find((m) => m.value === model)?.label} —{" "}
+                    {getDivinationPrice(LENORMAND_SPREAD, model)} ₽
+                  </dd>
+                </div>
+                <div className="flex flex-col">
+                  <dt className="text-xs text-gray-500">Пол</dt>
+                  <dd className="text-sm font-medium text-gray-900">
+                    {GENDERS.find((g) => g.key === gender)?.label}
+                  </dd>
+                </div>
+                <div className="flex flex-col">
+                  <dt className="text-xs text-gray-500">Период</dt>
+                  <dd className="text-sm font-medium text-gray-900">
+                    {PERIODS.find((p) => p.key === period)?.label}
+                  </dd>
+                </div>
+                <div className="flex flex-col sm:col-span-2">
+                  <dt className="text-xs text-gray-500">Сферы</dt>
+                  <dd className="text-sm font-medium text-gray-900">
+                    {SPHERES.filter((s) => spheres.includes(s.key))
+                      .map((s) => s.label)
+                      .join(", ")}
+                  </dd>
+                </div>
+                <div className="flex flex-col sm:col-span-2">
+                  <dt className="text-xs text-gray-500">Комментарий</dt>
+                  <dd className="whitespace-pre-wrap text-sm font-medium text-gray-900">
+                    {comment.trim() || "—"}
+                  </dd>
+                </div>
+              </dl>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setWizardDone(false);
+                    setWizardStep(0);
+                  }}
+                  disabled={formDisabled}
+                >
+                  <Icon name="Pencil" size={16} className="mr-1.5" />
+                  Редактировать
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={clearAll}
+                  disabled={formDisabled}
+                >
+                  <Icon name="RotateCcw" size={16} className="mr-1.5" />
+                  Очистить и начать заново
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
@@ -1068,6 +1362,8 @@ export default function LenormandDivination() {
               </div>
             </CardContent>
           </Card>
+          </>
+          )}
 
           {/* ЛОАДЕР под столом во время обработки */}
           {isProcessing && (
