@@ -736,21 +736,9 @@ export default function LenormandDivination() {
         </div>
 
         <LockedFormOverlay cost={LENORMAND_MIN_COST}>
-          {/* Кнопка очистки всей формы и начала нового расклада */}
-          <div className="mb-4 flex justify-center">
-            <Button
-              variant="outline"
-              onClick={clearAll}
-              disabled={formDisabled}
-            >
-              <Icon name="RotateCcw" size={16} className="mr-1.5" />
-              Очистить форму и начать новый расклад
-            </Button>
-          </div>
-
           {/* МАСТЕР НАСТРОЙКИ РАСКЛАДА (показывается, пока не завершён) */}
           {!wizardDone && (
-            <Card className="mb-6 overflow-hidden border-0 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500 text-white shadow-xl">
+            <Card className="mb-6 overflow-hidden border-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-fuchsia-800 text-white shadow-lg">
               <CardContent className="p-6">
                 <div className="mb-5">
                   <div className="mb-2 flex items-center justify-between">
@@ -1063,45 +1051,48 @@ export default function LenormandDivination() {
           {/* СВОДКА + СТОЛ РАСКЛАДА (после завершения мастера) */}
           {wizardDone && (
           <>
-          <Card className="mb-6 overflow-hidden border-0 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500 text-white shadow-xl">
+          <Card className="mb-6 overflow-hidden border-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-fuchsia-800 text-white shadow-lg">
             <CardContent className="p-6">
               <h2 className="mb-4 text-xl font-semibold text-white">
                 Параметры расклада
               </h2>
-              <div className="space-y-1.5 text-[15px] leading-relaxed text-white">
-                <p>
-                  <span className="text-white/70">Способ:</span>{" "}
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[15px] leading-relaxed text-white">
+                <span>
+                  <span className="text-white/60">Способ:</span>{" "}
                   {mode === "online" ? "Онлайн-расклад" : "Реальный расклад"}
-                </p>
-                <p>
-                  <span className="text-white/70">Система:</span> Ленорман
-                </p>
-                <p>
-                  <span className="text-white/70">Расклад:</span> Ленорман 9 × 4
-                </p>
-                <p>
-                  <span className="text-white/70">Гадалка:</span>{" "}
+                </span>
+                <span className="text-white/40">·</span>
+                <span>
+                  <span className="text-white/60">Расклад:</span> Ленорман 9 × 4
+                </span>
+                <span className="text-white/40">·</span>
+                <span>
+                  <span className="text-white/60">Гадалка:</span>{" "}
                   {MODELS.find((m) => m.value === model)?.label} —{" "}
                   {getDivinationPrice(LENORMAND_SPREAD, model)} ₽
-                </p>
-                <p>
-                  <span className="text-white/70">Пол:</span>{" "}
+                </span>
+                <span className="text-white/40">·</span>
+                <span>
+                  <span className="text-white/60">Пол:</span>{" "}
                   {GENDERS.find((g) => g.key === gender)?.label}
-                </p>
-                <p>
-                  <span className="text-white/70">Период:</span>{" "}
+                </span>
+                <span className="text-white/40">·</span>
+                <span>
+                  <span className="text-white/60">Период:</span>{" "}
                   {PERIODS.find((p) => p.key === period)?.label}
-                </p>
-                <p>
-                  <span className="text-white/70">Сферы:</span>{" "}
+                </span>
+                <span className="text-white/40">·</span>
+                <span>
+                  <span className="text-white/60">Сферы:</span>{" "}
                   {SPHERES.filter((s) => spheres.includes(s.key))
                     .map((s) => s.label)
                     .join(", ")}
-                </p>
-                <p className="whitespace-pre-wrap">
-                  <span className="text-white/70">Комментарий:</span>{" "}
+                </span>
+                <span className="text-white/40">·</span>
+                <span>
+                  <span className="text-white/60">Комментарий:</span>{" "}
                   {comment.trim() || "—"}
-                </p>
+                </span>
               </div>
               <div className="mt-5 flex flex-wrap gap-2">
                 <button
@@ -1123,7 +1114,7 @@ export default function LenormandDivination() {
                   className="inline-flex items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
                 >
                   <Icon name="RotateCcw" size={16} className="mr-1.5" />
-                  Очистить и начать заново
+                  Очистить всё и начать заново
                 </button>
               </div>
             </CardContent>
@@ -1146,7 +1137,7 @@ export default function LenormandDivination() {
                     onClick={clearLayout}
                     disabled={formDisabled}
                   >
-                    <Icon name="Eraser" size={16} className="mr-1" /> Очистить расклад
+                    <Icon name="Eraser" size={16} className="mr-1" /> Очистить только расклад
                   </Button>
                 </div>
               </div>
