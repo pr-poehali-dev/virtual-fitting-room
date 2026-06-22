@@ -39,8 +39,14 @@ export default function Login() {
       navigate('/profile');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Ошибка входа';
-      
-      if (errorMessage.includes('email') && errorMessage.toLowerCase().includes('verif')) {
+      const isNetworkError =
+        /failed to fetch|networkerror|load failed|network request failed/i.test(
+          errorMessage
+        );
+
+      if (isNetworkError) {
+        toast.error('Проблема с соединением. Обновите страницу и попробуйте снова.');
+      } else if (errorMessage.includes('email') && errorMessage.toLowerCase().includes('verif')) {
         setShowResendButton(true);
         toast.error('Email не подтвержден. Проверьте почту.');
       } else {
