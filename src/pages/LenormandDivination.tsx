@@ -9,16 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import Icon from "@/components/ui/icon";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
@@ -167,8 +157,7 @@ export default function LenormandDivination() {
   const [resultDate, setResultDate] = useState<string>("");
   const [downloaded, setDownloaded] = useState(true);
 
-  // Модалка «первое касание нового расклада, пока есть старый результат»
-  const [showTouchWarning, setShowTouchWarning] = useState(false);
+  // Подтверждение «у меня есть несохранённый результат, начинаю новый»
   const [touchAck, setTouchAck] = useState(false);
   // Аккордион «Предыдущий расклад»
   const [prevOpen, setPrevOpen] = useState(false);
@@ -328,18 +317,8 @@ export default function LenormandDivination() {
   // Есть любой предыдущий результат: свежий (из сессии) или подтянутый из базы
   const hasPrevResult = !!result || !!prevResult;
 
-  // Перехват первого касания формы нового расклада, пока есть старый результат
-  const guardTouch = (): boolean => {
-    if (hasPrevResult && !touchAck) {
-      setShowTouchWarning(true);
-      return true; // блокируем действие
-    }
-    return false;
-  };
-
   const toggleSphere = (key: SphereKey) => {
     if (isProcessing) return;
-    if (guardTouch()) return;
     setSpheres((prev) =>
       prev.includes(key) ? prev.filter((s) => s !== key) : [...prev, key]
     );
@@ -361,7 +340,6 @@ export default function LenormandDivination() {
   // Реальный расклад: клик по тегу карты
   const placeCard = (card: string) => {
     if (isProcessing) return;
-    if (guardTouch()) return;
     if (usedCardsSet.has(card)) return;
     setLayout((prev) => {
       const next = [...prev];
@@ -377,7 +355,6 @@ export default function LenormandDivination() {
   // Онлайн-расклад: перемешать колоду (подготовка перед раскладом)
   const shuffleDeck = () => {
     if (isProcessing) return;
-    if (guardTouch()) return;
     const remaining = CARD_NAMES.filter((c) => !usedCardsSet.has(c));
     setDeck(shuffleArray(remaining));
     setShuffled(true);
@@ -391,7 +368,6 @@ export default function LenormandDivination() {
   // Онлайн-расклад: тянем карту вслепую (берём верхнюю из колоды)
   const drawBlindCard = () => {
     if (isProcessing) return;
-    if (guardTouch()) return;
     if (!shuffled) {
       toast.info("Сначала перемешайте карты");
       return;
@@ -413,7 +389,6 @@ export default function LenormandDivination() {
   // Клик по дому
   const onHouseClick = (houseIdx: number) => {
     if (isProcessing) return;
-    if (guardTouch()) return;
     if (mode === "online" && !shuffled) {
       toast.info("Сначала перемешайте карты");
       return;
@@ -443,7 +418,6 @@ export default function LenormandDivination() {
 
   const clearLayout = () => {
     if (isProcessing) return;
-    if (guardTouch()) return;
     resetTable();
   };
 
@@ -462,7 +436,6 @@ export default function LenormandDivination() {
     setDivSystem("lenormand");
     setDivSpread("big9x4");
     setTouchAck(false);
-    setShowTouchWarning(false);
     setResult(null);
     setResultLayout([]);
     setResultDate("");
@@ -712,7 +685,6 @@ export default function LenormandDivination() {
   const switchMode = (m: Mode) => {
     if (isProcessing) return;
     if (m === mode) return;
-    if (guardTouch()) return;
     setMode(m);
     resetTable();
   };
@@ -736,6 +708,47 @@ export default function LenormandDivination() {
         </div>
 
         <LockedFormOverlay cost={LENORMAND_MIN_COST}>
+          <div className="relative">
+          {/* Блокировка всей формы, пока есть несохранённый прошлый результат */}
+          {hasPrevResult && !touchAck && (
+            <div className="absolute inset-0 z-20 flex items-start justify-center rounded-2xl bg-white/60 backdrop-blur-sm">
+              <div className="mx-4 mt-10 max-w-sm rounded-2xl bg-white/95 p-6 text-center shadow-xl ring-1 ring-purple-100">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-purple-100">
+                  <Icon name="Sparkles" size={28} className="text-purple-600" />
+                </div>
+                <h3 className="mb-1 text-lg font-semibold text-gray-900">
+                  У вас есть готовый расклад
+                </h3>
+                <p className="mb-4 text-sm text-gray-600">
+                  Скачайте его, если нужно — после начала нового расклада он будет
+                  удалён.
+                </p>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={() => {
+                      setTouchAck(true);
+                      downloadShownPng();
+                    }}
+                    className="bg-purple-600 text-white hover:bg-purple-700"
+                  >
+                    <Icon name="Download" size={16} className="mr-1.5" />
+                    Скачать результат
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setTouchAck(true);
+                      dropPrevResult();
+                    }}
+                  >
+                    <Icon name="RotateCcw" size={16} className="mr-1.5" />
+                    Начать новый расклад
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* МАСТЕР НАСТРОЙКИ РАСКЛАДА (показывается, пока не завершён) */}
           {!wizardDone && (
             <Card className="mb-6 overflow-hidden border-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-fuchsia-800 text-white shadow-lg">
@@ -813,7 +826,7 @@ export default function LenormandDivination() {
                     <div className="grid gap-3 sm:grid-cols-2">
                       <button
                         type="button"
-                        onClick={() => { if (guardTouch()) return; setDivSystem("lenormand"); }}
+                        onClick={() => setDivSystem("lenormand")}
                         className={`flex flex-col items-center gap-2 rounded-xl border-2 p-5 text-center transition ${
                           divSystem === "lenormand"
                             ? "border-white bg-white/15"
@@ -860,7 +873,7 @@ export default function LenormandDivination() {
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => { if (guardTouch()) return; setDivSpread("big9x4"); }}
+                        onClick={() => setDivSpread("big9x4")}
                         className={`rounded-xl border-2 px-4 py-3 text-sm font-semibold transition ${
                           divSpread === "big9x4"
                             ? "border-white bg-white/15 text-white"
@@ -903,7 +916,7 @@ export default function LenormandDivination() {
                               role="radio"
                               aria-checked={selected}
                               disabled={!affordable}
-                              onClick={() => { if (guardTouch()) return; setModel(m.value); }}
+                              onClick={() => setModel(m.value)}
                               className={`flex flex-col gap-1.5 rounded-xl border-2 p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
                                 selected
                                   ? "border-white bg-white/15"
@@ -942,7 +955,7 @@ export default function LenormandDivination() {
 
                   {/* Шаг 4: Пол */}
                   {wizardStep === 4 && (
-                    <Select value={gender} onValueChange={(v) => { if (guardTouch()) return; setGender(v as GenderKey); }}>
+                    <Select value={gender} onValueChange={(v) => setGender(v as GenderKey)}>
                       <SelectTrigger className="border-2 border-white/50 bg-transparent text-white focus:ring-white/40 [&>svg]:text-white">
                         <SelectValue />
                       </SelectTrigger>
@@ -958,7 +971,7 @@ export default function LenormandDivination() {
 
                   {/* Шаг 5: Период */}
                   {wizardStep === 5 && (
-                    <Select value={period} onValueChange={(v) => { if (guardTouch()) return; setPeriod(v as PeriodKey); }}>
+                    <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
                       <SelectTrigger className="border-2 border-white/50 bg-transparent text-white focus:ring-white/40 [&>svg]:text-white">
                         <SelectValue />
                       </SelectTrigger>
@@ -1001,7 +1014,7 @@ export default function LenormandDivination() {
                   {wizardStep === 7 && (
                     <Textarea
                       value={comment}
-                      onChange={(e) => { if (guardTouch()) return; setComment(e.target.value); }}
+                      onChange={(e) => setComment(e.target.value)}
                       placeholder="Например: стоит ли обновить гардероб этой весной и каким будет мой новый образ…"
                       rows={3}
                       className="border-2 border-white/50 bg-transparent text-white placeholder:text-white/60 focus-visible:ring-white/40"
@@ -1359,6 +1372,7 @@ export default function LenormandDivination() {
               </p>
             </div>
           )}
+          </div>
         </LockedFormOverlay>
 
         {/* ТОЛЬКО ТЕКСТ результата под столом */}
@@ -1667,39 +1681,6 @@ export default function LenormandDivination() {
         </div>
       )}
 
-      {/* Модалка при первом касании нового расклада */}
-      <AlertDialog open={showTouchWarning} onOpenChange={setShowTouchWarning}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Вы начинаете новый расклад</AlertDialogTitle>
-            <AlertDialogDescription>
-              Старый результат удалится, как только вы запустите новый. Рекомендуем
-              скачать его. Можно скачать прямо сейчас или начать новый расклад без
-              сохранения.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => {
-                setShowTouchWarning(false);
-                setTouchAck(true);
-                dropPrevResult();
-              }}
-            >
-              Начать новый расклад
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setShowTouchWarning(false);
-                setTouchAck(true);
-                downloadShownPng();
-              }}
-            >
-              Скачать
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Layout>
   );
 }
