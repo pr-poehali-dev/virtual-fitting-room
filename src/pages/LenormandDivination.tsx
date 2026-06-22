@@ -237,12 +237,9 @@ export default function LenormandDivination() {
               })
             : ""
         );
-        // Есть предыдущий результат — форма стартует чистой, очищаем сохранённое
-        try {
-          localStorage.removeItem(FORM_STORAGE_KEY);
-        } catch (e) {
-          /* ignore */
-        }
+        // Форму НЕ обнуляем при обновлении страницы — восстанавливаем
+        // сохранённые поля, даже если есть прошлый результат из базы.
+        restoreFormFromStorage();
         setFormReady(true);
       } catch (e) {
         finishWithEmpty();
@@ -375,17 +372,32 @@ export default function LenormandDivination() {
     resetTable();
   };
 
-  // Очистить фильтры — полный сброс всей формы к значениям по умолчанию
-  const clearFilters = () => {
+  // Очистить форму и начать новый расклад: сбрасывает все поля, стол,
+  // сохранённую форму в localStorage и предыдущий результат.
+  const clearAll = () => {
     if (isProcessing) return;
-    if (guardTouch()) return;
     setPeriod("now");
     setGender("female");
     setSpheres(["all"]);
     setComment("");
     setModel(MODELS[0].value);
     resetTable();
-    toast.success("Форма очищена");
+    setTouchAck(false);
+    setShowTouchWarning(false);
+    setResult(null);
+    setResultLayout([]);
+    setResultDate("");
+    setDownloaded(true);
+    setPrevResult(null);
+    setPrevLayout([]);
+    setPrevDate("");
+    setPrevOpen(false);
+    try {
+      localStorage.removeItem(FORM_STORAGE_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+    toast.success("Форма очищена — можно начинать новый расклад");
   };
 
   // Полный сброс старого результата (после запуска нового расклада)
@@ -645,15 +657,15 @@ export default function LenormandDivination() {
         </div>
 
         <LockedFormOverlay cost={LENORMAND_COST}>
-          {/* Кнопка очистки всей формы */}
-          <div className="mb-3 flex justify-end">
+          {/* Кнопка очистки всей формы и начала нового расклада */}
+          <div className="mb-4 flex justify-center">
             <Button
               variant="outline"
-              size="sm"
-              onClick={clearFilters}
+              onClick={clearAll}
               disabled={formDisabled}
             >
-              <Icon name="Eraser" size={16} className="mr-1" /> Очистить фильтры
+              <Icon name="RotateCcw" size={16} className="mr-1.5" />
+              Очистить форму и начать новый расклад
             </Button>
           </div>
 
