@@ -2,13 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import Icon from "@/components/ui/icon";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
@@ -777,8 +770,11 @@ export default function LenormandDivination() {
 
                 <fieldset
                   disabled={formDisabled}
-                  className={formDisabled ? "pointer-events-none opacity-60" : ""}
+                  className={`flex min-h-[168px] items-start rounded-2xl border border-white/15 bg-white/10 p-5 ${
+                    formDisabled ? "pointer-events-none opacity-60" : ""
+                  }`}
                 >
+                  <div className="w-full">
                   {/* Шаг 0: Способ расклада (Онлайн/Реальный) */}
                   {wizardStep === 0 && (
                     <div>
@@ -955,34 +951,58 @@ export default function LenormandDivination() {
 
                   {/* Шаг 4: Пол */}
                   {wizardStep === 4 && (
-                    <Select value={gender} onValueChange={(v) => setGender(v as GenderKey)}>
-                      <SelectTrigger className="border-2 border-white/50 bg-transparent text-white focus:ring-white/40 [&>svg]:text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {GENDERS.map((g) => (
-                          <SelectItem key={g.key} value={g.key}>
+                    <div className="flex flex-wrap gap-2">
+                      {GENDERS.map((g) => {
+                        const active = gender === g.key;
+                        return (
+                          <button
+                            key={g.key}
+                            type="button"
+                            onClick={() => setGender(g.key as GenderKey)}
+                            className={`flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition ${
+                              active
+                                ? "border-white bg-white/15 text-white"
+                                : "border-white/40 text-white/80 hover:border-white hover:text-white"
+                            }`}
+                          >
+                            <Icon
+                              name={active ? "CircleDot" : "Circle"}
+                              size={16}
+                              className="text-white"
+                            />
                             {g.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          </button>
+                        );
+                      })}
+                    </div>
                   )}
 
                   {/* Шаг 5: Период */}
                   {wizardStep === 5 && (
-                    <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
-                      <SelectTrigger className="border-2 border-white/50 bg-transparent text-white focus:ring-white/40 [&>svg]:text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PERIODS.map((p) => (
-                          <SelectItem key={p.key} value={p.key}>
+                    <div className="flex flex-wrap gap-2">
+                      {PERIODS.map((p) => {
+                        const active = period === p.key;
+                        return (
+                          <button
+                            key={p.key}
+                            type="button"
+                            onClick={() => setPeriod(p.key as PeriodKey)}
+                            className={`flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition ${
+                              active
+                                ? "border-white bg-white/15 text-white"
+                                : "border-white/40 text-white/80 hover:border-white hover:text-white"
+                            }`}
+                          >
+                            <Icon
+                              name={active ? "CircleDot" : "Circle"}
+                              size={16}
+                              className="text-white"
+                            />
                             {p.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          </button>
+                        );
+                      })}
+                    </div>
                   )}
 
                   {/* Шаг 6: Сферы */}
@@ -1020,10 +1040,11 @@ export default function LenormandDivination() {
                       className="border-2 border-white/50 bg-transparent text-white placeholder:text-white/60 focus-visible:ring-white/40"
                     />
                   )}
+                  </div>
                 </fieldset>
 
                 {/* Навигация мастера */}
-                <div className="mt-6 flex items-center justify-between">
+                <div className="mt-5 flex items-center justify-between border-t border-white/15 pt-5">
                   <button
                     type="button"
                     onClick={() => setWizardStep((s) => Math.max(0, s - 1))}
@@ -1038,7 +1059,7 @@ export default function LenormandDivination() {
                       type="button"
                       onClick={() => setWizardDone(true)}
                       disabled={formDisabled}
-                      className="inline-flex items-center rounded-xl border-2 border-white px-5 py-2 text-sm font-semibold text-white transition hover:bg-white/15 disabled:opacity-40"
+                      className="inline-flex items-center rounded-xl bg-white px-6 py-2.5 text-sm font-semibold text-purple-700 shadow-sm transition hover:bg-white/90 disabled:opacity-40"
                     >
                       <Icon name="Check" size={16} className="mr-1.5" />
                       Готово
@@ -1050,7 +1071,7 @@ export default function LenormandDivination() {
                         setWizardStep((s) => Math.min(WIZARD_STEPS_COUNT - 1, s + 1))
                       }
                       disabled={formDisabled}
-                      className="inline-flex items-center rounded-xl border-2 border-white px-5 py-2 text-sm font-semibold text-white transition hover:bg-white/15 disabled:opacity-40"
+                      className="inline-flex items-center rounded-xl bg-white px-6 py-2.5 text-sm font-semibold text-purple-700 shadow-sm transition hover:bg-white/90 disabled:opacity-40"
                     >
                       Далее
                       <Icon name="ArrowRight" size={16} className="ml-1.5" />
