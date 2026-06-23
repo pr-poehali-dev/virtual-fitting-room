@@ -142,6 +142,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
                       isOpen ? "px-4 py-3 justify-start" : "lg:w-14 lg:h-14 lg:p-0 lg:justify-center justify-center"
                     }
                   `}
+                  title={!isOpen ? item.label : undefined}
                 >
                   <Icon
                     name={item.icon}
