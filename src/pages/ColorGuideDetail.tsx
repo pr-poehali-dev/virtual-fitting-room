@@ -8,7 +8,10 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import ColorGuideReport, { ColorGuideResult } from "@/components/ColorGuideReport";
 import StyleAnalysisReport, { StyleAnalysisResult } from "@/components/StyleAnalysisReport";
-import OutfitReport, { OutfitResult } from "@/components/OutfitReport";
+import OutfitReport, {
+  OutfitResult,
+  OutfitFormParams,
+} from "@/components/OutfitReport";
 
 const COLORGUIDE_DETAIL_API = "https://functions.poehali.dev/90841acf-1a1a-4158-a8b6-8ddd65204126";
 
@@ -23,6 +26,9 @@ export default function ColorGuideDetail() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [styleResult, setStyleResult] = useState<StyleAnalysisResult | null>(null);
   const [outfitResult, setOutfitResult] = useState<OutfitResult | null>(null);
+  const [outfitParams, setOutfitParams] = useState<OutfitFormParams | null>(
+    null,
+  );
   const [errorText, setErrorText] = useState<string | null>(null);
 
   const handleDownload = async () => {
@@ -108,6 +114,8 @@ export default function ColorGuideDetail() {
           setImageUrl(data.cdn_url);
           if (svc === "outfit") {
             if (data.result) setOutfitResult(data.result as OutfitResult);
+            if (data.form_params)
+              setOutfitParams(data.form_params as OutfitFormParams);
           } else if (data.result) {
             setStyleResult(data.result as StyleAnalysisResult);
           }
@@ -170,6 +178,7 @@ export default function ColorGuideDetail() {
             <OutfitReport
               imageUrl={imageUrl}
               data={outfitResult}
+              formParams={outfitParams}
               onReset={() => navigate("/outfit-selection")}
             />
           ) : serviceType !== "colorguide" && styleResult ? (

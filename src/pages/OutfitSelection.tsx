@@ -19,7 +19,10 @@ import { useAuth } from "@/context/AuthContext";
 import { OUTFIT_SELECTION_COST } from "@/config/prices";
 import { useBalance } from "@/context/BalanceContext";
 import { useNavigate } from "react-router-dom";
-import OutfitReport, { OutfitResult } from "@/components/OutfitReport";
+import OutfitReport, {
+  OutfitResult,
+  OutfitFormParams,
+} from "@/components/OutfitReport";
 
 const START_API =
   "https://functions.poehali.dev/1551f3e9-8029-441b-ac77-2dc9cf164bdc";
@@ -134,6 +137,9 @@ export default function OutfitSelection() {
   const [analysisStatus, setAnalysisStatus] = useState<string>("");
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [resultData, setResultData] = useState<OutfitResult | null>(null);
+  const [resultParams, setResultParams] = useState<OutfitFormParams | null>(
+    null,
+  );
 
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -225,6 +231,8 @@ export default function OutfitSelection() {
         }
         setResultUrl(data.cdn_url);
         if (data.result) setResultData(data.result as OutfitResult);
+        if (data.form_params)
+          setResultParams(data.form_params as OutfitFormParams);
         setIsAnalyzing(false);
         setAnalysisStatus("");
         toast.success("Ваш образ готов!");
@@ -342,6 +350,7 @@ export default function OutfitSelection() {
   const handleReset = () => {
     setResultUrl(null);
     setResultData(null);
+    setResultParams(null);
     setUploadedImage(null);
     setHeight("");
     setKibbe("");
@@ -698,6 +707,7 @@ export default function OutfitSelection() {
             <OutfitReport
               imageUrl={resultUrl}
               data={resultData}
+              formParams={resultParams}
               onReset={handleReset}
             />
           )}

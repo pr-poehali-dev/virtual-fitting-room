@@ -61,7 +61,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute('''
             SELECT id, user_id, status, colortype_slug, result_json, cdn_url, error_message,
-                   cost, refunded, created_at, service_type
+                   cost, refunded, created_at, service_type, form_params
             FROM color_guide_tasks WHERE id = %s
         ''', (task_id,))
         row = cursor.fetchone()
@@ -91,6 +91,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             except Exception:
                 result = None
 
+        form_params = row.get('form_params')
+        if form_params and isinstance(form_params, str):
+            try:
+                form_params = json.loads(form_params)
+            except Exception:
+                form_params = None
+
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
@@ -105,7 +112,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'refunded': row['refunded'],
                 'error_message': row.get('error_message'),
                 'created_at': row['created_at'].isoformat() if row['created_at'] else None,
-                'result': result
+                'result': result,
+                'form_params': form_params
             }, ensure_ascii=False)
         }
     except Exception as e:

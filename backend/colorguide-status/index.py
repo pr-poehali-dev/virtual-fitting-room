@@ -49,7 +49,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = psycopg2.connect(dsn)
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT status, colortype_slug, result_json, cdn_url, error_message, service_type
+            SELECT status, colortype_slug, result_json, cdn_url, error_message, service_type, form_params
             FROM color_guide_tasks WHERE id = %s
         ''', (task_id,))
         row = cursor.fetchone()
@@ -64,7 +64,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Task not found'})
             }
 
-        status, colortype_slug, result_json, cdn_url, error_message, service_type = row
+        status, colortype_slug, result_json, cdn_url, error_message, service_type, form_params = row
 
         # Единая очередь: если задача всё ещё ждёт — будим воркер (он сам решит, стартовать или ждать слот)
         if status == 'pending':
@@ -88,6 +88,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 response_body['result'] = json.loads(result_json)
             else:
                 response_body['result'] = result_json
+        if form_params:
+            response_body['form_params'] = json.loads(form_params) if isinstance(form_params, str) else form_params
         if error_message:
             response_body['error'] = error_message
 

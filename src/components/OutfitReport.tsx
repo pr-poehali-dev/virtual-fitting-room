@@ -33,9 +33,25 @@ export interface OutfitResult {
   tips?: string[];
 }
 
+export interface OutfitFormParams {
+  gender?: string;
+  height?: number | string;
+  kibbe?: string;
+  archetypes?: string[];
+  colortypes?: string[];
+  hair_length?: string;
+  hair_color?: string;
+  eye_color?: string;
+  season?: string;
+  occasion?: string;
+  tags?: string[];
+  comment?: string;
+}
+
 interface Props {
   imageUrl: string | null;
   data: OutfitResult | null;
+  formParams?: OutfitFormParams | null;
   onReset: () => void;
 }
 
@@ -108,7 +124,39 @@ function NamedBlock({ item, label }: { item?: NamedItem; label: string }) {
   );
 }
 
-export default function OutfitReport({ imageUrl, data, onReset }: Props) {
+function buildParamRows(
+  fp?: OutfitFormParams | null,
+): { label: string; value: string }[] {
+  if (!fp) return [];
+  const rows: { label: string; value: string }[] = [];
+  const add = (label: string, value?: string | number | string[]) => {
+    if (value === undefined || value === null) return;
+    if (Array.isArray(value)) {
+      const v = value.filter((x) => x !== undefined && x !== null && `${x}`.trim() !== "");
+      if (v.length) rows.push({ label, value: v.join(", ") });
+    } else {
+      const v = `${value}`.trim();
+      if (v) rows.push({ label, value: v });
+    }
+  };
+  add("Пол", fp.gender);
+  add("Рост", fp.height ? `${fp.height} см` : undefined);
+  add("Типаж по Кибби", fp.kibbe);
+  add("Архетипы", fp.archetypes);
+  add("Цветотип", fp.colortypes);
+  add("Длина волос", fp.hair_length);
+  add("Цвет волос", fp.hair_color);
+  add("Цвет глаз", fp.eye_color);
+  add("Сезон / погода", fp.season);
+  add("Повод", fp.occasion);
+  add("Акценты", fp.tags);
+  add("Комментарий", fp.comment);
+  return rows;
+}
+
+export default function OutfitReport({ imageUrl, data, formParams, onReset }: Props) {
+  const paramRows = buildParamRows(formParams);
+
   const handleDownload = async () => {
     if (!imageUrl) return;
     try {
@@ -280,6 +328,27 @@ export default function OutfitReport({ imageUrl, data, onReset }: Props) {
                 </ul>
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {paramRows.length > 0 && (
+        <Card>
+          <CardContent className="p-6 md:p-8">
+            <SectionTitle icon="SlidersHorizontal">
+              Образ подобран по параметрам
+            </SectionTitle>
+            <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-2">
+              {paramRows.map((r) => (
+                <div
+                  key={r.label}
+                  className="flex justify-between gap-3 border-b border-border/60 py-1.5 text-sm"
+                >
+                  <dt className="text-muted-foreground shrink-0">{r.label}</dt>
+                  <dd className="text-right font-medium">{r.value}</dd>
+                </div>
+              ))}
+            </dl>
           </CardContent>
         </Card>
       )}
