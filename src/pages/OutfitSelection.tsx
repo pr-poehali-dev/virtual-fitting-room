@@ -372,6 +372,7 @@ export default function OutfitSelection() {
     setResultData(null);
     setResultParams(null);
     setUploadedImage(null);
+    setGender("");
     setHeight("");
     setKibbe("");
     setArchetypes([]);
