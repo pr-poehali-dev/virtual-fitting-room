@@ -53,7 +53,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
     {
       id: "outfit-selection",
       path: "/outfit-selection",
-      icon: "Sparkles",
+      icon: "Gem",
       label: "Подбор образов",
     },
     {
@@ -117,7 +117,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
           </div>
 
           {/* Menu Items */}
-          <nav className="flex-1 px-3 py-4 space-y-2">
+          <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-2">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
 
