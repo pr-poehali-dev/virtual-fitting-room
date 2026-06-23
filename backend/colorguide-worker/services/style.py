@@ -11,6 +11,12 @@
 # Логотип больше не нужен: картинка теперь — чистая сетка 2x2 из образов без шапки.
 LOGO_IMAGE_URL = None
 
+# Текстовая модель: переключаем стилевой анализ на Qwen3-VL Thinking (как в outfit).
+QWEN_MODEL = 'qwen/qwen3-vl-235b-a22b-thinking'
+# Флаг для worker: использовать Qwen (без strict json_schema, с парсингом JSON из ответа).
+# Если Qwen вернёт неполный JSON — worker автоматически откатится на strict-Gemini.
+USE_QWEN = True
+
 # Соотношение сторон итоговой картинки (широкий ряд из 4 образов)
 ASPECT_RATIO = '16:9'
 
@@ -43,6 +49,7 @@ GEMINI_PROMPT = '''Ты — топовый персональный стилис
 - tips: 5 коротких практических советов стилиста на русском (строки).
 - looks: массив РОВНО из 4 объектов {title, description}. Это 4 готовых полноценных образа для этого человека, основанных на твоих рекомендациях (стили, силуэты, ключевые вещи, палитра). title — короткое название образа на русском (например, "Деловой кэжуал", "Романтический вечер"). description — ДЕТАЛЬНОЕ описание образа на русском в 2-3 предложения: что именно надето сверху и снизу, верхняя одежда, обувь, сумка, аксессуары и украшения (с конкретными фасонами и цветами из рекомендованной палитры).
   ОЧЕНЬ ВАЖНО ПРО АКТУАЛЬНОСТЬ: образы должны выглядеть как мода 2025–2026 года, НЕ как 2010-е. Подбирай вещи и особенно обувь из новых коллекций ЭТОГО сезона — актуальное, что сейчас есть в магазинах и в свежих поступлениях. Никаких устаревших или прошлосезонных вещей, но и без экстремальных подиумных образов — это носибельная, реальная современная одежда. Вместо размытых формулировок ("платье-футляр", "прямые джинсы", "классические туфли-лодочки") описывай КОНКРЕТНЫЕ современные признаки фасона: актуальный силуэт и посадку (свободный/relaxed/прямой/oversize крой, высокая посадка), объём и длину (например, широкие или прямые брюки полной длины, удлинённый жакет с мягкими плечами, юбка-миди или макси), актуальную обувь сезона (лоферы, балетки, обувь на низком ходу, актуальные босоножки — а НЕ узкие шпильки-лодочки из 2010-х), современные сумки и украшения. Избегай примет 2010-х: скинни-джинсы, очень короткие приталенные пиджаки, узкие лодочки на тонкой шпильке, мини с прямыми лодочками.
+  ВАЖНО ПРО ЦВЕТ В КАЖДОМ ОБРАЗЕ: в одном образе используй НЕ БОЛЕЕ 3 цветов, распределённых в пропорции 60% + 30% + 10% (основной цвет занимает ~60% образа, дополнительный ~30%, акцентный ~10%). Эти 3 цвета обязаны сочетаться между собой и относиться к рекомендованной палитре цветотипа человека с фото (из palette_best). НЕ используй цвета из palette_avoid. В описании образа указывай, какой цвет основной, какой дополнительный и какой акцентный.
   ВАЖНО ПРО ФИГУРУ: фасон, силуэт, крой, длину и посадку КАЖДОЙ вещи в образах подбирай строго по результату анализа фигуры из пункта 2 (тип фигуры и ближайший типаж Кибби) — линии и пропорции должны быть гармоничны именно этому телу, а не абстрактному. Образы должны быть РАЗНЫМИ между собой и подобранными под фигуру человека, и желательно перекрывать разные ситуации (повседневный, деловой/смарт, и обязательно нарядный). ОБЯЗАТЕЛЬНО: как минимум ОДИН из 4 образов сделай эффектным, по-настоящему красивым и нарядным — образ для особого случая (например, для свидания, романтического вечера или выхода в свет). Это НЕ должна быть простая база "юбка + блузка": продумай его как стилист для красивого выхода — выразительное платье или эффектное сочетание верха и низа, благородные ткани (шёлк, атлас, бархат, кружево, струящиеся материалы), красивый крой и драпировка, изящные акценты, нарядная обувь и украшения, чтобы человек выглядел восхитительно. Остальные образы оставь более практичными для повседневной жизни. Описывай так, чтобы по тексту можно было точно нарисовать актуальный образ на человеке.
 
 Опирайся на реальные природные данные человека и профессиональный опыт. Будь точным и конкретным.'''
@@ -143,6 +150,8 @@ PERSON — MOST IMPORTANT: take the woman STRICTLY from the provided photo and k
 Dress her in these FOUR DIFFERENT complete outfits, one per cell, in order from left to right, exactly as described (modern current-year fashion, flattering cuts for her figure). Render every garment, shoes, bag, accessories and JEWELRY described, in realistic detail:
 
 {looks_block}FASHION ERA — VERY IMPORTANT: style every outfit to look like CURRENT 2025-2026 fashion, NOT 2010s. Every garment, shoe, bag and accessory MUST look like it comes from the NEWEST current-season collections — the newest in-store pieces of THIS season that are trending RIGHT NOW, but still REAL, WEARABLE everyday fashion (NOT extreme avant-garde runway looks). Footwear especially must be the newest current-season models, not classic dated styles. Use contemporary silhouettes and proportions: relaxed/structured tailoring, soft natural shoulders, high-waisted wide or straight full-length trousers, longline jackets and coats, midi/maxi lengths, modern footwear (loafers, ballet flats, low-heel or block-heel shoes, contemporary sandals). AVOID anything that looks like an old or past-season item, and AVOID dated 2010s markers: skinny jeans, very short tight blazers, thin stiletto pumps, overly fitted bodycon shapes. Hair, makeup and styling should also read as modern and current.
+
+COLOR RULE — IMPORTANT: each outfit must use NO MORE THAN 3 colors, balanced in a 60-30-10 proportion (one dominant color ~60%, a secondary ~30%, an accent ~10%), all harmonized and matching the person's color type.
 
 REQUIREMENTS: four DISTINCT outfits (do not repeat the same look), each shown head-to-toe once, contemporary 2025-2026 style, fit and silhouette flattering to her body. Photorealistic fashion photography quality. NO text, NO captions, NO labels, NO logos, NO color swatches anywhere on the image — only the four outfit photos in one horizontal row.'''
 

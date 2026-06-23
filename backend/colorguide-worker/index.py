@@ -343,6 +343,33 @@ def call_gemini(image_url: str) -> Dict[str, Any]:
     return call_gemini_once(image_url, PROMPT_TEMPLATE)
 
 
+# Поля, без которых отчёт по цветотипу считается неполным.
+COLORGUIDE_REQUIRED = ['colortype_slug', 'main_palette', 'avoid_palette', 'makeup', 'metals', 'hair_colors', 'capsules', 'tips']
+
+# Модель Qwen для определения цветотипа (та же версия, что в outfit/style).
+COLORGUIDE_QWEN_MODEL = 'qwen/qwen3-vl-235b-a22b-thinking'
+
+
+def call_colorguide(image_url: str) -> Dict[str, Any]:
+    """Определение цветотипа через Qwen3-VL Thinking с фолбэком на strict-Gemini.
+    Если Qwen вернёт битый/неполный JSON — автоматически откатываемся на Gemini."""
+    try:
+        result = call_qwen_json(image_url, PROMPT_TEMPLATE, COLORGUIDE_QWEN_MODEL)
+        missing = [f for f in COLORGUIDE_REQUIRED if not result.get(f)]
+        if missing:
+            raise RuntimeError(f'Qwen вернул неполный JSON, не хватает: {",".join(missing)}')
+        print(f'[MODEL-CHECK] service=colorguide model=qwen json=ok keys={list(result.keys())}')
+        return result
+    except Exception as qwen_err:
+        print(f'[MODEL-CHECK] service=colorguide model=qwen json=bad error={qwen_err}')
+        print('[MODEL-CHECK] service=colorguide fallback -> gemini')
+        result = call_gemini(image_url)
+        missing = [f for f in COLORGUIDE_REQUIRED if not result.get(f)]
+        status_json = 'bad' if missing else 'ok'
+        print(f'[MODEL-CHECK] service=colorguide model=gemini-fallback json={status_json} keys={list(result.keys())}')
+        return result
+
+
 def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_name: str) -> Dict[str, Any]:
     """Запрос к Gemini с произвольной JSON-схемой (для картиночных сервисов)."""
     api_key = os.environ.get('OPENROUTER_API_KEY_NEW') or os.environ.get('OPENROUTER_API_KEY')
@@ -637,16 +664,41 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
             if params_block:
                 gemini_prompt += '\n\n' + params_block
 
+        required = getattr(service, 'REQUIRED_FIELDS', [])
+        has_schema = bool(getattr(service, 'RESPONSE_SCHEMA', None))
         if getattr(service, 'USE_QWEN', False):
-            analysis = call_qwen_json(person_url, gemini_prompt, service.QWEN_MODEL)
+            model_used = 'qwen'
+            try:
+                analysis = call_qwen_json(person_url, gemini_prompt, service.QWEN_MODEL)
+                missing = [f for f in required if not analysis.get(f)]
+                if missing:
+                    raise RuntimeError(f'Qwen вернул неполный JSON, не хватает: {",".join(missing)}')
+                print(f'[MODEL-CHECK] service={service_type} model=qwen json=ok keys={list(analysis.keys())}')
+            except Exception as qwen_err:
+                print(f'[MODEL-CHECK] service={service_type} model=qwen json=bad error={qwen_err}')
+                if not has_schema:
+                    raise
+                print(f'[MODEL-CHECK] service={service_type} fallback -> gemini')
+                analysis = call_gemini_with_schema(
+                    person_url, gemini_prompt, service.RESPONSE_SCHEMA, f'{service_type}_result'
+                )
+                model_used = 'gemini-fallback'
+                missing = [f for f in required if not analysis.get(f)]
+                status_json = 'bad' if missing else 'ok'
+                print(f'[MODEL-CHECK] service={service_type} model=gemini-fallback json={status_json} keys={list(analysis.keys())}')
+                if missing:
+                    raise RuntimeError(f'неполный ответ Gemini: {",".join(missing)}')
         else:
+            model_used = 'gemini'
             analysis = call_gemini_with_schema(
                 person_url, gemini_prompt, service.RESPONSE_SCHEMA, f'{service_type}_result'
             )
-        print(f'[COLORGUIDE-WORKER] STEP analysis done, keys: {list(analysis.keys())}')
-        missing = [f for f in service.REQUIRED_FIELDS if not analysis.get(f)]
-        if missing:
-            raise RuntimeError(f'неполный ответ Gemini: {",".join(missing)}')
+            missing = [f for f in required if not analysis.get(f)]
+            status_json = 'bad' if missing else 'ok'
+            print(f'[MODEL-CHECK] service={service_type} model=gemini json={status_json} keys={list(analysis.keys())}')
+            if missing:
+                raise RuntimeError(f'неполный ответ Gemini: {",".join(missing)}')
+        print(f'[COLORGUIDE-WORKER] STEP analysis done via {model_used}, keys: {list(analysis.keys())}')
 
         analysis['source_image'] = person_url
 
@@ -817,8 +869,8 @@ def process_task(task_id: str):
         cdn_url = upload_to_s3(person_image, task_id, str(user_id))
         print(f'[COLORGUIDE-WORKER] Uploaded to {cdn_url}')
 
-        result = call_gemini(cdn_url)
-        print(f'[COLORGUIDE-WORKER] Gemini returned keys: {list(result.keys())}')
+        result = call_colorguide(cdn_url)
+        print(f'[COLORGUIDE-WORKER] colortype returned keys: {list(result.keys())}')
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (Gemini/S3): {e}')
         mark_failed_and_refund(task_id, str(e), 'ошибка обработки')
