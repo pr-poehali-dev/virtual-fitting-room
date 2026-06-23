@@ -51,6 +51,12 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       label: "Стилевой анализ внешности",
     },
     {
+      id: "outfit-selection",
+      path: "/outfit-selection",
+      icon: "Sparkles",
+      label: "Подбор образов",
+    },
+    {
       id: "kibbe-test",
       path: "/kibbe-test",
       icon: "Ruler",
