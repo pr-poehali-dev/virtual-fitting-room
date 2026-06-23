@@ -650,7 +650,15 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
 
         analysis['source_image'] = person_url
 
-        image_prompt = service.build_image_prompt(analysis, height)
+        gender = form_params.get('gender') if form_params else None
+        try:
+            import inspect
+            if 'gender' in inspect.signature(service.build_image_prompt).parameters:
+                image_prompt = service.build_image_prompt(analysis, height, gender)
+            else:
+                image_prompt = service.build_image_prompt(analysis, height)
+        except (TypeError, ValueError):
+            image_prompt = service.build_image_prompt(analysis, height)
         print(f'[COLORGUIDE-WORKER] STEP fal submit, prompt len={len(image_prompt)}')
         image_inputs = [person_url]
         logo_url = getattr(service, 'LOGO_IMAGE_URL', None)

@@ -156,8 +156,24 @@ function buildParamRows(
   return rows;
 }
 
+function isMaleGender(gender?: string): boolean {
+  const g = (gender || "").trim().toLowerCase();
+  return ["мужской", "муж", "мужчина", "male", "m", "man"].includes(g);
+}
+
+function makeupIsEmpty(item?: NamedItem): boolean {
+  const text = `${item?.name || ""} ${item?.description || ""}`.toLowerCase();
+  if (!text.trim()) return true;
+  return text.includes("не требуется") || text.includes("не нужен") || text.includes("без макияжа");
+}
+
 export default function OutfitReport({ imageUrl, data, formParams, onReset }: Props) {
   const paramRows = buildParamRows(formParams);
+  const male = isMaleGender(formParams?.gender);
+  const showMakeup =
+    !!data &&
+    (data.makeup?.name || data.makeup?.description) &&
+    !(male && makeupIsEmpty(data.makeup));
 
   const handleDownload = async () => {
     if (!imageUrl) return;
@@ -278,10 +294,15 @@ export default function OutfitReport({ imageUrl, data, formParams, onReset }: Pr
             )}
 
             <div className="grid md:grid-cols-2 gap-6">
-              {(data.makeup?.name || data.makeup?.description) && (
+              {showMakeup && (
                 <div>
-                  <SectionTitle icon="Sparkles">Макияж</SectionTitle>
-                  <NamedBlock item={data.makeup} label="Макияж" />
+                  <SectionTitle icon="Sparkles">
+                    {male ? "Груминг" : "Макияж"}
+                  </SectionTitle>
+                  <NamedBlock
+                    item={data.makeup}
+                    label={male ? "Груминг" : "Макияж"}
+                  />
                 </div>
               )}
               {(data.hairstyle?.name || data.hairstyle?.description) && (

@@ -89,6 +89,7 @@ GEMINI_PROMPT = '''Ты — топовый персональный стилис
 - Фасон, силуэт, длину и посадку каждой вещи подбирай строго под фигуру и рост человека.
 - НАТУРАЛЬНЫЕ КАМНИ В УКРАШЕНИЯХ: если повод нарядный, торжественный, вечерний или особый (например, свидание, театр, выход в свет, праздник, вечеринка) — обязательно предложи хотя бы одно украшение с НАТУРАЛЬНЫМ камнем (например, лабрадорит, оникс, лунный камень, аметист, бирюза, малахит, гранат, цитрин, агат и т.п.), подобранным по колориту и цвету образа; укажи название камня в описании украшения. Для повседневных, casual и офисных образов камни НЕ обязательны — добавляй лаконичную минималистичную бижутерию/металл без камней, если так уместнее.
 - ЗНАК ЗОДИАКА: если указан знак зодиака клиента, можешь мягко и со вкусом учесть его эстетику и характер в образе (настроение, акценты, выбор камня) — но БЕЗ эзотерики, гороскопов и навязчивости; это лишь лёгкий штрих, а не основа образа.
+- ПОЛ КЛИЕНТА — ОЧЕНЬ ВАЖНО: если пол клиента МУЖСКОЙ, собирай строго МУЖСКОЙ образ — мужской крой одежды, мужская обувь, мужские сумки и аксессуары; БЕЗ женственных деталей. Для мужчины НЕ предлагай декоративный макияж: в поле "makeup" укажи "Макияж не требуется" и при желании добавь короткую рекомендацию по грумингу (уход за кожей, брови, борода/щетина) — но НИКАКИХ помад, теней, румян. Украшения и аксессуары для мужчины подбирай мужские и лаконичные, в минимальном количестве (например, наручные часы, лаконичная цепочка/браслет/кольцо, ремень, очки). Если пол женский — собирай женский образ как обычно, с уместным макияжем.
 
 Верни СТРОГО валидный JSON-объект по схеме ниже (и ничего, кроме JSON — без markdown-обёртки ```), на русском языке, конкретно и обоснованно:
 
@@ -146,10 +147,21 @@ def _obj_desc(obj):
     return str(obj or '')
 
 
-def build_image_prompt(data: dict, height: int = None) -> str:
+def _is_male(gender) -> bool:
+    g = str(gender or '').strip().lower()
+    return g in ('мужской', 'муж', 'male', 'm', 'мужчина', 'man')
+
+
+def build_image_prompt(data: dict, height: int = None, gender=None) -> str:
     """Промпт для nano-banana-2: картинка 3:2 — в центре персона в образе во весь рост,
-    по бокам отдельно выложены элементы образа (украшения, аксессуары, макияж, обувь)."""
+    по бокам отдельно выложены элементы образа (украшения, аксессуары, обувь и т.п.)."""
     height_line = f'The person height is about {height} cm. ' if height else ''
+    is_male = _is_male(gender)
+
+    person_word = 'man' if is_male else 'woman'
+    pron_poss = 'his' if is_male else 'her'
+    pron_obj = 'him' if is_male else 'her'
+    enhance_extra = '' if is_male else ', light tasteful makeup'
 
     outfit_desc = str(data.get('image_outfit_desc') or data.get('look_summary') or '').strip()
     shoes_desc = _obj_desc(data.get('shoes'))
@@ -167,20 +179,23 @@ def build_image_prompt(data: dict, height: int = None) -> str:
         side_items.append(f'the bag ({bag_desc})')
     if shoes_desc:
         side_items.append(f'the shoes ({shoes_desc})')
-    if makeup_desc:
+    if is_male:
+        # Для мужчины вместо косметического крупного плана — наручные часы.
+        side_items.append('a close-up of an elegant wristwatch matching the outfit')
+    elif makeup_desc and 'не требуется' not in makeup_desc.lower():
         side_items.append(f'a small makeup/beauty close-up ({makeup_desc})')
     side_block = '; '.join(side_items) if side_items else 'jewelry, accessories, the bag, the shoes'
 
     prompt = f'''Create ONE photorealistic fashion editorial image with aspect ratio 3:2 (wide).
 
-LAYOUT: In the CENTER, a single full-body photo of the SAME real woman wearing ONE complete styled outfit, standing facing the camera. On the LEFT and RIGHT sides of the image, neatly arrange the separate individual ELEMENTS of this same outfit as clean product-style still-life cut-outs: {side_block}. The side elements must visually MATCH the outfit on the person (same colors, same style). Modern lookbook / styling moodboard composition on a soft neutral light-grey/beige seamless background, natural soft lighting. No text, no captions, no labels, no logos, no color swatches.
+LAYOUT: In the CENTER, a single full-body photo of the SAME real {person_word} wearing ONE complete styled outfit, standing facing the camera. On the LEFT and RIGHT sides of the image, neatly arrange the separate individual ELEMENTS of this same outfit as clean product-style still-life cut-outs: {side_block}. The side elements must visually MATCH the outfit on the person (same colors, same style). Modern lookbook / styling moodboard composition on a soft neutral light-grey/beige seamless background, natural soft lighting. No text, no captions, no labels, no logos, no color swatches.
 
-PERSON — MOST IMPORTANT: take the woman STRICTLY from the provided photo and keep her EXACT real face, facial features, face shape, hair color and texture, skin tone and body proportions. Use her real appearance from the uploaded photo as the single source of truth — do NOT invent a new face, do NOT change her ethnicity, age, facial features or hairstyle beyond the requested styling. It must clearly and recognizably be the SAME real person, photorealistic, not illustrated. You MAY gently enhance her so she looks her best (clear glowing skin, tidy hair, light tasteful makeup) but keep her identity 100% intact. {height_line}
+PERSON — MOST IMPORTANT: take the {person_word} STRICTLY from the provided photo and keep {pron_poss} EXACT real face, facial features, face shape, hair color and texture, skin tone and body proportions. Use {pron_poss} real appearance from the uploaded photo as the single source of truth — do NOT invent a new face, do NOT change {pron_poss} ethnicity, age, facial features or hairstyle beyond the requested styling. It must clearly and recognizably be the SAME real person, photorealistic, not illustrated. You MAY gently enhance {pron_obj} so {pron_obj} looks {pron_poss} best (clear healthy skin, tidy hair{enhance_extra}) but keep {pron_poss} identity 100% intact. {height_line}
 
 THE OUTFIT on the person: {outfit_desc}
 
 FASHION ERA — VERY IMPORTANT: style everything to look like CURRENT 2025-2026 fashion, NOT 2010s. Every garment, shoe, bag and accessory MUST look like it comes from the NEWEST current-season collections, trending right now, but still REAL and WEARABLE. Use no more than 3 colors in the outfit, harmonized in a 60-30-10 proportion. AVOID dated 2010s markers: skinny jeans, very short tight blazers, thin stiletto pumps, bodycon shapes.
 
-REQUIREMENTS: one cohesive head-to-toe look, contemporary 2025-2026 style, fit and silhouette flattering to her body, photorealistic fashion photography quality. The whole image is a single clean styling board: center person + side elements, nothing else.'''
+REQUIREMENTS: one cohesive head-to-toe look, contemporary 2025-2026 style, fit and silhouette flattering to {pron_poss} body, photorealistic fashion photography quality. The whole image is a single clean styling board: center person + side elements, nothing else.'''
 
     return prompt
