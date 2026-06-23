@@ -63,6 +63,16 @@ const Home = () => {
       path: "/style-analysis",
     },
     {
+      id: "outfit-selection",
+      title: "Подбор образов",
+      description:
+        "Персональный образ по вашему фото и параметрам: одежда, обувь, аксессуары и украшения — собранный лук под ваш повод. Можно скачать",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/8f739bdd-174d-41c0-bec9-6a01a5c58fd8.png",
+      icon: "Shirt",
+      path: "/outfit-selection",
+    },
+    {
       id: "kibbe-test",
       title: "Определение типажа по Кибби",
       description:
