@@ -41,11 +41,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
 
     params = event.get('queryStringParameters') or {}
-    limit_raw = params.get('limit', '50')
+    limit_raw = params.get('limit', '30')
     try:
-        limit = max(1, min(int(limit_raw), 200))
+        limit = max(1, min(int(limit_raw), 100))
     except (TypeError, ValueError):
-        limit = 50
+        limit = 30
+
+    offset_raw = params.get('offset', '0')
+    try:
+        offset = max(0, int(offset_raw))
+    except (TypeError, ValueError):
+        offset = 0
 
     dsn = os.environ.get('DATABASE_URL')
     if '?' in dsn:
@@ -56,13 +62,23 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     try:
         conn = psycopg2.connect(dsn)
         cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Общее число задач пользователя (для пагинации)
+        cursor.execute(
+            'SELECT COUNT(*) AS total FROM color_guide_tasks WHERE user_id = %s',
+            (user_id,)
+        )
+        total = cursor.fetchone()['total']
+
+        # Лёгкий запрос: НЕ тащим тяжёлый result_json, берём только короткое имя через ->>
         cursor.execute('''
-            SELECT id, status, colortype_slug, result_json, cdn_url, created_at, cost, refunded, error_message, service_type
+            SELECT id, status, colortype_slug, cdn_url, created_at, cost, refunded, error_message, service_type,
+                   COALESCE(result_json->>'colortype_name', result_json->>'identity') AS display_name
             FROM color_guide_tasks
             WHERE user_id = %s
             ORDER BY created_at DESC
-            LIMIT %s
-        ''', (user_id, limit))
+            LIMIT %s OFFSET %s
+        ''', (user_id, limit, offset))
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
@@ -72,17 +88,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         tasks = []
         for row in rows:
             service_type = row.get('service_type') or 'colorguide'
-            display_name = None
-            result_json = row.get('result_json')
-            if result_json:
-                if isinstance(result_json, str):
-                    try:
-                        result_json = json.loads(result_json)
-                    except Exception:
-                        result_json = None
-                if isinstance(result_json, dict):
-                    # colorguide -> colortype_name, прочие сервисы -> identity
-                    display_name = result_json.get('colortype_name') or result_json.get('identity')
+            display_name = row.get('display_name')
             if not display_name and service_type != 'colorguide':
                 display_name = service_labels.get(service_type, 'Анализ')
 
@@ -103,7 +109,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
             'isBase64Encoded': False,
-            'body': json.dumps({'tasks': tasks}, ensure_ascii=False)
+            'body': json.dumps({'tasks': tasks, 'total': total, 'limit': limit, 'offset': offset}, ensure_ascii=False)
         }
     except Exception as e:
         return {
