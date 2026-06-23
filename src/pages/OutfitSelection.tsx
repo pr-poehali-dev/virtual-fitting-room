@@ -133,7 +133,7 @@ export default function OutfitSelection() {
   const navigate = useNavigate();
 
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [gender, setGender] = useState<string>("Женский");
+  const [gender, setGender] = useState<string>("");
   const [height, setHeight] = useState<string>("");
   const [kibbe, setKibbe] = useState<string>("");
   const [archetypes, setArchetypes] = useState<string[]>([]);
@@ -278,6 +278,10 @@ export default function OutfitSelection() {
     }
     if (!uploadedImage) {
       toast.error("Загрузите фото в полный рост");
+      return;
+    }
+    if (!gender) {
+      toast.error("Укажите пол");
       return;
     }
 
@@ -443,10 +447,12 @@ export default function OutfitSelection() {
 
                       <div className="space-y-4">
                         <div>
-                          <p className="font-medium mb-2">Пол</p>
+                          <p className="font-medium mb-2">
+                            Пол <span className="text-destructive">*</span>
+                          </p>
                           <Select value={gender} onValueChange={setGender}>
                             <SelectTrigger>
-                              <SelectValue placeholder="Выберите" />
+                              <SelectValue placeholder="Выберите пол" />
                             </SelectTrigger>
                             <SelectContent>
                               {GENDERS.map((g) => (
