@@ -43,6 +43,7 @@ export interface OutfitFormParams {
   hair_color?: string;
   eye_color?: string;
   season?: string;
+  zodiac?: string;
   occasion?: string;
   tags?: string[];
   comment?: string;
@@ -148,6 +149,7 @@ function buildParamRows(
   add("Цвет волос", fp.hair_color);
   add("Цвет глаз", fp.eye_color);
   add("Сезон / погода", fp.season);
+  add("Знак зодиака", fp.zodiac);
   add("Повод", fp.occasion);
   add("Акценты", fp.tags);
   add("Комментарий", fp.comment);

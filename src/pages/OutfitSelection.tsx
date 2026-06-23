@@ -74,6 +74,20 @@ const COLORTYPES = [
   "Холодная зима",
   "Яркая зима",
 ];
+const ZODIAC_SIGNS = [
+  "Овен",
+  "Телец",
+  "Близнецы",
+  "Рак",
+  "Лев",
+  "Дева",
+  "Весы",
+  "Скорпион",
+  "Стрелец",
+  "Козерог",
+  "Водолей",
+  "Рыбы",
+];
 const HAIR_LENGTHS = ["Короткие", "До плеч", "Средние", "Длинные"];
 const SEASONS = [
   "Весна",
@@ -128,6 +142,7 @@ export default function OutfitSelection() {
   const [hairColor, setHairColor] = useState<string>("");
   const [eyeColor, setEyeColor] = useState<string>("");
   const [season, setSeason] = useState<string>("");
+  const [zodiac, setZodiac] = useState<string>("");
   const [occasion, setOccasion] = useState<string>("");
   const [customOccasion, setCustomOccasion] = useState<string>("");
   const [tags, setTags] = useState<string[]>([]);
@@ -284,6 +299,7 @@ export default function OutfitSelection() {
       hair_color: hairColor.trim(),
       eye_color: eyeColor.trim(),
       season,
+      zodiac,
       occasion: occasionFinal,
       tags,
       comment: comment.trim(),
@@ -360,6 +376,7 @@ export default function OutfitSelection() {
     setHairColor("");
     setEyeColor("");
     setSeason("");
+    setZodiac("");
     setOccasion("");
     setCustomOccasion("");
     setTags([]);
@@ -616,6 +633,29 @@ export default function OutfitSelection() {
                           value={customOccasion}
                           onChange={(e) => setCustomOccasion(e.target.value)}
                         />
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="font-medium mb-2">
+                          Знак зодиака{" "}
+                          <span className="text-muted-foreground text-xs">
+                            (необязательно)
+                          </span>
+                        </p>
+                        <Select value={zodiac} onValueChange={setZodiac}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Не выбрано" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ZODIAC_SIGNS.map((z) => (
+                              <SelectItem key={z} value={z}>
+                                {z}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
 
