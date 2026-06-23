@@ -343,33 +343,6 @@ def call_gemini(image_url: str) -> Dict[str, Any]:
     return call_gemini_once(image_url, PROMPT_TEMPLATE)
 
 
-# Поля, без которых отчёт по цветотипу считается неполным.
-COLORGUIDE_REQUIRED = ['colortype_slug', 'main_palette', 'avoid_palette', 'makeup', 'metals', 'hair_colors', 'capsules', 'tips']
-
-# Модель Qwen для определения цветотипа (та же версия, что в outfit/style).
-COLORGUIDE_QWEN_MODEL = 'qwen/qwen3-vl-235b-a22b-thinking'
-
-
-def call_colorguide(image_url: str) -> Dict[str, Any]:
-    """Определение цветотипа через Qwen3-VL Thinking с фолбэком на strict-Gemini.
-    Если Qwen вернёт битый/неполный JSON — автоматически откатываемся на Gemini."""
-    try:
-        result = call_qwen_json(image_url, PROMPT_TEMPLATE, COLORGUIDE_QWEN_MODEL)
-        missing = [f for f in COLORGUIDE_REQUIRED if not result.get(f)]
-        if missing:
-            raise RuntimeError(f'Qwen вернул неполный JSON, не хватает: {",".join(missing)}')
-        print(f'[MODEL-CHECK] service=colorguide model=qwen json=ok keys={list(result.keys())}')
-        return result
-    except Exception as qwen_err:
-        print(f'[MODEL-CHECK] service=colorguide model=qwen json=bad error={qwen_err}')
-        print('[MODEL-CHECK] service=colorguide fallback -> gemini')
-        result = call_gemini(image_url)
-        missing = [f for f in COLORGUIDE_REQUIRED if not result.get(f)]
-        status_json = 'bad' if missing else 'ok'
-        print(f'[MODEL-CHECK] service=colorguide model=gemini-fallback json={status_json} keys={list(result.keys())}')
-        return result
-
-
 def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_name: str) -> Dict[str, Any]:
     """Запрос к Gemini с произвольной JSON-схемой (для картиночных сервисов)."""
     api_key = os.environ.get('OPENROUTER_API_KEY_NEW') or os.environ.get('OPENROUTER_API_KEY')
@@ -869,7 +842,7 @@ def process_task(task_id: str):
         cdn_url = upload_to_s3(person_image, task_id, str(user_id))
         print(f'[COLORGUIDE-WORKER] Uploaded to {cdn_url}')
 
-        result = call_colorguide(cdn_url)
+        result = call_gemini(cdn_url)
         print(f'[COLORGUIDE-WORKER] colortype returned keys: {list(result.keys())}')
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (Gemini/S3): {e}')

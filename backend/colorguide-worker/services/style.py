@@ -11,11 +11,8 @@
 # Логотип больше не нужен: картинка теперь — чистая сетка 2x2 из образов без шапки.
 LOGO_IMAGE_URL = None
 
-# Текстовая модель: переключаем стилевой анализ на Qwen3-VL Thinking (как в outfit).
-QWEN_MODEL = 'qwen/qwen3-vl-235b-a22b-thinking'
-# Флаг для worker: использовать Qwen (без strict json_schema, с парсингом JSON из ответа).
-# Если Qwen вернёт неполный JSON — worker автоматически откатится на strict-Gemini.
-USE_QWEN = True
+# Стилевой анализ работает на Gemini со строгой JSON-схемой (стабильный валидный JSON).
+USE_QWEN = False
 
 # Соотношение сторон итоговой картинки (широкий ряд из 4 образов)
 ASPECT_RATIO = '16:9'
