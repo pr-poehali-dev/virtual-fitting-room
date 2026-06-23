@@ -1,0 +1,183 @@
+"""Сервис 'Подбор образов' (service_type='outfit').
+
+Главный премиальный сервис: пользователь загружает фото в полный рост и заполняет
+необязательные параметры (типаж по Кибби, архетипы по Юнгу, цветотип, волосы, глаза,
+пол, сезон/погода, повод, теги-эффекты, комментарий). Из заполненных параметров
+строится промпт для нейросети, которая подбирает ОДИН цельный образ:
+одежду, обувь, украшения, аксессуары, макияж, причёску — по трендам текущего года.
+
+Конвейер: Qwen3-VL Thinking анализирует фото + параметры -> русский JSON ->
+данные подставляются в промпт для nano-banana-2 -> картинка 3:2
+(в центре персона в образе, по бокам отдельные элементы образа).
+
+Отличия от style.py:
+- USE_QWEN = True  -> worker вызывает Qwen3-VL Thinking и парсит JSON из ответа
+  (а не строгую json_schema, т.к. thinking-модель отдаёт reasoning + JSON).
+- ASPECT_RATIO = '3:2'.
+- build_image_prompt собирает раскладку "персона + элементы по бокам".
+"""
+
+# Текстовая модель: свежий мультимодальный Qwen с reasoning.
+QWEN_MODEL = 'qwen/qwen3-vl-235b-a22b-thinking'
+
+# Флаг для worker: использовать Qwen (без strict json_schema, с парсингом JSON из ответа).
+USE_QWEN = True
+GEMINI_MODEL = QWEN_MODEL  # имя поля сохранено для совместимости вызова в worker
+
+# Логотип на картинку не добавляем.
+LOGO_IMAGE_URL = None
+
+# Соотношение сторон итоговой картинки: 3:2 (центр — персона, по бокам элементы образа).
+ASPECT_RATIO = '3:2'
+
+
+# Человекочитаемые подписи для параметров формы (используются при сборке промпта).
+def build_params_block(form_params: dict) -> str:
+    """Собирает текстовый блок ТОЛЬКО из заполненных параметров формы.
+    Пустые/незаполненные поля пропускаются."""
+    if not form_params or not isinstance(form_params, dict):
+        return ''
+
+    lines = []
+
+    def add(label, value):
+        if value is None:
+            return
+        if isinstance(value, (list, tuple)):
+            vals = [str(v).strip() for v in value if v not in (None, '')]
+            if not vals:
+                return
+            lines.append(f'- {label}: {", ".join(vals)}')
+        else:
+            s = str(value).strip()
+            if s:
+                lines.append(f'- {label}: {s}')
+
+    add('Пол', form_params.get('gender'))
+    add('Рост (см)', form_params.get('height'))
+    add('Типаж по Дэвиду Кибби', form_params.get('kibbe'))
+    add('Архетип(ы) по Карлу Юнгу', form_params.get('archetypes'))
+    add('Цветотип внешности', form_params.get('colortypes'))
+    add('Длина волос', form_params.get('hair_length'))
+    add('Цвет волос', form_params.get('hair_color'))
+    add('Цвет глаз', form_params.get('eye_color'))
+    add('Сезон / погода для образа', form_params.get('season'))
+    add('Повод / куда собирается', form_params.get('occasion'))
+    add('Желаемые акценты (теги)', form_params.get('tags'))
+    add('Комментарий клиента', form_params.get('comment'))
+
+    if not lines:
+        return ''
+    return 'ПАРАМЕТРЫ ОТ КЛИЕНТА (учитывай все указанные ниже, не указанные — не выдумывай):\n' + '\n'.join(lines)
+
+
+GEMINI_PROMPT = '''Ты — топовый персональный стилист-имиджмейкер мирового уровня с 15-летним опытом. К тебе пришёл клиент за индивидуальным подбором ОДНОГО идеального образа. Работай как настоящий профессионал: сначала ВНИМАТЕЛЬНО изучи самого человека на фото, затем учти параметры, которые он указал, и собери для него один цельный, продуманный, актуальный образ.
+
+КРИТИЧЕСКИ ВАЖНО про одежду на фото: НЕ ориентируйся на ту одежду, цвета, фасоны и степень нарядности, что СЕЙЧАС надеты на человеке — это случайный наряд для фото, а не указание, что ему идёт. Смотри на САМОГО человека: лицо, колорит, фигуру, пропорции, рост, энергетику. Из этого и из указанных параметров выводи рекомендации.
+
+ПОРЯДОК АНАЛИЗА (рассуждай как стилист):
+1) ВНЕШНОСТЬ И КОЛОРИТ: подтон кожи (тёплый/холодный/нейтральный), цвет волос и глаз, контрастность внешности.
+2) ФИГУРА И ПРОПОРЦИИ: внимательно оцени костяк, плечи, баланс верха/низа, талию, рост, масштаб. Если указан типаж по Кибби — опирайся на него; если нет — определи линии фигуры сам. Из этого выводи силуэты, длины, крой, посадку.
+3) ПАРАМЕТРЫ КЛИЕНТА: обязательно учти все указанные параметры (повод, сезон/погоду, архетипы, цветотип, желаемые акценты-теги, комментарий). Образ должен соответствовать поводу и погоде.
+4) ВЫВОД: собери ОДИН цельный образ — одежда (верх, низ или платье, верхняя одежда по сезону), обувь, сумка, аксессуары, украшения, макияж, причёска.
+
+ЖЁСТКИЕ ПРАВИЛА СТИЛЯ (соблюдай строго):
+- Все вещи и обувь — из НОВЫХ коллекций ТЕКУЩЕГО года, по актуальным трендам сезона. Никаких устаревших фасонов 2010-х (скинни, узкие лодочки-шпильки, короткие тесные пиджаки), но и без экстремального подиума — реальная носибельная современная мода.
+- В одном образе НЕ БОЛЕЕ 3 цветов одежды, в пропорции 60-30-10 (основной 60%, дополнительный 30%, акцентный 10%).
+- Все элементы образа должны сочетаться между собой ПО СТИЛЮ И ПО ЦВЕТУ — единый, гармоничный, законченный лук.
+- Фасон, силуэт, длину и посадку каждой вещи подбирай строго под фигуру и рост человека.
+
+Верни СТРОГО валидный JSON-объект по схеме ниже (и ничего, кроме JSON — без markdown-обёртки ```), на русском языке, конкретно и обоснованно:
+
+{
+  "identity": "2-4 слова — стилевая идентичность образа",
+  "look_title": "короткое название образа (например, 'Романтический вечер')",
+  "look_summary": "2-3 предложения — общее описание собранного образа и почему он идёт этому человеку и подходит поводу",
+  "color_analysis": "2-4 предложения — разбор колорита внешности",
+  "body_analysis": "2-4 предложения — фигура, пропорции, что подчёркиваем",
+  "palette": [ {"name":"название цвета","hex":"#RRGGBB","role":"основной 60% / дополнительный 30% / акцент 10%"} ],  // ровно 3 цвета образа в пропорции 60-30-10
+  "clothing": [ {"name":"название вещи","description":"фасон, ткань, цвет, посадка — конкретно и современно"} ],  // 2-4 предмета одежды (верх/низ/платье/верхняя одежда)
+  "shoes": {"name":"обувь","description":"актуальная модель сезона, цвет, материал"},
+  "bag": {"name":"сумка","description":"форма, размер, цвет"},
+  "accessories": [ {"name":"аксессуар","description":"что и как носить"} ],  // 2-3 аксессуара (ремень, очки, шляпа, платок и т.п.)
+  "jewelry": [ {"name":"украшение","description":"металл, форма"} ],  // 2-3 украшения
+  "makeup": {"description":"макияж под образ и колорит — тон, акценты, помада/тени/румяна"},
+  "hairstyle": {"description":"причёска под образ, длину и тип волос клиента"},
+  "tips": ["короткий практический совет стилиста"],  // ровно 5 советов
+  "image_outfit_desc": "ОДНО подробное предложение на РУССКОМ, описывающее весь образ целиком (одежда сверху донизу + обувь), как он выглядит надетым на человеке — для художника, который нарисует образ"
+}
+
+Будь точным и конкретным. Описывай так, чтобы по тексту можно было точно нарисовать актуальный образ этого года на человеке.'''
+
+
+# Обязательные поля результата (для валидации полноты ответа Qwen)
+REQUIRED_FIELDS = [
+    'identity', 'look_title', 'look_summary', 'palette', 'clothing',
+    'shoes', 'accessories', 'jewelry', 'makeup', 'hairstyle', 'tips'
+]
+
+
+def _join_descs(items):
+    """Собрать строку 'name — description' из списка объектов."""
+    out = []
+    for it in items or []:
+        if isinstance(it, dict):
+            name = str(it.get('name', '')).strip()
+            desc = str(it.get('description', '')).strip()
+            if name and desc:
+                out.append(f'{name} ({desc})')
+            elif name:
+                out.append(name)
+            elif desc:
+                out.append(desc)
+        elif it:
+            out.append(str(it))
+    return ', '.join(out)
+
+
+def _obj_desc(obj):
+    if isinstance(obj, dict):
+        name = str(obj.get('name', '')).strip()
+        desc = str(obj.get('description', '')).strip()
+        return f'{name} ({desc})' if name and desc else (name or desc)
+    return str(obj or '')
+
+
+def build_image_prompt(data: dict, height: int = None) -> str:
+    """Промпт для nano-banana-2: картинка 3:2 — в центре персона в образе во весь рост,
+    по бокам отдельно выложены элементы образа (украшения, аксессуары, макияж, обувь)."""
+    height_line = f'The person height is about {height} cm. ' if height else ''
+
+    outfit_desc = str(data.get('image_outfit_desc') or data.get('look_summary') or '').strip()
+    shoes_desc = _obj_desc(data.get('shoes'))
+    bag_desc = _obj_desc(data.get('bag'))
+    accessories_desc = _join_descs(data.get('accessories'))
+    jewelry_desc = _join_descs(data.get('jewelry'))
+    makeup_desc = _obj_desc(data.get('makeup'))
+
+    side_items = []
+    if jewelry_desc:
+        side_items.append(f'jewelry ({jewelry_desc})')
+    if accessories_desc:
+        side_items.append(f'accessories ({accessories_desc})')
+    if bag_desc:
+        side_items.append(f'the bag ({bag_desc})')
+    if shoes_desc:
+        side_items.append(f'the shoes ({shoes_desc})')
+    if makeup_desc:
+        side_items.append(f'a small makeup/beauty close-up ({makeup_desc})')
+    side_block = '; '.join(side_items) if side_items else 'jewelry, accessories, the bag, the shoes'
+
+    prompt = f'''Create ONE photorealistic fashion editorial image with aspect ratio 3:2 (wide).
+
+LAYOUT: In the CENTER, a single full-body photo of the SAME real woman wearing ONE complete styled outfit, standing facing the camera. On the LEFT and RIGHT sides of the image, neatly arrange the separate individual ELEMENTS of this same outfit as clean product-style still-life cut-outs: {side_block}. The side elements must visually MATCH the outfit on the person (same colors, same style). Modern lookbook / styling moodboard composition on a soft neutral light-grey/beige seamless background, natural soft lighting. No text, no captions, no labels, no logos, no color swatches.
+
+PERSON — MOST IMPORTANT: take the woman STRICTLY from the provided photo and keep her EXACT real face, facial features, face shape, hair color and texture, skin tone and body proportions. Use her real appearance from the uploaded photo as the single source of truth — do NOT invent a new face, do NOT change her ethnicity, age, facial features or hairstyle beyond the requested styling. It must clearly and recognizably be the SAME real person, photorealistic, not illustrated. You MAY gently enhance her so she looks her best (clear glowing skin, tidy hair, light tasteful makeup) but keep her identity 100% intact. {height_line}
+
+THE OUTFIT on the person: {outfit_desc}
+
+FASHION ERA — VERY IMPORTANT: style everything to look like CURRENT 2025-2026 fashion, NOT 2010s. Every garment, shoe, bag and accessory MUST look like it comes from the NEWEST current-season collections, trending right now, but still REAL and WEARABLE. Use no more than 3 colors in the outfit, harmonized in a 60-30-10 proportion. AVOID dated 2010s markers: skinny jeans, very short tight blazers, thin stiletto pumps, bodycon shapes.
+
+REQUIREMENTS: one cohesive head-to-toe look, contemporary 2025-2026 style, fit and silhouette flattering to her body, photorealistic fashion photography quality. The whole image is a single clean styling board: center person + side elements, nothing else.'''
+
+    return prompt

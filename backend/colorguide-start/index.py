@@ -8,10 +8,17 @@ from session_utils import validate_session
 
 COLORGUIDE_COST = 50
 
-ALLOWED_SERVICE_TYPES = ['colorguide', 'style']
+ALLOWED_SERVICE_TYPES = ['colorguide', 'style', 'outfit']
 SERVICE_LABELS = {
     'colorguide': 'Гид по цвету',
     'style': 'Стилевой анализ внешности',
+    'outfit': 'Подбор образа',
+}
+# Стоимость по типу сервиса. 'outfit' — премиальный, легко поднять цену здесь.
+SERVICE_COSTS = {
+    'colorguide': 50,
+    'style': 50,
+    'outfit': 100,
 }
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -88,6 +95,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         height = None
     service_label = SERVICE_LABELS.get(service_type, 'Гид по цвету')
 
+    # Параметры формы (для сервиса 'outfit'): необязательный JSON-объект.
+    form_params = body_data.get('form_params')
+    if not isinstance(form_params, dict):
+        form_params = None
+    form_params_json = json.dumps(form_params, ensure_ascii=False) if form_params else None
+
     if not person_image:
         return {
             'statusCode': 400,
@@ -123,7 +136,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         balance = float(user_row[0])
         unlimited_access = user_row[1]
-        cost = 0 if unlimited_access else COLORGUIDE_COST
+        cost = 0 if unlimited_access else SERVICE_COSTS.get(service_type, COLORGUIDE_COST)
 
         if not unlimited_access:
             if balance < cost:
@@ -143,9 +156,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print(f'[COLORGUIDE-START-{request_id}] Creating task {task_id}')
 
         cursor.execute('''
-            INSERT INTO color_guide_tasks (id, user_id, status, person_image, cost, created_at, service_type, height)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (task_id, user_id, 'pending', person_image, cost, datetime.utcnow(), service_type, height))
+            INSERT INTO color_guide_tasks (id, user_id, status, person_image, cost, created_at, service_type, height, form_params)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (task_id, user_id, 'pending', person_image, cost, datetime.utcnow(), service_type, height, form_params_json))
 
         if cost > 0:
             balance_after = balance - cost

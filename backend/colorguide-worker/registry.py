@@ -13,10 +13,12 @@
 """
 
 from services import style
+from services import outfit
 
 # service_type -> модуль сервиса
 IMAGE_SERVICES = {
     'style': style,
+    'outfit': outfit,
 }
 
 

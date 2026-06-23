@@ -45,6 +45,7 @@ import VkCallback from "./pages/VkCallback";
 import ReplicateTryOn from "./pages/ReplicateTryOn";
 import FreeGeneration from "./pages/FreeGeneration";
 import StyleAnalysis from "./pages/StyleAnalysis";
+import OutfitSelection from "./pages/OutfitSelection";
 import KibbeTest from "./pages/KibbeTest";
 import KibbeResultDetail from "./pages/KibbeResultDetail";
 import ProfileHistoryKibbe from "./pages/ProfileHistoryKibbe";
@@ -102,6 +103,7 @@ const App = () => (
               <Route path="/colortype" element={<ColorType />} />
             <Route path="/color-guide" element={<ColorGuide />} />
             <Route path="/style-analysis" element={<StyleAnalysis />} />
+            <Route path="/outfit-selection" element={<OutfitSelection />} />
             <Route path="/kibbe-test" element={<KibbeTest />} />
             <Route path="/kibbe-result/:id" element={<KibbeResultDetail />} />
             <Route path="/archetype-test" element={<ArchetypeTest />} />

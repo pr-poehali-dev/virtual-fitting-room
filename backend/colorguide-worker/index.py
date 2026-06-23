@@ -401,6 +401,84 @@ def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_na
     raise last_error if last_error else RuntimeError('Gemini request failed')
 
 
+def _extract_json_object(text: str) -> Dict[str, Any]:
+    """Извлекает первый валидный JSON-объект из текста ответа модели.
+    Thinking-модели возвращают reasoning + JSON, иногда в ```json блоке."""
+    if not text or not text.strip():
+        raise ValueError('Empty response from model')
+    s = text.strip()
+    # Убираем markdown-обёртку ```json ... ```
+    if '```' in s:
+        fence = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', s, re.DOTALL)
+        if fence:
+            s = fence.group(1)
+    try:
+        return json.loads(s)
+    except Exception:
+        pass
+    # Берём подстроку от первой { до последней } (баланс скобок)
+    start = s.find('{')
+    end = s.rfind('}')
+    if start != -1 and end != -1 and end > start:
+        candidate = s[start:end + 1]
+        return json.loads(candidate)
+    raise ValueError('No JSON object found in model response')
+
+
+def call_qwen_json(image_url: str, prompt: str, model: str) -> Dict[str, Any]:
+    """Запрос к мультимодальному Qwen (thinking) через OpenRouter.
+    Без strict json_schema: модель отдаёт reasoning + JSON, парсим объект из ответа.
+    3 попытки с retry."""
+    api_key = os.environ.get('OPENROUTER_API_KEY_NEW') or os.environ.get('OPENROUTER_API_KEY')
+    if not api_key:
+        raise RuntimeError('OPENROUTER_API_KEY not configured')
+
+    payload = {
+        'model': model,
+        'messages': [
+            {
+                'role': 'user',
+                'content': [
+                    {'type': 'image_url', 'image_url': {'url': image_url}},
+                    {'type': 'text', 'text': prompt}
+                ]
+            }
+        ],
+        'max_tokens': 12000,
+        'temperature': 0.6,
+    }
+
+    last_error = None
+    for attempt in range(3):
+        req = urllib.request.Request(
+            'https://openrouter.ai/api/v1/chat/completions',
+            data=json.dumps(payload).encode('utf-8'),
+            headers={
+                'Authorization': f'Bearer {api_key}',
+                'Content-Type': 'application/json',
+                'HTTP-Referer': 'https://fitting-room.ru',
+                'X-Title': 'Outfit Selection'
+            },
+            method='POST'
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=180) as response:
+                result = json.loads(response.read().decode('utf-8'))
+            content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+            return _extract_json_object(content)
+        except urllib.error.HTTPError as e:
+            err_body = e.read().decode('utf-8', errors='replace')[:500]
+            print(f'[COLORGUIDE-WORKER] Qwen HTTP {e.code} (attempt {attempt + 1}): {err_body}')
+            last_error = RuntimeError(f'Qwen error {e.code}: {err_body}')
+        except Exception as e:
+            print(f'[COLORGUIDE-WORKER] Qwen error (attempt {attempt + 1}): {e}')
+            last_error = e
+        if attempt < 2:
+            time.sleep(3)
+
+    raise last_error if last_error else RuntimeError('Qwen request failed')
+
+
 def fal_submit(prompt: str, image_urls: list, aspect_ratio: str):
     """Отправить задачу в очередь fal.ai nano-banana-2/edit.
     Возвращает (status_url, response_url)."""
@@ -525,17 +603,26 @@ def upload_result_to_s3(image_url: str, task_id: str, user_id: str) -> str:
     return f'https://storage.yandexcloud.net/{s3_bucket}/{s3_key}'
 
 
-def process_image_service(task_id: str, service_type: str, person_image: str, user_id, height):
-    """Обработка картиночного сервиса: Gemini-анализ -> nano-banana-2 -> S3."""
+def process_image_service(task_id: str, service_type: str, person_image: str, user_id, height, form_params=None):
+    """Обработка картиночного сервиса: анализ (Gemini/Qwen) -> nano-banana-2 -> S3."""
     service = registry.get_service(service_type)
     print(f'[COLORGUIDE-WORKER] Image service "{service_type}" for task {task_id}')
 
-    # Сегмент: S3 загрузка фото клиента + Gemini + fal.ai (долгая часть, без коннекта к БД)
+    # form_params может прийти как dict (из jsonb) или строка — нормализуем в dict
+    if isinstance(form_params, str):
+        try:
+            form_params = json.loads(form_params)
+        except Exception:
+            form_params = None
+    if not isinstance(form_params, dict):
+        form_params = None
+
+    # Сегмент: S3 загрузка фото клиента + анализ + fal.ai (долгая часть, без коннекта к БД)
     try:
         person_url = upload_to_s3(person_image, task_id, str(user_id))
         print(f'[COLORGUIDE-WORKER] Person uploaded to {person_url}')
 
-        print('[COLORGUIDE-WORKER] STEP gemini start')
+        print('[COLORGUIDE-WORKER] STEP analysis start')
         gemini_prompt = service.GEMINI_PROMPT
         if height:
             gemini_prompt += (
@@ -544,10 +631,19 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
                 'визуальный баланс силуэта. Рекомендации по длине и пропорциям должны подходить именно '
                 'этому росту.'
             )
-        analysis = call_gemini_with_schema(
-            person_url, gemini_prompt, service.RESPONSE_SCHEMA, f'{service_type}_result'
-        )
-        print(f'[COLORGUIDE-WORKER] STEP gemini done, keys: {list(analysis.keys())}')
+        # Блок параметров формы (для сервиса 'outfit')
+        if form_params and hasattr(service, 'build_params_block'):
+            params_block = service.build_params_block(form_params)
+            if params_block:
+                gemini_prompt += '\n\n' + params_block
+
+        if getattr(service, 'USE_QWEN', False):
+            analysis = call_qwen_json(person_url, gemini_prompt, service.QWEN_MODEL)
+        else:
+            analysis = call_gemini_with_schema(
+                person_url, gemini_prompt, service.RESPONSE_SCHEMA, f'{service_type}_result'
+            )
+        print(f'[COLORGUIDE-WORKER] STEP analysis done, keys: {list(analysis.keys())}')
         missing = [f for f in service.REQUIRED_FIELDS if not analysis.get(f)]
         if missing:
             raise RuntimeError(f'неполный ответ Gemini: {",".join(missing)}')
@@ -670,14 +766,14 @@ def process_task(task_id: str):
         cursor = conn.cursor()
         try:
             cursor.execute(
-                'SELECT user_id, person_image, status, cost, refunded, service_type, height FROM color_guide_tasks WHERE id = %s',
+                'SELECT user_id, person_image, status, cost, refunded, service_type, height, form_params FROM color_guide_tasks WHERE id = %s',
                 (task_id,)
             )
             row = cursor.fetchone()
             if not row:
                 print(f'[COLORGUIDE-WORKER] Task {task_id} not found')
                 return
-            user_id, person_image, status, cost, refunded, service_type, height = row
+            user_id, person_image, status, cost, refunded, service_type, height, form_params = row
             if status not in ('pending', 'processing'):
                 print(f'[COLORGUIDE-WORKER] Task {task_id} already in status {status}')
                 return
@@ -705,7 +801,7 @@ def process_task(task_id: str):
 
     # Картиночные сервисы (стиль, причёски и т.д.) идут отдельной веткой
     if registry.is_image_service(service_type or 'colorguide'):
-        process_image_service(task_id, service_type, person_image, user_id, height)
+        process_image_service(task_id, service_type, person_image, user_id, height, form_params)
         return
 
     # Сегмент 2 (без открытого коннекта): S3 + Gemini — долгая часть
