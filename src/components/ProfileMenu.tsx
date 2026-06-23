@@ -17,7 +17,7 @@ const ProfileMenu = () => {
     { path: '/profile/history', icon: 'Shirt', label: 'История примерок' },
     { path: '/profile/history-freegen', icon: 'Sparkles', label: 'История генераций' },
     { path: '/profile/history-colortypes', icon: 'Palette', label: 'История цветотипов' },
-    { path: '/profile/history-colorguide', icon: 'BookOpen', label: 'История гидов по цвету и стилевых анализов' },
+    { path: '/profile/history-colorguide', icon: 'BookOpen', label: 'История гидов, стилевых анализов и подбора образов' },
     { path: '/profile/history-kibbe', icon: 'Ruler', label: 'История тестов Кибби' },
     { path: '/profile/history-archetype', icon: 'Brain', label: 'История тестов на архетип' },
   ];
