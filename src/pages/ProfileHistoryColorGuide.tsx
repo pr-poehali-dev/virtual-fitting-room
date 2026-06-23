@@ -29,7 +29,11 @@ export default function ProfileHistoryColorGuide() {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<GuideTask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [total, setTotal] = useState(0);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const PAGE_SIZE = 30;
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -37,17 +41,27 @@ export default function ProfileHistoryColorGuide() {
     }
   }, [user, authLoading, navigate]);
 
-  const fetchHistory = async () => {
-    setIsLoading(true);
+  const fetchHistory = async (offset = 0) => {
+    if (offset === 0) {
+      setIsLoading(true);
+    } else {
+      setIsLoadingMore(true);
+    }
     try {
       const token = localStorage.getItem("session_token");
-      const response = await fetch(COLORGUIDE_HISTORY_API, {
-        headers: token ? { "X-Session-Token": token } : {},
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${COLORGUIDE_HISTORY_API}?limit=${PAGE_SIZE}&offset=${offset}`,
+        {
+          headers: token ? { "X-Session-Token": token } : {},
+          credentials: "include",
+        },
+      );
       const data = await response.json();
       if (response.ok && data.tasks) {
-        setTasks(data.tasks);
+        setTasks((prev) =>
+          offset === 0 ? data.tasks : [...prev, ...data.tasks],
+        );
+        if (typeof data.total === "number") setTotal(data.total);
       } else {
         toast.error(data.error || "Не удалось загрузить историю");
       }
@@ -56,6 +70,7 @@ export default function ProfileHistoryColorGuide() {
       toast.error("Не удалось загрузить историю");
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
@@ -93,6 +108,7 @@ export default function ProfileHistoryColorGuide() {
       if (result.success || response.ok) {
         toast.success("Гид удалён");
         setTasks((prev) => prev.filter((t) => t.id !== id));
+        setTotal((prev) => Math.max(0, prev - 1));
       } else {
         toast.error(result.error || "Ошибка удаления");
       }
@@ -218,6 +234,23 @@ export default function ProfileHistoryColorGuide() {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          )}
+
+          {!isLoading && tasks.length > 0 && tasks.length < total && (
+            <div className="mt-8 flex justify-center">
+              <Button
+                variant="outline"
+                onClick={() => fetchHistory(tasks.length)}
+                disabled={isLoadingMore}
+              >
+                {isLoadingMore ? (
+                  <Icon name="Loader2" size={18} className="mr-2 animate-spin" />
+                ) : (
+                  <Icon name="ChevronDown" size={18} className="mr-2" />
+                )}
+                Показать ещё
+              </Button>
             </div>
           )}
           </div>

@@ -25,15 +25,24 @@ export default function ProfileHistoryFreegen() {
   const navigate = useNavigate();
   const [items, setItems] = useState<FreegenItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadedCount, setLoadedCount] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
+
+  const PAGE_SIZE = 30;
 
   useEffect(() => {
     if (!authLoading && !user) navigate('/login');
   }, [user, authLoading, navigate]);
 
-  const load = async () => {
+  const load = async (offset = 0) => {
     if (!user) return;
-    setIsLoading(true);
+    if (offset === 0) {
+      setIsLoading(true);
+    } else {
+      setIsLoadingMore(true);
+    }
     try {
       const token = localStorage.getItem('session_token');
       const res = await fetch(DB_QUERY_API, {
@@ -47,19 +56,24 @@ export default function ProfileHistoryFreegen() {
           action: 'select',
           where: { user_id: user.id },
           order_by: 'created_at DESC',
-          limit: 200,
+          limit: PAGE_SIZE,
+          offset,
           columns: ['id', 'prompt', 'result_image', 'aspect_ratio', 'cost', 'created_at', 'removed_at'],
         }),
       });
       const result = await res.json();
       const rows = result.success && Array.isArray(result.data) ? result.data : [];
       if (res.ok) {
-        setItems(rows.filter((r: FreegenItem) => !r.removed_at));
+        const visible = rows.filter((r: FreegenItem) => !r.removed_at);
+        setItems((prev) => (offset === 0 ? visible : [...prev, ...visible]));
+        setLoadedCount(offset + rows.length);
+        setHasMore(rows.length === PAGE_SIZE);
       }
     } catch (e) {
       console.error('[FreegenHistory]', e);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
@@ -237,6 +251,23 @@ export default function ProfileHistoryFreegen() {
                     </CardContent>
                   </Card>
                 ))}
+              </div>
+            )}
+
+            {!isLoading && items.length > 0 && hasMore && (
+              <div className="mt-8 flex justify-center">
+                <Button
+                  variant="outline"
+                  onClick={() => load(loadedCount)}
+                  disabled={isLoadingMore}
+                >
+                  {isLoadingMore ? (
+                    <Icon name="Loader2" size={18} className="mr-2 animate-spin" />
+                  ) : (
+                    <Icon name="ChevronDown" size={18} className="mr-2" />
+                  )}
+                  Показать ещё
+                </Button>
               </div>
             )}
 
