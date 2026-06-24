@@ -155,13 +155,6 @@ export default function StyleAnalysisReport({ result, imageUrl }: Props) {
           {identity && (
             <h2 className="mt-2 font-serif text-3xl md:text-4xl text-[#5a4636]">{identity}</h2>
           )}
-          {source_image && (
-            <img
-              src={source_image}
-              alt="Исходное фото"
-              className="mt-4 mx-auto w-28 h-28 object-cover object-top rounded-full shadow-sm border border-[#e7ddd0]"
-            />
-          )}
         </div>
 
         {/* Образы */}
