@@ -527,6 +527,15 @@ def _is_transient_network_error(exc: Exception) -> bool:
     return False
 
 
+def _is_no_media_error(exc: Exception) -> bool:
+    """Отказ генерации картинки fal (HTTP 422 / no_media_generated) —
+    единичный сбой модели на конкретном промпте, имеет смысл повторить 1 раз."""
+    if isinstance(exc, urllib.error.HTTPError) and getattr(exc, 'code', None) == 422:
+        return True
+    text = str(exc)
+    return 'no_media_generated' in text or 'error 422' in text or 'HTTP 422' in text
+
+
 def _fal_get(url: str) -> dict:
     """GET к fal.ai; 400 'still in progress' трактуем как 'ещё не готово'.
     На временных сетевых сбоях (обрыв TLS/EOF/таймаут) повторяем запрос."""
@@ -689,15 +698,27 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
         logo_url = getattr(service, 'LOGO_IMAGE_URL', None)
         if logo_url:
             image_inputs.append(logo_url)
-        status_url, response_url = fal_submit(
-            image_prompt,
-            image_inputs,
-            service.ASPECT_RATIO
-        )
-        print(f'[COLORGUIDE-WORKER] STEP fal submitted: {status_url}')
-        result_image_url = fal_poll_result(status_url, response_url)
-        cdn_url = upload_result_to_s3(result_image_url, task_id, str(user_id))
-        print(f'[COLORGUIDE-WORKER] Result image saved: {cdn_url}')
+
+        cdn_url = None
+        last_no_media_err = None
+        for gen_attempt in range(2):
+            try:
+                status_url, response_url = fal_submit(
+                    image_prompt,
+                    image_inputs,
+                    service.ASPECT_RATIO
+                )
+                print(f'[COLORGUIDE-WORKER] STEP fal submitted: {status_url}')
+                result_image_url = fal_poll_result(status_url, response_url)
+                cdn_url = upload_result_to_s3(result_image_url, task_id, str(user_id))
+                print(f'[COLORGUIDE-WORKER] Result image saved: {cdn_url}')
+                break
+            except Exception as gen_err:
+                if _is_no_media_error(gen_err) and gen_attempt == 0:
+                    last_no_media_err = gen_err
+                    print(f'[COLORGUIDE-WORKER] image gen no_media (attempt 1), retrying once: {gen_err}')
+                    continue
+                raise
     except urllib.error.HTTPError as e:
         err_body = e.read().decode('utf-8', errors='replace')[:600] if hasattr(e, 'read') else ''
         print(f'[COLORGUIDE-WORKER] ERROR (image service) HTTP {e.code}: {err_body}')
