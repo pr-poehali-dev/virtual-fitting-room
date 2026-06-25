@@ -121,19 +121,34 @@ export default function LookbookViewerDialog({ lookbook, onClose, imageProxyApi 
       const gap = 3;
       const imageWidth = cellWidth - gap;
       const imageHeight = imageWidth * 1.4;
-      
+      const linkLineHeight = 4;
+      const maxLinksPerPhoto = 3;
+
+      // Высота блока ссылок под рядом = максимум ссылок среди фото этого ряда
+      const rowLinksHeight = (rowStart: number) => {
+        let maxLinks = 0;
+        for (let k = rowStart; k < Math.min(rowStart + 3, photos.length); k++) {
+          const links = lookbook.photo_products?.[photos[k]] || [];
+          maxLinks = Math.max(maxLinks, Math.min(links.length, maxLinksPerPhoto));
+        }
+        return maxLinks > 0 ? maxLinks * linkLineHeight + 2 : 0;
+      };
+
       let currentX = margin;
       let currentY = yPos;
       let photosInRow = 0;
-      
+      let rowStartIndex = 0;
+
       for (let i = 0; i < photos.length; i++) {
-        if (currentY + imageHeight > pageHeight - margin) {
+        const blockHeight = imageHeight + rowLinksHeight(rowStartIndex);
+        if (currentY + blockHeight > pageHeight - margin) {
           pdf.addPage();
           currentY = margin;
           currentX = margin;
           photosInRow = 0;
+          rowStartIndex = i;
         }
-        
+
         try {
           const imgData = await loadImage(photos[i]);
           const { width: natW, height: natH } = await getImageSize(imgData);
@@ -149,13 +164,27 @@ export default function LookbookViewerDialog({ lookbook, onClose, imageProxyApi 
         } catch (e) {
           console.error('Failed to load image:', e);
         }
-        
+
+        // Ссылки на товары под фото
+        const links = (lookbook.photo_products?.[photos[i]] || []).slice(0, maxLinksPerPhoto);
+        if (links.length > 0) {
+          pdf.setFontSize(7);
+          pdf.setTextColor(124, 58, 237);
+          links.forEach((link, li) => {
+            const label = encodeText(link.name).slice(0, 30) || 'WB';
+            const ly = currentY + imageHeight + 3 + li * linkLineHeight;
+            pdf.textWithLink(label, currentX, ly, { url: link.product_url });
+          });
+          pdf.setTextColor(0, 0, 0);
+        }
+
         photosInRow++;
-        
-        if (photosInRow === 3) {
+
+        if (photosInRow === 3 || i === photos.length - 1) {
           currentX = margin;
-          currentY += imageHeight + gap;
+          currentY += imageHeight + rowLinksHeight(rowStartIndex) + gap;
           photosInRow = 0;
+          rowStartIndex = i + 1;
         } else {
           currentX += cellWidth;
         }
