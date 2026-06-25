@@ -33,6 +33,7 @@ interface ColorTypeAnalysis {
   color_type_ai?: string;
   result_text: string;
   created_at: string;
+  guide_task_id?: string | null;
 }
 
 export default function PalettePage() {
@@ -164,6 +165,17 @@ export default function PalettePage() {
             </Button>
             {paletteInfo && (
               <h1 className="text-xl font-semibold">{paletteInfo.displayName}</h1>
+            )}
+            {analysis.guide_task_id && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-auto flex items-center gap-2"
+                onClick={() => navigate(`/color-guide/${analysis.guide_task_id}`)}
+              >
+                <Icon name="Sparkles" size={18} />
+                Открыть гид по цвету
+              </Button>
             )}
           </div>
         </div>

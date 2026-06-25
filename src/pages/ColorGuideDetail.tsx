@@ -30,6 +30,9 @@ export default function ColorGuideDetail() {
     null,
   );
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [colortypeHistoryId, setColortypeHistoryId] = useState<string | null>(
+    null,
+  );
 
   const handleDownload = async () => {
     if (!imageUrl) return;
@@ -105,6 +108,7 @@ export default function ColorGuideDetail() {
         }
         const svc = data.service_type || "colorguide";
         setServiceType(svc);
+        setColortypeHistoryId(data.colortype_history_id || null);
 
         if (svc !== "colorguide") {
           if (data.status !== "completed" || !data.cdn_url) {
@@ -198,7 +202,20 @@ export default function ColorGuideDetail() {
               </div>
             </div>
           ) : result && photoUrl ? (
-            <ColorGuideReport result={result} photoUrl={photoUrl} />
+            <div className="space-y-6">
+              <ColorGuideReport result={result} photoUrl={photoUrl} />
+              {colortypeHistoryId && (
+                <div className="flex justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate(`/palette/${colortypeHistoryId}`)}
+                  >
+                    <Icon name="Palette" className="mr-2" size={18} />
+                    Открыть палитру цветотипа
+                  </Button>
+                </div>
+              )}
+            </div>
           ) : null}
         </div>
       </section>
