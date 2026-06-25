@@ -338,9 +338,20 @@ def call_gemini_once(image_url: str, prompt: str) -> Dict[str, Any]:
     return json.loads(content)
 
 
-def call_gemini(image_url: str) -> Dict[str, Any]:
-    """Вызывает Gemini. Strict json_schema гарантирует валидный JSON, retry не нужен."""
-    return call_gemini_once(image_url, PROMPT_TEMPLATE)
+def call_gemini(image_url: str, forced_slug: str = None) -> Dict[str, Any]:
+    """Вызывает Gemini. Strict json_schema гарантирует валидный JSON, retry не нужен.
+    Если forced_slug задан — цветотип уже определён на шаге /colortype, и Gemini
+    строит гид строго под него, не определяя цветотип заново."""
+    prompt = PROMPT_TEMPLATE
+    if forced_slug:
+        prompt = (
+            f'ВАЖНО: цветотип этого человека уже точно определён ранее и равен "{forced_slug}". '
+            f'НЕ переопределяй цветотип. В поле colortype_slug верни строго "{forced_slug}". '
+            f'Все рекомендации (палитра, макияж, металлы, волосы, капсулы, советы) делай '
+            f'именно для цветотипа "{forced_slug}", учитывая внешность на фото.\n\n'
+            + PROMPT_TEMPLATE
+        )
+    return call_gemini_once(image_url, prompt)
 
 
 def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_name: str) -> Dict[str, Any]:
@@ -820,14 +831,14 @@ def process_task(task_id: str):
         cursor = conn.cursor()
         try:
             cursor.execute(
-                'SELECT user_id, person_image, status, cost, refunded, service_type, height, form_params FROM color_guide_tasks WHERE id = %s',
+                'SELECT user_id, person_image, status, cost, refunded, service_type, height, form_params, forced_colortype_slug FROM color_guide_tasks WHERE id = %s',
                 (task_id,)
             )
             row = cursor.fetchone()
             if not row:
                 print(f'[COLORGUIDE-WORKER] Task {task_id} not found')
                 return
-            user_id, person_image, status, cost, refunded, service_type, height, form_params = row
+            user_id, person_image, status, cost, refunded, service_type, height, form_params, forced_colortype_slug = row
             if status not in ('pending', 'processing'):
                 print(f'[COLORGUIDE-WORKER] Task {task_id} already in status {status}')
                 return
@@ -863,12 +874,17 @@ def process_task(task_id: str):
         cdn_url = upload_to_s3(person_image, task_id, str(user_id))
         print(f'[COLORGUIDE-WORKER] Uploaded to {cdn_url}')
 
-        result = call_gemini(cdn_url)
+        result = call_gemini(cdn_url, forced_colortype_slug)
         print(f'[COLORGUIDE-WORKER] colortype returned keys: {list(result.keys())}')
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (Gemini/S3): {e}')
         mark_failed_and_refund(task_id, str(e), 'ошибка обработки')
         return
+
+    # Если цветотип уже определён на шаге /colortype — фиксируем его,
+    # чтобы гид гарантированно совпадал с результатом определения.
+    if forced_colortype_slug:
+        result['colortype_slug'] = forced_colortype_slug
 
     # Валидация slug
     raw_slug = result.get('colortype_slug', '')

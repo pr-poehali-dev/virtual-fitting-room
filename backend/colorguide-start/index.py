@@ -8,6 +8,12 @@ from session_utils import validate_session
 
 COLORGUIDE_COST = 50
 
+ALLOWED_SLUGS = [
+    'bright-spring', 'bright-winter', 'dusty-summer', 'fiery-autumn',
+    'gentle-autumn', 'gentle-spring', 'soft-summer', 'soft-winter',
+    'vibrant-spring', 'vivid-autumn', 'vivid-summer', 'vivid-winter'
+]
+
 ALLOWED_SERVICE_TYPES = ['colorguide', 'style', 'outfit']
 SERVICE_LABELS = {
     'colorguide': 'Гид по цвету',
@@ -101,6 +107,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         form_params = None
     form_params_json = json.dumps(form_params, ensure_ascii=False) if form_params else None
 
+    # Объединённый поток: если цветотип уже определён на шаге /colortype,
+    # передаём готовый slug — worker не определяет его заново.
+    forced_slug = body_data.get('colortype_slug')
+    if forced_slug:
+        forced_slug = str(forced_slug).strip().lower().replace('_', '-').replace(' ', '-')
+        if forced_slug not in ALLOWED_SLUGS:
+            forced_slug = None
+    # skip_charge — не списывать повторно (оплата уже была на шаге определения цветотипа).
+    # Доверять фронту нельзя: ниже проверяем реальную оплаченную задачу цветотипа.
+    skip_charge_requested = bool(body_data.get('skip_charge')) and forced_slug is not None
+
     if not person_image:
         return {
             'statusCode': 400,
@@ -136,9 +153,29 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         balance = float(user_row[0])
         unlimited_access = user_row[1]
-        cost = 0 if unlimited_access else SERVICE_COSTS.get(service_type, COLORGUIDE_COST)
 
-        if not unlimited_access:
+        # Проверяем право на бесплатный гид-«довесок» к уже оплаченному цветотипу.
+        # Защита от обхода оплаты: фронту не доверяем — проверяем реальную свежую
+        # оплаченную (cost > 0 ИЛИ unlimited) и успешную задачу цветотипа с тем же slug.
+        free_followup = False
+        if skip_charge_requested and service_type == 'colorguide':
+            cursor.execute('''
+                SELECT 1 FROM color_type_history
+                WHERE user_id = %s
+                  AND status = 'completed'
+                  AND lower(replace(color_type, ' ', '-')) = %s
+                  AND created_at > NOW() - INTERVAL '30 minutes'
+                LIMIT 1
+            ''', (str(user_id), forced_slug))
+            if cursor.fetchone():
+                free_followup = True
+                print(f'[COLORGUIDE-START-{request_id}] Free follow-up guide for slug {forced_slug}')
+            else:
+                print(f'[COLORGUIDE-START-{request_id}] skip_charge requested but no paid colortype found — charging normally')
+
+        cost = 0 if (unlimited_access or free_followup) else SERVICE_COSTS.get(service_type, COLORGUIDE_COST)
+
+        if not unlimited_access and not free_followup:
             if balance < cost:
                 cursor.close()
                 conn.close()
@@ -156,9 +193,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print(f'[COLORGUIDE-START-{request_id}] Creating task {task_id}')
 
         cursor.execute('''
-            INSERT INTO color_guide_tasks (id, user_id, status, person_image, cost, created_at, service_type, height, form_params)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (task_id, user_id, 'pending', person_image, cost, datetime.utcnow(), service_type, height, form_params_json))
+            INSERT INTO color_guide_tasks (id, user_id, status, person_image, cost, created_at, service_type, height, form_params, forced_colortype_slug)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (task_id, user_id, 'pending', person_image, cost, datetime.utcnow(), service_type, height, form_params_json, forced_slug))
 
         if cost > 0:
             balance_after = balance - cost

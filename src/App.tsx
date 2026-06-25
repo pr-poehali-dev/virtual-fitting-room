@@ -11,7 +11,6 @@ import { useEffect } from "react";
 
 import Home from "./pages/Home";
 import ColorType from "./pages/ColorType";
-import ColorGuide from "./pages/ColorGuide";
 import ColorGuideDetail from "./pages/ColorGuideDetail";
 import ProfileHistoryColorGuide from "./pages/ProfileHistoryColorGuide";
 import AdminColorGuide from "./pages/AdminColorGuide";
@@ -102,7 +101,7 @@ const App = () => (
               <Route path="/replicate" element={<Navigate to="/virtualfitting" replace />} />
               <Route path="/freegeneration" element={<FreeGeneration />} />
               <Route path="/colortype" element={<ColorType />} />
-            <Route path="/color-guide" element={<ColorGuide />} />
+            <Route path="/color-guide" element={<Navigate to="/colortype" replace />} />
             <Route path="/style-analysis" element={<StyleAnalysis />} />
             <Route path="/outfit-selection" element={<OutfitSelection />} />
             <Route path="/kibbe-test" element={<KibbeTest />} />

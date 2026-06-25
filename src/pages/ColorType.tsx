@@ -15,15 +15,28 @@ import { useBalance } from "@/context/BalanceContext";
 import { useNavigate, Link } from "react-router-dom";
 import { colorTypeRules, ColorTypeName } from "@/data/colorTypeRules";
 import { seasonalPalettes } from "@/data/seasonalPalettes";
+import ColorGuideReport, { ColorGuideResult } from "@/components/ColorGuideReport";
 
 const COLORTYPE_START_API =
   "https://functions.poehali.dev/f5ab39bd-a682-44d8-ac47-d7b9d035013b";
 const COLORTYPE_STATUS_API =
   "https://functions.poehali.dev/7f1395ac-bddc-45ec-b997-b39497110680";
+const COLORGUIDE_START_API =
+  "https://functions.poehali.dev/1551f3e9-8029-441b-ac77-2dc9cf164bdc";
+const COLORGUIDE_STATUS_API =
+  "https://functions.poehali.dev/ce27daee-90c0-4dd7-9369-a6b079895493";
+const DB_QUERY_API =
+  "https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9";
+
+// Цветотип ("SOFT WINTER") -> slug гида ("soft-winter")
+const colorTypeToSlug = (colorType: string): string =>
+  colorType.trim().toLowerCase().replace(/\s+/g, "-");
 
 const COST = COLORTYPE_COST;
 const POLLING_INTERVAL = 20000; // 20 seconds
 const TIMEOUT_DURATION = 180000; // 3 minutes
+const GUIDE_POLLING_INTERVAL = 8000; // 8 seconds
+const GUIDE_TIMEOUT_DURATION = 180000; // 3 minutes
 
 // Eye colors mapping (Russian → English) - grouped by similarity, light → bright → dark
 const eyeColors: Record<string, string> = {
@@ -168,14 +181,28 @@ export default function ColorType() {
     description: string;
   } | null>(null);
 
+  // Второй шаг: персональный гид по цвету
+  const [guideResult, setGuideResult] = useState<ColorGuideResult | null>(null);
+  const [guidePhotoUrl, setGuidePhotoUrl] = useState<string | null>(null);
+  const [guideStatus, setGuideStatus] = useState<
+    "idle" | "loading" | "done" | "failed"
+  >("idle");
+
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const guidePollingRef = useRef<NodeJS.Timeout | null>(null);
+  const guideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Данные для (повторного) запуска гида
+  const colorTypeRecordRef = useRef<string | null>(null);
+  const guideSlugRef = useRef<string | null>(null);
 
   // Cleanup polling on unmount
   useEffect(() => {
     return () => {
       if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (guidePollingRef.current) clearInterval(guidePollingRef.current);
+      if (guideTimeoutRef.current) clearTimeout(guideTimeoutRef.current);
     };
   }, []);
 
@@ -254,6 +281,128 @@ export default function ColorType() {
     setUploadedImage(resized);
   };
 
+  // Привязываем готовый гид к записи цветотипа (для истории)
+  const linkGuideToHistory = async (
+    colorTypeRecordId: string,
+    guideTaskId: string,
+  ) => {
+    try {
+      const token = localStorage.getItem("session_token");
+      await fetch(DB_QUERY_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "X-Session-Token": token } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          table: "color_type_history",
+          action: "update",
+          where: { id: colorTypeRecordId, user_id: user?.id },
+          data: { guide_task_id: guideTaskId },
+        }),
+      });
+    } catch (e) {
+      console.error("[ColorType] linkGuideToHistory error", e);
+    }
+  };
+
+  const handleReset = () => {
+    setResult(null);
+    setGuideResult(null);
+    setGuidePhotoUrl(null);
+    setGuideStatus("idle");
+    setUploadedImage(null);
+    setEyeColor("");
+    setHasTimedOut(false);
+  };
+
+  const handleRetryGuide = () => {
+    if (guideSlugRef.current && uploadedImage) {
+      startGuide(guideSlugRef.current, uploadedImage);
+    }
+  };
+
+  const pollGuideStatus = async (guideTaskId: string) => {
+    try {
+      const token = localStorage.getItem("session_token");
+      const response = await fetch(
+        `${COLORGUIDE_STATUS_API}?task_id=${guideTaskId}`,
+        {
+          headers: token ? { "X-Session-Token": token } : {},
+          credentials: "include",
+        },
+      );
+      const data = await response.json();
+
+      if (data.status === "completed") {
+        if (guidePollingRef.current) clearInterval(guidePollingRef.current);
+        if (guideTimeoutRef.current) clearTimeout(guideTimeoutRef.current);
+
+        if (!data.result) {
+          setGuideStatus("failed");
+          return;
+        }
+        setGuideResult(data.result as ColorGuideResult);
+        setGuidePhotoUrl(data.cdn_url || uploadedImage || "");
+        setGuideStatus("done");
+      } else if (data.status === "failed") {
+        if (guidePollingRef.current) clearInterval(guidePollingRef.current);
+        if (guideTimeoutRef.current) clearTimeout(guideTimeoutRef.current);
+        setGuideStatus("failed");
+      }
+    } catch (error) {
+      console.error("[ColorType] Guide polling error:", error);
+    }
+  };
+
+  const startGuide = async (slug: string, image: string) => {
+    setGuideStatus("loading");
+    setGuideResult(null);
+    if (guidePollingRef.current) clearInterval(guidePollingRef.current);
+    if (guideTimeoutRef.current) clearTimeout(guideTimeoutRef.current);
+
+    try {
+      const token = localStorage.getItem("session_token");
+      const response = await fetch(COLORGUIDE_START_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "X-Session-Token": token } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          person_image: image,
+          colortype_slug: slug,
+          skip_charge: true,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setGuideStatus("failed");
+        return;
+      }
+
+      const guideTaskId = data.task_id;
+      if (colorTypeRecordRef.current && guideTaskId) {
+        linkGuideToHistory(colorTypeRecordRef.current, guideTaskId);
+      }
+
+      guidePollingRef.current = setInterval(() => {
+        pollGuideStatus(guideTaskId);
+      }, GUIDE_POLLING_INTERVAL);
+
+      guideTimeoutRef.current = setTimeout(() => {
+        if (guidePollingRef.current) clearInterval(guidePollingRef.current);
+        setGuideStatus("failed");
+      }, GUIDE_TIMEOUT_DURATION);
+    } catch (error) {
+      console.error("[ColorType] startGuide error:", error);
+      setGuideStatus("failed");
+    }
+  };
+
   const pollTaskStatus = async (id: string) => {
     try {
       const token = localStorage.getItem("session_token");
@@ -293,9 +442,20 @@ export default function ColorType() {
         });
         setIsAnalyzing(false);
         setAnalysisStatus("");
-        toast.success("Цветотип определён!");
+        toast.success("Цветотип определён! Формируем персональный гид...");
         refetchColorTypeHistory();
         refreshBalance();
+
+        // Второй шаг: автоматически запускаем персональный гид
+        // с УЖЕ известным цветотипом (без повторного определения и оплаты).
+        // В гид передаём base64-фото (colorguide-start ждёт person_image как data-url).
+        const slug = colorTypeToSlug(data.color_type);
+        const imageForGuide = uploadedImage || "";
+        colorTypeRecordRef.current = id;
+        guideSlugRef.current = slug;
+        if (slug && imageForGuide) {
+          startGuide(slug, imageForGuide);
+        }
       } else if (data.status === "failed") {
         if (pollingIntervalRef.current)
           clearInterval(pollingIntervalRef.current);
@@ -338,6 +498,9 @@ export default function ColorType() {
     setAnalysisStatus("Запуск анализа...");
     setHasTimedOut(false);
     setResult(null);
+    setGuideResult(null);
+    setGuidePhotoUrl(null);
+    setGuideStatus("idle");
 
     try {
       const token = localStorage.getItem("session_token");
@@ -472,6 +635,30 @@ export default function ColorType() {
             </Card>
           </div>
 
+          {guideStatus === "done" && guideResult ? (
+            <div className="animate-fade-in space-y-6">
+              <ColorGuideReport
+                result={guideResult}
+                photoUrl={guidePhotoUrl || ""}
+              />
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button
+                  onClick={() => navigate("/profile/history-colortypes")}
+                  variant="outline"
+                >
+                  <Icon name="History" className="mr-2" size={20} />
+                  Перейти в историю
+                </Button>
+                <Button
+                  onClick={handleReset}
+                  variant="outline"
+                >
+                  <Icon name="RefreshCw" className="mr-2" size={20} />
+                  Определить ещё раз
+                </Button>
+              </div>
+            </div>
+          ) : (
           <div className="grid md:grid-cols-2 gap-8 items-start">
             {/* Left Panel - Upload */}
             <Card className="animate-scale-in">
@@ -677,11 +864,31 @@ export default function ColorType() {
                         return renderPalette(result.colorType);
                       })()}
 
-                      <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground text-center">
-                        <p>
-                          Просмотр и редактирование палитр доступен в личном кабинете в разделе «История цветотипов»
-                        </p>
-                      </div>
+                      {guideStatus === "loading" && (
+                        <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-sm text-center space-y-2">
+                          <Icon
+                            name="Loader2"
+                            className="mx-auto text-primary animate-spin"
+                            size={28}
+                          />
+                          <p className="text-muted-foreground">
+                            Формируем персональный гид по цвету...
+                          </p>
+                        </div>
+                      )}
+
+                      {guideStatus === "failed" && (
+                        <div className="bg-muted/50 rounded-lg p-4 text-sm text-center space-y-3">
+                          <p className="text-muted-foreground">
+                            Цветотип определён, но гид сформировать не удалось.
+                            Попробуйте ещё раз — это бесплатно.
+                          </p>
+                          <Button onClick={handleRetryGuide} className="w-full">
+                            <Icon name="RefreshCw" className="mr-2" size={18} />
+                            Повторить гид
+                          </Button>
+                        </div>
+                      )}
 
                       <Button
                         onClick={() => navigate("/profile/history-colortypes")}
@@ -736,6 +943,7 @@ export default function ColorType() {
               </CardContent>
             </Card>
           </div>
+          )}
         </div>
       </section>
 

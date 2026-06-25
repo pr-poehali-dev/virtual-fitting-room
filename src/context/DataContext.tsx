@@ -31,6 +31,7 @@ interface ColorTypeHistory {
   result_text: string;
   created_at: string;
   status: string;
+  guide_task_id?: string | null;
 }
 
 interface KibbeHistory {
@@ -261,7 +262,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({
           table: 'color_type_history',
           action: 'select',
-          columns: ['id', 'cdn_url', 'color_type', 'result_text', 'created_at', 'status'],
+          columns: ['id', 'cdn_url', 'color_type', 'result_text', 'created_at', 'status', 'guide_task_id'],
           where: { user_id: user.id, status: 'completed' },
           order_by: 'created_at DESC',
           limit: COLOR_TYPE_PAGE_SIZE + 1,

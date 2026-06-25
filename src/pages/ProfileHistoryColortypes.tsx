@@ -35,6 +35,7 @@ interface ColorTypeHistory {
   result_text: string;
   created_at: string;
   status: string;
+  guide_task_id?: string | null;
 }
 
 export default function ProfileHistoryColortypes() {
@@ -195,15 +196,27 @@ export default function ProfileHistoryColortypes() {
                         </p>
                       )}
                       <div className="flex gap-2">
-                        <Button
-                          className="flex-1"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/palette/${item.id}`)}
-                        >
-                          <Icon name="Palette" className="mr-2" size={16} />
-                          Палитра
-                        </Button>
+                        {item.guide_task_id ? (
+                          <Button
+                            className="flex-1"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/color-guide/${item.guide_task_id}`)}
+                          >
+                            <Icon name="Sparkles" className="mr-2" size={16} />
+                            Гид
+                          </Button>
+                        ) : (
+                          <Button
+                            className="flex-1"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/palette/${item.id}`)}
+                          >
+                            <Icon name="Palette" className="mr-2" size={16} />
+                            Палитра
+                          </Button>
+                        )}
                         <Button
                           className="flex-1"
                           variant="outline"
