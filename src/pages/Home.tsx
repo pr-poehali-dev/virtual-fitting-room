@@ -131,7 +131,7 @@ const Home = () => {
                 className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 lg:mr-auto flex items-center hover:opacity-80 transition-opacity"
               >
                 <img
-                  src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/b0c8eb8e-a9f0-4e1f-831b-3761c4e77908.svg"
+                  src="https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/088f0996-9515-4193-8090-4a069e1e0e3b.svg"
                   alt="StyleSelect"
                   className="h-8 md:h-10"
                 />
@@ -151,9 +151,7 @@ const Home = () => {
                           {userInitial}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-sm text-gray-300">
-                        {user.name}
-                      </span>
+                      <span className="text-sm text-gray-300">{user.name}</span>
                     </div>
                     <Button
                       variant="ghost"
