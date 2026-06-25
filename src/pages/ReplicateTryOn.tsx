@@ -68,6 +68,8 @@ interface SelectedClothing {
   isFromCatalog?: boolean;
 }
 
+const MAX_TRYON_ITEMS = 10;
+
 const CATALOG_API =
   "https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc";
 const NANOBANANAPRO_START_API =
@@ -298,27 +300,16 @@ export default function ReplicateTryOn() {
       return;
     }
 
-    if (
-      selectedClothingItems?.length >= 1 &&
-      selectedClothingItems?.[0]?.category === "dresses"
-    ) {
-      toast.error(
-        "Уже выбран полный образ. Удалите его, если хотите загрузить другую вещь",
-      );
-      e.target.value = "";
-      return;
-    }
-
-    const remainingSlots = 2 - (selectedClothingItems?.length || 0);
+    const remainingSlots = MAX_TRYON_ITEMS - (selectedClothingItems?.length || 0);
     if (remainingSlots <= 0) {
-      toast.error("Максимум 2 вещи можно выбрать");
+      toast.error(`Максимум ${MAX_TRYON_ITEMS} вещей можно выбрать`);
       e.target.value = "";
       return;
     }
 
     const filesToProcess = Array.from(files).slice(0, remainingSlots);
     if (files.length > remainingSlots) {
-      toast.warning(`Можно добавить только ${remainingSlots} вещь(и)`);
+      toast.warning(`Можно добавить ещё ${remainingSlots} вещь(и)`);
     }
 
     try {
@@ -372,29 +363,8 @@ export default function ReplicateTryOn() {
         (prev) => prev?.filter((i) => i.id !== item.id) || [],
       );
     } else {
-      if (
-        selectedClothingItems?.length >= 1 &&
-        selectedClothingItems?.[0]?.category === "dresses"
-      ) {
-        toast.error(
-          "Уже выбран полный образ. Удалите его, если хотите выбрать другую вещь",
-        );
-        return;
-      }
-
-      if ((selectedClothingItems?.length || 0) >= 2) {
-        toast.error("Максимум 2 вещи можно выбрать");
-        return;
-      }
-
-      const newCategory = mapCategoryFromCatalog(item);
-      if (
-        newCategory === "dresses" &&
-        (selectedClothingItems?.length || 0) > 0
-      ) {
-        toast.error(
-          "Полный образ нельзя комбинировать с другими вещами. Удалите уже выбранные вещи",
-        );
+      if ((selectedClothingItems?.length || 0) >= MAX_TRYON_ITEMS) {
+        toast.error(`Максимум ${MAX_TRYON_ITEMS} вещей можно выбрать`);
         return;
       }
 
@@ -404,7 +374,7 @@ export default function ReplicateTryOn() {
           id: item.id,
           image: item.image_url,
           name: item.name,
-          category: newCategory,
+          category: mapCategoryFromCatalog(item),
           isFromCatalog: true,
         },
       ]);
@@ -452,8 +422,8 @@ export default function ReplicateTryOn() {
         return;
       }
 
-      if ((selectedClothingItems?.length || 0) > 2) {
-        toast.error("Максимум 2 вещи можно выбрать");
+      if ((selectedClothingItems?.length || 0) > MAX_TRYON_ITEMS) {
+        toast.error(`Максимум ${MAX_TRYON_ITEMS} вещей можно выбрать`);
         return;
       }
 
@@ -462,29 +432,7 @@ export default function ReplicateTryOn() {
         return;
       }
 
-      const itemsWithoutCategory =
-        selectedClothingItems?.filter((item) => !item.category) || [];
-      if (itemsWithoutCategory.length > 0) {
-        setShowCategoryError(true);
-        toast.error("Укажите категорию для всех выбранных вещей");
-        return;
-      }
       setShowCategoryError(false);
-
-      if (selectedClothingItems?.length === 2) {
-        const categories =
-          selectedClothingItems?.map((item) => item.category) || [];
-        const hasUpperAndLower =
-          categories.includes("upper_body") &&
-          categories.includes("lower_body");
-
-        if (!hasUpperAndLower) {
-          toast.error(
-            'При выборе 2-х вещей одна должна быть "Верх", другая - "Низ"',
-          );
-          return;
-        }
-      }
 
       const balanceCheck = await checkReplicateBalance(
         user,
@@ -543,7 +491,8 @@ export default function ReplicateTryOn() {
           garments:
             selectedClothingItems?.map((item) => ({
               image: item.image,
-              category: item.category || "upper_body",
+              category: item.category || "",
+              name: item.name || "",
             })) || [],
           custom_prompt: customPrompt,
         }),
