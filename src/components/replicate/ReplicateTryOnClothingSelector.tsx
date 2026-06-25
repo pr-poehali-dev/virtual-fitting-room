@@ -43,6 +43,8 @@ interface SelectedClothing {
   isFromCatalog?: boolean;
 }
 
+export const MAX_TRYON_ITEMS = 10;
+
 interface ReplicateTryOnClothingSelectorProps {
   selectedClothingItems: SelectedClothing[];
   onClothingItemsChange: (items: SelectedClothing[]) => void;
@@ -129,22 +131,16 @@ export default function ReplicateTryOnClothingSelector({
       return;
     }
 
-    if (selectedClothingItems?.length >= 1 && selectedClothingItems[0]?.category === 'dresses') {
-      toast.error('Уже выбран полный образ. Удалите его, если хотите загрузить другую вещь');
-      e.target.value = '';
-      return;
-    }
-
-    const remainingSlots = 2 - (selectedClothingItems?.length || 0);
+    const remainingSlots = MAX_TRYON_ITEMS - (selectedClothingItems?.length || 0);
     if (remainingSlots <= 0) {
-      toast.error('Максимум 2 вещи можно выбрать');
+      toast.error(`Максимум ${MAX_TRYON_ITEMS} вещей можно выбрать`);
       e.target.value = '';
       return;
     }
 
     const filesToProcess = Array.from(files).slice(0, remainingSlots);
     if (files.length > remainingSlots) {
-      toast.warning(`Можно добавить только ${remainingSlots} вещь(и)`);
+      toast.warning(`Можно добавить ещё ${remainingSlots} вещь(и)`);
     }
 
     try {
@@ -192,29 +188,18 @@ export default function ReplicateTryOnClothingSelector({
     if (exists) {
       onClothingItemsChange(selectedClothingItems?.filter((i) => i.id !== item.id) || []);
     } else {
-      if (selectedClothingItems?.length >= 1 && selectedClothingItems[0]?.category === 'dresses') {
-        toast.error('Уже выбран полный образ. Удалите его, если хотите выбрать другую вещь');
+      if ((selectedClothingItems?.length || 0) >= MAX_TRYON_ITEMS) {
+        toast.error(`Максимум ${MAX_TRYON_ITEMS} вещей можно выбрать`);
         return;
       }
-      
-      if ((selectedClothingItems?.length || 0) >= 2) {
-        toast.error('Максимум 2 вещи можно выбрать');
-        return;
-      }
-      
-      const newCategory = mapCategoryFromCatalog(item);
-      if (newCategory === 'dresses' && (selectedClothingItems?.length || 0) > 0) {
-        toast.error('Полный образ нельзя комбинировать с другими вещами. Удалите уже выбранные вещи');
-        return;
-      }
-      
+
       onClothingItemsChange([
         ...selectedClothingItems,
         {
           id: item.id,
           image: item.image_url,
           name: item.name,
-          category: newCategory,
+          category: mapCategoryFromCatalog(item),
           isFromCatalog: true,
         },
       ]);

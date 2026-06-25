@@ -194,17 +194,8 @@ export function useReplicateTryOn() {
       return;
     }
 
-    const categoryExists = selectedClothingItems.some(
-      existing => existing.category === newItem.category && newItem.category
-    );
-
-    if (categoryExists && newItem.category) {
-      const categoryNames: { [key: string]: string } = {
-        'upper_body': 'верхней одежды',
-        'lower_body': 'нижней одежды',
-        'dresses': 'платьев'
-      };
-      toast.error(`Можно добавить только одну вещь ${categoryNames[newItem.category] || 'этой категории'}`);
+    if (selectedClothingItems.length >= 10) {
+      toast.error('Максимум 10 вещей можно выбрать');
       return;
     }
 
@@ -233,12 +224,6 @@ export function useReplicateTryOn() {
       return;
     }
 
-    const hasInvalidCategory = selectedClothingItems.some(item => !item.category);
-    if (hasInvalidCategory) {
-      setShowCategoryError(true);
-      toast.error('Некоторые вещи имеют неопределенную категорию. Пожалуйста, удалите их.');
-      return;
-    }
     setShowCategoryError(false);
 
     const balanceCheck = await checkReplicateBalance(user, selectedClothingItems.length);
@@ -253,16 +238,10 @@ export function useReplicateTryOn() {
 
       await deductReplicateBalance(user, selectedClothingItems.length);
 
-      const garmentDict: { [key: string]: string } = {};
-      selectedClothingItems.forEach(item => {
-        if (item.category) {
-          garmentDict[item.category] = item.image;
-        }
-      });
-
-      const garmentsArray = Object.entries(garmentDict).map(([category, image]) => ({
-        category,
-        image
+      const garmentsArray = selectedClothingItems.map(item => ({
+        image: item.image,
+        category: item.category || '',
+        name: item.name || ''
       }));
 
       console.log('Starting NanoBananaPro generation with:', {
