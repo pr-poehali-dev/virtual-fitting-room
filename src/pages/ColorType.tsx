@@ -281,25 +281,39 @@ export default function ColorType() {
     setUploadedImage(resized);
   };
 
-  // Привязываем готовый гид к записи цветотипа (для истории)
+  // Привязываем гид и цветотип друг к другу в обе стороны (для перехода между историями)
   const linkGuideToHistory = async (
     colorTypeRecordId: string,
     guideTaskId: string,
   ) => {
+    const token = localStorage.getItem("session_token");
+    const headers = {
+      "Content-Type": "application/json",
+      ...(token ? { "X-Session-Token": token } : {}),
+    };
     try {
-      const token = localStorage.getItem("session_token");
+      // Цветотип -> гид
       await fetch(DB_QUERY_API, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { "X-Session-Token": token } : {}),
-        },
+        headers,
         credentials: "include",
         body: JSON.stringify({
           table: "color_type_history",
           action: "update",
           where: { id: colorTypeRecordId, user_id: user?.id },
           data: { guide_task_id: guideTaskId },
+        }),
+      });
+      // Гид -> цветотип (обратная связь)
+      await fetch(DB_QUERY_API, {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: JSON.stringify({
+          table: "color_guide_tasks",
+          action: "update",
+          where: { id: guideTaskId, user_id: user?.id },
+          data: { colortype_history_id: colorTypeRecordId },
         }),
       });
     } catch (e) {
@@ -321,6 +335,72 @@ export default function ColorType() {
     if (guideSlugRef.current && uploadedImage) {
       startGuide(guideSlugRef.current, uploadedImage);
     }
+  };
+
+  // Блок «цветотип + палитры» — переиспользуется в сетке и под готовым гидом
+  const renderColorTypePalette = () => {
+    if (!result) return null;
+    const hasTwoResults =
+      result.colorTypeAi && result.colorTypeAi !== result.colorType;
+
+    const renderPalette = (colorTypeName: string, label?: string) => {
+      const colorTypeEnum = colorTypeToEnum[colorTypeName];
+      if (!colorTypeEnum) return null;
+      const rule = colorTypeRules[colorTypeEnum];
+      if (!rule) return null;
+      const palettes = seasonalPalettes[rule.season];
+      if (!palettes) return null;
+      return (
+        <div className="space-y-4">
+          <h4 className="text-lg font-medium text-center">
+            {label || "Ваша палитра"}
+          </h4>
+          {Object.entries(palettes).map(([paletteKey, palette]) => (
+            <div key={paletteKey} className="space-y-2">
+              <div className="grid grid-cols-5 gap-2">
+                {Object.entries(palette).map(([colorName, colorValue]) => (
+                  <div
+                    key={colorName}
+                    className="aspect-square rounded-lg border border-border/50"
+                    style={{
+                      backgroundColor: colorValue,
+                      filter: rule.filter || "none",
+                    }}
+                    title={colorName}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    };
+
+    return (
+      <div className="w-full space-y-6">
+        <div className="text-center">
+          <h3 className="text-3xl font-light mb-4">{result.colorType}</h3>
+          <div className="bg-muted rounded-lg p-6 text-sm">
+            <p className="whitespace-pre-wrap">{result.description}</p>
+          </div>
+        </div>
+        {hasTwoResults ? (
+          <div className="space-y-6">
+            {renderPalette(
+              result.colorType,
+              `Результат формулы: ${result.colorType}`,
+            )}
+            <div className="border-t border-border/50 pt-2" />
+            {renderPalette(
+              result.colorTypeAi!,
+              `Результат ИИ: ${result.colorTypeAi}`,
+            )}
+          </div>
+        ) : (
+          renderPalette(result.colorType)
+        )}
+      </div>
+    );
   };
 
   const pollGuideStatus = async (guideTaskId: string) => {
@@ -636,12 +716,30 @@ export default function ColorType() {
           </div>
 
           {guideStatus === "done" && guideResult ? (
-            <div className="animate-fade-in space-y-6">
+            <div className="animate-fade-in space-y-8">
+              {/* Персональный гид (основной блок) */}
               <ColorGuideReport
                 result={guideResult}
                 photoUrl={guidePhotoUrl || ""}
               />
+
+              {/* Палитра цветотипа (ниже гида) */}
+              <Card>
+                <CardContent className="p-8">{renderColorTypePalette()}</CardContent>
+              </Card>
+
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                {colorTypeRecordRef.current && (
+                  <Button
+                    onClick={() =>
+                      navigate(`/palette/${colorTypeRecordRef.current}`)
+                    }
+                    variant="outline"
+                  >
+                    <Icon name="Palette" className="mr-2" size={20} />
+                    Открыть палитру
+                  </Button>
+                )}
                 <Button
                   onClick={() => navigate("/profile/history-colortypes")}
                   variant="outline"
@@ -649,10 +747,7 @@ export default function ColorType() {
                   <Icon name="History" className="mr-2" size={20} />
                   Перейти в историю
                 </Button>
-                <Button
-                  onClick={handleReset}
-                  variant="outline"
-                >
+                <Button onClick={handleReset} variant="outline">
                   <Icon name="RefreshCw" className="mr-2" size={20} />
                   Определить ещё раз
                 </Button>
@@ -799,83 +894,26 @@ export default function ColorType() {
                 <div className="min-h-[500px] flex items-center justify-center">
                   {result ? (
                     <div className="w-full space-y-6 animate-fade-in">
-                      <div className="text-center">
-                        <h3 className="text-3xl font-light mb-4">
-                          {result.colorType}
-                        </h3>
-                        <div className="bg-muted rounded-lg p-6 text-sm">
-                          <p className="whitespace-pre-wrap">
-                            {result.description}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Palettes */}
-                      {(() => {
-                        const hasTwoResults = result.colorTypeAi && result.colorTypeAi !== result.colorType;
-
-                        const renderPalette = (colorTypeName: string, label?: string) => {
-                          const colorTypeEnum = colorTypeToEnum[colorTypeName];
-                          if (!colorTypeEnum) return null;
-
-                          const rule = colorTypeRules[colorTypeEnum];
-                          if (!rule) return null;
-
-                          const palettes = seasonalPalettes[rule.season];
-                          if (!palettes) return null;
-
-                          return (
-                            <div className="space-y-4">
-                              <h4 className="text-lg font-medium text-center">
-                                {label || 'Ваша палитра'}
-                              </h4>
-                              
-                              {Object.entries(palettes).map(([paletteKey, palette]) => (
-                                <div key={paletteKey} className="space-y-2">
-                                  <div className="grid grid-cols-5 gap-2">
-                                    {Object.entries(palette).map(([colorName, colorValue]) => (
-                                      <div
-                                        key={colorName}
-                                        className="aspect-square rounded-lg border border-border/50"
-                                        style={{
-                                          backgroundColor: colorValue,
-                                          filter: rule.filter || 'none',
-                                        }}
-                                        title={colorName}
-                                      />
-                                    ))}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        };
-
-                        if (hasTwoResults) {
-                          return (
-                            <div className="space-y-6">
-                              {renderPalette(result.colorType, `Результат формулы: ${result.colorType}`)}
-                              <div className="border-t border-border/50 pt-2" />
-                              {renderPalette(result.colorTypeAi!, `Результат ИИ: ${result.colorTypeAi}`)}
-                            </div>
-                          );
-                        }
-
-                        return renderPalette(result.colorType);
-                      })()}
-
                       {guideStatus === "loading" && (
-                        <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-sm text-center space-y-2">
+                        <div className="bg-primary/10 border-2 border-primary/30 rounded-lg p-5 text-center space-y-3">
                           <Icon
                             name="Loader2"
                             className="mx-auto text-primary animate-spin"
-                            size={28}
+                            size={36}
                           />
-                          <p className="text-muted-foreground">
-                            Формируем персональный гид по цвету...
-                          </p>
+                          <div>
+                            <p className="font-semibold text-base">
+                              Формируем персональный гид по цвету...
+                            </p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Цветотип уже готов — ниже палитра. Не закрывайте
+                              страницу, гид появится здесь автоматически.
+                            </p>
+                          </div>
                         </div>
                       )}
+
+                      {renderColorTypePalette()}
 
                       {guideStatus === "failed" && (
                         <div className="bg-muted/50 rounded-lg p-4 text-sm text-center space-y-3">
@@ -968,6 +1006,18 @@ export default function ColorType() {
           </p>
         </div>
       </footer>
+
+      {/* Стики-плашка прогресса гида — видна при любом скролле */}
+      {guideStatus === "loading" && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-primary text-primary-foreground shadow-lg animate-fade-in">
+          <div className="container mx-auto px-4 py-3 flex items-center justify-center gap-3">
+            <Icon name="Loader2" className="animate-spin" size={20} />
+            <p className="text-sm font-medium">
+              Формируем персональный гид по цвету... Не закрывайте страницу
+            </p>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

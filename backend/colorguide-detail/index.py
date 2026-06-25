@@ -61,7 +61,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute('''
             SELECT id, user_id, status, colortype_slug, result_json, cdn_url, error_message,
-                   cost, refunded, created_at, service_type, form_params
+                   cost, refunded, created_at, service_type, form_params, colortype_history_id
             FROM color_guide_tasks WHERE id = %s
         ''', (task_id,))
         row = cursor.fetchone()
@@ -113,7 +113,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'error_message': row.get('error_message'),
                 'created_at': row['created_at'].isoformat() if row['created_at'] else None,
                 'result': result,
-                'form_params': form_params
+                'form_params': form_params,
+                'colortype_history_id': str(row['colortype_history_id']) if row.get('colortype_history_id') else None
             }, ensure_ascii=False)
         }
     except Exception as e:
