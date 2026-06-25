@@ -16,6 +16,7 @@ interface Lookbook {
   share_token?: string;
   created_at: string;
   updated_at: string;
+  photo_products?: Record<string, { name: string; product_url: string }[]>;
 }
 
 interface LookbookViewerDialogProps {
@@ -220,15 +221,37 @@ export default function LookbookViewerDialog({ lookbook, onClose, imageProxyApi 
               <div>
                 <h3 className="text-sm font-medium mb-3">Результаты примерок</h3>
                 <div className="grid grid-cols-3 gap-3">
-                  {lookbook.photos.map((photo, index) => (
-                    <div key={index} className="relative rounded-lg overflow-hidden bg-muted aspect-[5/7]">
-                      <ImageViewer 
-                        src={photo} 
-                        alt={`Photo ${index + 1}`}
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                  ))}
+                  {lookbook.photos.map((photo, index) => {
+                    const links = lookbook.photo_products?.[photo] || [];
+                    return (
+                      <div key={index} className="space-y-1">
+                        <div className="relative rounded-lg overflow-hidden bg-muted aspect-[5/7]">
+                          <ImageViewer
+                            src={photo}
+                            alt={`Photo ${index + 1}`}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        {links.length > 0 && (
+                          <div className="space-y-0.5">
+                            {links.map((link, i) => (
+                              <a
+                                key={i}
+                                href={link.product_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 truncate"
+                                title={link.name}
+                              >
+                                <Icon name="ExternalLink" size={12} className="flex-shrink-0" />
+                                <span className="truncate">{link.name}</span>
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

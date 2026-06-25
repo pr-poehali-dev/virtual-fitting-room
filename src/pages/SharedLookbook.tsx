@@ -13,6 +13,7 @@ interface Lookbook {
   color_palette: string[];
   created_at: string;
   updated_at: string;
+  photo_products?: Record<string, { name: string; product_url: string }[]>;
 }
 
 const LOOKBOOKS_API = 'https://functions.poehali.dev/69de81d7-5596-4e1d-bbd3-4b3e1a520d6b';
@@ -91,18 +92,37 @@ export default function SharedLookbook() {
               <CardContent>
                 {lookbook.photos.length > 0 ? (
                   <div className="grid grid-cols-2 gap-4">
-                    {lookbook.photos.map((photo, index) => (
-                      <div
-                        key={index}
-                        className="aspect-square rounded-lg overflow-hidden bg-muted"
-                      >
-                        <img
-                          src={photo}
-                          alt={`Фото ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ))}
+                    {lookbook.photos.map((photo, index) => {
+                      const links = lookbook.photo_products?.[photo] || [];
+                      return (
+                        <div key={index} className="space-y-1">
+                          <div className="aspect-square rounded-lg overflow-hidden bg-muted">
+                            <img
+                              src={photo}
+                              alt={`Фото ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          {links.length > 0 && (
+                            <div className="space-y-0.5">
+                              {links.map((link, i) => (
+                                <a
+                                  key={i}
+                                  href={link.product_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 truncate"
+                                  title={link.name}
+                                >
+                                  <Icon name="ExternalLink" size={12} className="flex-shrink-0" />
+                                  <span className="truncate">{link.name}</span>
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-center py-8">

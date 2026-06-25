@@ -1,11 +1,19 @@
 import json
 import os
 import psycopg2
+from psycopg2.extras import Json
 import boto3
 from botocore.config import Config
 from typing import Dict, Any, List, Optional
 from session_utils import validate_session
 # redeploy v2
+
+
+def _adapt_value(value: Any) -> Any:
+    '''dict -> jsonb (через Json), остальное без изменений (list -> text[] адаптирует psycopg2).'''
+    if isinstance(value, dict):
+        return Json(value)
+    return value
 
 def delete_from_s3_if_orphaned(photo_url: str, user_id: str, cursor, schema: str) -> None: 
     '''
@@ -210,7 +218,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 raise Exception('No data provided for insert')
             
             columns = list(data.keys())
-            values = list(data.values())
+            values = [_adapt_value(v) for v in data.values()]
             placeholders = ', '.join(['%s'] * len(values))
             columns_str = ', '.join(columns)
             
@@ -255,7 +263,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             params = []
             for key, value in data.items():
                 set_parts.append(f'{key} = %s')
-                params.append(value)
+                params.append(_adapt_value(value))
             
             where_parts = []
             for key, value in where.items():

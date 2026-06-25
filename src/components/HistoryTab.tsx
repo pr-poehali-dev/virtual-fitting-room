@@ -98,11 +98,18 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
       const lookbook = lookbooks.find(lb => lb.id === selectedLookbookId);
       if (!lookbook) return;
 
-      const selectedPhotos = history
-        .filter(item => selectedItems.includes(item.id))
-        .map(item => item.result_image);
+      const selectedHistory = history.filter(item => selectedItems.includes(item.id));
+      const selectedPhotos = selectedHistory.map(item => item.result_image);
 
       const updatedPhotos = [...lookbook.photos, ...selectedPhotos];
+
+      const updatedPhotoProducts = { ...(lookbook.photo_products || {}) };
+      selectedHistory.forEach(item => {
+        const links = parseProductLinks(item.garments);
+        if (links.length > 0) {
+          updatedPhotoProducts[item.result_image] = links;
+        }
+      });
 
       const token = localStorage.getItem('session_token');
       const response = await fetch(DB_QUERY_API, {
@@ -116,7 +123,7 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
           table: 'lookbooks',
           action: 'update',
           where: { id: selectedLookbookId },
-          data: { photos: updatedPhotos }
+          data: { photos: updatedPhotos, photo_products: updatedPhotoProducts }
         })
       });
 

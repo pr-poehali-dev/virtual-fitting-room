@@ -11,6 +11,7 @@ interface Lookbook {
   share_token?: string;
   created_at: string;
   updated_at: string;
+  photo_products?: Record<string, { name: string; product_url: string }[]>;
 }
 
 interface HistoryItem {
