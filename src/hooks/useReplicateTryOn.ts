@@ -283,7 +283,6 @@ export function useReplicateTryOn() {
           'Content-Type': 'application/json',
           'X-Session-Token': token
         },
-        credentials: 'include',
         body: JSON.stringify({
           person_image: uploadedImage,
           garments: garmentsArray,
@@ -354,7 +353,6 @@ export function useReplicateTryOn() {
           'Content-Type': 'application/json',
           'X-Session-Token': token
         },
-        credentials: 'include',
       });
 
       if (!statusResponse.ok) {
@@ -427,7 +425,6 @@ export function useReplicateTryOn() {
           'Content-Type': 'application/json',
           'X-Session-Token': token
         },
-        credentials: 'include',
       });
 
       const workerData = await workerResponse.json();
