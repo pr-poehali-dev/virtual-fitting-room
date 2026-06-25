@@ -23,18 +23,6 @@ export const SERVICES: Service[] = [
   { id: "style", name: "Стиль одежды", icon: "Shirt", available: true },
   { id: "hairstyle", name: "Причёски", icon: "Scissors", available: false },
   { id: "makeup", name: "Макияж", icon: "Sparkles", available: false },
-  { id: "face", name: "Анализ лица", icon: "ScanFace", available: false },
-  { id: "colortype", name: "Цветотип", icon: "Palette", available: false },
-  {
-    id: "archetype",
-    name: "Архетип по Юнгу",
-    icon: "Brain",
-    available: true,
-    testLink: true,
-    testPath: "/archetype-test",
-    testInfo:
-      "Определение архетипа по фото пока в разработке. Но вы уже можете бесплатно пройти тест из 36 вопросов и узнать свой ведущий архетип из 12 по системе Карла Юнга.",
-  },
   {
     id: "kibbe",
     name: "Типаж по Кибби",
