@@ -43,16 +43,6 @@ const Home = () => {
       path: "/colortype",
     },
     {
-      id: "color-guide",
-      title: "Ваш гид по цвету",
-      description:
-        "Полный персональный отчёт: палитра, макияж, украшения, цвета волос и капсульные образы. Можно скачать в PNG",
-      image:
-        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/fee34fa0-c3d9-4189-b35e-f804bf38844c.jpg",
-      icon: "BookOpen",
-      path: "/color-guide",
-    },
-    {
       id: "style-analysis",
       title: "Стилевой анализ внешности",
       description:

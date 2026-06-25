@@ -39,12 +39,6 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       label: "Определение цветотипа",
     },
     {
-      id: "color-guide",
-      path: "/color-guide",
-      icon: "BookOpen",
-      label: "Ваш гид по цвету",
-    },
-    {
       id: "style-analysis",
       path: "/style-analysis",
       icon: "Wand2",
