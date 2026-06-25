@@ -395,6 +395,30 @@ export default function ReplicateTryOn() {
     );
   };
 
+  const updateClothingName = (id: string, name: string) => {
+    setSelectedClothingItems(
+      (prev) =>
+        prev?.map((item) => (item.id === id ? { ...item, name } : item)) || [],
+    );
+  };
+
+  const addTextOnlyItem = () => {
+    if ((selectedClothingItems?.length || 0) >= MAX_TRYON_ITEMS) {
+      toast.error(`Максимум ${MAX_TRYON_ITEMS} вещей можно выбрать`);
+      return;
+    }
+    setSelectedClothingItems((prev) => [
+      ...prev,
+      {
+        id: `text-${Date.now()}-${Math.random()}`,
+        image: "",
+        name: "",
+        category: "",
+        isFromCatalog: false,
+      },
+    ]);
+  };
+
   const handleGenerate = async () => {
     const callId = Math.random().toString(36).substring(7);
     console.log(
@@ -915,6 +939,8 @@ export default function ReplicateTryOn() {
                     toggleClothingSelection={toggleClothingSelection}
                     removeClothingItem={removeClothingItem}
                     updateClothingCategory={updateClothingCategory}
+                    updateClothingName={updateClothingName}
+                    addTextOnlyItem={addTextOnlyItem}
                     handleCustomClothingUpload={handleCustomClothingUpload}
                     isGenerating={isGenerating}
                     showCategoryError={showCategoryError}

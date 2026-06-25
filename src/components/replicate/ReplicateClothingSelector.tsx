@@ -1,15 +1,9 @@
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import Icon from "@/components/ui/icon";
 import ImageViewer from "@/components/ImageViewer";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface ClothingItem {
   id: string;
@@ -57,10 +51,14 @@ interface ReplicateClothingSelectorProps {
   toggleClothingSelection: (item: ClothingItem) => void;
   removeClothingItem: (id: string) => void;
   updateClothingCategory: (id: string, category: string) => void;
+  updateClothingName: (id: string, name: string) => void;
+  addTextOnlyItem: () => void;
   handleCustomClothingUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isGenerating: boolean;
   showCategoryError: boolean;
 }
+
+const MAX_TRYON_ITEMS = 10;
 
 export default function ReplicateClothingSelector({
   selectedClothingItems,
@@ -77,67 +75,16 @@ export default function ReplicateClothingSelector({
   toggleClothingSelection,
   removeClothingItem,
   updateClothingCategory,
+  updateClothingName,
+  addTextOnlyItem,
   handleCustomClothingUpload,
   isGenerating,
   showCategoryError,
 }: ReplicateClothingSelectorProps) {
   const [filtersExpanded, setFiltersExpanded] = React.useState(false);
 
-  const toggleFilter = (array: number[], value: number) => {
-    if (!array) return [value];
-    return array.includes(value)
-      ? array.filter((v) => v !== value)
-      : [...array, value];
-  };
-
-  const getCategoryHint = (
-    itemId: string,
-    currentCategory: string | undefined,
-  ) => {
-    if ((selectedClothingItems?.length || 0) === 1) {
-      if (currentCategory === "dresses") {
-        return "Это фото полного образа";
-      }
-      return "Любая категория";
-    }
-
-    if ((selectedClothingItems?.length || 0) === 2) {
-      const otherItem = selectedClothingItems?.find(
-        (item) => item.id !== itemId,
-      );
-      if (!otherItem || !otherItem.category) {
-        return "Выберите категорию";
-      }
-
-      if (currentCategory === "dresses") {
-        return "Это фото полного образа (нельзя комбинировать с другими вещами)";
-      }
-
-      if (otherItem.category === "dresses") {
-        return "Другая вещь — полный образ (нельзя комбинировать)";
-      }
-
-      if (otherItem.category === "upper_body") {
-        if (currentCategory === "upper_body") {
-          return "Выберите фото из категории низ (брюки, шорты, юбки)";
-        }
-        return currentCategory === "lower_body"
-          ? "Низ (правильно ✓)"
-          : "Нужен низ (брюки, юбки, шорты)";
-      }
-
-      if (otherItem.category === "lower_body") {
-        if (currentCategory === "lower_body") {
-          return "Выберите фото из категории верх (топы, рубашки, жакеты)";
-        }
-        return currentCategory === "upper_body"
-          ? "Верх (правильно ✓)"
-          : "Нужен верх (топы, рубашки, жакеты)";
-      }
-    }
-
-    return "";
-  };
+  const itemsCount = selectedClothingItems?.length || 0;
+  const limitReached = itemsCount >= MAX_TRYON_ITEMS;
 
   return (
     <div>
@@ -148,15 +95,16 @@ export default function ReplicateClothingSelector({
       <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
         <p className="text-sm text-blue-900">
           <Icon name="Info" className="inline mr-1" size={16} />
-          Можно выбрать 1 полный образ/вещь (любой категории) или 2 вещи (верх +
-          низ)
+          Добавьте до {MAX_TRYON_ITEMS} вещей: одежда, обувь, сумки, аксессуары,
+          украшения. Если на фото несколько вещей — напишите в названии, что
+          именно примерить.
         </p>
       </div>
 
-      {(selectedClothingItems?.length || 0) > 0 && (
+      {itemsCount > 0 && (
         <div className="mb-4 space-y-3">
           <p className="text-sm text-muted-foreground">
-            Выбрано: {selectedClothingItems?.length || 0}
+            Выбрано: {itemsCount} / {MAX_TRYON_ITEMS}
           </p>
           <div className="space-y-3">
             {selectedClothingItems?.map((item) => (
@@ -165,26 +113,15 @@ export default function ReplicateClothingSelector({
                 className="flex gap-3 p-3 border rounded-lg bg-card"
               >
                 <div className="relative flex-shrink-0 w-20 h-20">
-                  <ImageViewer
-                    src={item.image}
-                    alt={item.name || "Clothing"}
-                    className="w-full h-full object-cover rounded border-2 border-primary bg-muted"
-                  />
-                  {item.category && (
-                    <div
-                      className={`absolute -top-2 -left-2 px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm ${
-                        item.category === "upper_body"
-                          ? "bg-blue-500 text-white"
-                          : item.category === "lower_body"
-                            ? "bg-green-500 text-white"
-                            : "bg-purple-500 text-white"
-                      }`}
-                    >
-                      {item.category === "upper_body"
-                        ? "👕 Верх"
-                        : item.category === "lower_body"
-                          ? "👖 Низ"
-                          : "👗 Образ"}
+                  {item.image ? (
+                    <ImageViewer
+                      src={item.image}
+                      alt={item.name || "Clothing"}
+                      className="w-full h-full object-cover rounded border-2 border-primary bg-muted"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center rounded border-2 border-dashed border-primary/50 bg-muted text-muted-foreground">
+                      <Icon name="Type" size={22} />
                     </div>
                   )}
                   <button
@@ -196,61 +133,30 @@ export default function ReplicateClothingSelector({
                   </button>
                 </div>
                 <div className="flex-1 min-w-0 space-y-2">
-                  <p className="text-sm font-medium truncate">
-                    {item.name || "Одежда"}
-                  </p>
-                  <Select
-                    value={item.category || ""}
-                    onValueChange={(value) =>
-                      updateClothingCategory(item.id, value)
-                    }
-                    disabled={
-                      item.isFromCatalog ||
-                      isGenerating ||
-                      ((selectedClothingItems?.length || 0) === 2 &&
-                        item.category &&
-                        selectedClothingItems?.find(
-                          (i) =>
-                            i.id !== item.id &&
-                            i.category &&
-                            i.category !== item.category &&
-                            ["upper_body", "lower_body"].includes(i.category),
-                        ) !== undefined)
-                    }
-                  >
-                    <SelectTrigger
-                      className={`h-8 text-xs ${showCategoryError && !item.category ? "border-red-500 border-2" : ""}`}
-                    >
-                      <SelectValue
-                        placeholder="Выберите категорию"
-                        className={
-                          showCategoryError && !item.category
-                            ? "text-red-500"
-                            : ""
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="upper_body" className="text-xs">
-                        Верх (Топы, Рубашки, Жакеты)
-                      </SelectItem>
-                      <SelectItem value="lower_body" className="text-xs">
-                        Низ (Брюки, Юбки, Шорты)
-                      </SelectItem>
-                      {(selectedClothingItems?.length || 0) === 1 && (
-                        <SelectItem value="dresses" className="text-xs">
-                          Весь образ, платья, верх и низ вместе
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  {getCategoryHint(item.id, item.category) && (
-                    <p
-                      className={`text-xs ${showCategoryError && !item.category ? "text-red-500 font-medium" : "text-muted-foreground"}`}
-                    >
-                      {getCategoryHint(item.id, item.category)}
+                  {item.isFromCatalog ? (
+                    <p className="text-sm font-medium truncate">
+                      {item.name || "Вещь из каталога"}
                     </p>
+                  ) : (
+                    <Input
+                      value={item.name || ""}
+                      onChange={(e) =>
+                        updateClothingName(item.id, e.target.value)
+                      }
+                      disabled={isGenerating}
+                      placeholder={
+                        item.image
+                          ? "Название / что взять с фото (необязательно)"
+                          : "Опишите вещь (например: бежевая сумка)"
+                      }
+                      className="h-9 text-sm"
+                    />
                   )}
+                  <p className="text-xs text-muted-foreground">
+                    {item.image
+                      ? "Если на фото несколько вещей — уточните, что примерить"
+                      : "Вещь будет создана по описанию"}
+                  </p>
                 </div>
               </div>
             ))}
@@ -258,101 +164,43 @@ export default function ReplicateClothingSelector({
         </div>
       )}
 
-      {(selectedClothingItems?.length || 0) > 0 &&
-        selectedClothingItems?.[0]?.category === "dresses" && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-sm text-green-900">
-              <Icon name="CheckCircle2" className="inline mr-1" size={16} />
-              Отлично! Выбран полный образ. Чтобы выбрать другие вещи, удалите
-              выбранные
-            </p>
-          </div>
-        )}
-
-      {(selectedClothingItems?.length || 0) === 2 &&
-        selectedClothingItems?.every((item) => item.category) &&
-        selectedClothingItems?.some((item) => item.category === "upper_body") &&
-        selectedClothingItems?.some(
-          (item) => item.category === "lower_body",
-        ) && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-sm text-green-900">
-              <Icon name="CheckCircle2" className="inline mr-1" size={16} />
-              Отлично! Выбран комплект: верх и низ. Можно создавать образ
-            </p>
-          </div>
-        )}
-
-      {(selectedClothingItems?.length || 0) === 2 &&
-        selectedClothingItems?.every((item) => item.category) &&
-        (selectedClothingItems?.filter((item) => item.category === "upper_body")
-          ?.length || 0) === 2 && (
-          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-sm text-amber-900">
-              <Icon name="AlertCircle" className="inline mr-1" size={16} />
-              Выбрано два верха. Измените одну вещь на категорию "Низ"
-            </p>
-          </div>
-        )}
-
-      {(selectedClothingItems?.length || 0) === 2 &&
-        selectedClothingItems?.every((item) => item.category) &&
-        (selectedClothingItems?.filter((item) => item.category === "lower_body")
-          ?.length || 0) === 2 && (
-          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-sm text-amber-900">
-              <Icon name="AlertCircle" className="inline mr-1" size={16} />
-              Выбрано два низа. Измените одну вещь на категорию "Верх"
-            </p>
-          </div>
-        )}
-
-      {(selectedClothingItems?.length || 0) === 2 &&
-        selectedClothingItems?.some((item) => item.category === "dresses") && (
-          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-sm text-amber-900">
-              <Icon name="AlertCircle" className="inline mr-1" size={16} />
-              Полный образ нельзя комбинировать с другими вещами. Удалите одну
-              вещь
-            </p>
-          </div>
-        )}
-
       <div className="space-y-3">
-        <div>
-          <input
-            type="file"
-            accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-            multiple
-            onChange={handleCustomClothingUpload}
-            className="hidden"
-            id="clothing-upload"
-            disabled={
-              isGenerating ||
-              (selectedClothingItems?.length || 0) >= 2 ||
-              ((selectedClothingItems?.length || 0) > 0 &&
-                selectedClothingItems?.[0]?.category === "dresses")
-            }
-          />
-          <label htmlFor="clothing-upload">
-            <Button
-              type="button"
-              variant="outline"
-              className={`w-full ${isGenerating || (selectedClothingItems?.length || 0) >= 2 || ((selectedClothingItems?.length || 0) > 0 && selectedClothingItems?.[0]?.category === "dresses") ? "opacity-50 cursor-not-allowed" : ""}`}
-              disabled={
-                isGenerating ||
-                (selectedClothingItems?.length || 0) >= 2 ||
-                ((selectedClothingItems?.length || 0) > 0 &&
-                  selectedClothingItems?.[0]?.category === "dresses")
-              }
-              asChild
-            >
-              <span>
-                <Icon name="Upload" className="mr-2" size={16} />
-                Загрузить свои вещи
-              </span>
-            </Button>
-          </label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <input
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+              multiple
+              onChange={handleCustomClothingUpload}
+              className="hidden"
+              id="clothing-upload"
+              disabled={isGenerating || limitReached}
+            />
+            <label htmlFor="clothing-upload">
+              <Button
+                type="button"
+                variant="outline"
+                className={`w-full ${isGenerating || limitReached ? "opacity-50 cursor-not-allowed" : ""}`}
+                disabled={isGenerating || limitReached}
+                asChild
+              >
+                <span>
+                  <Icon name="Upload" className="mr-2" size={16} />
+                  Загрузить свои вещи
+                </span>
+              </Button>
+            </label>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={addTextOnlyItem}
+            disabled={isGenerating || limitReached}
+          >
+            <Icon name="Type" className="mr-2" size={16} />
+            Добавить по описанию
+          </Button>
         </div>
 
         {filters && (
@@ -529,11 +377,7 @@ export default function ReplicateClothingSelector({
                 const isSelected =
                   selectedClothingItems?.some((i) => i.id === item.id) ?? false;
                 const isDisabled =
-                  isGenerating ||
-                  ((selectedClothingItems?.length || 0) >= 2 && !isSelected) ||
-                  ((selectedClothingItems?.length || 0) > 0 &&
-                    selectedClothingItems?.[0]?.category === "dresses" &&
-                    !isSelected);
+                  isGenerating || (limitReached && !isSelected);
                 return (
                   <div
                     key={item.id}
