@@ -286,7 +286,7 @@ RESPONSE_SCHEMA = {
 }
 
 
-def call_gemini_once(image_url: str, prompt: str) -> Dict[str, Any]:
+def call_gemini_once(image_url: str, prompt: str, max_tokens: int = 6000) -> Dict[str, Any]:
     """Один запрос к Gemini через OpenRouter с строгой JSON-схемой"""
     api_key = os.environ.get('OPENROUTER_API_KEY_NEW') or os.environ.get('OPENROUTER_API_KEY')
     if not api_key:
@@ -303,7 +303,7 @@ def call_gemini_once(image_url: str, prompt: str) -> Dict[str, Any]:
                 ]
             }
         ],
-        'max_tokens': 6000,
+        'max_tokens': max_tokens,
         'temperature': 0.3,
         'response_format': {
             'type': 'json_schema',
@@ -339,7 +339,9 @@ def call_gemini_once(image_url: str, prompt: str) -> Dict[str, Any]:
 
 
 def call_gemini(image_url: str, forced_slug: str = None) -> Dict[str, Any]:
-    """Вызывает Gemini. Strict json_schema гарантирует валидный JSON, retry не нужен.
+    """Вызывает Gemini с авто-ретраем.
+    Иногда модель возвращает оборванный/невалидный JSON (обрыв ответа на середине) —
+    в этом случае делаем повторные попытки, прежде чем считать задачу неудачной.
     Если forced_slug задан — цветотип уже определён на шаге /colortype, и Gemini
     строит гид строго под него, не определяя цветотип заново."""
     prompt = PROMPT_TEMPLATE
@@ -351,7 +353,21 @@ def call_gemini(image_url: str, forced_slug: str = None) -> Dict[str, Any]:
             f'именно для цветотипа "{forced_slug}", учитывая внешность на фото.\n\n'
             + PROMPT_TEMPLATE
         )
-    return call_gemini_once(image_url, prompt)
+
+    max_attempts = 3
+    last_error = None
+    for attempt in range(1, max_attempts + 1):
+        # На повторных попытках даём больше токенов — частая причина сбоя обрыв ответа.
+        max_tokens = 6000 if attempt == 1 else 8000
+        try:
+            return call_gemini_once(image_url, prompt, max_tokens)
+        except (json.JSONDecodeError, ValueError, urllib.error.URLError, socket.timeout) as e:
+            last_error = e
+            print(f'[COLORGUIDE-WORKER] Gemini attempt {attempt}/{max_attempts} failed: {e}')
+            if attempt < max_attempts:
+                time.sleep(2)
+
+    raise last_error if last_error else RuntimeError('Gemini call failed')
 
 
 def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_name: str) -> Dict[str, Any]:
