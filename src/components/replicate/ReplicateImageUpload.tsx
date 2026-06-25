@@ -2,6 +2,7 @@ import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import ImageViewer from '@/components/ImageViewer';
 import { useRef } from 'react';
+import { toast } from 'sonner';
 
 interface ReplicateImageUploadProps {
   uploadedImage: string | null;
@@ -58,8 +59,14 @@ export default function ReplicateImageUpload({
         </button>
         <button
           type="button"
-          onClick={() => !modelSwitchDisabled && onModeChange('model')}
-          disabled={isGenerating || isModelLoading || modelSwitchDisabled}
+          onClick={() => {
+            if (modelSwitchDisabled) {
+              if (modelSwitchHint) toast.info(modelSwitchHint);
+              return;
+            }
+            onModeChange('model');
+          }}
+          disabled={isGenerating || isModelLoading}
           title={modelSwitchDisabled ? modelSwitchHint : undefined}
           className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
             mode === 'model'
@@ -75,10 +82,6 @@ export default function ReplicateImageUpload({
           Создать модель
         </button>
       </div>
-
-      {modelSwitchDisabled && modelSwitchHint && (
-        <p className="text-xs text-orange-600 mb-2">{modelSwitchHint}</p>
-      )}
 
       <p className="text-sm text-muted-foreground mb-3">
         На которого хотите примерить одежду
