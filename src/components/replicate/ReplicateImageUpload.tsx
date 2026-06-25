@@ -84,6 +84,18 @@ export default function ReplicateImageUpload({
         На которого хотите примерить одежду
       </p>
 
+      {mode === 'model' && uploadedImage && !isModelLoading && (
+        <button
+          type="button"
+          onClick={onOpenModelDialog}
+          disabled={isGenerating}
+          className="mb-3 text-sm text-primary hover:text-primary/80 inline-flex items-center"
+        >
+          <Icon name="RefreshCw" className="mr-1" size={14} />
+          Выбрать другую модель
+        </button>
+      )}
+
       {isModelLoading ? (
         <div className="flex flex-col items-center justify-center border-2 border-dashed border-primary rounded-lg p-8 bg-primary/5 min-h-[260px]">
           <Icon name="Loader2" size={48} className="text-primary mb-4 animate-spin" />
@@ -151,18 +163,6 @@ export default function ReplicateImageUpload({
             )}
           </label>
         </div>
-      )}
-
-      {mode === 'model' && uploadedImage && !isModelLoading && (
-        <button
-          type="button"
-          onClick={onOpenModelDialog}
-          disabled={isGenerating}
-          className="mt-2 text-sm text-primary hover:text-primary/80 inline-flex items-center"
-        >
-          <Icon name="RefreshCw" className="mr-1" size={14} />
-          Выбрать другую модель
-        </button>
       )}
     </div>
   );
