@@ -81,7 +81,8 @@ def build_model_prompt(params: Dict[str, Any]) -> str:
     description = ', '.join(parts)
 
     suffix = (
-        '. Wearing a plain fitted tank top and short shorts reaching mid-thigh. '
+        '. Wearing a plain fitted tank top and short shorts reaching mid-thigh, '
+        'and sneakers in the same color as the tank top and shorts (matching outfit color). '
         'Standing straight, full height from head to toe visible, front view, '
         'neutral pose with arms relaxed at sides. '
         'Clean light gray studio background, soft even lighting, '
