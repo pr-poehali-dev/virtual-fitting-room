@@ -66,9 +66,13 @@ interface SelectedClothing {
   name?: string;
   category?: string;
   isFromCatalog?: boolean;
+  product_url?: string;
 }
 
 const MAX_TRYON_ITEMS = 10;
+
+const WB_PRODUCT_API =
+  "https://functions.poehali.dev/df3372b3-6746-4e64-9f3f-c9fdb9ab428c";
 
 const CATALOG_API =
   "https://functions.poehali.dev/e65f7df8-0a43-4921-8dbd-3dc0587255cc";
@@ -419,6 +423,42 @@ export default function ReplicateTryOn() {
     ]);
   };
 
+  const addWildberriesItem = async (url: string): Promise<boolean> => {
+    if ((selectedClothingItems?.length || 0) >= MAX_TRYON_ITEMS) {
+      toast.error(`Максимум ${MAX_TRYON_ITEMS} вещей можно выбрать`);
+      return false;
+    }
+    try {
+      const response = await fetch(WB_PRODUCT_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.image) {
+        toast.error(data.error || "Не удалось загрузить товар с Wildberries");
+        return false;
+      }
+      setSelectedClothingItems((prev) => [
+        ...prev,
+        {
+          id: `wb-${Date.now()}-${Math.random()}`,
+          image: data.image,
+          name: data.name || "Товар Wildberries",
+          category: "",
+          isFromCatalog: false,
+          product_url: data.product_url,
+        },
+      ]);
+      toast.success("Товар добавлен");
+      return true;
+    } catch (error) {
+      console.error("WB item error:", error);
+      toast.error("Ошибка загрузки товара с Wildberries");
+      return false;
+    }
+  };
+
   const handleGenerate = async () => {
     const callId = Math.random().toString(36).substring(7);
     console.log(
@@ -517,6 +557,7 @@ export default function ReplicateTryOn() {
               image: item.image,
               category: item.category || "",
               name: item.name || "",
+              product_url: item.product_url || "",
             })) || [],
           custom_prompt: customPrompt,
         }),
@@ -941,6 +982,7 @@ export default function ReplicateTryOn() {
                     updateClothingCategory={updateClothingCategory}
                     updateClothingName={updateClothingName}
                     addTextOnlyItem={addTextOnlyItem}
+                    addWildberriesItem={addWildberriesItem}
                     handleCustomClothingUpload={handleCustomClothingUpload}
                     isGenerating={isGenerating}
                     showCategoryError={showCategoryError}

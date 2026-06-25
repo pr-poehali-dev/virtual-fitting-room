@@ -34,6 +34,7 @@ interface SelectedClothing {
   name?: string;
   category?: string;
   isFromCatalog?: boolean;
+  product_url?: string;
 }
 
 interface ReplicateClothingSelectorProps {
@@ -53,6 +54,7 @@ interface ReplicateClothingSelectorProps {
   updateClothingCategory: (id: string, category: string) => void;
   updateClothingName: (id: string, name: string) => void;
   addTextOnlyItem: () => void;
+  addWildberriesItem: (url: string) => Promise<boolean>;
   handleCustomClothingUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isGenerating: boolean;
   showCategoryError: boolean;
@@ -77,14 +79,25 @@ export default function ReplicateClothingSelector({
   updateClothingCategory,
   updateClothingName,
   addTextOnlyItem,
+  addWildberriesItem,
   handleCustomClothingUpload,
   isGenerating,
   showCategoryError,
 }: ReplicateClothingSelectorProps) {
   const [filtersExpanded, setFiltersExpanded] = React.useState(false);
+  const [wbUrl, setWbUrl] = React.useState("");
+  const [wbLoading, setWbLoading] = React.useState(false);
 
   const itemsCount = selectedClothingItems?.length || 0;
   const limitReached = itemsCount >= MAX_TRYON_ITEMS;
+
+  const handleAddWb = async () => {
+    if (!wbUrl.trim()) return;
+    setWbLoading(true);
+    const ok = await addWildberriesItem(wbUrl.trim());
+    setWbLoading(false);
+    if (ok) setWbUrl("");
+  };
 
   return (
     <div>
@@ -133,10 +146,24 @@ export default function ReplicateClothingSelector({
                   </button>
                 </div>
                 <div className="flex-1 min-w-0 space-y-2">
-                  {item.isFromCatalog ? (
-                    <p className="text-sm font-medium truncate">
-                      {item.name || "Вещь из каталога"}
-                    </p>
+                  {item.isFromCatalog || item.product_url ? (
+                    <div className="flex items-center gap-2 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {item.name || "Вещь"}
+                      </p>
+                      {item.product_url && (
+                        <a
+                          href={item.product_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-800"
+                          title="Открыть товар на Wildberries"
+                        >
+                          <Icon name="ExternalLink" size={14} />
+                          WB
+                        </a>
+                      )}
+                    </div>
                   ) : (
                     <Input
                       value={item.name || ""}
@@ -200,6 +227,38 @@ export default function ReplicateClothingSelector({
           >
             <Icon name="Type" className="mr-2" size={16} />
             Добавить по описанию
+          </Button>
+        </div>
+
+        <div className="flex gap-2">
+          <Input
+            value={wbUrl}
+            onChange={(e) => setWbUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleAddWb();
+              }
+            }}
+            placeholder="Ссылка на товар Wildberries"
+            disabled={isGenerating || limitReached || wbLoading}
+            className="h-10 text-sm"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleAddWb}
+            disabled={isGenerating || limitReached || wbLoading || !wbUrl.trim()}
+            className="flex-shrink-0"
+          >
+            {wbLoading ? (
+              <Icon name="Loader2" className="animate-spin" size={16} />
+            ) : (
+              <>
+                <Icon name="Link" className="mr-2" size={16} />
+                Добавить
+              </>
+            )}
           </Button>
         </div>
 
