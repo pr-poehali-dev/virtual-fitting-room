@@ -277,6 +277,49 @@ def save_to_history(conn, user_id: str, cdn_url: str, prompt: str, references_js
         return None
 
 
+def save_user_model(conn, user_id: str, cdn_url: str, prompt: str, model_params: Any, task_id: str) -> None:
+    '''Сохранить сгенерированную модель в user_models (идемпотентно по task_id).'''
+    try:
+        params = model_params if isinstance(model_params, dict) else (json.loads(model_params) if model_params else {})
+    except Exception:
+        params = {}
+    try:
+        cursor = conn.cursor()
+        cursor.execute('SELECT 1 FROM t_p29007832_virtual_fitting_room.user_models WHERE task_id = %s', (task_id,))
+        if cursor.fetchone():
+            cursor.close()
+            return
+        cursor.execute('''
+            INSERT INTO t_p29007832_virtual_fitting_room.user_models
+            (user_id, image_url, gender, age, height, body_type, hair_color, eye_color, hair_length, kibbe, colortype, prompt, task_id, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (
+            user_id,
+            cdn_url,
+            params.get('gender'),
+            params.get('age'),
+            params.get('height'),
+            params.get('body_type'),
+            params.get('hair_color'),
+            params.get('eye_color'),
+            params.get('hair_length'),
+            params.get('kibbe'),
+            params.get('colortype'),
+            prompt,
+            task_id,
+            datetime.utcnow(),
+        ))
+        conn.commit()
+        cursor.close()
+        print(f'[Model] Saved to user_models for task {task_id}')
+    except Exception as e:
+        print(f'[Model] Save error: {e}')
+        try:
+            cursor.close()
+        except Exception:
+            pass
+
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
     Business: Обработчик задачи свободной генерации NanoBanana 2 по task_id (асинхронный воркер)
@@ -327,7 +370,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT id, prompt, "references", aspect_ratio, fal_request_id, fal_response_url, user_id, status, saved_to_history
+            SELECT id, prompt, "references", aspect_ratio, fal_request_id, fal_response_url, user_id, status, saved_to_history, task_type, model_params
             FROM t_p29007832_virtual_fitting_room.freegen_tasks
             WHERE id = %s
         ''', (task_id,))
@@ -343,8 +386,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Task not found'}),
             }
 
-        task_id, prompt, references_json, aspect_ratio, fal_request_id, fal_response_url, user_id, task_status, saved_to_history = row
+        task_id, prompt, references_json, aspect_ratio, fal_request_id, fal_response_url, user_id, task_status, saved_to_history, task_type, model_params = row
         references = json.loads(references_json) if references_json else []
+        is_model_task = task_type == 'model'
 
         if saved_to_history:
             cursor.close()
@@ -399,7 +443,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         url = upload_reference_to_s3(ref, task_id, i)
                         ref_urls.append(url)
 
-                    final_prompt = build_prompt(prompt or '', len(ref_urls))
+                    if is_model_task:
+                        final_prompt = prompt or ''
+                    else:
+                        final_prompt = build_prompt(prompt or '', len(ref_urls))
                     print(f'[Freegen] Prompt: {final_prompt[:200]}')
 
                     request_id, response_url = submit_to_fal_queue(final_prompt, ref_urls, aspect_ratio or '1:1')
@@ -457,6 +504,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
                             if atomic:
                                 save_to_history(conn, user_id, cdn_url, prompt or '', references_json, aspect_ratio or '1:1', task_id)
+                                if is_model_task:
+                                    save_user_model(conn, user_id, cdn_url, prompt or '', model_params, task_id)
 
                             cursor.execute('''
                                 UPDATE t_p29007832_virtual_fitting_room.freegen_tasks
@@ -510,7 +559,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # --- STUCK RECOVERY: добить зависшие processing-задачи других пользователей
         try:
             cursor.execute('''
-                SELECT id, fal_response_url, user_id, prompt, "references", aspect_ratio, saved_to_history, created_at
+                SELECT id, fal_response_url, user_id, prompt, "references", aspect_ratio, saved_to_history, created_at, task_type, model_params
                 FROM t_p29007832_virtual_fitting_room.freegen_tasks
                 WHERE status = 'processing'
                   AND fal_response_url IS NOT NULL
@@ -523,7 +572,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             print(f'[Freegen] Found {len(stuck_rows)} stuck tasks')
 
             for stuck in stuck_rows:
-                s_id, s_response_url, s_user_id, s_prompt, s_refs_json, s_aspect, s_saved, s_created = stuck
+                s_id, s_response_url, s_user_id, s_prompt, s_refs_json, s_aspect, s_saved, s_created, s_task_type, s_model_params = stuck
                 try:
                     s_refs = json.loads(s_refs_json) if s_refs_json else []
                     s_age = (datetime.utcnow() - s_created).total_seconds() if s_created else 0
@@ -551,6 +600,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
                                 if s_atomic:
                                     save_to_history(conn, s_user_id, s_cdn_url, s_prompt or '', s_refs_json, s_aspect or '1:1', s_id)
+                                    if s_task_type == 'model':
+                                        save_user_model(conn, s_user_id, s_cdn_url, s_prompt or '', s_model_params, s_id)
 
                                 cursor.execute('''
                                     UPDATE t_p29007832_virtual_fitting_room.freegen_tasks

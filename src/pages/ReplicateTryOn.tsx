@@ -10,6 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import Icon from "@/components/ui/icon";
 import { Link } from "react-router-dom";
 import ReplicateImageUpload from "@/components/replicate/ReplicateImageUpload";
+import CreateModelDialog, {
+  MODEL_COST,
+  TRYON_COST,
+} from "@/components/replicate/CreateModelDialog";
 import ReplicateClothingSelector from "@/components/replicate/ReplicateClothingSelector";
 import ReplicateResultPanel from "@/components/replicate/ReplicateResultPanel";
 import ReplicateSaveDialog from "@/components/replicate/ReplicateSaveDialog";
@@ -88,6 +92,8 @@ const IMAGE_PROXY_API =
   "https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90";
 const SAVE_IMAGE_FTP_API =
   "https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8";
+const FREEGEN_STATUS_API =
+  "https://functions.poehali.dev/f706d708-5f17-4c11-864c-d13bf91cebce";
 
 const proxyFalImage = async (falUrl: string): Promise<string> => {
   try {
@@ -122,7 +128,7 @@ const proxyFalImage = async (falUrl: string): Promise<string> => {
 export default function ReplicateTryOn() {
   const { user } = useAuth();
   const { lookbooks, refetchLookbooks, refetchHistory } = useData();
-  const { balanceInfo } = useBalance();
+  const { balanceInfo, refreshBalance } = useBalance();
 
   const hasInsufficientBalance =
     user && !balanceInfo?.unlimited_access && !balanceInfo?.can_generate;
@@ -130,6 +136,10 @@ export default function ReplicateTryOn() {
   const [activeMode, setActiveMode] = useState<TemplateMode>("standard");
 
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [personMode, setPersonMode] = useState<"upload" | "model">("upload");
+  const [showModelDialog, setShowModelDialog] = useState(false);
+  const [isModelLoading, setIsModelLoading] = useState(false);
+  const [hasUserModels, setHasUserModels] = useState(false);
   const [selectedClothingItems, setSelectedClothingItems] = useState<
     SelectedClothing[]
   >([]);
@@ -157,6 +167,7 @@ export default function ReplicateTryOn() {
   const [customPrompt, setCustomPrompt] = useState<string>("");
   const [showCategoryError, setShowCategoryError] = useState(false);
   const isNanoBananaRequestInProgress = useRef(false);
+  const modelPollingRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: filters } = useCatalogFilters([
     "Обувь",
@@ -180,6 +191,92 @@ export default function ReplicateTryOn() {
       }
     };
   }, [pollingInterval]);
+
+  useEffect(() => {
+    if (!user) {
+      setHasUserModels(false);
+      return;
+    }
+    const token = localStorage.getItem("session_token");
+    if (!token) return;
+    fetch(DB_QUERY_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Session-Token": token },
+      credentials: "include",
+      body: JSON.stringify({
+        table: "user_models",
+        action: "select",
+        columns: ["id"],
+        order_by: "created_at DESC",
+      }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && Array.isArray(d.data)) setHasUserModels(d.data.length > 0);
+      })
+      .catch(() => {});
+  }, [user]);
+
+  const modelBalance = balanceInfo?.balance ?? 0;
+  const modelUnlimited = !!balanceInfo?.unlimited_access;
+  // Переключатель доступен если: unlimited, есть готовые модели, либо хватает на модель + примерку
+  const modelSwitchDisabled =
+    !!user &&
+    !modelUnlimited &&
+    !hasUserModels &&
+    modelBalance < MODEL_COST + TRYON_COST;
+  const modelSwitchHint = modelSwitchDisabled
+    ? `Нужно ${MODEL_COST + TRYON_COST}₽: ${MODEL_COST} на модель + ${TRYON_COST} на примерку`
+    : undefined;
+
+  const handleModelReady = async (imageUrl: string) => {
+    setUploadedImage(imageUrl);
+    setIsModelLoading(false);
+    setHasUserModels(true);
+    await refreshBalance();
+  };
+
+  const handleModelGenerationStarted = (modelTaskId: string) => {
+    setIsModelLoading(true);
+    setUploadedImage(null);
+    const token = localStorage.getItem("session_token");
+    if (modelPollingRef.current) clearInterval(modelPollingRef.current);
+    modelPollingRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(
+          `${FREEGEN_STATUS_API}?task_id=${modelTaskId}&force_check=true`,
+          {
+            headers: token ? { "X-Session-Token": token } : {},
+            credentials: "include",
+          },
+        );
+        const data = await res.json();
+        if (data.status === "completed" && data.result_url) {
+          if (modelPollingRef.current) clearInterval(modelPollingRef.current);
+          modelPollingRef.current = null;
+          handleModelReady(data.result_url);
+          toast.success("Модель создана!");
+        } else if (data.status === "failed") {
+          if (modelPollingRef.current) clearInterval(modelPollingRef.current);
+          modelPollingRef.current = null;
+          setIsModelLoading(false);
+          await refreshBalance();
+          toast.error(
+            data.error_message ||
+              "Не удалось создать модель. Средства возвращены",
+          );
+        }
+      } catch (e) {
+        console.error("[Model] polling error", e);
+      }
+    }, 5000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (modelPollingRef.current) clearInterval(modelPollingRef.current);
+    };
+  }, []);
 
   const resizeImage = (
     file: File,
@@ -963,6 +1060,12 @@ export default function ReplicateTryOn() {
                     uploadedImage={uploadedImage}
                     handleImageUpload={handleImageUpload}
                     isGenerating={isGenerating}
+                    mode={personMode}
+                    onModeChange={setPersonMode}
+                    onOpenModelDialog={() => setShowModelDialog(true)}
+                    isModelLoading={isModelLoading}
+                    modelSwitchDisabled={!!modelSwitchDisabled}
+                    modelSwitchHint={modelSwitchHint}
                   />
 
                   <ReplicateClothingSelector
@@ -1254,6 +1357,15 @@ export default function ReplicateTryOn() {
           aspectRatio={3 / 4}
         />
       )}
+
+      <CreateModelDialog
+        open={showModelDialog}
+        onClose={() => setShowModelDialog(false)}
+        onModelReady={handleModelReady}
+        onGenerationStarted={handleModelGenerationStarted}
+        balance={modelBalance}
+        unlimited={modelUnlimited}
+      />
     </Layout>
   );
 }

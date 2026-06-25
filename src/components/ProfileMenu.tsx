@@ -9,6 +9,7 @@ const ProfileMenu = () => {
   const menuItems = [
     { path: '/profile', icon: 'Home', label: 'Главная' },
     { path: '/profile/lookbooks', icon: 'Album', label: 'Лукбуки' },
+    { path: '/profile/models', icon: 'Users', label: 'Мои модели' },
     { path: '/profile/wallet', icon: 'Wallet', label: 'Кошелёк' },
     { path: '/profile/settings', icon: 'Settings', label: 'Настройки' },
   ];

@@ -149,7 +149,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'freegen_tasks',
             'color_guide_tasks',
             'kibbe_test_history',
-            'archetype_test_history'
+            'archetype_test_history',
+            'user_models'
         ]
         
         if table not in allowed_tables:
@@ -193,6 +194,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 query = f'SELECT * FROM {full_table}'
             
             params = []
+            
+            # Для user_models принудительно ограничиваем выборку владельцем
+            if table == 'user_models':
+                where = dict(where or {})
+                where['user_id'] = user_id
             
             if where:
                 where_parts = []
@@ -349,6 +355,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 row = cursor.fetchone()
                 if row and row[0]:
                     photos_to_force_delete.append(row[0])
+
+            # Для user_models - удаляем только свои, фото из S3 не трогаем (может использоваться в истории/лукбуках)
+            elif table == 'user_models' and user_id:
+                where = dict(where or {})
+                where['user_id'] = user_id
 
             # Для color_guide_tasks - сохраняем cdn_url перед удалением (фото гида нигде больше не используется)
             elif table == 'color_guide_tasks' and user_id:
