@@ -229,11 +229,13 @@ def submit_template_to_fal(person_image: str, template_image: str, garment_image
         'image_urls': image_urls,
         'prompt': prompt,
         'aspect_ratio': aspect_ratio,
-        'num_images': 1
+        'num_images': 1,
+        'resolution': '1K',
+        'output_format': 'png'
     }
 
     response = requests.post(
-        'https://queue.fal.run/fal-ai/nano-banana-pro/edit',
+        'https://queue.fal.run/fal-ai/nano-banana-2/edit',
         headers=headers,
         json=payload,
         timeout=30

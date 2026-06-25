@@ -104,11 +104,13 @@ def submit_to_fal_queue(person_image: str, garments: list, custom_prompt: str) -
         'image_urls': image_urls,
         'prompt': prompt,
         'aspect_ratio': '3:4',
-        'num_images': 1
+        'num_images': 1,
+        'resolution': '1K',
+        'output_format': 'png'
     }
     
     response = requests.post(
-        'https://queue.fal.run/fal-ai/nano-banana-pro/edit',
+        'https://queue.fal.run/fal-ai/nano-banana-2/edit',
         headers=headers,
         json=payload,
         timeout=30
