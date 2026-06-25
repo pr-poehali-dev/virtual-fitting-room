@@ -195,6 +195,7 @@ export default function ColorType() {
   // Данные для (повторного) запуска гида
   const colorTypeRecordRef = useRef<string | null>(null);
   const guideSlugRef = useRef<string | null>(null);
+  const guideSlugAltRef = useRef<string | null>(null);
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -333,7 +334,7 @@ export default function ColorType() {
 
   const handleRetryGuide = () => {
     if (guideSlugRef.current && uploadedImage) {
-      startGuide(guideSlugRef.current, uploadedImage);
+      startGuide(guideSlugRef.current, uploadedImage, guideSlugAltRef.current);
     }
   };
 
@@ -403,6 +404,32 @@ export default function ColorType() {
     );
   };
 
+  // Сохраняем выбранный Gemini цветотип в запись цветотипа (для активной вкладки палитры)
+  const saveGuideChosenSlug = async (
+    colorTypeRecordId: string,
+    chosenSlug: string,
+  ) => {
+    try {
+      const token = localStorage.getItem("session_token");
+      await fetch(DB_QUERY_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "X-Session-Token": token } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          table: "color_type_history",
+          action: "update",
+          where: { id: colorTypeRecordId, user_id: user?.id },
+          data: { guide_chosen_slug: chosenSlug },
+        }),
+      });
+    } catch (e) {
+      console.error("[ColorType] saveGuideChosenSlug error", e);
+    }
+  };
+
   const pollGuideStatus = async (guideTaskId: string) => {
     try {
       const token = localStorage.getItem("session_token");
@@ -423,9 +450,16 @@ export default function ColorType() {
           setGuideStatus("failed");
           return;
         }
-        setGuideResult(data.result as ColorGuideResult);
+        const guideRes = data.result as ColorGuideResult;
+        setGuideResult(guideRes);
         setGuidePhotoUrl(data.cdn_url || uploadedImage || "");
         setGuideStatus("done");
+
+        // Сохраняем цветотип, который утвердил Gemini — для активной вкладки палитры
+        const chosenSlug = data.colortype_slug || guideRes.colortype_slug;
+        if (colorTypeRecordRef.current && chosenSlug) {
+          saveGuideChosenSlug(colorTypeRecordRef.current, chosenSlug);
+        }
       } else if (data.status === "failed") {
         if (guidePollingRef.current) clearInterval(guidePollingRef.current);
         if (guideTimeoutRef.current) clearTimeout(guideTimeoutRef.current);
@@ -436,7 +470,11 @@ export default function ColorType() {
     }
   };
 
-  const startGuide = async (slug: string, image: string) => {
+  const startGuide = async (
+    slug: string,
+    image: string,
+    slugAlt?: string | null,
+  ) => {
     setGuideStatus("loading");
     setGuideResult(null);
     if (guidePollingRef.current) clearInterval(guidePollingRef.current);
@@ -454,6 +492,7 @@ export default function ColorType() {
         body: JSON.stringify({
           person_image: image,
           colortype_slug: slug,
+          ...(slugAlt ? { colortype_slug_alt: slugAlt } : {}),
           skip_charge: true,
         }),
       });
@@ -529,12 +568,18 @@ export default function ColorType() {
         // Второй шаг: автоматически запускаем персональный гид
         // с УЖЕ известным цветотипом (без повторного определения и оплаты).
         // В гид передаём base64-фото (colorguide-start ждёт person_image как data-url).
+        // Если ИИ и формула разошлись — передаём оба кандидата, Gemini выберет по фото.
         const slug = colorTypeToSlug(data.color_type);
+        const slugAlt =
+          data.color_type_ai && data.color_type_ai !== data.color_type
+            ? colorTypeToSlug(data.color_type_ai)
+            : null;
         const imageForGuide = uploadedImage || "";
         colorTypeRecordRef.current = id;
         guideSlugRef.current = slug;
+        guideSlugAltRef.current = slugAlt;
         if (slug && imageForGuide) {
-          startGuide(slug, imageForGuide);
+          startGuide(slug, imageForGuide, slugAlt);
         }
       } else if (data.status === "failed") {
         if (pollingIntervalRef.current)

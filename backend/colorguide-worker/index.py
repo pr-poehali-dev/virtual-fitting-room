@@ -338,14 +338,25 @@ def call_gemini_once(image_url: str, prompt: str, max_tokens: int = 6000) -> Dic
     return json.loads(content)
 
 
-def call_gemini(image_url: str, forced_slug: str = None) -> Dict[str, Any]:
+def call_gemini(image_url: str, forced_slug: str = None, forced_slug_alt: str = None) -> Dict[str, Any]:
     """Вызывает Gemini с авто-ретраем.
     Иногда модель возвращает оборванный/невалидный JSON (обрыв ответа на середине) —
     в этом случае делаем повторные попытки, прежде чем считать задачу неудачной.
-    Если forced_slug задан — цветотип уже определён на шаге /colortype, и Gemini
-    строит гид строго под него, не определяя цветотип заново."""
+    - forced_slug без forced_slug_alt: цветотип уже определён, Gemini строит гид
+      строго под него, не переопределяя.
+    - forced_slug и forced_slug_alt: ИИ и формула разошлись — Gemini выбирает один
+      из двух кандидатов по фото и строит гид под выбранный."""
     prompt = PROMPT_TEMPLATE
-    if forced_slug:
+    if forced_slug and forced_slug_alt:
+        prompt = (
+            f'ВАЖНО: цветотип этого человека — ОДИН ИЗ ДВУХ: "{forced_slug}" ИЛИ "{forced_slug_alt}". '
+            f'Внимательно посмотри на фото и выбери, какой из этих двух подходит точнее. '
+            f'В поле colortype_slug верни строго один из этих двух вариантов (НЕ другой цветотип). '
+            f'Все рекомендации (палитра, макияж, металлы, волосы, капсулы, советы) делай '
+            f'именно для выбранного цветотипа, учитывая внешность на фото.\n\n'
+            + PROMPT_TEMPLATE
+        )
+    elif forced_slug:
         prompt = (
             f'ВАЖНО: цветотип этого человека уже точно определён ранее и равен "{forced_slug}". '
             f'НЕ переопределяй цветотип. В поле colortype_slug верни строго "{forced_slug}". '
@@ -847,14 +858,14 @@ def process_task(task_id: str):
         cursor = conn.cursor()
         try:
             cursor.execute(
-                'SELECT user_id, person_image, status, cost, refunded, service_type, height, form_params, forced_colortype_slug FROM color_guide_tasks WHERE id = %s',
+                'SELECT user_id, person_image, status, cost, refunded, service_type, height, form_params, forced_colortype_slug, forced_colortype_slug_alt FROM color_guide_tasks WHERE id = %s',
                 (task_id,)
             )
             row = cursor.fetchone()
             if not row:
                 print(f'[COLORGUIDE-WORKER] Task {task_id} not found')
                 return
-            user_id, person_image, status, cost, refunded, service_type, height, form_params, forced_colortype_slug = row
+            user_id, person_image, status, cost, refunded, service_type, height, form_params, forced_colortype_slug, forced_colortype_slug_alt = row
             if status not in ('pending', 'processing'):
                 print(f'[COLORGUIDE-WORKER] Task {task_id} already in status {status}')
                 return
@@ -890,17 +901,26 @@ def process_task(task_id: str):
         cdn_url = upload_to_s3(person_image, task_id, str(user_id))
         print(f'[COLORGUIDE-WORKER] Uploaded to {cdn_url}')
 
-        result = call_gemini(cdn_url, forced_colortype_slug)
+        result = call_gemini(cdn_url, forced_colortype_slug, forced_colortype_slug_alt)
         print(f'[COLORGUIDE-WORKER] colortype returned keys: {list(result.keys())}')
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (Gemini/S3): {e}')
         mark_failed_and_refund(task_id, str(e), 'ошибка обработки')
         return
 
-    # Если цветотип уже определён на шаге /colortype — фиксируем его,
-    # чтобы гид гарантированно совпадал с результатом определения.
-    if forced_colortype_slug:
+    # Фиксация цветотипа:
+    # - один кандидат -> жёстко фиксируем его (без переопределения);
+    # - два кандидата -> Gemini выбрал один из них; принимаем выбор, но валидируем,
+    #   что он входит в число кандидатов, иначе берём первый (формулу).
+    if forced_colortype_slug and not forced_colortype_slug_alt:
         result['colortype_slug'] = forced_colortype_slug
+    elif forced_colortype_slug and forced_colortype_slug_alt:
+        candidates = {forced_colortype_slug, forced_colortype_slug_alt}
+        chosen = normalize_slug(result.get('colortype_slug', ''), result.get('colortype_name', ''))
+        if chosen not in candidates:
+            print(f'[COLORGUIDE-WORKER] Gemini chose "{chosen}" not in {candidates}, fallback to {forced_colortype_slug}')
+            chosen = forced_colortype_slug
+        result['colortype_slug'] = chosen
 
     # Валидация slug
     raw_slug = result.get('colortype_slug', '')

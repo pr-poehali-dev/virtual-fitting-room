@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { useAuth } from '@/context/AuthContext';
@@ -34,7 +34,12 @@ interface ColorTypeAnalysis {
   result_text: string;
   created_at: string;
   guide_task_id?: string | null;
+  guide_chosen_slug?: string | null;
 }
+
+// "VIVID WINTER" -> "vivid-winter"
+const toSlug = (v?: string | null): string =>
+  (v || '').trim().toLowerCase().replace(/\s+/g, '-');
 
 export default function PalettePage() {
   const { analysisId } = useParams<{ analysisId: string }>();
@@ -48,6 +53,8 @@ export default function PalettePage() {
   const [activeSource, setActiveSource] = useState<'formula' | 'ai'>('formula');
   const [overrideColorType, setOverrideColorType] = useState<ColorTypeName | null>(null);
   const [showLookbookDialog, setShowLookbookDialog] = useState(false);
+  // Активную вкладку (Формула/ИИ) по выбору Gemini выставляем только при первой загрузке
+  const initialTabAppliedRef = useRef(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -80,6 +87,18 @@ export default function PalettePage() {
         if (result.success && result.data.length > 0) {
           const analysisData = result.data[0];
           setAnalysis(analysisData);
+
+          // При первой загрузке выставляем активной вкладку по выбору Gemini.
+          if (!initialTabAppliedRef.current) {
+            initialTabAppliedRef.current = true;
+            const chosen = toSlug(analysisData.guide_chosen_slug);
+            const aiSlug = toSlug(analysisData.color_type_ai);
+            const hasAi = aiSlug && aiSlug !== toSlug(analysisData.color_type);
+            if (chosen && hasAi && chosen === aiSlug) {
+              setActiveSource('ai');
+              return; // useEffect перезапустится с activeSource='ai'
+            }
+          }
 
           const currentColorType = activeSource === 'formula' ? analysisData.color_type : (analysisData.color_type_ai || analysisData.color_type);
           const colorTypeKey = overrideColorType || colorTypeNamesMap[currentColorType];

@@ -109,11 +109,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     # Объединённый поток: если цветотип уже определён на шаге /colortype,
     # передаём готовый slug — worker не определяет его заново.
-    forced_slug = body_data.get('colortype_slug')
-    if forced_slug:
-        forced_slug = str(forced_slug).strip().lower().replace('_', '-').replace(' ', '-')
-        if forced_slug not in ALLOWED_SLUGS:
-            forced_slug = None
+    def _norm_slug(value):
+        if not value:
+            return None
+        s = str(value).strip().lower().replace('_', '-').replace(' ', '-')
+        return s if s in ALLOWED_SLUGS else None
+
+    forced_slug = _norm_slug(body_data.get('colortype_slug'))
+    # Второй кандидат (при расхождении ИИ и формулы). Если задан и отличается от
+    # первого — worker даст Gemini выбрать один из двух по фото.
+    forced_slug_alt = _norm_slug(body_data.get('colortype_slug_alt'))
+    if forced_slug_alt == forced_slug:
+        forced_slug_alt = None
     # skip_charge — не списывать повторно (оплата уже была на шаге определения цветотипа).
     # Доверять фронту нельзя: ниже проверяем реальную оплаченную задачу цветотипа.
     skip_charge_requested = bool(body_data.get('skip_charge')) and forced_slug is not None
@@ -159,17 +166,23 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # оплаченную (cost > 0 ИЛИ unlimited) и успешную задачу цветотипа с тем же slug.
         free_followup = False
         if skip_charge_requested and service_type == 'colorguide':
+            # Кандидаты должны соответствовать слугам свежей записи цветотипа
+            # (формула color_type ИЛИ ИИ color_type_ai).
+            cand_slugs = [s for s in (forced_slug, forced_slug_alt) if s]
             cursor.execute('''
                 SELECT 1 FROM color_type_history
                 WHERE user_id = %s
                   AND status = 'completed'
-                  AND lower(replace(color_type, ' ', '-')) = %s
                   AND created_at > NOW() - INTERVAL '30 minutes'
+                  AND (
+                        lower(replace(color_type, ' ', '-')) = ANY(%s)
+                     OR lower(replace(color_type_ai, ' ', '-')) = ANY(%s)
+                  )
                 LIMIT 1
-            ''', (str(user_id), forced_slug))
+            ''', (str(user_id), cand_slugs, cand_slugs))
             if cursor.fetchone():
                 free_followup = True
-                print(f'[COLORGUIDE-START-{request_id}] Free follow-up guide for slug {forced_slug}')
+                print(f'[COLORGUIDE-START-{request_id}] Free follow-up guide for slugs {cand_slugs}')
             else:
                 print(f'[COLORGUIDE-START-{request_id}] skip_charge requested but no paid colortype found — charging normally')
 
@@ -193,9 +206,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print(f'[COLORGUIDE-START-{request_id}] Creating task {task_id}')
 
         cursor.execute('''
-            INSERT INTO color_guide_tasks (id, user_id, status, person_image, cost, created_at, service_type, height, form_params, forced_colortype_slug)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (task_id, user_id, 'pending', person_image, cost, datetime.utcnow(), service_type, height, form_params_json, forced_slug))
+            INSERT INTO color_guide_tasks (id, user_id, status, person_image, cost, created_at, service_type, height, form_params, forced_colortype_slug, forced_colortype_slug_alt)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (task_id, user_id, 'pending', person_image, cost, datetime.utcnow(), service_type, height, form_params_json, forced_slug, forced_slug_alt))
 
         if cost > 0:
             balance_after = balance - cost
