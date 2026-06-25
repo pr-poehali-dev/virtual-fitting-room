@@ -153,10 +153,9 @@ export default function CreateModelDialog({
   }, [open]);
 
   const hasModels = models.length > 0;
-  const canGenerate =
-    unlimited || hasModels
-      ? unlimited || balance >= MODEL_COST
-      : balance >= MODEL_COST + TRYON_COST;
+  // Создание НОВОЙ модели всегда требует денег и на модель, и на примерку.
+  // Готовые модели можно выбрать бесплатно — на это условие не влияет.
+  const canGenerate = unlimited || balance >= MODEL_COST + TRYON_COST;
 
   const update = (key: keyof ModelForm, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -397,8 +396,11 @@ export default function CreateModelDialog({
         <div className="mt-4">
           {!canGenerate && (
             <p className="text-xs text-orange-600 mb-2 text-center">
-              Для создания модели нужно {MODEL_COST + TRYON_COST}₽ на балансе:{" "}
-              {MODEL_COST} на модель + {TRYON_COST} на примерку
+              У вас {balance}₽. Для новой модели нужно {MODEL_COST + TRYON_COST}₽
+              ({MODEL_COST} на модель + {TRYON_COST} на примерку).{" "}
+              {hasModels
+                ? "Выберите готовую модель выше или пополните баланс."
+                : "Пополните баланс."}
             </p>
           )}
           <Button
