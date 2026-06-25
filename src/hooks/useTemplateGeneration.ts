@@ -84,7 +84,6 @@ export function useTemplateGeneration(
               "Content-Type": "application/json",
               "X-Session-Token": token,
             },
-            credentials: "include",
             body: JSON.stringify({
               table: "nanobananapro_tasks",
               action: "select",
@@ -107,7 +106,6 @@ export function useTemplateGeneration(
             if (workerToken) {
               fetch(`${TEMPLATE_WORKER_API}?task_id=${taskId}`, {
                 headers: { "X-Session-Token": workerToken },
-                credentials: "include",
               }).catch(() => {});
             }
           }
@@ -194,7 +192,6 @@ export function useTemplateGeneration(
             "Content-Type": "application/json",
             "X-Session-Token": token,
           },
-          credentials: "include",
           body: JSON.stringify(payload),
         });
 
@@ -213,7 +210,6 @@ export function useTemplateGeneration(
         if (workerToken) {
           fetch(`${TEMPLATE_WORKER_API}?task_id=${data.task_id}`, {
             headers: { "X-Session-Token": workerToken },
-            credentials: "include",
           }).catch(() => {});
         }
 
