@@ -17,11 +17,6 @@ import CreateModelDialog, {
 import ReplicateClothingSelector from "@/components/replicate/ReplicateClothingSelector";
 import ReplicateResultPanel from "@/components/replicate/ReplicateResultPanel";
 import ReplicateSaveDialog from "@/components/replicate/ReplicateSaveDialog";
-import TemplateModeTabs, {
-  type TemplateMode,
-} from "@/components/replicate/TemplateModeTabs";
-import CapsuleTemplate from "@/components/replicate/templates/CapsuleTemplate";
-import LookbookGridTemplate from "@/components/replicate/templates/LookbookGridTemplate";
 import LockedFormOverlay from "@/components/LockedFormOverlay";
 import ImageCropper from "@/components/ImageCropper";
 import {
@@ -132,8 +127,6 @@ export default function ReplicateTryOn() {
 
   const hasInsufficientBalance =
     user && !balanceInfo?.unlimited_access && !balanceInfo?.can_generate;
-
-  const [activeMode, setActiveMode] = useState<TemplateMode>("standard");
 
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [personMode, setPersonMode] = useState<"upload" | "model">("upload");
@@ -1009,15 +1002,8 @@ export default function ReplicateTryOn() {
             <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
               Примерьте одежду онлайн с помощью AI
             </p>
-
-            <TemplateModeTabs
-              activeMode={activeMode}
-              onModeChange={setActiveMode}
-              disabled={isGenerating}
-            />
           </div>
 
-          {activeMode === "standard" && (<>
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
             <LockedFormOverlay cost={GENERATION_COST}>
             <Card className="animate-scale-in">
@@ -1313,23 +1299,6 @@ export default function ReplicateTryOn() {
               Powered by NanoBananaPro
             </p>
           </div>
-          </>)}
-
-          {activeMode === "capsule" && (
-            <CapsuleTemplate
-              user={user}
-              hasInsufficientBalance={!!hasInsufficientBalance}
-              onRefetchHistory={refetchHistory}
-            />
-          )}
-
-          {activeMode === "lookbook_grid" && (
-            <LookbookGridTemplate
-              user={user}
-              hasInsufficientBalance={!!hasInsufficientBalance}
-              onRefetchHistory={refetchHistory}
-            />
-          )}
         </div>
       </div>
 
