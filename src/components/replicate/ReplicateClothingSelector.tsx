@@ -232,7 +232,7 @@ export default function ReplicateClothingSelector({
           </Button>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Input
             value={wbUrl}
             onChange={(e) => setWbUrl(e.target.value)}
@@ -244,14 +244,14 @@ export default function ReplicateClothingSelector({
             }}
             placeholder="Ссылка на товар Wildberries"
             disabled={isGenerating || limitReached || wbLoading}
-            className="h-10 text-sm"
+            className="h-10 text-sm w-full"
           />
           <Button
             type="button"
             variant="outline"
             onClick={handleAddWb}
             disabled={isGenerating || limitReached || wbLoading || !wbUrl.trim()}
-            className="flex-shrink-0"
+            className="flex-shrink-0 w-full sm:w-auto"
           >
             {wbLoading ? (
               <Icon name="Loader2" className="animate-spin" size={16} />
