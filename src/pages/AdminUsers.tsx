@@ -66,6 +66,7 @@ interface User {
   unlimited_access?: boolean;
   created_at: string;
   is_vk?: boolean;
+  vk_id?: string;
   phone?: string;
   avatar_url?: string;
 }
@@ -318,6 +319,9 @@ export default function AdminUsers() {
                                   )}
                                   <span>{user.email || <span className="text-gray-400">— без email</span>}</span>
                                 </div>
+                                {user.is_vk && user.vk_id && (
+                                  <span className="text-xs text-gray-500">VK ID: {user.vk_id}</span>
+                                )}
                                 {user.phone && (
                                   <span className="text-xs text-gray-500">{user.phone}</span>
                                 )}

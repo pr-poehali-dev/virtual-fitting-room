@@ -836,6 +836,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'unlimited_access': u['unlimited_access'] or False,
                         'created_at': u['created_at'].isoformat(),
                         'is_vk': bool(u.get('vk_id')),
+                        'vk_id': str(u.get('vk_id')) if u.get('vk_id') else '',
                         'oauth_provider': u.get('oauth_provider') or '',
                         'phone': u.get('phone') or '',
                         'avatar_url': u.get('avatar_url') or ''
