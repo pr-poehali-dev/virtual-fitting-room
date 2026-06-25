@@ -323,7 +323,7 @@ export default function ReplicateTryOn() {
           return {
             id: `custom-${Date.now()}-${Math.random()}`,
             image: resized,
-            name: file.name,
+            name: "",
             category: "",
             isFromCatalog: false,
           };
