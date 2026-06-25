@@ -15,7 +15,29 @@ interface HistoryItem {
   model_used?: string;
   saved_to_lookbook?: boolean;
   cost?: number;
+  garments?: string;
 }
+
+interface ProductLink {
+  name: string;
+  product_url: string;
+}
+
+const parseProductLinks = (garments?: string): ProductLink[] => {
+  if (!garments) return [];
+  try {
+    const parsed = JSON.parse(garments);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((g) => g && typeof g === 'object' && g.product_url)
+      .map((g) => ({
+        name: g.name || 'Товар Wildberries',
+        product_url: g.product_url as string,
+      }));
+  } catch {
+    return [];
+  }
+};
 
 interface Lookbook {
   id: string;
@@ -374,6 +396,26 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
                     year: 'numeric'
                   })}
                 </p>
+                {parseProductLinks(item.garments).length > 0 && (
+                  <div className="space-y-1 border-t pt-2">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground text-center">
+                      Товары
+                    </p>
+                    {parseProductLinks(item.garments).map((link, idx) => (
+                      <a
+                        key={idx}
+                        href={link.product_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 truncate"
+                        title={link.name}
+                      >
+                        <Icon name="ExternalLink" size={12} className="flex-shrink-0" />
+                        <span className="truncate">{link.name}</span>
+                      </a>
+                    ))}
+                  </div>
+                )}
                 <div className="flex gap-1 justify-center">
                   <Button
                     variant="secondary"
