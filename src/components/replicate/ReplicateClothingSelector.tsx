@@ -179,11 +179,13 @@ export default function ReplicateClothingSelector({
                       className="h-9 text-sm"
                     />
                   )}
-                  <p className="text-xs text-muted-foreground">
-                    {item.image
-                      ? "Если на фото несколько вещей — уточните, что примерить"
-                      : "Вещь будет создана по описанию"}
-                  </p>
+                  {!(item.isFromCatalog || item.product_url) && (
+                    <p className="text-xs text-muted-foreground">
+                      {item.image
+                        ? "Если на фото несколько вещей — уточните, что примерить"
+                        : "Вещь будет создана по описанию"}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
