@@ -100,12 +100,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'At least one garment is required'})
         }
     
-    if len(garments) > 2:
+    if len(garments) > 10:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
             'isBase64Encoded': False,
-            'body': json.dumps({'error': 'Максимум 2 вещи за раз для NanoBanana'})
+            'body': json.dumps({'error': 'Максимум 10 вещей за раз'})
         }
     
     try:

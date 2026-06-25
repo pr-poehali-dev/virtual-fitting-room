@@ -44,35 +44,54 @@ def translate_to_english(text: str) -> str:
         return text
 
 def build_prompt(garments: list, custom_prompt: str) -> str:
-    '''Build clear prompt for NanoBanana with category-based specifications'''
-    
-    base_prompt = "Make only one photo where the model from first uploaded image is wearing the clothes from others uploaded images. "
-    
-    if len(garments) == 1:
-        category = garments[0].get('category', 'dresses')
-        if category == 'upper_body':
-            base_prompt += "Change top clothing on the model from first uploaded image. Dress on the model from first uploaded image ONLY the top clothes (blouse/shirt/jacket/sweater/t-shirt/sweatshirt/hoodie) from second uploaded image. Do NOT change bottom clothing on the model from first uploaded image. "
-        elif category == 'lower_body':
-            base_prompt += "Change bottom clothing on the model from first uploaded image. Dress on the model from first uploaded image ONLY the bottom clothes (pants/skirt/shorts/underpants) from second uploaded image. Do NOT change top clothing on the model from first uploaded image. "
-        else:
-            base_prompt += "Change full clothing on the model from first uploaded image. Dress on the model from first uploaded image the full clothes from second uploaded image. "
-    else:
-        for i, garment in enumerate(garments):
-            img_num = i + 2
-            category = garment.get('category', 'dresses')
-            if category == 'upper_body':
-                base_prompt += f"Change top clothing on the model from first uploaded image. Dress on the model from first uploaded image ONLY the top clothes (blouse/shirt/jacket/sweater/t-shirt/sweatshirt/hoodie) from second uploaded image. "
-            elif category == 'lower_body':
-                base_prompt += f"Change bottom clothing on the model from first uploaded image. Dress on the model from first uploaded image ONLY the bottom clothes (pants/skirt/shorts/underpants) from third uploaded image. "
+    '''Build prompt for NanoBanana: model from first image wears all listed items.
+    Supports any number of items (clothes, shoes, bags, accessories, jewelry).
+    Items may have a photo (referenced by image number) and/or a text name.
+    Items without a photo are described by text only.'''
+
+    base_prompt = (
+        "Make only ONE photo. The model is the person from the FIRST uploaded image. "
+        "It is CRITICAL to keep the EXACT same face, facial features, hairstyle, skin tone, "
+        "body shape, body proportions and pose from the FIRST uploaded image — do NOT change "
+        "the person's identity in any way. Only change what the model is wearing. "
+        "Dress the model in the following items as a single complete outfit: "
+    )
+
+    img_num = 2  # first image is the person
+    item_sentences = []
+    for garment in garments:
+        name = (garment.get('name') or '').strip()
+        has_image = bool(garment.get('image'))
+        if has_image:
+            translated_name = translate_to_english(name) if name else ''
+            if translated_name:
+                item_sentences.append(
+                    f"the item shown in uploaded image {img_num} (it is: {translated_name}) "
+                    f"— take ONLY this specific item from image {img_num}"
+                )
             else:
-                base_prompt += f"Change full clothing on the model from first uploaded image. Dress on the model from first uploaded image the full clothes from second uploaded image. "
-    
-    base_prompt += "Keep the EXACT face, body shape, pose from first uploaded image. Change ONLY the clothes. "
+                item_sentences.append(
+                    f"the item shown in uploaded image {img_num}"
+                )
+            img_num += 1
+        elif name:
+            translated_name = translate_to_english(name)
+            item_sentences.append(f"{translated_name} (generate it from this description)")
+
+    if item_sentences:
+        base_prompt += "; ".join(item_sentences) + ". "
+
+    base_prompt += (
+        "Combine all these items into one realistic head-to-toe look on the same model. "
+        "Replace the model's original clothing with these items. "
+        "Keep the EXACT face, body shape, proportions and pose from the FIRST uploaded image. "
+        "Change ONLY the clothing and accessories, never the person. "
+    )
 
     if custom_prompt:
         translated_prompt = translate_to_english(custom_prompt)
-        base_prompt += f"Additional: {translated_prompt}"
-    
+        base_prompt += f"Additional instructions: {translated_prompt}"
+
     return base_prompt
 
 def submit_to_fal_queue(person_image: str, garments: list, custom_prompt: str) -> tuple:
@@ -81,17 +100,16 @@ def submit_to_fal_queue(person_image: str, garments: list, custom_prompt: str) -
     if not fal_api_key:
         raise Exception('FAL_API_KEY not configured')
     
-    # Sort garments: upper_body first, then lower_body, then dresses
-    sorted_garments = sorted(garments, key=lambda g: 0 if g.get('category') == 'upper_body' else (1 if g.get('category') == 'lower_body' else 2))
-    
+    # Keep items in the order the user added them (prompt image numbers must match)
     person_data = normalize_image_format(person_image)
-    garment_data = [normalize_image_format(g['image']) for g in sorted_garments]
+    # Only items that have a photo go into image_urls; text-only items are described in the prompt
+    garment_data = [normalize_image_format(g['image']) for g in garments if g.get('image')]
     
-    prompt = build_prompt(sorted_garments, custom_prompt)
+    prompt = build_prompt(garments, custom_prompt)
     print(f'[NanoBanana] Final prompt: {prompt}')
-    print(f'[NanoBanana] Image order: 1=Person, 2-{len(garment_data)+1}=Clothes')
-    for i, g in enumerate(sorted_garments):
-        print(f'[NanoBanana] Garment {i+2}: category={g.get("category")}')
+    print(f'[NanoBanana] Image order: 1=Person, 2-{len(garment_data)+1}=Clothes with photo')
+    for i, g in enumerate(garments):
+        print(f'[NanoBanana] Item {i+1}: name={g.get("name")!r} has_image={bool(g.get("image"))}')
     
     headers = {
         'Authorization': f'Key {fal_api_key}',

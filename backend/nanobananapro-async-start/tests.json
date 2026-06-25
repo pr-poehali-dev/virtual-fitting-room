@@ -1,28 +1,30 @@
 {
   "tests": [
     {
-      "name": "Start NanoBananaPro task",
+      "name": "Start requires authentication",
       "method": "POST",
       "path": "/",
-      "headers": {
-        "X-User-Id": "test-user-123"
-      },
       "body": {
         "person_image": "https://example.com/person.jpg",
         "garments": [
           {
             "image": "https://example.com/garment.jpg",
-            "category": "tops"
+            "name": "test item"
           }
         ],
         "custom_prompt": "test prompt"
       },
-      "expectedStatus": 200,
+      "expectedStatus": 401,
       "expectedBody": {
-        "task_id": "string",
-        "status": "pending"
+        "error": "string"
       },
       "bodyMatcher": "partial"
+    },
+    {
+      "name": "OPTIONS CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
     }
   ]
 }
