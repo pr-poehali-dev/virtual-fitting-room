@@ -723,8 +723,8 @@ export default function OutfitSelection() {
                         Подобрать образ за {COST} ₽
                       </Button>
                       <p className="text-xs text-muted-foreground text-center">
-                        Все поля, кроме фото, необязательны. Чем больше укажете —
-                        тем точнее образ.
+                        Все поля, кроме фото, необязательны. Чем больше укажете
+                        — тем точнее образ.
                       </p>
                     </div>
                   </CardContent>
@@ -745,7 +745,8 @@ export default function OutfitSelection() {
                   {analysisStatus || "Подбираем ваш образ..."}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Это может занять 1–3 минуты. Не закрывайте страницу.
+                  Это может занять 1–3 минуты, в редких случаях — до 5 минут. Не
+                  закрывайте страницу.
                 </p>
               </CardContent>
             </Card>
@@ -768,7 +769,8 @@ export default function OutfitSelection() {
                   <div className="space-y-3">
                     <p>
                       Все созданные образы автоматически сохраняются в вашем
-                      личном кабинете — вы можете вернуться к ним в любой момент.
+                      личном кабинете — вы можете вернуться к ним в любой
+                      момент.
                     </p>
                     <Button
                       variant="outline"
