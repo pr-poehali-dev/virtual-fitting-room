@@ -37,60 +37,31 @@ def extract_nm_id(raw: str) -> Optional[int]:
     return None
 
 
+_BASKET_RANGES = [
+    (143, 1), (287, 2), (431, 3), (719, 4), (1007, 5), (1061, 6),
+    (1115, 7), (1169, 8), (1313, 9), (1601, 10), (1655, 11), (1919, 12),
+    (2045, 13), (2189, 14), (2405, 15), (2621, 16), (2837, 17), (3053, 18),
+    (3269, 19), (3485, 20), (3701, 21), (3917, 22), (4133, 23), (4349, 24),
+    (4565, 25), (4877, 26), (5189, 27), (5501, 28), (5813, 29), (6125, 30),
+    (6437, 31), (6749, 32), (7061, 33), (7373, 34), (7685, 35), (7997, 36),
+    (8309, 37), (8621, 38), (8933, 39), (9245, 40), (9557, 41), (9869, 42),
+    (10181, 43), (10493, 44), (10805, 45), (11117, 46), (11429, 47),
+    (11741, 48), (12053, 49), (12365, 50),
+]
+
+
 def _basket_num(vol: int) -> int:
-    '''Возвращает номер basket-хоста WB по диапазону vol.'''
-    if vol <= 143:
-        return 1
-    elif vol <= 287:
-        return 2
-    elif vol <= 431:
-        return 3
-    elif vol <= 719:
-        return 4
-    elif vol <= 1007:
-        return 5
-    elif vol <= 1061:
-        return 6
-    elif vol <= 1115:
-        return 7
-    elif vol <= 1169:
-        return 8
-    elif vol <= 1313:
-        return 9
-    elif vol <= 1601:
-        return 10
-    elif vol <= 1655:
-        return 11
-    elif vol <= 1919:
-        return 12
-    elif vol <= 2045:
-        return 13
-    elif vol <= 2189:
-        return 14
-    elif vol <= 2405:
-        return 15
-    elif vol <= 2621:
-        return 16
-    elif vol <= 2837:
-        return 17
-    elif vol <= 3053:
-        return 18
-    elif vol <= 3269:
-        return 19
-    elif vol <= 3485:
-        return 20
-    elif vol <= 3701:
-        return 21
-    elif vol <= 3917:
-        return 22
-    elif vol <= 4133:
-        return 23
-    elif vol <= 4349:
-        return 24
-    elif vol <= 4565:
-        return 25
-    else:
-        return 26
+    '''Возвращает номер basket-хоста WB по диапазону vol.
+
+    Диапазоны WB постоянно растут вместе с новыми артикулами.
+    Для значений выше последнего известного диапазона оцениваем номер
+    хоста по шагу ~312 vol на хост, чтобы покрыть новые большие товары.
+    '''
+    for max_vol, num in _BASKET_RANGES:
+        if vol <= max_vol:
+            return num
+    last_max, last_num = _BASKET_RANGES[-1]
+    return last_num + ((vol - last_max) // 312) + 1
 
 
 def _basket_host(vol: int) -> str:
@@ -102,13 +73,13 @@ def _candidate_hosts(vol: int) -> list:
     base = _basket_num(vol)
     nums = [base]
     # Перебираем вверх и вниз вокруг расчётного значения
-    for delta in range(1, 8):
+    for delta in range(1, 12):
         nums.append(base + delta)
         if base - delta >= 1:
             nums.append(base - delta)
     seen = []
     for n in nums:
-        if 1 <= n <= 40 and n not in seen:
+        if 1 <= n <= 60 and n not in seen:
             seen.append(n)
     return [f'basket-{n:02d}.wbbasket.ru' for n in seen]
 
