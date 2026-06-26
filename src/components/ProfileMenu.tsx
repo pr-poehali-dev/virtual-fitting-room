@@ -4,7 +4,7 @@ import Icon from '@/components/ui/icon';
 
 const ProfileMenu = () => {
   const location = useLocation();
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(true);
 
   const menuItems = [
     { path: '/profile', icon: 'Home', label: 'Главная' },
