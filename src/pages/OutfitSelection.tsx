@@ -23,6 +23,7 @@ import OutfitReport, {
   OutfitResult,
   OutfitFormParams,
 } from "@/components/OutfitReport";
+import FaqAccordion from "@/components/FaqAccordion";
 
 const START_API =
   "https://functions.poehali.dev/1551f3e9-8029-441b-ac77-2dc9cf164bdc";
@@ -758,6 +759,44 @@ export default function OutfitSelection() {
               onReset={handleReset}
             />
           )}
+
+          <FaqAccordion
+            items={[
+              {
+                question: "Где посмотреть все созданные образы?",
+                answer: user ? (
+                  <div className="space-y-3">
+                    <p>
+                      Все созданные образы автоматически сохраняются в вашем
+                      личном кабинете — вы можете вернуться к ним в любой момент.
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate("/profile/history-colorguide")}
+                    >
+                      <Icon name="Images" size={18} className="mr-2" />
+                      Мои образы
+                    </Button>
+                  </div>
+                ) : (
+                  <p>
+                    Все созданные образы сохраняются в личном кабинете. Войдите
+                    в аккаунт, чтобы они были доступны вам в любой момент.
+                  </p>
+                ),
+              },
+              {
+                question: "Сколько времени занимает подбор?",
+                answer:
+                  "Обычно 1–3 минуты, в редких случаях — до 5 минут. Не закрывайте страницу до завершения.",
+              },
+              {
+                question: "Какое фото загружать?",
+                answer:
+                  "Фото в полный рост, при дневном свете, на нейтральном фоне. Не в зимней верхней одежде — она скрывает фигуру.",
+              },
+            ]}
+          />
         </div>
       </section>
     </Layout>
