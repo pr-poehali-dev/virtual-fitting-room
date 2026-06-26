@@ -85,6 +85,7 @@ export default function ReplicateClothingSelector({
   showCategoryError,
 }: ReplicateClothingSelectorProps) {
   const [filtersExpanded, setFiltersExpanded] = React.useState(false);
+  const [catalogExpanded, setCatalogExpanded] = React.useState(false);
   const [wbUrl, setWbUrl] = React.useState("");
   const [wbLoading, setWbLoading] = React.useState(false);
 
@@ -264,6 +265,23 @@ export default function ReplicateClothingSelector({
           </Button>
         </div>
 
+        <div className="border rounded-lg">
+          <button
+            type="button"
+            onClick={() => setCatalogExpanded(!catalogExpanded)}
+            className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+          >
+            <span className="text-sm font-semibold">Каталог</span>
+            <Icon
+              name={catalogExpanded ? "ChevronUp" : "ChevronDown"}
+              size={20}
+              className="text-muted-foreground"
+            />
+          </button>
+
+          {catalogExpanded && (
+            <div className="p-3 pt-0 border-t space-y-3">
+              <div className="pt-3" />
         {filters && (
           <div className="border rounded-lg">
             <button
@@ -466,6 +484,9 @@ export default function ReplicateClothingSelector({
             <p className="text-sm text-center text-muted-foreground">
               Каталог пуст
             </p>
+          )}
+        </div>
+            </div>
           )}
         </div>
       </div>
