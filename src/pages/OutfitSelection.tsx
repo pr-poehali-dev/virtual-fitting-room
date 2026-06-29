@@ -24,6 +24,19 @@ import OutfitReport, {
   OutfitFormParams,
 } from "@/components/OutfitReport";
 import FaqAccordion from "@/components/FaqAccordion";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  OutfitProfile,
+  fetchOutfitProfiles,
+  saveOutfitProfile,
+} from "@/lib/outfitProfiles";
 
 const START_API =
   "https://functions.poehali.dev/1551f3e9-8029-441b-ac77-2dc9cf164bdc";
@@ -316,6 +329,13 @@ export default function OutfitSelection() {
   const [customFavoritePatterns, setCustomFavoritePatterns] = useState<string>("");
   const [customDislikedPatterns, setCustomDislikedPatterns] = useState<string>("");
 
+  const [profiles, setProfiles] = useState<OutfitProfile[]>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState<string>("");
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [profileComment, setProfileComment] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisStatus, setAnalysisStatus] = useState<string>("");
   const [resultUrl, setResultUrl] = useState<string | null>(null);
@@ -333,6 +353,18 @@ export default function OutfitSelection() {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
+
+  const loadProfiles = () => {
+    if (!user) return;
+    fetchOutfitProfiles()
+      .then(setProfiles)
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    loadProfiles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const toggleMulti = (
     value: string,
@@ -459,32 +491,15 @@ export default function OutfitSelection() {
     }
   };
 
-  const handleAnalyze = async () => {
-    if (!user) {
-      toast.error("Войдите в аккаунт");
-      navigate("/login");
-      return;
-    }
-    if (!uploadedImage) {
-      toast.error("Загрузите фото в полный рост");
-      return;
-    }
-    if (!gender) {
-      toast.error("Укажите пол");
-      return;
-    }
-
+  const buildFormParams = (): OutfitFormParams => {
     let heightNum: number | undefined;
     if (height) {
       const n = parseInt(height, 10);
       if (!isNaN(n) && n >= 100 && n <= 250) heightNum = n;
     }
-
     const occasionFinal = customOccasion.trim() || occasion;
-
     const isFemale = gender === "Женский";
-
-    const formParams = {
+    return {
       gender,
       height: heightNum,
       kibbe,
@@ -507,6 +522,110 @@ export default function OutfitSelection() {
       style_age: styleAge.trim(),
       comment: comment.trim(),
     };
+  };
+
+  const buildAutoComment = (): string => {
+    const parts: string[] = [];
+    if (gender) parts.push(gender.toLowerCase());
+    if (archetypes.length) parts.push(`архетип: ${archetypes.join(", ")}`);
+    if (kibbe) parts.push(`типаж: ${kibbe}`);
+    const occ = customOccasion.trim() || occasion;
+    if (occ) parts.push(`повод: ${occ}`);
+    return parts.join("; ");
+  };
+
+  const applyProfile = (id: string) => {
+    setSelectedProfileId(id);
+    if (!id) return;
+    const profile = profiles.find((p) => String(p.id) === id);
+    if (!profile) return;
+    const fp = profile.form_params || {};
+    setGender(fp.gender || "");
+    setHeight(fp.height ? String(fp.height) : "");
+    setKibbe(fp.kibbe || "");
+    setArchetypes(fp.archetypes || []);
+    setColortypes(fp.colortypes || []);
+    setHairLength(fp.hair_length || "");
+    setHairColor(fp.hair_color || "");
+    setEyeColor(fp.eye_color || "");
+    setSeason(fp.season || "");
+    setZodiac(fp.zodiac || "");
+    setOccasion(fp.occasion || "");
+    setCustomOccasion("");
+    setTags(fp.tags || []);
+    setFavoriteColors(fp.favorite_colors || []);
+    setDislikedColors(fp.disliked_colors || []);
+    setFavoriteFabrics(fp.favorite_fabrics || []);
+    setDislikedFabrics(fp.disliked_fabrics || []);
+    setFavoritePatterns(fp.favorite_patterns || []);
+    setDislikedPatterns(fp.disliked_patterns || []);
+    setSkirtLength(fp.skirt_length || "");
+    setStyleAge(fp.style_age ? String(fp.style_age) : "");
+    setComment(fp.comment || "");
+    setCustomFavoriteColors("");
+    setCustomDislikedColors("");
+    setCustomFavoriteFabrics("");
+    setCustomDislikedFabrics("");
+    setCustomFavoritePatterns("");
+    setCustomDislikedPatterns("");
+    toast.success(`Анкета «${profile.name}» загружена`);
+  };
+
+  const openSaveDialog = () => {
+    if (!user) {
+      toast.error("Войдите в аккаунт, чтобы сохранять анкеты");
+      navigate("/login");
+      return;
+    }
+    setProfileName("");
+    setProfileComment(buildAutoComment());
+    setSaveDialogOpen(true);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!profileName.trim()) {
+      toast.error("Введите название анкеты");
+      return;
+    }
+    setSavingProfile(true);
+    try {
+      await saveOutfitProfile({
+        name: profileName.trim(),
+        comment: profileComment.trim(),
+        form_params: buildFormParams(),
+      });
+      toast.success("Анкета сохранена");
+      setSaveDialogOpen(false);
+      loadProfiles();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Ошибка сохранения");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleAnalyze = async () => {
+    if (!user) {
+      toast.error("Войдите в аккаунт");
+      navigate("/login");
+      return;
+    }
+    if (!uploadedImage) {
+      toast.error("Загрузите фото в полный рост");
+      return;
+    }
+    if (!gender) {
+      toast.error("Укажите пол");
+      return;
+    }
+
+    let heightNum: number | undefined;
+    if (height) {
+      const n = parseInt(height, 10);
+      if (!isNaN(n) && n >= 100 && n <= 250) heightNum = n;
+    }
+
+    const formParams = buildFormParams();
 
     setIsAnalyzing(true);
     setAnalysisStatus("Запуск подбора...");
@@ -628,6 +747,30 @@ export default function OutfitSelection() {
               <LockedFormOverlay cost={COST}>
                 <Card>
                   <CardContent className="p-6 md:p-8 space-y-8">
+                    {user && profiles.length > 0 && (
+                      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                        <p className="font-medium mb-2 flex items-center gap-2">
+                          <Icon name="Bookmark" size={18} className="text-primary" />
+                          Быстрое заполнение из сохранённой анкеты
+                        </p>
+                        <Select
+                          value={selectedProfileId}
+                          onValueChange={applyProfile}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Выберите анкету" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {profiles.map((p) => (
+                              <SelectItem key={p.id} value={String(p.id)}>
+                                {p.name}
+                                {p.comment ? ` — ${p.comment}` : ""}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
                         <p className="font-medium mb-3">
@@ -1026,17 +1169,29 @@ export default function OutfitSelection() {
                     </div>
 
                     <div className="flex flex-col items-center gap-3 pt-2">
-                      <Button
-                        size="lg"
-                        className="w-full md:w-auto"
-                        onClick={handleAnalyze}
-                      >
-                        <Icon name="Sparkles" size={18} className="mr-2" />
-                        Подобрать образ за {COST} ₽
-                      </Button>
+                      <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                        <Button
+                          size="lg"
+                          className="w-full sm:w-auto"
+                          onClick={handleAnalyze}
+                        >
+                          <Icon name="Sparkles" size={18} className="mr-2" />
+                          Подобрать образ за {COST} ₽
+                        </Button>
+                        <Button
+                          size="lg"
+                          variant="outline"
+                          className="w-full sm:w-auto"
+                          onClick={openSaveDialog}
+                        >
+                          <Icon name="BookmarkPlus" size={18} className="mr-2" />
+                          Сохранить анкету
+                        </Button>
+                      </div>
                       <p className="text-xs text-muted-foreground text-center">
                         Все поля, кроме фото, необязательны. Чем больше укажете
-                        — тем точнее образ.
+                        — тем точнее образ. Сохраните анкету, чтобы быстро
+                        заполнять форму в следующий раз.
                       </p>
                     </div>
                   </CardContent>
@@ -1114,6 +1269,59 @@ export default function OutfitSelection() {
           />
         </div>
       </section>
+
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Icon name="BookmarkPlus" size={20} className="text-primary" />
+              Сохранить анкету
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="profile-name">Название анкеты</Label>
+              <Input
+                id="profile-name"
+                className="mt-1.5"
+                placeholder="Например: Образы для работы"
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                maxLength={120}
+              />
+            </div>
+            <div>
+              <Label htmlFor="profile-comment">Комментарий</Label>
+              <Textarea
+                id="profile-comment"
+                className="mt-1.5"
+                placeholder="Например: форма для образов в архетипе Маг"
+                value={profileComment}
+                onChange={(e) => setProfileComment(e.target.value)}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Заполнен автоматически — можно отредактировать.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSaveDialogOpen(false)}
+              disabled={savingProfile}
+            >
+              Отмена
+            </Button>
+            <Button onClick={handleSaveProfile} disabled={savingProfile}>
+              {savingProfile && (
+                <Icon name="Loader2" size={16} className="mr-2 animate-spin" />
+              )}
+              Сохранить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }

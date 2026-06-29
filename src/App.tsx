@@ -18,6 +18,7 @@ import Profile from "./pages/Profile";
 import ProfileDashboard from "./pages/ProfileDashboard";
 import ProfileLookbooks from "./pages/ProfileLookbooks";
 import ProfileModels from "./pages/ProfileModels";
+import ProfileOutfitProfiles from "./pages/ProfileOutfitProfiles";
 import ProfileHistory from "./pages/ProfileHistory";
 import ProfileHistoryColortypes from "./pages/ProfileHistoryColortypes";
 import ProfileHistoryFreegen from "./pages/ProfileHistoryFreegen";
@@ -116,6 +117,7 @@ const App = () => (
             <Route path="/profile" element={<ProfileDashboard />} />
             <Route path="/profile/lookbooks" element={<ProfileLookbooks />} />
             <Route path="/profile/models" element={<ProfileModels />} />
+            <Route path="/profile/outfit-profiles" element={<ProfileOutfitProfiles />} />
             <Route path="/profile/history" element={<ProfileHistory />} />
             <Route path="/profile/history-colortypes" element={<ProfileHistoryColortypes />} />
             <Route path="/profile/history-colorguide" element={<ProfileHistoryColorGuide />} />

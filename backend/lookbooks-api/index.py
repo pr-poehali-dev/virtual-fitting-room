@@ -178,6 +178,124 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': error_msg or 'Unauthorized'})
                 }
         
+        # ===== Сохранённые анкеты для подбора образа (outfit_profiles) =====
+        # Отдельная ветка по action — не затрагивает логику лукбуков.
+        action_param = (event.get('queryStringParameters') or {}).get('action')
+        body_action = None
+        if method in ('POST', 'PUT') and event.get('body'):
+            try:
+                _peek = json.loads(event.get('body') or '{}')
+                body_action = _peek.get('action')
+            except Exception:
+                body_action = None
+        if action_param == 'outfit_profiles' or body_action == 'outfit_profiles':
+            cors_headers = {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': get_cors_origin(event),
+                'Access-Control-Allow-Credentials': 'true'
+            }
+            if not user_id:
+                return {
+                    'statusCode': 401,
+                    'headers': cors_headers,
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Unauthorized'})
+                }
+
+            if method == 'GET':
+                cursor.execute(
+                    "SELECT id, name, comment, form_params, created_at "
+                    "FROM outfit_profiles WHERE user_id = %s ORDER BY created_at DESC",
+                    (user_id,)
+                )
+                rows = cursor.fetchall()
+                profiles = []
+                for r in rows:
+                    profiles.append({
+                        'id': r['id'],
+                        'name': r['name'],
+                        'comment': r['comment'] or '',
+                        'form_params': r['form_params'] or {},
+                        'created_at': r['created_at'].isoformat() if r.get('created_at') else None,
+                    })
+                return {
+                    'statusCode': 200,
+                    'headers': cors_headers,
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'profiles': profiles}, ensure_ascii=False)
+                }
+
+            if method == 'POST':
+                data = json.loads(event.get('body') or '{}')
+                name = (data.get('name') or '').strip()[:120]
+                comment = (data.get('comment') or '').strip()
+                form_params = data.get('form_params')
+                if not name:
+                    return {
+                        'statusCode': 400,
+                        'headers': cors_headers,
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'error': 'Укажите название анкеты'})
+                    }
+                if not isinstance(form_params, dict):
+                    form_params = {}
+                cursor.execute("SELECT COUNT(*) AS c FROM outfit_profiles WHERE user_id = %s", (user_id,))
+                count_row = cursor.fetchone()
+                if count_row and count_row['c'] >= 50:
+                    return {
+                        'statusCode': 400,
+                        'headers': cors_headers,
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'error': 'Достигнут лимит сохранённых анкет (50)'})
+                    }
+                cursor.execute(
+                    "INSERT INTO outfit_profiles (user_id, name, comment, form_params) "
+                    "VALUES (%s, %s, %s, %s) RETURNING id, created_at",
+                    (user_id, name, comment, json.dumps(form_params, ensure_ascii=False))
+                )
+                new_row = cursor.fetchone()
+                conn.commit()
+                return {
+                    'statusCode': 200,
+                    'headers': cors_headers,
+                    'isBase64Encoded': False,
+                    'body': json.dumps({
+                        'id': new_row['id'],
+                        'name': name,
+                        'comment': comment,
+                        'form_params': form_params,
+                        'created_at': new_row['created_at'].isoformat() if new_row.get('created_at') else None,
+                    }, ensure_ascii=False)
+                }
+
+            if method == 'DELETE':
+                pid = (event.get('queryStringParameters') or {}).get('id')
+                if not pid:
+                    return {
+                        'statusCode': 400,
+                        'headers': cors_headers,
+                        'isBase64Encoded': False,
+                        'body': json.dumps({'error': 'Не указан id анкеты'})
+                    }
+                cursor.execute(
+                    "DELETE FROM outfit_profiles WHERE id = %s AND user_id = %s",
+                    (pid, user_id)
+                )
+                conn.commit()
+                return {
+                    'statusCode': 200,
+                    'headers': cors_headers,
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'success': True})
+                }
+
+            return {
+                'statusCode': 405,
+                'headers': cors_headers,
+                'isBase64Encoded': False,
+                'body': json.dumps({'error': 'Method not allowed'})
+            }
+
         if method == 'GET':
             query_params = event.get('queryStringParameters') or {}
             lookbook_id = query_params.get('id')

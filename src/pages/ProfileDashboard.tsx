@@ -42,6 +42,13 @@ export default function ProfileDashboard() {
           color: 'bg-purple-100 text-purple-700'
         },
         {
+          title: 'Мои анкеты для образов',
+          description: 'Сохранённые анкеты для быстрого подбора образа',
+          icon: 'Bookmark',
+          path: '/profile/outfit-profiles',
+          color: 'bg-teal-100 text-teal-700'
+        },
+        {
           title: 'История примерок',
           description: 'Все ваши виртуальные примерки',
           icon: 'Shirt',

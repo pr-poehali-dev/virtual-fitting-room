@@ -10,6 +10,7 @@ const ProfileMenu = () => {
     { path: '/profile', icon: 'Home', label: 'Главная' },
     { path: '/profile/lookbooks', icon: 'Album', label: 'Лукбуки' },
     { path: '/profile/models', icon: 'Users', label: 'Мои модели' },
+    { path: '/profile/outfit-profiles', icon: 'Bookmark', label: 'Мои анкеты для образов' },
     { path: '/profile/wallet', icon: 'Wallet', label: 'Кошелёк' },
     { path: '/profile/settings', icon: 'Settings', label: 'Настройки' },
   ];
