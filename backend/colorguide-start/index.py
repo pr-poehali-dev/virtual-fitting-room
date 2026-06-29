@@ -24,7 +24,7 @@ SERVICE_LABELS = {
 SERVICE_COSTS = {
     'colorguide': 50,
     'style': 50,
-    'outfit': 100,
+    'outfit': 50,
 }
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
