@@ -29,6 +29,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -1277,6 +1278,10 @@ export default function OutfitSelection() {
               <Icon name="BookmarkPlus" size={20} className="text-primary" />
               Сохранить анкету
             </DialogTitle>
+            <DialogDescription>
+              Сохраните заполненные параметры, чтобы быстро использовать их при
+              следующем подборе образа.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
