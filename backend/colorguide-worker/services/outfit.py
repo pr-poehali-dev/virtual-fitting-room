@@ -65,6 +65,14 @@ def build_params_block(form_params: dict) -> str:
     add('Повод / куда собирается', form_params.get('occasion'))
     add('Знак зодиака', form_params.get('zodiac'))
     add('Желаемые акценты (теги)', form_params.get('tags'))
+    add('Цвета, которые НРАВЯТСЯ (используй их в образе)', form_params.get('favorite_colors'))
+    add('Цвета, которые НЕ НРАВЯТСЯ (НЕ используй их)', form_params.get('disliked_colors'))
+    add('Ткани, которые НРАВЯТСЯ (отдавай им предпочтение)', form_params.get('favorite_fabrics'))
+    add('Ткани, которые НЕ НРАВЯТСЯ (избегай их)', form_params.get('disliked_fabrics'))
+    add('Орнаменты, которые НРАВЯТСЯ', form_params.get('favorite_patterns'))
+    add('Орнаменты, которые НЕ НРАВЯТСЯ (избегай их)', form_params.get('disliked_patterns'))
+    add('Предпочтения по длине юбок (для женских образов)', form_params.get('skirt_length'))
+    add('Примерный возраст для образа (ориентируйся на него по уместности фасонов)', form_params.get('style_age'))
     add('Комментарий клиента', form_params.get('comment'))
 
     if not lines:

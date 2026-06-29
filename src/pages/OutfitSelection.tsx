@@ -123,10 +123,163 @@ const TAGS = [
   "Total look",
   "Монохром",
   "Акцент на аксессуары",
+  "Удобный",
+  "Комфортный",
+  "Не как у всех",
+  "Сдержанный",
+  "Практичный",
+  "Яркий и запоминающийся",
+];
+
+const FAVORITE_COLORS = [
+  "Чёрный",
+  "Белый",
+  "Бежевый",
+  "Серый",
+  "Синий",
+  "Голубой",
+  "Зелёный",
+  "Изумрудный",
+  "Красный",
+  "Бордовый",
+  "Розовый",
+  "Пудровый",
+  "Жёлтый",
+  "Оранжевый",
+  "Коричневый",
+  "Фиолетовый",
+  "Бирюзовый",
+  "Золотой",
+  "Серебряный",
+];
+
+const FABRICS = [
+  "Хлопок",
+  "Лён",
+  "Шёлк",
+  "Шерсть",
+  "Кашемир",
+  "Трикотаж",
+  "Деним",
+  "Кожа",
+  "Замша",
+  "Вискоза",
+  "Атлас",
+  "Бархат",
+  "Кружево",
+  "Синтетика",
+  "Плотные ткани",
+  "Лёгкие струящиеся",
+];
+
+const PATTERNS = [
+  "Однотонное",
+  "Полоска",
+  "Клетка",
+  "Горох",
+  "Цветочный",
+  "Геометрия",
+  "Анималистичный",
+  "Абстракция",
+  "Этнический",
+  "Пейсли",
+  "Камуфляж",
+];
+
+const SKIRT_LENGTHS = [
+  "Мини",
+  "До колена",
+  "Миди",
+  "Макси",
+  "В пол",
+  "Не ношу юбки",
 ];
 
 const MAX_ARCHETYPES = 4;
 const MAX_COLORTYPES = 2;
+
+function playReadySound() {
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext })
+        .webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+    const notes = [880, 1108.73, 1318.51];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      const start = now + i * 0.16;
+      const end = start + 0.22;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.18, start + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, end);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(end);
+    });
+    setTimeout(() => ctx.close(), 1200);
+  } catch {
+    // звук не критичен — молча игнорируем
+  }
+}
+
+function TagPicker({
+  title,
+  hint,
+  options,
+  selected,
+  onToggle,
+  custom,
+  onCustomChange,
+}: {
+  title: string;
+  hint?: string;
+  options: string[];
+  selected: string[];
+  onToggle: (value: string) => void;
+  custom: string;
+  onCustomChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <p className="font-medium mb-2">
+        {title}{" "}
+        <span className="text-muted-foreground text-xs">(необязательно)</span>
+      </p>
+      {hint && (
+        <p className="text-xs text-muted-foreground mb-2">{hint}</p>
+      )}
+      <div className="flex flex-wrap gap-2">
+        {options.map((o) => (
+          <button
+            key={o}
+            type="button"
+            onClick={() => onToggle(o)}
+            className={`rounded-full border px-3 py-1.5 text-sm transition-all ${
+              selected.includes(o)
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border hover:border-primary/40"
+            }`}
+          >
+            {o}
+          </button>
+        ))}
+      </div>
+      <Input
+        className="mt-2"
+        placeholder="Свой вариант (через запятую)"
+        value={custom}
+        onChange={(e) => onCustomChange(e.target.value)}
+      />
+    </div>
+  );
+}
 
 export default function OutfitSelection() {
   const { user } = useAuth();
@@ -148,6 +301,20 @@ export default function OutfitSelection() {
   const [customOccasion, setCustomOccasion] = useState<string>("");
   const [tags, setTags] = useState<string[]>([]);
   const [comment, setComment] = useState<string>("");
+  const [favoriteColors, setFavoriteColors] = useState<string[]>([]);
+  const [dislikedColors, setDislikedColors] = useState<string[]>([]);
+  const [favoriteFabrics, setFavoriteFabrics] = useState<string[]>([]);
+  const [dislikedFabrics, setDislikedFabrics] = useState<string[]>([]);
+  const [favoritePatterns, setFavoritePatterns] = useState<string[]>([]);
+  const [dislikedPatterns, setDislikedPatterns] = useState<string[]>([]);
+  const [skirtLength, setSkirtLength] = useState<string>("");
+  const [styleAge, setStyleAge] = useState<string>("");
+  const [customFavoriteColors, setCustomFavoriteColors] = useState<string>("");
+  const [customDislikedColors, setCustomDislikedColors] = useState<string>("");
+  const [customFavoriteFabrics, setCustomFavoriteFabrics] = useState<string>("");
+  const [customDislikedFabrics, setCustomDislikedFabrics] = useState<string>("");
+  const [customFavoritePatterns, setCustomFavoritePatterns] = useState<string>("");
+  const [customDislikedPatterns, setCustomDislikedPatterns] = useState<string>("");
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisStatus, setAnalysisStatus] = useState<string>("");
@@ -182,6 +349,26 @@ export default function OutfitSelection() {
       }
       setList([...list, value]);
     }
+  };
+
+  const toggleTag = (
+    value: string,
+    list: string[],
+    setList: React.Dispatch<React.SetStateAction<string[]>>,
+  ) => {
+    setList((prev) =>
+      prev.includes(value)
+        ? prev.filter((x) => x !== value)
+        : [...prev, value],
+    );
+  };
+
+  const mergeCustom = (list: string[], custom: string): string[] => {
+    const extra = custom
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    return [...list, ...extra];
   };
 
   const resizeImage = (base64Str: string, maxSize: number): Promise<string> => {
@@ -251,6 +438,7 @@ export default function OutfitSelection() {
           setResultParams(data.form_params as OutfitFormParams);
         setIsAnalyzing(false);
         setAnalysisStatus("");
+        playReadySound();
         toast.success("Ваш образ готов!");
         refreshBalance();
       } else if (data.status === "failed") {
@@ -294,6 +482,8 @@ export default function OutfitSelection() {
 
     const occasionFinal = customOccasion.trim() || occasion;
 
+    const isFemale = gender === "Женский";
+
     const formParams = {
       gender,
       height: heightNum,
@@ -307,6 +497,14 @@ export default function OutfitSelection() {
       zodiac,
       occasion: occasionFinal,
       tags,
+      favorite_colors: mergeCustom(favoriteColors, customFavoriteColors),
+      disliked_colors: mergeCustom(dislikedColors, customDislikedColors),
+      favorite_fabrics: mergeCustom(favoriteFabrics, customFavoriteFabrics),
+      disliked_fabrics: mergeCustom(dislikedFabrics, customDislikedFabrics),
+      favorite_patterns: mergeCustom(favoritePatterns, customFavoritePatterns),
+      disliked_patterns: mergeCustom(dislikedPatterns, customDislikedPatterns),
+      skirt_length: isFemale ? skirtLength : "",
+      style_age: styleAge.trim(),
       comment: comment.trim(),
     };
 
@@ -387,6 +585,27 @@ export default function OutfitSelection() {
     setCustomOccasion("");
     setTags([]);
     setComment("");
+    setFavoriteColors([]);
+    setDislikedColors([]);
+    setFavoriteFabrics([]);
+    setDislikedFabrics([]);
+    setFavoritePatterns([]);
+    setDislikedPatterns([]);
+    setSkirtLength("");
+    setStyleAge("");
+    setCustomFavoriteColors("");
+    setCustomDislikedColors("");
+    setCustomFavoriteFabrics("");
+    setCustomDislikedFabrics("");
+    setCustomFavoritePatterns("");
+    setCustomDislikedPatterns("");
+  };
+
+  const handleEdit = () => {
+    setResultUrl(null);
+    setResultData(null);
+    setResultParams(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -698,6 +917,99 @@ export default function OutfitSelection() {
                       </div>
                     </div>
 
+                    <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
+                      <TagPicker
+                        title="Цвета, которые нравятся"
+                        options={FAVORITE_COLORS}
+                        selected={favoriteColors}
+                        onToggle={(v) => toggleTag(v, favoriteColors, setFavoriteColors)}
+                        custom={customFavoriteColors}
+                        onCustomChange={setCustomFavoriteColors}
+                      />
+                      <TagPicker
+                        title="Цвета, которые не нравятся"
+                        options={FAVORITE_COLORS}
+                        selected={dislikedColors}
+                        onToggle={(v) => toggleTag(v, dislikedColors, setDislikedColors)}
+                        custom={customDislikedColors}
+                        onCustomChange={setCustomDislikedColors}
+                      />
+                      <TagPicker
+                        title="Ткани, которые нравятся"
+                        options={FABRICS}
+                        selected={favoriteFabrics}
+                        onToggle={(v) => toggleTag(v, favoriteFabrics, setFavoriteFabrics)}
+                        custom={customFavoriteFabrics}
+                        onCustomChange={setCustomFavoriteFabrics}
+                      />
+                      <TagPicker
+                        title="Ткани, которые не нравятся"
+                        options={FABRICS}
+                        selected={dislikedFabrics}
+                        onToggle={(v) => toggleTag(v, dislikedFabrics, setDislikedFabrics)}
+                        custom={customDislikedFabrics}
+                        onCustomChange={setCustomDislikedFabrics}
+                        hint="Например: плотные, синтетические"
+                      />
+                      <TagPicker
+                        title="Орнаменты, которые нравятся"
+                        options={PATTERNS}
+                        selected={favoritePatterns}
+                        onToggle={(v) => toggleTag(v, favoritePatterns, setFavoritePatterns)}
+                        custom={customFavoritePatterns}
+                        onCustomChange={setCustomFavoritePatterns}
+                      />
+                      <TagPicker
+                        title="Орнаменты, которые не нравятся"
+                        options={PATTERNS}
+                        selected={dislikedPatterns}
+                        onToggle={(v) => toggleTag(v, dislikedPatterns, setDislikedPatterns)}
+                        custom={customDislikedPatterns}
+                        onCustomChange={setCustomDislikedPatterns}
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {gender === "Женский" && (
+                        <div>
+                          <p className="font-medium mb-2">
+                            Предпочтения по длине юбок{" "}
+                            <span className="text-muted-foreground text-xs">
+                              (необязательно)
+                            </span>
+                          </p>
+                          <Select value={skirtLength} onValueChange={setSkirtLength}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Не выбрано" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SKIRT_LENGTHS.map((s) => (
+                                <SelectItem key={s} value={s}>
+                                  {s}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-medium mb-2">
+                          Примерный возраст для образа{" "}
+                          <span className="text-muted-foreground text-xs">
+                            (необязательно)
+                          </span>
+                        </p>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={120}
+                          placeholder="Например, 30"
+                          value={styleAge}
+                          onChange={(e) => setStyleAge(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
                     <div>
                       <p className="font-medium mb-2">
                         Комментарий{" "}
@@ -758,6 +1070,7 @@ export default function OutfitSelection() {
               data={resultData}
               formParams={resultParams}
               onReset={handleReset}
+              onEdit={handleEdit}
             />
           )}
 

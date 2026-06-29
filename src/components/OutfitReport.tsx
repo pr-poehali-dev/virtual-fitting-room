@@ -46,6 +46,14 @@ export interface OutfitFormParams {
   zodiac?: string;
   occasion?: string;
   tags?: string[];
+  favorite_colors?: string[];
+  disliked_colors?: string[];
+  favorite_fabrics?: string[];
+  disliked_fabrics?: string[];
+  favorite_patterns?: string[];
+  disliked_patterns?: string[];
+  skirt_length?: string;
+  style_age?: string | number;
   comment?: string;
 }
 
@@ -54,6 +62,7 @@ interface Props {
   data: OutfitResult | null;
   formParams?: OutfitFormParams | null;
   onReset: () => void;
+  onEdit?: () => void;
 }
 
 async function fetchAsBlob(url: string): Promise<Blob> {
@@ -152,6 +161,14 @@ function buildParamRows(
   add("Знак зодиака", fp.zodiac);
   add("Повод", fp.occasion);
   add("Акценты", fp.tags);
+  add("Любимые цвета", fp.favorite_colors);
+  add("Нежелательные цвета", fp.disliked_colors);
+  add("Любимые ткани", fp.favorite_fabrics);
+  add("Нежелательные ткани", fp.disliked_fabrics);
+  add("Любимые орнаменты", fp.favorite_patterns);
+  add("Нежелательные орнаменты", fp.disliked_patterns);
+  add("Длина юбок", fp.skirt_length);
+  add("Возраст для образа", fp.style_age);
   add("Комментарий", fp.comment);
   return rows;
 }
@@ -167,7 +184,7 @@ function makeupIsEmpty(item?: NamedItem): boolean {
   return text.includes("не требуется") || text.includes("не нужен") || text.includes("без макияжа");
 }
 
-export default function OutfitReport({ imageUrl, data, formParams, onReset }: Props) {
+export default function OutfitReport({ imageUrl, data, formParams, onReset, onEdit }: Props) {
   const paramRows = buildParamRows(formParams);
   const male = isMaleGender(formParams?.gender);
   const showMakeup =
@@ -381,6 +398,12 @@ export default function OutfitReport({ imageUrl, data, formParams, onReset }: Pr
           <Icon name="Download" size={18} className="mr-2" />
           Скачать картинку
         </Button>
+        {onEdit && (
+          <Button onClick={onEdit} variant="outline">
+            <Icon name="Pencil" size={18} className="mr-2" />
+            Изменить параметры
+          </Button>
+        )}
         <Button onClick={onReset}>
           <Icon name="RotateCcw" size={18} className="mr-2" />
           Подобрать новый образ
