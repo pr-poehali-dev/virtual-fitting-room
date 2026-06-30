@@ -10,7 +10,7 @@ import requests
 import psycopg2
 from datetime import datetime
 
-OPENROUTER_API_KEY = (os.environ.get("OPENROUTER_API_KEY") or os.environ.get("OPENROUTER_API_KEY_OLD") or "").strip()
+OPENROUTER_API_KEY = (os.environ.get("OPENROUTER_API_KEY_NEW") or os.environ.get("OPENROUTER_API_KEY_OLD") or "").strip()
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 DB_SCHEMA = 't_p29007832_virtual_fitting_room'
 
