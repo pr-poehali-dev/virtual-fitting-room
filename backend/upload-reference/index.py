@@ -13,8 +13,7 @@ MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB после декода
 
 def get_cors_origin(event: Dict[str, Any]) -> str:
     origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin', '')
-    allowed_origins = ['https://fitting-room.ru', 'https://preview--virtual-fitting-room.poehali.dev']
-    return origin if origin in allowed_origins else 'https://fitting-room.ru'
+    return origin if origin else 'https://fitting-room.ru'
 
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:

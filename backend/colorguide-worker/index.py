@@ -123,8 +123,7 @@ PROMPT_TEMPLATE = '''Ты профессиональный имидж-стили
 
 def get_cors_origin(event):
     origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin', '')
-    allowed_origins = ['https://fitting-room.ru', 'https://preview--virtual-fitting-room.poehali.dev']
-    return origin if origin in allowed_origins else 'https://fitting-room.ru'
+    return origin if origin else 'https://fitting-room.ru'
 
 
 def cors_headers(event):

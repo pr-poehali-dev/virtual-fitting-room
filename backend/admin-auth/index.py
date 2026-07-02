@@ -10,8 +10,7 @@ ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'fitting-room-admin-2024')
 
 def get_cors_origin(event: Dict[str, Any]) -> str:
     origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin', '')
-    allowed_origins = ['https://fitting-room.ru', 'https://p29007832.vercel.app']
-    return origin if origin in allowed_origins else 'https://fitting-room.ru'
+    return origin if origin else 'https://fitting-room.ru'
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''

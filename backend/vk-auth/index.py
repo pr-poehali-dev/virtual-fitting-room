@@ -22,8 +22,7 @@ def get_db_connection():
 
 def get_cors_origin(event: Dict[str, Any]) -> str:
     origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin', '')
-    allowed_origins = ['https://fitting-room.ru', 'https://preview--virtual-fitting-room.poehali.dev']
-    return origin if origin in allowed_origins else 'https://fitting-room.ru'
+    return origin if origin else 'https://fitting-room.ru'
 
 
 def fetch_vk_user_info(access_token: str) -> Dict[str, Any]:
