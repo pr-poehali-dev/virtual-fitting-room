@@ -1,6 +1,6 @@
 import Icon from "@/components/ui/icon";
 
-const SHOW_MAINTENANCE_BANNER = true;
+const SHOW_MAINTENANCE_BANNER = false;
 
 const MaintenanceBanner = () => {
   if (!SHOW_MAINTENANCE_BANNER) return null;

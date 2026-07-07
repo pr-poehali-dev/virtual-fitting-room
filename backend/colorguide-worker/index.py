@@ -771,11 +771,11 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
     except urllib.error.HTTPError as e:
         err_body = e.read().decode('utf-8', errors='replace')[:600] if hasattr(e, 'read') else ''
         print(f'[COLORGUIDE-WORKER] ERROR (image service) HTTP {e.code}: {err_body}')
-        mark_failed_and_refund(task_id, f'HTTP {e.code}: {err_body}', 'ошибка генерации')
+        mark_failed_and_refund(task_id, 'Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте позже.', 'ошибка генерации')
         return
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (image service): {e}')
-        mark_failed_and_refund(task_id, str(e), 'ошибка генерации')
+        mark_failed_and_refund(task_id, 'Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте позже.', 'ошибка генерации')
         return
 
     # Сегмент: сохраняем результат
@@ -799,7 +799,7 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
             conn.close()
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (save image result): {e}')
-        mark_failed_and_refund(task_id, f'Ошибка сохранения результата: {e}', 'ошибка обработки')
+        mark_failed_and_refund(task_id, 'Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте позже.', 'ошибка обработки')
 
 
 def refund_user(cursor, task_id: str, user_id, cost: int, reason: str):
@@ -899,7 +899,7 @@ def process_task(task_id: str):
             conn.close()
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (read task): {e}')
-        mark_failed_and_refund(task_id, f'Ошибка чтения задачи: {e}', 'ошибка обработки')
+        mark_failed_and_refund(task_id, 'Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте позже.', 'ошибка обработки')
         return
 
     # Картиночные сервисы (стиль, причёски и т.д.) идут отдельной веткой
@@ -916,7 +916,7 @@ def process_task(task_id: str):
         print(f'[COLORGUIDE-WORKER] colortype returned keys: {list(result.keys())}')
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (Gemini/S3): {e}')
-        mark_failed_and_refund(task_id, str(e), 'ошибка обработки')
+        mark_failed_and_refund(task_id, 'Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте позже.', 'ошибка обработки')
         return
 
     # Фиксация цветотипа:
@@ -940,7 +940,7 @@ def process_task(task_id: str):
         print(f'[COLORGUIDE-WORKER] WARNING: Invalid slug "{raw_slug}"')
         mark_failed_and_refund(
             task_id,
-            'Не удалось определить цветотип по этому фото. Попробуйте другое фото.',
+            'Не удалось определить цветотип по этому фото. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте другое фото.',
             'не удалось определить цветотип'
         )
         return
@@ -954,7 +954,7 @@ def process_task(task_id: str):
         print(f'[COLORGUIDE-WORKER] WARNING: Missing fields in result: {missing}')
         mark_failed_and_refund(
             task_id,
-            'Не удалось сформировать полный отчёт. Попробуйте ещё раз.',
+            'Не удалось сформировать полный отчёт. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте ещё раз.',
             f'неполный ответ Gemini: {",".join(missing)}'
         )
         return
@@ -981,7 +981,7 @@ def process_task(task_id: str):
             conn.close()
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (save result): {e}')
-        mark_failed_and_refund(task_id, f'Ошибка сохранения результата: {e}', 'ошибка обработки')
+        mark_failed_and_refund(task_id, 'Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте позже.', 'ошибка обработки')
 
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
