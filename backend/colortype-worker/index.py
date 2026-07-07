@@ -540,6 +540,12 @@ def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
         print(f'[OpenRouter] ERROR: Got HTML instead of JSON. Response: {error_text}')
         raise Exception(f'OpenRouter returned HTML error page (status {response.status_code}). This is usually a temporary server issue. Please try again.')
     
+    if response.status_code != 200:
+        diag_headers = {k: response.headers.get(k) for k in ['Server', 'CF-Ray', 'CF-Cache-Status', 'cf-mitigated', 'Content-Type', 'Date', 'Via', 'X-Clerk-Auth-Reason'] if response.headers.get(k)}
+        print(f'[OpenRouter] NON-200 status={response.status_code}')
+        print(f'[OpenRouter] NON-200 response headers: {json.dumps(diag_headers)}')
+        print(f'[OpenRouter] NON-200 FULL body: {response.text}')
+
     if response.status_code == 200:
         try:
             result = response.json()
@@ -574,7 +580,7 @@ def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
             print(f'[OpenRouter] ERROR parsing response: {str(e)}. Response: {response.text[:300]}')
             raise Exception(f'Failed to parse OpenRouter response: {str(e)}')
     
-    raise Exception(f'Failed to submit to OpenRouter: {response.status_code} - {response.text[:500]}')
+    raise Exception(f'Failed to submit to OpenRouter: {response.status_code} - {response.text[:2000]}')
 
 def refund_balance_if_needed(conn, user_id: str, task_id: str) -> None:
     '''Refund 50 rubles to user balance if not unlimited and not already refunded'''
