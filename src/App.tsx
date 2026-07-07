@@ -64,6 +64,7 @@ import PersonalData from "./pages/PersonalData";
 import AiEditor from "./pages/AiEditor";
 import LenormandDivination from "./pages/LenormandDivination";
 import ScrollToTop from "./components/ScrollToTop";
+import MaintenanceBanner from "./components/MaintenanceBanner";
 
 const APP_VERSION = "2.0.0";
 
@@ -95,6 +96,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+            <MaintenanceBanner />
             <ScrollToTop />
             <Routes>
               <Route path="/" element={<Home />} />
