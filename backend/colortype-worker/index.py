@@ -11,6 +11,13 @@ import base64
 
 COLORTYPE_COST = 50
 
+
+def get_openrouter_proxies():
+    proxy_url = (os.environ.get("OPENROUTER_PROXY_URL") or "").strip()
+    if not proxy_url:
+        return None
+    return {"http": proxy_url, "https": proxy_url}
+
 # Updated with 18 exclusion rules + bright/soft eyes distinction + penalties for accurate color type matching
 # Rule 1: Brown eyes → exclude GENTLE SPRING, BRIGHT SPRING, all SUMMER, SOFT WINTER
 # Rule 2: Cool light eyes → exclude VIVID AUTUMN, VIVID WINTER
@@ -528,7 +535,8 @@ def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
         'https://openrouter.ai/api/v1/chat/completions',
         headers=headers,
         json=payload,
-        timeout=60
+        timeout=60,
+        proxies=get_openrouter_proxies()
     )
     
     print(f'[OpenRouter] Response status: {response.status_code}, Content-Type: {response.headers.get("Content-Type", "unknown")}')

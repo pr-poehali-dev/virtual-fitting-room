@@ -15,6 +15,18 @@ import boto3
 import registry
 
 
+def _open_openrouter(req, timeout):
+    """Открывает запрос к OpenRouter. Если задан OPENROUTER_PROXY_URL —
+    идёт через HTTP(S)-прокси, иначе напрямую (как раньше)."""
+    proxy_url = (os.environ.get('OPENROUTER_PROXY_URL') or '').strip()
+    if proxy_url:
+        opener = urllib.request.build_opener(
+            urllib.request.ProxyHandler({'http': proxy_url, 'https': proxy_url})
+        )
+        return opener.open(req, timeout=timeout)
+    return urllib.request.urlopen(req, timeout=timeout)
+
+
 ALLOWED_SLUGS = [
     'bright-spring', 'bright-winter', 'dusty-summer', 'fiery-autumn',
     'gentle-autumn', 'gentle-spring', 'soft-summer', 'soft-winter',
@@ -325,7 +337,7 @@ def call_gemini_once(image_url: str, prompt: str, max_tokens: int = 6000) -> Dic
         },
         method='POST'
     )
-    with urllib.request.urlopen(req, timeout=90) as response:
+    with _open_openrouter(req, timeout=90) as response:
         result = json.loads(response.read().decode('utf-8'))
 
     content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
@@ -419,7 +431,7 @@ def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_na
             method='POST'
         )
         try:
-            with urllib.request.urlopen(req, timeout=90) as response:
+            with _open_openrouter(req, timeout=90) as response:
                 result = json.loads(response.read().decode('utf-8'))
             content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
             if not content or not content.strip():
@@ -499,7 +511,7 @@ def call_qwen_json(image_url: str, prompt: str, model: str) -> Dict[str, Any]:
             method='POST'
         )
         try:
-            with urllib.request.urlopen(req, timeout=180) as response:
+            with _open_openrouter(req, timeout=180) as response:
                 result = json.loads(response.read().decode('utf-8'))
             content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
             return _extract_json_object(content)

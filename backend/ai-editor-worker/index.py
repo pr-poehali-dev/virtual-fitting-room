@@ -12,6 +12,15 @@ from datetime import datetime
 
 OPENROUTER_API_KEY = (os.environ.get("OPENROUTER_API_KEY_NEW") or os.environ.get("OPENROUTER_API_KEY_OLD") or "").strip()
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+
+def get_openrouter_proxies():
+    proxy_url = (os.environ.get("OPENROUTER_PROXY_URL") or "").strip()
+    if not proxy_url:
+        return None
+    return {"http": proxy_url, "https": proxy_url}
+
+
 DB_SCHEMA = 't_p29007832_virtual_fitting_room'
 
 TEXT_EXTENSIONS = {
@@ -183,6 +192,7 @@ def call_openrouter(model, prompt_text):
             'max_tokens': 64000,
         },
         timeout=540,
+        proxies=get_openrouter_proxies(),
     )
     if response.status_code != 200:
         return None, f'OpenRouter ошибка ({response.status_code}): {response.text[:500]}'
