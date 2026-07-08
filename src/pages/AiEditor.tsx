@@ -49,6 +49,35 @@ const authHeaders = (): Record<string, string> => {
   return token ? { "X-Session-Token": token } : {};
 };
 
+interface ParsedResponse {
+  text: string;
+  changedFiles: string[];
+  deletedFiles: string[];
+}
+
+const parseAiResponse = (raw: string): ParsedResponse => {
+  if (!raw) return { text: "", changedFiles: [], deletedFiles: [] };
+  const changedFiles: string[] = [];
+  const fileBlockRe = /```file:(.+?)\n[\s\S]*?```/g;
+  let m: RegExpExecArray | null;
+  while ((m = fileBlockRe.exec(raw)) !== null) {
+    const name = m[1].trim();
+    if (name && !changedFiles.includes(name)) changedFiles.push(name);
+  }
+  const deletedFiles: string[] = [];
+  const deleteRe = /DELETE:(.+?)(?:\n|$)/g;
+  while ((m = deleteRe.exec(raw)) !== null) {
+    const name = m[1].trim();
+    if (name && !deletedFiles.includes(name)) deletedFiles.push(name);
+  }
+  const text = raw
+    .replace(fileBlockRe, "")
+    .replace(deleteRe, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  return { text, changedFiles, deletedFiles };
+};
+
 const TEXT_EXTENSIONS = [
   ".py", ".js", ".jsx", ".ts", ".tsx", ".html", ".css", ".scss", ".less",
   ".json", ".xml", ".yaml", ".yml", ".toml", ".ini", ".md", ".txt",
@@ -568,7 +597,9 @@ export default function AiEditor() {
             </CardContent>
           </Card>
 
-          {response && (
+          {response && (() => {
+            const parsed = parseAiResponse(response);
+            return (
             <Card className="bg-white border-gray-200 shadow-sm">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-3">
@@ -578,7 +609,7 @@ export default function AiEditor() {
                   </div>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(response);
+                      navigator.clipboard.writeText(parsed.text || response);
                       toast.success("Скопировано!");
                     }}
                     className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -586,12 +617,45 @@ export default function AiEditor() {
                     <Icon name="Copy" size={18} />
                   </button>
                 </div>
-                <pre className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap overflow-x-auto max-h-[600px] overflow-y-auto">
-                  {response}
-                </pre>
+                {parsed.text && (
+                  <pre className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap overflow-x-auto max-h-[600px] overflow-y-auto">
+                    {parsed.text}
+                  </pre>
+                )}
+                {(parsed.changedFiles.length > 0 || parsed.deletedFiles.length > 0) && (
+                  <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm">
+                    {parsed.changedFiles.length > 0 && (
+                      <div>
+                        <p className="font-medium text-gray-700 mb-1.5 flex items-center gap-1.5">
+                          <Icon name="FileEdit" size={16} className="text-purple-500" />
+                          Изменённые файлы ({parsed.changedFiles.length})
+                        </p>
+                        <ul className="space-y-1">
+                          {parsed.changedFiles.map((f) => (
+                            <li key={f} className="font-mono text-xs text-gray-600 break-all">{f}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {parsed.deletedFiles.length > 0 && (
+                      <div className={parsed.changedFiles.length > 0 ? "mt-3" : ""}>
+                        <p className="font-medium text-gray-700 mb-1.5 flex items-center gap-1.5">
+                          <Icon name="Trash2" size={16} className="text-red-500" />
+                          Удалённые файлы ({parsed.deletedFiles.length})
+                        </p>
+                        <ul className="space-y-1">
+                          {parsed.deletedFiles.map((f) => (
+                            <li key={f} className="font-mono text-xs text-gray-600 break-all">{f}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
-          )}
+            );
+          })()}
 
           {(lastTask || isLoadingTask) && (
             <Card className="bg-white border-gray-200 shadow-sm">
