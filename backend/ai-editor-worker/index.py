@@ -191,7 +191,7 @@ def call_openrouter(model, prompt_text):
             'messages': [{'role': 'user', 'content': prompt_text}],
             'max_tokens': 64000,
         },
-        timeout=540,
+        timeout=570,
         proxies=get_openrouter_proxies(),
     )
     if response.status_code != 200:
