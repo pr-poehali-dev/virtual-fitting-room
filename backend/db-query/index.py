@@ -101,20 +101,34 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
-    # Validate session token
-    is_valid, user_id, error_msg = validate_session(event)
+    # Определяем публичный запрос: чтение опубликованных статей "Базы знаний"
+    # доступно без входа. Для этого читаем тело заранее.
+    try:
+        _pre_body = json.loads(event.get('body', '{}'))
+    except Exception:
+        _pre_body = {}
+    is_public_read = (
+        _pre_body.get('table') == 'knowledge_posts'
+        and _pre_body.get('action') == 'select'
+    )
     
-    if not is_valid:
-        return {
-            'statusCode': 401,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': get_cors_origin(event),
-                'Access-Control-Allow-Credentials': 'true'
-            },
-            'isBase64Encoded': False,
-            'body': json.dumps({'error': error_msg or 'Unauthorized'})
-        }
+    # Validate session token (пропускаем только для публичного чтения статей)
+    if is_public_read:
+        user_id = None
+    else:
+        is_valid, user_id, error_msg = validate_session(event)
+        
+        if not is_valid:
+            return {
+                'statusCode': 401,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                    'Access-Control-Allow-Credentials': 'true'
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps({'error': error_msg or 'Unauthorized'})
+            }
     
     try:
         body = json.loads(event.get('body', '{}'))
@@ -149,7 +163,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'color_guide_tasks',
             'kibbe_test_history',
             'archetype_test_history',
-            'user_models'
+            'user_models',
+            'knowledge_posts'
         ]
         
         if table not in allowed_tables:
@@ -161,6 +176,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'Access-Control-Allow-Credentials': 'true'
                 },
                 'body': json.dumps({'error': f'Access to table {table} is not allowed'}),
+                'isBase64Encoded': False
+            }
+        
+        # knowledge_posts доступна через db-query ТОЛЬКО на чтение.
+        # Создание/редактирование/удаление статей — только через админку (admin-api).
+        if table == 'knowledge_posts' and action != 'select':
+            return {
+                'statusCode': 403,
+                'headers': {
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Credentials': 'true'
+                },
+                'body': json.dumps({'error': 'Only read access is allowed for knowledge_posts'}),
                 'isBase64Encoded': False
             }
         
@@ -198,6 +227,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if table == 'user_models':
                 where = dict(where or {})
                 where['user_id'] = user_id
+            
+            # Для knowledge_posts публично отдаём ТОЛЬКО опубликованные статьи
+            if table == 'knowledge_posts':
+                where = dict(where or {})
+                where['published'] = True
             
             if where:
                 where_parts = []

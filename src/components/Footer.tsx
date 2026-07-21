@@ -42,6 +42,11 @@ const Footer = () => {
             <h3 className="text-white font-semibold mb-4">Информация</h3>
             <ul className="space-y-2">
               <li>
+                <Link to="/knowledge" className="hover:text-white transition-colors">
+                  База знаний
+                </Link>
+              </li>
+              <li>
                 <Link to="/payment" className="hover:text-white transition-colors">
                   Информация об оплате
                 </Link>

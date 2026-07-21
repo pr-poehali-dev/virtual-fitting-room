@@ -15,6 +15,29 @@
       "bodyMatcher": "partial"
     },
     {
+      "name": "Test public read knowledge_posts without token",
+      "method": "POST",
+      "body": {
+        "table": "knowledge_posts",
+        "action": "select",
+        "limit": 5
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "Test knowledge_posts write denied",
+      "method": "POST",
+      "body": {
+        "table": "knowledge_posts",
+        "action": "insert",
+        "data": {
+          "title": "x",
+          "slug": "x"
+        }
+      },
+      "expectedStatus": 401
+    },
+    {
       "name": "Test OPTIONS for CORS",
       "method": "OPTIONS",
       "expectedStatus": 200

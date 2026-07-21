@@ -1676,6 +1676,147 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'success': True})
             }
         
+        elif action == 'knowledge_list':
+            section = query_params.get('section')
+            if section:
+                cursor.execute(
+                    "SELECT id, section, title, slug, cover_url, excerpt, published, created_at, updated_at "
+                    "FROM knowledge_posts WHERE section = %s ORDER BY created_at DESC",
+                    (section,)
+                )
+            else:
+                cursor.execute(
+                    "SELECT id, section, title, slug, cover_url, excerpt, published, created_at, updated_at "
+                    "FROM knowledge_posts ORDER BY created_at DESC"
+                )
+            rows = cursor.fetchall()
+            posts = []
+            for r in rows:
+                item = dict(r)
+                if item.get('created_at'):
+                    item['created_at'] = item['created_at'].isoformat()
+                if item.get('updated_at'):
+                    item['updated_at'] = item['updated_at'].isoformat()
+                posts.append(item)
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps({'posts': posts})
+            }
+        
+        elif action == 'knowledge_get':
+            post_id = query_params.get('id')
+            if not post_id:
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Missing id'})
+                }
+            cursor.execute("SELECT * FROM knowledge_posts WHERE id = %s", (post_id,))
+            row = cursor.fetchone()
+            if not row:
+                return {
+                    'statusCode': 404,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Not found'})
+                }
+            item = dict(row)
+            if item.get('created_at'):
+                item['created_at'] = item['created_at'].isoformat()
+            if item.get('updated_at'):
+                item['updated_at'] = item['updated_at'].isoformat()
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                'isBase64Encoded': False,
+                'body': json.dumps({'post': item})
+            }
+        
+        elif action == 'knowledge_save' and method == 'POST':
+            body_data = json.loads(event.get('body', '{}'))
+            post_id = body_data.get('id')
+            section = body_data.get('section', 'article')
+            title = (body_data.get('title') or '').strip()
+            slug = (body_data.get('slug') or '').strip()
+            cover_url = body_data.get('cover_url') or None
+            excerpt = body_data.get('excerpt') or None
+            blocks = body_data.get('blocks', [])
+            published = bool(body_data.get('published', False))
+            
+            if section not in ('instruction', 'news', 'article'):
+                section = 'article'
+            if not title:
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Заголовок обязателен'})
+                }
+            
+            import re as _re_slug
+            if not slug:
+                translit = {
+                    'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z','и':'i','й':'y',
+                    'к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f',
+                    'х':'h','ц':'c','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'
+                }
+                slug = ''.join(translit.get(ch, ch) for ch in title.lower())
+            slug = _re_slug.sub(r'[^a-z0-9]+', '-', slug.lower()).strip('-')[:200]
+            if not slug:
+                slug = 'post'
+            
+            blocks_json = json.dumps(blocks, ensure_ascii=False)
+            
+            if post_id:
+                cursor.execute(
+                    "UPDATE knowledge_posts SET section=%s, title=%s, slug=%s, cover_url=%s, excerpt=%s, "
+                    "blocks=%s::jsonb, published=%s, updated_at=NOW() WHERE id=%s RETURNING id, slug",
+                    (section, title, slug, cover_url, excerpt, blocks_json, published, post_id)
+                )
+            else:
+                cursor.execute(
+                    "SELECT COUNT(*) as cnt FROM knowledge_posts WHERE slug = %s", (slug,)
+                )
+                if cursor.fetchone()['cnt'] > 0:
+                    slug = f"{slug}-{int(datetime.now().timestamp())}"
+                cursor.execute(
+                    "INSERT INTO knowledge_posts (section, title, slug, cover_url, excerpt, blocks, published) "
+                    "VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s) RETURNING id, slug",
+                    (section, title, slug, cover_url, excerpt, blocks_json, published)
+                )
+            saved = cursor.fetchone()
+            conn.commit()
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                'isBase64Encoded': False,
+                'body': json.dumps({'success': True, 'id': saved['id'], 'slug': saved['slug']})
+            }
+        
+        elif action == 'knowledge_delete' and method == 'DELETE':
+            post_id = query_params.get('id')
+            if not post_id:
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'Missing id'})
+                }
+            cursor.execute("DELETE FROM knowledge_posts WHERE id = %s", (post_id,))
+            conn.commit()
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                'isBase64Encoded': False,
+                'body': json.dumps({'success': True})
+            }
+        
         else:
             return {
                 'statusCode': 400,

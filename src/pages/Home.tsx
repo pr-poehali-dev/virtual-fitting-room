@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,34 @@ const Home = () => {
   const { user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const userInitial = user?.name?.charAt(0).toUpperCase() || "U";
+
+  const [knowledgePosts, setKnowledgePosts] = useState<
+    { id: number; title: string; slug: string; cover_url: string | null; excerpt: string | null; section: string }[]
+  >([]);
+
+  useEffect(() => {
+    const DB_QUERY = "https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9";
+    fetch(DB_QUERY, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        table: "knowledge_posts",
+        action: "select",
+        columns: ["id", "title", "slug", "cover_url", "excerpt", "section"],
+        order_by: "created_at DESC",
+        limit: 3,
+      }),
+    })
+      .then((r) => r.json())
+      .then((data) => setKnowledgePosts(Array.isArray(data) ? data : data.data || []))
+      .catch(() => setKnowledgePosts([]));
+  }, []);
+
+  const knowledgeSectionLabels: Record<string, string> = {
+    instruction: "Инструкция",
+    news: "Новость",
+    article: "Статья",
+  };
 
   const handleLogout = () => {
     logout();
@@ -274,6 +302,71 @@ const Home = () => {
                 </div>
               ))}
             </div>
+
+            {knowledgePosts.length > 0 && (
+              <div className="mt-16">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl lg:text-3xl font-bold text-white">База знаний</h2>
+                    <p className="text-gray-400 mt-1">
+                      Инструкции по сервисам, новости и полезные статьи
+                    </p>
+                  </div>
+                  <Link
+                    to="/knowledge"
+                    className="hidden sm:flex items-center gap-2 text-purple-400 font-medium hover:gap-3 transition-all"
+                  >
+                    <span>Все материалы</span>
+                    <Icon name="ArrowRight" size={20} />
+                  </Link>
+                </div>
+
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+                  {knowledgePosts.map((post) => (
+                    <Link
+                      key={post.id}
+                      to={`/knowledge/${post.slug}`}
+                      className="group cursor-pointer bg-gray-800/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-gray-700 hover:border-purple-500 transition-all duration-300"
+                    >
+                      <div className="aspect-video overflow-hidden bg-gray-800">
+                        {post.cover_url ? (
+                          <img
+                            src={post.cover_url}
+                            alt={post.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Icon name="Image" size={32} className="text-gray-600" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-5">
+                        <span className="inline-block text-xs px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 mb-2">
+                          {knowledgeSectionLabels[post.section] || "Статья"}
+                        </span>
+                        <h3 className="text-lg font-semibold text-white group-hover:text-purple-400 transition-colors line-clamp-2">
+                          {post.title}
+                        </h3>
+                        {post.excerpt && (
+                          <p className="text-gray-400 text-sm mt-2 line-clamp-2">{post.excerpt}</p>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+
+                <div className="mt-6 sm:hidden">
+                  <Link
+                    to="/knowledge"
+                    className="flex items-center gap-2 text-purple-400 font-medium"
+                  >
+                    <span>Все материалы</span>
+                    <Icon name="ArrowRight" size={20} />
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </main>
 

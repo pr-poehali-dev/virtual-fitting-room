@@ -67,7 +67,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Missing image_url'})
         }
     
-    if folder not in ['catalog', 'lookbooks']:
+    if folder not in ['catalog', 'lookbooks', 'knowledge']:
         folder = 'catalog'
     
     # Get S3 credentials from environment

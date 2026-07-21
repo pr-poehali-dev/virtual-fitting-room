@@ -63,6 +63,9 @@ import Privacy from "./pages/Privacy";
 import PersonalData from "./pages/PersonalData";
 import AiEditor from "./pages/AiEditor";
 import LenormandDivination from "./pages/LenormandDivination";
+import Knowledge from "./pages/Knowledge";
+import KnowledgePost from "./pages/KnowledgePost";
+import AdminKnowledge from "./pages/AdminKnowledge";
 import ScrollToTop from "./components/ScrollToTop";
 import MaintenanceBanner from "./components/MaintenanceBanner";
 
@@ -114,6 +117,8 @@ const App = () => (
             <Route path="/color-guide/:id" element={<ColorGuideDetail />} />
             <Route path="/ai-editor" element={<AiEditor />} />
             <Route path="/divination" element={<LenormandDivination />} />
+            <Route path="/knowledge" element={<Knowledge />} />
+            <Route path="/knowledge/:slug" element={<KnowledgePost />} />
             
             {/* Profile Routes */}
             <Route path="/profile" element={<ProfileDashboard />} />
@@ -144,6 +149,7 @@ const App = () => (
             <Route path="/vf-console/colorguides" element={<AdminColorGuide />} />
             <Route path="/vf-console/kibbe" element={<AdminKibbe />} />
             <Route path="/vf-console/archetype" element={<AdminArchetype />} />
+            <Route path="/vf-console/knowledge" element={<AdminKnowledge />} />
             <Route path="/vf-console/cleanup" element={<AdminCleanup />} />
             
             <Route path="/login" element={<Login />} />

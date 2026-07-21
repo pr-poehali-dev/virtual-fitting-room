@@ -7,12 +7,12 @@
       "expectedStatus": 200
     },
     {
-      "name": "Test save image from URL",
+      "name": "Test save image from base64 to knowledge folder",
       "method": "POST",
       "path": "/",
       "body": {
-        "image_url": "https://via.placeholder.com/300",
-        "folder": "catalog",
+        "image_url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        "folder": "knowledge",
         "user_id": "123"
       },
       "expectedStatus": 200,
