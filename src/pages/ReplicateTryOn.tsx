@@ -1002,6 +1002,12 @@ export default function ReplicateTryOn() {
             <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
               Примерьте одежду онлайн с помощью AI
             </p>
+            <Link to="/knowledge/kak-primerit-odezhdu-po-foto">
+              <Button variant="outline" className="gap-2">
+                <Icon name="BookOpen" size={18} />
+                Как это работает
+              </Button>
+            </Link>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
