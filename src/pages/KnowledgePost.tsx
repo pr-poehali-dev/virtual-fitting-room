@@ -152,14 +152,18 @@ export default function KnowledgePost() {
                   );
                 if (block.type === 'image')
                   return block.url ? (
-                    <figure key={i} className="my-6">
-                      <img src={block.url} alt={block.caption || ''} className="w-full rounded-xl" />
-                      {block.caption && (
-                        <figcaption className="text-lg text-muted-foreground text-center mt-2 mb-4">
+                    block.caption ? (
+                      <figure key={i} className="my-6 border border-border rounded-2xl p-3 md:p-4">
+                        <img src={block.url} alt={block.caption} className="w-full rounded-xl" />
+                        <figcaption className="text-lg text-muted-foreground text-center mt-3">
                           {block.caption}
                         </figcaption>
-                      )}
-                    </figure>
+                      </figure>
+                    ) : (
+                      <figure key={i} className="my-6">
+                        <img src={block.url} alt="" className="w-full rounded-xl" />
+                      </figure>
+                    )
                   ) : null;
                 if (block.type === 'image-pair') {
                   if (!block.left && !block.right) return null;
@@ -168,16 +172,20 @@ export default function KnowledgePost() {
                   if (block.right) cells.push({ url: block.right, caption: block.rightCaption });
                   return (
                     <div key={i} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 my-6">
-                      {cells.map((cell, ci) => (
-                        <figure key={ci}>
-                          <img src={cell.url} alt={cell.caption || ''} className="w-full rounded-xl" />
-                          {cell.caption && (
-                            <figcaption className="text-base text-muted-foreground text-center mt-2 mb-4">
+                      {cells.map((cell, ci) =>
+                        cell.caption ? (
+                          <figure key={ci} className="border border-border rounded-2xl p-3 md:p-4">
+                            <img src={cell.url} alt={cell.caption} className="w-full rounded-xl" />
+                            <figcaption className="text-base text-muted-foreground text-center mt-3">
                               {cell.caption}
                             </figcaption>
-                          )}
-                        </figure>
-                      ))}
+                          </figure>
+                        ) : (
+                          <figure key={ci}>
+                            <img src={cell.url} alt="" className="w-full rounded-xl" />
+                          </figure>
+                        )
+                      )}
                     </div>
                   );
                 }
