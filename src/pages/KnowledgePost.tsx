@@ -172,7 +172,7 @@ export default function KnowledgePost() {
                         <figure key={ci}>
                           <img src={cell.url} alt={cell.caption || ''} className="w-full rounded-xl" />
                           {cell.caption && (
-                            <figcaption className="text-base text-muted-foreground text-center mt-2">
+                            <figcaption className="text-base text-muted-foreground text-center mt-2 mb-4">
                               {cell.caption}
                             </figcaption>
                           )}
