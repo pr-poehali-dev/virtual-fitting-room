@@ -154,7 +154,7 @@ export default function KnowledgePost() {
                     <figure key={i} className="my-6">
                       <img src={block.url} alt={block.caption || ''} className="w-full rounded-xl" />
                       {block.caption && (
-                        <figcaption className="text-sm text-muted-foreground text-center mt-2">
+                        <figcaption className="text-lg text-muted-foreground text-center mt-2 mb-4">
                           {block.caption}
                         </figcaption>
                       )}
