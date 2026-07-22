@@ -28,6 +28,7 @@ type Block =
   | { type: 'heading'; text: string }
   | { type: 'paragraph'; text: string }
   | { type: 'image'; url: string; caption?: string }
+  | { type: 'image-pair'; left: string; right: string; leftCaption?: string; rightCaption?: string }
   | { type: 'button'; text: string; url: string };
 
 interface PostListItem {
@@ -63,10 +64,10 @@ export default function AdminKnowledge() {
   const [isLoading, setIsLoading] = useState(true);
   const [editing, setEditing] = useState<PostFull | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [uploadingIndex, setUploadingIndex] = useState<number | 'cover' | null>(null);
+  const [uploadingIndex, setUploadingIndex] = useState<string | 'cover' | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const blockImageInputRef = useRef<HTMLInputElement>(null);
-  const pendingBlockIndex = useRef<number | null>(null);
+  const pendingBlockTarget = useRef<{ index: number; side: 'single' | 'left' | 'right' } | null>(null);
 
   const fetchPosts = useCallback(async () => {
     setIsLoading(true);
@@ -140,13 +141,28 @@ export default function AdminKnowledge() {
   const handleBlockImageSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    const idx = pendingBlockIndex.current;
-    if (!file || !editing || idx === null) return;
-    setUploadingIndex(idx);
+    const target = pendingBlockTarget.current;
+    if (!file || !editing || !target) return;
+    const key = `${target.index}:${target.side}`;
+    setUploadingIndex(key);
     const url = await uploadImage(file);
     setUploadingIndex(null);
-    if (url) updateBlock(idx, { type: 'image', url });
-    else toast.error('Ошибка загрузки фото');
+    if (!url) {
+      toast.error('Ошибка загрузки фото');
+      return;
+    }
+    setEditing((prev) => {
+      if (!prev) return prev;
+      const blocks = [...prev.blocks];
+      const b = blocks[target.index];
+      if (target.side === 'single' && b?.type === 'image') {
+        blocks[target.index] = { ...b, url };
+      } else if (b?.type === 'image-pair') {
+        blocks[target.index] =
+          target.side === 'left' ? { ...b, left: url } : { ...b, right: url };
+      }
+      return { ...prev, blocks };
+    });
   };
 
   const addBlock = (type: Block['type']) => {
@@ -155,6 +171,7 @@ export default function AdminKnowledge() {
     if (type === 'heading') block = { type: 'heading', text: '' };
     else if (type === 'paragraph') block = { type: 'paragraph', text: '' };
     else if (type === 'image') block = { type: 'image', url: '' };
+    else if (type === 'image-pair') block = { type: 'image-pair', left: '', right: '' };
     else block = { type: 'button', text: '', url: '' };
     setEditing({ ...editing, blocks: [...editing.blocks, block] });
   };
@@ -428,6 +445,7 @@ export default function AdminKnowledge() {
                             {block.type === 'heading' && 'Заголовок'}
                             {block.type === 'paragraph' && 'Абзац текста'}
                             {block.type === 'image' && 'Фото'}
+                            {block.type === 'image-pair' && 'Два фото в ряд'}
                             {block.type === 'button' && 'Кнопка-ссылка'}
                           </span>
                           <div className="flex gap-1">
@@ -480,11 +498,11 @@ export default function AdminKnowledge() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  pendingBlockIndex.current = index;
+                                  pendingBlockTarget.current = { index, side: 'single' };
                                   blockImageInputRef.current?.click();
                                 }}
                               >
-                                {uploadingIndex === index ? (
+                                {uploadingIndex === `${index}:single` ? (
                                   <Icon name="Loader2" size={16} className="animate-spin mr-2" />
                                 ) : (
                                   <Icon name="Upload" size={16} className="mr-2" />
@@ -499,6 +517,52 @@ export default function AdminKnowledge() {
                               }
                               placeholder="Подпись к фото (необязательно)"
                             />
+                          </div>
+                        )}
+
+                        {block.type === 'image-pair' && (
+                          <div className="grid sm:grid-cols-2 gap-4">
+                            {(['left', 'right'] as const).map((side) => {
+                              const url = side === 'left' ? block.left : block.right;
+                              const caption = side === 'left' ? block.leftCaption : block.rightCaption;
+                              return (
+                                <div key={side} className="space-y-2">
+                                  {url ? (
+                                    <img src={url} alt="" className="w-full max-h-56 object-cover rounded-lg" />
+                                  ) : (
+                                    <div className="h-32 rounded-lg bg-gray-100 flex items-center justify-center text-muted-foreground text-sm">
+                                      {side === 'left' ? 'Левое фото' : 'Правое фото'}
+                                    </div>
+                                  )}
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => {
+                                      pendingBlockTarget.current = { index, side };
+                                      blockImageInputRef.current?.click();
+                                    }}
+                                  >
+                                    {uploadingIndex === `${index}:${side}` ? (
+                                      <Icon name="Loader2" size={16} className="animate-spin mr-2" />
+                                    ) : (
+                                      <Icon name="Upload" size={16} className="mr-2" />
+                                    )}
+                                    {url ? 'Заменить' : 'Загрузить'}
+                                  </Button>
+                                  <Input
+                                    value={caption || ''}
+                                    onChange={(e) =>
+                                      updateBlock(index, {
+                                        ...block,
+                                        [side === 'left' ? 'leftCaption' : 'rightCaption']: e.target.value,
+                                      })
+                                    }
+                                    placeholder="Подпись (необязательно)"
+                                  />
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
 
@@ -534,6 +598,9 @@ export default function AdminKnowledge() {
                   </Button>
                   <Button variant="outline" onClick={() => addBlock('image')}>
                     <Icon name="Image" size={16} className="mr-2" /> Фото
+                  </Button>
+                  <Button variant="outline" onClick={() => addBlock('image-pair')}>
+                    <Icon name="Columns2" size={16} className="mr-2" /> 2 фото в ряд
                   </Button>
                   <Button variant="outline" onClick={() => addBlock('button')}>
                     <Icon name="Link" size={16} className="mr-2" /> Кнопка-ссылка

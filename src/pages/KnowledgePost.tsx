@@ -16,6 +16,7 @@ type Block =
   | { type: 'heading'; text: string }
   | { type: 'paragraph'; text: string }
   | { type: 'image'; url: string; caption?: string }
+  | { type: 'image-pair'; left: string; right: string; leftCaption?: string; rightCaption?: string }
   | { type: 'button'; text: string; url: string };
 
 interface Post {
@@ -160,6 +161,26 @@ export default function KnowledgePost() {
                       )}
                     </figure>
                   ) : null;
+                if (block.type === 'image-pair') {
+                  if (!block.left && !block.right) return null;
+                  const cells: { url: string; caption?: string }[] = [];
+                  if (block.left) cells.push({ url: block.left, caption: block.leftCaption });
+                  if (block.right) cells.push({ url: block.right, caption: block.rightCaption });
+                  return (
+                    <div key={i} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 my-6">
+                      {cells.map((cell, ci) => (
+                        <figure key={ci}>
+                          <img src={cell.url} alt={cell.caption || ''} className="w-full rounded-xl" />
+                          {cell.caption && (
+                            <figcaption className="text-base text-muted-foreground text-center mt-2">
+                              {cell.caption}
+                            </figcaption>
+                          )}
+                        </figure>
+                      ))}
+                    </div>
+                  );
+                }
                 if (block.type === 'button') return <BlockButton key={i} block={block} />;
                 return null;
               })}
