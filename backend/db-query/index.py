@@ -240,6 +240,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     params.append(value)
                 query += ' WHERE ' + ' AND '.join(where_parts)
             
+            with_count = bool(body.get('with_count', False))
+            total_count = None
+            if with_count:
+                count_query = f'SELECT COUNT(*) FROM {full_table}'
+                if where:
+                    count_query += ' WHERE ' + ' AND '.join(where_parts)
+                cursor.execute(count_query, list(params))
+                total_count = cursor.fetchone()[0]
+            
             query += f' ORDER BY {order_by} LIMIT %s OFFSET %s'
             params.append(limit)
             params.append(offset)
@@ -248,7 +257,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             columns = [desc[0] for desc in cursor.description]
             rows = cursor.fetchall()
             
-            result_data = [dict(zip(columns, row)) for row in rows]
+            rows_data = [dict(zip(columns, row)) for row in rows]
+            if with_count:
+                result_data = {'data': rows_data, 'total': total_count}
+            else:
+                result_data = rows_data
         
         elif action == 'insert':
             # INSERT query
