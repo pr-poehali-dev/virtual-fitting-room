@@ -309,7 +309,7 @@ const Home = () => {
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h2 className="text-2xl lg:text-3xl font-bold text-white">База знаний</h2>
-                    <p className="text-gray-400 mt-1">
+                    <p className="text-purple-100 mt-1">
                       Инструкции по сервисам, новости и полезные статьи
                     </p>
                   </div>
@@ -350,7 +350,7 @@ const Home = () => {
                           {post.title}
                         </h3>
                         {post.excerpt && (
-                          <p className="text-gray-400 text-sm mt-2 line-clamp-2">{post.excerpt}</p>
+                          <p className="text-purple-100 text-sm mt-2 line-clamp-2">{post.excerpt}</p>
                         )}
                       </div>
                     </Link>
