@@ -82,9 +82,15 @@ export default function Knowledge() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      const data = await res.json();
-      setPosts(Array.isArray(data.data) ? data.data : []);
-      setTotal(typeof data.total === 'number' ? data.total : 0);
+      const json = await res.json();
+      const payload = json?.data ?? json;
+      const rows = Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload)
+          ? payload
+          : [];
+      setPosts(rows);
+      setTotal(typeof payload?.total === 'number' ? payload.total : rows.length);
     } catch {
       setPosts([]);
       setTotal(0);
