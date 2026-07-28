@@ -5,19 +5,21 @@ import Icon from '@/components/ui/icon';
 
 const DB_QUERY = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
 
-type Section = 'all' | 'instruction' | 'news' | 'article';
+type Section = 'all' | 'instruction' | 'news' | 'article' | 'prompts';
 
 const TABS: { id: Section; label: string; icon: string }[] = [
   { id: 'all', label: 'Всё', icon: 'LayoutGrid' },
   { id: 'instruction', label: 'Инструкции', icon: 'BookOpen' },
   { id: 'news', label: 'Новости', icon: 'Newspaper' },
   { id: 'article', label: 'Статьи', icon: 'PenLine' },
+  { id: 'prompts', label: 'Промпты', icon: 'Sparkles' },
 ];
 
 const SECTION_LABELS: Record<string, string> = {
   instruction: 'Инструкция',
   news: 'Новость',
   article: 'Статья',
+  prompts: 'Промпт',
 };
 
 interface PostCard {

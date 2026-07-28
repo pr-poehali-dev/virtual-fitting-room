@@ -10,6 +10,7 @@ const SECTION_LABELS: Record<string, string> = {
   instruction: 'Инструкция',
   news: 'Новость',
   article: 'Статья',
+  prompts: 'Промпт',
 };
 
 type Block =

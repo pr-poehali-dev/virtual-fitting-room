@@ -1749,7 +1749,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             blocks = body_data.get('blocks', [])
             published = bool(body_data.get('published', False))
             
-            if section not in ('instruction', 'news', 'article'):
+            if section not in ('instruction', 'news', 'article', 'prompts'):
                 section = 'article'
             if not title:
                 return {

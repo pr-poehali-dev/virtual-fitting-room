@@ -42,6 +42,7 @@ const Home = () => {
     instruction: "Инструкция",
     news: "Новость",
     article: "Статья",
+    prompts: "Промпт",
   };
 
   const handleLogout = () => {

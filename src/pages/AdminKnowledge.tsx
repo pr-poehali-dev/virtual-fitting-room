@@ -16,12 +16,13 @@ const SAVE_IMAGE_API = 'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-42
 const getAdminToken = () =>
   document.cookie.split('; ').find((c) => c.startsWith('admin_token='))?.split('=')[1] || '';
 
-type Section = 'instruction' | 'news' | 'article';
+type Section = 'instruction' | 'news' | 'article' | 'prompts';
 
 const SECTION_LABELS: Record<Section, string> = {
   instruction: 'Инструкция',
   news: 'Новость',
   article: 'Статья',
+  prompts: 'Промпт',
 };
 
 type Block =
@@ -362,6 +363,7 @@ export default function AdminKnowledge() {
                             <SelectItem value="instruction">Инструкция</SelectItem>
                             <SelectItem value="news">Новость</SelectItem>
                             <SelectItem value="article">Статья</SelectItem>
+                            <SelectItem value="prompts">Промпт</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
