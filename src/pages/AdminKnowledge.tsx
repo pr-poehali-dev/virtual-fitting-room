@@ -9,6 +9,7 @@ import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import AdminMenu from '@/components/AdminMenu';
+import ParagraphEditor from '@/components/admin/ParagraphEditor';
 
 const ADMIN_API = 'https://functions.poehali.dev/6667a30b-a520-41d8-b23a-e240a9aefb15';
 const SAVE_IMAGE_API = 'https://functions.poehali.dev/56814ab9-6cba-4035-a63d-423ac0d301c8';
@@ -478,11 +479,9 @@ export default function AdminKnowledge() {
                         )}
 
                         {block.type === 'paragraph' && (
-                          <Textarea
+                          <ParagraphEditor
                             value={block.text}
-                            onChange={(e) => updateBlock(index, { type: 'paragraph', text: e.target.value })}
-                            placeholder="Текст абзаца"
-                            rows={4}
+                            onChange={(text) => updateBlock(index, { type: 'paragraph', text })}
                           />
                         )}
 

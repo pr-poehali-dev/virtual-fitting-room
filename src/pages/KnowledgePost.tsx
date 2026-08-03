@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const DB_QUERY = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
 
@@ -147,9 +149,12 @@ export default function KnowledgePost() {
                   );
                 if (block.type === 'paragraph')
                   return (
-                    <p key={i} className="text-base md:text-lg leading-relaxed text-foreground/90 mb-4 whitespace-pre-wrap">
-                      {block.text}
-                    </p>
+                    <div
+                      key={i}
+                      className="text-base md:text-lg leading-relaxed text-foreground/90 mb-4 [&_p]:mb-4 [&_strong]:font-semibold [&_em]:italic [&_a]:text-purple-600 [&_a]:underline [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-4 [&_li]:mb-1"
+                    >
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.text}</ReactMarkdown>
+                    </div>
                   );
                 if (block.type === 'image')
                   return block.url ? (
