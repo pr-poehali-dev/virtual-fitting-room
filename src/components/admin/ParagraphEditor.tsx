@@ -11,7 +11,17 @@ type WrapAction = { kind: 'wrap'; before: string; after: string; placeholder: st
 type LinePrefixAction = { kind: 'linePrefix'; prefix: string };
 type ToolAction = WrapAction | LinePrefixAction;
 
-const TOOLS: { icon: string; title: string; action: ToolAction }[] = [
+const TOOLS: { icon?: string; label?: string; title: string; action: ToolAction }[] = [
+  {
+    label: 'H2',
+    title: 'Подзаголовок',
+    action: { kind: 'linePrefix', prefix: '## ' },
+  },
+  {
+    label: 'H3',
+    title: 'Подзаголовок поменьше',
+    action: { kind: 'linePrefix', prefix: '### ' },
+  },
   {
     icon: 'Bold',
     title: 'Жирный',
@@ -61,9 +71,13 @@ export default function ParagraphEditor({ value, onChange }: ParagraphEditorProp
     let lineEnd = value.indexOf('\n', end);
     if (lineEnd === -1) lineEnd = value.length;
     const segment = value.slice(lineStart, lineEnd);
+    const isHeading = a.prefix.startsWith('#');
     const lines = segment.split('\n');
     const prefixed = lines
-      .map((line) => (line.startsWith(a.prefix) ? line : a.prefix + line))
+      .map((line) => {
+        const clean = isHeading ? line.replace(/^#{1,6}\s+/, '') : line;
+        return clean.startsWith(a.prefix) ? clean : a.prefix + clean;
+      })
       .join('\n');
     const next = value.slice(0, lineStart) + prefixed + value.slice(lineEnd);
     onChange(next);
@@ -88,13 +102,17 @@ export default function ParagraphEditor({ value, onChange }: ParagraphEditorProp
             title={t.title}
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => handle(t.action)}
-            className="h-8 w-8 flex items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            className="h-8 min-w-8 px-1.5 flex items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
-            <Icon name={t.icon} size={16} />
+            {t.icon ? (
+              <Icon name={t.icon} size={16} />
+            ) : (
+              <span className="text-xs font-semibold">{t.label}</span>
+            )}
           </button>
         ))}
         <span className="ml-1 text-xs text-muted-foreground">
-          Выделите текст и нажмите кнопку. **жирный**, *курсив*, «- » — список
+          Выделите текст и нажмите кнопку. ## подзаголовок, **жирный**, *курсив*, «- » — список
         </span>
       </div>
       <Textarea

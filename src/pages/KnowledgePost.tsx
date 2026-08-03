@@ -151,7 +151,7 @@ export default function KnowledgePost() {
                   return (
                     <div
                       key={i}
-                      className="text-base md:text-lg leading-relaxed text-foreground/90 mb-4 [&_p]:mb-4 [&_strong]:font-semibold [&_em]:italic [&_a]:text-purple-600 [&_a]:underline [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-4 [&_li]:mb-1"
+                      className="text-base md:text-lg leading-relaxed text-foreground/90 mb-4 [&_p]:mb-4 [&_strong]:font-semibold [&_em]:italic [&_a]:text-purple-600 [&_a]:underline [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-4 [&_li]:mb-1 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mt-6 [&_h1]:mb-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-6 [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-5 [&_h3]:mb-2"
                     >
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.text}</ReactMarkdown>
                     </div>
