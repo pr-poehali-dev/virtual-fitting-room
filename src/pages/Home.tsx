@@ -256,17 +256,18 @@ const Home = () => {
               </p>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 lg:gap-6">
               {services.map((service) => (
                 <div
                   key={service.id}
                   onClick={() => navigate(service.path)}
-                  className="group cursor-pointer bg-gray-800/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-gray-700 hover:border-purple-500 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20"
+                  className="group cursor-pointer flex flex-col bg-gray-800/60 backdrop-blur-sm rounded-2xl overflow-hidden border border-gray-700 hover:border-purple-500 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20"
                 >
                   <div className="aspect-video overflow-hidden relative">
                     <img
                       src={service.image}
                       alt={service.title}
+                      loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     {service.id === "color-guide" && (
@@ -277,27 +278,28 @@ const Home = () => {
                     )}
                   </div>
 
-                  <div className="p-6 lg:p-8">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
-                        <Icon
-                          name={service.icon}
-                          size={24}
-                          className="text-purple-400"
-                        />
-                      </div>
-                      <h2 className="text-2xl font-bold text-white group-hover:text-purple-400 transition-colors">
-                        {service.title}
-                      </h2>
+                  <div className="flex flex-col flex-1 p-5">
+                    <div className="w-12 h-12 rounded-full bg-purple-500/25 ring-1 ring-purple-400/40 flex items-center justify-center mb-3 group-hover:bg-purple-500/40 transition-colors">
+                      <Icon
+                        name={service.icon}
+                        size={22}
+                        className="text-purple-300"
+                      />
                     </div>
 
-                    <p className="text-gray-300 leading-relaxed">
+                    <h2 className="w-full text-lg font-bold text-white mb-2 group-hover:text-purple-300 transition-colors">
+                      {service.title}
+                    </h2>
+
+                    <p className="text-sm text-gray-300 leading-relaxed mb-5">
                       {service.description}
                     </p>
 
-                    <div className="mt-6 flex items-center gap-2 text-purple-400 font-medium group-hover:gap-3 transition-all">
-                      <span>Перейти к сервису</span>
-                      <Icon name="ArrowRight" size={20} />
+                    <div className="mt-auto">
+                      <span className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm group-hover:bg-purple-500 transition-colors">
+                        К сервису
+                        <Icon name="ArrowRight" size={16} />
+                      </span>
                     </div>
                   </div>
                 </div>
