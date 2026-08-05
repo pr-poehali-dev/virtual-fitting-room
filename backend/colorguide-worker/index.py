@@ -759,6 +759,7 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
                     service.ASPECT_RATIO
                 )
                 print(f'[COLORGUIDE-WORKER] STEP fal submitted: {status_url}')
+                save_fal_urls(task_id, status_url, response_url, analysis)
                 result_image_url = fal_poll_result(status_url, response_url)
                 cdn_url = upload_result_to_s3(result_image_url, task_id, str(user_id))
                 print(f'[COLORGUIDE-WORKER] Result image saved: {cdn_url}')
@@ -801,6 +802,95 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (save image result): {e}')
         mark_failed_and_refund(task_id, 'Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте позже.', 'ошибка обработки')
+
+
+def save_fal_urls(task_id: str, status_url: str, response_url: str, analysis: dict):
+    """Сохраняет ссылки на задание fal и готовый анализ, чтобы результат можно было
+    забрать позже, если текущий вызов оборвётся (сбой сети/таймаут функции)."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                UPDATE color_guide_tasks
+                SET fal_status_url = %s, fal_response_url = %s, result_json = %s, updated_at = %s
+                WHERE id = %s
+            ''', (status_url, response_url, json.dumps(analysis, ensure_ascii=False),
+                  datetime.utcnow(), task_id))
+            conn.commit()
+        finally:
+            cursor.close()
+            conn.close()
+    except Exception as e:
+        print(f'[COLORGUIDE-WORKER] save_fal_urls failed (non-critical): {e}')
+
+
+def recover_stuck_tasks(current_task_id: str = None):
+    """Подхватывает задачи, оборвавшиеся из-за сбоя связи: если картинка у fal уже
+    готова — дочитывает её и завершает задачу (результат попадёт в историю).
+    Через 12 минут возвращает деньги, но подхват продолжается до 24 часов."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                SELECT id, user_id, status, fal_response_url, result_json, cost, refunded,
+                       EXTRACT(EPOCH FROM (NOW() - created_at))
+                FROM color_guide_tasks
+                WHERE status IN ('pending', 'processing', 'failed')
+                  AND fal_response_url IS NOT NULL
+                  AND COALESCE(recovery_done, FALSE) = FALSE
+                  AND created_at < NOW() - INTERVAL '3 minutes'
+                  AND created_at > NOW() - INTERVAL '24 hours'
+                  AND (%s IS NULL OR id <> %s::uuid)
+                ORDER BY created_at ASC
+                LIMIT 3
+            ''', (current_task_id, current_task_id))
+            rows = cursor.fetchall()
+        finally:
+            cursor.close()
+            conn.close()
+
+        for row in rows:
+            s_id, s_user, s_status, s_resp_url, s_analysis, s_cost, s_refunded, s_age = row
+            try:
+                data = _fal_get(s_resp_url)
+                images = data.get('images') or []
+                image_url = images[0].get('url') if images else None
+
+                if image_url:
+                    cdn = upload_result_to_s3(image_url, str(s_id), str(s_user))
+                    note = None
+                    if s_refunded:
+                        note = ('Результат пришёл с задержкой после сбоя связи. '
+                                'Деньги за эту генерацию были возвращены на баланс.')
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    try:
+                        cursor.execute('''
+                            UPDATE color_guide_tasks
+                            SET status = 'completed', cdn_url = %s, person_image = NULL,
+                                recovery_done = TRUE, error_message = %s, updated_at = %s
+                            WHERE id = %s
+                        ''', (cdn, note, datetime.utcnow(), s_id))
+                        conn.commit()
+                    finally:
+                        cursor.close()
+                        conn.close()
+                    print(f'[COLORGUIDE-WORKER] Stuck task {s_id} recovered -> completed (refunded={s_refunded})')
+                elif s_status == 'failed':
+                    pass
+                elif s_age > 720:
+                    mark_failed_and_refund(
+                        s_id,
+                        'Генерация прервалась из-за сбоя связи. Деньги возвращены на баланс. '
+                        'Если результат всё же придёт, он появится в истории.',
+                        'сбой связи'
+                    )
+            except Exception as e:
+                print(f'[COLORGUIDE-WORKER] recovery of {s_id} skipped: {e}')
+    except Exception as e:
+        print(f'[COLORGUIDE-WORKER] recover_stuck_tasks failed (non-critical): {e}')
 
 
 def refund_user(cursor, task_id: str, user_id, cost: int, reason: str):
@@ -1015,6 +1105,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
 
     process_task(task_id)
+
+    # Подхват задач, оборвавшихся из-за сбоя связи у другого пользователя
+    recover_stuck_tasks(task_id)
 
     # Единая очередь: после завершения своей задачи будим следующую pending (FIFO)
     try:

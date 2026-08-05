@@ -171,10 +171,21 @@ def check_fal_status(response_url: str) -> Optional[dict]:
 
 def upload_result_to_s3(image_url: str, user_id: str) -> str:
     '''Скачать результат с fal.ai и загрузить в папку freegeneration Яндекс Облака'''
-    img_response = requests.get(image_url, timeout=30)
-    if img_response.status_code != 200:
-        raise Exception(f'Failed to download result: {img_response.status_code}')
-    image_data = img_response.content
+    image_data = None
+    last_err = None
+    for attempt in range(4):
+        try:
+            img_response = requests.get(image_url, timeout=30 if attempt == 0 else 20)
+            if img_response.status_code != 200:
+                raise Exception(f'Failed to download result: {img_response.status_code}')
+            image_data = img_response.content
+            break
+        except requests.exceptions.RequestException as e:
+            last_err = e
+            print(f'[S3] download result network error (attempt {attempt + 1}): {e}')
+            time.sleep(1 if attempt == 0 else 2)
+    if image_data is None:
+        raise last_err if last_err else Exception('Failed to download result image')
 
     timestamp = time.strftime('%Y%m%d_%H%M%S')
     milliseconds = int(time.time() * 1000) % 1000000

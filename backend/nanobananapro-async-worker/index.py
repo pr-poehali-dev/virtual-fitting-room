@@ -179,11 +179,21 @@ def upload_to_s3(image_url: str, user_id: str) -> str:
     
     # Download image from fal.ai
     print(f'[S3] Downloading image from fal.ai: {image_url[:50]}...')
-    img_response = requests.get(image_url, timeout=30)
-    if img_response.status_code != 200:
-        raise Exception(f'Failed to download image: {img_response.status_code}')
-    
-    image_data = img_response.content
+    image_data = None
+    last_err = None
+    for attempt in range(4):
+        try:
+            img_response = requests.get(image_url, timeout=30 if attempt == 0 else 20)
+            if img_response.status_code != 200:
+                raise Exception(f'Failed to download image: {img_response.status_code}')
+            image_data = img_response.content
+            break
+        except requests.exceptions.RequestException as e:
+            last_err = e
+            print(f'[S3] download network error (attempt {attempt + 1}): {e}')
+            time.sleep(1 if attempt == 0 else 2)
+    if image_data is None:
+        raise last_err if last_err else Exception('Failed to download image')
     print(f'[S3] Downloaded {len(image_data)} bytes')
     
     # Generate filename
