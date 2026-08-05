@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import ImageViewer from '@/components/ImageViewer';
 import { toast } from 'sonner';
-import { jsPDF } from 'jspdf';
+const loadJsPDF = async () => (await import('jspdf')).jsPDF;
 
 interface Lookbook {
   id: string;
@@ -33,6 +33,7 @@ export default function LookbookViewerDialog({ lookbook, onClose, imageProxyApi 
     
     setIsGeneratingPDF(true);
     try {
+      const jsPDF = await loadJsPDF();
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();

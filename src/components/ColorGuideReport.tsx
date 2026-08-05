@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Icon from "@/components/ui/icon";
 import { toast } from "sonner";
-import html2canvas from "html2canvas";
+const loadHtml2Canvas = async () => (await import("html2canvas")).default;
 
 const GUIDE_IMAGES_API = "https://functions.poehali.dev/6df158f5-ce47-4f8c-9fad-c312c737757e";
 const IMAGE_PROXY_API = "https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90";
@@ -131,6 +131,7 @@ export default function ColorGuideReport({ result, photoUrl }: ColorGuideReportP
     if (!reportRef.current) return;
     setIsDownloading(true);
     try {
+      const html2canvas = await loadHtml2Canvas();
       const canvas = await html2canvas(reportRef.current, {
         backgroundColor: "#ffffff",
         scale: 2,

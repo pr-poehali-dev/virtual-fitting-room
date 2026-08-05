@@ -14,7 +14,7 @@ import ImageViewer from '@/components/ImageViewer';
 import ImageCropper from '@/components/ImageCropper';
 import WalletTab from '@/components/WalletTab';
 import HistoryTab from '@/components/HistoryTab';
-import { jsPDF } from 'jspdf';
+const loadJsPDF = async () => (await import('jspdf')).jsPDF;
 
 interface Lookbook {
   id: string;
@@ -294,6 +294,7 @@ export default function Profile() {
     
     setIsGeneratingPDF(true);
     try {
+      const jsPDF = await loadJsPDF();
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();

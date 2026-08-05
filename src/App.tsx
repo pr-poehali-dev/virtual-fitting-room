@@ -7,71 +7,77 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { DataProvider } from "./context/DataContext";
 import { BalanceProvider } from "./context/BalanceContext";
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 
 import Home from "./pages/Home";
-import ColorType from "./pages/ColorType";
-import ColorGuideDetail from "./pages/ColorGuideDetail";
-import ProfileHistoryColorGuide from "./pages/ProfileHistoryColorGuide";
-import AdminColorGuide from "./pages/AdminColorGuide";
-import Profile from "./pages/Profile";
-import ProfileDashboard from "./pages/ProfileDashboard";
-import ProfileLookbooks from "./pages/ProfileLookbooks";
-import ProfileModels from "./pages/ProfileModels";
-import ProfileOutfitProfiles from "./pages/ProfileOutfitProfiles";
-import ProfileHistory from "./pages/ProfileHistory";
-import ProfileHistoryColortypes from "./pages/ProfileHistoryColortypes";
-import ProfileHistoryFreegen from "./pages/ProfileHistoryFreegen";
-import ProfileWallet from "./pages/ProfileWallet";
-import ProfileSettings from "./pages/ProfileSettings";
-import PalettePage from "./pages/PalettePage";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import SharedLookbook from "./pages/SharedLookbook";
-import AdminLogin from "./pages/AdminLogin";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminStats from "./pages/AdminStats";
-import AdminUsers from "./pages/AdminUsers";
-import AdminLookbooks from "./pages/AdminLookbooks";
-import AdminPayments from "./pages/AdminPayments";
-import AdminCatalog from "./pages/AdminCatalog";
-import AdminGenerations from "./pages/AdminGenerations";
-import AdminColorTypes from "./pages/AdminColorTypes";
-import AdminCleanup from "./pages/AdminCleanup";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import VerifyEmail from "./pages/VerifyEmail";
-import RegistrationSuccess from "./pages/RegistrationSuccess";
-import VkCallback from "./pages/VkCallback";
-import ReplicateTryOn from "./pages/ReplicateTryOn";
-import FreeGeneration from "./pages/FreeGeneration";
-import StyleAnalysis from "./pages/StyleAnalysis";
-import OutfitSelection from "./pages/OutfitSelection";
-import KibbeTest from "./pages/KibbeTest";
-import KibbeResultDetail from "./pages/KibbeResultDetail";
-import ProfileHistoryKibbe from "./pages/ProfileHistoryKibbe";
-import AdminKibbe from "./pages/AdminKibbe";
-import ArchetypeTest from "./pages/ArchetypeTest";
-import ArchetypeResultDetail from "./pages/ArchetypeResultDetail";
-import ProfileHistoryArchetype from "./pages/ProfileHistoryArchetype";
-import AdminArchetype from "./pages/AdminArchetype";
-import NotFound from "./pages/NotFound";
-import Payment from "./pages/Payment";
-import Offer from "./pages/Offer";
-import Contacts from "./pages/Contacts";
-import Privacy from "./pages/Privacy";
-import PersonalData from "./pages/PersonalData";
-import AiEditor from "./pages/AiEditor";
-import LenormandDivination from "./pages/LenormandDivination";
-import Knowledge from "./pages/Knowledge";
-import KnowledgePost from "./pages/KnowledgePost";
-import AdminKnowledge from "./pages/AdminKnowledge";
+const ColorType = lazy(() => import("./pages/ColorType"));
+const ColorGuideDetail = lazy(() => import("./pages/ColorGuideDetail"));
+const ProfileHistoryColorGuide = lazy(() => import("./pages/ProfileHistoryColorGuide"));
+const AdminColorGuide = lazy(() => import("./pages/AdminColorGuide"));
+const Profile = lazy(() => import("./pages/Profile"));
+const ProfileDashboard = lazy(() => import("./pages/ProfileDashboard"));
+const ProfileLookbooks = lazy(() => import("./pages/ProfileLookbooks"));
+const ProfileModels = lazy(() => import("./pages/ProfileModels"));
+const ProfileOutfitProfiles = lazy(() => import("./pages/ProfileOutfitProfiles"));
+const ProfileHistory = lazy(() => import("./pages/ProfileHistory"));
+const ProfileHistoryColortypes = lazy(() => import("./pages/ProfileHistoryColortypes"));
+const ProfileHistoryFreegen = lazy(() => import("./pages/ProfileHistoryFreegen"));
+const ProfileWallet = lazy(() => import("./pages/ProfileWallet"));
+const ProfileSettings = lazy(() => import("./pages/ProfileSettings"));
+const PalettePage = lazy(() => import("./pages/PalettePage"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const SharedLookbook = lazy(() => import("./pages/SharedLookbook"));
+const AdminLogin = lazy(() => import("./pages/AdminLogin"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdminStats = lazy(() => import("./pages/AdminStats"));
+const AdminUsers = lazy(() => import("./pages/AdminUsers"));
+const AdminLookbooks = lazy(() => import("./pages/AdminLookbooks"));
+const AdminPayments = lazy(() => import("./pages/AdminPayments"));
+const AdminCatalog = lazy(() => import("./pages/AdminCatalog"));
+const AdminGenerations = lazy(() => import("./pages/AdminGenerations"));
+const AdminColorTypes = lazy(() => import("./pages/AdminColorTypes"));
+const AdminCleanup = lazy(() => import("./pages/AdminCleanup"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
+const RegistrationSuccess = lazy(() => import("./pages/RegistrationSuccess"));
+const VkCallback = lazy(() => import("./pages/VkCallback"));
+const ReplicateTryOn = lazy(() => import("./pages/ReplicateTryOn"));
+const FreeGeneration = lazy(() => import("./pages/FreeGeneration"));
+const StyleAnalysis = lazy(() => import("./pages/StyleAnalysis"));
+const OutfitSelection = lazy(() => import("./pages/OutfitSelection"));
+const KibbeTest = lazy(() => import("./pages/KibbeTest"));
+const KibbeResultDetail = lazy(() => import("./pages/KibbeResultDetail"));
+const ProfileHistoryKibbe = lazy(() => import("./pages/ProfileHistoryKibbe"));
+const AdminKibbe = lazy(() => import("./pages/AdminKibbe"));
+const ArchetypeTest = lazy(() => import("./pages/ArchetypeTest"));
+const ArchetypeResultDetail = lazy(() => import("./pages/ArchetypeResultDetail"));
+const ProfileHistoryArchetype = lazy(() => import("./pages/ProfileHistoryArchetype"));
+const AdminArchetype = lazy(() => import("./pages/AdminArchetype"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Payment = lazy(() => import("./pages/Payment"));
+const Offer = lazy(() => import("./pages/Offer"));
+const Contacts = lazy(() => import("./pages/Contacts"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const PersonalData = lazy(() => import("./pages/PersonalData"));
+const AiEditor = lazy(() => import("./pages/AiEditor"));
+const LenormandDivination = lazy(() => import("./pages/LenormandDivination"));
+const Knowledge = lazy(() => import("./pages/Knowledge"));
+const KnowledgePost = lazy(() => import("./pages/KnowledgePost"));
+const AdminKnowledge = lazy(() => import("./pages/AdminKnowledge"));
 import ScrollToTop from "./components/ScrollToTop";
 import MaintenanceBanner from "./components/MaintenanceBanner";
 
 const APP_VERSION = "2.0.0";
 
 const queryClient = new QueryClient();
+
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="h-8 w-8 rounded-full border-2 border-muted border-t-primary animate-spin" />
+  </div>
+);
 
 const VersionManager = () => {
   useEffect(() => {
@@ -101,6 +107,7 @@ const App = () => (
             <BrowserRouter>
             <MaintenanceBanner />
             <ScrollToTop />
+            <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/virtualfitting" element={<ReplicateTryOn />} />
@@ -168,6 +175,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
         </DataProvider>

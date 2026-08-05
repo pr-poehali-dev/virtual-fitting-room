@@ -15,7 +15,7 @@ import {
   getDivinationPrice,
   getDivinationMinPrice,
 } from "@/config/prices";
-import html2canvas from "html2canvas";
+const loadHtml2Canvas = async () => (await import("html2canvas")).default;
 import {
   HOUSE_NAMES,
   CARD_NAMES,
@@ -629,6 +629,7 @@ export default function LenormandDivination() {
     try {
       await inlineCardImages(prevCardRef.current);
       await waitForImages(prevCardRef.current);
+      const html2canvas = await loadHtml2Canvas();
       const canvas = await html2canvas(prevCardRef.current, {
         backgroundColor: "#faf7ff",
         scale: 2,
@@ -658,6 +659,7 @@ export default function LenormandDivination() {
     try {
       await inlineCardImages(dbPrevCardRef.current);
       await waitForImages(dbPrevCardRef.current);
+      const html2canvas = await loadHtml2Canvas();
       const canvas = await html2canvas(dbPrevCardRef.current, {
         backgroundColor: "#faf7ff",
         scale: 2,
