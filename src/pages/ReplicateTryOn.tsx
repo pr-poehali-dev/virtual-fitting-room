@@ -16,6 +16,7 @@ import CreateModelDialog, {
 } from "@/components/replicate/CreateModelDialog";
 import ReplicateClothingSelector from "@/components/replicate/ReplicateClothingSelector";
 import ReplicateResultPanel from "@/components/replicate/ReplicateResultPanel";
+import { useScrollToResult } from "@/hooks/useScrollToResult";
 import ReplicateSaveDialog from "@/components/replicate/ReplicateSaveDialog";
 import LockedFormOverlay from "@/components/LockedFormOverlay";
 import ImageCropper from "@/components/ImageCropper";
@@ -140,6 +141,7 @@ export default function ReplicateTryOn() {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [cdnImageUrl, setCdnImageUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const { resultRef, scrollToResult } = useScrollToResult<HTMLDivElement>();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [newLookbookName, setNewLookbookName] = useState("");
   const [newLookbookPersonName, setNewLookbookPersonName] = useState("");
@@ -184,6 +186,10 @@ export default function ReplicateTryOn() {
       }
     };
   }, [pollingInterval]);
+
+  useEffect(() => {
+    if (isGenerating || generatedImage) scrollToResult();
+  }, [isGenerating, generatedImage, scrollToResult]);
 
   useEffect(() => {
     if (!user) {
@@ -1176,14 +1182,16 @@ export default function ReplicateTryOn() {
             </Card>
             </LockedFormOverlay>
 
-            <ReplicateResultPanel
-              isGenerating={isGenerating}
-              generatedImage={generatedImage}
-              handleDownloadImage={handleDownloadImage}
-              setShowSaveDialog={setShowSaveDialog}
-              handleReset={handleReset}
-              hasTimedOut={hasTimedOut}
-            />
+            <div ref={resultRef}>
+              <ReplicateResultPanel
+                isGenerating={isGenerating}
+                generatedImage={generatedImage}
+                handleDownloadImage={handleDownloadImage}
+                setShowSaveDialog={setShowSaveDialog}
+                handleReset={handleReset}
+                hasTimedOut={hasTimedOut}
+              />
+            </div>
           </div>
 
           <div className="max-w-5xl mx-auto mt-16 mb-12">

@@ -12,6 +12,7 @@ import { COLORGUIDE_COST } from "@/config/prices";
 import { useBalance } from "@/context/BalanceContext";
 import { useNavigate } from "react-router-dom";
 import ColorGuideReport, { ColorGuideResult } from "@/components/ColorGuideReport";
+import { useScrollToResult } from "@/hooks/useScrollToResult";
 
 const COLORGUIDE_START_API = "https://functions.poehali.dev/1551f3e9-8029-441b-ac77-2dc9cf164bdc";
 const COLORGUIDE_STATUS_API = "https://functions.poehali.dev/ce27daee-90c0-4dd7-9369-a6b079895493";
@@ -30,6 +31,7 @@ export default function ColorGuide() {
   const [tempImageForCrop, setTempImageForCrop] = useState<string | null>(null);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const { resultRef, scrollToResult } = useScrollToResult<HTMLDivElement>();
   const [analysisStatus, setAnalysisStatus] = useState<string>("");
   const [hasTimedOut, setHasTimedOut] = useState(false);
 
@@ -45,6 +47,10 @@ export default function ColorGuide() {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (result && photoUrl) scrollToResult();
+  }, [result, photoUrl, scrollToResult]);
 
   const resizeImage = (base64Str: string, maxWidth: number, maxHeight: number): Promise<string> => {
     return new Promise((resolve) => {
@@ -298,7 +304,7 @@ export default function ColorGuide() {
           )}
 
           {result && photoUrl ? (
-            <div className="space-y-6">
+            <div className="space-y-6" ref={resultRef}>
               <ColorGuideReport result={result} photoUrl={photoUrl} />
               <div className="flex flex-wrap justify-center gap-3">
                 <Button onClick={handleReset} variant="outline" size="lg">

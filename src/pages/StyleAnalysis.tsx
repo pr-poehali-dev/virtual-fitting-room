@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { STYLE_ANALYSIS_COST } from "@/config/prices";
 import { useBalance } from "@/context/BalanceContext";
 import { useNavigate } from "react-router-dom";
+import { useScrollToResult } from "@/hooks/useScrollToResult";
 import StyleAnalysisReport, {
   StyleAnalysisResult,
 } from "@/components/StyleAnalysisReport";
@@ -111,6 +112,12 @@ export default function StyleAnalysis() {
       toast.error("Ошибка скачивания");
     }
   };
+
+  const { resultRef, scrollToResult } = useScrollToResult<HTMLDivElement>();
+
+  useEffect(() => {
+    if (resultData) scrollToResult();
+  }, [resultData, scrollToResult]);
 
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -226,6 +233,7 @@ export default function StyleAnalysis() {
     setIsAnalyzing(true);
     setAnalysisStatus("Запуск анализа...");
     setResultUrl(null);
+    scrollToResult();
 
     try {
       const token = localStorage.getItem("session_token");
@@ -486,7 +494,7 @@ export default function StyleAnalysis() {
           )}
 
           {isAnalyzing && !resultUrl && (
-            <Card>
+            <Card ref={resultRef}>
               <CardContent className="p-10 flex flex-col items-center justify-center text-center min-h-[340px]">
                 <Icon
                   name="Loader2"
@@ -505,7 +513,7 @@ export default function StyleAnalysis() {
           )}
 
           {resultData ? (
-            <div className="space-y-6 animate-fade-in">
+            <div className="space-y-6 animate-fade-in" ref={resultRef}>
               <StyleAnalysisReport result={resultData} imageUrl={resultUrl} />
               <div className="flex justify-center">
                 <Button size="lg" variant="outline" onClick={handleReset}>

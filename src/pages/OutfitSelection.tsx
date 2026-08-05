@@ -24,6 +24,7 @@ import OutfitReport, {
   OutfitFormParams,
 } from "@/components/OutfitReport";
 import FaqAccordion from "@/components/FaqAccordion";
+import { useScrollToResult } from "@/hooks/useScrollToResult";
 import {
   Dialog,
   DialogContent,
@@ -338,6 +339,7 @@ export default function OutfitSelection() {
   const [savingProfile, setSavingProfile] = useState(false);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const { resultRef, scrollToResult } = useScrollToResult<HTMLDivElement>();
   const [analysisStatus, setAnalysisStatus] = useState<string>("");
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [resultData, setResultData] = useState<OutfitResult | null>(null);
@@ -354,6 +356,10 @@ export default function OutfitSelection() {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (resultUrl && !isAnalyzing) scrollToResult();
+  }, [resultUrl, isAnalyzing, scrollToResult]);
 
   const loadProfiles = () => {
     if (!user) return;
@@ -632,6 +638,7 @@ export default function OutfitSelection() {
     setAnalysisStatus("Запуск подбора...");
     setResultUrl(null);
     setResultData(null);
+    scrollToResult();
 
     try {
       const token = localStorage.getItem("session_token");
@@ -1202,7 +1209,7 @@ export default function OutfitSelection() {
           )}
 
           {isAnalyzing && (
-            <Card>
+            <Card ref={resultRef}>
               <CardContent className="p-10 text-center">
                 <Icon
                   name="Loader2"
@@ -1221,13 +1228,15 @@ export default function OutfitSelection() {
           )}
 
           {resultUrl && !isAnalyzing && (
-            <OutfitReport
-              imageUrl={resultUrl}
-              data={resultData}
-              formParams={resultParams}
-              onReset={handleReset}
-              onEdit={handleEdit}
-            />
+            <div ref={resultRef}>
+              <OutfitReport
+                imageUrl={resultUrl}
+                data={resultData}
+                formParams={resultParams}
+                onReset={handleReset}
+                onEdit={handleEdit}
+              />
+            </div>
           )}
 
           <FaqAccordion

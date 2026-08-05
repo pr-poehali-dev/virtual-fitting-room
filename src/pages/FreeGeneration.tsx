@@ -18,6 +18,7 @@ import {
 } from '@/utils/replicateBalanceUtils';
 import { GENERATION_COST } from '@/config/prices';
 import { useBalance } from '@/context/BalanceContext';
+import { useScrollToResult } from '@/hooks/useScrollToResult';
 
 const FREEGEN_START_API = 'https://functions.poehali.dev/093c98ba-e711-4c78-b328-a7494005df42';
 const FREEGEN_STATUS_API = 'https://functions.poehali.dev/f706d708-5f17-4c11-864c-d13bf91cebce';
@@ -37,12 +38,17 @@ export default function FreeGeneration() {
   const [statusText, setStatusText] = useState('');
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const { resultRef, scrollToResult } = useScrollToResult<HTMLDivElement>();
 
   useEffect(() => {
     return () => {
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (isGenerating || resultUrl) scrollToResult();
+  }, [isGenerating, resultUrl, scrollToResult]);
 
   const insertRefLabel = (index: number) => {
     const label = `@ref${index + 1}`;
@@ -267,7 +273,7 @@ export default function FreeGeneration() {
             </LockedFormOverlay>
           </div>
 
-          <div>
+          <div ref={resultRef}>
             <FreegenResultPanel
               resultUrl={resultUrl}
               isGenerating={isGenerating}
