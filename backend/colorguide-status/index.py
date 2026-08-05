@@ -3,6 +3,43 @@ import os
 import psycopg2
 from typing import Dict, Any
 
+STALE_TASK_SECONDS = 720
+STALE_ERROR_MESSAGE = (
+    'Генерация прервалась из-за сбоя связи и не была завершена. '
+    'Деньги возвращены на баланс, если они списывались. Попробуйте ещё раз.'
+)
+
+
+def _fail_stale_task(conn, cursor, task_id: str, row):
+    """Помечает зависшую задачу как failed и возвращает списанные деньги.
+    Задача считается зависшей, если провисела в работе дольше STALE_TASK_SECONDS."""
+    user_id, cost, refunded = row[8], row[9], row[10]
+    try:
+        if cost and cost > 0 and not refunded:
+            cursor.execute('SELECT balance FROM users WHERE id = %s', (user_id,))
+            u = cursor.fetchone()
+            if u:
+                balance_before = float(u[0])
+                balance_after = balance_before + cost
+                cursor.execute('UPDATE users SET balance = balance + %s WHERE id = %s', (cost, user_id))
+                cursor.execute('''
+                    INSERT INTO balance_transactions
+                    (user_id, type, amount, balance_before, balance_after, description)
+                    VALUES (%s, 'refund', %s, %s, %s, %s)
+                ''', (user_id, cost, balance_before, balance_after, 'Возврат: генерация прервалась'))
+                cursor.execute('UPDATE color_guide_tasks SET refunded = TRUE WHERE id = %s', (task_id,))
+        cursor.execute(
+            "UPDATE color_guide_tasks SET status = 'failed', error_message = %s, updated_at = NOW() WHERE id = %s",
+            (STALE_ERROR_MESSAGE, task_id)
+        )
+        conn.commit()
+        print(f'[COLORGUIDE-STATUS] Stale task {task_id} marked as failed')
+        return ('failed',) + tuple(row[1:4]) + (STALE_ERROR_MESSAGE,) + tuple(row[5:])
+    except Exception as e:
+        conn.rollback()
+        print(f'[COLORGUIDE-STATUS] Failed to mark stale task {task_id}: {e}')
+        return row
+
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -49,10 +86,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = psycopg2.connect(dsn)
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT status, colortype_slug, result_json, cdn_url, error_message, service_type, form_params
+            SELECT status, colortype_slug, result_json, cdn_url, error_message, service_type, form_params,
+                   EXTRACT(EPOCH FROM (NOW() - created_at)), user_id, cost, refunded
             FROM color_guide_tasks WHERE id = %s
         ''', (task_id,))
         row = cursor.fetchone()
+
+        if row and row[0] in ('pending', 'processing') and (row[7] or 0) > STALE_TASK_SECONDS:
+            row = _fail_stale_task(conn, cursor, task_id, row)
+
         cursor.close()
         conn.close()
 
@@ -64,7 +106,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Task not found'})
             }
 
-        status, colortype_slug, result_json, cdn_url, error_message, service_type, form_params = row
+        status, colortype_slug, result_json, cdn_url, error_message, service_type, form_params = row[:7]
 
         # Единая очередь: если задача всё ещё ждёт — будим воркер (он сам решит, стартовать или ждать слот)
         if status == 'pending':

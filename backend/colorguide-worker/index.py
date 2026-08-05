@@ -605,7 +605,7 @@ def _fal_get(url: str) -> dict:
                 raise
             last_error = e
             print(f'[COLORGUIDE-WORKER] fal.ai GET network error (attempt {attempt + 1}): {e}')
-            time.sleep(3)
+            time.sleep(1.5)
     raise last_error if last_error else RuntimeError('fal.ai GET failed')
 
 
@@ -632,10 +632,11 @@ def upload_result_to_s3(image_url: str, task_id: str, user_id: str) -> str:
     На временных сетевых сбоях (обрыв TLS/EOF/таймаут) повторяем скачивание."""
     image_bytes = None
     last_error = None
-    for attempt in range(4):
+    for attempt in range(5):
+        attempt_timeout = 60 if attempt == 0 else 25
         req = urllib.request.Request(image_url, method='GET')
         try:
-            with urllib.request.urlopen(req, timeout=60) as response:
+            with urllib.request.urlopen(req, timeout=attempt_timeout) as response:
                 image_bytes = response.read()
             break
         except Exception as e:
@@ -643,7 +644,7 @@ def upload_result_to_s3(image_url: str, task_id: str, user_id: str) -> str:
                 raise
             last_error = e
             print(f'[COLORGUIDE-WORKER] download result network error (attempt {attempt + 1}): {e}')
-            time.sleep(3)
+            time.sleep(1 if attempt == 0 else 2)
     if image_bytes is None:
         raise last_error if last_error else RuntimeError('failed to download result image')
 
