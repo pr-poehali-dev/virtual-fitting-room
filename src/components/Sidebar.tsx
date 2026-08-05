@@ -111,7 +111,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
           </div>
 
           {/* Menu Items */}
-          <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-2">
+          <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 py-4 space-y-2">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
 
