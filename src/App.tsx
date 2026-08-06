@@ -8,6 +8,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { DataProvider } from "./context/DataContext";
 import { BalanceProvider } from "./context/BalanceContext";
 import { useEffect, lazy, Suspense } from "react";
+import { startRoutePreload } from "@/utils/routePreloader";
 
 import Home from "./pages/Home";
 const ColorType = lazy(() => import("./pages/ColorType"));
@@ -95,9 +96,18 @@ const VersionManager = () => {
   return null;
 };
 
+const RoutePreloader = () => {
+  useEffect(() => {
+    startRoutePreload();
+  }, []);
+
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <VersionManager />
+    <RoutePreloader />
     <AuthProvider>
       <BalanceProvider>
         <DataProvider>
