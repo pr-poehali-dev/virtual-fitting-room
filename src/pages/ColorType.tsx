@@ -686,7 +686,7 @@ export default function ColorType() {
   return (
     <Layout>
       <section className="py-20 px-4">
-        <div className="container mx-auto max-w-7xl">
+        <div className="w-full mx-auto max-w-7xl">
           <div className="text-center mb-16 animate-fade-in">
             <h2 className="text-5xl md:text-6xl font-light mb-4">
               Определение цветотипа
@@ -900,22 +900,24 @@ export default function ColorType() {
                   <Button
                     onClick={handleAnalyze}
                     disabled={isAnalyzing || !uploadedImage || !eyeColor || !user || !!hasInsufficientBalance}
-                    className="w-full h-12 text-base"
+                    className="w-full max-w-full min-h-12 h-auto py-3 text-base whitespace-normal text-center leading-snug"
                     size="lg"
                   >
                     {isAnalyzing ? (
                       <>
                         <Icon
                           name="Loader2"
-                          className="mr-2 animate-spin"
+                          className="mr-2 animate-spin shrink-0"
                           size={20}
                         />
-                        {analysisStatus || "Анализ..."}
+                        <span className="min-w-0">
+                          {analysisStatus || "Анализ..."}
+                        </span>
                       </>
                     ) : (
                       <>
-                        <Icon name="Palette" className="mr-2" size={20} />
-                        Определить цветотип
+                        <Icon name="Palette" className="mr-2 shrink-0" size={20} />
+                        <span className="min-w-0">Определить цветотип</span>
                       </>
                     )}
                   </Button>

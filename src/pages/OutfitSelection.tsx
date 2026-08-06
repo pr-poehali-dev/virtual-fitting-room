@@ -738,7 +738,7 @@ export default function OutfitSelection() {
   return (
     <Layout>
       <section className="py-20 px-4">
-        <div className="container mx-auto max-w-4xl">
+        <div className="w-full mx-auto max-w-4xl">
           <div className="text-center mb-12 animate-fade-in">
             <h2 className="text-5xl md:text-6xl font-light mb-4">
               Подбор образов
@@ -1180,20 +1180,22 @@ export default function OutfitSelection() {
                       <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                         <Button
                           size="lg"
-                          className="w-full sm:w-auto"
+                          className="w-full sm:w-auto max-w-full min-h-11 h-auto py-3 whitespace-normal text-center leading-snug"
                           onClick={handleAnalyze}
                         >
-                          <Icon name="Sparkles" size={18} className="mr-2" />
-                          Подобрать образ за {COST} ₽
+                          <Icon name="Sparkles" size={18} className="mr-2 shrink-0" />
+                          <span className="min-w-0">
+                            Подобрать образ за {COST} ₽
+                          </span>
                         </Button>
                         <Button
                           size="lg"
                           variant="outline"
-                          className="w-full sm:w-auto"
+                          className="w-full sm:w-auto max-w-full min-h-11 h-auto py-3 whitespace-normal text-center leading-snug"
                           onClick={openSaveDialog}
                         >
-                          <Icon name="BookmarkPlus" size={18} className="mr-2" />
-                          Сохранить анкету
+                          <Icon name="BookmarkPlus" size={18} className="mr-2 shrink-0" />
+                          <span className="min-w-0">Сохранить анкету</span>
                         </Button>
                       </div>
                       <p className="text-xs text-muted-foreground text-center">

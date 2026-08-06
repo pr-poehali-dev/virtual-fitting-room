@@ -297,7 +297,7 @@ export default function StyleAnalysis() {
   return (
     <Layout>
       <section className="py-20 px-4">
-        <div className="container mx-auto max-w-4xl">
+        <div className="w-full mx-auto max-w-4xl">
           <div className="text-center mb-12 animate-fade-in">
             <h2 className="text-5xl md:text-6xl font-light mb-4">
               Стилевой анализ внешности
@@ -468,7 +468,7 @@ export default function StyleAnalysis() {
 
                         <Button
                           size="lg"
-                          className="w-full"
+                          className="w-full max-w-full min-h-11 h-auto py-3 whitespace-normal text-center leading-snug"
                           onClick={handleAnalyze}
                           disabled={isAnalyzing || !uploadedImage}
                         >
@@ -477,12 +477,16 @@ export default function StyleAnalysis() {
                               <Icon
                                 name="Loader2"
                                 size={18}
-                                className="mr-2 animate-spin"
+                                className="mr-2 animate-spin shrink-0"
                               />
-                              {analysisStatus || "Обработка..."}
+                              <span className="min-w-0">
+                                {analysisStatus || "Обработка..."}
+                              </span>
                             </>
                           ) : (
-                            <>Анализировать за {COST} ₽</>
+                            <span className="min-w-0">
+                              Анализировать за {COST} ₽
+                            </span>
                           )}
                         </Button>
                       </>
