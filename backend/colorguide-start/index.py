@@ -14,17 +14,25 @@ ALLOWED_SLUGS = [
     'vibrant-spring', 'vivid-autumn', 'vivid-summer', 'vivid-winter'
 ]
 
-ALLOWED_SERVICE_TYPES = ['colorguide', 'style', 'outfit']
+ALLOWED_SERVICE_TYPES = ['colorguide', 'style', 'outfit', 'glasses', 'makeup', 'hairstyle', 'kibbe']
 SERVICE_LABELS = {
     'colorguide': 'Гид по цвету',
     'style': 'Стилевой анализ внешности',
     'outfit': 'Подбор образа',
+    'glasses': 'Подбор очков',
+    'makeup': 'Подбор макияжа',
+    'hairstyle': 'Подбор причёски',
+    'kibbe': 'Типаж по Кибби',
 }
 # Стоимость по типу сервиса. 'outfit' — премиальный, легко поднять цену здесь.
 SERVICE_COSTS = {
     'colorguide': 50,
     'style': 50,
     'outfit': 50,
+    'glasses': 50,
+    'makeup': 50,
+    'hairstyle': 50,
+    'kibbe': 50,
 }
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:

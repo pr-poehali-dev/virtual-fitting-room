@@ -15,6 +15,8 @@ import { useScrollToResult } from "@/hooks/useScrollToResult";
 import StyleAnalysisReport, {
   StyleAnalysisResult,
 } from "@/components/StyleAnalysisReport";
+import BeautyAnalysisReport from "@/components/BeautyAnalysisReport";
+import { BEAUTY_REPORTS } from "@/config/beautyReports";
 
 const START_API =
   "https://functions.poehali.dev/1551f3e9-8029-441b-ac77-2dc9cf164bdc";
@@ -30,26 +32,105 @@ type Service = {
   name: string;
   icon: string;
   available: boolean;
-  testLink?: boolean;
-  testPath?: string;
-  testInfo?: string;
+  fullBody: boolean;
+  needsHeight: boolean;
+  photoHint: string;
+  extraLink?: string;
+  extraPath?: string;
+  extraInfo?: string;
 };
 
 const SERVICES: Service[] = [
-  { id: "style", name: "Стиль одежды", icon: "Shirt", available: true },
-  { id: "hairstyle", name: "Причёски", icon: "Scissors", available: false },
-  { id: "makeup", name: "Макияж", icon: "Sparkles", available: false },
+  {
+    id: "style",
+    name: "Стиль одежды",
+    icon: "Shirt",
+    available: true,
+    fullBody: true,
+    needsHeight: true,
+    photoHint:
+      "Фото в полный рост, без верхней одежды. Встаньте прямо, лицом к камере, руки вдоль тела.",
+  },
   {
     id: "kibbe",
     name: "Типаж по Кибби",
     icon: "Ruler",
     available: true,
-    testLink: true,
-    testPath: "/kibbe-test",
-    testInfo:
-      "Определение типажа по Кибби по фото пока в разработке. Но вы уже можете бесплатно пройти тест и узнать свой типаж из 10 по системе Дэвида Кибби.",
+    fullBody: true,
+    needsHeight: true,
+    photoHint:
+      "Фото в полный рост, обязательно БЕЗ верхней одежды. Нужна облегающая или неширокая одежда, чтобы были видны линии фигуры. Встаньте прямо, лицом к камере.",
+    extraLink: "Пройти бесплатный тест",
+    extraPath: "/kibbe-test",
+    extraInfo:
+      "Хотите проверить себя? Пройдите бесплатный тест по системе Дэвида Кибби — он определит типаж по вашим ответам.",
+  },
+  {
+    id: "hairstyle",
+    name: "Причёски",
+    icon: "Scissors",
+    available: true,
+    fullBody: false,
+    needsHeight: false,
+    photoHint:
+      "Портрет крупным планом: лицо и волосы полностью в кадре. Без головного убора, лицо хорошо освещено.",
+  },
+  {
+    id: "makeup",
+    name: "Макияж",
+    icon: "Sparkles",
+    available: true,
+    fullBody: false,
+    needsHeight: false,
+    photoHint:
+      "Портрет крупным планом при дневном свете. Лучше без макияжа или с минимальным — так анализ кожи будет точнее. Без очков и фильтров.",
+  },
+  {
+    id: "glasses",
+    name: "Очки",
+    icon: "Glasses",
+    available: true,
+    fullBody: false,
+    needsHeight: false,
+    photoHint:
+      "Портрет анфас крупным планом, БЕЗ очков. Лицо полностью в кадре, волосы не закрывают лоб и брови.",
   },
 ];
+
+const SERVICE_TITLES: Record<string, { title: string; subtitle: string }> = {
+  style: {
+    title: "Стилевой анализ внешности",
+    subtitle:
+      "Персональная инфографика по фото: стиль, палитра, образы и рекомендации",
+  },
+  kibbe: {
+    title: "Типаж по системе Кибби",
+    subtitle:
+      "Определим ваш типаж по фото и покажем 3 образа, которые его раскрывают",
+  },
+  hairstyle: {
+    title: "Подбор причёски по фото",
+    subtitle:
+      "Форма лица, тип волос и 3 причёски, которые вам подойдут",
+  },
+  makeup: {
+    title: "Подбор макияжа по фото",
+    subtitle:
+      "Разбор кожи и колорита, подходящие текстуры и 2 готовых образа",
+  },
+  glasses: {
+    title: "Подбор очков по фото",
+    subtitle: "Форма лица, подходящие оправы и 3 примера очков на вас",
+  },
+};
+
+const STATUS_TEXTS: Record<string, string> = {
+  style: "Анализ внешности и создание инфографики...",
+  kibbe: "Определяем типаж и рисуем образы...",
+  hairstyle: "Подбираем причёски и рисуем варианты...",
+  makeup: "Анализируем кожу и рисуем макияж...",
+  glasses: "Подбираем оправы и рисуем примеры...",
+};
 
 export default function StyleAnalysis() {
   const { user } = useAuth();
@@ -66,7 +147,11 @@ export default function StyleAnalysis() {
   const [resultData, setResultData] = useState<StyleAnalysisResult | null>(
     null,
   );
-  const [activeTestLink, setActiveTestLink] = useState<string | null>(null);
+  const [resultService, setResultService] = useState<string>("style");
+
+  const activeService =
+    SERVICES.find((s) => s.id === serviceType) || SERVICES[0];
+  const pageTitle = SERVICE_TITLES[serviceType] || SERVICE_TITLES.style;
 
   const handleDownload = async () => {
     if (!resultUrl) return;
@@ -205,7 +290,7 @@ export default function StyleAnalysis() {
         toast.error(data.error || "Ошибка анализа. Попробуйте ещё раз.");
         refreshBalance();
       } else if (data.status === "processing") {
-        setAnalysisStatus("Анализ внешности и создание инфографики...");
+        setAnalysisStatus(STATUS_TEXTS[serviceType] || STATUS_TEXTS.style);
       } else if (data.status === "pending") {
         setAnalysisStatus("Подготовка к анализу...");
       }
@@ -225,14 +310,18 @@ export default function StyleAnalysis() {
       return;
     }
     const heightNum = parseInt(height, 10);
-    if (!height || isNaN(heightNum) || heightNum < 100 || heightNum > 250) {
-      toast.error("Укажите рост от 100 до 250 см");
-      return;
+    if (activeService.needsHeight) {
+      if (!height || isNaN(heightNum) || heightNum < 100 || heightNum > 250) {
+        toast.error("Укажите рост от 100 до 250 см");
+        return;
+      }
     }
 
     setIsAnalyzing(true);
     setAnalysisStatus("Запуск анализа...");
     setResultUrl(null);
+    setResultData(null);
+    setResultService(serviceType);
     scrollToResult();
 
     try {
@@ -247,7 +336,7 @@ export default function StyleAnalysis() {
         body: JSON.stringify({
           person_image: uploadedImage,
           service_type: serviceType,
-          height: heightNum,
+          ...(activeService.needsHeight ? { height: heightNum } : {}),
         }),
       });
       const data = await response.json();
@@ -300,11 +389,10 @@ export default function StyleAnalysis() {
         <div className="w-full mx-auto max-w-4xl">
           <div className="text-center mb-12 animate-fade-in">
             <h2 className="text-5xl md:text-6xl font-light mb-4">
-              Стилевой анализ внешности
+              {pageTitle.title}
             </h2>
             <p className="text-muted-foreground text-lg">
-              Персональная инфографика по фото: стиль, палитра, образы и
-              рекомендации
+              {pageTitle.subtitle}
             </p>
           </div>
 
@@ -315,32 +403,18 @@ export default function StyleAnalysis() {
                   <CardContent className="p-6 md:p-8 space-y-8">
                     <div>
                       <p className="font-medium mb-3">Выберите анализ</p>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                         {SERVICES.map((s) => (
                           <button
                             key={s.id}
                             type="button"
-                            disabled={
-                              (!s.available && !s.testLink) || isAnalyzing
-                            }
-                            onClick={() => {
-                              if (s.testLink) {
-                                setActiveTestLink((prev) =>
-                                  prev === s.id ? null : s.id,
-                                );
-                              } else if (s.available) {
-                                setServiceType(s.id);
-                                setActiveTestLink(null);
-                              }
-                            }}
-                            className={`relative flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all ${
-                              (s.testLink && activeTestLink === s.id) ||
-                              (!s.testLink &&
-                                !activeTestLink &&
-                                serviceType === s.id)
+                            disabled={isAnalyzing}
+                            onClick={() => setServiceType(s.id)}
+                            className={`relative flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all cursor-pointer ${
+                              serviceType === s.id
                                 ? "border-primary bg-primary/5 ring-1 ring-primary"
                                 : "border-border hover:border-primary/40"
-                            } ${!s.available && !s.testLink ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                            }`}
                           >
                             <Icon
                               name={s.icon}
@@ -350,56 +424,61 @@ export default function StyleAnalysis() {
                             <span className="text-sm font-medium leading-tight">
                               {s.name}
                             </span>
-                            {!s.available && !s.testLink && (
-                              <span className="absolute top-1.5 right-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                                скоро
-                              </span>
-                            )}
-                            {s.testLink && (
-                              <span className="absolute top-1.5 right-1.5 text-[10px] uppercase tracking-wide text-purple-600">
-                                тест
-                              </span>
-                            )}
                           </button>
                         ))}
                       </div>
 
-                      {activeTestLink &&
-                        (() => {
-                          const activeService = SERVICES.find(
-                            (s) => s.id === activeTestLink,
-                          );
-                          if (!activeService?.testPath) return null;
-                          return (
-                            <div className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
-                              <div className="flex items-start gap-3">
-                                <Icon
-                                  name="Info"
-                                  size={20}
-                                  className="mt-0.5 shrink-0 text-purple-600"
-                                />
-                                <div>
-                                  <p className="text-sm text-gray-700">
-                                    {activeService.testInfo}
-                                  </p>
-                                  <Button
-                                    type="button"
-                                    className="mt-3 bg-purple-600 text-white hover:bg-purple-700"
-                                    onClick={() =>
-                                      navigate(activeService.testPath!)
-                                    }
-                                  >
-                                    Пройти бесплатный тест
-                                  </Button>
-                                </div>
-                              </div>
+                      <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4">
+                        <div className="flex items-start gap-3">
+                          <Icon
+                            name={activeService.fullBody ? "PersonStanding" : "ScanFace"}
+                            size={20}
+                            className="mt-0.5 shrink-0 text-primary"
+                          />
+                          <div>
+                            <p className="text-sm font-medium mb-1">
+                              {activeService.fullBody
+                                ? "Нужно фото в полный рост"
+                                : "Нужен портрет крупным планом"}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {activeService.photoHint}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {activeService.extraPath && (
+                        <div className="mt-3 rounded-xl border border-purple-200 bg-purple-50 p-4">
+                          <div className="flex items-start gap-3">
+                            <Icon
+                              name="Info"
+                              size={20}
+                              className="mt-0.5 shrink-0 text-purple-600"
+                            />
+                            <div>
+                              <p className="text-sm text-gray-700">
+                                {activeService.extraInfo}
+                              </p>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="mt-3 max-w-full min-h-10 h-auto py-2.5 whitespace-normal text-center leading-snug border-purple-300 text-purple-700 hover:bg-purple-100"
+                                onClick={() =>
+                                  navigate(activeService.extraPath!)
+                                }
+                              >
+                                <span className="min-w-0">
+                                  {activeService.extraLink}
+                                </span>
+                              </Button>
                             </div>
-                          );
-                        })()}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    {!activeTestLink && (
-                      <>
+                    <>
                         <div className="grid md:grid-cols-2 gap-6">
                           <div>
                             <p className="font-medium mb-3">Ваше фото</p>
@@ -421,7 +500,9 @@ export default function StyleAnalysis() {
                                     className="mx-auto mb-3"
                                   />
                                   <p className="text-sm">
-                                    Загрузите фото в полный рост или портрет
+                                    {activeService.fullBody
+                                      ? "Загрузите фото в полный рост"
+                                      : "Загрузите портрет крупным планом"}
                                   </p>
                                   <p className="text-xs mt-1">JPG, PNG, WebP</p>
                                 </div>
@@ -438,30 +519,33 @@ export default function StyleAnalysis() {
                           </div>
 
                           <div className="flex flex-col gap-4">
-                            <div>
-                              <p className="font-medium mb-3">Ваш рост, см</p>
-                              <Input
-                                type="number"
-                                min={100}
-                                max={250}
-                                placeholder="например, 168"
-                                value={height}
-                                onChange={(e) => setHeight(e.target.value)}
-                                disabled={isAnalyzing}
-                              />
-                            </div>
+                            {activeService.needsHeight && (
+                              <div>
+                                <p className="font-medium mb-3">Ваш рост, см</p>
+                                <Input
+                                  type="number"
+                                  min={100}
+                                  max={250}
+                                  placeholder="например, 168"
+                                  value={height}
+                                  onChange={(e) => setHeight(e.target.value)}
+                                  disabled={isAnalyzing}
+                                />
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  Рост нужен, чтобы точнее определить пропорции
+                                  фигуры.
+                                </p>
+                              </div>
+                            )}
                             <div className="rounded-xl bg-muted/40 p-4 text-sm text-muted-foreground">
                               <p className="flex items-center gap-2 mb-2 text-foreground font-medium">
                                 <Icon name="Info" size={16} /> Как это работает
                               </p>
-                              Для стилевого анализа загрузите фото{" "}
-                              <span className="text-foreground font-medium">
-                                в полный рост
-                              </span>
-                              . Выберите свое фото при дневном свете желательно
-                              на нейтральном не слишком детализированном фоне.
-                              Анализ занимает 2–3 минуты, результат — готовая
-                              инфографика, которую можно скачать.
+                              {activeService.photoHint} Снимайте при дневном
+                              свете, желательно на нейтральном не слишком
+                              детализированном фоне. Анализ занимает 2–3 минуты,
+                              результат — подробный разбор и картинка, которые
+                              можно скачать.
                             </div>
                           </div>
                         </div>
@@ -490,7 +574,6 @@ export default function StyleAnalysis() {
                           )}
                         </Button>
                       </>
-                    )}
                   </CardContent>
                 </Card>
               </LockedFormOverlay>
@@ -518,11 +601,24 @@ export default function StyleAnalysis() {
 
           {resultData ? (
             <div className="space-y-6 animate-fade-in" ref={resultRef}>
-              <StyleAnalysisReport result={resultData} imageUrl={resultUrl} />
+              {BEAUTY_REPORTS[resultService] ? (
+                <BeautyAnalysisReport
+                  result={resultData as Record<string, unknown>}
+                  imageUrl={resultUrl}
+                  config={BEAUTY_REPORTS[resultService]}
+                />
+              ) : (
+                <StyleAnalysisReport result={resultData} imageUrl={resultUrl} />
+              )}
               <div className="flex justify-center">
-                <Button size="lg" variant="outline" onClick={handleReset}>
-                  <Icon name="RotateCcw" size={18} className="mr-2" />
-                  Новый анализ
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={handleReset}
+                  className="max-w-full min-h-11 h-auto py-3 whitespace-normal text-center leading-snug"
+                >
+                  <Icon name="RotateCcw" size={18} className="mr-2 shrink-0" />
+                  <span className="min-w-0">Новый анализ</span>
                 </Button>
               </div>
             </div>

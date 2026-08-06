@@ -14,11 +14,19 @@
 
 from services import style
 from services import outfit
+from services import glasses
+from services import makeup
+from services import hairstyle
+from services import kibbe
 
 # service_type -> модуль сервиса
 IMAGE_SERVICES = {
     'style': style,
     'outfit': outfit,
+    'glasses': glasses,
+    'makeup': makeup,
+    'hairstyle': hairstyle,
+    'kibbe': kibbe,
 }
 
 

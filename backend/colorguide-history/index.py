@@ -83,7 +83,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor.close()
         conn.close()
 
-        service_labels = {'colorguide': 'Гид по цвету', 'style': 'Стилевой анализ'}
+        service_labels = {
+            'colorguide': 'Гид по цвету',
+            'style': 'Стилевой анализ',
+            'outfit': 'Подбор образа',
+            'glasses': 'Подбор очков',
+            'makeup': 'Подбор макияжа',
+            'hairstyle': 'Подбор причёски',
+            'kibbe': 'Типаж по Кибби',
+        }
 
         tasks = []
         for row in rows:
