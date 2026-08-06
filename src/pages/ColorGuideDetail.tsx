@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import ColorGuideReport, { ColorGuideResult } from "@/components/ColorGuideReport";
 import StyleAnalysisReport, { StyleAnalysisResult } from "@/components/StyleAnalysisReport";
+import BeautyAnalysisReport from "@/components/BeautyAnalysisReport";
+import { BEAUTY_REPORTS } from "@/config/beautyReports";
 import OutfitReport, {
   OutfitResult,
   OutfitFormParams,
@@ -184,6 +186,12 @@ export default function ColorGuideDetail() {
               data={outfitResult}
               formParams={outfitParams}
               onReset={() => navigate("/outfit-selection")}
+            />
+          ) : BEAUTY_REPORTS[serviceType] && styleResult ? (
+            <BeautyAnalysisReport
+              result={styleResult as Record<string, unknown>}
+              imageUrl={imageUrl}
+              config={BEAUTY_REPORTS[serviceType]}
             />
           ) : serviceType !== "colorguide" && styleResult ? (
             <StyleAnalysisReport result={styleResult} imageUrl={imageUrl} />
