@@ -74,9 +74,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       </span>
                     </div>
                     <Button
+                      asChild
                       variant="ghost"
                       size="sm"
-                      onClick={() => navigate("/profile")}
                       className={`hidden lg:flex ${location.pathname.startsWith("/profile") ? "text-white hover:text-white" : "hover:bg-purple-700 hover:text-white"}`}
                       style={
                         location.pathname.startsWith("/profile")
@@ -84,11 +84,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                           : {}
                       }
                     >
-                      <Icon name="User" size={16} className="mr-2" />
-                      Личный кабинет
+                      <Link to="/profile">
+                        <Icon name="User" size={16} className="mr-2" />
+                        Личный кабинет
+                      </Link>
                     </Button>
-                    <button
-                      onClick={() => navigate("/profile")}
+                    <Link
+                      to="/profile"
                       className="lg:hidden p-1 hover:bg-muted rounded-lg transition-colors"
                       aria-label="Profile"
                     >
@@ -100,7 +102,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                           {userInitial}
                         </AvatarFallback>
                       </Avatar>
-                    </button>
+                    </Link>
                     <Button
                       variant="outline"
                       size="sm"
@@ -121,27 +123,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 ) : (
                   <>
                     <Button
+                      asChild
                       variant="outline"
                       size="sm"
-                      onClick={() => navigate("/login")}
                       className="hidden md:flex"
                     >
-                      Войти
+                      <Link to="/login">Войти</Link>
                     </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => navigate("/register")}
-                      className="hidden md:flex"
-                    >
-                      Регистрация
+                    <Button asChild size="sm" className="hidden md:flex">
+                      <Link to="/register">Регистрация</Link>
                     </Button>
-                    <button
-                      onClick={() => navigate("/login")}
+                    <Link
+                      to="/login"
                       className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
                       aria-label="Login"
                     >
                       <Icon name="User" size={24} />
-                    </button>
+                    </Link>
                   </>
                 )}
               </div>

@@ -173,16 +173,18 @@ const Home = () => {
                       <span className="text-sm text-gray-300">{user.name}</span>
                     </div>
                     <Button
+                      asChild
                       variant="ghost"
                       size="sm"
-                      onClick={() => navigate("/profile")}
                       className="hidden lg:flex text-white hover:bg-purple-700 hover:text-white"
                     >
-                      <Icon name="User" size={16} className="mr-2" />
-                      Личный кабинет
+                      <Link to="/profile">
+                        <Icon name="User" size={16} className="mr-2" />
+                        Личный кабинет
+                      </Link>
                     </Button>
-                    <button
-                      onClick={() => navigate("/profile")}
+                    <Link
+                      to="/profile"
                       className="lg:hidden p-1 hover:bg-gray-700 rounded-lg transition-colors"
                       aria-label="Profile"
                     >
@@ -194,7 +196,7 @@ const Home = () => {
                           {userInitial}
                         </AvatarFallback>
                       </Avatar>
-                    </button>
+                    </Link>
                     <Button
                       variant="outline"
                       size="sm"
@@ -215,28 +217,28 @@ const Home = () => {
                 ) : (
                   <>
                     <Button
+                      asChild
                       variant="ghost"
                       size="sm"
-                      onClick={() => navigate("/login")}
                       className="hidden md:flex text-white hover:bg-white/10"
                     >
-                      Войти
+                      <Link to="/login">Войти</Link>
                     </Button>
                     <Button
+                      asChild
                       size="sm"
-                      onClick={() => navigate("/register")}
                       className="hidden md:flex text-white hover:opacity-90"
                       style={{ backgroundColor: "rgb(150, 115, 211)" }}
                     >
-                      Регистрация
+                      <Link to="/register">Регистрация</Link>
                     </Button>
-                    <button
-                      onClick={() => navigate("/login")}
+                    <Link
+                      to="/login"
                       className="lg:hidden p-2 hover:bg-gray-700 rounded-lg transition-colors"
                       aria-label="Login"
                     >
                       <Icon name="User" size={24} className="text-white" />
-                    </button>
+                    </Link>
                   </>
                 )}
               </div>
