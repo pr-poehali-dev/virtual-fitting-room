@@ -53,6 +53,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     except (TypeError, ValueError):
         offset = 0
 
+    # Фильтр по типам услуг: services=glasses,kibbe,outfit (пусто = показать все)
+    allowed_services = {'colorguide', 'style', 'outfit', 'glasses', 'makeup', 'hairstyle', 'kibbe'}
+    services_raw = params.get('services') or ''
+    selected_services = [s.strip() for s in services_raw.split(',') if s.strip() in allowed_services]
+
     dsn = os.environ.get('DATABASE_URL')
     if '?' in dsn:
         dsn += '&options=-c%20search_path%3Dt_p29007832_virtual_fitting_room'
@@ -63,22 +68,41 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = psycopg2.connect(dsn)
         cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-        # Общее число задач пользователя (для пагинации)
+        # Пустой service_type у старых записей считаем гидом по цвету
+        service_expr = "COALESCE(NULLIF(service_type, ''), 'colorguide')"
+
+        # Счётчики по каждому типу услуги (для бейджей фильтра) — всегда по всей истории
         cursor.execute(
-            'SELECT COUNT(*) AS total FROM color_guide_tasks WHERE user_id = %s',
+            f'SELECT {service_expr} AS svc, COUNT(*) AS cnt '
+            'FROM color_guide_tasks WHERE user_id = %s GROUP BY 1',
             (user_id,)
+        )
+        counts = {row['svc']: row['cnt'] for row in cursor.fetchall()}
+
+        # Условие фильтра по выбранным типам
+        filter_sql = ''
+        filter_params: list = []
+        if selected_services:
+            placeholders = ','.join(['%s'] * len(selected_services))
+            filter_sql = f' AND {service_expr} IN ({placeholders})'
+            filter_params = list(selected_services)
+
+        # Общее число задач с учётом фильтра (для пагинации)
+        cursor.execute(
+            f'SELECT COUNT(*) AS total FROM color_guide_tasks WHERE user_id = %s{filter_sql}',
+            (user_id, *filter_params)
         )
         total = cursor.fetchone()['total']
 
         # Лёгкий запрос: НЕ тащим тяжёлый result_json, берём только короткое имя через ->>
-        cursor.execute('''
+        cursor.execute(f'''
             SELECT id, status, colortype_slug, cdn_url, created_at, cost, refunded, error_message, service_type,
                    COALESCE(result_json->>'colortype_name', result_json->>'identity') AS display_name
             FROM color_guide_tasks
-            WHERE user_id = %s
+            WHERE user_id = %s{filter_sql}
             ORDER BY created_at DESC
             LIMIT %s OFFSET %s
-        ''', (user_id, limit, offset))
+        ''', (user_id, *filter_params, limit, offset))
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
@@ -104,6 +128,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'id': str(row['id']),
                 'status': row['status'],
                 'service_type': service_type,
+                'service_label': service_labels.get(service_type, 'Анализ'),
                 'colortype_slug': row['colortype_slug'],
                 'colortype_name': display_name,
                 'cdn_url': row['cdn_url'],
@@ -117,7 +142,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
             'isBase64Encoded': False,
-            'body': json.dumps({'tasks': tasks, 'total': total, 'limit': limit, 'offset': offset}, ensure_ascii=False)
+            'body': json.dumps({
+                'tasks': tasks,
+                'total': total,
+                'limit': limit,
+                'offset': offset,
+                'counts': counts,
+                'service_labels': service_labels,
+            }, ensure_ascii=False)
         }
     except Exception as e:
         return {

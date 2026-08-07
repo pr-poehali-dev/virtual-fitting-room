@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import ServiceTypeFilter from "@/components/history/ServiceTypeFilter";
 
 const COLORGUIDE_HISTORY_API = "https://functions.poehali.dev/d894b5d6-acf1-4b38-ae86-4c3c1ad3397f";
 const DB_QUERY_API = "https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9";
@@ -15,6 +16,7 @@ interface GuideTask {
   id: string;
   status: string;
   service_type?: string | null;
+  service_label?: string | null;
   colortype_slug: string | null;
   colortype_name: string | null;
   cdn_url: string | null;
@@ -32,6 +34,10 @@ export default function ProfileHistoryColorGuide() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [total, setTotal] = useState(0);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [serviceLabels, setServiceLabels] = useState<Record<string, string>>({});
+  const [draftServices, setDraftServices] = useState<string[]>([]);
+  const [appliedServices, setAppliedServices] = useState<string[]>([]);
 
   const PAGE_SIZE = 30;
 
@@ -41,7 +47,7 @@ export default function ProfileHistoryColorGuide() {
     }
   }, [user, authLoading, navigate]);
 
-  const fetchHistory = async (offset = 0) => {
+  const fetchHistory = async (offset = 0, services: string[] = appliedServices) => {
     if (offset === 0) {
       setIsLoading(true);
     } else {
@@ -49,8 +55,9 @@ export default function ProfileHistoryColorGuide() {
     }
     try {
       const token = localStorage.getItem("session_token");
+      const servicesParam = services.length > 0 ? `&services=${services.join(",")}` : "";
       const response = await fetch(
-        `${COLORGUIDE_HISTORY_API}?limit=${PAGE_SIZE}&offset=${offset}`,
+        `${COLORGUIDE_HISTORY_API}?limit=${PAGE_SIZE}&offset=${offset}${servicesParam}`,
         {
           headers: token ? { "X-Session-Token": token } : {},
           credentials: "include",
@@ -62,6 +69,8 @@ export default function ProfileHistoryColorGuide() {
           offset === 0 ? data.tasks : [...prev, ...data.tasks],
         );
         if (typeof data.total === "number") setTotal(data.total);
+        if (data.counts) setCounts(data.counts);
+        if (data.service_labels) setServiceLabels(data.service_labels);
       } else {
         toast.error(data.error || "Не удалось загрузить историю");
       }
@@ -79,6 +88,12 @@ export default function ProfileHistoryColorGuide() {
       fetchHistory();
     }
   }, [user]);
+
+  const handleApplyFilter = () => {
+    setAppliedServices(draftServices);
+    setTasks([]);
+    fetchHistory(0, draftServices);
+  };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -107,8 +122,15 @@ export default function ProfileHistoryColorGuide() {
       const result = await response.json();
       if (result.success || response.ok) {
         toast.success("Гид удалён");
+        const deletedType = tasks.find((t) => t.id === id)?.service_type;
         setTasks((prev) => prev.filter((t) => t.id !== id));
         setTotal((prev) => Math.max(0, prev - 1));
+        if (deletedType) {
+          setCounts((prev) => ({
+            ...prev,
+            [deletedType]: Math.max(0, (prev[deletedType] || 0) - 1),
+          }));
+        }
       } else {
         toast.error(result.error || "Ошибка удаления");
       }
@@ -160,6 +182,16 @@ export default function ProfileHistoryColorGuide() {
               <p className="text-muted-foreground">Все ваши персональные отчёты</p>
             </div>
 
+          <ServiceTypeFilter
+            labels={serviceLabels}
+            counts={counts}
+            draft={draftServices}
+            onDraftChange={setDraftServices}
+            applied={appliedServices}
+            onApply={handleApplyFilter}
+            isLoading={isLoading}
+          />
+
           {isLoading ? (
             <div className="flex justify-center py-20">
               <Icon name="Loader2" className="animate-spin text-primary" size={40} />
@@ -168,11 +200,32 @@ export default function ProfileHistoryColorGuide() {
             <Card>
               <CardContent className="p-12 text-center space-y-4">
                 <Icon name="BookOpen" className="mx-auto text-muted-foreground" size={48} />
-                <p className="text-muted-foreground">У вас ещё нет ни одного гида по цвету</p>
-                <Button onClick={() => navigate("/color-guide")}>
-                  <Icon name="Sparkles" className="mr-2" size={18} />
-                  Создать гид
-                </Button>
+                {appliedServices.length > 0 ? (
+                  <>
+                    <p className="text-muted-foreground">
+                      По выбранным типам отчётов ничего не найдено
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setDraftServices([]);
+                        setAppliedServices([]);
+                        setTasks([]);
+                        fetchHistory(0, []);
+                      }}
+                    >
+                      Показать все
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-muted-foreground">У вас ещё нет ни одного гида по цвету</p>
+                    <Button onClick={() => navigate("/color-guide")}>
+                      <Icon name="Sparkles" className="mr-2" size={18} />
+                      Создать гид
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -218,6 +271,11 @@ export default function ProfileHistoryColorGuide() {
                     </button>
                   </div>
                   <CardContent className="p-4">
+                    {task.service_label && (
+                      <span className="inline-block text-xs px-2 py-0.5 mb-2 rounded-full bg-purple-100 text-purple-700">
+                        {task.service_label}
+                      </span>
+                    )}
                     <h3 className="font-medium text-base mb-1 truncate">
                       {task.colortype_name || (task.status === "failed" ? "Не удалось" : "Без результата")}
                     </h3>
