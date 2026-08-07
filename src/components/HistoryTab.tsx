@@ -2,21 +2,12 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 import ImageViewer from '@/components/ImageViewer';
 import { toast } from 'sonner';
 import { useData } from '@/context/DataContext';
-
-interface HistoryItem {
-  id: string;
-  result_image: string;
-  created_at: string;
-  model_used?: string;
-  saved_to_lookbook?: boolean;
-  cost?: number;
-  garments?: string;
-}
+import { useAddToLookbook } from '@/hooks/useAddToLookbook';
+import AddToLookbookBar from '@/components/lookbooks/AddToLookbookBar';
 
 interface ProductLink {
   name: string;
@@ -39,13 +30,6 @@ const parseProductLinks = (garments?: string): ProductLink[] => {
   }
 };
 
-interface Lookbook {
-  id: string;
-  name: string;
-  person_name: string;
-  photos: string[];
-}
-
 interface HistoryTabProps {
   userId: string;
 }
@@ -53,11 +37,15 @@ interface HistoryTabProps {
 const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
 
 export default function HistoryTab({ userId }: HistoryTabProps) {
-  const { history, lookbooks, hasMoreHistory, isLoadingMoreHistory, refetchHistory, loadMoreHistory, refetchLookbooks } = useData();
+  const { history, lookbooks, hasMoreHistory, isLoadingMoreHistory, refetchHistory, loadMoreHistory } = useData();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [selectedLookbookId, setSelectedLookbookId] = useState<string>('');
-  const [isAdding, setIsAdding] = useState(false);
+  const {
+    selectedLookbookId,
+    setSelectedLookbookId,
+    isAdding,
+    addToLookbook,
+  } = useAddToLookbook();
 
   useEffect(() => {
     console.log('[HistoryTab] userId received:', userId);
@@ -83,64 +71,14 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
   };
 
   const handleAddToLookbook = async () => {
-    if (selectedItems.length === 0) {
-      toast.error('Выберите фото для добавления');
-      return;
-    }
+    const selectedHistory = history.filter(item => selectedItems.includes(item.id));
+    const photos = selectedHistory.map(item => ({
+      url: item.result_image,
+      products: parseProductLinks(item.garments),
+    }));
 
-    if (!selectedLookbookId) {
-      toast.error('Выберите лукбук');
-      return;
-    }
-
-    setIsAdding(true);
-    try {
-      const lookbook = lookbooks.find(lb => lb.id === selectedLookbookId);
-      if (!lookbook) return;
-
-      const selectedHistory = history.filter(item => selectedItems.includes(item.id));
-      const selectedPhotos = selectedHistory.map(item => item.result_image);
-
-      const updatedPhotos = [...lookbook.photos, ...selectedPhotos];
-
-      const updatedPhotoProducts = { ...(lookbook.photo_products || {}) };
-      selectedHistory.forEach(item => {
-        const links = parseProductLinks(item.garments);
-        if (links.length > 0) {
-          updatedPhotoProducts[item.result_image] = links;
-        }
-      });
-
-      const token = localStorage.getItem('session_token');
-      const response = await fetch(DB_QUERY_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'X-Session-Token': token } : {})
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          table: 'lookbooks',
-          action: 'update',
-          where: { id: selectedLookbookId },
-          data: { photos: updatedPhotos, photo_products: updatedPhotoProducts }
-        })
-      });
-
-      if (response.ok) {
-        toast.success(`Добавлено ${selectedPhotos.length} фото в лукбук`);
-        setSelectedItems([]);
-        setSelectedLookbookId('');
-        await refetchLookbooks();
-      } else {
-        throw new Error('Failed to update lookbook');
-      }
-    } catch (error) {
-      console.error('Failed to add to lookbook:', error);
-      toast.error('Ошибка добавления в лукбук');
-    } finally {
-      setIsAdding(false);
-    }
+    const ok = await addToLookbook(photos);
+    if (ok) setSelectedItems([]);
   };
 
   const handleDeleteFromHistory = async (id: string) => {
@@ -291,65 +229,17 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
 
   return (
     <div className="space-y-6">
-      {selectedItems.length > 0 && (
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-              <div className="flex-1">
-                <p className="font-medium text-blue-900">
-                  Выбрано: {selectedItems.length}
-                </p>
-                <p className="text-sm text-blue-700">
-                  Добавьте выбранные фото в лукбук
-                </p>
-              </div>
-              <div className="flex gap-2 w-full md:w-auto">
-                <Select value={selectedLookbookId} onValueChange={setSelectedLookbookId}>
-                  <SelectTrigger className="w-full md:w-[200px]">
-                    <SelectValue placeholder="Выберите лукбук" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {lookbooks.map(lb => (
-                      <SelectItem key={lb.id} value={lb.id}>
-                        {lb.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button 
-                  onClick={handleAddToLookbook} 
-                  disabled={isAdding || !selectedLookbookId}
-                >
-                  {isAdding ? (
-                    <>
-                      <Icon name="Loader2" className="mr-2 animate-spin" size={16} />
-                      Добавление...
-                    </>
-                  ) : (
-                    <>
-                      <Icon name="Plus" className="mr-2" size={16} />
-                      Добавить
-                    </>
-                  )}
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  onClick={handleDeleteSelected}
-                >
-                  <Icon name="Trash2" className="mr-2" size={16} />
-                  Удалить
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setSelectedItems([])}
-                >
-                  Отменить
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <AddToLookbookBar
+        selectedCount={selectedItems.length}
+        lookbooks={lookbooks}
+        selectedLookbookId={selectedLookbookId}
+        onLookbookChange={setSelectedLookbookId}
+        isAdding={isAdding}
+        onAdd={handleAddToLookbook}
+        onDelete={handleDeleteSelected}
+        onCancel={() => setSelectedItems([])}
+      />
+
 
       <div className="flex justify-between items-center">
         <Button

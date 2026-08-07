@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import ProfileMenu from '@/components/ProfileMenu';
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useAddToLookbook } from '@/hooks/useAddToLookbook';
+import AddToLookbookBar from '@/components/lookbooks/AddToLookbookBar';
 
 const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
 
@@ -29,8 +32,31 @@ export default function ProfileHistoryFreegen() {
   const [hasMore, setHasMore] = useState(false);
   const [loadedCount, setLoadedCount] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const {
+    lookbooks,
+    selectedLookbookId,
+    setSelectedLookbookId,
+    isAdding,
+    addToLookbook,
+  } = useAddToLookbook();
 
   const PAGE_SIZE = 30;
+
+  const toggleSelection = (id: string) => {
+    setSelectedItems((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleAddToLookbook = async () => {
+    const photos = items
+      .filter((it) => selectedItems.includes(it.id))
+      .map((it) => ({ url: it.result_image }));
+
+    const ok = await addToLookbook(photos);
+    if (ok) setSelectedItems([]);
+  };
 
   useEffect(() => {
     if (!authLoading && !user) navigate('/login');
@@ -105,6 +131,33 @@ export default function ProfileHistoryFreegen() {
       } else {
         toast.error('Ошибка удаления');
       }
+    } catch {
+      toast.error('Ошибка удаления');
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (!user || selectedItems.length === 0) return;
+    if (!confirm(`Удалить выбранные изображения (${selectedItems.length})?`)) return;
+    try {
+      const token = localStorage.getItem('session_token');
+      for (const id of selectedItems) {
+        await fetch(DB_QUERY_API, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'X-Session-Token': token } : {}),
+          },
+          body: JSON.stringify({
+            table: 'freegen_history',
+            action: 'delete',
+            where: { id, user_id: user.id },
+          }),
+        });
+      }
+      setItems((prev) => prev.filter((x) => !selectedItems.includes(x.id)));
+      setSelectedItems([]);
+      toast.success('Удалено');
     } catch {
       toast.error('Ошибка удаления');
     }
@@ -191,6 +244,21 @@ export default function ProfileHistoryFreegen() {
               </Button>
             </div>
 
+            {!isLoading && items.length > 0 && (
+              <div className="mb-4">
+                <AddToLookbookBar
+                  selectedCount={selectedItems.length}
+                  lookbooks={lookbooks}
+                  selectedLookbookId={selectedLookbookId}
+                  onLookbookChange={setSelectedLookbookId}
+                  isAdding={isAdding}
+                  onAdd={handleAddToLookbook}
+                  onDelete={handleDeleteSelected}
+                  onCancel={() => setSelectedItems([])}
+                />
+              </div>
+            )}
+
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
                 <Icon name="Loader2" className="animate-spin" size={40} />
@@ -209,16 +277,26 @@ export default function ProfileHistoryFreegen() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {items.map((it) => (
                   <Card key={it.id} className="overflow-hidden group">
-                    <div
-                      className="aspect-square bg-muted cursor-pointer"
-                      onClick={() => setSelected(it.result_image)}
-                    >
-                      <img
-                        src={it.result_image}
-                        alt={it.prompt.slice(0, 40)}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
+                    <div className="relative aspect-square bg-muted">
+                      <div
+                        className="w-full h-full cursor-pointer"
+                        onClick={() => setSelected(it.result_image)}
+                      >
+                        <img
+                          src={it.result_image}
+                          alt={it.prompt.slice(0, 40)}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                      <div className="absolute top-2 left-2 z-10">
+                        <Checkbox
+                          checked={selectedItems.includes(it.id)}
+                          onCheckedChange={() => toggleSelection(it.id)}
+                          className="bg-white/90 border-white shadow-sm"
+                          aria-label="Выбрать изображение"
+                        />
+                      </div>
                     </div>
                     <CardContent className="p-3">
                       <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2.5rem]">

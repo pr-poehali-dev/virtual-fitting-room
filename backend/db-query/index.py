@@ -33,6 +33,13 @@ def delete_from_s3_if_orphaned(photo_url: str, user_id: str, cursor, schema: str
     )
     history_count = cursor.fetchone()[0]
     
+    # Проверяем наличие в freegen_history (генерации тоже можно добавлять в лукбуки)
+    cursor.execute(
+        f"SELECT COUNT(*) as count FROM {schema}.freegen_history WHERE user_id = %s AND result_image = %s",
+        (user_id, photo_url)
+    )
+    freegen_count = cursor.fetchone()[0]
+    
     # Проверяем наличие в lookbooks
     cursor.execute(
         f"SELECT COUNT(*) as count FROM {schema}.lookbooks WHERE user_id = %s AND %s = ANY(photos)",
@@ -41,7 +48,7 @@ def delete_from_s3_if_orphaned(photo_url: str, user_id: str, cursor, schema: str
     lookbooks_count = cursor.fetchone()[0]
     
     # Если фото нигде не используется - удаляем из S3
-    if history_count == 0 and lookbooks_count == 0:
+    if history_count == 0 and freegen_count == 0 and lookbooks_count == 0:
         try:
             s3_key = photo_url.replace(s3_url_prefix, '')
             
@@ -388,7 +395,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if row and row[0]:
                     photos_to_check.append(row[0])
             
-            # Для freegen_history - сохраняем result_image перед удалением (удаляем из S3 безусловно)
+            # Для freegen_history - сохраняем result_image перед удалением
+            # (удаляем из S3 только если фото не используется в лукбуках и других историях)
             elif table == 'freegen_history' and user_id:
                 where_parts = []
                 params = []
@@ -400,7 +408,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 cursor.execute(select_query, params)
                 row = cursor.fetchone()
                 if row and row[0]:
-                    photos_to_force_delete.append(row[0])
+                    photos_to_check.append(row[0])
 
             # Для user_models - удаляем только свои, фото из S3 не трогаем (может использоваться в истории/лукбуках)
             elif table == 'user_models' and user_id:
@@ -476,7 +484,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 for photo_url in photos_to_check:
                     delete_from_s3_if_orphaned(photo_url, user_id, cursor, schema)
             
-            # Удаляем фото из S3 безусловно (для freegen — нет привязок к лукбукам)
+            # Удаляем фото из S3 безусловно (для цветогидов — фото нигде больше не используется)
             if photos_to_force_delete or prefixes_to_force_delete:
                 s3_bucket_name = os.environ.get('S3_BUCKET_NAME', 'fitting-room-images')
                 s3_url_prefix = f'https://storage.yandexcloud.net/{s3_bucket_name}/'
