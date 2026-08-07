@@ -155,7 +155,7 @@ export default function ColorGuideDetail() {
   return (
     <Layout>
       <section className="py-10">
-        <div className="container mx-auto max-w-6xl">
+        <div className="container mx-auto max-w-6xl px-4 md:px-8">
           <Button
             variant="ghost"
             onClick={() => navigate("/profile/history-colorguide")}
