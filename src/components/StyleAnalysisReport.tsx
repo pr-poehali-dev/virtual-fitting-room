@@ -148,7 +148,7 @@ export default function StyleAnalysisReport({ result, imageUrl }: Props) {
         </Button>
       </div>
 
-      <div ref={reportRef} className="bg-[#fdfbf7] rounded-xl p-4 md:p-8 space-y-8">
+      <div ref={reportRef} className="bg-[#fdfbf7] rounded-xl px-2 py-4 md:p-8 space-y-8">
         <div className="text-center border-b border-[#e7ddd0] pb-6">
           <p className="text-sm tracking-widest text-[#a08b7a] uppercase">
             Стилевой анализ внешности

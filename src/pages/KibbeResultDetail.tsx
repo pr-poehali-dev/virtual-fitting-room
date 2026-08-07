@@ -114,14 +114,14 @@ export default function KibbeResultDetail() {
   return (
     <Layout>
       <section className="py-12 md:py-20">
-        <div className="container max-w-3xl mx-auto px-4">
+        <div className="container max-w-3xl mx-auto px-2 md:px-4">
           <Button variant="ghost" className="mb-4" onClick={() => navigate('/profile/history-kibbe')}>
             <Icon name="ChevronLeft" size={18} className="mr-1" />
             К истории тестов
           </Button>
 
           <Card>
-            <CardContent className="p-6 md:p-8 space-y-6">
+            <CardContent className="px-3 py-6 md:p-8 space-y-6">
               <div className="text-center">
                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-purple-100">
                   <Icon name="Sparkles" size={32} className="text-purple-600" />
