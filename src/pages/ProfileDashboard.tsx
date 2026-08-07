@@ -42,18 +42,18 @@ export default function ProfileDashboard() {
           color: 'bg-purple-100 text-purple-700'
         },
         {
-          title: 'Мои анкеты для образов',
-          description: 'Сохранённые анкеты для быстрого подбора образа',
-          icon: 'Bookmark',
-          path: '/profile/outfit-profiles',
-          color: 'bg-teal-100 text-teal-700'
-        },
-        {
           title: 'История примерок',
           description: 'Все ваши виртуальные примерки',
           icon: 'Shirt',
           path: '/profile/history',
           color: 'bg-blue-100 text-blue-700'
+        },
+        {
+          title: 'История генераций',
+          description: 'Все сгенерированные изображения',
+          icon: 'Sparkles',
+          path: '/profile/history-freegen',
+          color: 'bg-pink-100 text-pink-700'
         },
         {
           title: 'История цветотипов',
@@ -65,14 +65,21 @@ export default function ProfileDashboard() {
       ]
     },
     {
-      heading: 'Генерация изображений',
+      heading: 'Сохранённые анкеты и модели',
       cards: [
         {
-          title: 'История генераций',
-          description: 'Все сгенерированные изображения',
-          icon: 'Sparkles',
-          path: '/profile/history-freegen',
-          color: 'bg-pink-100 text-pink-700'
+          title: 'Мои анкеты для образов',
+          description: 'Сохранённые анкеты для быстрого подбора образа',
+          icon: 'Bookmark',
+          path: '/profile/outfit-profiles',
+          color: 'bg-teal-100 text-teal-700'
+        },
+        {
+          title: 'Мои модели',
+          description: 'Сохранённые фото моделей для примерок',
+          icon: 'Users',
+          path: '/profile/models',
+          color: 'bg-cyan-100 text-cyan-700'
         }
       ]
     },
@@ -135,22 +142,22 @@ export default function ProfileDashboard() {
               <p className="text-muted-foreground">Управляйте лукбуками и историей примерок</p>
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-5">
               {dashboardSections.map((section) => (
-                <div key={section.heading} className="rounded-2xl border bg-muted/30 p-5">
-                  <h2 className="text-lg font-semibold mb-4">{section.heading}</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div key={section.heading} className="rounded-2xl border bg-muted/30 p-4">
+                  <h2 className="text-base font-semibold mb-3">{section.heading}</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {section.cards.map((card) => (
                       <Link key={card.path} to={card.path}>
                         <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-                          <CardHeader>
-                            <div className={`w-12 h-12 rounded-lg ${card.color} flex items-center justify-center mb-4`}>
-                              <Icon name={card.icon} size={24} />
+                          <CardHeader className="p-4 pb-2">
+                            <div className={`w-9 h-9 rounded-lg ${card.color} flex items-center justify-center mb-2`}>
+                              <Icon name={card.icon} size={18} />
                             </div>
-                            <CardTitle>{card.title}</CardTitle>
+                            <CardTitle className="text-base leading-snug">{card.title}</CardTitle>
                           </CardHeader>
-                          <CardContent>
-                            <p className="text-muted-foreground">{card.description}</p>
+                          <CardContent className="p-4 pt-0">
+                            <p className="text-sm text-muted-foreground leading-snug">{card.description}</p>
                           </CardContent>
                         </Card>
                       </Link>
