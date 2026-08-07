@@ -59,7 +59,7 @@ export default function SharedLookbook() {
   if (error || !lookbook) {
     return (
       <Layout>
-        <section className="py-12 px-4">
+        <section className="py-12">
           <div className="container mx-auto max-w-4xl text-center">
             <Icon name="AlertCircle" size={64} className="mx-auto mb-4 text-muted-foreground" />
             <h2 className="text-3xl font-light mb-4">Лукбук не найден</h2>
@@ -74,7 +74,7 @@ export default function SharedLookbook() {
 
   return (
     <Layout>
-      <section className="py-12 px-4">
+      <section className="py-12">
         <div className="container mx-auto max-w-6xl">
           <div className="mb-8">
             <h2 className="text-4xl font-light mb-2">{lookbook.name}</h2>

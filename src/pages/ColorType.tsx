@@ -1046,7 +1046,7 @@ export default function ColorType() {
         />
       )}
 
-      <footer className="border-t border-border py-12 px-4">
+      <footer className="border-t border-border py-12">
         <div className="container mx-auto text-center text-muted-foreground">
           <p className="text-sm">
             © 2025 Virtual Fitting. Технология определения цветотипа на базе AI

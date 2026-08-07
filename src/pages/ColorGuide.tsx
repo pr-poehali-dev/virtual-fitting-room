@@ -235,7 +235,7 @@ export default function ColorGuide() {
 
   return (
     <Layout>
-      <section className="py-20 px-4">
+      <section className="py-20">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12 animate-fade-in">
             <h2 className="text-5xl md:text-6xl font-light mb-4">Ваш гид по цвету</h2>
@@ -415,7 +415,7 @@ export default function ColorGuide() {
         />
       )}
 
-      <footer className="border-t border-border py-12 px-4">
+      <footer className="border-t border-border py-12">
         <div className="container mx-auto text-center text-muted-foreground">
           <p className="text-sm">© 2025 Virtual Fitting. Персональный гид по цвету на базе AI</p>
         </div>

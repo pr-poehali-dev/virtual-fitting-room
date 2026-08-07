@@ -154,7 +154,7 @@ export default function ColorGuideDetail() {
 
   return (
     <Layout>
-      <section className="py-10 px-4">
+      <section className="py-10">
         <div className="container mx-auto max-w-6xl">
           <Button
             variant="ghost"

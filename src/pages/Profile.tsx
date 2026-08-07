@@ -559,7 +559,7 @@ export default function Profile() {
 
   return (
     <Layout>
-      <section className="py-12 px-4">
+      <section className="py-12">
         <div className="container mx-auto max-w-7xl">
           <div className="mb-8">
             <h2 className="text-4xl font-light mb-2">Личный кабинет</h2>
