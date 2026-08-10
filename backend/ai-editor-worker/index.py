@@ -182,24 +182,67 @@ def build_result_zip(original_zip_bytes, updated_text_files):
 
 
 def call_openrouter(model, prompt_text):
+    """Запрашивает модель в потоковом режиме.
+
+    Ответ приходит частями, поэтому соединение не простаивает и шлюз не рвёт его
+    по таймауту бездействия. Куски склеиваются в единый текст — результат
+    полностью совпадает с обычным (непотоковым) ответом.
+    """
     response = requests.post(
         OPENROUTER_URL,
         headers={
             'Authorization': f'Bearer {OPENROUTER_API_KEY}',
             'Content-Type': 'application/json',
+            'Accept': 'text/event-stream',
         },
         json={
             'model': model,
             'messages': [{'role': 'user', 'content': prompt_text}],
             'max_tokens': 64000,
+            'stream': True,
         },
-        timeout=570,
+        timeout=(30, 570),
         proxies=get_openrouter_proxies(),
+        stream=True,
     )
+
     if response.status_code != 200:
         return None, f'OpenRouter ошибка ({response.status_code}): {response.text[:500]}'
-    result = response.json()
-    ai_text = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+
+    chunks = []
+    stream_error = None
+
+    for raw_line in response.iter_lines(decode_unicode=True):
+        if not raw_line:
+            continue
+        if raw_line.startswith(':'):
+            continue
+        if not raw_line.startswith('data: '):
+            continue
+
+        payload = raw_line[6:].strip()
+        if payload == '[DONE]':
+            break
+
+        try:
+            parsed = json.loads(payload)
+        except ValueError:
+            continue
+
+        if parsed.get('error'):
+            err = parsed['error']
+            stream_error = err.get('message') if isinstance(err, dict) else str(err)
+            break
+
+        for choice in parsed.get('choices') or []:
+            piece = (choice.get('delta') or {}).get('content')
+            if piece:
+                chunks.append(piece)
+
+    if stream_error:
+        return None, f'OpenRouter ошибка: {stream_error[:500]}'
+
+    ai_text = ''.join(chunks)
     if not ai_text:
         return None, 'Модель не вернула ответ'
     return ai_text, None
