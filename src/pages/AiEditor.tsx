@@ -220,6 +220,10 @@ export default function AiEditor() {
         const res = await fetch(`${AI_EDITOR_STATUS}?task_id=${taskId}`);
         const data = await res.json();
 
+        if (data.progress?.text) {
+          setStatusText(`${data.progress.text} · ${elapsed} сек`);
+        }
+
         if (data.status === "completed") {
           clearInterval(interval);
           pollingRef.current = null;

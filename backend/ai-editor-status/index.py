@@ -11,13 +11,46 @@ DB_SCHEMA = 't_p29007832_virtual_fitting_room'
 
 
 def get_db_connection():
-    return psycopg2.connect(os.environ['DATABASE_URL'])
+    conn = psycopg2.connect(os.environ['DATABASE_URL'])
+    conn.set_client_encoding('UTF8')
+    return conn
+
+
+def build_progress(mode, status, plan_files, step_index):
+    """Человекопонятный прогресс пошаговой архивной задачи."""
+    if mode != 'archive' or status not in ('pending', 'processing'):
+        return None
+
+    if not plan_files:
+        return {'stage': 'planning', 'text': 'Анализирую проект и составляю план'}
+
+    if isinstance(plan_files, str):
+        try:
+            plan_files = json.loads(plan_files)
+        except ValueError:
+            return None
+
+    targets = (plan_files or {}).get('targets') or []
+    total = len(targets)
+    idx = step_index or 0
+
+    if total and idx < total:
+        current = targets[idx].get('path') or ''
+        return {
+            'stage': 'files',
+            'current': idx + 1,
+            'total': total,
+            'file': current,
+            'text': f'Файл {idx + 1} из {total}: {current}',
+        }
+
+    return {'stage': 'packing', 'total': total, 'text': 'Собираю архив'}
 
 
 def build_result(task_id, row):
     (status, mode, ai_response, result_file_content, result_archive_base64,
      files_count, model_used, error_message, filename, created_at,
-     task_type, divination_meta) = row
+     task_type, divination_meta, plan_files, step_index) = row
 
     result = {
         'task_id': str(task_id),
@@ -30,6 +63,10 @@ def build_result(task_id, row):
 
     if divination_meta is not None:
         result['divination_meta'] = divination_meta
+
+    progress = build_progress(mode, status, plan_files, step_index)
+    if progress:
+        result['progress'] = progress
 
     if status == 'completed':
         if ai_response:
@@ -99,7 +136,7 @@ def handler(event, context):
                 cur.execute(
                     f"""SELECT id, status, mode, ai_response, result_file_content, result_archive_base64,
                                files_count, model_used, error_message, filename, created_at,
-                               task_type, divination_meta
+                               task_type, divination_meta, plan_files, step_index
                         FROM {DB_SCHEMA}.ai_editor_tasks
                         WHERE status IN ('completed', 'failed', 'processing')
                           AND user_id = '{safe_uid}'
@@ -117,7 +154,7 @@ def handler(event, context):
                 cur.execute(
                     f"""SELECT status, mode, ai_response, result_file_content, result_archive_base64,
                                files_count, model_used, error_message, filename, created_at,
-                               task_type, divination_meta
+                               task_type, divination_meta, plan_files, step_index
                         FROM {DB_SCHEMA}.ai_editor_tasks WHERE id = '{safe_id}'"""
                 )
                 row = cur.fetchone()
