@@ -323,6 +323,9 @@ def call_openrouter(model, prompt_text):
     if response.status_code != 200:
         return None, f'OpenRouter ошибка ({response.status_code}): {response.text[:500]}'
 
+    # Без явной кодировки поток декодируется как latin-1 и кириллица ломается.
+    response.encoding = 'utf-8'
+
     chunks = []
     stream_error = None
 
