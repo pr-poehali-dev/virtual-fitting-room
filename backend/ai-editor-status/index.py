@@ -54,6 +54,17 @@ def build_result(task_id, row):
     return result
 
 
+def trigger_next_step(task_id):
+    """Пинает воркер для следующего шага. Ошибки некритичны — следующий опрос повторит."""
+    try:
+        import urllib.request
+        worker_url = 'https://functions.poehali.dev/d3e4e0ce-9999-45d3-82b4-15d3eeb45425'
+        req = urllib.request.Request(f'{worker_url}?task_id={task_id}', method='GET')
+        urllib.request.urlopen(req, timeout=2)
+    except Exception as e:
+        print(f'Step trigger (non-critical): {e}')
+
+
 def handler(event, context):
     """Возвращает статус задачи AI-редактирования по task_id или последнюю задачу (latest=true)."""
 
@@ -118,6 +129,11 @@ def handler(event, context):
         conn.close()
 
     result = build_result(found_id, data_row)
+
+    # Архивные задачи выполняются по шагам: каждый опрос статуса продвигает
+    # следующий шаг. Вызов fire-and-forget, ответ не ждём.
+    if data_row[0] in ('pending', 'processing') and data_row[1] == 'archive':
+        trigger_next_step(found_id)
 
     return {
         'statusCode': 200,

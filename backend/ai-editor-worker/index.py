@@ -115,6 +115,114 @@ def build_archive_prompt(files, user_prompt):
 """
 
 
+def build_plan_prompt(files, user_prompt):
+    """Шаг 1: модель только планирует, какие файлы менять. Ответ короткий."""
+    file_list = "\n".join(f"- {f}" for f in sorted(files.keys()))
+    files_content = ""
+    for path, content in sorted(files.items()):
+        files_content += f"\n--- FILE: {path} ---\n{content}\n"
+
+    return f"""Ты — опытный разработчик. Тебе дан проект и задача от пользователя.
+
+ФАЙЛЫ ПРОЕКТА:
+{file_list}
+
+СОДЕРЖИМОЕ ФАЙЛОВ:
+{files_content}
+
+ЗАДАЧА ПОЛЬЗОВАТЕЛЯ:
+{user_prompt}
+
+ИНСТРУКЦИИ:
+1. НЕ пиши код файлов на этом шаге. Код будет запрошен отдельно.
+2. Определи, какие файлы нужно изменить, создать или удалить.
+3. Ответь СТРОГО в формате JSON без markdown-обёртки:
+
+{{"summary": "краткое описание что будет сделано",
+  "files": [{{"path": "путь/к/файлу", "action": "edit", "what": "что именно изменить"}}],
+  "delete": ["путь/к/файлу"]}}
+
+4. action — одно из: edit (изменить существующий), create (создать новый).
+5. Включай в files ТОЛЬКО файлы, которые реально нужно изменить или создать.
+6. Никакого текста вне JSON.
+"""
+
+
+def build_step_file_prompt(files, user_prompt, target_path, what_to_do, plan_summary):
+    """Шаг 2..N: модель возвращает ОДИН файл целиком. Проект виден для контекста."""
+    file_list = "\n".join(f"- {f}" for f in sorted(files.keys()))
+    files_content = ""
+    for path, content in sorted(files.items()):
+        files_content += f"\n--- FILE: {path} ---\n{content}\n"
+
+    return f"""Ты — опытный разработчик. Тебе дан проект и задача от пользователя.
+
+ФАЙЛЫ ПРОЕКТА:
+{file_list}
+
+СОДЕРЖИМОЕ ФАЙЛОВ:
+{files_content}
+
+ЗАДАЧА ПОЛЬЗОВАТЕЛЯ:
+{user_prompt}
+
+ОБЩИЙ ПЛАН:
+{plan_summary}
+
+ТЕКУЩИЙ ШАГ:
+Сейчас работай ТОЛЬКО над файлом: {target_path}
+Что нужно сделать в этом файле: {what_to_do}
+
+ИНСТРУКЦИИ:
+1. Выведи ПОЛНОЕ итоговое содержимое ТОЛЬКО файла {target_path} в формате:
+
+```file:{target_path}
+полное содержимое файла
+```
+
+2. НЕ выводи другие файлы — они обрабатываются отдельно.
+3. Никаких пояснений до или после блока.
+"""
+
+
+def parse_plan_response(response_text):
+    """Достаёт JSON-план из ответа модели, даже если он обёрнут в markdown."""
+    text = (response_text or '').strip()
+    fenced = re.search(r'```(?:json)?\s*(.*?)```', text, re.DOTALL)
+    if fenced:
+        text = fenced.group(1).strip()
+    start = text.find('{')
+    end = text.rfind('}')
+    if start == -1 or end == -1 or end <= start:
+        return None
+    try:
+        data = json.loads(text[start:end + 1])
+    except ValueError:
+        return None
+    if not isinstance(data, dict):
+        return None
+
+    files = []
+    for item in data.get('files') or []:
+        if not isinstance(item, dict):
+            continue
+        path = (item.get('path') or '').strip()
+        if not path:
+            continue
+        files.append({
+            'path': path,
+            'action': (item.get('action') or 'edit').strip(),
+            'what': (item.get('what') or '').strip(),
+        })
+
+    deletes = [str(p).strip() for p in (data.get('delete') or []) if str(p).strip()]
+    return {
+        'summary': (data.get('summary') or '').strip(),
+        'files': files,
+        'delete': deletes,
+    }
+
+
 def build_file_prompt(filename, file_content, user_prompt):
     return f"""Ты — опытный разработчик. Тебе дан файл и задача от пользователя.
 
@@ -161,7 +269,8 @@ def parse_single_file_response(response_text, filename, original_content):
     return original_content
 
 
-def build_result_zip(original_zip_bytes, updated_text_files):
+def build_result_zip(original_zip_bytes, updated_text_files, deleted_paths=None):
+    deleted = set(deleted_paths or ())
     result_buffer = io.BytesIO()
     with zipfile.ZipFile(io.BytesIO(original_zip_bytes), 'r') as original_zf:
         with zipfile.ZipFile(result_buffer, 'w', zipfile.ZIP_DEFLATED) as result_zf:
@@ -169,6 +278,9 @@ def build_result_zip(original_zip_bytes, updated_text_files):
             for info in original_zf.infolist():
                 if info.is_dir():
                     result_zf.writestr(info, '')
+                    continue
+                if info.filename in deleted:
+                    processed.add(info.filename)
                     continue
                 if info.filename in updated_text_files:
                     result_zf.writestr(info.filename, updated_text_files[info.filename].encode('utf-8'))
@@ -298,6 +410,240 @@ def refund_lenormand(task_id):
         conn.close()
 
 
+STEP_LOCK_TIMEOUT_SEC = 300
+
+
+def process_archive_step(task_id, model, prompt, archive_base64):
+    """Обрабатывает ОДИН шаг архивной задачи и возвращает (done, error).
+
+    Шаг 1 — план (какие файлы менять), далее по одному файлу за вызов.
+    Каждый вызов короткий, поэтому не упирается в лимит соединения.
+    """
+    safe_id = str(task_id).replace("'", "''")
+
+    zip_bytes = base64.b64decode(archive_base64)
+    text_files = extract_text_files(zip_bytes)
+    if not text_files:
+        return True, 'Не найдено текстовых файлов в архиве'
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""SELECT plan_files, done_files, step_index, plan_summary
+                    FROM {DB_SCHEMA}.ai_editor_tasks WHERE id = '{safe_id}'"""
+            )
+            row = cur.fetchone()
+    finally:
+        conn.close()
+
+    plan_files = row[0] if row and row[0] else None
+    done_files = (row[1] if row and row[1] else {}) or {}
+    step_index = (row[2] if row and row[2] is not None else 0)
+    plan_summary = (row[3] if row and row[3] else '') or ''
+
+    if isinstance(plan_files, str):
+        plan_files = json.loads(plan_files)
+    if isinstance(done_files, str):
+        done_files = json.loads(done_files)
+
+    # --- Шаг 1: построить план ---
+    if plan_files is None:
+        print(f'[{task_id}] Шаг: планирование, файлов на входе={len(text_files)}')
+        plan_text, error = call_openrouter(model, build_plan_prompt(text_files, prompt))
+        if error:
+            return True, error
+        plan = parse_plan_response(plan_text)
+        if not plan:
+            return True, 'Модель вернула некорректный план'
+
+        targets = plan['files']
+        deletes = plan['delete']
+        print(f'[{task_id}] План: файлов к изменению={len(targets)}, к удалению={len(deletes)}')
+
+        if not targets and not deletes:
+            # Менять нечего — сразу отдаём исходный архив.
+            result_zip = build_result_zip(zip_bytes, dict(text_files))
+            save_archive_result(
+                task_id, model,
+                plan['summary'] or 'Изменения не потребовались',
+                result_zip, len(text_files),
+            )
+            return True, None
+
+        payload = {'targets': targets, 'delete': deletes}
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
+                        SET plan_files = {sql_escape(json.dumps(payload, ensure_ascii=False))}::jsonb,
+                            plan_summary = {sql_escape(plan['summary'])},
+                            done_files = '{{}}'::jsonb,
+                            step_index = 0,
+                            step_lock = NULL,
+                            updated_at = '{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}'
+                        WHERE id = '{safe_id}'"""
+                )
+            conn.commit()
+        finally:
+            conn.close()
+        return False, None
+
+    # --- Шаг 2..N: по одному файлу ---
+    targets = plan_files.get('targets') or []
+    deletes = plan_files.get('delete') or []
+
+    if step_index < len(targets):
+        target = targets[step_index]
+        path = target.get('path')
+        print(f'[{task_id}] Шаг {step_index + 1}/{len(targets)}: файл {path}')
+
+        prompt_text = build_step_file_prompt(
+            text_files, prompt, path, target.get('what') or '', plan_summary
+        )
+        ai_text, error = call_openrouter(model, prompt_text)
+        if error:
+            return True, error
+
+        content = parse_single_file_response(ai_text, path, text_files.get(path, ''))
+        done_files[path] = content
+
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
+                        SET done_files = {sql_escape(json.dumps(done_files, ensure_ascii=False))}::jsonb,
+                            step_index = {step_index + 1},
+                            step_lock = NULL,
+                            updated_at = '{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}'
+                        WHERE id = '{safe_id}'"""
+                )
+            conn.commit()
+        finally:
+            conn.close()
+        return False, None
+
+    # --- Финал: собрать архив ---
+    print(f'[{task_id}] Сборка архива: изменено файлов={len(done_files)}')
+    updated_files = dict(text_files)
+    updated_files.update(done_files)
+    for path in deletes:
+        updated_files.pop(path, None)
+
+    result_zip = build_result_zip(zip_bytes, updated_files, deletes)
+
+    lines = [plan_summary] if plan_summary else []
+    if done_files:
+        lines.append('\nИзменённые файлы:')
+        lines += [f'- {p}' for p in sorted(done_files.keys())]
+    if deletes:
+        lines.append('\nУдалённые файлы:')
+        lines += [f'- {p}' for p in deletes]
+
+    save_archive_result(task_id, model, '\n'.join(lines), result_zip, len(text_files))
+    return True, None
+
+
+def save_archive_result(task_id, model, summary_text, result_zip, files_count):
+    safe_id = str(task_id).replace("'", "''")
+    now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    result_b64 = base64.b64encode(result_zip).decode('utf-8')
+    summary_b64 = base64.b64encode(summary_text.encode('utf-8')).decode('ascii')
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
+                    SET status = 'completed',
+                        ai_response = {sql_escape(summary_b64)},
+                        result_archive_base64 = {sql_escape(result_b64)},
+                        files_count = {int(files_count)},
+                        model_used = {sql_escape(model)},
+                        step_lock = NULL,
+                        updated_at = '{now}'
+                    WHERE id = '{safe_id}'"""
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def fail_task(task_id, error):
+    safe_id = str(task_id).replace("'", "''")
+    now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
+                    SET status = 'failed', error_message = {sql_escape(str(error)[:1000])},
+                        step_lock = NULL, updated_at = '{now}'
+                    WHERE id = '{safe_id}'"""
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def is_archive_task(task_id):
+    """True только для незавершённых архивных задач (chat/lenormand сюда не попадают)."""
+    safe_id = str(task_id).replace("'", "''")
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""SELECT mode, status FROM {DB_SCHEMA}.ai_editor_tasks
+                    WHERE id = '{safe_id}'"""
+            )
+            row = cur.fetchone()
+    except Exception:
+        return False
+    finally:
+        conn.close()
+    if not row:
+        return False
+    return row[0] == 'archive' and row[1] in ('pending', 'processing')
+
+
+def process_archive_task(task_id):
+    """Берёт архивную задачу под замок и выполняет один шаг."""
+    safe_id = str(task_id).replace("'", "''")
+    now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
+                    SET status = 'processing', step_lock = '{now}', updated_at = '{now}'
+                    WHERE id = '{safe_id}'
+                      AND status IN ('pending', 'processing')
+                      AND (step_lock IS NULL
+                           OR step_lock < NOW() - INTERVAL '{STEP_LOCK_TIMEOUT_SEC} seconds')
+                    RETURNING model, prompt, archive_base64"""
+            )
+            row = cur.fetchone()
+            if not row:
+                return
+        conn.commit()
+    finally:
+        conn.close()
+
+    model, prompt, archive_base64 = row
+
+    try:
+        done, error = process_archive_step(task_id, model, prompt, archive_base64)
+    except Exception as e:
+        done, error = True, str(e)[:1000]
+
+    if error:
+        print(f'[{task_id}] Ошибка шага: {error}')
+        fail_task(task_id, error)
+
+
 def process_task(task_id):
     safe_id = str(task_id).replace("'", "''")
     now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
@@ -419,7 +765,10 @@ def handler(event, context):
     if not task_id:
         return {'statusCode': 400, 'headers': cors_headers, 'body': json.dumps({'error': 'task_id required'})}
 
-    process_task(task_id)
+    if is_archive_task(task_id):
+        process_archive_task(task_id)
+    else:
+        process_task(task_id)
 
     return {
         'statusCode': 200,
