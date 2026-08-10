@@ -46,7 +46,9 @@ def get_db_connection():
     dsn = os.environ.get('DATABASE_URL', '')
     if not dsn:
         raise RuntimeError('DATABASE_URL not set — check function secrets binding')
-    return psycopg2.connect(dsn)
+    conn = psycopg2.connect(dsn)
+    conn.set_client_encoding('UTF8')
+    return conn
 
 
 def is_text_file(filename):
