@@ -127,6 +127,7 @@ export default function GiftSelection() {
   const [recipientGender, setRecipientGender] = useState("");
   const [recipientAge, setRecipientAge] = useState("");
   const [relation, setRelation] = useState("");
+  const [customRelation, setCustomRelation] = useState("");
   const [occasion, setOccasion] = useState("");
   const [customOccasion, setCustomOccasion] = useState("");
   const [budgetMin, setBudgetMin] = useState("");
@@ -199,7 +200,7 @@ export default function GiftSelection() {
   const buildFormParams = (): GiftFormParams => ({
     recipient_gender: recipientGender,
     recipient_age: recipientAge.trim(),
-    relation,
+    relation: customRelation.trim() || relation,
     occasion: customOccasion.trim() || occasion,
     budget_min: budgetMin.trim(),
     budget_max: budgetMax.trim(),
@@ -223,9 +224,14 @@ export default function GiftSelection() {
     const fp = (profile.form_params || {}) as GiftFormParams;
     setRecipientGender(fp.recipient_gender || "");
     setRecipientAge(fp.recipient_age ? String(fp.recipient_age) : "");
-    setRelation(fp.relation || "");
-    setOccasion(fp.occasion || "");
-    setCustomOccasion("");
+    const savedRelation = fp.relation || "";
+    const isKnownRelation = RELATIONS.includes(savedRelation);
+    setRelation(isKnownRelation ? savedRelation : "");
+    setCustomRelation(isKnownRelation ? "" : savedRelation);
+    const savedOccasion = fp.occasion || "";
+    const isKnownOccasion = OCCASIONS.includes(savedOccasion);
+    setOccasion(isKnownOccasion ? savedOccasion : "");
+    setCustomOccasion(isKnownOccasion ? "" : savedOccasion);
     setBudgetMin(fp.budget_min ? String(fp.budget_min) : "");
     setBudgetMax(fp.budget_max ? String(fp.budget_max) : "");
     setZodiac(fp.zodiac || "");
@@ -244,7 +250,8 @@ export default function GiftSelection() {
 
   const buildAutoComment = (): string => {
     const parts: string[] = [];
-    if (relation) parts.push(relation.toLowerCase());
+    const rel = customRelation.trim() || relation;
+    if (rel) parts.push(rel.toLowerCase());
     const occ = customOccasion.trim() || occasion;
     if (occ) parts.push(`повод: ${occ}`);
     if (budgetMax) parts.push(`бюджет до ${budgetMax} ₽`);
@@ -286,7 +293,7 @@ export default function GiftSelection() {
   };
 
   const handleAnalyze = () => {
-    if (!relation && !recipientGender) {
+    if (!relation && !customRelation.trim() && !recipientGender) {
       toast.error("Укажите, кому подбираем подарок");
       return;
     }
@@ -309,6 +316,7 @@ export default function GiftSelection() {
     setRecipientGender("");
     setRecipientAge("");
     setRelation("");
+    setCustomRelation("");
     setOccasion("");
     setCustomOccasion("");
     setBudgetMin("");
@@ -425,6 +433,12 @@ export default function GiftSelection() {
                             ))}
                           </SelectContent>
                         </Select>
+                        <Input
+                          className="mt-2"
+                          placeholder="Или свой вариант"
+                          value={customRelation}
+                          onChange={(e) => setCustomRelation(e.target.value)}
+                        />
                       </div>
                     </div>
 
