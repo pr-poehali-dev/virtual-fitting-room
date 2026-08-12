@@ -48,6 +48,7 @@ import {
   fetchOutfitProfiles,
   saveOutfitProfile,
 } from "@/lib/outfitProfiles";
+import SourceLookOption from "@/components/selection/SourceLookOption";
 import {
   SourceLook,
   fetchSourceLooks,
@@ -949,13 +950,13 @@ export default function WeddingSelection() {
                               onValueChange={applyStyleFromLook}
                               disabled={loadingLook}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger className="h-auto min-h-10 py-1.5">
                                 <SelectValue placeholder="Выберите образ" />
                               </SelectTrigger>
                               <SelectContent>
                                 {sourceLooks.map((l) => (
                                   <SelectItem key={l.id} value={l.id}>
-                                    {l.title} — {l.serviceLabel}
+                                    <SourceLookOption look={l} />
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -1127,13 +1128,13 @@ export default function WeddingSelection() {
                             onValueChange={applyPartnerFromLook}
                             disabled={loadingLook}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className="h-auto min-h-10 py-1.5">
                               <SelectValue placeholder="Выберите образ (необязательно)" />
                             </SelectTrigger>
                             <SelectContent>
                               {sourceLooks.map((l) => (
                                 <SelectItem key={l.id} value={l.id}>
-                                  {l.title} — {l.serviceLabel}
+                                  <SourceLookOption look={l} />
                                 </SelectItem>
                               ))}
                             </SelectContent>
