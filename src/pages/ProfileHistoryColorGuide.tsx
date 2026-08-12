@@ -14,9 +14,9 @@ const DB_QUERY_API = "https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-8844
 
 // Подарки и ароматы — текстовые подборки без картинки, показываем заглушку сервиса.
 const SERVICE_PLACEHOLDERS: Record<string, string> = {
-  gift: "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/79d4240f-ad68-4269-9998-4f484e0658b2.jpg",
+  gift: "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/397a0fb0-ac62-44a2-acbd-588dc53419d9.jpg",
   perfume:
-    "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/90f752ca-05c1-4c77-9628-58a5b1bdd630.jpg",
+    "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/15bd8187-7c0a-4015-abd8-3602df61386b.jpg",
 };
 
 interface GuideTask {

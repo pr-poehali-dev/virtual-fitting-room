@@ -54,7 +54,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         offset = 0
 
     # Фильтр по типам услуг: services=glasses,kibbe,outfit (пусто = показать все)
-    allowed_services = {'colorguide', 'style', 'outfit', 'glasses', 'makeup', 'hairstyle', 'kibbe'}
+    allowed_services = {'colorguide', 'style', 'outfit', 'glasses', 'makeup', 'hairstyle', 'kibbe',
+                        'gift', 'perfume'}
     services_raw = params.get('services') or ''
     selected_services = [s.strip() for s in services_raw.split(',') if s.strip() in allowed_services]
 

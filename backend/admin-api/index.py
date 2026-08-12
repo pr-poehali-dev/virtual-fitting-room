@@ -589,7 +589,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             cursor.execute(query, filter_values)
             history = cursor.fetchall()
 
-            cg_service_labels = {'colorguide': 'Гид по цвету', 'style': 'Стилевой анализ'}
+            cg_service_labels = {
+                'colorguide': 'Гид по цвету',
+                'style': 'Стилевой анализ',
+                'outfit': 'Подбор образа',
+                'glasses': 'Подбор очков',
+                'makeup': 'Подбор макияжа',
+                'hairstyle': 'Подбор причёски',
+                'kibbe': 'Типаж по Кибби',
+                'gift': 'Подбор подарка',
+                'perfume': 'Подбор аромата',
+            }
             result_list = []
             for h in history:
                 service_type = h.get('service_type') or 'colorguide'
