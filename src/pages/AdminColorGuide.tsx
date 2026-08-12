@@ -43,6 +43,7 @@ export default function AdminColorGuide() {
   const [items, setItems] = useState<GuideItem[]>([]);
   const [userFilter, setUserFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [serviceFilter, setServiceFilter] = useState<string>("all");
   const [showPaid, setShowPaid] = useState(true);
   const [showUnlimited, setShowUnlimited] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +66,7 @@ export default function AdminColorGuide() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [showPaid, showUnlimited]);
+  }, [showPaid, showUnlimited, serviceFilter]);
 
   const fetchUsers = async () => {
     try {
@@ -143,7 +144,21 @@ export default function AdminColorGuide() {
     return <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-700">Ожидает</span>;
   };
 
+  // Список услуг для фильтра — только те, что реально есть в загруженных задачах.
+  const serviceOptions = Array.from(
+    new Map(
+      items
+        .filter((it) => it.service_type)
+        .map((it) => [
+          it.service_type as string,
+          it.service_label || (it.service_type as string),
+        ]),
+    ).entries(),
+  ).sort((a, b) => a[1].localeCompare(b[1], "ru"));
+
   const filteredItems = items.filter((it) => {
+    if (serviceFilter !== "all" && (it.service_type || "colorguide") !== serviceFilter)
+      return false;
     if (showPaid && showUnlimited) return true;
     if (!showPaid && !showUnlimited) return true;
     if (showPaid) return it.cost > 0;
@@ -176,6 +191,21 @@ export default function AdminColorGuide() {
                     {users.map((u) => (
                       <SelectItem key={u.id} value={u.id}>
                         {u.email} ({u.name})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1">
+                <Select value={serviceFilter} onValueChange={setServiceFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Все сервисы" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Все сервисы</SelectItem>
+                    {serviceOptions.map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
                       </SelectItem>
                     ))}
                   </SelectContent>
