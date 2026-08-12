@@ -50,6 +50,7 @@ export default function ColorGuideDetail() {
     null,
   );
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [resultNote, setResultNote] = useState<string | null>(null);
   const [colortypeHistoryId, setColortypeHistoryId] = useState<string | null>(
     null,
   );
@@ -133,15 +134,18 @@ export default function ColorGuideDetail() {
         if (svc !== "colorguide") {
           // Подарки и ароматы — текстовые отчёты, картинки у них нет.
           const isTextOnly = svc === "gift" || svc === "perfume";
+          // Картинки может не быть: разбор готов, деньги возвращены — показываем текст.
           if (
             data.status !== "completed" ||
-            (!isTextOnly && !data.cdn_url) ||
+            (!isTextOnly && !data.cdn_url && !data.result) ||
             (isTextOnly && !data.result)
           ) {
             setErrorText(data.error_message || "Отчёт ещё не готов или не удался");
             return;
           }
           setImageUrl(data.cdn_url || null);
+          if (!isTextOnly && !data.cdn_url && data.error_message)
+            setResultNote(data.error_message as string);
           if (isTextOnly) {
             setTextResult(data.result as Record<string, unknown>);
             if (data.form_params)
@@ -225,6 +229,7 @@ export default function ColorGuideDetail() {
               imageUrl={imageUrl}
               data={textResult as unknown as WeddingResult}
               formParams={textParams as unknown as WeddingFormParams}
+              note={resultNote}
               onReset={() => navigate("/wedding-selection")}
             />
           ) : serviceType === "gift" && textResult ? (

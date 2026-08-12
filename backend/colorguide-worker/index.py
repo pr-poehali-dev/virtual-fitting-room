@@ -650,6 +650,14 @@ def _is_capacity_error(exc: Exception) -> bool:
     return 'error 429' in text or 'http 429' in text or 'at capacity' in text
 
 
+# Пометка для заказов, где текстовый разбор готов, а картинку создать не удалось.
+NO_IMAGE_NOTE = (
+    'Картинка не сгенерирована из-за перегрузки сервиса, поэтому деньги за подбор не списаны — '
+    'они возвращены на баланс. Текстовое описание готово, им можно пользоваться. '
+    'Чтобы получить картинку, запустите подбор ещё раз.'
+)
+
+
 def _image_error_message(exc: Exception) -> str:
     """Текст ошибки для пользователя: при перегрузке сервиса картинок — понятный совет."""
     if _is_capacity_error(exc):
@@ -768,6 +776,8 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
 
     # Сегмент: S3 загрузка фото клиента + анализ + fal.ai (долгая часть, без коннекта к БД)
     text_only = registry.is_text_only(service_type)
+    # Готовый разбор: если он уже есть, а картинка не удалась — сохраним текст и вернём деньги.
+    analysis = None
 
     try:
         if text_only:
@@ -778,11 +788,16 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
             print(f'[COLORGUIDE-WORKER] Person uploaded to {person_url}')
 
         # Фото партнёра — ТОЛЬКО для анализа, в генерацию картинки не идёт.
+        # Может прийти как base64 (загрузка файла) или как готовая ссылка (выбор своего образа).
         partner_url = None
         if partner_image and not text_only:
             try:
-                partner_url = upload_to_s3(partner_image, f'{task_id}-partner', str(user_id))
-                print(f'[COLORGUIDE-WORKER] Partner photo uploaded to {partner_url}')
+                if str(partner_image).startswith('http'):
+                    partner_url = str(partner_image)
+                    print(f'[COLORGUIDE-WORKER] Partner photo by URL: {partner_url}')
+                else:
+                    partner_url = upload_to_s3(partner_image, f'{task_id}-partner', str(user_id))
+                    print(f'[COLORGUIDE-WORKER] Partner photo uploaded to {partner_url}')
             except Exception as p_err:
                 print(f'[COLORGUIDE-WORKER] Partner photo skipped: {p_err}')
                 partner_url = None
@@ -900,10 +915,14 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
     except urllib.error.HTTPError as e:
         err_body = e.read().decode('utf-8', errors='replace')[:600] if hasattr(e, 'read') else ''
         print(f'[COLORGUIDE-WORKER] ERROR (image service) HTTP {e.code}: {err_body}')
+        if analysis and _save_result_without_image(task_id, analysis, NO_IMAGE_NOTE):
+            return
         mark_failed_and_refund(task_id, _image_error_message(e), 'ошибка генерации')
         return
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (image service): {e}')
+        if analysis and _save_result_without_image(task_id, analysis, NO_IMAGE_NOTE):
+            return
         mark_failed_and_refund(task_id, _image_error_message(e), 'ошибка генерации')
         return
 
@@ -954,6 +973,45 @@ def _save_text_only_result(task_id: str, analysis: dict):
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (save text result): {e}')
         mark_failed_and_refund(task_id, 'Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте позже.', 'ошибка обработки')
+
+
+def _save_result_without_image(task_id: str, analysis: dict, note: str):
+    """Картинка не сгенерировалась, но текстовый разбор готов: сохраняем его как выполненный
+    результат и ВОЗВРАЩАЕМ деньги — услуга без картинки не считается оплаченной."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'SELECT user_id, cost, refunded FROM color_guide_tasks WHERE id = %s',
+                (task_id,)
+            )
+            r = cursor.fetchone()
+            if r:
+                u_id, t_cost, t_refunded = r
+                if not t_refunded and t_cost and t_cost > 0:
+                    refund_user(cursor, task_id, u_id, t_cost, 'картинка не сгенерирована')
+            cursor.execute('''
+                UPDATE color_guide_tasks
+                SET status = 'completed',
+                    result_json = %s,
+                    cdn_url = NULL,
+                    error_message = %s,
+                    person_image = NULL,
+                    partner_image = NULL,
+                    recovery_done = TRUE,
+                    updated_at = %s
+                WHERE id = %s
+            ''', (json.dumps(analysis, ensure_ascii=False), note[:500], datetime.utcnow(), task_id))
+            conn.commit()
+            print(f'[COLORGUIDE-WORKER] Task {task_id} saved without image (refunded)')
+            return True
+        finally:
+            cursor.close()
+            conn.close()
+    except Exception as e:
+        print(f'[COLORGUIDE-WORKER] ERROR (save result without image): {e}')
+        return False
 
 
 def save_fal_urls(task_id: str, status_url: str, response_url: str, analysis: dict):

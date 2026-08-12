@@ -165,6 +165,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     # Второе фото (образ партнёра) — только для сервиса 'wedding', необязательное.
     # Используется ТОЛЬКО для анализа, в генерацию картинки не передаётся.
     partner_image = body_data.get('partner_image') if service_type in PARTNER_IMAGE_SERVICES else None
+    # Ссылку принимаем только на наши же хранилища (выбор своего готового образа),
+    # чтобы через это поле нельзя было подсунуть произвольный внешний адрес.
+    if partner_image and str(partner_image).startswith('http'):
+        allowed_prefixes = (
+            'https://storage.yandexcloud.net/',
+            'https://cdn.poehali.dev/',
+        )
+        if not str(partner_image).startswith(allowed_prefixes):
+            partner_image = None
     if partner_image and len(partner_image) > 8_000_000:
         return {
             'statusCode': 400,

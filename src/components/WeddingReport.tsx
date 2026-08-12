@@ -73,6 +73,7 @@ interface Props {
   imageUrl: string | null;
   data: WeddingResult | null;
   formParams?: WeddingFormParams | null;
+  note?: string | null;
   onReset: () => void;
   onEdit?: () => void;
 }
@@ -214,6 +215,7 @@ export default function WeddingReport({
   imageUrl,
   data,
   formParams,
+  note,
   onReset,
   onEdit,
 }: Props) {
@@ -245,17 +247,33 @@ export default function WeddingReport({
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          {imageUrl && (
+      {note && (
+        <Card className="border-amber-300 bg-amber-50">
+          <CardContent className="p-5 flex gap-3">
+            <Icon
+              name="TriangleAlert"
+              size={22}
+              className="shrink-0 text-amber-600 mt-0.5"
+            />
+            <div className="text-sm text-amber-900">
+              <p className="font-medium mb-1">Картинка не сгенерирована</p>
+              <p>{note}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {imageUrl && (
+        <Card className="overflow-hidden">
+          <CardContent className="p-0">
             <img
               src={imageUrl}
               alt="Свадебный образ"
               className="w-full object-contain bg-muted"
             />
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {data && (
         <Card>
@@ -479,10 +497,12 @@ export default function WeddingReport({
       )}
 
       <div className="flex flex-col sm:flex-row justify-center gap-3">
-        <Button onClick={handleDownload} variant="outline">
-          <Icon name="Download" size={18} className="mr-2" />
-          Скачать картинку
-        </Button>
+        {imageUrl && (
+          <Button onClick={handleDownload} variant="outline">
+            <Icon name="Download" size={18} className="mr-2" />
+            Скачать картинку
+          </Button>
+        )}
         {onEdit && (
           <Button onClick={onEdit} variant="outline">
             <Icon name="Pencil" size={18} className="mr-2" />

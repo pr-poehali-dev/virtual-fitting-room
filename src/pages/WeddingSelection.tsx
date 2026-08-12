@@ -48,6 +48,13 @@ import {
   fetchOutfitProfiles,
   saveOutfitProfile,
 } from "@/lib/outfitProfiles";
+import {
+  SourceLook,
+  fetchSourceLooks,
+  fetchLookDetail,
+  buildStyleFromLook,
+  buildPartnerLookText,
+} from "@/lib/weddingSourceLooks";
 
 const START_API =
   "https://functions.poehali.dev/1551f3e9-8029-441b-ac77-2dc9cf164bdc";
@@ -63,6 +70,7 @@ const ROLES = ["Невеста", "Жених"];
 const STYLE_MODES = [
   "Стиль свадьбы уже выбран",
   "Подобрать стиль от образа (от обратного)",
+  "Взять стиль из моего готового образа",
 ];
 
 const KIBBE_TYPES = [
@@ -227,6 +235,11 @@ export default function WeddingSelection() {
   const [budget, setBudget] = useState<string>("");
   const [comment, setComment] = useState<string>("");
 
+  const [sourceLooks, setSourceLooks] = useState<SourceLook[]>([]);
+  const [styleLookId, setStyleLookId] = useState<string>("");
+  const [partnerLookId, setPartnerLookId] = useState<string>("");
+  const [loadingLook, setLoadingLook] = useState(false);
+
   const [profiles, setProfiles] = useState<OutfitProfile[]>([]);
   const [selectedProfileId, setSelectedProfileId] = useState<string>("");
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -242,12 +255,14 @@ export default function WeddingSelection() {
   const [resultParams, setResultParams] = useState<WeddingFormParams | null>(
     null,
   );
+  const [resultNote, setResultNote] = useState<string | null>(null);
 
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isBride = role === "Невеста";
   const styleFromLook = styleMode === STYLE_MODES[1];
+  const styleFromSaved = styleMode === STYLE_MODES[2];
 
   useEffect(() => {
     return () => {
@@ -257,8 +272,8 @@ export default function WeddingSelection() {
   }, []);
 
   useEffect(() => {
-    if (resultUrl && !isAnalyzing) scrollToResult();
-  }, [resultUrl, isAnalyzing, scrollToResult]);
+    if ((resultUrl || resultData) && !isAnalyzing) scrollToResult();
+  }, [resultUrl, resultData, isAnalyzing, scrollToResult]);
 
   const loadProfiles = () => {
     if (!user) return;
@@ -269,8 +284,57 @@ export default function WeddingSelection() {
 
   useEffect(() => {
     loadProfiles();
+    if (user) {
+      fetchSourceLooks()
+        .then(setSourceLooks)
+        .catch(() => {});
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  /** Берём стиль торжества из ранее созданного образа. */
+  const applyStyleFromLook = async (id: string) => {
+    setStyleLookId(id);
+    if (!id) return;
+    setLoadingLook(true);
+    try {
+      const detail = await fetchLookDetail(id);
+      const text = buildStyleFromLook(detail);
+      if (!text) {
+        toast.error("В этом образе нет описания стиля");
+        return;
+      }
+      setCustomStyle(text);
+      setWeddingStyle("");
+      toast.success("Стиль взят из выбранного образа");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не удалось загрузить образ");
+    } finally {
+      setLoadingLook(false);
+    }
+  };
+
+  /** Берём образ партнёра из ранее созданного образа: картинка + описание наряда. */
+  const applyPartnerFromLook = async (id: string) => {
+    setPartnerLookId(id);
+    if (!id) return;
+    setLoadingLook(true);
+    try {
+      const detail = await fetchLookDetail(id);
+      const text = buildPartnerLookText(detail);
+      if (text) setPartnerLook(text);
+      setPartnerImage(detail.imageUrl || null);
+      if (!text && !detail.imageUrl) {
+        toast.error("В этом образе нет данных для подстановки");
+        return;
+      }
+      toast.success("Образ партнёра подставлен");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не удалось загрузить образ");
+    } finally {
+      setLoadingLook(false);
+    }
+  };
 
   const toggleMulti = (
     value: string,
@@ -372,20 +436,26 @@ export default function WeddingSelection() {
         if (pollingIntervalRef.current)
           clearInterval(pollingIntervalRef.current);
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        if (!data.cdn_url) {
+        // Картинки может не быть: разбор готов, деньги возвращены — показываем текст.
+        if (!data.cdn_url && !data.result) {
           setIsAnalyzing(false);
           setAnalysisStatus("");
           toast.error("Не удалось получить результат. Попробуйте ещё раз.");
           return;
         }
-        setResultUrl(data.cdn_url);
+        setResultUrl(data.cdn_url || null);
+        setResultNote(!data.cdn_url && data.error ? data.error : null);
         if (data.result) setResultData(data.result as WeddingResult);
         if (data.form_params)
           setResultParams(data.form_params as WeddingFormParams);
         setIsAnalyzing(false);
         setAnalysisStatus("");
         playReadySound();
-        toast.success("Свадебный образ готов!");
+        if (data.cdn_url) {
+          toast.success("Свадебный образ готов!");
+        } else {
+          toast.warning("Разбор готов, но картинку создать не удалось");
+        }
         refreshBalance();
       } else if (data.status === "failed") {
         if (pollingIntervalRef.current)
@@ -429,7 +499,11 @@ export default function WeddingSelection() {
       venue,
       location: location.trim(),
       day_time: dayTime,
-      style_mode: styleFromLook ? "От обратного" : "Задан клиентом",
+      style_mode: styleFromLook
+        ? "От обратного"
+        : styleFromSaved
+          ? "Взят из готового образа клиента"
+          : "Задан клиентом",
       wedding_style: styleFinal,
       wedding_colors: weddingColors.trim(),
       partner_look: partnerLook.trim(),
@@ -632,6 +706,9 @@ export default function WeddingSelection() {
     setResultParams(null);
     setUploadedImage(null);
     setPartnerImage(null);
+    setStyleLookId("");
+    setPartnerLookId("");
+    setResultNote(null);
     setRole("");
     setHeight("");
     setAge("");
@@ -690,7 +767,7 @@ export default function WeddingSelection() {
             </p>
           </div>
 
-          {!resultUrl && !isAnalyzing && (
+          {!resultUrl && !resultData && !isAnalyzing && (
             <div className="relative">
               <LockedFormOverlay cost={COST}>
                 <Card>
@@ -850,36 +927,86 @@ export default function WeddingSelection() {
                         <p className="text-xs text-muted-foreground mt-2">
                           {styleFromLook
                             ? "Стилист подберёт наряд, который вам максимально идёт, и от него выведет стиль всей свадьбы: палитру, декор и настроение."
-                            : "Образ будет собран строго под выбранный вами стиль торжества."}
+                            : styleFromSaved
+                              ? "Стиль, палитра и настроение возьмутся из выбранного вами готового образа."
+                              : "Образ будет собран строго под выбранный вами стиль торжества."}
                         </p>
                       </div>
+
+                      {styleFromSaved && (
+                        <div>
+                          <p className="font-medium mb-2">
+                            Мой готовый образ — источник стиля
+                          </p>
+                          {sourceLooks.length === 0 ? (
+                            <p className="text-xs text-muted-foreground">
+                              Готовых образов пока нет. Выберите другой способ
+                              или создайте образ — он появится здесь.
+                            </p>
+                          ) : (
+                            <Select
+                              value={styleLookId}
+                              onValueChange={applyStyleFromLook}
+                              disabled={loadingLook}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Выберите образ" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {sourceLooks.map((l) => (
+                                  <SelectItem key={l.id} value={l.id}>
+                                    {l.title} — {l.serviceLabel}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      )}
 
                       {!styleFromLook && (
                         <div>
                           <p className="font-medium mb-2">
                             Стиль торжества и дресс-код
+                            {styleFromSaved && (
+                              <span className="text-muted-foreground text-xs font-normal">
+                                {" "}(заполнено из выбранного образа, можно
+                                отредактировать)
+                              </span>
+                            )}
                           </p>
-                          <Select
-                            value={weddingStyle}
-                            onValueChange={setWeddingStyle}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Не выбрано" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {WEDDING_STYLES.map((s) => (
-                                <SelectItem key={s} value={s}>
-                                  {s}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Input
-                            className="mt-2"
-                            placeholder="Или свой вариант стиля"
-                            value={customStyle}
-                            onChange={(e) => setCustomStyle(e.target.value)}
-                          />
+                          {!styleFromSaved && (
+                            <Select
+                              value={weddingStyle}
+                              onValueChange={setWeddingStyle}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Не выбрано" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {WEDDING_STYLES.map((s) => (
+                                  <SelectItem key={s} value={s}>
+                                    {s}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                          {styleFromSaved ? (
+                            <Textarea
+                              placeholder="Описание стиля появится здесь после выбора образа"
+                              value={customStyle}
+                              onChange={(e) => setCustomStyle(e.target.value)}
+                              rows={4}
+                            />
+                          ) : (
+                            <Input
+                              className="mt-2"
+                              placeholder="Или свой вариант стиля"
+                              value={customStyle}
+                              onChange={(e) => setCustomStyle(e.target.value)}
+                            />
+                          )}
                         </div>
                       )}
 
@@ -990,6 +1117,30 @@ export default function WeddingSelection() {
                         цвету, стилю и нарядности. Фото партнёра используется
                         только для анализа: на итоговой картинке будете вы.
                       </p>
+                      {sourceLooks.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-xs font-medium mb-1.5">
+                            Выбрать из моих готовых образов
+                          </p>
+                          <Select
+                            value={partnerLookId}
+                            onValueChange={applyPartnerFromLook}
+                            disabled={loadingLook}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Выберите образ (необязательно)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {sourceLooks.map((l) => (
+                                <SelectItem key={l.id} value={l.id}>
+                                  {l.title} — {l.serviceLabel}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
                       <div className="grid md:grid-cols-2 gap-4">
                         <label
                           htmlFor="wedding-partner-photo"
@@ -1354,12 +1505,13 @@ export default function WeddingSelection() {
             </Card>
           )}
 
-          {resultUrl && !isAnalyzing && (
+          {(resultUrl || resultData) && !isAnalyzing && (
             <div ref={resultRef}>
               <WeddingReport
                 imageUrl={resultUrl}
                 data={resultData}
                 formParams={resultParams}
+                note={resultNote}
                 onReset={handleReset}
                 onEdit={handleEdit}
               />
