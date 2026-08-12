@@ -450,6 +450,48 @@ def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_na
     raise last_error if last_error else RuntimeError('Gemini request failed')
 
 
+def _repair_json_quotes(s: str) -> str:
+    """Чинит НЕэкранированные кавычки внутри строковых значений.
+
+    Модель часто пишет: "name": "Издание "Мастер и Маргарита"" — такой JSON
+    не парсится. Кавычка считается закрывающей только если дальше идёт
+    разделитель (, : } ] или конец), иначе экранируем её.
+    """
+    out = []
+    in_string = False
+    escaped = False
+    for i, ch in enumerate(s):
+        if not in_string:
+            out.append(ch)
+            if ch == '"':
+                in_string = True
+            continue
+
+        if escaped:
+            out.append(ch)
+            escaped = False
+            continue
+
+        if ch == '\\':
+            out.append(ch)
+            escaped = True
+            continue
+
+        if ch == '"':
+            rest = s[i + 1:]
+            stripped = rest.lstrip()
+            nxt = stripped[0] if stripped else ''
+            if nxt in (',', ':', '}', ']', ''):
+                out.append(ch)
+                in_string = False
+            else:
+                out.append('\\"')
+            continue
+
+        out.append(ch)
+    return ''.join(out)
+
+
 def _extract_json_object(text: str) -> Dict[str, Any]:
     """Извлекает первый валидный JSON-объект из текста ответа модели.
     Thinking-модели возвращают reasoning + JSON, иногда в ```json блоке."""
@@ -470,7 +512,11 @@ def _extract_json_object(text: str) -> Dict[str, Any]:
     end = s.rfind('}')
     if start != -1 and end != -1 and end > start:
         candidate = s[start:end + 1]
-        return json.loads(candidate)
+        try:
+            return json.loads(candidate)
+        except Exception:
+            # Последняя попытка: чиним неэкранированные кавычки в значениях
+            return json.loads(_repair_json_quotes(candidate))
     raise ValueError('No JSON object found in model response')
 
 
