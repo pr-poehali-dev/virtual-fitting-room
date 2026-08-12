@@ -1,6 +1,10 @@
+import { useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Icon from "@/components/ui/icon";
+import { toast } from "sonner";
+
+const loadHtml2Canvas = async () => (await import("html2canvas")).default;
 
 export interface GiftItem {
   name?: string;
@@ -108,9 +112,36 @@ export default function GiftReport({
   onEdit,
 }: Props) {
   const paramRows = buildParamRows(formParams);
+  const reportRef = useRef<HTMLDivElement>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!reportRef.current) return;
+    setIsDownloading(true);
+    try {
+      const html2canvas = await loadHtml2Canvas();
+      const canvas = await html2canvas(reportRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        imageTimeout: 15000,
+      });
+      const link = document.createElement("a");
+      link.download = `podbor-podarkov-${Date.now()}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      toast.success("Отчёт сохранён");
+    } catch (e) {
+      console.error("[GiftReport] download error", e);
+      toast.error("Не удалось скачать отчёт");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in" ref={reportRef}>
       {data && (
         <Card>
           <CardContent className="p-6 md:p-8 space-y-7">
@@ -249,14 +280,25 @@ export default function GiftReport({
         </Card>
       )}
 
-      <div className="flex flex-col sm:flex-row justify-center gap-3">
+      <div
+        className="flex flex-col sm:flex-row justify-center gap-3"
+        data-html2canvas-ignore="true"
+      >
+        <Button onClick={handleDownload} disabled={isDownloading}>
+          {isDownloading ? (
+            <Icon name="Loader2" size={18} className="mr-2 animate-spin" />
+          ) : (
+            <Icon name="Download" size={18} className="mr-2" />
+          )}
+          Скачать картинкой
+        </Button>
         {onEdit && (
           <Button onClick={onEdit} variant="outline">
             <Icon name="Pencil" size={18} className="mr-2" />
             Изменить параметры
           </Button>
         )}
-        <Button onClick={onReset}>
+        <Button onClick={onReset} variant="outline">
           <Icon name="RotateCcw" size={18} className="mr-2" />
           Подобрать другие подарки
         </Button>
