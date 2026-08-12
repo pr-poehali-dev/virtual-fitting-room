@@ -55,6 +55,7 @@ export interface WeddingFormParams {
   wedding_style?: string;
   wedding_colors?: string;
   partner_look?: string;
+  has_partner_photo?: boolean;
   favorite_fabrics?: string[];
   disliked_fabrics?: string[];
   favorite_colors?: string[];
@@ -179,6 +180,7 @@ function buildParamRows(
   add("Стиль торжества", fp.wedding_style);
   add("Гамма свадьбы", fp.wedding_colors);
   add("Образ партнёра", fp.partner_look);
+  add("Фото партнёра", fp.has_partner_photo ? "Загружено и учтено" : undefined);
   add("Силуэт платья", fp.dress_silhouette);
   add("Любимые ткани", fp.favorite_fabrics);
   add("Нежелательные ткани", fp.disliked_fabrics);

@@ -520,9 +520,10 @@ def _extract_json_object(text: str) -> Dict[str, Any]:
     raise ValueError('No JSON object found in model response')
 
 
-def call_qwen_json(image_url: str, prompt: str, model: str) -> Dict[str, Any]:
+def call_qwen_json(image_url: str, prompt: str, model: str, extra_image_url: str = None) -> Dict[str, Any]:
     """Запрос к мультимодальному Qwen (thinking) через OpenRouter.
     Без strict json_schema: модель отдаёт reasoning + JSON, парсим объект из ответа.
+    extra_image_url — второе фото (образ партнёра) только для анализа.
     3 попытки с retry."""
     api_key = os.environ.get('OPENROUTER_API_KEY_NEW') or os.environ.get('OPENROUTER_API_KEY')
     if not api_key:
@@ -530,10 +531,10 @@ def call_qwen_json(image_url: str, prompt: str, model: str) -> Dict[str, Any]:
 
     # Текстовые сервисы (подарки, ароматы) идут без фото — тогда шлём только текст.
     if image_url:
-        content = [
-            {'type': 'image_url', 'image_url': {'url': image_url}},
-            {'type': 'text', 'text': prompt},
-        ]
+        content = [{'type': 'image_url', 'image_url': {'url': image_url}}]
+        if extra_image_url:
+            content.append({'type': 'image_url', 'image_url': {'url': extra_image_url}})
+        content.append({'type': 'text', 'text': prompt})
     else:
         content = [{'type': 'text', 'text': prompt}]
 
@@ -709,7 +710,7 @@ def upload_result_to_s3(image_url: str, task_id: str, user_id: str) -> str:
     return f'https://storage.yandexcloud.net/{s3_bucket}/{s3_key}'
 
 
-def process_image_service(task_id: str, service_type: str, person_image: str, user_id, height, form_params=None):
+def process_image_service(task_id: str, service_type: str, person_image: str, user_id, height, form_params=None, partner_image=None):
     """Обработка картиночного сервиса: анализ (Gemini/Qwen) -> nano-banana-2 -> S3."""
     service = registry.get_service(service_type)
     print(f'[COLORGUIDE-WORKER] Image service "{service_type}" for task {task_id}')
@@ -734,6 +735,16 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
             person_url = upload_to_s3(person_image, task_id, str(user_id))
             print(f'[COLORGUIDE-WORKER] Person uploaded to {person_url}')
 
+        # Фото партнёра — ТОЛЬКО для анализа, в генерацию картинки не идёт.
+        partner_url = None
+        if partner_image and not text_only:
+            try:
+                partner_url = upload_to_s3(partner_image, f'{task_id}-partner', str(user_id))
+                print(f'[COLORGUIDE-WORKER] Partner photo uploaded to {partner_url}')
+            except Exception as p_err:
+                print(f'[COLORGUIDE-WORKER] Partner photo skipped: {p_err}')
+                partner_url = None
+
         print('[COLORGUIDE-WORKER] STEP analysis start')
         gemini_prompt = service.GEMINI_PROMPT
         if height:
@@ -749,12 +760,27 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
             if params_block:
                 gemini_prompt += '\n\n' + params_block
 
+        # Пояснение про второе фото (образ партнёра) — только для анализа.
+        if partner_url:
+            gemini_prompt += (
+                '\n\nПРИЛОЖЕНО ДВА ФОТО. ПЕРВОЕ фото — КЛИЕНТ, тот, для кого ты собираешь образ: '
+                'именно его внешность, колорит и фигуру анализируй и для него подбирай наряд. '
+                'ВТОРОЕ фото — ПАРТНЁР (вторая половина пары) в уже готовом образе. Второе фото '
+                'нужно ТОЛЬКО для согласования: разбери по нему наряд партнёра (цвета, оттенки, '
+                'ткани, фасон, уровень нарядности, стиль) и подбери клиенту образ, который '
+                'гармонично сочетается с ним в паре — по палитре, степени торжественности и стилю. '
+                'СТРОГО ЗАПРЕЩЕНО: анализировать внешность, колорит, фигуру или лицо человека со '
+                'второго фото и подбирать образ под него; путать людей местами; описывать в ответе '
+                'образ партнёра как рекомендацию клиенту. Все рекомендации — только для человека с '
+                'ПЕРВОГО фото. Итоги согласования пары опиши в поле "partner_harmony".'
+            )
+
         required = getattr(service, 'REQUIRED_FIELDS', [])
         has_schema = bool(getattr(service, 'RESPONSE_SCHEMA', None))
         if getattr(service, 'USE_QWEN', False):
             model_used = 'qwen'
             try:
-                analysis = call_qwen_json(person_url, gemini_prompt, service.QWEN_MODEL)
+                analysis = call_qwen_json(person_url, gemini_prompt, service.QWEN_MODEL, partner_url)
                 missing = [f for f in required if not analysis.get(f)]
                 if missing:
                     raise RuntimeError(f'Qwen вернул неполный JSON, не хватает: {",".join(missing)}')
@@ -850,6 +876,7 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
                     result_json = %s,
                     cdn_url = %s,
                     person_image = NULL,
+                    partner_image = NULL,
                     updated_at = %s
                 WHERE id = %s
             ''', (json.dumps(analysis, ensure_ascii=False), cdn_url, datetime.utcnow(), task_id))
@@ -1021,7 +1048,7 @@ def mark_failed_and_refund(task_id: str, error_message: str, refund_reason: str)
                 if not t_refunded and t_cost and t_cost > 0:
                     refund_user(cursor, task_id, u_id, t_cost, refund_reason)
             cursor.execute(
-                "UPDATE color_guide_tasks SET status = 'failed', error_message = %s, updated_at = %s WHERE id = %s",
+                "UPDATE color_guide_tasks SET status = 'failed', error_message = %s, partner_image = NULL, updated_at = %s WHERE id = %s",
                 (error_message[:500], datetime.utcnow(), task_id)
             )
             conn.commit()
@@ -1043,14 +1070,14 @@ def process_task(task_id: str):
         cursor = conn.cursor()
         try:
             cursor.execute(
-                'SELECT user_id, person_image, status, cost, refunded, service_type, height, form_params, forced_colortype_slug, forced_colortype_slug_alt FROM color_guide_tasks WHERE id = %s',
+                'SELECT user_id, person_image, status, cost, refunded, service_type, height, form_params, forced_colortype_slug, forced_colortype_slug_alt, partner_image FROM color_guide_tasks WHERE id = %s',
                 (task_id,)
             )
             row = cursor.fetchone()
             if not row:
                 print(f'[COLORGUIDE-WORKER] Task {task_id} not found')
                 return
-            user_id, person_image, status, cost, refunded, service_type, height, form_params, forced_colortype_slug, forced_colortype_slug_alt = row
+            user_id, person_image, status, cost, refunded, service_type, height, form_params, forced_colortype_slug, forced_colortype_slug_alt, partner_image = row
             if status not in ('pending', 'processing'):
                 print(f'[COLORGUIDE-WORKER] Task {task_id} already in status {status}')
                 return
@@ -1078,7 +1105,7 @@ def process_task(task_id: str):
 
     # Картиночные сервисы (стиль, причёски и т.д.) идут отдельной веткой
     if registry.is_image_service(service_type or 'colorguide'):
-        process_image_service(task_id, service_type, person_image, user_id, height, form_params)
+        process_image_service(task_id, service_type, person_image, user_id, height, form_params, partner_image)
         return
 
     # Сегмент 2 (без открытого коннекта): S3 + Gemini — долгая часть

@@ -66,8 +66,11 @@ def build_params_block(form_params: dict) -> str:
     add('Стиль торжества / дресс-код (если указан — строго придерживайся его)',
         form_params.get('wedding_style'))
     add('Цветовая гамма свадьбы', form_params.get('wedding_colors'))
-    add('Образ партнёра (согласуй образ с ним, чтобы пара смотрелась цельно)',
+    add('Образ партнёра — описание клиента (согласуй образ с ним, чтобы пара смотрелась цельно)',
         form_params.get('partner_look'))
+    if form_params.get('has_partner_photo'):
+        lines.append('- Образ партнёра: приложен ВТОРЫМ фото — разбери по нему наряд партнёра '
+                     '(цвета, ткани, фасон, уровень нарядности) и согласуй с ним образ клиента')
     add('Ткани, которые НРАВЯТСЯ', form_params.get('favorite_fabrics'))
     add('Ткани, которые НЕ НРАВЯТСЯ (избегай их)', form_params.get('disliked_fabrics'))
     add('Цвета, которые НРАВЯТСЯ', form_params.get('favorite_colors'))

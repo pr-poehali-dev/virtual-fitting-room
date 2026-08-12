@@ -191,6 +191,7 @@ export default function WeddingSelection() {
   const navigate = useNavigate();
 
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [partnerImage, setPartnerImage] = useState<string | null>(null);
   const [role, setRole] = useState<string>("");
   const [height, setHeight] = useState<string>("");
   const [age, setAge] = useState<string>("");
@@ -339,6 +340,25 @@ export default function WeddingSelection() {
     reader.readAsDataURL(file);
   };
 
+  const handlePartnerImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const validation = validateImageFile(file);
+    if (!validation.isValid) {
+      toast.error(validation.error || "Неверный файл");
+      e.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const resized = await resizeImage(reader.result as string, 1024);
+      setPartnerImage(resized);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const pollTaskStatus = async (id: string) => {
     try {
       const token = localStorage.getItem("session_token");
@@ -413,6 +433,7 @@ export default function WeddingSelection() {
       wedding_style: styleFinal,
       wedding_colors: weddingColors.trim(),
       partner_look: partnerLook.trim(),
+      has_partner_photo: !!partnerImage,
       favorite_fabrics: mergeCustom(favoriteFabrics, customFavoriteFabrics),
       disliked_fabrics: mergeCustom(dislikedFabrics, customDislikedFabrics),
       favorite_colors: mergeCustom(favoriteColors, customFavoriteColors),
@@ -562,6 +583,7 @@ export default function WeddingSelection() {
         credentials: "include",
         body: JSON.stringify({
           person_image: uploadedImage,
+          partner_image: partnerImage || undefined,
           service_type: "wedding",
           height: heightNum,
           form_params: formParams,
@@ -609,6 +631,7 @@ export default function WeddingSelection() {
     setResultData(null);
     setResultParams(null);
     setUploadedImage(null);
+    setPartnerImage(null);
     setRole("");
     setHeight("");
     setAge("");
@@ -949,19 +972,77 @@ export default function WeddingSelection() {
                       </div>
                     </div>
 
-                    <div>
-                      <p className="font-medium mb-2">
+                    <div className="rounded-xl border border-border p-4">
+                      <p className="font-medium mb-1 flex items-center gap-2">
+                        <Icon
+                          name="Users"
+                          size={18}
+                          className="text-primary"
+                        />
                         Образ партнёра{" "}
-                        <span className="text-muted-foreground text-xs">
+                        <span className="text-muted-foreground text-xs font-normal">
                           (необязательно)
                         </span>
                       </p>
-                      <Textarea
-                        placeholder="Опишите образ второго: например, жених в тёмно-синем костюме без галстука, обувь коричневая — образ будет согласован с ним"
-                        value={partnerLook}
-                        onChange={(e) => setPartnerLook(e.target.value)}
-                        rows={2}
-                      />
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Если образ второго уже есть — загрузите его фото и/или
+                        опишите словами. Стилист согласует ваш образ с ним по
+                        цвету, стилю и нарядности. Фото партнёра используется
+                        только для анализа: на итоговой картинке будете вы.
+                      </p>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <label
+                          htmlFor="wedding-partner-photo"
+                          className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-xl p-4 cursor-pointer hover:border-primary/40 transition-colors min-h-[160px]"
+                        >
+                          {partnerImage ? (
+                            <img
+                              src={partnerImage}
+                              alt="Образ партнёра"
+                              className="max-h-[220px] rounded-lg object-contain"
+                            />
+                          ) : (
+                            <div className="text-center text-muted-foreground">
+                              <Icon
+                                name="ImagePlus"
+                                size={32}
+                                className="mx-auto mb-2"
+                              />
+                              <p className="text-sm">
+                                Фото готового образа партнёра
+                              </p>
+                              <p className="text-xs mt-1">JPG, PNG, WebP</p>
+                            </div>
+                          )}
+                          <input
+                            id="wedding-partner-photo"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handlePartnerImageUpload}
+                          />
+                        </label>
+                        <div className="flex flex-col">
+                          <Textarea
+                            placeholder="Опишите образ второго: например, жених в тёмно-синем костюме без галстука, обувь коричневая"
+                            value={partnerLook}
+                            onChange={(e) => setPartnerLook(e.target.value)}
+                            rows={5}
+                            className="flex-1"
+                          />
+                          {partnerImage && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="mt-2 self-start text-muted-foreground"
+                              onClick={() => setPartnerImage(null)}
+                            >
+                              <Icon name="X" size={16} className="mr-1" />
+                              Убрать фото партнёра
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     <div>
@@ -1290,7 +1371,12 @@ export default function WeddingSelection() {
               {
                 question: "Можно подобрать образ и невесте, и жениху?",
                 answer:
-                  "Да. В анкете выберите, для кого образ, и заполните форму. Чтобы получить оба образа, пройдите подбор дважды — во второй раз опишите в поле «Образ партнёра» уже подобранный первый образ, и стилист согласует их между собой.",
+                  "Да. В анкете выберите, для кого образ, и заполните форму. Чтобы получить оба образа, пройдите подбор дважды — во второй раз загрузите фото уже готового первого образа в блок «Образ партнёра» или опишите его словами, и стилист согласует образы между собой.",
+              },
+              {
+                question: "Зачем загружать фото партнёра?",
+                answer:
+                  "Если образ второго уже готов — например, платье куплено или костюм выбран — загрузите его фото, и стилист разберёт по нему цвета, ткани и уровень нарядности, чтобы пара смотрелась цельно на фотографиях. Фото партнёра используется только для анализа: на итоговой картинке будете вы. Можно загрузить фото, написать описание словами или сделать и то, и другое — а можно не заполнять вовсе.",
               },
               {
                 question: "Что значит «подобрать стиль от образа»?",

@@ -17,6 +17,8 @@ ALLOWED_SLUGS = [
 ALLOWED_SERVICE_TYPES = ['colorguide', 'style', 'outfit', 'glasses', 'makeup', 'hairstyle', 'kibbe', 'gift', 'perfume', 'wedding']
 # Сервисы, работающие только по анкете — фото не требуется.
 TEXT_ONLY_SERVICE_TYPES = {'gift', 'perfume'}
+# Сервисы, принимающие второе фото (образ партнёра) — только для анализа.
+PARTNER_IMAGE_SERVICES = {'wedding'}
 SERVICE_LABELS = {
     'colorguide': 'Гид по цвету',
     'style': 'Стилевой анализ внешности',
@@ -160,6 +162,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Фото слишком большое. Попробуйте уменьшить размер изображения.'})
         }
 
+    # Второе фото (образ партнёра) — только для сервиса 'wedding', необязательное.
+    # Используется ТОЛЬКО для анализа, в генерацию картинки не передаётся.
+    partner_image = body_data.get('partner_image') if service_type in PARTNER_IMAGE_SERVICES else None
+    if partner_image and len(partner_image) > 8_000_000:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+            'isBase64Encoded': False,
+            'body': json.dumps({'error': 'Фото партнёра слишком большое. Попробуйте уменьшить размер изображения.'})
+        }
+
     try:
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
@@ -225,9 +238,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print(f'[COLORGUIDE-START-{request_id}] Creating task {task_id}')
 
         cursor.execute('''
-            INSERT INTO color_guide_tasks (id, user_id, status, person_image, cost, created_at, service_type, height, form_params, forced_colortype_slug, forced_colortype_slug_alt)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (task_id, user_id, 'pending', person_image, cost, datetime.utcnow(), service_type, height, form_params_json, forced_slug, forced_slug_alt))
+            INSERT INTO color_guide_tasks (id, user_id, status, person_image, cost, created_at, service_type, height, form_params, forced_colortype_slug, forced_colortype_slug_alt, partner_image)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (task_id, user_id, 'pending', person_image, cost, datetime.utcnow(), service_type, height, form_params_json, forced_slug, forced_slug_alt, partner_image))
 
         if cost > 0:
             balance_after = balance - cost
