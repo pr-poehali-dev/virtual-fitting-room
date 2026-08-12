@@ -599,6 +599,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'kibbe': 'Типаж по Кибби',
                 'gift': 'Подбор подарка',
                 'perfume': 'Подбор аромата',
+                'wedding': 'Свадебный образ',
             }
             result_list = []
             for h in history:

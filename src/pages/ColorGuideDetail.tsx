@@ -22,6 +22,10 @@ import PerfumeReport, {
   PerfumeResult,
   PerfumeFormParams,
 } from "@/components/PerfumeReport";
+import WeddingReport, {
+  WeddingResult,
+  WeddingFormParams,
+} from "@/components/WeddingReport";
 
 const COLORGUIDE_DETAIL_API = "https://functions.poehali.dev/90841acf-1a1a-4158-a8b6-8ddd65204126";
 
@@ -146,6 +150,11 @@ export default function ColorGuideDetail() {
             if (data.result) setOutfitResult(data.result as OutfitResult);
             if (data.form_params)
               setOutfitParams(data.form_params as OutfitFormParams);
+          } else if (svc === "wedding") {
+            if (data.result)
+              setTextResult(data.result as Record<string, unknown>);
+            if (data.form_params)
+              setTextParams(data.form_params as Record<string, unknown>);
           } else if (data.result) {
             setStyleResult(data.result as StyleAnalysisResult);
           }
@@ -210,6 +219,13 @@ export default function ColorGuideDetail() {
               data={outfitResult}
               formParams={outfitParams}
               onReset={() => navigate("/outfit-selection")}
+            />
+          ) : serviceType === "wedding" && (textResult || imageUrl) ? (
+            <WeddingReport
+              imageUrl={imageUrl}
+              data={textResult as unknown as WeddingResult}
+              formParams={textParams as unknown as WeddingFormParams}
+              onReset={() => navigate("/wedding-selection")}
             />
           ) : serviceType === "gift" && textResult ? (
             <GiftReport
