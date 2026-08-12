@@ -51,6 +51,18 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       label: "Подбор образов",
     },
     {
+      id: "gift-selection",
+      path: "/gift-selection",
+      icon: "Gift",
+      label: "Подбор подарков",
+    },
+    {
+      id: "perfume-selection",
+      path: "/perfume-selection",
+      icon: "SprayCan",
+      label: "Подбор ароматов",
+    },
+    {
       id: "kibbe-test",
       path: "/kibbe-test",
       icon: "Ruler",

@@ -92,6 +92,26 @@ const Home = () => {
       path: "/outfit-selection",
     },
     {
+      id: "gift-selection",
+      title: "Подбор подарков",
+      description:
+        "Пять идей подарка под получателя и повод: с учётом его интересов, бюджета, знака зодиака и архетипа — с объяснением, почему подойдёт",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/79d4240f-ad68-4269-9998-4f484e0658b2.jpg",
+      icon: "Gift",
+      path: "/gift-selection",
+    },
+    {
+      id: "perfume-selection",
+      title: "Подбор ароматов",
+      description:
+        "Пять конкретных ароматов под вас: любимые ноты, повод, сезон и стойкость — с разбором пирамиды нот и советами по нанесению",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/90f752ca-05c1-4c77-9628-58a5b1bdd630.jpg",
+      icon: "SprayCan",
+      path: "/perfume-selection",
+    },
+    {
       id: "kibbe-test",
       title: "Определение типажа по Кибби",
       description:

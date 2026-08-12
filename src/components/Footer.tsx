@@ -35,6 +35,16 @@ const Footer = () => {
                   Определение цветотипа
                 </Link>
               </li>
+              <li>
+                <Link to="/gift-selection" className="hover:text-white transition-colors">
+                  Подбор подарков
+                </Link>
+              </li>
+              <li>
+                <Link to="/perfume-selection" className="hover:text-white transition-colors">
+                  Подбор ароматов
+                </Link>
+              </li>
             </ul>
           </div>
 
