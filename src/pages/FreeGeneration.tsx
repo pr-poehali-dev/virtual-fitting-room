@@ -36,6 +36,7 @@ export default function FreeGeneration() {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [statusText, setStatusText] = useState('');
+  const [failNote, setFailNote] = useState<string | null>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { resultRef, scrollToResult } = useScrollToResult<HTMLDivElement>();
@@ -114,7 +115,8 @@ export default function FreeGeneration() {
           stopPolling();
           setIsGenerating(false);
           setStatusText('');
-          // Отказ модели — подробный текст с советом, показываем дольше.
+          // Отказ модели — подробный текст с советом: показываем и всплывашкой, и блоком.
+          setFailNote(data.error_message || 'Ошибка генерации');
           toast.error(data.error_message || 'Ошибка генерации', {
             duration: data.error_message && data.error_message.length > 60 ? 15000 : 5000,
           });
@@ -163,6 +165,7 @@ export default function FreeGeneration() {
 
     setIsGenerating(true);
     setResultUrl(null);
+    setFailNote(null);
     setStatusText('Отправка...');
 
     try {
@@ -275,6 +278,28 @@ export default function FreeGeneration() {
             </Card>
             </LockedFormOverlay>
           </div>
+
+          {failNote && (
+            <div className="mb-4 flex gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4">
+              <Icon
+                name="TriangleAlert"
+                size={20}
+                className="mt-0.5 shrink-0 text-amber-600"
+              />
+              <div className="text-sm text-amber-900">
+                <p className="font-medium mb-1">Картинка не создана</p>
+                <p>{failNote}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFailNote(null)}
+                className="ml-auto shrink-0 text-amber-700 hover:text-amber-900"
+                aria-label="Закрыть"
+              >
+                <Icon name="X" size={18} />
+              </button>
+            </div>
+          )}
 
           <div ref={resultRef}>
             <FreegenResultPanel
