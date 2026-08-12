@@ -12,6 +12,13 @@ import ServiceTypeFilter from "@/components/history/ServiceTypeFilter";
 const COLORGUIDE_HISTORY_API = "https://functions.poehali.dev/d894b5d6-acf1-4b38-ae86-4c3c1ad3397f";
 const DB_QUERY_API = "https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9";
 
+// Подарки и ароматы — текстовые подборки без картинки, показываем заглушку сервиса.
+const SERVICE_PLACEHOLDERS: Record<string, string> = {
+  gift: "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/79d4240f-ad68-4269-9998-4f484e0658b2.jpg",
+  perfume:
+    "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/90f752ca-05c1-4c77-9628-58a5b1bdd630.jpg",
+};
+
 interface GuideTask {
   id: string;
   status: string;
@@ -245,10 +252,14 @@ export default function ProfileHistoryColorGuide() {
                   }}
                 >
                   <div className="aspect-[3/4] relative bg-gray-100">
-                    {task.cdn_url ? (
+                    {task.cdn_url ||
+                    SERVICE_PLACEHOLDERS[task.service_type || ""] ? (
                       <img
-                        src={task.cdn_url}
-                        alt={task.colortype_name || "Фото"}
+                        src={
+                          task.cdn_url ||
+                          SERVICE_PLACEHOLDERS[task.service_type || ""]
+                        }
+                        alt={task.colortype_name || task.service_label || "Фото"}
                         className="w-full h-full object-cover"
                       />
                     ) : (

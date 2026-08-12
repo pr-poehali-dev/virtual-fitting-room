@@ -14,6 +14,14 @@ import OutfitReport, {
   OutfitResult,
   OutfitFormParams,
 } from "@/components/OutfitReport";
+import GiftReport, {
+  GiftResult,
+  GiftFormParams,
+} from "@/components/GiftReport";
+import PerfumeReport, {
+  PerfumeResult,
+  PerfumeFormParams,
+} from "@/components/PerfumeReport";
 
 const COLORGUIDE_DETAIL_API = "https://functions.poehali.dev/90841acf-1a1a-4158-a8b6-8ddd65204126";
 
@@ -29,6 +37,12 @@ export default function ColorGuideDetail() {
   const [styleResult, setStyleResult] = useState<StyleAnalysisResult | null>(null);
   const [outfitResult, setOutfitResult] = useState<OutfitResult | null>(null);
   const [outfitParams, setOutfitParams] = useState<OutfitFormParams | null>(
+    null,
+  );
+  const [textResult, setTextResult] = useState<Record<string, unknown> | null>(
+    null,
+  );
+  const [textParams, setTextParams] = useState<Record<string, unknown> | null>(
     null,
   );
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -113,12 +127,22 @@ export default function ColorGuideDetail() {
         setColortypeHistoryId(data.colortype_history_id || null);
 
         if (svc !== "colorguide") {
-          if (data.status !== "completed" || !data.cdn_url) {
+          // Подарки и ароматы — текстовые отчёты, картинки у них нет.
+          const isTextOnly = svc === "gift" || svc === "perfume";
+          if (
+            data.status !== "completed" ||
+            (!isTextOnly && !data.cdn_url) ||
+            (isTextOnly && !data.result)
+          ) {
             setErrorText(data.error_message || "Отчёт ещё не готов или не удался");
             return;
           }
-          setImageUrl(data.cdn_url);
-          if (svc === "outfit") {
+          setImageUrl(data.cdn_url || null);
+          if (isTextOnly) {
+            setTextResult(data.result as Record<string, unknown>);
+            if (data.form_params)
+              setTextParams(data.form_params as Record<string, unknown>);
+          } else if (svc === "outfit") {
             if (data.result) setOutfitResult(data.result as OutfitResult);
             if (data.form_params)
               setOutfitParams(data.form_params as OutfitFormParams);
@@ -186,6 +210,18 @@ export default function ColorGuideDetail() {
               data={outfitResult}
               formParams={outfitParams}
               onReset={() => navigate("/outfit-selection")}
+            />
+          ) : serviceType === "gift" && textResult ? (
+            <GiftReport
+              data={textResult as unknown as GiftResult}
+              formParams={textParams as unknown as GiftFormParams}
+              onReset={() => navigate("/gift-selection")}
+            />
+          ) : serviceType === "perfume" && textResult ? (
+            <PerfumeReport
+              data={textResult as unknown as PerfumeResult}
+              formParams={textParams as unknown as PerfumeFormParams}
+              onReset={() => navigate("/perfume-selection")}
             />
           ) : BEAUTY_REPORTS[serviceType] && styleResult ? (
             <BeautyAnalysisReport
