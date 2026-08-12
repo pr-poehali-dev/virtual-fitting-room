@@ -138,6 +138,7 @@ export default function GiftSelection() {
   const [interests, setInterests] = useState<string[]>([]);
   const [customInterests, setCustomInterests] = useState("");
   const [giftFormats, setGiftFormats] = useState<string[]>([]);
+  const [customGiftFormats, setCustomGiftFormats] = useState("");
   const [season, setSeason] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [alreadyGifted, setAlreadyGifted] = useState("");
@@ -208,7 +209,7 @@ export default function GiftSelection() {
     archetypes,
     colortypes,
     interests: mergeCustom(interests, customInterests),
-    gift_formats: giftFormats,
+    gift_formats: mergeCustom(giftFormats, customGiftFormats),
     season,
     tags,
     already_gifted: alreadyGifted.trim(),
@@ -240,6 +241,7 @@ export default function GiftSelection() {
     setInterests(fp.interests || []);
     setCustomInterests("");
     setGiftFormats(fp.gift_formats || []);
+    setCustomGiftFormats("");
     setSeason(fp.season || "");
     setTags(fp.tags || []);
     setAlreadyGifted(fp.already_gifted || "");
@@ -327,6 +329,7 @@ export default function GiftSelection() {
     setInterests([]);
     setCustomInterests("");
     setGiftFormats([]);
+    setCustomGiftFormats("");
     setSeason("");
     setTags([]);
     setAlreadyGifted("");
@@ -508,6 +511,8 @@ export default function GiftSelection() {
                       options={GIFT_FORMATS}
                       selected={giftFormats}
                       onToggle={(v) => toggleTag(v, setGiftFormats)}
+                      custom={customGiftFormats}
+                      onCustomChange={setCustomGiftFormats}
                     />
 
                     <div>

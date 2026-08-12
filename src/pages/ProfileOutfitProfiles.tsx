@@ -14,12 +14,54 @@ import {
 } from "@/lib/outfitProfiles";
 import { OutfitFormParams } from "@/components/OutfitReport";
 
+const SERVICES = [
+  {
+    key: "outfit",
+    label: "Образы",
+    title: "Мои анкеты для образов",
+    hint: "Сохранённые анкеты для быстрого заполнения формы подбора образа",
+    action: "Подобрать образ",
+    path: "/outfit-selection",
+  },
+  {
+    key: "gift",
+    label: "Подарки",
+    title: "Мои анкеты для подарков",
+    hint: "Сохранённые анкеты для быстрого заполнения формы подбора подарка",
+    action: "Подобрать подарок",
+    path: "/gift-selection",
+  },
+  {
+    key: "perfume",
+    label: "Ароматы",
+    title: "Мои анкеты для ароматов",
+    hint: "Сохранённые анкеты для быстрого заполнения формы подбора аромата",
+    action: "Подобрать аромат",
+    path: "/perfume-selection",
+  },
+];
+
 function summarize(fp: OutfitFormParams): string {
   const parts: string[] = [];
-  if (fp.gender) parts.push(fp.gender);
+  const p = fp as OutfitFormParams & Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === "string" && v ? v : "");
+  const rel = str(p.relation);
+  const recipient = str(p.recipient_gender);
+
+  if (rel) parts.push(rel);
+  else if (recipient) parts.push(recipient);
+  else if (fp.gender) parts.push(fp.gender);
+
   if (fp.archetypes?.length) parts.push(`архетип: ${fp.archetypes.join(", ")}`);
   if (fp.kibbe) parts.push(`типаж: ${fp.kibbe}`);
   if (fp.occasion) parts.push(`повод: ${fp.occasion}`);
+
+  const budget = str(p.budget_max);
+  if (budget) parts.push(`бюджет до ${budget} ₽`);
+
+  const notes = Array.isArray(p.favorite_notes) ? p.favorite_notes : [];
+  if (notes.length) parts.push(`ноты: ${notes.slice(0, 3).join(", ")}`);
+
   if (fp.style_age) parts.push(`возраст: ${fp.style_age}`);
   return parts.join(" · ");
 }
@@ -30,6 +72,8 @@ export default function ProfileOutfitProfiles() {
   const [profiles, setProfiles] = useState<OutfitProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [service, setService] = useState("outfit");
+  const current = SERVICES.find((s) => s.key === service) || SERVICES[0];
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -39,11 +83,12 @@ export default function ProfileOutfitProfiles() {
 
   useEffect(() => {
     if (!user) return;
-    fetchOutfitProfiles()
+    setLoading(true);
+    fetchOutfitProfiles(service)
       .then(setProfiles)
       .catch(() => toast.error("Не удалось загрузить анкеты"))
       .finally(() => setLoading(false));
-  }, [user]);
+  }, [user, service]);
 
   const handleDelete = async (id: number) => {
     if (!confirm("Удалить эту анкету?")) return;
@@ -80,18 +125,26 @@ export default function ProfileOutfitProfiles() {
           <div className="flex-1">
             <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
               <div>
-                <h1 className="text-3xl font-bold mb-2">
-                  Мои анкеты для образов
-                </h1>
-                <p className="text-muted-foreground">
-                  Сохранённые анкеты для быстрого заполнения формы подбора
-                  образа
-                </p>
+                <h1 className="text-3xl font-bold mb-2">{current.title}</h1>
+                <p className="text-muted-foreground">{current.hint}</p>
               </div>
-              <Button onClick={() => navigate("/outfit-selection")}>
+              <Button onClick={() => navigate(current.path)}>
                 <Icon name="Sparkles" size={18} className="mr-2" />
-                Подобрать образ
+                {current.action}
               </Button>
+            </div>
+
+            <div className="flex gap-2 mb-6 flex-wrap">
+              {SERVICES.map((s) => (
+                <Button
+                  key={s.key}
+                  variant={s.key === service ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setService(s.key)}
+                >
+                  {s.label}
+                </Button>
+              ))}
             </div>
 
             {loading ? (
@@ -107,14 +160,14 @@ export default function ProfileOutfitProfiles() {
                     className="mx-auto mb-4 opacity-50"
                   />
                   <p className="mb-4">
-                    У вас пока нет сохранённых анкет. Заполните форму подбора
-                    образа и нажмите «Сохранить анкету».
+                    У вас пока нет сохранённых анкет в этом разделе. Заполните
+                    форму подбора и нажмите «Сохранить анкету».
                   </p>
                   <Button
                     variant="outline"
-                    onClick={() => navigate("/outfit-selection")}
+                    onClick={() => navigate(current.path)}
                   >
-                    Перейти к подбору образа
+                    {current.action}
                   </Button>
                 </CardContent>
               </Card>
