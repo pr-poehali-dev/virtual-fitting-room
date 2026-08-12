@@ -114,7 +114,10 @@ export default function FreeGeneration() {
           stopPolling();
           setIsGenerating(false);
           setStatusText('');
-          toast.error(data.error_message || 'Ошибка генерации');
+          // Отказ модели — подробный текст с советом, показываем дольше.
+          toast.error(data.error_message || 'Ошибка генерации', {
+            duration: data.error_message && data.error_message.length > 60 ? 15000 : 5000,
+          });
           refreshBalance();
         } else if (data.status === 'processing') {
           setStatusText('Генерация...');

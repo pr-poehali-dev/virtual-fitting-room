@@ -152,6 +152,15 @@ def submit_to_fal_queue(prompt: str, reference_urls: List[str], aspect_ratio: st
     raise Exception(f'Failed to submit to fal.ai queue: {response.status_code} - {response.text[:300]}')
 
 
+# Отказ модели (422): решение по конкретному запросу, часто разовое —
+# тот же промпт со второй попытки нередко проходит.
+MODEL_REJECTED_ERROR = (
+    'Модель отклонила запрос и не создала картинку. Деньги возвращены на баланс. '
+    'Попробуйте запустить генерацию ещё раз с тем же запросом — часто со второй попытки '
+    'получается. Если снова не выйдет, немного измените описание.'
+)
+
+
 def check_fal_status(response_url: str) -> Optional[dict]:
     fal_api_key = os.environ.get('FAL_API_KEY')
     if not fal_api_key:
@@ -166,6 +175,14 @@ def check_fal_status(response_url: str) -> Optional[dict]:
     if response.status_code >= 500:
         error_text = response.text[:200] if response.text else 'Unknown server error'
         return {'status': 'FAILED', 'error': f'fal.ai server error {response.status_code}: {error_text}'}
+    # 422 — модель отклонила запрос (не смогла сгенерировать по этому промпту).
+    # Это окончательный отказ по задаче: помечаем FAILED, чтобы вернуть деньги,
+    # а не обрывать проверку и держать задачу в 'processing' вечно.
+    if response.status_code == 422:
+        return {'status': 'FAILED', 'error': MODEL_REJECTED_ERROR}
+    # 404/410 — задания у fal больше нет (устарело и удалено).
+    if response.status_code in (404, 410):
+        return {'status': 'FAILED', 'error': 'Задание не найдено у сервиса генерации (устарело).'}
     raise Exception(f'Failed to check status: {response.status_code}')
 
 
@@ -536,7 +553,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
                 elif fal_status.upper() in ('FAILED', 'EXPIRED'):
                     error_raw = status_data.get('error', 'Generation failed')
-                    error_msg = f'Ошибка генерации: {str(error_raw)[:200]}'
+                    # Понятный текст отказа модели показываем как есть, без служебной приписки.
+                    error_msg = (str(error_raw) if str(error_raw) == MODEL_REJECTED_ERROR
+                                 else f'Ошибка генерации: {str(error_raw)[:200]}')
                     cursor.execute('''
                         UPDATE t_p29007832_virtual_fitting_room.freegen_tasks
                         SET status = 'failed', error_message = %s, updated_at = %s
@@ -632,7 +651,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
                     elif s_fal_status.upper() in ('FAILED', 'EXPIRED'):
                         s_err_raw = s_data.get('error', 'Generation failed')
-                        s_err_msg = f'Ошибка генерации: {str(s_err_raw)[:200]}'
+                        s_err_msg = (str(s_err_raw) if str(s_err_raw) == MODEL_REJECTED_ERROR
+                                     else f'Ошибка генерации: {str(s_err_raw)[:200]}')
                         cursor.execute('''
                             UPDATE t_p29007832_virtual_fitting_room.freegen_tasks
                             SET status = 'failed', error_message = %s, updated_at = %s
@@ -654,7 +674,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         delete_tmp_references(s_id, len(s_refs))
                         print(f'[Freegen] Stuck task {s_id} timed out, failed')
                 except Exception as se:
+                    # Сбой по одной задаче не должен обрывать разбор остальных.
                     print(f'[Freegen] Stuck {s_id} processing error: {se}')
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
         except Exception as e:
             print(f'[Freegen] Stuck scan error (non-critical): {e}')
 
