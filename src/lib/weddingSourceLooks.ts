@@ -9,6 +9,7 @@ export interface SourceLook {
   id: string;
   title: string;
   serviceLabel: string;
+  serviceType: string;
   imageUrl: string | null;
   createdAt: string | null;
 }
@@ -43,6 +44,7 @@ export async function fetchSourceLooks(): Promise<SourceLook[]> {
       id: t.id,
       title: t.colortype_name || t.service_label || "Образ",
       serviceLabel: t.service_label || "",
+      serviceType: t.service_type || "",
       imageUrl: t.cdn_url || null,
       createdAt: t.created_at || null,
     }));
@@ -57,7 +59,7 @@ export interface LookDetail {
 
 /** Полный отчёт по выбранному образу — из него берём стиль или описание наряда. */
 export async function fetchLookDetail(id: string): Promise<LookDetail> {
-  const res = await fetch(`${DETAIL_API}?id=${encodeURIComponent(id)}`, {
+  const res = await fetch(`${DETAIL_API}?task_id=${encodeURIComponent(id)}`, {
     headers: authHeaders(),
     credentials: "include",
   });

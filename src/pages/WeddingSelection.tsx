@@ -261,6 +261,9 @@ export default function WeddingSelection() {
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Источник стиля торжества — только свадебные образы: у обычных подборов нет стиля свадьбы.
+  const weddingLooks = sourceLooks.filter((l) => l.serviceType === "wedding");
+
   const isBride = role === "Невеста";
   const styleFromLook = styleMode === STYLE_MODES[1];
   const styleFromSaved = styleMode === STYLE_MODES[2];
@@ -939,10 +942,11 @@ export default function WeddingSelection() {
                           <p className="font-medium mb-2">
                             Мой готовый образ — источник стиля
                           </p>
-                          {sourceLooks.length === 0 ? (
+                          {weddingLooks.length === 0 ? (
                             <p className="text-xs text-muted-foreground">
-                              Готовых образов пока нет. Выберите другой способ
-                              или создайте образ — он появится здесь.
+                              Готовых свадебных образов пока нет. Выберите
+                              другой способ — образ появится здесь после первого
+                              свадебного подбора.
                             </p>
                           ) : (
                             <Select
@@ -954,7 +958,7 @@ export default function WeddingSelection() {
                                 <SelectValue placeholder="Выберите образ" />
                               </SelectTrigger>
                               <SelectContent>
-                                {sourceLooks.map((l) => (
+                                {weddingLooks.map((l) => (
                                   <SelectItem key={l.id} value={l.id}>
                                     <SourceLookOption look={l} />
                                   </SelectItem>
