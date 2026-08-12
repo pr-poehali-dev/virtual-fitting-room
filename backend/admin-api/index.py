@@ -142,6 +142,21 @@ def delete_user_folder_from_s3(user_id: str) -> int:
         print(f'Error deleting S3 folder for user {user_id}: {str(e)}')
         return 0
 
+# Названия услуг для админки (колонка «Сервис»).
+CG_SERVICE_LABELS = {
+    'colorguide': 'Гид по цвету',
+    'style': 'Стилевой анализ',
+    'outfit': 'Подбор образа',
+    'glasses': 'Подбор очков',
+    'makeup': 'Подбор макияжа',
+    'hairstyle': 'Подбор причёски',
+    'kibbe': 'Типаж по Кибби',
+    'gift': 'Подбор подарка',
+    'perfume': 'Подбор аромата',
+    'wedding': 'Свадебный образ',
+}
+
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
     Business: Admin API for managing users, lookbooks and viewing statistics
@@ -589,18 +604,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             cursor.execute(query, filter_values)
             history = cursor.fetchall()
 
-            cg_service_labels = {
-                'colorguide': 'Гид по цвету',
-                'style': 'Стилевой анализ',
-                'outfit': 'Подбор образа',
-                'glasses': 'Подбор очков',
-                'makeup': 'Подбор макияжа',
-                'hairstyle': 'Подбор причёски',
-                'kibbe': 'Типаж по Кибби',
-                'gift': 'Подбор подарка',
-                'perfume': 'Подбор аромата',
-                'wedding': 'Свадебный образ',
-            }
+            cg_service_labels = CG_SERVICE_LABELS
             result_list = []
             for h in history:
                 service_type = h.get('service_type') or 'colorguide'
@@ -617,6 +621,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if not colortype_name and service_type != 'colorguide':
                     colortype_name = cg_service_labels.get(service_type, 'Анализ')
                 result_list.append({
+                    'service_label': cg_service_labels.get(service_type, 'Гид по цвету'),
                     'id': str(h['id']),
                     'user_id': str(h['user_id']) if h['user_id'] else None,
                     'user_email': h['user_email'],
@@ -655,7 +660,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             cursor.execute('''
                 SELECT g.id, g.user_id, u.email as user_email, u.name as user_name,
                        g.status, g.colortype_slug, g.result_json, g.cdn_url, g.cost,
-                       g.refunded, g.error_message, g.created_at
+                       g.refunded, g.error_message, g.created_at, g.service_type
                 FROM color_guide_tasks g
                 LEFT JOIN users u ON g.user_id = u.id
                 WHERE g.id::text = %s
@@ -692,6 +697,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'refunded': row['refunded'],
                     'error_message': row.get('error_message'),
                     'created_at': row['created_at'].isoformat() if row['created_at'] else None,
+                    'service_type': row.get('service_type') or 'colorguide',
+                    'service_label': CG_SERVICE_LABELS.get(
+                        row.get('service_type') or 'colorguide', 'Гид по цвету'),
+                    'colortype_name': (rj.get('colortype_name') or rj.get('identity'))
+                                      if isinstance(rj, dict) else None,
                     'result': rj
                 }, ensure_ascii=False)
             }

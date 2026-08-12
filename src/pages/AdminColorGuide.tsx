@@ -24,6 +24,7 @@ interface GuideItem {
   user_name: string;
   status: string;
   service_type?: string | null;
+  service_label?: string | null;
   colortype_slug: string | null;
   colortype_name: string | null;
   cdn_url: string | null;
@@ -236,7 +237,7 @@ export default function AdminColorGuide() {
                       <tr>
                         <th className="px-4 py-3 text-left text-sm font-medium">ID</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Пользователь</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Цветотип</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Сервис</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Статус</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">₽</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Дата</th>
@@ -253,7 +254,15 @@ export default function AdminColorGuide() {
                             <div>{it.user_name || "—"}</div>
                             <div className="text-xs text-gray-500">{it.user_email}</div>
                           </td>
-                          <td className="px-4 py-3 text-sm">{it.colortype_name || it.colortype_slug || "—"}</td>
+                          <td className="px-4 py-3 text-sm">
+                            <div>{it.service_label || "—"}</div>
+                            {it.colortype_name &&
+                              it.colortype_name !== it.service_label && (
+                                <div className="text-xs text-gray-500">
+                                  {it.colortype_name}
+                                </div>
+                              )}
+                          </td>
                           <td className="px-4 py-3">{getStatusBadge(it)}</td>
                           <td className="px-4 py-3 text-sm">{it.cost?.toFixed(0)}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">
@@ -337,8 +346,15 @@ export default function AdminColorGuide() {
                   {getStatusBadge(selectedDetail)}
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Цветотип</p>
-                  <p>{selectedDetail.colortype_name || selectedDetail.colortype_slug || "—"}</p>
+                  <p className="text-muted-foreground">Сервис</p>
+                  <p>{selectedDetail.service_label || "—"}</p>
+                  {selectedDetail.colortype_name &&
+                    selectedDetail.colortype_name !==
+                      selectedDetail.service_label && (
+                      <p className="text-xs text-gray-500">
+                        {selectedDetail.colortype_name}
+                      </p>
+                    )}
                 </div>
                 <div>
                   <p className="text-muted-foreground">Стоимость</p>
