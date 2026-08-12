@@ -201,11 +201,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Unauthorized'})
                 }
 
+            # Анкеты разделены по сервисам: образы, подарки, ароматы — каждый свой список.
+            params = event.get('queryStringParameters') or {}
+            profile_service = (params.get('service_type') or 'outfit').strip()[:50] or 'outfit'
+
             if method == 'GET':
                 cursor.execute(
                     "SELECT id, name, comment, form_params, created_at "
-                    "FROM outfit_profiles WHERE user_id = %s ORDER BY created_at DESC",
-                    (user_id,)
+                    "FROM outfit_profiles WHERE user_id = %s AND service_type = %s "
+                    "ORDER BY created_at DESC",
+                    (user_id, profile_service)
                 )
                 rows = cursor.fetchall()
                 profiles = []
@@ -238,7 +243,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     }
                 if not isinstance(form_params, dict):
                     form_params = {}
-                cursor.execute("SELECT COUNT(*) AS c FROM outfit_profiles WHERE user_id = %s", (user_id,))
+                body_service = (data.get('service_type') or profile_service).strip()[:50] or 'outfit'
+                cursor.execute(
+                    "SELECT COUNT(*) AS c FROM outfit_profiles WHERE user_id = %s AND service_type = %s",
+                    (user_id, body_service)
+                )
                 count_row = cursor.fetchone()
                 if count_row and count_row['c'] >= 50:
                     return {
@@ -248,9 +257,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'body': json.dumps({'error': 'Достигнут лимит сохранённых анкет (50)'})
                     }
                 cursor.execute(
-                    "INSERT INTO outfit_profiles (user_id, name, comment, form_params) "
-                    "VALUES (%s, %s, %s, %s) RETURNING id, created_at",
-                    (user_id, name, comment, json.dumps(form_params, ensure_ascii=False))
+                    "INSERT INTO outfit_profiles (user_id, name, comment, form_params, service_type) "
+                    "VALUES (%s, %s, %s, %s, %s) RETURNING id, created_at",
+                    (user_id, name, comment, json.dumps(form_params, ensure_ascii=False), body_service)
                 )
                 new_row = cursor.fetchone()
                 conn.commit()

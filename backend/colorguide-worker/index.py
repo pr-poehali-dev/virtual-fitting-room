@@ -482,17 +482,18 @@ def call_qwen_json(image_url: str, prompt: str, model: str) -> Dict[str, Any]:
     if not api_key:
         raise RuntimeError('OPENROUTER_API_KEY not configured')
 
+    # Текстовые сервисы (подарки, ароматы) идут без фото — тогда шлём только текст.
+    if image_url:
+        content = [
+            {'type': 'image_url', 'image_url': {'url': image_url}},
+            {'type': 'text', 'text': prompt},
+        ]
+    else:
+        content = [{'type': 'text', 'text': prompt}]
+
     payload = {
         'model': model,
-        'messages': [
-            {
-                'role': 'user',
-                'content': [
-                    {'type': 'image_url', 'image_url': {'url': image_url}},
-                    {'type': 'text', 'text': prompt}
-                ]
-            }
-        ],
+        'messages': [{'role': 'user', 'content': content}],
         'max_tokens': 12000,
         'temperature': 0.6,
     }
@@ -677,9 +678,15 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
         form_params = None
 
     # Сегмент: S3 загрузка фото клиента + анализ + fal.ai (долгая часть, без коннекта к БД)
+    text_only = registry.is_text_only(service_type)
+
     try:
-        person_url = upload_to_s3(person_image, task_id, str(user_id))
-        print(f'[COLORGUIDE-WORKER] Person uploaded to {person_url}')
+        if text_only:
+            person_url = None
+            print('[COLORGUIDE-WORKER] Text-only service: фото не требуется')
+        else:
+            person_url = upload_to_s3(person_image, task_id, str(user_id))
+            print(f'[COLORGUIDE-WORKER] Person uploaded to {person_url}')
 
         print('[COLORGUIDE-WORKER] STEP analysis start')
         gemini_prompt = service.GEMINI_PROMPT
@@ -733,6 +740,12 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
         print(f'[COLORGUIDE-WORKER] STEP analysis done via {model_used}, keys: {list(analysis.keys())}')
 
         analysis['source_image'] = person_url
+
+        if text_only:
+            cdn_url = None
+            print('[COLORGUIDE-WORKER] Text-only service: картинка не генерируется')
+            _save_text_only_result(task_id, analysis)
+            return
 
         gender = form_params.get('gender') if form_params else None
         try:
@@ -801,6 +814,30 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
             conn.close()
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (save image result): {e}')
+        mark_failed_and_refund(task_id, 'Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте позже.', 'ошибка обработки')
+
+
+def _save_text_only_result(task_id: str, analysis: dict):
+    """Сохраняет результат текстового сервиса (подарки, ароматы) — без картинки."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                UPDATE color_guide_tasks
+                SET status = 'completed',
+                    result_json = %s,
+                    person_image = NULL,
+                    updated_at = %s
+                WHERE id = %s
+            ''', (json.dumps(analysis, ensure_ascii=False), datetime.utcnow(), task_id))
+            conn.commit()
+            print(f'[COLORGUIDE-WORKER] Task {task_id} completed (text-only)')
+        finally:
+            cursor.close()
+            conn.close()
+    except Exception as e:
+        print(f'[COLORGUIDE-WORKER] ERROR (save text result): {e}')
         mark_failed_and_refund(task_id, 'Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте позже.', 'ошибка обработки')
 
 

@@ -18,6 +18,8 @@ from services import glasses
 from services import makeup
 from services import hairstyle
 from services import kibbe
+from services import gift
+from services import perfume
 
 # service_type -> модуль сервиса
 IMAGE_SERVICES = {
@@ -27,11 +29,19 @@ IMAGE_SERVICES = {
     'makeup': makeup,
     'hairstyle': hairstyle,
     'kibbe': kibbe,
+    'gift': gift,
+    'perfume': perfume,
 }
 
 
 def is_image_service(service_type: str) -> bool:
     return service_type in IMAGE_SERVICES
+
+
+def is_text_only(service_type: str) -> bool:
+    """Сервис работает без фото и не рисует картинку."""
+    service = IMAGE_SERVICES.get(service_type)
+    return bool(getattr(service, 'TEXT_ONLY', False))
 
 
 def get_service(service_type: str):

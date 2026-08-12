@@ -115,6 +115,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'makeup': 'Подбор макияжа',
             'hairstyle': 'Подбор причёски',
             'kibbe': 'Типаж по Кибби',
+            'gift': 'Подбор подарка',
+            'perfume': 'Подбор аромата',
         }
 
         tasks = []

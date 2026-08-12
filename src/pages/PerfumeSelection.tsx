@@ -371,7 +371,7 @@ export default function PerfumeSelection() {
 
           {!result && !isAnalyzing && (
             <div className="relative">
-              <LockedFormOverlay cost={COST} actionLabel="подбора ароматов">
+              <LockedFormOverlay cost={COST}>
                 <Card>
                   <CardContent className="p-6 md:p-8 space-y-8">
                     {user && profiles.length > 0 && (

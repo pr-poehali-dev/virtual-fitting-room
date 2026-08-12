@@ -347,7 +347,7 @@ export default function GiftSelection() {
 
           {!result && !isAnalyzing && (
             <div className="relative">
-              <LockedFormOverlay cost={COST} actionLabel="подбора подарков">
+              <LockedFormOverlay cost={COST}>
                 <Card>
                   <CardContent className="p-6 md:p-8 space-y-8">
                     {user && profiles.length > 0 && (

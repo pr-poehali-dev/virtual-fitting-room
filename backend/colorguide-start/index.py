@@ -14,7 +14,9 @@ ALLOWED_SLUGS = [
     'vibrant-spring', 'vivid-autumn', 'vivid-summer', 'vivid-winter'
 ]
 
-ALLOWED_SERVICE_TYPES = ['colorguide', 'style', 'outfit', 'glasses', 'makeup', 'hairstyle', 'kibbe']
+ALLOWED_SERVICE_TYPES = ['colorguide', 'style', 'outfit', 'glasses', 'makeup', 'hairstyle', 'kibbe', 'gift', 'perfume']
+# Сервисы, работающие только по анкете — фото не требуется.
+TEXT_ONLY_SERVICE_TYPES = {'gift', 'perfume'}
 SERVICE_LABELS = {
     'colorguide': 'Гид по цвету',
     'style': 'Стилевой анализ внешности',
@@ -23,6 +25,8 @@ SERVICE_LABELS = {
     'makeup': 'Подбор макияжа',
     'hairstyle': 'Подбор причёски',
     'kibbe': 'Типаж по Кибби',
+    'gift': 'Подбор подарка',
+    'perfume': 'Подбор аромата',
 }
 # Стоимость по типу сервиса. 'outfit' — премиальный, легко поднять цену здесь.
 SERVICE_COSTS = {
@@ -33,6 +37,8 @@ SERVICE_COSTS = {
     'makeup': 50,
     'hairstyle': 50,
     'kibbe': 50,
+    'gift': 50,
+    'perfume': 50,
 }
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -132,7 +138,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     # Доверять фронту нельзя: ниже проверяем реальную оплаченную задачу цветотипа.
     skip_charge_requested = bool(body_data.get('skip_charge')) and forced_slug is not None
 
-    if not person_image:
+    text_only = service_type in TEXT_ONLY_SERVICE_TYPES
+    if text_only:
+        person_image = None
+
+    if not person_image and not text_only:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
@@ -140,7 +150,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'person_image is required'})
         }
 
-    if len(person_image) > 8_000_000:
+    if person_image and len(person_image) > 8_000_000:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},

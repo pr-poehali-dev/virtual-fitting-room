@@ -16,11 +16,16 @@ function authHeaders(): Record<string, string> {
   return token ? { "X-Session-Token": token } : {};
 }
 
-export async function fetchOutfitProfiles(): Promise<OutfitProfile[]> {
-  const res = await fetch(`${LOOKBOOKS_API}?action=outfit_profiles`, {
-    headers: authHeaders(),
-    credentials: "include",
-  });
+export async function fetchOutfitProfiles(
+  serviceType: string = "outfit",
+): Promise<OutfitProfile[]> {
+  const res = await fetch(
+    `${LOOKBOOKS_API}?action=outfit_profiles&service_type=${encodeURIComponent(serviceType)}`,
+    {
+      headers: authHeaders(),
+      credentials: "include",
+    },
+  );
   if (!res.ok) throw new Error("Не удалось загрузить анкеты");
   const data = await res.json();
   return (data.profiles || []) as OutfitProfile[];
@@ -29,7 +34,8 @@ export async function fetchOutfitProfiles(): Promise<OutfitProfile[]> {
 export async function saveOutfitProfile(payload: {
   name: string;
   comment: string;
-  form_params: OutfitFormParams;
+  form_params: OutfitFormParams | Record<string, unknown>;
+  service_type?: string;
 }): Promise<OutfitProfile> {
   const res = await fetch(`${LOOKBOOKS_API}?action=outfit_profiles`, {
     method: "POST",

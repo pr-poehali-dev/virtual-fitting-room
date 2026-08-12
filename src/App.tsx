@@ -48,6 +48,8 @@ const ReplicateTryOn = lazy(() => import("./pages/ReplicateTryOn"));
 const FreeGeneration = lazy(() => import("./pages/FreeGeneration"));
 const StyleAnalysis = lazy(() => import("./pages/StyleAnalysis"));
 const OutfitSelection = lazy(() => import("./pages/OutfitSelection"));
+const GiftSelection = lazy(() => import("./pages/GiftSelection"));
+const PerfumeSelection = lazy(() => import("./pages/PerfumeSelection"));
 const KibbeTest = lazy(() => import("./pages/KibbeTest"));
 const KibbeResultDetail = lazy(() => import("./pages/KibbeResultDetail"));
 const ProfileHistoryKibbe = lazy(() => import("./pages/ProfileHistoryKibbe"));
@@ -127,6 +129,8 @@ const App = () => (
             <Route path="/color-guide" element={<Navigate to="/colortype" replace />} />
             <Route path="/style-analysis" element={<StyleAnalysis />} />
             <Route path="/outfit-selection" element={<OutfitSelection />} />
+            <Route path="/gift-selection" element={<GiftSelection />} />
+            <Route path="/perfume-selection" element={<PerfumeSelection />} />
             <Route path="/kibbe-test" element={<KibbeTest />} />
             <Route path="/kibbe-result/:id" element={<KibbeResultDetail />} />
             <Route path="/archetype-test" element={<ArchetypeTest />} />
