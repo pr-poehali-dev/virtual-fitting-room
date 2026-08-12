@@ -24,6 +24,14 @@ const SERVICES = [
     path: "/outfit-selection",
   },
   {
+    key: "wedding",
+    label: "Свадьба",
+    title: "Мои анкеты для свадебных образов",
+    hint: "Сохранённые анкеты для быстрого заполнения формы свадебного образа",
+    action: "Подобрать свадебный образ",
+    path: "/wedding-selection",
+  },
+  {
     key: "gift",
     label: "Подарки",
     title: "Мои анкеты для подарков",
@@ -47,10 +55,17 @@ function summarize(fp: OutfitFormParams): string {
   const str = (v: unknown) => (typeof v === "string" && v ? v : "");
   const rel = str(p.relation);
   const recipient = str(p.recipient_gender);
+  const role = str(p.role);
 
-  if (rel) parts.push(rel);
+  if (role) parts.push(role);
+  else if (rel) parts.push(rel);
   else if (recipient) parts.push(recipient);
   else if (fp.gender) parts.push(fp.gender);
+
+  const weddingStyle = str(p.wedding_style);
+  if (weddingStyle) parts.push(`стиль: ${weddingStyle}`);
+  const venue = str(p.venue);
+  if (venue) parts.push(venue);
 
   if (fp.archetypes?.length) parts.push(`архетип: ${fp.archetypes.join(", ")}`);
   if (fp.kibbe) parts.push(`типаж: ${fp.kibbe}`);
