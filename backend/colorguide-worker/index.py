@@ -591,19 +591,36 @@ def fal_submit(prompt: str, image_urls: list, aspect_ratio: str):
         'resolution': '1K',
         'output_format': 'png',
     }
-    req = urllib.request.Request(
-        'https://queue.fal.run/fal-ai/nano-banana-2/edit',
-        data=json.dumps(payload).encode('utf-8'),
-        headers={'Authorization': f'Key {fal_api_key}', 'Content-Type': 'application/json'},
-        method='POST'
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=30) as response:
-            result = json.loads(response.read().decode('utf-8'))
-    except urllib.error.HTTPError as e:
-        err_body = e.read().decode('utf-8', errors='replace')[:500]
-        print(f'[COLORGUIDE-WORKER] fal.ai HTTP {e.code}: {err_body}')
-        raise RuntimeError(f'fal.ai error {e.code}: {err_body}')
+    # 429 'All paths are at capacity' — мощностей нет прямо сейчас, в очередь fal такой
+    # запрос не ставит. Повторяем сами с нарастающей паузой: обычно освобождается за секунды.
+    capacity_delays = [3, 6, 12]
+    result = None
+    for attempt in range(len(capacity_delays) + 1):
+        req = urllib.request.Request(
+            'https://queue.fal.run/fal-ai/nano-banana-2/edit',
+            data=json.dumps(payload).encode('utf-8'),
+            headers={'Authorization': f'Key {fal_api_key}', 'Content-Type': 'application/json'},
+            method='POST'
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=30) as response:
+                result = json.loads(response.read().decode('utf-8'))
+            break
+        except urllib.error.HTTPError as e:
+            err_body = e.read().decode('utf-8', errors='replace')[:500]
+            print(f'[COLORGUIDE-WORKER] fal.ai HTTP {e.code} (attempt {attempt + 1}): {err_body}')
+            if e.code == 429 and attempt < len(capacity_delays):
+                delay = capacity_delays[attempt]
+                print(f'[COLORGUIDE-WORKER] fal.ai at capacity, retry in {delay}s')
+                time.sleep(delay)
+                continue
+            if e.code == 429:
+                raise RuntimeError(
+                    'fal.ai error 429: сервис генерации картинок сейчас перегружен'
+                )
+            raise RuntimeError(f'fal.ai error {e.code}: {err_body}')
+    if not result:
+        raise RuntimeError('fal.ai submit failed: пустой ответ сервиса')
     response_url = result.get('response_url')
     status_url = result.get('status_url') or (response_url + '/status' if response_url else None)
     if not response_url:
@@ -622,6 +639,24 @@ def _is_transient_network_error(exc: Exception) -> bool:
             return True
         return True
     return False
+
+
+def _is_capacity_error(exc: Exception) -> bool:
+    """fal вернул 429 'All paths are at capacity' — свободных мощностей нет прямо сейчас.
+    Запрос даже не встаёт в очередь, поэтому повторяем сами через паузу."""
+    if isinstance(exc, urllib.error.HTTPError) and getattr(exc, 'code', None) == 429:
+        return True
+    text = str(exc).lower()
+    return 'error 429' in text or 'http 429' in text or 'at capacity' in text
+
+
+def _image_error_message(exc: Exception) -> str:
+    """Текст ошибки для пользователя: при перегрузке сервиса картинок — понятный совет."""
+    if _is_capacity_error(exc):
+        return ('Сервис создания картинок сейчас перегружен. Попробуйте ещё раз через пару минут. '
+                'Деньги вернутся на баланс автоматически сразу или чуть позже администратором.')
+    return ('Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже '
+            'администратором. Попробуйте позже.')
 
 
 def _is_no_media_error(exc: Exception) -> bool:
@@ -646,6 +681,13 @@ def _fal_get(url: str) -> dict:
                 return json.loads(response.read().decode('utf-8'))
         except urllib.error.HTTPError as e:
             if e.code in (202, 400):
+                return {'status': 'IN_PROGRESS'}
+            # 429 при опросе — временная перегрузка, не повод ронять задачу: ждём и спрашиваем снова.
+            if e.code == 429:
+                print(f'[COLORGUIDE-WORKER] fal.ai GET 429 at capacity (attempt {attempt + 1}), waiting')
+                if attempt < 3:
+                    time.sleep(3)
+                    continue
                 return {'status': 'IN_PROGRESS'}
             raise
         except Exception as e:
@@ -858,11 +900,11 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
     except urllib.error.HTTPError as e:
         err_body = e.read().decode('utf-8', errors='replace')[:600] if hasattr(e, 'read') else ''
         print(f'[COLORGUIDE-WORKER] ERROR (image service) HTTP {e.code}: {err_body}')
-        mark_failed_and_refund(task_id, 'Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте позже.', 'ошибка генерации')
+        mark_failed_and_refund(task_id, _image_error_message(e), 'ошибка генерации')
         return
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (image service): {e}')
-        mark_failed_and_refund(task_id, 'Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте позже.', 'ошибка генерации')
+        mark_failed_and_refund(task_id, _image_error_message(e), 'ошибка генерации')
         return
 
     # Сегмент: сохраняем результат
