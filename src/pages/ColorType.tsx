@@ -589,7 +589,10 @@ export default function ColorType() {
         setIsAnalyzing(false);
         setAnalysisStatus("");
         toast.error(
-          data.result_text || "Ошибка анализа. Деньги возвращены на баланс.",
+          data.error_message ||
+            data.result_text ||
+            "Ошибка анализа. Деньги возвращены на баланс.",
+          { duration: 10000 },
         );
       } else if (data.status === "processing") {
         setAnalysisStatus("Анализ изображения на нейросети...");

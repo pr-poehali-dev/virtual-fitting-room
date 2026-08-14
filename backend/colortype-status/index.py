@@ -1,5 +1,6 @@
 import json
 import os
+import uuid
 import psycopg2
 import requests
 from typing import Dict, Any
@@ -1001,13 +1002,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False,
             'body': json.dumps({'error': 'task_id is required'})
         }
-    
+
+    # Номер задачи должен быть корректным UUID, иначе БД падает с ошибкой 500.
+    try:
+        uuid.UUID(str(task_id))
+    except (ValueError, AttributeError, TypeError):
+        return {
+            'statusCode': 404,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+            'isBase64Encoded': False,
+            'body': json.dumps({'error': 'Task not found'})
+        }
+
     try:
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT status, result_text, color_type, replicate_prediction_id, color_type_ai
+            SELECT status, result_text, color_type, replicate_prediction_id, color_type_ai, error_message
             FROM color_type_history
             WHERE id = %s
         ''', (task_id,))
@@ -1024,7 +1036,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Task not found'})
             }
         
-        status, result_text, color_type, replicate_prediction_id, color_type_ai = row
+        status, result_text, color_type, replicate_prediction_id, color_type_ai, error_message = row
         
         # Direct API check (no worker trigger, like nanobananapro-async-status)
         if force_check and status == 'processing' and replicate_prediction_id:
@@ -1122,7 +1134,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'status': status,
             'result_text': result_text,
             'color_type': color_type,
-            'color_type_ai': color_type_ai
+            'color_type_ai': color_type_ai,
+            'error_message': error_message
         }
         
         return {

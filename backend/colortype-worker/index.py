@@ -11,6 +11,12 @@ import base64
 
 COLORTYPE_COST = 50
 
+# Ответ ИИ пришёл повреждённым и не разобрался — разовый сбой сервиса.
+COLORTYPE_PARSE_ERROR = (
+    'Сервис не смог обработать фото — ответ пришёл повреждённым. '
+    'Деньги возвращены на баланс. Попробуйте запустить определение цветотипа ещё раз.'
+)
+
 
 def get_openrouter_proxies():
     proxy_url = (os.environ.get("OPENROUTER_PROXY_URL") or "").strip()
@@ -521,7 +527,7 @@ def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
                 'content': content
             }
         ],
-        'max_tokens': 600,
+        'max_tokens': 1200,
         'temperature': 0.3,  # Lower temperature for more consistent analysis
         'response_format': {'type': 'json_object'}  # Force structured JSON output
     }
@@ -583,6 +589,15 @@ def submit_to_openai(image_url: str, eye_color: str = 'brown') -> dict:
                     raise Exception(f'OpenRouter returned empty content (finish_reason={finish_reason}, refusal={refusal})')
             
             print(f'[OpenRouter] Got response (finish_reason={finish_reason}): {content[:200]}...')
+
+            # Ответ оборван на середине (сбой провайдера или упёрлись в лимит длины) —
+            # разобрать такой JSON невозможно, считаем попытку неуспешной,
+            # чтобы сработал повтор, а не сохранение обрывка как результата.
+            if finish_reason and str(finish_reason).lower() in ('error', 'length'):
+                raise Exception(
+                    f'OpenRouter returned truncated content (finish_reason={finish_reason})'
+                )
+
             return {'status': 'succeeded', 'output': content}
         except (KeyError, IndexError, json.JSONDecodeError) as e:
             print(f'[OpenRouter] ERROR parsing response: {str(e)}. Response: {response.text[:300]}')
@@ -1680,6 +1695,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 or 'error while downloading' in err_lower
                                 or "couldn't fetch" in err_lower
                                 or 'failed to fetch' in err_lower
+                                # Оборванный/пустой ответ модели — разовый сбой, повтор обычно проходит
+                                or 'truncated content' in err_lower
+                                or 'empty content' in err_lower
                             )
                             if is_fetch_err and attempt < 2:
                                 pause = 2 * (attempt + 1)
@@ -1834,9 +1852,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             result_text_value += f'\n\n⚠️ Ваша внешность находится на границе двух типов:\n\n**{gpt_colortype_ru} (по визуальному анализу ИИ):**\nИИ сравнил вашу внешность с референсными фото и определил наибольшее сходство с этим типом.\n\n**{formula_colortype_ru} (по формуле параметров):**\nМатематический анализ характеристик (подтон, насыщенность, контраст) указывает на этот тип.\n\nРекомендуем попробовать палитры обоих типов и выбрать ту, в которой вы чувствуете себя наиболее гармонично.'
                         
                     except (json.JSONDecodeError, KeyError, TypeError) as e:
+                        # Ответ ИИ не разобрался — это НЕ успех.
+                        # Раньше сюда сохранялся сырой обрывок как готовый результат
+                        # и деньги не возвращались.
                         print(f'[ColorType-Worker] Failed to parse JSON: {e}')
-                        color_type = None
-                        result_text_value = raw_result
+                        cursor.execute('''
+                            UPDATE color_type_history
+                            SET status = 'failed', error_message = %s, updated_at = %s
+                            WHERE id = %s
+                        ''', (COLORTYPE_PARSE_ERROR, datetime.utcnow(), task_id))
+                        conn.commit()
+                        refund_balance_if_needed(conn, user_id, task_id)
+                        cursor.close()
+                        conn.close()
+                        return {
+                            'statusCode': 200,
+                            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event)},
+                            'isBase64Encoded': False,
+                            'body': json.dumps({'status': 'failed', 'error': COLORTYPE_PARSE_ERROR})
+                        }
                     
                     # Save result to DB (color_type = formula result, color_type_ai = GPT suggestion)
                     cursor.execute('''
