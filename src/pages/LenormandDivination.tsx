@@ -30,6 +30,11 @@ import {
   CARD_BACK_IMAGE,
   getCardImageByName,
 } from "@/data/lenormandImages";
+import { getSpread, spreadsByDeck, type DeckId } from "@/data/divination/spreads";
+import { getDeck } from "@/data/divination/decks";
+import { divTheme } from "@/components/divination/theme";
+import SpreadTable from "@/components/divination/SpreadTable";
+import OptionGrid from "@/components/divination/OptionGrid";
 
 const AI_EDITOR_START =
   "https://functions.poehali.dev/6ddfd93a-b3ac-445f-a1bf-3327d6ba01d7";
@@ -80,7 +85,7 @@ const LENORMAND_MIN_COST = getDivinationMinPrice(LENORMAND_SPREAD);
 
 const POLLING_INTERVAL = 5000;
 const TIMEOUT_SECONDS = 600;
-const EMPTY_LAYOUT = () => Array(36).fill("");
+const EMPTY_LAYOUT = (size = 36) => Array(size).fill("");
 
 // Заголовки шагов мастера настройки расклада
 const WIZARD_TITLES = [
@@ -96,8 +101,6 @@ const WIZARD_TITLES = [
 const WIZARD_STEPS_COUNT = WIZARD_TITLES.length;
 const TAROT_BACK_IMAGE =
   "https://storage.yandexcloud.net/fitting-room-images/images/tarot/000.png";
-const LENORMAND_BACK_IMAGE =
-  "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/85cd2949-eca2-4aaf-9ca6-515907635509.png";
 
 type Mode = "online" | "real";
 
@@ -134,7 +137,6 @@ export default function LenormandDivination() {
   const [spheres, setSpheres] = useState<SphereKey[]>(["all"]);
   const [comment, setComment] = useState("");
   const [model, setModel] = useState(MODELS[0].value);
-  const selectedCost = getDivinationPrice(LENORMAND_SPREAD, model);
   const [layout, setLayout] = useState<string[]>(EMPTY_LAYOUT());
   const [activeHouse, setActiveHouse] = useState<number>(0);
 
@@ -146,7 +148,23 @@ export default function LenormandDivination() {
   const [wizardStep, setWizardStep] = useState(0);
   const [wizardDone, setWizardDone] = useState(false);
   const [divSystem, setDivSystem] = useState<"lenormand" | "tarot">("lenormand");
-  const [divSpread, setDivSpread] = useState("big9x4");
+  const [divSpread, setDivSpread] = useState("lenormand_big9x4");
+
+  // Активный расклад и колода — из реестра (единый источник правды)
+  const activeSpread = getSpread(divSpread) ?? getSpread("lenormand_big9x4")!;
+  const activeDeck = getDeck(divSystem as DeckId);
+  const spreadSize = activeSpread.size;
+  // Карты активной колоды (Ленорман/Таро)
+  const deckCards = activeDeck.cards;
+  // Картинки карт есть только у колоды Ленорман. Для Таро изображение не
+  // подставляем, иначе совпадающие названия (Луна, Башня, Солнце) подтянут
+  // чужую картинку из колоды Ленорман.
+  const getDeckCardImage = (name: string) =>
+    divSystem === "lenormand" ? getCardImageByName(name) : undefined;
+  // Рубашка колоды — своя для каждой системы карт
+  const deckBackImage =
+    divSystem === "lenormand" ? CARD_BACK_IMAGE : TAROT_BACK_IMAGE;
+  const selectedCost = getDivinationPrice(divSpread, model);
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusText, setStatusText] = useState("");
@@ -187,11 +205,21 @@ export default function LenormandDivination() {
         if (Array.isArray(d.spheres)) setSpheres(d.spheres);
         if (typeof d.comment === "string") setComment(d.comment);
         if (d.model) setModel(d.model);
-        if (Array.isArray(d.layout) && d.layout.length === 36) setLayout(d.layout);
+        if (Array.isArray(d.layout) && d.layout.length > 0) setLayout(d.layout);
         if (typeof d.wizardStep === "number") setWizardStep(d.wizardStep);
         if (typeof d.wizardDone === "boolean") setWizardDone(d.wizardDone);
         if (d.divSystem === "lenormand" || d.divSystem === "tarot") setDivSystem(d.divSystem);
-        if (typeof d.divSpread === "string") setDivSpread(d.divSpread);
+        if (typeof d.divSpread === "string") {
+          // Старые сохранённые формы хранят короткий id ("big9x4") —
+          // переводим в новый полный id, иначе не сойдётся цена расклада.
+          const legacy: Record<string, string> = {
+            big9x4: "lenormand_big9x4",
+            line3: "lenormand_line3",
+            card1: "lenormand_card1",
+          };
+          const restored = legacy[d.divSpread] || d.divSpread;
+          setDivSpread(getSpread(restored) ? restored : "lenormand_big9x4");
+        }
       }
     } catch (e) {
       /* ignore */
@@ -353,7 +381,7 @@ export default function LenormandDivination() {
   // Онлайн-расклад: перемешать колоду (подготовка перед раскладом)
   const shuffleDeck = () => {
     if (isProcessing) return;
-    const remaining = CARD_NAMES.filter((c) => !usedCardsSet.has(c));
+    const remaining = deckCards.filter((c) => !usedCardsSet.has(c));
     setDeck(shuffleArray(remaining));
     setShuffled(true);
     if (layout[activeHouse]) {
@@ -408,9 +436,9 @@ export default function LenormandDivination() {
   };
 
   const resetTable = () => {
-    setLayout(EMPTY_LAYOUT());
+    setLayout(EMPTY_LAYOUT(spreadSize));
     setActiveHouse(0);
-    setDeck(shuffleArray(CARD_NAMES));
+    setDeck(shuffleArray(deckCards));
     setShuffled(false);
   };
 
@@ -503,8 +531,8 @@ export default function LenormandDivination() {
     }, 60);
 
     const meta = {
-      system: "lenormand",
-      spread: "big9x4",
+      system: divSystem,
+      spread: divSpread,
       period,
       gender,
       spheres,
@@ -548,7 +576,7 @@ export default function LenormandDivination() {
       setIsProcessing(false);
       toast.error("Ошибка соединения");
     }
-  }, [filledCount, period, gender, spheres, comment, model, layout, navigate, refreshBalance, selectedCost]);
+  }, [filledCount, period, gender, spheres, comment, model, layout, navigate, refreshBalance, selectedCost, divSystem, divSpread]);
 
   const pollStatus = (taskId: string, submittedLayout: string[]) => {
     let elapsed = 0;
@@ -689,20 +717,34 @@ export default function LenormandDivination() {
     resetTable();
   };
 
+  // Страховка: длина стола всегда соответствует выбранному раскладу
+  // (например, после восстановления старой формы из браузера).
+  useEffect(() => {
+    setLayout((prev) => {
+      if (prev.length === spreadSize) return prev;
+      const next = EMPTY_LAYOUT(spreadSize);
+      for (let i = 0; i < Math.min(prev.length, spreadSize); i++) next[i] = prev[i];
+      return next;
+    });
+    setActiveHouse((prev) => (prev >= spreadSize ? 0 : prev));
+  }, [spreadSize]);
+
   const houseLocked = mode === "online" && !shuffled;
   const formDisabled = isProcessing;
 
   return (
     <Layout>
-      <div className="mx-auto max-w-6xl px-4 py-8">
+      {/* Тема раздела применяется ТОЛЬКО к контентному блоку:
+          шапка сайта, боковое меню и футер остаются прежними. */}
+      <div className={`mx-auto max-w-6xl rounded-3xl px-4 py-8 sm:px-6 ${divTheme.surface}`}>
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-purple-100">
-            <Icon name="Sparkles" size={28} className="text-purple-600" />
+          <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full ${divTheme.accentSoft}`}>
+            <Icon name="Sparkles" size={28} className="text-[#c9a84c]" />
           </div>
-          <h1 className="text-3xl font-semibold text-gray-900">
+          <h1 className={`text-3xl sm:text-4xl ${divTheme.title}`}>
             Гадания на картах онлайн с ИИ
           </h1>
-          <p className="mt-2 text-gray-600">
+          <p className={`mt-2 ${divTheme.muted}`}>
             Выберите расклад и нейросеть-гадалку — получите подробное толкование за минуту
           </p>
         </div>
@@ -753,7 +795,7 @@ export default function LenormandDivination() {
 
           {/* МАСТЕР НАСТРОЙКИ РАСКЛАДА (показывается, пока не завершён) */}
           {!wizardDone && (
-            <Card className="mb-6 overflow-hidden border-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-fuchsia-800 text-white shadow-lg">
+            <Card className="mb-6 overflow-hidden border-0 bg-gradient-to-br from-[#2d1b69] via-[#241845] to-[#1a1030] text-white shadow-lg ring-1 ring-[#c9a84c]/25">
               <CardContent className="p-6">
                 <div className="mb-5">
                   <div className="mb-2 flex items-center justify-between">
@@ -764,15 +806,15 @@ export default function LenormandDivination() {
                       {wizardStep + 1}/{WIZARD_STEPS_COUNT}
                     </span>
                   </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/25">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/15">
                     <div
-                      className="h-full rounded-full bg-white transition-all"
+                      className="h-full rounded-full bg-gradient-to-r from-[#c9a84c] to-[#e8c252] transition-all"
                       style={{
                         width: `${((wizardStep + 1) / WIZARD_STEPS_COUNT) * 100}%`,
                       }}
                     />
                   </div>
-                  <h2 className="mt-3 text-xl font-semibold text-white">
+                  <h2 className="mt-3 font-serif text-2xl text-[#f3ecff]">
                     {WIZARD_TITLES[wizardStep]}
                   </h2>
                 </div>
@@ -833,79 +875,57 @@ export default function LenormandDivination() {
 
                   {/* Шаг 1: Система карт */}
                   {wizardStep === 1 && (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <button
-                        type="button"
-                        onClick={() => setDivSystem("lenormand")}
-                        className={`flex flex-col items-center gap-2 rounded-xl border-2 p-5 text-center transition ${
-                          divSystem === "lenormand"
-                            ? "border-white bg-white/15"
-                            : "border-white/40 hover:border-white"
-                        }`}
-                      >
-                        <img
-                          src={LENORMAND_BACK_IMAGE}
-                          alt="Ленорман"
-                          className="h-16 w-auto rounded object-contain"
-                          loading="lazy"
-                        />
-                        <span className="font-semibold text-white">Ленорман</span>
-                        <span className="text-xs text-white/80">
-                          36 карт, большой расклад 9 × 4
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        disabled
-                        className="flex cursor-not-allowed flex-col items-center gap-2 rounded-xl border-2 border-white/25 bg-white/5 p-5 text-center opacity-70"
-                      >
-                        <img
-                          src={TAROT_BACK_IMAGE}
-                          alt="Таро"
-                          className="h-16 w-auto rounded object-contain"
-                          loading="lazy"
-                        />
-                        <span className="flex items-center gap-2 font-semibold text-white/80">
-                          Таро
-                          <span className="rounded bg-white/20 px-2 py-0.5 text-xs text-white">
-                            Скоро
-                          </span>
-                        </span>
-                        <span className="text-xs text-white/60">
-                          Скоро будет доступно
-                        </span>
-                      </button>
-                    </div>
+                    <OptionGrid
+                      columns={2}
+                      value={divSystem}
+                      onChange={(v) => {
+                        const next = v as DeckId;
+                        setDivSystem(next);
+                        // Расклад всегда должен принадлежать выбранной колоде
+                        const list = spreadsByDeck(next);
+                        if (!list.some((sp) => sp.id === divSpread)) {
+                          setDivSpread(list[0].id);
+                          setLayout(EMPTY_LAYOUT(list[0].size));
+                        }
+                        setDeck(shuffleArray(getDeck(next).cards));
+                        setShuffled(false);
+                      }}
+                      options={[
+                        {
+                          value: "lenormand",
+                          label: "Ленорман",
+                          desc: "36 карт, конкретика и бытовые ситуации",
+                          icon: "Spade",
+                        },
+                        {
+                          value: "tarot",
+                          label: "Таро",
+                          desc: "78 карт, глубокий образный разбор",
+                          icon: "Sparkles",
+                        },
+                      ]}
+                    />
                   )}
 
                   {/* Шаг 2: Расклад */}
                   {wizardStep === 2 && (
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setDivSpread("big9x4")}
-                        className={`rounded-xl border-2 px-4 py-3 text-sm font-semibold transition ${
-                          divSpread === "big9x4"
-                            ? "border-white bg-white/15 text-white"
-                            : "border-white/40 text-white/80 hover:border-white hover:text-white"
-                        }`}
-                      >
-                        Большой 9 × 4
-                      </button>
-                      {["1 карта", "3 карты", "Большой 8×4+4"].map((label) => (
-                        <button
-                          key={label}
-                          type="button"
-                          disabled
-                          className="flex cursor-not-allowed items-center gap-2 rounded-xl border-2 border-white/25 bg-white/5 px-4 py-3 text-sm font-semibold text-white/70 opacity-70"
-                        >
-                          {label}
-                          <span className="rounded bg-white/20 px-2 py-0.5 text-xs text-white">
-                            Скоро
-                          </span>
-                        </button>
-                      ))}
-                    </div>
+                    <OptionGrid
+                      columns={2}
+                      value={divSpread}
+                      onChange={(v) => {
+                        setDivSpread(v);
+                        const sp = getSpread(v);
+                        if (sp) setLayout(EMPTY_LAYOUT(sp.size));
+                        setActiveHouse(0);
+                      }}
+                      options={spreadsByDeck(divSystem as DeckId).map((sp) => ({
+                        value: sp.id,
+                        label: sp.title,
+                        desc: sp.short,
+                        icon: sp.icon,
+                        note: `${getDivinationPrice(sp.id, model)} \u20bd`,
+                      }))}
+                    />
                   )}
 
                   {/* Шаг 3: Нейросеть-гадалка */}
@@ -1099,7 +1119,7 @@ export default function LenormandDivination() {
           {/* СВОДКА + СТОЛ РАСКЛАДА (после завершения мастера) */}
           {wizardDone && (
           <>
-          <Card className="mb-6 overflow-hidden border-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-fuchsia-800 text-white shadow-lg">
+          <Card className="mb-6 overflow-hidden border-0 bg-gradient-to-br from-[#2d1b69] via-[#241845] to-[#1a1030] text-white shadow-lg ring-1 ring-[#c9a84c]/25">
             <CardContent className="p-6">
               <h2 className="mb-4 text-xl font-semibold text-white">
                 Параметры расклада
@@ -1177,7 +1197,7 @@ export default function LenormandDivination() {
                 </h2>
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-gray-500">
-                    Заполнено: {filledCount}/36
+                    Заполнено: {filledCount}/{spreadSize}
                   </span>
                   <Button
                     variant="ghost"
@@ -1234,63 +1254,17 @@ export default function LenormandDivination() {
                 )}
               </div>
 
-              {/* Дома-плитки на «столе гадалки» */}
-              <div
-                className="overflow-x-auto rounded-2xl border border-purple-200 p-3 sm:p-4"
-                style={{
-                  background:
-                    "radial-gradient(120% 100% at 50% 0%, #ede9fe 0%, #ddd6fe 55%, #c7bdf4 100%)",
-                  boxShadow:
-                    "inset 0 0 50px rgba(124,58,237,0.18), inset 0 0 6px rgba(124,58,237,0.12)",
-                }}
-              >
-                <div className="grid min-w-[760px] grid-cols-9 gap-1.5">
-                  {HOUSE_NAMES.map((house, idx) => {
-                  const card = layout[idx];
-                  const isActive = activeHouse === idx && !houseLocked;
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => onHouseClick(idx)}
-                      disabled={formDisabled}
-                      className={`flex min-h-[64px] flex-col rounded-lg border p-1.5 text-left transition disabled:cursor-not-allowed ${
-                        isActive
-                          ? "border-purple-500 ring-2 ring-purple-300"
-                          : card
-                          ? "border-purple-200 bg-white/60"
-                          : "border-dashed border-gray-300 bg-white/40 hover:border-purple-300"
-                      } ${houseLocked || formDisabled ? "opacity-60" : ""}`}
-                    >
-                      <span className="text-[10px] leading-tight text-purple-700">
-                        {idx + 1}. дом {house}
-                      </span>
-                      {card && getCardImageByName(card) && (
-                        <img
-                          src={getCardImageByName(card)}
-                          alt={card}
-                          className="mx-auto mt-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px]"
-                          loading="lazy"
-                        />
-                      )}
-                      <span
-                        className={`mt-auto flex min-h-[28px] items-end text-[11px] font-semibold leading-tight sm:text-xs ${
-                          card ? "text-purple-900" : "text-gray-400"
-                        }`}
-                      >
-                        {card ? `карта ${card}` : "—"}
-                      </span>
-                    </button>
-                  );
-                  })}
-                </div>
-              </div>
-
-              <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-gray-400 lg:hidden">
-                <Icon name="ArrowLeft" size={14} />
-                <span>Листайте стол вбок, чтобы увидеть все 36 домов</span>
-                <Icon name="ArrowRight" size={14} />
-              </div>
+              {/* Стол расклада — геометрия берётся из реестра раскладов */}
+              <SpreadTable
+                spread={activeSpread}
+                houseNames={activeDeck.houseNames}
+                layout={layout}
+                activeIndex={activeHouse}
+                locked={houseLocked}
+                disabled={formDisabled}
+                onSlotClick={onHouseClick}
+                getCardImage={getDeckCardImage}
+              />
 
               {/* ОНЛАЙН: колода рубашкой вверх (под столом) */}
               {mode === "online" && shuffled && (
@@ -1311,7 +1285,7 @@ export default function LenormandDivination() {
                         className="h-24 w-[62px] overflow-hidden rounded-md border border-purple-300 shadow-sm transition hover:-translate-y-1 sm:h-32 sm:w-[82px]"
                       >
                         <img
-                          src={CARD_BACK_IMAGE}
+                          src={deckBackImage}
                           alt="Рубашка карты"
                           className="h-full w-full object-contain"
                           loading="lazy"
@@ -1336,7 +1310,7 @@ export default function LenormandDivination() {
                     Карты колоды
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {CARD_NAMES.filter((c) => !usedCardsSet.has(c)).map((card) => (
+                    {deckCards.filter((c) => !usedCardsSet.has(c)).map((card) => (
                       <button
                         key={card}
                         type="button"
@@ -1344,9 +1318,9 @@ export default function LenormandDivination() {
                         disabled={formDisabled}
                         className="flex items-center gap-1.5 rounded-full border border-purple-300 bg-purple-50 py-1 pl-1 pr-2.5 text-sm text-purple-700 transition hover:bg-purple-100"
                       >
-                        {getCardImageByName(card) && (
+                        {getDeckCardImage(card) && (
                           <img
-                            src={getCardImageByName(card)}
+                            src={getDeckCardImage(card)}
                             alt={card}
                             className="h-8 w-8 rounded-full object-cover"
                             loading="lazy"
@@ -1355,7 +1329,7 @@ export default function LenormandDivination() {
                         {card}
                       </button>
                     ))}
-                    {usedCardsSet.size === CARD_NAMES.length && (
+                    {usedCardsSet.size === deckCards.length && (
                       <span className="text-sm text-gray-400">
                         Все карты разложены
                       </span>
@@ -1456,9 +1430,9 @@ export default function LenormandDivination() {
                           <div className="text-[10px] leading-tight text-purple-700">
                             {idx + 1}. дом {HOUSE_NAMES[idx]}
                           </div>
-                          {getCardImageByName(card) && (
+                          {getDeckCardImage(card) && (
                             <img
-                              src={getCardImageByName(card)}
+                              src={getDeckCardImage(card)}
                               alt={card}
                               className="mx-auto my-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px]"
                               loading="lazy"
@@ -1552,9 +1526,9 @@ export default function LenormandDivination() {
                               <div className="text-[10px] leading-tight text-purple-700">
                                 {idx + 1}. дом {HOUSE_NAMES[idx]}
                               </div>
-                              {getCardImageByName(card) && (
+                              {getDeckCardImage(card) && (
                                 <img
-                                  src={getCardImageByName(card)}
+                                  src={getDeckCardImage(card)}
                                   alt={card}
                                   className="mx-auto my-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px]"
                                   loading="lazy"
@@ -1648,9 +1622,9 @@ export default function LenormandDivination() {
                     <div className="text-xs text-purple-700">
                       {idx + 1}. дом {HOUSE_NAMES[idx]}
                     </div>
-                    {getCardImageByName(card) && (
+                    {getDeckCardImage(card) && (
                       <img
-                        src={getCardImageByName(card)}
+                        src={getDeckCardImage(card)}
                         alt={card}
                         data-card-img="1"
                         className="mx-auto my-1 h-32 w-[82px] rounded object-contain"
@@ -1723,9 +1697,9 @@ export default function LenormandDivination() {
                       <div className="text-xs text-purple-700">
                         {idx + 1}. дом {HOUSE_NAMES[idx]}
                       </div>
-                      {getCardImageByName(card) && (
+                      {getDeckCardImage(card) && (
                         <img
-                          src={getCardImageByName(card)}
+                          src={getDeckCardImage(card)}
                           alt={card}
                           data-card-img="1"
                           className="mx-auto my-1 h-32 w-[82px] rounded object-contain"
