@@ -806,17 +806,18 @@ export default function LenormandDivination() {
                       setTouchAck(true);
                       downloadShownPng();
                     }}
-                    className="bg-purple-600 text-white hover:bg-purple-700"
+                    className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
                   >
                     <Icon name="Download" size={16} className="mr-1.5" />
                     Скачать результат
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     onClick={() => {
                       setTouchAck(true);
                       dropPrevResult();
                     }}
+                    className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
                   >
                     <Icon name="RotateCcw" size={16} className="mr-1.5" />
                     Начать новый расклад

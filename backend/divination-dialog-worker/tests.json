@@ -1,0 +1,22 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET without step_id",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 400
+    },
+    {
+      "name": "GET with unknown step",
+      "method": "GET",
+      "path": "/?step_id=00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 200
+    }
+  ]
+}

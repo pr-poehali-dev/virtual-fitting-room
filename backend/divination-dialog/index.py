@@ -44,6 +44,22 @@ def make_cors_headers(event):
     }
 
 
+def trigger_worker(step_id):
+    """Будит воркер, который сходит в нейросеть. Ответ не ждём."""
+    try:
+        import urllib.request
+        worker_url = os.environ.get(
+            'DIALOG_WORKER_URL',
+            'https://functions.poehali.dev/a5284fc1-21a4-45a5-8e29-4672324b9193',
+        )
+        if not worker_url:
+            return
+        req = urllib.request.Request(f'{worker_url}?step_id={step_id}', method='GET')
+        urllib.request.urlopen(req, timeout=2)
+    except Exception as e:
+        print(f'Worker trigger (non-critical): {e}')
+
+
 def get_db():
     dsn = os.environ['DATABASE_URL']
     sep = '&' if '?' in dsn else '?'
@@ -176,6 +192,7 @@ def action_start(body, user_id, event):
 
 
 def action_ask(body, user_id, event):
+    """Создаёт шаг диалога и списывает деньги. Ответ нейросети готовит воркер."""
     dialog_id = (body.get('dialog_id') or '').strip()
     question = (body.get('question') or '').strip()
     cards = body.get('cards') or []
@@ -196,7 +213,7 @@ def action_ask(body, user_id, event):
     try:
         with conn.cursor() as cur:
             cur.execute(
-                f"""SELECT user_id, deck, spread, model, status, steps_count, context
+                f"""SELECT user_id, deck, spread, model, status, steps_count
                     FROM {DB_SCHEMA}.divination_dialogs WHERE id = %s""",
                 (dialog_id,),
             )
@@ -204,7 +221,7 @@ def action_ask(body, user_id, event):
             if not row:
                 return resp(404, {'error': 'Диалог не найден'}, event)
 
-            owner, deck, spread_id, model, status, steps_count, ctx = row
+            owner, deck, spread_id, model, status, steps_count = row
             if str(owner) != str(user_id):
                 return resp(403, {'error': 'Чужой диалог'}, event)
             if status != 'active':
@@ -219,7 +236,7 @@ def action_ask(body, user_id, event):
             if len(cards) > spread['size']:
                 cards = cards[:spread['size']]
 
-            # Списание: цену берём только с сервера
+            # Цену берём только с сервера
             price = pricing.get_price(spread_id, model)
             cur.execute(
                 'SELECT balance, unlimited_access FROM users WHERE id = %s',
@@ -239,8 +256,13 @@ def action_ask(body, user_id, event):
                     'current': balance,
                 }, event)
 
-            history = load_history(cur, dialog_id)
-            step_no = len(history) + 1
+            cur.execute(
+                f"""SELECT COALESCE(MAX(step_no), 0)
+                    FROM {DB_SCHEMA}.divination_dialog_steps
+                    WHERE dialog_id = %s""",
+                (dialog_id,),
+            )
+            step_no = (cur.fetchone()[0] or 0) + 1
             step_id = str(uuid.uuid4())
 
             if cost > 0:
@@ -264,66 +286,65 @@ def action_ask(body, user_id, event):
                  json.dumps(cards, ensure_ascii=False), cost),
             )
         conn.commit()
-
-        prompt_text = build_dialog_prompt(
-            spread_id, question, cards, history,
-            context=ctx if isinstance(ctx, dict) else None,
-        )
-        ai_text, error = call_openrouter(model, prompt_text)
-
-        with conn.cursor() as cur:
-            if error or not ai_text:
-                cur.execute(
-                    f"""UPDATE {DB_SCHEMA}.divination_dialog_steps
-                        SET status = 'failed', refunded = %s, updated_at = NOW()
-                        WHERE id = %s""",
-                    (cost > 0, step_id),
-                )
-                if cost > 0:
-                    cur.execute(
-                        'UPDATE users SET balance = balance + %s WHERE id = %s',
-                        (cost, user_id),
-                    )
-                    cur.execute(
-                        f"""INSERT INTO {DB_SCHEMA}.balance_transactions
-                            (user_id, type, amount, balance_before, balance_after, description)
-                            VALUES (%s, 'refund', %s, %s, %s, %s)""",
-                        (user_id, cost, balance - cost, balance,
-                         'Возврат: диалог-гадание (ошибка)'),
-                    )
-                conn.commit()
-                return resp(200, {
-                    'status': 'failed',
-                    'error': 'Не удалось получить ответ. Деньги возвращены на баланс. '
-                             'Попробуйте задать вопрос ещё раз.',
-                }, event)
-
-            answer, summary = split_answer_and_summary(ai_text)
-            cur.execute(
-                f"""UPDATE {DB_SCHEMA}.divination_dialog_steps
-                    SET status = 'done', answer_text = %s, summary = %s, updated_at = NOW()
-                    WHERE id = %s""",
-                (answer, summary, step_id),
-            )
-            cur.execute(
-                f"""UPDATE {DB_SCHEMA}.divination_dialogs
-                    SET steps_count = %s, total_spent = total_spent + %s, updated_at = NOW()
-                    WHERE id = %s""",
-                (step_no, cost, dialog_id),
-            )
-        conn.commit()
     finally:
         conn.close()
 
+    # Нейросеть отвечает дольше лимита функции — работу доделывает воркер
+    trigger_worker(step_id)
+
     return resp(200, {
-        'status': 'done',
+        'status': 'pending',
+        'step_id': step_id,
         'step_no': step_no,
         'question': question,
         'cards': cards,
-        'answer': answer,
         'cost': cost,
         'steps_left': pricing.DIALOG_MAX_STEPS - step_no,
     }, event)
+
+
+def action_step_status(body, user_id, event):
+    """Готов ли ответ на шаг диалога."""
+    step_id = (body.get('step_id') or '').strip()
+    try:
+        uuid.UUID(step_id)
+    except (ValueError, AttributeError):
+        return resp(404, {'error': 'Шаг не найден'}, event)
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""SELECT s.status, s.answer_text, s.step_no, s.question, s.cards, d.user_id
+                    FROM {DB_SCHEMA}.divination_dialog_steps s
+                    JOIN {DB_SCHEMA}.divination_dialogs d ON d.id = s.dialog_id
+                    WHERE s.id = %s""",
+                (step_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return resp(404, {'error': 'Шаг не найден'}, event)
+            status, answer, step_no, question, cards, owner = row
+            if str(owner) != str(user_id):
+                return resp(403, {'error': 'Чужой диалог'}, event)
+    finally:
+        conn.close()
+
+    if status == 'failed':
+        return resp(200, {
+            'status': 'failed',
+            'error': 'Не удалось получить ответ. Деньги возвращены на баланс. '
+                     'Попробуйте задать вопрос ещё раз.',
+        }, event)
+
+    return resp(200, {
+        'status': status,
+        'step_no': step_no,
+        'question': question,
+        'cards': cards if isinstance(cards, list) else [],
+        'answer': answer or '',
+    }, event)
+
 
 
 def action_history(body, user_id, event):
@@ -426,6 +447,8 @@ def handler(event: dict, context) -> dict:
         return action_start(body, user_id, event)
     if action == 'ask':
         return action_ask(body, user_id, event)
+    if action == 'step_status':
+        return action_step_status(body, user_id, event)
     if action == 'history':
         return action_history(body, user_id, event)
     if action == 'close':

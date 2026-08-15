@@ -156,18 +156,45 @@ const DialogChat = ({
         return;
       }
 
+      // Нейросеть отвечает не мгновенно — ждём готовности шага
+      onBalanceChange();
+      const stepId = data.step_id;
+      const started = Date.now();
+      let ready = null;
+
+      while (Date.now() - started < 180000) {
+        await new Promise((r) => setTimeout(r, 3000));
+        const poll = await api({ action: "step_status", step_id: stepId });
+        if (!poll.res.ok) continue;
+        if (poll.data.status === "done") {
+          ready = poll.data;
+          break;
+        }
+        if (poll.data.status === "failed") {
+          toast.error(poll.data.error || "Не удалось получить ответ");
+          onBalanceChange();
+          return;
+        }
+      }
+
+      if (!ready) {
+        toast.error(
+          "Ответ готовится дольше обычного. Обновите страницу через минуту.",
+        );
+        return;
+      }
+
       setSteps((prev) => [
         ...prev,
         {
-          step_no: data.step_no,
-          question: data.question,
-          cards: data.cards || [],
-          answer: data.answer || "",
+          step_no: ready.step_no,
+          question: ready.question,
+          cards: ready.cards || [],
+          answer: ready.answer || "",
         },
       ]);
       setQuestion("");
       resetDraw();
-      onBalanceChange();
     } catch {
       toast.error("Ошибка соединения");
     } finally {
@@ -376,7 +403,7 @@ const DialogChat = ({
                     size={16}
                     className="mr-1.5 animate-spin"
                   />
-                  Карты отвечают...
+                  Карты отвечают, подождите...
                 </>
               ) : (
                 <>
