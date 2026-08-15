@@ -23,6 +23,8 @@ interface DialogChatProps {
   backImage: string;
   /** Сколько карт тянуть на один вопрос (1..6) */
   cardsPerStep: number;
+  /** online — тянем вслепую из рубашек, real — выбираем карту лицом */
+  mode: "online" | "real";
   /** full — каждый вопрос новая колода, single — одна на весь диалог */
   deckMode: "full" | "single";
   /** Беседа, к которой вернулись из списка сохранённых */
@@ -62,6 +64,7 @@ const DialogChat = ({
   spread,
   backImage,
   cardsPerStep,
+  mode,
   deckMode,
   resumeDialog,
   onDialogChanged,
@@ -149,6 +152,13 @@ const DialogChat = ({
     setDeck(shuffle(pool));
     setShuffled(true);
     toast.success("Карты перемешаны — тяните карту из колоды");
+  };
+
+  // Реальный расклад: человек сам указывает выпавшую карту
+  const pickNamedCard = (card: string) => {
+    if (busy || picked.length >= need) return;
+    if (picked.includes(card)) return;
+    setPicked((p) => [...p, card]);
   };
 
   // Карта вытягивается вслепую: человек кликает по рубашке в колоде
@@ -460,8 +470,42 @@ const DialogChat = ({
             </div>
           </div>
 
-          {/* Колода рубашками вверх: карту тянут вслепую, кликая по рубашке */}
-          {picked.length < need && (
+          {/* РЕАЛЬНЫЙ расклад: карты лицом — вы уже разложили их у себя
+              и просто отмечаете, что выпало. */}
+          {picked.length < need && mode === "real" && (
+            <div className="mb-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/10">
+              <p className={`mb-2 text-sm ${divTheme.muted}`}>
+                Отметьте карты, которые выпали у вас в реальном раскладе
+              </p>
+              <div className="flex max-h-[220px] flex-wrap gap-1.5 overflow-y-auto">
+                {availableCards().map((card) => {
+                  const img = getCardImage(card);
+                  return (
+                    <button
+                      key={card}
+                      type="button"
+                      onClick={() => pickNamedCard(card)}
+                      disabled={busy}
+                      className="flex items-center gap-1.5 rounded-full border border-[#c9a84c]/40 bg-[#c9a84c]/10 py-1 pl-1 pr-2.5 text-sm text-[#e8e0f0] transition hover:bg-[#c9a84c]/20 disabled:opacity-50"
+                    >
+                      {img && (
+                        <img
+                          src={img}
+                          alt={card}
+                          className="h-8 w-8 rounded-full object-cover"
+                          loading="lazy"
+                        />
+                      )}
+                      {card}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ОНЛАЙН: колода рубашками вверх, карту тянут вслепую */}
+          {picked.length < need && mode === "online" && (
             <div className="mb-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/10">
               {!shuffled ? (
                 <div className="text-center">

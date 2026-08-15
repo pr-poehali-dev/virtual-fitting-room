@@ -1355,6 +1355,7 @@ export default function LenormandDivination() {
               model={model}
               context={{ gender, period, spheres, comment: comment.trim() }}
               cardsPerStep={cardsPerStep}
+              mode={mode}
               deckMode={deckMode}
               resumeDialog={resumeDialog}
               onDialogChanged={() => setSavedReload((k) => k + 1)}
