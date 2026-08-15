@@ -570,8 +570,8 @@ const DialogChat = ({
                 </>
               ) : (
                 <>
-                  <Icon name="Send" size={20} className="mr-2" />
-                  Спросить за {stepPrice} &#8381;
+                  <Icon name="Sparkles" size={20} className="mr-2" />
+                  Трактовать с помощью ИИ ({stepPrice} &#8381;)
                 </>
               )}
             </Button>
