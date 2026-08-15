@@ -19,20 +19,16 @@ DIALOG_STEP_PRICES = {
 
 # Какие расклады работают в режиме диалога
 DIALOG_SPREADS = {
-    'lenormand_card1',
-    'lenormand_line3',
-    'tarot_card1',
-    'tarot_line3',
+    'lenormand_dialog',
+    'tarot_dialog',
 }
 
 SPREAD_PRICES = {
     'lenormand_big9x4': FULL_SPREAD_PRICES,
     'lenormand_big8x4plus4': FULL_SPREAD_PRICES,
     'tarot_celtic10': FULL_SPREAD_PRICES,
-    'lenormand_card1': DIALOG_STEP_PRICES,
-    'lenormand_line3': DIALOG_STEP_PRICES,
-    'tarot_card1': DIALOG_STEP_PRICES,
-    'tarot_line3': DIALOG_STEP_PRICES,
+    'lenormand_dialog': DIALOG_STEP_PRICES,
+    'tarot_dialog': DIALOG_STEP_PRICES,
 }
 
 ALLOWED_MODELS = set(FULL_SPREAD_PRICES.keys())

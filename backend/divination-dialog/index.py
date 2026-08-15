@@ -148,10 +148,11 @@ def load_history(cur, dialog_id):
 
 
 def action_start(body, user_id, event):
+    """Создаёт диалог. Незакрытые беседы при этом НЕ удаляются."""
     system = body.get('system')
     if system not in ('lenormand', 'tarot'):
         system = 'lenormand'
-    spread_id = body.get('spread') or 'lenormand_line3'
+    spread_id = body.get('spread') or f'{system}_dialog'
     if not pricing.is_dialog_spread(spread_id):
         return resp(400, {'error': 'Этот расклад не поддерживает диалог'}, event)
 
@@ -159,7 +160,19 @@ def action_start(body, user_id, event):
     if model not in pricing.ALLOWED_MODELS:
         model = pricing.DEFAULT_MODEL
 
-    # Параметры из мастера — учитываются во всех ответах диалога
+    # Сколько карт тянуть на один вопрос (1..6)
+    try:
+        cards_per_step = int(body.get('cards_per_step') or 1)
+    except (TypeError, ValueError):
+        cards_per_step = 1
+    cards_per_step = max(1, min(6, cards_per_step))
+
+    # Режим колоды: full — каждый вопрос из полной колоды,
+    # single — одна колода на весь диалог (карты не повторяются)
+    deck_mode = body.get('deck_mode')
+    if deck_mode not in ('full', 'single'):
+        deck_mode = 'full'
+
     ctx = {
         'gender': body.get('gender') or 'female',
         'period': body.get('period') or 'now',
@@ -173,10 +186,11 @@ def action_start(body, user_id, event):
         with conn.cursor() as cur:
             cur.execute(
                 f"""INSERT INTO {DB_SCHEMA}.divination_dialogs
-                    (id, user_id, deck, spread, model, status, context)
-                    VALUES (%s, %s, %s, %s, %s, 'active', %s::jsonb)""",
+                    (id, user_id, deck, spread, model, status, context,
+                     deck_mode, cards_per_step)
+                    VALUES (%s, %s, %s, %s, %s, 'active', %s::jsonb, %s, %s)""",
                 (dialog_id, user_id, system, spread_id, model,
-                 json.dumps(ctx, ensure_ascii=False)),
+                 json.dumps(ctx, ensure_ascii=False), deck_mode, cards_per_step),
             )
         conn.commit()
     finally:
@@ -186,6 +200,8 @@ def action_start(body, user_id, event):
         'dialog_id': dialog_id,
         'spread': spread_id,
         'model': model,
+        'deck_mode': deck_mode,
+        'cards_per_step': cards_per_step,
         'step_price': pricing.get_price(spread_id, model),
         'max_steps': pricing.DIALOG_MAX_STEPS,
     }, event)
@@ -213,7 +229,8 @@ def action_ask(body, user_id, event):
     try:
         with conn.cursor() as cur:
             cur.execute(
-                f"""SELECT user_id, deck, spread, model, status, steps_count
+                f"""SELECT user_id, deck, spread, model, status, steps_count,
+                           cards_per_step
                     FROM {DB_SCHEMA}.divination_dialogs WHERE id = %s""",
                 (dialog_id,),
             )
@@ -221,7 +238,8 @@ def action_ask(body, user_id, event):
             if not row:
                 return resp(404, {'error': 'Диалог не найден'}, event)
 
-            owner, deck, spread_id, model, status, steps_count = row
+            (owner, deck, spread_id, model, status, steps_count,
+             cards_per_step) = row
             if str(owner) != str(user_id):
                 return resp(403, {'error': 'Чужой диалог'}, event)
             if status != 'active':
@@ -232,9 +250,11 @@ def action_ask(body, user_id, event):
                              f'Начните новый диалог.'
                 }, event)
 
+            # Сколько карт допустимо на один вопрос — задано при создании диалога
             spread = get_spread(spread_id)
-            if len(cards) > spread['size']:
-                cards = cards[:spread['size']]
+            limit = min(int(cards_per_step or 1), spread['size'])
+            if len(cards) > limit:
+                cards = cards[:limit]
 
             # Цену берём только с сервера
             price = pricing.get_price(spread_id, model)
@@ -405,7 +425,8 @@ def action_last(body, user_id, event):
     try:
         with conn.cursor() as cur:
             cur.execute(
-                f"""SELECT id, deck, spread, model, steps_count, context
+                f"""SELECT id, deck, spread, model, steps_count, context,
+                           deck_mode, cards_per_step
                     FROM {DB_SCHEMA}.divination_dialogs
                     WHERE user_id = %s AND status = 'active'
                     ORDER BY created_at DESC LIMIT 1""",
@@ -415,7 +436,8 @@ def action_last(body, user_id, event):
             if not row:
                 return resp(200, {'empty': True}, event)
 
-            dialog_id, deck, spread_id, model, steps_count, ctx = row
+            (dialog_id, deck, spread_id, model, steps_count, ctx,
+             deck_mode, cards_per_step) = row
             cur.execute(
                 f"""SELECT step_no, question, cards, answer_text
                     FROM {DB_SCHEMA}.divination_dialog_steps
@@ -442,13 +464,69 @@ def action_last(body, user_id, event):
         'spread': spread_id,
         'model': model,
         'context': ctx if isinstance(ctx, dict) else {},
+        'deck_mode': deck_mode,
+        'cards_per_step': cards_per_step,
+        # Уже вытянутые карты — нужны для режима «одна колода»
+        'used_cards': [c for st in steps for c in (st.get('cards') or [])],
         'step_price': pricing.get_price(spread_id, model),
         'max_steps': pricing.DIALOG_MAX_STEPS,
         'steps': steps,
     }, event)
 
 
+def action_list(body, user_id, event):
+    """Все беседы пользователя: незакрытые + последняя закрытая."""
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""SELECT d.id, d.deck, d.spread, d.model, d.status, d.steps_count,
+                           d.deck_mode, d.cards_per_step, d.created_at,
+                           (SELECT question FROM {DB_SCHEMA}.divination_dialog_steps
+                             WHERE dialog_id = d.id AND status = 'done'
+                             ORDER BY step_no LIMIT 1) AS first_question,
+                           (SELECT question FROM {DB_SCHEMA}.divination_dialog_steps
+                             WHERE dialog_id = d.id AND status = 'done'
+                             ORDER BY step_no DESC LIMIT 1) AS last_question
+                    FROM {DB_SCHEMA}.divination_dialogs d
+                    WHERE d.user_id = %s AND d.steps_count > 0
+                    ORDER BY d.status = 'active' DESC, d.created_at DESC""",
+                (user_id,),
+            )
+            rows = cur.fetchall()
+    finally:
+        conn.close()
+
+    items = []
+    closed_seen = False
+    for r in rows:
+        status = r[4]
+        # Показываем все незакрытые и только последнюю закрытую
+        if status != 'active':
+            if closed_seen:
+                continue
+            closed_seen = True
+        items.append({
+            'dialog_id': str(r[0]),
+            'system': r[1],
+            'spread': r[2],
+            'model': r[3],
+            'status': status,
+            'steps_count': r[5],
+            'deck_mode': r[6],
+            'cards_per_step': r[7],
+            'created_at': r[8].isoformat() if r[8] else None,
+            'first_question': r[9] or '',
+            'last_question': r[10] or '',
+            'step_price': pricing.get_price(r[2], r[3]),
+        })
+
+    return resp(200, {'items': items, 'max_steps': pricing.DIALOG_MAX_STEPS}, event)
+
+
 def action_close(body, user_id, event):
+    """Закрывает диалог. Прежняя закрытая беседа при этом удаляется —
+    хранится только последняя закрытая. Незакрытые не трогаем."""
     dialog_id = (body.get('dialog_id') or '').strip()
     try:
         uuid.UUID(dialog_id)
@@ -464,10 +542,27 @@ def action_close(body, user_id, event):
                     WHERE id = %s AND user_id = %s""",
                 (dialog_id, user_id),
             )
+            # Оставляем только последнюю закрытую беседу
+            cur.execute(
+                f"""SELECT id FROM {DB_SCHEMA}.divination_dialogs
+                    WHERE user_id = %s AND status = 'closed'
+                    ORDER BY updated_at DESC OFFSET 1""",
+                (user_id,),
+            )
+            old_ids = [str(r[0]) for r in cur.fetchall()]
+            for old_id in old_ids:
+                cur.execute(
+                    f"DELETE FROM {DB_SCHEMA}.divination_dialog_steps WHERE dialog_id = %s",
+                    (old_id,),
+                )
+                cur.execute(
+                    f"DELETE FROM {DB_SCHEMA}.divination_dialogs WHERE id = %s",
+                    (old_id,),
+                )
         conn.commit()
     finally:
         conn.close()
-    return resp(200, {'status': 'closed'}, event)
+    return resp(200, {'status': 'closed', 'deleted_old': len(old_ids)}, event)
 
 
 def handler(event: dict, context) -> dict:
@@ -498,6 +593,8 @@ def handler(event: dict, context) -> dict:
         return action_ask(body, user_id, event)
     if action == 'step_status':
         return action_step_status(body, user_id, event)
+    if action == 'list':
+        return action_list(body, user_id, event)
     if action == 'last':
         return action_last(body, user_id, event)
     if action == 'history':
