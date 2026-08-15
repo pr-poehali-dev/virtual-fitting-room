@@ -356,7 +356,10 @@ export default function LenormandDivination() {
   }, []);
 
   // Есть любой предыдущий результат: свежий (из сессии) или подтянутый из базы
-  const hasPrevResult = !!result || !!prevResult;
+  // В режиме диалога сохранённый большой расклад не показываем:
+  // он относится к другому сценарию и сбивает с толку.
+  const hasPrevResult =
+    !activeSpread.dialog && (!!result || !!prevResult);
 
   const toggleSphere = (key: SphereKey) => {
     if (isProcessing) return;
@@ -1309,7 +1312,7 @@ export default function LenormandDivination() {
                       size="lg"
                       onClick={shuffleDeck}
                       disabled={formDisabled}
-                      className="bg-purple-600 px-8 py-6 text-base text-white hover:bg-purple-700"
+                      className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] px-8 py-6 text-base font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
                     >
                       <Icon name="Shuffle" size={22} className="mr-2" />
                       Перемешать карты
@@ -1423,7 +1426,7 @@ export default function LenormandDivination() {
                 <Button
                   onClick={startReading}
                   disabled={isProcessing}
-                  className="bg-purple-600 text-white hover:bg-purple-700"
+                  className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
                 >
                   {isProcessing ? (
                     <>
@@ -1466,23 +1469,25 @@ export default function LenormandDivination() {
         </LockedFormOverlay>
 
         {/* ТОЛЬКО ТЕКСТ результата под столом */}
-        {result && !isProcessing && (
+        {result && !isProcessing && !activeSpread.dialog && (
           <div className="mt-8" ref={resultCardRef}>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-xl font-semibold text-[#f3ecff]">
                 Толкование расклада
               </h2>
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" onClick={copyText}>
+                <Button variant="ghost"
+                    className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white" onClick={copyText}>
                   <Icon name="Copy" size={16} className="mr-1" /> Скопировать
                 </Button>
                 <Button
                   onClick={downloadPng}
-                  className="bg-purple-600 text-white hover:bg-purple-700"
+                  className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
                 >
                   <Icon name="Download" size={16} className="mr-1" /> Скачать PNG
                 </Button>
-                <Button variant="outline" onClick={startNewReadingNow}>
+                <Button variant="ghost"
+                    className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white" onClick={startNewReadingNow}>
                   <Icon name="RotateCcw" size={16} className="mr-1" /> Очистить
                   форму и начать новый расклад
                 </Button>
@@ -1496,7 +1501,7 @@ export default function LenormandDivination() {
                   className="mb-6 overflow-x-auto rounded-2xl border border-[#c9a84c]/25 p-3 sm:p-4"
                   style={{
                     background:
-                      "radial-gradient(120% 100% at 50% 0%, #ede9fe 0%, #ddd6fe 55%, #c7bdf4 100%)",
+                      "radial-gradient(120% 100% at 50% 0%, #2d1b69 0%, #241845 55%, #1a1030 100%)",
                     boxShadow:
                       "inset 0 0 50px rgba(124,58,237,0.18), inset 0 0 6px rgba(124,58,237,0.12)",
                   }}
@@ -1540,7 +1545,7 @@ export default function LenormandDivination() {
         )}
 
         {/* Предыдущий расклад из базы (после перезагрузки, пока нет свежего) */}
-        {prevResult && !result && !isProcessing && (
+        {prevResult && !result && !isProcessing && !activeSpread.dialog && (
           <div className="mt-8 rounded-2xl border border-[#c9a84c]/20">
             <button
               type="button"
@@ -1556,7 +1561,7 @@ export default function LenormandDivination() {
             </button>
             {prevOpen && (
               <div className="border-t border-[#c9a84c]/20 p-5">
-                <div className="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+                <div className="mb-3 flex items-start gap-2 rounded-lg bg-[#c9a84c]/12 p-3 text-sm text-[#e8d9a8] ring-1 ring-[#c9a84c]/30">
                   <Icon name="TriangleAlert" size={18} className="mt-0.5 shrink-0" />
                   <span>
                     Этот расклад удалится, как только вы запустите новый.
@@ -1564,13 +1569,14 @@ export default function LenormandDivination() {
                   </span>
                 </div>
                 <div className="mb-3 flex gap-2">
-                  <Button variant="outline" size="sm" onClick={copyPrevText}>
+                  <Button variant="ghost"
+                    className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white" size="sm" onClick={copyPrevText}>
                     <Icon name="Copy" size={16} className="mr-1" /> Скопировать
                   </Button>
                   <Button
                     size="sm"
                     onClick={downloadPrevPng}
-                    className="bg-purple-600 text-white hover:bg-purple-700"
+                    className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
                   >
                     <Icon name="Download" size={16} className="mr-1" /> Скачать PNG
                   </Button>
@@ -1580,7 +1586,7 @@ export default function LenormandDivination() {
                   className="rounded-2xl border border-[#c9a84c]/20 p-6 shadow-sm"
                   style={{
                     background:
-                      "linear-gradient(180deg, #faf7ff 0%, #f3eefc 100%)",
+                      "linear-gradient(180deg, #241845 0%, #1a1030 100%)",
                   }}
                 >
                   <div className="mb-4 text-center">
@@ -1595,7 +1601,7 @@ export default function LenormandDivination() {
                       className="mb-6 overflow-x-auto rounded-2xl border border-[#c9a84c]/25 p-3 sm:p-4"
                       style={{
                         background:
-                          "radial-gradient(120% 100% at 50% 0%, #ede9fe 0%, #ddd6fe 55%, #c7bdf4 100%)",
+                          "radial-gradient(120% 100% at 50% 0%, #2d1b69 0%, #241845 55%, #1a1030 100%)",
                         boxShadow:
                           "inset 0 0 50px rgba(124,58,237,0.18), inset 0 0 6px rgba(124,58,237,0.12)",
                       }}
@@ -1634,7 +1640,7 @@ export default function LenormandDivination() {
                   <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-[#e8e0f0]">
                     {prevResult}
                   </div>
-                  <div className="mt-6 border-t border-[#c9a84c]/25 pt-4 text-center text-xs text-purple-400">
+                  <div className="mt-6 border-t border-[#c9a84c]/25 pt-4 text-center text-xs text-[#9888b8]">
                     <p>
                       Трактовки раскладов носят
                       развлекательно-информационно-рекомендательный характер,
@@ -1652,7 +1658,7 @@ export default function LenormandDivination() {
         )}
 
         {/* Дисклеймер */}
-        <div className="mt-10 flex items-start gap-3 rounded-xl border-2 border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="mt-10 flex items-start gap-3 rounded-xl border border-[#c9a84c]/35 bg-[#c9a84c]/10 p-4 text-sm text-[#e8d9a8]">
           <Icon name="Info" size={20} className="mt-0.5 shrink-0 text-amber-600" />
           <p>
             Трактовки раскладов носят развлекательно-информационно-рекомендательный

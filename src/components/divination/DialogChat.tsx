@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import Icon from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
@@ -70,10 +70,6 @@ const DialogChat = ({
   const [closed, setClosed] = useState(false);
   const [shuffled, setShuffled] = useState(false);
 
-  const need = spread.size;
-  const ready = question.trim().length > 0 && picked.length === need;
-  const stepsLeft = maxSteps - steps.length;
-
   const api = async (payload: Record<string, unknown>) => {
     const token = localStorage.getItem("session_token");
     const res = await fetch(DIVINATION_DIALOG, {
@@ -86,6 +82,30 @@ const DialogChat = ({
     });
     return { res, data: await res.json() };
   };
+
+  // После перезагрузки подхватываем незакрытый диалог, чтобы беседа не терялась
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { res, data } = await api({ action: "last" });
+        if (cancelled || !res.ok || data.empty) return;
+        if (data.spread !== spread.id) return;
+        setDialogId(data.dialog_id);
+        setSteps(data.steps || []);
+      } catch {
+        /* тихо: продолжаем с чистого диалога */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spread.id]);
+
+  const need = spread.size;
+  const ready = question.trim().length > 0 && picked.length === need;
+  const stepsLeft = maxSteps - steps.length;
 
   const shuffleDeck = () => {
     if (busy) return;

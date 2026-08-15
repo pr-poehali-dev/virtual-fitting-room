@@ -399,6 +399,55 @@ def action_history(body, user_id, event):
     }, event)
 
 
+def action_last(body, user_id, event):
+    """Последний незакрытый диалог пользователя — чтобы продолжить после перезагрузки."""
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""SELECT id, deck, spread, model, steps_count, context
+                    FROM {DB_SCHEMA}.divination_dialogs
+                    WHERE user_id = %s AND status = 'active'
+                    ORDER BY created_at DESC LIMIT 1""",
+                (user_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return resp(200, {'empty': True}, event)
+
+            dialog_id, deck, spread_id, model, steps_count, ctx = row
+            cur.execute(
+                f"""SELECT step_no, question, cards, answer_text
+                    FROM {DB_SCHEMA}.divination_dialog_steps
+                    WHERE dialog_id = %s AND status = 'done'
+                    ORDER BY step_no""",
+                (dialog_id,),
+            )
+            steps = [{
+                'step_no': r[0],
+                'question': r[1],
+                'cards': r[2] if isinstance(r[2], list) else [],
+                'answer': r[3] or '',
+            } for r in cur.fetchall()]
+    finally:
+        conn.close()
+
+    if not steps:
+        return resp(200, {'empty': True}, event)
+
+    return resp(200, {
+        'empty': False,
+        'dialog_id': dialog_id,
+        'system': deck,
+        'spread': spread_id,
+        'model': model,
+        'context': ctx if isinstance(ctx, dict) else {},
+        'step_price': pricing.get_price(spread_id, model),
+        'max_steps': pricing.DIALOG_MAX_STEPS,
+        'steps': steps,
+    }, event)
+
+
 def action_close(body, user_id, event):
     dialog_id = (body.get('dialog_id') or '').strip()
     try:
@@ -449,6 +498,8 @@ def handler(event: dict, context) -> dict:
         return action_ask(body, user_id, event)
     if action == 'step_status':
         return action_step_status(body, user_id, event)
+    if action == 'last':
+        return action_last(body, user_id, event)
     if action == 'history':
         return action_history(body, user_id, event)
     if action == 'close':
