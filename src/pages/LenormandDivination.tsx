@@ -35,6 +35,8 @@ import { getDeck } from "@/data/divination/decks";
 import { divTheme } from "@/components/divination/theme";
 import SpreadTable from "@/components/divination/SpreadTable";
 import OptionGrid from "@/components/divination/OptionGrid";
+import DialogChat from "@/components/divination/DialogChat";
+import { DIALOG_MAX_STEPS } from "@/config/prices";
 
 const AI_EDITOR_START =
   "https://functions.poehali.dev/6ddfd93a-b3ac-445f-a1bf-3327d6ba01d7";
@@ -122,11 +124,6 @@ export default function LenormandDivination() {
   // иначе модель доступна, если её цены хватает на балансе.
   const hasUnlimited = balanceInfo?.unlimited_access === true;
   const currentBalance = balanceInfo?.balance ?? 0;
-  const isModelAffordable = (modelValue: string) => {
-    if (hasUnlimited) return true;
-    return currentBalance >= getDivinationPrice(LENORMAND_SPREAD, modelValue);
-  };
-
   // Форма заблокирована балансовым/авторизационным оверлеем (как в LockedFormOverlay):
   // нет пользователя ИЛИ не безлимит и баланса не хватает на минимальную цену.
   const isLockedByBalanceOrAuth =
@@ -165,6 +162,12 @@ export default function LenormandDivination() {
   const deckBackImage =
     divSystem === "lenormand" ? CARD_BACK_IMAGE : TAROT_BACK_IMAGE;
   const selectedCost = getDivinationPrice(divSpread, model);
+  // Доступность гадалки считаем по цене ВЫБРАННОГО расклада
+  // (у диалогов шаг стоит дешевле полного расклада).
+  const isModelAffordable = (modelValue: string) => {
+    if (hasUnlimited) return true;
+    return currentBalance >= getDivinationPrice(divSpread, modelValue);
+  };
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusText, setStatusText] = useState("");
@@ -936,7 +939,7 @@ export default function LenormandDivination() {
                         className="grid gap-2.5 sm:grid-cols-3"
                       >
                         {MODELS.map((m) => {
-                          const price = getDivinationPrice(LENORMAND_SPREAD, m.value);
+                          const price = getDivinationPrice(divSpread, m.value);
                           const affordable = isModelAffordable(m.value);
                           const selected = model === m.value;
                           return (
@@ -977,8 +980,9 @@ export default function LenormandDivination() {
                         })}
                       </div>
                       <p className="mt-2.5 text-xs text-white/80">
-                        3 нейросети-гадалки — цена расклада от {LENORMAND_MIN_COST} до{" "}
-                        {getDivinationPrice(LENORMAND_SPREAD, MODELS[MODELS.length - 1].value)} ₽
+                        {activeSpread.dialog
+                          ? `Цена одного вопроса в диалоге: ${getDivinationPrice(divSpread, MODELS[0].value)}–${getDivinationPrice(divSpread, MODELS[MODELS.length - 1].value)} \u20bd`
+                          : `Цена расклада: ${getDivinationPrice(divSpread, MODELS[0].value)}–${getDivinationPrice(divSpread, MODELS[MODELS.length - 1].value)} \u20bd`}
                       </p>
                     </div>
                   )}
@@ -1117,7 +1121,22 @@ export default function LenormandDivination() {
           )}
 
           {/* СВОДКА + СТОЛ РАСКЛАДА (после завершения мастера) */}
-          {wizardDone && (
+          {/* Расклады-диалоги идут отдельным сценарием: вопрос → карты → ответ */}
+          {wizardDone && activeSpread.dialog && (
+            <DialogChat
+              key={`${divSpread}-${model}`}
+              spread={activeSpread}
+              deckCards={deckCards}
+              model={model}
+              stepPrice={selectedCost}
+              maxSteps={DIALOG_MAX_STEPS}
+              getCardImage={getDeckCardImage}
+              onBalanceChange={refreshBalance}
+              onNeedTopup={() => navigate("/profile/wallet")}
+            />
+          )}
+
+          {wizardDone && !activeSpread.dialog && (
           <>
           <Card className="mb-6 overflow-hidden border-0 bg-gradient-to-br from-[#2d1b69] via-[#241845] to-[#1a1030] text-white shadow-lg ring-1 ring-[#c9a84c]/25">
             <CardContent className="p-6">
@@ -1131,13 +1150,13 @@ export default function LenormandDivination() {
                 </span>
                 <span className="text-white/40">·</span>
                 <span>
-                  <span className="text-white/60">Расклад:</span> Ленорман 9 × 4
+                  <span className="text-white/60">Расклад:</span> {activeSpread.title}
                 </span>
                 <span className="text-white/40">·</span>
                 <span>
                   <span className="text-white/60">Гадалка:</span>{" "}
                   {MODELS.find((m) => m.value === model)?.label} —{" "}
-                  {getDivinationPrice(LENORMAND_SPREAD, model)} ₽
+                  {selectedCost} ₽
                 </span>
                 <span className="text-white/40">·</span>
                 <span>

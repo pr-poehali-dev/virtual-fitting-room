@@ -1,0 +1,30 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET not allowed",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 405
+    },
+    {
+      "name": "POST start without auth returns 401",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "start", "system": "tarot", "spread": "tarot_line3"},
+      "expectedStatus": 401
+    },
+    {
+      "name": "POST ask without auth returns 401",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "ask", "dialog_id": "00000000-0000-0000-0000-000000000000", "question": "test", "cards": ["Shut"]},
+      "expectedStatus": 401
+    }
+  ]
+}
