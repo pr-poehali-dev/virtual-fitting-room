@@ -8,6 +8,8 @@ export interface OptionItem {
   icon?: string;
   /** Приписка справа, например цена */
   note?: string;
+  /** Значок-ярлык рядом с названием, например «Диалог» */
+  badge?: string;
 }
 
 interface OptionGridProps {
@@ -73,6 +75,11 @@ const OptionGrid = ({
                   <span className="font-medium text-[#f3ecff]">
                     {opt.label}
                   </span>
+                  {opt.badge && (
+                    <span className="shrink-0 rounded-full bg-[#c9a84c]/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#c9a84c] ring-1 ring-[#c9a84c]/40">
+                      {opt.badge}
+                    </span>
+                  )}
                   {multi && isActive && (
                     <Icon
                       name="Check"

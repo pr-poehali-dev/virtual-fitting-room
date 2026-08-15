@@ -12,6 +12,8 @@ interface SpreadSummaryProps {
   periodLabel: string;
   spheresLabel: string;
   comment: string;
+  /** В диалоге сферы и комментарий не спрашиваются — не показываем их */
+  hideTopic?: boolean;
   disabled?: boolean;
   onEdit: () => void;
   onClearAll: () => void;
@@ -32,6 +34,7 @@ const SpreadSummary = ({
   periodLabel,
   spheresLabel,
   comment,
+  hideTopic = false,
   disabled = false,
   onEdit,
   onClearAll,
@@ -64,15 +67,19 @@ const SpreadSummary = ({
         <span>
           <span className="text-white/60">Период:</span> {periodLabel}
         </span>
-        <span className="text-white/40">·</span>
-        <span>
-          <span className="text-white/60">Сферы:</span> {spheresLabel}
-        </span>
-        <span className="text-white/40">·</span>
-        <span>
-          <span className="text-white/60">Комментарий:</span>{" "}
-          {comment.trim() || "—"}
-        </span>
+        {!hideTopic && (
+          <>
+            <span className="text-white/40">·</span>
+            <span>
+              <span className="text-white/60">Сферы:</span> {spheresLabel}
+            </span>
+            <span className="text-white/40">·</span>
+            <span>
+              <span className="text-white/60">Комментарий:</span>{" "}
+              {comment.trim() || "—"}
+            </span>
+          </>
+        )}
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">

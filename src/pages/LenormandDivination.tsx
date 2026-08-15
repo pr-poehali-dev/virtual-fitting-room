@@ -95,7 +95,9 @@ const TIMEOUT_SECONDS = 600;
 const EMPTY_LAYOUT = (size = 36) => Array(size).fill("");
 
 // Заголовки шагов мастера настройки расклада
-const WIZARD_TITLES = [
+// Полный набор шагов мастера. Для раскладов-диалогов сферы и комментарий
+// не спрашиваем: там человек формулирует вопрос прямо в диалоге.
+const WIZARD_TITLES_FULL = [
   "Способ расклада",
   "Система карт",
   "Расклад",
@@ -105,7 +107,7 @@ const WIZARD_TITLES = [
   "Сферы",
   "Комментарий",
 ];
-const WIZARD_STEPS_COUNT = WIZARD_TITLES.length;
+const WIZARD_TITLES_DIALOG = WIZARD_TITLES_FULL.slice(0, 6);
 
 type Mode = "online" | "real";
 
@@ -156,6 +158,11 @@ export default function LenormandDivination() {
   const spreadSize = activeSpread.size;
   // Карты активной колоды (Ленорман/Таро)
   const deckCards = activeDeck.cards;
+  // Набор шагов зависит от типа расклада
+  const WIZARD_TITLES = activeSpread.dialog
+    ? WIZARD_TITLES_DIALOG
+    : WIZARD_TITLES_FULL;
+  const WIZARD_STEPS_COUNT = WIZARD_TITLES.length;
   // Картинки карт есть только у колоды Ленорман. Для Таро изображение не
   // подставляем, иначе совпадающие названия (Луна, Башня, Солнце) подтянут
   // чужую картинку из колоды Ленорман.
@@ -725,6 +732,13 @@ export default function LenormandDivination() {
     resetTable();
   };
 
+  // Страховка: если у диалога шагов меньше, не зависаем на несуществующем шаге
+  useEffect(() => {
+    setWizardStep((prev) =>
+      prev > WIZARD_STEPS_COUNT - 1 ? WIZARD_STEPS_COUNT - 1 : prev,
+    );
+  }, [WIZARD_STEPS_COUNT]);
+
   // Страховка: длина стола всегда соответствует выбранному раскладу
   // (например, после восстановления старой формы из браузера).
   useEffect(() => {
@@ -774,15 +788,15 @@ export default function LenormandDivination() {
               Если форма уже закрыта балансовым/авторизационным оверлеем —
               наш оверлей не показываем (новый расклад без баланса всё равно нельзя). */}
           {hasPrevResult && !touchAck && !isLockedByBalanceOrAuth && (
-            <div className="absolute inset-0 z-20 flex items-start justify-center rounded-2xl bg-white/60 backdrop-blur-sm">
-              <div className="mx-4 mt-10 max-w-sm rounded-2xl bg-white/95 p-6 text-center shadow-xl ring-1 ring-purple-100">
-                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-purple-100">
-                  <Icon name="Sparkles" size={28} className="text-purple-600" />
+            <div className="absolute inset-0 z-20 flex items-start justify-center rounded-2xl bg-[#1a1030]/70 backdrop-blur-sm">
+              <div className="mx-4 mt-10 max-w-sm rounded-2xl bg-[#241845] p-6 text-center shadow-xl ring-1 ring-[#c9a84c]/30">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#c9a84c]/15">
+                  <Icon name="Sparkles" size={28} className="text-[#c9a84c]" />
                 </div>
-                <h3 className="mb-1 text-lg font-semibold text-gray-900">
+                <h3 className="mb-1 text-lg font-semibold text-[#f3ecff]">
                   У вас есть готовый расклад
                 </h3>
-                <p className="mb-4 text-sm text-gray-600">
+                <p className="mb-4 text-sm text-[#c9bfe0]">
                   Скачайте его, если нужно — после начала нового расклада он будет
                   удалён.
                 </p>
@@ -940,9 +954,15 @@ export default function LenormandDivination() {
                       options={spreadsByDeck(divSystem as DeckId).map((sp) => ({
                         value: sp.id,
                         label: sp.title,
-                        desc: sp.short,
+                        // Сразу видно, можно ли вести диалог с картами
+                        desc: sp.dialog
+                          ? `${sp.short}. Режим диалога: можно задавать уточняющие вопросы`
+                          : `${sp.short}. Одно подробное толкование, без диалога`,
                         icon: sp.icon,
-                        note: `${getDivinationPrice(sp.id, model)} \u20bd`,
+                        badge: sp.dialog ? "Диалог" : undefined,
+                        note: sp.dialog
+                          ? `${getDivinationPrice(sp.id, model)} \u20bd/вопрос`
+                          : `${getDivinationPrice(sp.id, model)} \u20bd`,
                       }))}
                     />
                   )}
@@ -1113,7 +1133,7 @@ export default function LenormandDivination() {
                       type="button"
                       onClick={() => setWizardDone(true)}
                       disabled={formDisabled}
-                      className="inline-flex items-center rounded-xl bg-white px-6 py-2.5 text-sm font-semibold text-purple-700 shadow-sm transition hover:bg-white/90 disabled:opacity-40"
+                      className="inline-flex items-center rounded-xl bg-gradient-to-r from-[#c9a84c] to-[#e8c252] px-6 py-2.5 text-sm font-semibold text-[#1a1030] shadow-lg transition hover:from-[#d8b75b] hover:to-[#f0cf6a] disabled:opacity-40"
                     >
                       <Icon name="Check" size={16} className="mr-1.5" />
                       Готово
@@ -1125,7 +1145,7 @@ export default function LenormandDivination() {
                         setWizardStep((s) => Math.min(WIZARD_STEPS_COUNT - 1, s + 1))
                       }
                       disabled={formDisabled}
-                      className="inline-flex items-center rounded-xl bg-white px-6 py-2.5 text-sm font-semibold text-purple-700 shadow-sm transition hover:bg-white/90 disabled:opacity-40"
+                      className="inline-flex items-center rounded-xl bg-gradient-to-r from-[#c9a84c] to-[#e8c252] px-6 py-2.5 text-sm font-semibold text-[#1a1030] shadow-lg transition hover:from-[#d8b75b] hover:to-[#f0cf6a] disabled:opacity-40"
                     >
                       Далее
                       <Icon name="ArrowRight" size={16} className="ml-1.5" />
@@ -1151,6 +1171,7 @@ export default function LenormandDivination() {
                 .map((sp) => sp.label)
                 .join(", ")}
               comment={comment}
+              hideTopic
               disabled={false}
               onEdit={() => {
                 setWizardDone(false);
@@ -1255,7 +1276,7 @@ export default function LenormandDivination() {
                   Стол расклада
                 </h2>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-[#9888b8]">
                     Заполнено: {filledCount}/{spreadSize}
                   </span>
                   <Button
@@ -1270,14 +1291,14 @@ export default function LenormandDivination() {
               </div>
 
               {/* Выбранный способ (задаётся в мастере) */}
-              <div className="mb-4 inline-flex items-center gap-2 rounded-lg bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-800">
-                <Icon name="Sparkles" size={15} className="text-purple-600" />
+              <div className="mb-4 inline-flex items-center gap-2 rounded-lg bg-[#c9a84c]/12 px-3 py-1.5 text-sm font-medium text-[#c9a84c] ring-1 ring-[#c9a84c]/30">
+                <Icon name="Sparkles" size={15} className="text-[#c9a84c]" />
                 {mode === "online" ? "Онлайн-расклад" : "Реальный расклад"}
               </div>
 
               {/* УПРАВЛЕНИЕ И ПОДСКАЗКИ — НАД СТОЛОМ */}
               <div
-                className={`mb-4 rounded-xl border border-purple-100 bg-purple-50/40 p-4 ${
+                className={`mb-4 rounded-xl border border-[#c9a84c]/20 bg-white/[0.04] p-4 ${
                   formDisabled ? "pointer-events-none opacity-60" : ""
                 }`}
               >
@@ -1293,20 +1314,20 @@ export default function LenormandDivination() {
                       Перемешать карты
                     </Button>
                     {shuffled ? (
-                      <p className="text-center text-sm text-gray-600">
+                      <p className="text-center text-sm text-[#c9bfe0]">
                         Активный дом: «{activeHouse + 1}. {HOUSE_NAMES[activeHouse]}».
                         Кликните любую карту-рубашку <b>в колоде ниже</b> — она
                         ляжет в дом.
                       </p>
                     ) : (
-                      <p className="text-center text-sm text-gray-600">
+                      <p className="text-center text-sm text-[#c9bfe0]">
                         Перемешайте карты, чтобы начать. Колода рубашками —{" "}
                         <b>ниже под столом</b>.
                       </p>
                     )}
                   </div>
                 ) : (
-                  <p className="text-center text-sm text-gray-600">
+                  <p className="text-center text-sm text-[#c9bfe0]">
                     Выберите дом, затем кликните карту, которая выпала в реальном
                     раскладе. Список карт — <b>ниже под столом</b>.
                   </p>
@@ -1330,7 +1351,7 @@ export default function LenormandDivination() {
                 <div
                   className={`mt-6 ${formDisabled ? "pointer-events-none opacity-60" : ""}`}
                 >
-                  <div className="mb-2 text-sm font-medium text-gray-700">
+                  <div className="mb-2 text-sm font-medium text-[#e8e0f0]">
                     Колода (рубашкой вверх)
                   </div>
                   <div className="flex flex-wrap justify-center gap-1.5">
@@ -1341,7 +1362,7 @@ export default function LenormandDivination() {
                         onClick={drawBlindCard}
                         disabled={formDisabled}
                         title="Вытянуть карту"
-                        className="h-24 w-[62px] overflow-hidden rounded-md border border-purple-300 shadow-sm transition hover:-translate-y-1 sm:h-32 sm:w-[82px]"
+                        className="h-24 w-[62px] overflow-hidden rounded-md border border-[#c9a84c]/35 shadow-sm transition hover:-translate-y-1 sm:h-32 sm:w-[82px]"
                       >
                         <img
                           src={deckBackImage}
@@ -1352,7 +1373,7 @@ export default function LenormandDivination() {
                       </button>
                     ))}
                     {deck.length === 0 && (
-                      <span className="text-sm text-gray-400">
+                      <span className="text-sm text-[#9888b8]">
                         Все карты разложены
                       </span>
                     )}
@@ -1365,7 +1386,7 @@ export default function LenormandDivination() {
                 <div
                   className={`mt-6 ${formDisabled ? "pointer-events-none opacity-60" : ""}`}
                 >
-                  <div className="mb-2 text-sm font-medium text-gray-700">
+                  <div className="mb-2 text-sm font-medium text-[#e8e0f0]">
                     Карты колоды
                   </div>
                   <div className="flex flex-wrap gap-1.5">
@@ -1375,7 +1396,7 @@ export default function LenormandDivination() {
                         type="button"
                         onClick={() => placeCard(card)}
                         disabled={formDisabled}
-                        className="flex items-center gap-1.5 rounded-full border border-purple-300 bg-purple-50 py-1 pl-1 pr-2.5 text-sm text-purple-700 transition hover:bg-purple-100"
+                        className="flex items-center gap-1.5 rounded-full border border-[#c9a84c]/40 bg-[#c9a84c]/10 py-1 pl-1 pr-2.5 text-sm text-[#c9a84c] transition hover:bg-[#c9a84c]/20"
                       >
                         {getDeckCardImage(card) && (
                           <img
@@ -1389,7 +1410,7 @@ export default function LenormandDivination() {
                       </button>
                     ))}
                     {usedCardsSet.size === deckCards.length && (
-                      <span className="text-sm text-gray-400">
+                      <span className="text-sm text-[#9888b8]">
                         Все карты разложены
                       </span>
                     )}
@@ -1425,17 +1446,17 @@ export default function LenormandDivination() {
           {isProcessing && (
             <div
               ref={loaderRef}
-              className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-purple-100 bg-purple-50/40 py-12"
+              className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-[#c9a84c]/20 bg-white/[0.04] py-12"
             >
               <Icon
                 name="Loader2"
                 size={40}
-                className="mb-4 animate-spin text-purple-500"
+                className="mb-4 animate-spin text-[#c9a84c]"
               />
-              <p className="text-base font-medium text-purple-700">
+              <p className="text-base font-medium text-[#c9a84c]">
                 {statusText || "Карты раскрываются…"}
               </p>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-[#9888b8]">
                 Это может занять до минуты. Не закрывайте страницу.
               </p>
             </div>
@@ -1447,7 +1468,7 @@ export default function LenormandDivination() {
         {result && !isProcessing && (
           <div className="mt-8" ref={resultCardRef}>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-xl font-semibold text-purple-800">
+              <h2 className="text-xl font-semibold text-[#f3ecff]">
                 Толкование расклада
               </h2>
               <div className="flex flex-wrap gap-2">
@@ -1467,11 +1488,11 @@ export default function LenormandDivination() {
               </div>
             </div>
             <div className="rounded-2xl bg-white/[0.04] p-6 shadow-sm ring-1 ring-[#c9a84c]/20">
-              <p className="mb-3 text-sm text-purple-500">{resultDate}</p>
+              <p className="mb-3 text-sm text-[#c9a84c]">{resultDate}</p>
 
               {resultLayout.length > 0 && (
                 <div
-                  className="mb-6 overflow-x-auto rounded-2xl border border-purple-200 p-3 sm:p-4"
+                  className="mb-6 overflow-x-auto rounded-2xl border border-[#c9a84c]/25 p-3 sm:p-4"
                   style={{
                     background:
                       "radial-gradient(120% 100% at 50% 0%, #ede9fe 0%, #ddd6fe 55%, #c7bdf4 100%)",
@@ -1487,9 +1508,9 @@ export default function LenormandDivination() {
                       card ? (
                         <div
                           key={idx}
-                          className="rounded-md border border-purple-200 bg-white/60 p-1.5 text-center"
+                          className="rounded-md border border-[#c9a84c]/25 bg-white/[0.06] p-1.5 text-center"
                         >
-                          <div className="text-[10px] leading-tight text-purple-700">
+                          <div className="text-[10px] leading-tight text-[#c9a84c]">
                             {idx + 1}. дом {HOUSE_NAMES[idx]}
                           </div>
                           {getDeckCardImage(card) && (
@@ -1500,7 +1521,7 @@ export default function LenormandDivination() {
                               loading="lazy"
                             />
                           )}
-                          <div className="text-[11px] font-semibold leading-tight text-purple-900 sm:text-xs">
+                          <div className="text-[11px] font-semibold leading-tight text-[#f3ecff] sm:text-xs">
                             карта {card}
                           </div>
                         </div>
@@ -1510,7 +1531,7 @@ export default function LenormandDivination() {
                 </div>
               )}
 
-              <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-gray-800">
+              <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-[#e8e0f0]">
                 {result}
               </div>
             </div>
@@ -1519,7 +1540,7 @@ export default function LenormandDivination() {
 
         {/* Предыдущий расклад из базы (после перезагрузки, пока нет свежего) */}
         {prevResult && !result && !isProcessing && (
-          <div className="mt-8 rounded-2xl border border-purple-100">
+          <div className="mt-8 rounded-2xl border border-[#c9a84c]/20">
             <button
               type="button"
               onClick={() => setPrevOpen((o) => !o)}
@@ -1529,11 +1550,11 @@ export default function LenormandDivination() {
               <Icon
                 name={prevOpen ? "ChevronUp" : "ChevronDown"}
                 size={20}
-                className="text-gray-500"
+                className="text-[#9888b8]"
               />
             </button>
             {prevOpen && (
-              <div className="border-t border-purple-100 p-5">
+              <div className="border-t border-[#c9a84c]/20 p-5">
                 <div className="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
                   <Icon name="TriangleAlert" size={18} className="mt-0.5 shrink-0" />
                   <span>
@@ -1555,22 +1576,22 @@ export default function LenormandDivination() {
                 </div>
 
                 <div
-                  className="rounded-2xl border border-purple-100 p-6 shadow-sm"
+                  className="rounded-2xl border border-[#c9a84c]/20 p-6 shadow-sm"
                   style={{
                     background:
                       "linear-gradient(180deg, #faf7ff 0%, #f3eefc 100%)",
                   }}
                 >
                   <div className="mb-4 text-center">
-                    <h3 className="text-2xl font-semibold text-purple-800">
+                    <h3 className="text-2xl font-semibold text-[#f3ecff]">
                       Большой расклад Ленорман 9 × 4
                     </h3>
-                    <p className="mt-1 text-sm text-purple-500">{prevDate}</p>
+                    <p className="mt-1 text-sm text-[#c9a84c]">{prevDate}</p>
                   </div>
 
                   {prevLayout.length > 0 && (
                     <div
-                      className="mb-6 overflow-x-auto rounded-2xl border border-purple-200 p-3 sm:p-4"
+                      className="mb-6 overflow-x-auto rounded-2xl border border-[#c9a84c]/25 p-3 sm:p-4"
                       style={{
                         background:
                           "radial-gradient(120% 100% at 50% 0%, #ede9fe 0%, #ddd6fe 55%, #c7bdf4 100%)",
@@ -1586,9 +1607,9 @@ export default function LenormandDivination() {
                           card ? (
                             <div
                               key={idx}
-                              className="rounded-md border border-purple-200 bg-white/60 p-1.5 text-center"
+                              className="rounded-md border border-[#c9a84c]/25 bg-white/[0.06] p-1.5 text-center"
                             >
-                              <div className="text-[10px] leading-tight text-purple-700">
+                              <div className="text-[10px] leading-tight text-[#c9a84c]">
                                 {idx + 1}. дом {HOUSE_NAMES[idx]}
                               </div>
                               {getDeckCardImage(card) && (
@@ -1599,7 +1620,7 @@ export default function LenormandDivination() {
                                   loading="lazy"
                                 />
                               )}
-                              <div className="text-[11px] font-semibold leading-tight text-purple-900 sm:text-xs">
+                              <div className="text-[11px] font-semibold leading-tight text-[#f3ecff] sm:text-xs">
                                 карта {card}
                               </div>
                             </div>
@@ -1609,17 +1630,17 @@ export default function LenormandDivination() {
                     </div>
                   )}
 
-                  <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-gray-800">
+                  <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-[#e8e0f0]">
                     {prevResult}
                   </div>
-                  <div className="mt-6 border-t border-purple-200 pt-4 text-center text-xs text-purple-400">
+                  <div className="mt-6 border-t border-[#c9a84c]/25 pt-4 text-center text-xs text-purple-400">
                     <p>
                       Трактовки раскладов носят
                       развлекательно-информационно-рекомендательный характер,
                       создаются нейросетью, мы не несём ответственность за текст
                       ответа нейросети.
                     </p>
-                    <p className="mt-1 font-medium text-purple-500">
+                    <p className="mt-1 font-medium text-[#c9a84c]">
                       fitting-room.ru
                     </p>
                   </div>
