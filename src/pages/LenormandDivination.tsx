@@ -1411,6 +1411,7 @@ export default function LenormandDivination() {
                     size="sm"
                     onClick={clearLayout}
                     disabled={formDisabled}
+                    className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
                   >
                     <Icon name="Eraser" size={16} className="mr-1" /> Очистить только расклад
                   </Button>
