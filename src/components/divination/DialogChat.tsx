@@ -148,10 +148,12 @@ const DialogChat = ({
   const [stepDeckMode, setStepDeckMode] = useState<"full" | "single">(deckMode);
   // «Та же колода» — выпавшие карты больше не участвуют.
   // «Полная колода» — колода собирается заново, отбор начинается с нуля.
-  const availableCards = (mode = stepDeckMode) =>
-    mode === "single"
-      ? deckCards.filter((c) => !usedCards.includes(c))
-      : deckCards;
+  // Карты, уже вытянутые на ЭТОТ вопрос, второй раз не предлагаем
+  const availableCards = (mode = stepDeckMode, drawn = picked, used = usedCards) =>
+    (mode === "single"
+      ? deckCards.filter((c) => !used.includes(c))
+      : deckCards
+    ).filter((c) => !drawn.includes(c));
 
   // Смена режима до вытягивания карт: пересобираем колоду под новый режим
   const changeStepDeckMode = (mode: "full" | "single") => {
@@ -160,7 +162,7 @@ const DialogChat = ({
     if (mode === "full") setUsedCards([]);
     setPicked([]);
     setShuffled(false);
-    setDeck(shuffle(availableCards(mode)));
+    setDeck(shuffle(availableCards(mode, [], mode === "full" ? [] : usedCards)));
   };
 
   const shuffleDeck = () => {
@@ -199,7 +201,7 @@ const DialogChat = ({
 
   const resetDraw = () => {
     setPicked([]);
-    setDeck(shuffle(availableCards()));
+    setDeck(shuffle(availableCards(stepDeckMode, [])));
     setShuffled(false);
   };
 
