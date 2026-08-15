@@ -1398,63 +1398,53 @@ export default function LenormandDivination() {
           {/* Стол расклада — ниже на всю ширину */}
           <Card className="border-0 bg-white/[0.04] ring-1 ring-[#c9a84c]/20">
             <CardContent className="p-5">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="font-serif text-lg text-[#f3ecff]">
-                  Стол расклада
-                </h2>
+              {/* Заголовок, главное действие и счётчик — одной строкой.
+                  На мобильном перестраивается в столбик. */}
+              <div
+                className={`mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${
+                  formDisabled ? "pointer-events-none opacity-60" : ""
+                }`}
+              >
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-[#9888b8]">
-                    Заполнено: {filledCount}/{spreadSize}
+                  <h2 className="font-serif text-lg text-[#f3ecff]">
+                    Стол расклада
+                  </h2>
+                  <span className="rounded-full bg-white/8 px-2.5 py-0.5 text-xs text-[#c9bfe0]">
+                    {filledCount}/{spreadSize}
                   </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {mode === "online" && (
+                    <Button
+                      onClick={shuffleDeck}
+                      disabled={formDisabled}
+                      className="flex-1 bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a] sm:flex-none"
+                    >
+                      <Icon name="Shuffle" size={17} className="mr-1.5" />
+                      Перемешать карты
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
-                    size="sm"
                     onClick={clearLayout}
                     disabled={formDisabled}
-                    className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
+                    className="flex-1 border border-white/25 text-[#e8e0f0] hover:bg-white/8 hover:text-white sm:flex-none"
                   >
-                    <Icon name="Eraser" size={16} className="mr-1" /> Очистить только расклад
+                    <Icon name="Eraser" size={16} className="mr-1.5" />
+                    Очистить
                   </Button>
                 </div>
               </div>
 
-              {/* УПРАВЛЕНИЕ И ПОДСКАЗКИ — НАД СТОЛОМ */}
-              <div
-                className={`mb-4 rounded-xl border border-[#c9a84c]/20 bg-white/[0.04] p-4 ${
-                  formDisabled ? "pointer-events-none opacity-60" : ""
-                }`}
-              >
-                {mode === "online" ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <Button
-                      size="lg"
-                      onClick={shuffleDeck}
-                      disabled={formDisabled}
-                      className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] px-8 py-6 text-base font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
-                    >
-                      <Icon name="Shuffle" size={22} className="mr-2" />
-                      Перемешать карты
-                    </Button>
-                    {shuffled ? (
-                      <p className="text-center text-sm text-[#c9bfe0]">
-                        Активный дом: «{activeHouse + 1}. {HOUSE_NAMES[activeHouse]}».
-                        Кликните любую карту-рубашку <b>в колоде ниже</b> — она
-                        ляжет в дом.
-                      </p>
-                    ) : (
-                      <p className="text-center text-sm text-[#c9bfe0]">
-                        Перемешайте карты, чтобы начать. Колода рубашками —{" "}
-                        <b>ниже под столом</b>.
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-center text-sm text-[#c9bfe0]">
-                    Выберите дом, затем кликните карту, которая выпала в реальном
-                    раскладе. Список карт — <b>ниже под столом</b>.
-                  </p>
-                )}
-              </div>
+              {/* Подсказка — одной строкой под панелью */}
+              <p className="mb-4 text-sm text-[#9888b8]">
+                {mode === "online"
+                  ? shuffled
+                    ? `Активный дом: ${activeHouse + 1}. ${HOUSE_NAMES[activeHouse]}. Кликните карту-рубашку в колоде под столом.`
+                    : "Перемешайте карты, чтобы начать. Колода появится под столом."
+                  : "Выберите дом, затем кликните карту, которая выпала в реальном раскладе. Список карт — под столом."}
+              </p>
 
               {/* Стол расклада — геометрия берётся из реестра раскладов */}
               <SpreadTable
