@@ -4,6 +4,7 @@ import Icon from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { divTheme } from "./theme";
+import { downloadDialogText } from "./SavedDialogs";
 import type { SpreadDef } from "@/data/divination/spreads";
 
 const DIVINATION_DIALOG =
@@ -20,6 +21,14 @@ interface DialogChatProps {
   spread: SpreadDef;
   /** Рубашка колоды — по ней кликают, чтобы вытянуть карту */
   backImage: string;
+  /** Сколько карт тянуть на один вопрос (1..6) */
+  cardsPerStep: number;
+  /** full — каждый вопрос новая колода, single — одна на весь диалог */
+  deckMode: "full" | "single";
+  /** Беседа, к которой вернулись из списка сохранённых */
+  resumeDialog?: { dialog_id: string } | null;
+  /** Сообщить наружу, что список бесед изменился */
+  onDialogChanged?: () => void;
   /** Параметры из мастера — уходят в первый вопрос как контекст */
   context?: {
     gender: string;
@@ -52,6 +61,10 @@ const shuffle = <T,>(arr: T[]): T[] => {
 const DialogChat = ({
   spread,
   backImage,
+  cardsPerStep,
+  deckMode,
+  resumeDialog,
+  onDialogChanged,
   context,
   deckCards,
   model,
@@ -66,9 +79,12 @@ const DialogChat = ({
   const [question, setQuestion] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
   const [deck, setDeck] = useState<string[]>(() => shuffle(deckCards));
+  // Карты, уже выпавшие в этом диалоге (для режима «одна колода»)
+  const [usedCards, setUsedCards] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [closed, setClosed] = useState(false);
   const [shuffled, setShuffled] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
 
   const api = async (payload: Record<string, unknown>) => {
     const token = localStorage.getItem("session_token");
@@ -83,16 +99,26 @@ const DialogChat = ({
     return { res, data: await res.json() };
   };
 
-  // После перезагрузки подхватываем незакрытый диалог, чтобы беседа не терялась
+  // Возвращаемся к сохранённой беседе (по кнопке) либо к последней незакрытой
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const { res, data } = await api({ action: "last" });
+        const payload = resumeDialog?.dialog_id
+          ? { action: "history", dialog_id: resumeDialog.dialog_id }
+          : { action: "last" };
+        const { res, data } = await api(payload);
         if (cancelled || !res.ok || data.empty) return;
-        if (data.spread !== spread.id) return;
+        if (!resumeDialog && data.spread !== spread.id) return;
+
         setDialogId(data.dialog_id);
         setSteps(data.steps || []);
+        // В режиме «одна колода» помним, что уже выпало
+        const used = (data.steps || []).flatMap(
+          (st: { cards?: string[] }) => st.cards || [],
+        );
+        setUsedCards(used);
+        setClosed(data.status === "closed");
       } catch {
         /* тихо: продолжаем с чистого диалога */
       }
@@ -101,15 +127,26 @@ const DialogChat = ({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spread.id]);
+  }, [spread.id, resumeDialog?.dialog_id]);
 
-  const need = spread.size;
+  const need = Math.max(1, Math.min(cardsPerStep || 1, spread.size));
   const ready = question.trim().length > 0 && picked.length === need;
   const stepsLeft = maxSteps - steps.length;
 
+  // В режиме «одна колода» выпавшие карты больше не участвуют
+  const availableCards = () =>
+    deckMode === "single"
+      ? deckCards.filter((c) => !usedCards.includes(c))
+      : deckCards;
+
   const shuffleDeck = () => {
     if (busy) return;
-    setDeck(shuffle(deckCards));
+    const pool = availableCards();
+    if (pool.length < need) {
+      toast.info("Колода закончилась — начните новый диалог");
+      return;
+    }
+    setDeck(shuffle(pool));
     setShuffled(true);
     toast.success("Карты перемешаны — тяните карту из колоды");
   };
@@ -131,7 +168,7 @@ const DialogChat = ({
 
   const resetDraw = () => {
     setPicked([]);
-    setDeck(shuffle(deckCards));
+    setDeck(shuffle(availableCards()));
     setShuffled(false);
   };
 
@@ -146,6 +183,8 @@ const DialogChat = ({
           system: spread.deck,
           spread: spread.id,
           model,
+          cards_per_step: need,
+          deck_mode: deckMode,
           gender: context?.gender,
           period: context?.period,
           spheres: context?.spheres,
@@ -214,7 +253,12 @@ const DialogChat = ({
         },
       ]);
       setQuestion("");
-      resetDraw();
+      if (deckMode === "single") {
+        setUsedCards((prev) => [...prev, ...(ready.cards || [])]);
+      }
+      setPicked([]);
+      setShuffled(false);
+      onDialogChanged?.();
     } catch {
       toast.error("Ошибка соединения");
     } finally {
@@ -227,9 +271,19 @@ const DialogChat = ({
       setClosed(true);
       return;
     }
-    await api({ action: "close", dialog_id: dialogId });
+    const { data } = await api({ action: "close", dialog_id: dialogId });
     setClosed(true);
-    toast.success("Диалог закрыт");
+    setConfirmClose(false);
+    onDialogChanged?.();
+    toast.success(
+      data?.deleted_old
+        ? "Диалог закрыт. Прежняя закрытая беседа удалена."
+        : "Диалог закрыт",
+    );
+  };
+
+  const downloadThis = async () => {
+    if (dialogId) await downloadDialogText(dialogId);
   };
 
   return (
@@ -272,6 +326,49 @@ const DialogChat = ({
           </p>
         </div>
       ))}
+
+      {confirmClose && (
+        <div className={`${divTheme.panel} p-5`}>
+          <div className="mb-3 flex items-start gap-2">
+            <Icon
+              name="TriangleAlert"
+              size={20}
+              className="mt-0.5 shrink-0 text-[#c9a84c]"
+            />
+            <div className="text-sm text-[#e8d9a8]">
+              <p className="mb-1 font-medium text-[#f3ecff]">
+                Закрыть эту беседу?
+              </p>
+              <p>
+                Незакрытые диалоги хранятся всегда, а из закрытых остаётся
+                только последний. Прежняя закрытая беседа будет удалена —
+                скачайте её, если она нужна.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={downloadThis}
+              className={divTheme.btnPrimary}
+              size="sm"
+            >
+              <Icon name="Download" size={15} className="mr-1.5" />
+              Скачать эту беседу
+            </Button>
+            <Button onClick={closeDialog} size="sm" className={divTheme.btnGhost}>
+              Всё равно закрыть
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setConfirmClose(false)}
+              size="sm"
+              className={divTheme.btnGhost}
+            >
+              Отмена
+            </Button>
+          </div>
+        </div>
+      )}
 
       {closed ? (
         <div className={`${divTheme.panel} p-5 text-center`}>
@@ -436,7 +533,7 @@ const DialogChat = ({
             {steps.length > 0 && (
               <Button
                 variant="ghost"
-                onClick={closeDialog}
+                onClick={() => setConfirmClose(true)}
                 disabled={busy}
                 className={divTheme.btnGhost}
               >

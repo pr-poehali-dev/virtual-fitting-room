@@ -40,6 +40,8 @@ import { divTheme } from "@/components/divination/theme";
 import SpreadTable from "@/components/divination/SpreadTable";
 import OptionGrid from "@/components/divination/OptionGrid";
 import SpreadSummary from "@/components/divination/SpreadSummary";
+import DivinationTabs, { type DivTab } from "@/components/divination/DivinationTabs";
+import SavedDialogs, { type SavedDialog } from "@/components/divination/SavedDialogs";
 import DialogChat from "@/components/divination/DialogChat";
 import { DIALOG_MAX_STEPS } from "@/config/prices";
 
@@ -100,8 +102,9 @@ const EMPTY_LAYOUT = (size = 36) => Array(size).fill("");
 const WIZARD_TITLES_FULL = [
   "Способ расклада",
   "Система карт",
-  "Расклад",
+  // Гадалка идёт ДО расклада: цена расклада зависит от выбранной гадалки
   "Нейросеть-гадалка",
+  "Расклад",
   "Пол",
   "Период",
   "Сферы",
@@ -151,6 +154,14 @@ export default function LenormandDivination() {
   const [wizardDone, setWizardDone] = useState(false);
   const [divSystem, setDivSystem] = useState<"lenormand" | "tarot">("lenormand");
   const [divSpread, setDivSpread] = useState("lenormand_big9x4");
+  // Настройки диалога: сколько карт на вопрос и как берём колоду
+  const [cardsPerStep, setCardsPerStep] = useState(1);
+  const [deckMode, setDeckMode] = useState<"full" | "single">("full");
+  // Вкладка раздела: обычные расклады или диалоги
+  const [tab, setTab] = useState<DivTab>("spreads");
+  const [savedReload, setSavedReload] = useState(0);
+  // Диалог, к которому вернулись из списка сохранённых
+  const [resumeDialog, setResumeDialog] = useState<SavedDialog | null>(null);
 
   // Активный расклад и колода — из реестра (единый источник правды)
   const activeSpread = getSpread(divSpread) ?? getSpread("lenormand_big9x4")!;
@@ -785,6 +796,38 @@ export default function LenormandDivination() {
           </p>
         </div>
 
+        {/* Две категории: расклады и диалоги — со своими правилами хранения */}
+        <DivinationTabs
+          value={tab}
+          onChange={(next) => {
+            setTab(next);
+            const list = spreadsByDeck(divSystem as DeckId).filter((sp) =>
+              next === "dialogs" ? sp.dialog : !sp.dialog,
+            );
+            if (list.length && !list.some((sp) => sp.id === divSpread)) {
+              setDivSpread(list[0].id);
+              setLayout(EMPTY_LAYOUT(list[0].size));
+            }
+            setWizardDone(false);
+            setWizardStep(0);
+            setResumeDialog(null);
+          }}
+        />
+
+        {tab === "dialogs" && (
+          <SavedDialogs
+            reloadKey={savedReload}
+            onContinue={(d) => {
+              setDivSystem(d.system as DeckId);
+              setDivSpread(d.spread);
+              setCardsPerStep(d.cards_per_step || 1);
+              setDeckMode((d.deck_mode as "full" | "single") || "full");
+              setResumeDialog(d);
+              setWizardDone(true);
+            }}
+          />
+        )}
+
         <LockedFormOverlay cost={LENORMAND_MIN_COST}>
           <div className="relative">
           {/* Блокировка всей формы, пока есть несохранённый прошлый результат.
@@ -944,8 +987,8 @@ export default function LenormandDivination() {
                     />
                   )}
 
-                  {/* Шаг 2: Расклад */}
-                  {wizardStep === 2 && (
+                  {/* Шаг 3: Расклад */}
+                  {wizardStep === 3 && (
                     <OptionGrid
                       columns={2}
                       value={divSpread}
@@ -955,7 +998,11 @@ export default function LenormandDivination() {
                         if (sp) setLayout(EMPTY_LAYOUT(sp.size));
                         setActiveHouse(0);
                       }}
-                      options={spreadsByDeck(divSystem as DeckId).map((sp) => ({
+                      options={spreadsByDeck(divSystem as DeckId)
+                        .filter((sp) =>
+                          tab === "dialogs" ? sp.dialog : !sp.dialog,
+                        )
+                        .map((sp) => ({
                         value: sp.id,
                         label: sp.title,
                         // Сразу видно, можно ли вести диалог с картами
@@ -967,12 +1014,84 @@ export default function LenormandDivination() {
                         note: sp.dialog
                           ? `${getDivinationPrice(sp.id, model)} \u20bd/вопрос`
                           : `${getDivinationPrice(sp.id, model)} \u20bd`,
-                      }))}
+                        }))}
                     />
                   )}
 
-                  {/* Шаг 3: Нейросеть-гадалка */}
-                  {wizardStep === 3 && (
+                  {/* Настройки диалога — только для диалоговых раскладов */}
+                  {wizardStep === 3 && activeSpread.dialog && (
+                    <div className="mt-5 space-y-5">
+                      <div>
+                        <p className="mb-2 text-sm font-medium text-white">
+                          Сколько карт тянуть на один вопрос
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {[1, 2, 3, 4, 5, 6].map((n) => (
+                            <button
+                              key={n}
+                              type="button"
+                              onClick={() => setCardsPerStep(n)}
+                              className={`h-11 w-11 rounded-xl border-2 text-sm font-semibold transition ${
+                                cardsPerStep === n
+                                  ? "border-[#c9a84c] bg-[#c9a84c]/20 text-white"
+                                  : "border-white/40 text-white/80 hover:border-white"
+                              }`}
+                            >
+                              {n}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="mt-1.5 text-xs text-white/70">
+                          Больше карт — подробнее ответ. Цена за вопрос не меняется.
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="mb-2 text-sm font-medium text-white">
+                          Как берём колоду
+                        </p>
+                        <div className="grid gap-2.5 sm:grid-cols-2">
+                          <button
+                            type="button"
+                            onClick={() => setDeckMode("full")}
+                            className={`rounded-xl border-2 p-3 text-left transition ${
+                              deckMode === "full"
+                                ? "border-[#c9a84c] bg-[#c9a84c]/15"
+                                : "border-white/40 hover:border-white"
+                            }`}
+                          >
+                            <span className="block font-medium text-white">
+                              Каждый вопрос — полная колода
+                            </span>
+                            <span className="mt-0.5 block text-xs text-white/70">
+                              Перед каждым вопросом колода собирается заново.
+                              Карты могут повторяться, вопросы независимы.
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeckMode("single")}
+                            className={`rounded-xl border-2 p-3 text-left transition ${
+                              deckMode === "single"
+                                ? "border-[#c9a84c] bg-[#c9a84c]/15"
+                                : "border-white/40 hover:border-white"
+                            }`}
+                          >
+                            <span className="block font-medium text-white">
+                              Одна колода на весь диалог
+                            </span>
+                            <span className="mt-0.5 block text-xs text-white/70">
+                              Выпавшие карты не возвращаются. Разговор идёт,
+                              пока не кончатся карты или лимит вопросов.
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Шаг 2: Нейросеть-гадалка */}
+                  {wizardStep === 2 && (
                     <div>
                       <div
                         role="radiogroup"
@@ -1193,6 +1312,10 @@ export default function LenormandDivination() {
               backImage={deckBackImage}
               model={model}
               context={{ gender, period, spheres, comment: comment.trim() }}
+              cardsPerStep={cardsPerStep}
+              deckMode={deckMode}
+              resumeDialog={resumeDialog}
+              onDialogChanged={() => setSavedReload((k) => k + 1)}
               stepPrice={selectedCost}
               maxSteps={DIALOG_MAX_STEPS}
               getCardImage={getDeckCardImage}

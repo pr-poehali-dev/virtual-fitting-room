@@ -13,6 +13,8 @@ export interface SpreadDef {
   size: number;
   grid: { cols: number; rows: number; tail?: number } | null;
   positions?: string[];
+  /** Сколько карт можно выбрать (для диалогов) */
+  flexible?: { min: number; max: number };
   /** Расклад-диалог: вопрос → карты → ответ → уточняющий вопрос */
   dialog?: boolean;
   icon: string;
@@ -38,45 +40,26 @@ export const SPREADS: SpreadDef[] = [
     icon: "Grid2x2",
   },
   {
-    id: "lenormand_line3",
+    id: "lenormand_dialog",
     deck: "lenormand",
-    title: "Три карты",
-    short: "Короткий ответ на вопрос",
-    size: 3,
-    grid: { cols: 3, rows: 1 },
+    title: "Диалог на картах Ленорман",
+    short: "Вопрос, карты, ответ — и уточнения",
+    size: 6,
+    flexible: { min: 1, max: 6 },
+    grid: { cols: 6, rows: 1 },
     dialog: true,
-    icon: "Rows3",
+    icon: "MessagesSquare",
   },
   {
-    id: "lenormand_card1",
-    deck: "lenormand",
-    title: "Одна карта",
-    short: "Быстрый совет дня",
-    size: 1,
-    grid: { cols: 1, rows: 1 },
-    dialog: true,
-    icon: "Square",
-  },
-  {
-    id: "tarot_card1",
+    id: "tarot_dialog",
     deck: "tarot",
-    title: "Одна карта",
-    short: "Быстрый совет дня",
-    size: 1,
-    grid: { cols: 1, rows: 1 },
+    title: "Диалог на картах Таро",
+    short: "Вопрос, карты, ответ — и уточнения",
+    size: 6,
+    flexible: { min: 1, max: 6 },
+    grid: { cols: 6, rows: 1 },
     dialog: true,
-    icon: "Square",
-  },
-  {
-    id: "tarot_line3",
-    deck: "tarot",
-    title: "Прошлое — Настоящее — Будущее",
-    short: "Развитие ситуации во времени",
-    size: 3,
-    grid: { cols: 3, rows: 1 },
-    positions: ["Прошлое", "Настоящее", "Будущее"],
-    dialog: true,
-    icon: "Rows3",
+    icon: "MessagesSquare",
   },
   {
     id: "tarot_celtic10",

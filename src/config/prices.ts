@@ -54,10 +54,8 @@ export const DIVINATION_PRICES: Record<string, Record<string, number>> = {
     "anthropic/claude-sonnet-4.6": 100,
   },
   // Расклады-диалоги: цена за ОДИН шаг (вопрос + карты + ответ)
-  lenormand_card1: DIALOG_STEP_PRICES,
-  lenormand_line3: DIALOG_STEP_PRICES,
-  tarot_card1: DIALOG_STEP_PRICES,
-  tarot_line3: DIALOG_STEP_PRICES,
+  lenormand_dialog: DIALOG_STEP_PRICES,
+  tarot_dialog: DIALOG_STEP_PRICES,
 };
 
 // Максимум шагов в одном диалоге

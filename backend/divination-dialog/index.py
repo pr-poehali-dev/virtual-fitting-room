@@ -524,6 +524,41 @@ def action_list(body, user_id, event):
     return resp(200, {'items': items, 'max_steps': pricing.DIALOG_MAX_STEPS}, event)
 
 
+def action_delete(body, user_id, event):
+    """Удаляет беседу по кнопке пользователя (подтверждение — на стороне интерфейса)."""
+    dialog_id = (body.get('dialog_id') or '').strip()
+    try:
+        uuid.UUID(dialog_id)
+    except (ValueError, AttributeError):
+        return resp(404, {'error': 'Диалог не найден'}, event)
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"SELECT user_id FROM {DB_SCHEMA}.divination_dialogs WHERE id = %s",
+                (dialog_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return resp(404, {'error': 'Диалог не найден'}, event)
+            if str(row[0]) != str(user_id):
+                return resp(403, {'error': 'Чужой диалог'}, event)
+
+            cur.execute(
+                f"DELETE FROM {DB_SCHEMA}.divination_dialog_steps WHERE dialog_id = %s",
+                (dialog_id,),
+            )
+            cur.execute(
+                f"DELETE FROM {DB_SCHEMA}.divination_dialogs WHERE id = %s",
+                (dialog_id,),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+    return resp(200, {'status': 'deleted'}, event)
+
+
 def action_close(body, user_id, event):
     """Закрывает диалог. Прежняя закрытая беседа при этом удаляется —
     хранится только последняя закрытая. Незакрытые не трогаем."""
@@ -593,6 +628,8 @@ def handler(event: dict, context) -> dict:
         return action_ask(body, user_id, event)
     if action == 'step_status':
         return action_step_status(body, user_id, event)
+    if action == 'delete':
+        return action_delete(body, user_id, event)
     if action == 'list':
         return action_list(body, user_id, event)
     if action == 'last':
