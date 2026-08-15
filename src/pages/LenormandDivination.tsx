@@ -172,6 +172,26 @@ export default function LenormandDivination() {
     ? WIZARD_TITLES_DIALOG
     : WIZARD_TITLES_FULL;
   const WIZARD_STEPS_COUNT = WIZARD_TITLES.length;
+  // Шаг «Расклад» показываем, только если есть из чего выбирать:
+  // у диалогов на вкладке часто единственный вариант
+  const spreadChoiceCount = spreadsByDeck(divSystem as DeckId).filter((sp) =>
+    tab === "dialogs" ? sp.dialog : !sp.dialog,
+  ).length;
+  const isStepVisible = (step: number) =>
+    !(WIZARD_TITLES[step] === "Расклад" && spreadChoiceCount <= 1);
+  // Номера показываемых шагов — для счётчика «Шаг X из Y»
+  const visibleSteps = Array.from(
+    { length: WIZARD_STEPS_COUNT },
+    (_, i) => i,
+  ).filter(isStepVisible);
+  const visibleTotal = visibleSteps.length;
+  const visibleNo = Math.max(1, visibleSteps.indexOf(wizardStep) + 1);
+  // Переход вперёд/назад с пропуском скрытых шагов
+  const stepTo = (from: number, dir: 1 | -1) => {
+    let n = from + dir;
+    while (n > 0 && n < WIZARD_STEPS_COUNT - 1 && !isStepVisible(n)) n += dir;
+    return Math.max(0, Math.min(WIZARD_STEPS_COUNT - 1, n));
+  };
   // Картинки карт есть только у колоды Ленорман. Для Таро изображение не
   // подставляем, иначе совпадающие названия (Луна, Башня, Солнце) подтянут
   // чужую картинку из колоды Ленорман.
@@ -781,10 +801,14 @@ export default function LenormandDivination() {
 
   // Страховка: если у диалога шагов меньше, не зависаем на несуществующем шаге
   useEffect(() => {
-    setWizardStep((prev) =>
-      prev > WIZARD_STEPS_COUNT - 1 ? WIZARD_STEPS_COUNT - 1 : prev,
-    );
-  }, [WIZARD_STEPS_COUNT]);
+    setWizardStep((prev) => {
+      const last = WIZARD_STEPS_COUNT - 1;
+      const cur = prev > last ? last : prev;
+      // Не оставляем пользователя на скрытом шаге
+      return isStepVisible(cur) ? cur : stepTo(cur, 1);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [WIZARD_STEPS_COUNT, spreadChoiceCount, tab, divSystem]);
 
   // Страховка: длина стола всегда соответствует выбранному раскладу
   // (например, после восстановления старой формы из браузера).
@@ -935,17 +959,17 @@ export default function LenormandDivination() {
                 <div className="mb-5">
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-sm font-medium text-white/90">
-                      Шаг {wizardStep + 1} из {WIZARD_STEPS_COUNT}
+                      Шаг {visibleNo} из {visibleTotal}
                     </span>
                     <span className="text-xs text-white/70">
-                      {wizardStep + 1}/{WIZARD_STEPS_COUNT}
+                      {visibleNo}/{visibleTotal}
                     </span>
                   </div>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/15">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-[#c9a84c] to-[#e8c252] transition-all"
                       style={{
-                        width: `${((wizardStep + 1) / WIZARD_STEPS_COUNT) * 100}%`,
+                        width: `${(visibleNo / visibleTotal) * 100}%`,
                       }}
                     />
                   </div>
@@ -1230,7 +1254,7 @@ export default function LenormandDivination() {
                 <div className="mt-5 flex items-center justify-between border-t border-white/15 pt-5">
                   <button
                     type="button"
-                    onClick={() => setWizardStep((s) => Math.max(0, s - 1))}
+                    onClick={() => setWizardStep((s) => stepTo(s, -1))}
                     disabled={wizardStep === 0 || formDisabled}
                     className="inline-flex items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
                   >
@@ -1258,7 +1282,7 @@ export default function LenormandDivination() {
                     <button
                       type="button"
                       onClick={() =>
-                        setWizardStep((s) => Math.min(WIZARD_STEPS_COUNT - 1, s + 1))
+                        setWizardStep((s) => stepTo(s, 1))
                       }
                       disabled={formDisabled || !!stepBlockReason}
                       title={stepBlockReason || undefined}
@@ -1283,7 +1307,6 @@ export default function LenormandDivination() {
               cost={selectedCost}
               costSuffix=" за вопрос"
               genderLabel={GENDERS.find((g) => g.key === gender)?.label || ""}
-              periodLabel={PERIODS.find((pd) => pd.key === period)?.label || ""}
               spheresLabel={SPHERES.filter((sp) => spheres.includes(sp.key))
                 .map((sp) => sp.label)
                 .join(", ")}

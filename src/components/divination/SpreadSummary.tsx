@@ -9,7 +9,7 @@ interface SpreadSummaryProps {
   /** Приписка к цене, например « за вопрос» для диалогов */
   costSuffix?: string;
   genderLabel: string;
-  periodLabel: string;
+  periodLabel?: string;
   spheresLabel: string;
   comment: string;
   /** В диалоге сферы и комментарий не спрашиваются — не показываем их */
@@ -86,10 +86,14 @@ const SpreadSummary = ({
         <span>
           <span className="text-white/60">Пол:</span> {genderLabel}
         </span>
-        <span className="text-white/40">·</span>
-        <span>
-          <span className="text-white/60">Период:</span> {periodLabel}
-        </span>
+        {periodLabel && (
+          <>
+            <span className="text-white/40">·</span>
+            <span>
+              <span className="text-white/60">Период:</span> {periodLabel}
+            </span>
+          </>
+        )}
         {!hideTopic && (
           <>
             <span className="text-white/40">·</span>
