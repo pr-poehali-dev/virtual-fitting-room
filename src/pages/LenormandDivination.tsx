@@ -154,8 +154,8 @@ export default function LenormandDivination() {
   const [wizardDone, setWizardDone] = useState(false);
   const [divSystem, setDivSystem] = useState<"lenormand" | "tarot">("lenormand");
   const [divSpread, setDivSpread] = useState("lenormand_big9x4");
-  // Настройки диалога: сколько карт на вопрос и как берём колоду
-  const [cardsPerStep, setCardsPerStep] = useState(1);
+  // Настройка диалога: как берём колоду (число карт человек выбирает
+  // прямо при вопросе — от 1 до 6)
   const [deckMode, setDeckMode] = useState<"full" | "single">("full");
   // Вкладка раздела: обычные расклады или диалоги
   const [tab, setTab] = useState<DivTab>("spreads");
@@ -861,7 +861,6 @@ export default function LenormandDivination() {
             onContinue={(d) => {
               setDivSystem(d.system as DeckId);
               setDivSpread(d.spread);
-              setCardsPerStep(d.cards_per_step || 1);
               setDeckMode((d.deck_mode as "full" | "single") || "full");
               setResumeDialog(d);
               setWizardDone(true);
@@ -1065,31 +1064,6 @@ export default function LenormandDivination() {
                   {/* Настройки диалога — только для диалоговых раскладов */}
                   {wizardStep === 3 && activeSpread.dialog && (
                     <div className="mt-5 space-y-5">
-                      <div>
-                        <p className="mb-2 text-sm font-medium text-white">
-                          Сколько карт тянуть на один вопрос
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {[1, 2, 3, 4, 5, 6].map((n) => (
-                            <button
-                              key={n}
-                              type="button"
-                              onClick={() => setCardsPerStep(n)}
-                              className={`h-11 w-11 rounded-xl border-2 text-sm font-semibold transition ${
-                                cardsPerStep === n
-                                  ? "border-[#c9a84c] bg-[#c9a84c]/20 text-white"
-                                  : "border-white/40 text-white/80 hover:border-white"
-                              }`}
-                            >
-                              {n}
-                            </button>
-                          ))}
-                        </div>
-                        <p className="mt-1.5 text-xs text-white/70">
-                          Больше карт — подробнее ответ. Цена за вопрос не меняется.
-                        </p>
-                      </div>
-
                       <div>
                         <p className="mb-2 text-sm font-medium text-white">
                           Как берём колоду
@@ -1364,7 +1338,7 @@ export default function LenormandDivination() {
               backImage={deckBackImage}
               model={model}
               context={{ gender, period, spheres, comment: comment.trim() }}
-              cardsPerStep={cardsPerStep}
+              cardsPerStep={6}
               mode={mode}
               deckMode={deckMode}
               resumeDialog={resumeDialog}

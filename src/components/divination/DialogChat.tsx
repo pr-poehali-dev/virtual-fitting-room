@@ -132,8 +132,10 @@ const DialogChat = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spread.id, resumeDialog?.dialog_id]);
 
-  const need = Math.max(1, Math.min(cardsPerStep || 1, spread.size));
-  const ready = question.trim().length > 0 && picked.length === need;
+  // Сколько карт можно вытянуть на один вопрос (верхняя граница)
+  const maxCards = Math.max(1, Math.min(cardsPerStep || 6, spread.size));
+  // Отправить можно с любым количеством от 1 до maxCards
+  const ready = question.trim().length > 0 && picked.length >= 1;
   const stepsLeft = maxSteps - steps.length;
 
   // В режиме «одна колода» выпавшие карты больше не участвуют
@@ -145,7 +147,7 @@ const DialogChat = ({
   const shuffleDeck = () => {
     if (busy) return;
     const pool = availableCards();
-    if (pool.length < need) {
+    if (pool.length < 1) {
       toast.info("Колода закончилась — начните новый диалог");
       return;
     }
@@ -156,14 +158,14 @@ const DialogChat = ({
 
   // Реальный расклад: человек сам указывает выпавшую карту
   const pickNamedCard = (card: string) => {
-    if (busy || picked.length >= need) return;
+    if (busy || picked.length >= maxCards) return;
     if (picked.includes(card)) return;
     setPicked((p) => [...p, card]);
   };
 
   // Карта вытягивается вслепую: человек кликает по рубашке в колоде
   const drawCardAt = (index: number) => {
-    if (busy || picked.length >= need) return;
+    if (busy || picked.length >= maxCards) return;
     if (!shuffled) {
       toast.info("Сначала перемешайте карты");
       return;
@@ -193,7 +195,7 @@ const DialogChat = ({
           system: spread.deck,
           spread: spread.id,
           model,
-          cards_per_step: need,
+          cards_per_step: maxCards,
           deck_mode: deckMode,
           gender: context?.gender,
           period: context?.period,
@@ -425,7 +427,8 @@ const DialogChat = ({
           <div className="mb-3">
             <div className="mb-2 flex items-center justify-between">
               <span className={`text-sm ${divTheme.muted}`}>
-                Карты: {picked.length} из {need}
+                Вы можете вытянуть на этот вопрос от 1 до {maxCards} карт.
+                Выбрано: {picked.length}
               </span>
               {picked.length > 0 && (
                 <button
@@ -462,9 +465,9 @@ const DialogChat = ({
                 );
               })}
 
-              {picked.length < need && (
-                <div className="flex h-[104px] w-[68px] flex-col items-center justify-center rounded-lg border border-dashed border-[#c9a84c]/30 text-center text-[10px] text-[#9888b8]">
-                  Карта {picked.length + 1}
+              {picked.length < maxCards && (
+                <div className="flex h-[104px] w-[68px] flex-col items-center justify-center rounded-lg border border-dashed border-[#c9a84c]/30 px-1 text-center text-[10px] leading-tight text-[#9888b8]">
+                  {picked.length === 0 ? "Вытяните карту" : "Можно ещё"}
                 </div>
               )}
             </div>
@@ -472,7 +475,7 @@ const DialogChat = ({
 
           {/* РЕАЛЬНЫЙ расклад: карты лицом — вы уже разложили их у себя
               и просто отмечаете, что выпало. */}
-          {picked.length < need && mode === "real" && (
+          {picked.length < maxCards && mode === "real" && (
             <div className="mb-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/10">
               <p className={`mb-2 text-sm ${divTheme.muted}`}>
                 Отметьте карты, которые выпали у вас в реальном раскладе
@@ -505,7 +508,7 @@ const DialogChat = ({
           )}
 
           {/* ОНЛАЙН: колода рубашками вверх, карту тянут вслепую */}
-          {picked.length < need && mode === "online" && (
+          {picked.length < maxCards && mode === "online" && (
             <div className="mb-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/10">
               {!shuffled ? (
                 <div className="text-center">

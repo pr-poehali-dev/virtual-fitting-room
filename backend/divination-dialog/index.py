@@ -160,11 +160,11 @@ def action_start(body, user_id, event):
     if model not in pricing.ALLOWED_MODELS:
         model = pricing.DEFAULT_MODEL
 
-    # Сколько карт тянуть на один вопрос (1..6)
+    # Верхняя граница карт на один вопрос (человек тянет от 1 до неё)
     try:
-        cards_per_step = int(body.get('cards_per_step') or 1)
+        cards_per_step = int(body.get('cards_per_step') or 6)
     except (TypeError, ValueError):
-        cards_per_step = 1
+        cards_per_step = 6
     cards_per_step = max(1, min(6, cards_per_step))
 
     # Режим колоды: full — каждый вопрос из полной колоды,
@@ -252,7 +252,7 @@ def action_ask(body, user_id, event):
 
             # Сколько карт допустимо на один вопрос — задано при создании диалога
             spread = get_spread(spread_id)
-            limit = min(int(cards_per_step or 1), spread['size'])
+            limit = min(int(cards_per_step or 6), spread['size'])
             if len(cards) > limit:
                 cards = cards[:limit]
 
