@@ -143,15 +143,24 @@ def action_start(body, user_id, event):
     if model not in pricing.ALLOWED_MODELS:
         model = pricing.DEFAULT_MODEL
 
+    # Параметры из мастера — учитываются во всех ответах диалога
+    ctx = {
+        'gender': body.get('gender') or 'female',
+        'period': body.get('period') or 'now',
+        'spheres': body.get('spheres') or [],
+        'comment': (body.get('comment') or '').strip(),
+    }
+
     dialog_id = str(uuid.uuid4())
     conn = get_db()
     try:
         with conn.cursor() as cur:
             cur.execute(
                 f"""INSERT INTO {DB_SCHEMA}.divination_dialogs
-                    (id, user_id, deck, spread, model, status)
-                    VALUES (%s, %s, %s, %s, %s, 'active')""",
-                (dialog_id, user_id, system, spread_id, model),
+                    (id, user_id, deck, spread, model, status, context)
+                    VALUES (%s, %s, %s, %s, %s, 'active', %s::jsonb)""",
+                (dialog_id, user_id, system, spread_id, model,
+                 json.dumps(ctx, ensure_ascii=False)),
             )
         conn.commit()
     finally:
@@ -187,7 +196,7 @@ def action_ask(body, user_id, event):
     try:
         with conn.cursor() as cur:
             cur.execute(
-                f"""SELECT user_id, deck, spread, model, status, steps_count
+                f"""SELECT user_id, deck, spread, model, status, steps_count, context
                     FROM {DB_SCHEMA}.divination_dialogs WHERE id = %s""",
                 (dialog_id,),
             )
@@ -195,7 +204,7 @@ def action_ask(body, user_id, event):
             if not row:
                 return resp(404, {'error': 'Диалог не найден'}, event)
 
-            owner, deck, spread_id, model, status, steps_count = row
+            owner, deck, spread_id, model, status, steps_count, ctx = row
             if str(owner) != str(user_id):
                 return resp(403, {'error': 'Чужой диалог'}, event)
             if status != 'active':
@@ -256,7 +265,10 @@ def action_ask(body, user_id, event):
             )
         conn.commit()
 
-        prompt_text = build_dialog_prompt(spread_id, question, cards, history)
+        prompt_text = build_dialog_prompt(
+            spread_id, question, cards, history,
+            context=ctx if isinstance(ctx, dict) else None,
+        )
         ai_text, error = call_openrouter(model, prompt_text)
 
         with conn.cursor() as cur:

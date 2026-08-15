@@ -18,6 +18,15 @@ export interface DialogStep {
 
 interface DialogChatProps {
   spread: SpreadDef;
+  /** Рубашка колоды — по ней кликают, чтобы вытянуть карту */
+  backImage: string;
+  /** Параметры из мастера — уходят в первый вопрос как контекст */
+  context?: {
+    gender: string;
+    period: string;
+    spheres: string[];
+    comment: string;
+  };
   deckCards: string[];
   model: string;
   stepPrice: number;
@@ -42,6 +51,8 @@ const shuffle = <T,>(arr: T[]): T[] => {
  */
 const DialogChat = ({
   spread,
+  backImage,
+  context,
   deckCards,
   model,
   stepPrice,
@@ -57,6 +68,7 @@ const DialogChat = ({
   const [deck, setDeck] = useState<string[]>(() => shuffle(deckCards));
   const [busy, setBusy] = useState(false);
   const [closed, setClosed] = useState(false);
+  const [shuffled, setShuffled] = useState(false);
 
   const need = spread.size;
   const ready = question.trim().length > 0 && picked.length === need;
@@ -75,18 +87,32 @@ const DialogChat = ({
     return { res, data: await res.json() };
   };
 
-  const drawCard = () => {
+  const shuffleDeck = () => {
+    if (busy) return;
+    setDeck(shuffle(deckCards));
+    setShuffled(true);
+    toast.success("Карты перемешаны — тяните карту из колоды");
+  };
+
+  // Карта вытягивается вслепую: человек кликает по рубашке в колоде
+  const drawCardAt = (index: number) => {
     if (busy || picked.length >= need) return;
+    if (!shuffled) {
+      toast.info("Сначала перемешайте карты");
+      return;
+    }
     setDeck((d) => {
       if (!d.length) return d;
-      setPicked((p) => [...p, d[0]]);
-      return d.slice(1);
+      const i = Math.min(index, d.length - 1);
+      setPicked((p) => [...p, d[i]]);
+      return d.filter((_, k) => k !== i);
     });
   };
 
   const resetDraw = () => {
     setPicked([]);
     setDeck(shuffle(deckCards));
+    setShuffled(false);
   };
 
   const send = async () => {
@@ -100,6 +126,10 @@ const DialogChat = ({
           system: spread.deck,
           spread: spread.id,
           model,
+          gender: context?.gender,
+          period: context?.period,
+          spheres: context?.spheres,
+          comment: context?.comment,
         });
         if (!res.ok) {
           toast.error(data.error || "Не удалось начать диалог");
@@ -279,18 +309,59 @@ const DialogChat = ({
               })}
 
               {picked.length < need && (
-                <button
-                  type="button"
-                  onClick={drawCard}
-                  disabled={busy}
-                  className="flex h-[104px] w-[68px] flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-[#c9a84c]/40 bg-white/[0.04] text-[#c9a84c] transition hover:bg-white/[0.08] disabled:opacity-50"
-                >
-                  <Icon name="Plus" size={18} />
-                  <span className="text-[10px]">Тянуть</span>
-                </button>
+                <div className="flex h-[104px] w-[68px] flex-col items-center justify-center rounded-lg border border-dashed border-[#c9a84c]/30 text-center text-[10px] text-[#9888b8]">
+                  Карта {picked.length + 1}
+                </div>
               )}
             </div>
           </div>
+
+          {/* Колода рубашками вверх: карту тянут вслепую, кликая по рубашке */}
+          {picked.length < need && (
+            <div className="mb-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/10">
+              {!shuffled ? (
+                <div className="text-center">
+                  <p className={`mb-2 text-sm ${divTheme.muted}`}>
+                    Сосредоточьтесь на вопросе и перемешайте колоду
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={shuffleDeck}
+                    disabled={busy}
+                    className={divTheme.btnGhost}
+                  >
+                    <Icon name="Shuffle" size={16} className="mr-1.5" />
+                    Перемешать карты
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <p className={`mb-2 text-center text-sm ${divTheme.muted}`}>
+                    Выберите карту из колоды — она откроется только после выбора
+                  </p>
+                  <div className="flex max-h-[150px] flex-wrap justify-center gap-1 overflow-y-auto">
+                    {deck.slice(0, 40).map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => drawCardAt(i)}
+                        disabled={busy}
+                        aria-label="Вытянуть карту"
+                        className="h-[62px] w-[42px] overflow-hidden rounded border border-[#c9a84c]/30 transition hover:-translate-y-1 hover:border-[#c9a84c] disabled:opacity-50"
+                      >
+                        <img
+                          src={backImage}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center gap-2">
             <Button

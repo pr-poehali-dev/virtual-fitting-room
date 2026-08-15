@@ -6,7 +6,10 @@
 
 from .decks import get_deck
 from .spreads import get_spread
-from .prompt import ROLE_INTRO, COMMON_RULES
+from .prompt import (
+    ROLE_INTRO, COMMON_RULES,
+    PERIOD_LABELS, GENDER_LABELS, SPHERE_LABELS,
+)
 
 # Разделитель: до него — ответ человеку, после — краткая выжимка для истории
 SUMMARY_MARKER = '###КРАТКО###'
@@ -46,12 +49,34 @@ def build_history_block(history: list) -> str:
     return '\n'.join(lines)
 
 
+def build_context_block(ctx: dict) -> str:
+    """Параметры из мастера: пол, период, сферы, пожелание человека."""
+    if not ctx:
+        return ''
+    gender = GENDER_LABELS.get(ctx.get('gender'), GENDER_LABELS['female'])
+    period = PERIOD_LABELS.get(ctx.get('period'), PERIOD_LABELS['now'])
+    spheres = [SPHERE_LABELS.get(s, s) for s in (ctx.get('spheres') or [])]
+    spheres_text = ', '.join(spheres) if spheres else 'общая ситуация'
+    comment = (ctx.get('comment') or '').strip()
+
+    lines = [
+        'О человеке и запросе (задано в начале, учитывай во всех ответах):',
+        f'- гадание {gender};',
+        f'- интересующий период: {period};',
+        f'- сферы жизни: {spheres_text};',
+    ]
+    if comment:
+        lines.append(f'- дополнительное пожелание: {comment}')
+    return '\n'.join(lines)
+
+
 def build_dialog_prompt(
     spread_id: str,
     question: str,
     cards: list,
     history: list = None,
     gender: str = 'female',
+    context: dict = None,
 ) -> str:
     """Собирает промпт одного шага диалога."""
     spread = get_spread(spread_id)
@@ -77,6 +102,10 @@ def build_dialog_prompt(
         f'Сейчас шаг {step_no}. Человек задаёт вопрос и тянет карты, '
         f'ты отвечаешь, затем он уточняет дальше.',
     ]
+
+    context_block = build_context_block(context)
+    if context_block:
+        parts += ['', context_block]
 
     history_block = build_history_block(history)
     if history_block:

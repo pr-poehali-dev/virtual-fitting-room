@@ -39,6 +39,7 @@ import {
 import { divTheme } from "@/components/divination/theme";
 import SpreadTable from "@/components/divination/SpreadTable";
 import OptionGrid from "@/components/divination/OptionGrid";
+import SpreadSummary from "@/components/divination/SpreadSummary";
 import DialogChat from "@/components/divination/DialogChat";
 import { DIALOG_MAX_STEPS } from "@/config/prices";
 
@@ -750,8 +751,11 @@ export default function LenormandDivination() {
   return (
     <Layout>
       {/* Тема раздела применяется ТОЛЬКО к контентному блоку:
-          шапка сайта, боковое меню и футер остаются прежними. */}
-      <div className={`mx-auto max-w-6xl rounded-3xl px-4 py-8 sm:px-6 ${divTheme.surface}`}>
+          шапка сайта, боковое меню и футер остаются прежними.
+          Фон тянется на всю ширину области контента, чтобы тёмный блок
+          не выглядел «заплаткой» на белом. */}
+      <div className={`min-h-screen ${divTheme.surface}`}>
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="mb-8 text-center">
           <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full ${divTheme.accentSoft}`}>
             <Icon name="Sparkles" size={28} className="text-[#c9a84c]" />
@@ -1135,11 +1139,35 @@ export default function LenormandDivination() {
           {/* СВОДКА + СТОЛ РАСКЛАДА (после завершения мастера) */}
           {/* Расклады-диалоги идут отдельным сценарием: вопрос → карты → ответ */}
           {wizardDone && activeSpread.dialog && (
+            <SpreadSummary
+              mode={mode}
+              spreadTitle={activeSpread.title}
+              modelLabel={MODELS.find((m) => m.value === model)?.label || ""}
+              cost={selectedCost}
+              costSuffix=" за вопрос"
+              genderLabel={GENDERS.find((g) => g.key === gender)?.label || ""}
+              periodLabel={PERIODS.find((pd) => pd.key === period)?.label || ""}
+              spheresLabel={SPHERES.filter((sp) => spheres.includes(sp.key))
+                .map((sp) => sp.label)
+                .join(", ")}
+              comment={comment}
+              disabled={false}
+              onEdit={() => {
+                setWizardDone(false);
+                setWizardStep(0);
+              }}
+              onClearAll={clearAll}
+            />
+          )}
+
+          {wizardDone && activeSpread.dialog && (
             <DialogChat
               key={`${divSpread}-${model}`}
               spread={activeSpread}
               deckCards={deckCards}
+              backImage={deckBackImage}
               model={model}
+              context={{ gender, period, spheres, comment: comment.trim() }}
               stepPrice={selectedCost}
               maxSteps={DIALOG_MAX_STEPS}
               getCardImage={getDeckCardImage}
@@ -1220,10 +1248,10 @@ export default function LenormandDivination() {
           </Card>
 
           {/* Стол расклада — ниже на всю ширину */}
-          <Card>
+          <Card className="border-0 bg-white/[0.04] ring-1 ring-[#c9a84c]/20">
             <CardContent className="p-5">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="font-serif text-lg text-[#f3ecff]">
                   Стол расклада
                 </h2>
                 <div className="flex items-center gap-3">
@@ -1438,7 +1466,7 @@ export default function LenormandDivination() {
                 </Button>
               </div>
             </div>
-            <div className="rounded-2xl border border-purple-100 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl bg-white/[0.04] p-6 shadow-sm ring-1 ring-[#c9a84c]/20">
               <p className="mb-3 text-sm text-purple-500">{resultDate}</p>
 
               {resultLayout.length > 0 && (
@@ -1497,7 +1525,7 @@ export default function LenormandDivination() {
               onClick={() => setPrevOpen((o) => !o)}
               className="flex w-full items-center justify-between px-5 py-3 text-left"
             >
-              <span className="font-medium text-gray-900">Предыдущий расклад</span>
+              <span className="font-medium text-[#f3ecff]">Предыдущий расклад</span>
               <Icon
                 name={prevOpen ? "ChevronUp" : "ChevronDown"}
                 size={20}
@@ -1611,9 +1639,10 @@ export default function LenormandDivination() {
           </p>
         </div>
 
-        <p className="mt-6 text-center text-sm font-medium text-purple-500">
+        <p className="mt-6 text-center text-sm font-medium text-[#c9a84c]">
           fitting-room.ru
         </p>
+      </div>
       </div>
 
       {/* Скрытая копия карточки для скачивания PNG (всегда в DOM, пока есть результат) */}
