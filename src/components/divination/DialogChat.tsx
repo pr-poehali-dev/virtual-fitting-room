@@ -613,11 +613,27 @@ const DialogChat = ({
             </div>
           )}
 
+          {/* Понятно, чего не хватает для отправки */}
+          {!busy && !ready && (
+            <p className="mb-2 text-sm text-[#c9a84c]">
+              {!hasQuestion
+                ? "Напишите вопрос — без него карты не трактуем"
+                : "Выберите хотя бы одну карту"}
+            </p>
+          )}
+
           <div className="flex flex-wrap items-center gap-2">
             <Button
               size="lg"
               onClick={send}
               disabled={!ready || busy}
+              title={
+                !ready
+                  ? !hasQuestion
+                    ? "Сначала напишите вопрос"
+                    : "Выберите хотя бы одну карту"
+                  : undefined
+              }
               className={`${divTheme.btnHero} w-full disabled:opacity-50 sm:w-auto`}
             >
               {busy ? (
