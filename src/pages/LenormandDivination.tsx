@@ -773,6 +773,20 @@ export default function LenormandDivination() {
     return 1;
   };
 
+  // Можно ли уйти с текущего шага мастера дальше.
+  // Шаг «Расклад» и «Сферы» требуют явного выбора.
+  const spreadsOnTab = spreadsByDeck(divSystem as DeckId).filter((sp) =>
+    tab === "dialogs" ? sp.dialog : !sp.dialog,
+  );
+  const spreadChosen = spreadsOnTab.some((sp) => sp.id === divSpread);
+  const stepBlockReason = (() => {
+    const title = WIZARD_TITLES[wizardStep];
+    if (title === "Расклад" && !spreadChosen) return "Выберите расклад";
+    if (title === "Сферы" && spheres.length === 0)
+      return "Выберите хотя бы одну сферу";
+    return "";
+  })();
+
   const houseLocked = mode === "online" && !shuffled;
   const formDisabled = isProcessing;
 
@@ -961,9 +975,12 @@ export default function LenormandDivination() {
                       onChange={(v) => {
                         const next = v as DeckId;
                         setDivSystem(next);
-                        // Расклад всегда должен принадлежать выбранной колоде
-                        const list = spreadsByDeck(next);
-                        if (!list.some((sp) => sp.id === divSpread)) {
+                        // Расклад должен принадлежать и выбранной колоде,
+                        // и текущей вкладке (расклады / диалоги)
+                        const list = spreadsByDeck(next).filter((sp) =>
+                          tab === "dialogs" ? sp.dialog : !sp.dialog,
+                        );
+                        if (list.length && !list.some((sp) => sp.id === divSpread)) {
                           setDivSpread(list[0].id);
                           setLayout(EMPTY_LAYOUT(list[0].size));
                         }
@@ -1251,11 +1268,18 @@ export default function LenormandDivination() {
                     <Icon name="ArrowLeft" size={16} className="mr-1.5" />
                     Назад
                   </button>
+
+                  {stepBlockReason && (
+                    <span className="order-last w-full text-center text-sm text-[#e8d9a8] sm:order-none sm:w-auto">
+                      {stepBlockReason}
+                    </span>
+                  )}
                   {wizardStep === WIZARD_STEPS_COUNT - 1 ? (
                     <button
                       type="button"
                       onClick={() => setWizardDone(true)}
-                      disabled={formDisabled}
+                      disabled={formDisabled || !!stepBlockReason}
+                      title={stepBlockReason || undefined}
                       className="inline-flex items-center rounded-xl bg-gradient-to-r from-[#c9a84c] to-[#e8c252] px-6 py-2.5 text-sm font-semibold text-[#1a1030] shadow-lg transition hover:from-[#d8b75b] hover:to-[#f0cf6a] disabled:opacity-40"
                     >
                       <Icon name="Check" size={16} className="mr-1.5" />
@@ -1267,7 +1291,8 @@ export default function LenormandDivination() {
                       onClick={() =>
                         setWizardStep((s) => Math.min(WIZARD_STEPS_COUNT - 1, s + 1))
                       }
-                      disabled={formDisabled}
+                      disabled={formDisabled || !!stepBlockReason}
+                      title={stepBlockReason || undefined}
                       className="inline-flex items-center rounded-xl bg-gradient-to-r from-[#c9a84c] to-[#e8c252] px-6 py-2.5 text-sm font-semibold text-[#1a1030] shadow-lg transition hover:from-[#d8b75b] hover:to-[#f0cf6a] disabled:opacity-40"
                     >
                       Далее
