@@ -121,6 +121,10 @@ const DialogChat = ({
           (st: { cards?: string[] }) => st.cards || [],
         );
         setUsedCards(used);
+        // Продолжаем диалог с тем режимом колоды, что был у него
+        if (data.deck_mode === "single" || data.deck_mode === "full") {
+          setStepDeckMode(data.deck_mode);
+        }
         setClosed(data.status === "closed");
       } catch {
         /* тихо: продолжаем с чистого диалога */
