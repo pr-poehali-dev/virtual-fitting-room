@@ -448,7 +448,9 @@ const DialogChat = ({
             className="mb-3 min-h-[80px] border-white/15 bg-white/[0.04] text-[#e8e0f0] placeholder:text-[#9888b8]"
           />
 
-          {/* Колода для ЭТОГО вопроса: выбирается заново каждый раз */}
+          {/* Колода для ЭТОГО вопроса: выбирается заново каждый раз.
+              У первого вопроса выбора нет — колода ещё полная. */}
+          {steps.length > 0 && (
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <span className={`text-sm ${divTheme.muted}`}>Колода:</span>
             {([
@@ -476,6 +478,7 @@ const DialogChat = ({
                 : "все карты доступны"}
             </span>
           </div>
+          )}
 
           <div className="mb-3">
             <div className="mb-2 flex items-center justify-between">
