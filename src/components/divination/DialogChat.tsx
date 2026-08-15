@@ -138,11 +138,24 @@ const DialogChat = ({
   const ready = question.trim().length > 0 && picked.length >= 1;
   const stepsLeft = maxSteps - steps.length;
 
-  // В режиме «одна колода» выпавшие карты больше не участвуют
-  const availableCards = () =>
-    deckMode === "single"
+  // Режим колоды человек выбирает для КАЖДОГО вопроса заново
+  const [stepDeckMode, setStepDeckMode] = useState<"full" | "single">(deckMode);
+  // «Та же колода» — выпавшие карты больше не участвуют.
+  // «Полная колода» — колода собирается заново, отбор начинается с нуля.
+  const availableCards = (mode = stepDeckMode) =>
+    mode === "single"
       ? deckCards.filter((c) => !usedCards.includes(c))
       : deckCards;
+
+  // Смена режима до вытягивания карт: пересобираем колоду под новый режим
+  const changeStepDeckMode = (mode: "full" | "single") => {
+    if (busy || mode === stepDeckMode) return;
+    setStepDeckMode(mode);
+    if (mode === "full") setUsedCards([]);
+    setPicked([]);
+    setShuffled(false);
+    setDeck(shuffle(availableCards(mode)));
+  };
 
   const shuffleDeck = () => {
     if (busy) return;
@@ -196,7 +209,7 @@ const DialogChat = ({
           spread: spread.id,
           model,
           cards_per_step: maxCards,
-          deck_mode: deckMode,
+          deck_mode: stepDeckMode,
           gender: context?.gender,
           period: context?.period,
           spheres: context?.spheres,
@@ -265,8 +278,11 @@ const DialogChat = ({
         },
       ]);
       setQuestion("");
-      if (deckMode === "single") {
+      if (stepDeckMode === "single") {
         setUsedCards((prev) => [...prev, ...(ready.cards || [])]);
+      } else {
+        // Тянули из полной колоды — отбор начинается заново
+        setUsedCards([...(ready.cards || [])]);
       }
       setPicked([]);
       setShuffled(false);
@@ -423,6 +439,35 @@ const DialogChat = ({
             disabled={busy}
             className="mb-3 min-h-[80px] border-white/15 bg-white/[0.04] text-[#e8e0f0] placeholder:text-[#9888b8]"
           />
+
+          {/* Колода для ЭТОГО вопроса: выбирается заново каждый раз */}
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <span className={`text-sm ${divTheme.muted}`}>Колода:</span>
+            {([
+              { key: "single", label: "Та же колода", hint: "Выпавшие карты не возвращаются" },
+              { key: "full", label: "Полная колода", hint: "Колода собирается заново" },
+            ] as const).map((o) => (
+              <button
+                key={o.key}
+                type="button"
+                title={o.hint}
+                onClick={() => changeStepDeckMode(o.key)}
+                disabled={busy}
+                className={`rounded-lg px-3 py-1.5 text-xs ring-1 transition ${
+                  stepDeckMode === o.key
+                    ? "bg-[#c9a84c]/18 text-[#f3ecff] ring-[#c9a84c]/60"
+                    : "bg-white/[0.03] text-[#9888b8] ring-white/10 hover:text-[#e8e0f0]"
+                }`}
+              >
+                {o.label}
+              </button>
+            ))}
+            <span className="text-xs text-[#9888b8]">
+              {stepDeckMode === "single"
+                ? `осталось ${availableCards().length} карт`
+                : "все карты доступны"}
+            </span>
+          </div>
 
           <div className="mb-3">
             <div className="mb-2 flex items-center justify-between">
