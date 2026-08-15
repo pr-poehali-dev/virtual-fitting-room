@@ -1418,12 +1418,6 @@ export default function LenormandDivination() {
                 </div>
               </div>
 
-              {/* Выбранный способ (задаётся в мастере) */}
-              <div className="mb-4 inline-flex items-center gap-2 rounded-lg bg-[#c9a84c]/12 px-3 py-1.5 text-sm font-medium text-[#c9a84c] ring-1 ring-[#c9a84c]/30">
-                <Icon name="Sparkles" size={15} className="text-[#c9a84c]" />
-                {mode === "online" ? "Онлайн-расклад" : "Реальный расклад"}
-              </div>
-
               {/* УПРАВЛЕНИЕ И ПОДСКАЗКИ — НАД СТОЛОМ */}
               <div
                 className={`mb-4 rounded-xl border border-[#c9a84c]/20 bg-white/[0.04] p-4 ${
