@@ -97,7 +97,7 @@ const Home = () => {
       description:
         "Полный образ для невесты или жениха: наряд, обувь, украшения, аксессуары, макияж и причёска — под вашу внешность, сезон и стиль торжества. С картинкой образа",
       image:
-        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/32704c75-eaf9-42ac-8c2b-bacaaf83255e.jpg",
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/0a618c78-3d6b-407c-a4cf-a0b159ba7356.jpg",
       icon: "Heart",
       path: "/wedding-selection",
     },
