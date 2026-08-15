@@ -32,6 +32,10 @@ import {
 } from "@/data/lenormandImages";
 import { getSpread, spreadsByDeck, type DeckId } from "@/data/divination/spreads";
 import { getDeck } from "@/data/divination/decks";
+import {
+  getTarotImageByName,
+  TAROT_BACK_IMAGE as TAROT_BACK,
+} from "@/data/divination/tarotImages";
 import { divTheme } from "@/components/divination/theme";
 import SpreadTable from "@/components/divination/SpreadTable";
 import OptionGrid from "@/components/divination/OptionGrid";
@@ -101,8 +105,6 @@ const WIZARD_TITLES = [
   "Комментарий",
 ];
 const WIZARD_STEPS_COUNT = WIZARD_TITLES.length;
-const TAROT_BACK_IMAGE =
-  "https://storage.yandexcloud.net/fitting-room-images/images/tarot/000.png";
 
 type Mode = "online" | "real";
 
@@ -156,11 +158,14 @@ export default function LenormandDivination() {
   // Картинки карт есть только у колоды Ленорман. Для Таро изображение не
   // подставляем, иначе совпадающие названия (Луна, Башня, Солнце) подтянут
   // чужую картинку из колоды Ленорман.
+  // Картинка карты берётся из своей колоды: у Ленорман и Таро есть карты
+  // с одинаковыми названиями (Луна, Башня, Солнце) — их нельзя перепутать.
   const getDeckCardImage = (name: string) =>
-    divSystem === "lenormand" ? getCardImageByName(name) : undefined;
+    divSystem === "lenormand"
+      ? getCardImageByName(name)
+      : getTarotImageByName(name);
   // Рубашка колоды — своя для каждой системы карт
-  const deckBackImage =
-    divSystem === "lenormand" ? CARD_BACK_IMAGE : TAROT_BACK_IMAGE;
+  const deckBackImage = divSystem === "lenormand" ? CARD_BACK_IMAGE : TAROT_BACK;
   const selectedCost = getDivinationPrice(divSpread, model);
   // Доступность гадалки считаем по цене ВЫБРАННОГО расклада
   // (у диалогов шаг стоит дешевле полного расклада).
