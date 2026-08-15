@@ -315,10 +315,9 @@ export default function LenormandDivination() {
           return;
         }
         const meta = data.divination_meta || {};
+        // Раскладов теперь много (3, 10, 36 карт) — берём любую непустую раскладку
         const layoutArr =
-          Array.isArray(meta.layout) && meta.layout.length === 36
-            ? meta.layout
-            : [];
+          Array.isArray(meta.layout) && meta.layout.length > 0 ? meta.layout : [];
         setPrevResult(data.ai_response);
         setPrevLayout(layoutArr);
         setPrevDate(
@@ -731,6 +730,14 @@ export default function LenormandDivination() {
     });
     setActiveHouse((prev) => (prev >= spreadSize ? 0 : prev));
   }, [spreadSize]);
+
+  // Сколько колонок рисовать для готового расклада (по количеству карт)
+  const resultCols = (len: number) => {
+    if (len >= 36) return 9;
+    if (len >= 10) return 5;
+    if (len >= 3) return len;
+    return 1;
+  };
 
   const houseLocked = mode === "online" && !shuffled;
   const formDisabled = isProcessing;
@@ -1429,7 +1436,7 @@ export default function LenormandDivination() {
             <div className="rounded-2xl border border-purple-100 bg-white p-6 shadow-sm">
               <p className="mb-3 text-sm text-purple-500">{resultDate}</p>
 
-              {resultLayout.length === 36 && (
+              {resultLayout.length > 0 && (
                 <div
                   className="mb-6 overflow-x-auto rounded-2xl border border-purple-200 p-3 sm:p-4"
                   style={{
@@ -1439,7 +1446,10 @@ export default function LenormandDivination() {
                       "inset 0 0 50px rgba(124,58,237,0.18), inset 0 0 6px rgba(124,58,237,0.12)",
                   }}
                 >
-                  <div className="grid min-w-[760px] grid-cols-9 gap-1.5">
+                  <div
+                    className="grid min-w-[760px] gap-1.5"
+                    style={{ gridTemplateColumns: `repeat(${resultCols(resultLayout.length)}, minmax(0, 1fr))` }}
+                  >
                     {resultLayout.map((card, idx) =>
                       card ? (
                         <div
@@ -1525,7 +1535,7 @@ export default function LenormandDivination() {
                     <p className="mt-1 text-sm text-purple-500">{prevDate}</p>
                   </div>
 
-                  {prevLayout.length === 36 && (
+                  {prevLayout.length > 0 && (
                     <div
                       className="mb-6 overflow-x-auto rounded-2xl border border-purple-200 p-3 sm:p-4"
                       style={{
@@ -1535,7 +1545,10 @@ export default function LenormandDivination() {
                           "inset 0 0 50px rgba(124,58,237,0.18), inset 0 0 6px rgba(124,58,237,0.12)",
                       }}
                     >
-                      <div className="grid min-w-[760px] grid-cols-9 gap-1.5">
+                      <div
+                        className="grid min-w-[760px] gap-1.5"
+                        style={{ gridTemplateColumns: `repeat(${resultCols(prevLayout.length)}, minmax(0, 1fr))` }}
+                      >
                         {prevLayout.map((card, idx) =>
                           card ? (
                             <div
@@ -1624,8 +1637,9 @@ export default function LenormandDivination() {
               <p className="mt-1 text-sm text-purple-500">{resultDate}</p>
             </div>
             <div
-              className="mb-6 grid grid-cols-9 gap-1.5 rounded-2xl border border-purple-200 p-4"
+              className="mb-6 grid gap-1.5 rounded-2xl border border-purple-200 p-4"
               style={{
+                gridTemplateColumns: `repeat(${resultCols(resultLayout.length)}, minmax(0, 1fr))`,
                 background:
                   "radial-gradient(120% 100% at 50% 0%, #ede9fe 0%, #ddd6fe 55%, #c7bdf4 100%)",
                 boxShadow:
@@ -1697,10 +1711,11 @@ export default function LenormandDivination() {
               </h3>
               <p className="mt-1 text-sm text-purple-500">{prevDate}</p>
             </div>
-            {prevLayout.length === 36 && (
+            {prevLayout.length > 0 && (
               <div
-                className="mb-6 grid grid-cols-9 gap-1.5 rounded-2xl border border-purple-200 p-4"
+                className="mb-6 grid gap-1.5 rounded-2xl border border-purple-200 p-4"
                 style={{
+                  gridTemplateColumns: `repeat(${resultCols(prevLayout.length)}, minmax(0, 1fr))`,
                   background:
                     "radial-gradient(120% 100% at 50% 0%, #ede9fe 0%, #ddd6fe 55%, #c7bdf4 100%)",
                   boxShadow:
