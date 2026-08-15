@@ -8,28 +8,16 @@ import base64
 from datetime import datetime
 
 from session_utils import validate_session
-from lenormand import build_lenormand_prompt
+from lenormand import build_lenormand_prompt, normalize_spread_id
+from divination import pricing
 
 DB_SCHEMA = 't_p29007832_virtual_fitting_room'
 
-LENORMAND_COST = 50
-
-# Матрица цен расклада Ленорман по моделям (источник правды для бэкенда).
-# Цену НИКОГДА не берём с фронта — только отсюда.
-LENORMAND_PRICES = {
-    'google/gemini-2.5-flash': 50,
-    'anthropic/claude-sonnet-4.6': 100,
-    'anthropic/claude-opus-4.6': 150,
-}
-LENORMAND_MODELS = set(LENORMAND_PRICES.keys())
-DEFAULT_LENORMAND_MODEL = 'google/gemini-2.5-flash'
-
-# Короткие коды моделей для описания транзакции
-LENORMAND_MODEL_CODES = {
-    'google/gemini-2.5-flash': 'GF',
-    'anthropic/claude-sonnet-4.6': 'CS',
-    'anthropic/claude-opus-4.6': 'CO',
-}
+# Цены и модели живут в divination/pricing.py — единый источник правды.
+LENORMAND_COST = pricing.DEFAULT_COST
+LENORMAND_MODELS = pricing.ALLOWED_MODELS
+DEFAULT_LENORMAND_MODEL = pricing.DEFAULT_MODEL
+LENORMAND_MODEL_CODES = pricing.MODEL_CODES
 
 
 ALLOWED_ORIGINS = [
@@ -104,7 +92,14 @@ def handle_lenormand(event, body, cors_headers):
         model = DEFAULT_LENORMAND_MODEL
 
     meta = body.get('divination_meta') or {}
-    meta['system'] = 'lenormand'
+    # Система карт: lenormand (по умолчанию) или tarot
+    system = meta.get('system')
+    if system not in ('lenormand', 'tarot'):
+        system = 'lenormand'
+    meta['system'] = system
+    # Полный идентификатор расклада (поддерживает старый короткий формат)
+    spread_id = normalize_spread_id(meta.get('spread'), system)
+    meta['spread'] = spread_id
     layout = meta.get('layout') or []
     filled = [c for c in layout if isinstance(c, str) and c.strip()]
     if not filled:
@@ -127,7 +122,7 @@ def handle_lenormand(event, body, cors_headers):
 
                 balance = float(user_row[0])
                 unlimited_access = user_row[1]
-                model_price = LENORMAND_PRICES.get(model, LENORMAND_COST)
+                model_price = pricing.get_price(spread_id, model)
                 cost = 0 if unlimited_access else model_price
 
                 if not unlimited_access and balance < cost:

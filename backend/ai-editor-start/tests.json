@@ -51,10 +51,10 @@
       "bodyMatcher": "partial"
     },
     {
-      "name": "POST lenormand opus model without auth returns 401",
+      "name": "POST lenormand sonnet model without auth returns 401",
       "method": "POST",
       "path": "/",
-      "body": {"task_type": "lenormand", "model": "anthropic/claude-opus-4.6", "divination_meta": {"layout": ["Луна"]}},
+      "body": {"task_type": "lenormand", "model": "anthropic/claude-sonnet-4.6", "divination_meta": {"layout": ["Луна"]}},
       "expectedStatus": 401,
       "expectedBody": {"error": "string"},
       "bodyMatcher": "partial"

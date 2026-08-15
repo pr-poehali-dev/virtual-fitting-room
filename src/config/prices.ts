@@ -30,13 +30,13 @@ export const LENORMAND_AI: AiOracle[] = [
     label: "Гадалка CS — подробный",
     desc: "Подробное развёрнутое толкование",
   },
-  {
-    value: "anthropic/claude-opus-4.6",
-    code: "CO",
-    label: "Гадалка CO — глубинный",
-    desc: "Самый детальный, глубинный разбор",
-  },
 ];
+
+// Цена одного шага диалога (вопрос + карты + ответ)
+export const DIALOG_STEP_PRICES: Record<string, number> = {
+  "google/gemini-2.5-flash": 10,
+  "anthropic/claude-sonnet-4.6": 25,
+};
 
 // Матрица цен: расклад × модель (источник правды для фронта).
 // В будущем легко вынести в БД/админку без изменения вызывающего кода.
@@ -44,9 +44,20 @@ export const DIVINATION_PRICES: Record<string, Record<string, number>> = {
   lenormand_big9x4: {
     "google/gemini-2.5-flash": 50,
     "anthropic/claude-sonnet-4.6": 100,
-    "anthropic/claude-opus-4.6": 150,
   },
+  tarot_celtic10: {
+    "google/gemini-2.5-flash": 50,
+    "anthropic/claude-sonnet-4.6": 100,
+  },
+  // Расклады-диалоги: цена за ОДИН шаг (вопрос + карты + ответ)
+  lenormand_card1: DIALOG_STEP_PRICES,
+  lenormand_line3: DIALOG_STEP_PRICES,
+  tarot_card1: DIALOG_STEP_PRICES,
+  tarot_line3: DIALOG_STEP_PRICES,
 };
+
+// Максимум шагов в одном диалоге
+export const DIALOG_MAX_STEPS = 30;
 
 export const getDivinationPrice = (spread: string, model: string): number => {
   const table = DIVINATION_PRICES[spread] || {};
