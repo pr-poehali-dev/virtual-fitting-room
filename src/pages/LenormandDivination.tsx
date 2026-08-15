@@ -216,6 +216,20 @@ export default function LenormandDivination() {
   const [resultSystem, setResultSystem] = useState<string>("lenormand");
   const prevCardImage = (name: string) => cardImageFor(prevSystem, name);
   const resultCardImage = (name: string) => cardImageFor(resultSystem, name);
+  // Расклад показанного результата: заголовок и названия домов берём из него,
+  // а не из текущего выбора в форме
+  const [prevSpreadId, setPrevSpreadId] = useState<string>("lenormand_big9x4");
+  const [resultSpreadId, setResultSpreadId] = useState<string>("lenormand_big9x4");
+  // Старые расклады в базе хранились коротким именем («big9x4»)
+  const normSpreadId = (id: string, system: string) =>
+    !id ? divSpread : id.includes("_") ? id : `${system}_${id}`;
+  const spreadOf = (id: string) => getSpread(id) ?? activeSpread;
+  // Названия мест расклада: у Таро это позиции («Суть ситуации»),
+  // у Ленорман — дома («Всадник»)
+  const houseNamesOf = (system: string, id: string) =>
+    getSpread(id)?.positions ?? getDeck(system as DeckId).houseNames ?? [];
+  const houseWordOf = (system: string) =>
+    system === "tarot" ? "позиция" : "дом";
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultCardRef = useRef<HTMLDivElement>(null);
@@ -353,6 +367,9 @@ export default function LenormandDivination() {
         setPrevLayout(layoutArr);
         // Колода расклада — из его же данных, а не из текущего выбора
         setPrevSystem(meta.system === "tarot" ? "tarot" : "lenormand");
+        setPrevSpreadId(
+          normSpreadId(meta.spread || "", meta.system === "tarot" ? "tarot" : "lenormand"),
+        );
         setPrevDate(
           data.created_at
             ? new Date(data.created_at).toLocaleDateString("ru-RU", {
@@ -641,6 +658,7 @@ export default function LenormandDivination() {
           setResult(data.ai_response || "");
           setResultLayout(submittedLayout);
           setResultSystem(divSystem);
+          setResultSpreadId(divSpread);
           setResultDate(
             new Date().toLocaleDateString("ru-RU", {
               day: "numeric",
@@ -1469,7 +1487,7 @@ export default function LenormandDivination() {
               <p className="mb-4 text-sm text-[#9888b8]">
                 {mode === "online"
                   ? shuffled
-                    ? `Активный дом: ${activeHouse + 1}. ${HOUSE_NAMES[activeHouse]}. Кликните карту-рубашку в колоде под столом.`
+                    ? `Активное место: ${activeHouse + 1}. ${houseNamesOf(divSystem, divSpread)[activeHouse]}. Кликните карту-рубашку в колоде под столом.`
                     : "Перемешайте карты, чтобы начать. Колода появится под столом."
                   : "Выберите дом, затем кликните карту, которая выпала в реальном раскладе. Список карт — под столом."}
               </p>
@@ -1477,7 +1495,7 @@ export default function LenormandDivination() {
               {/* Стол расклада — геометрия берётся из реестра раскладов */}
               <SpreadTable
                 spread={activeSpread}
-                houseNames={activeDeck.houseNames}
+                houseNames={houseNamesOf(divSystem, divSpread)}
                 layout={layout}
                 activeIndex={activeHouse}
                 locked={houseLocked}
@@ -1659,7 +1677,7 @@ export default function LenormandDivination() {
                           className="rounded-md border border-[#c9a84c]/25 bg-white/[0.06] p-1.5 text-center"
                         >
                           <div className="text-[10px] leading-tight text-[#c9a84c]">
-                            {idx + 1}. дом {HOUSE_NAMES[idx]}
+                            {idx + 1}. {houseWordOf(resultSystem)} {houseNamesOf(resultSystem, resultSpreadId)[idx]}
                           </div>
                           {resultCardImage(card) && (
                             <img
@@ -1733,7 +1751,7 @@ export default function LenormandDivination() {
                 >
                   <div className="mb-4 text-center">
                     <h3 className="text-2xl font-semibold text-[#f3ecff]">
-                      Большой расклад Ленорман 9 × 4
+                      {spreadOf(prevSpreadId).title}
                     </h3>
                     <p className="mt-1 text-sm text-[#c9a84c]">{prevDate}</p>
                   </div>
@@ -1759,7 +1777,7 @@ export default function LenormandDivination() {
                               className="rounded-md border border-[#c9a84c]/25 bg-white/[0.06] p-1.5 text-center"
                             >
                               <div className="text-[10px] leading-tight text-[#c9a84c]">
-                                {idx + 1}. дом {HOUSE_NAMES[idx]}
+                                {idx + 1}. {houseWordOf(prevSystem)} {houseNamesOf(prevSystem, prevSpreadId)[idx]}
                               </div>
                               {prevCardImage(card) && (
                                 <img
@@ -1836,7 +1854,7 @@ export default function LenormandDivination() {
           >
             <div className="mb-4 text-center">
               <h3 className="text-2xl font-semibold text-purple-800">
-                Большой расклад Ленорман 9 × 4
+                {spreadOf(resultSpreadId).title}
               </h3>
               <p className="mt-1 text-sm text-purple-500">{resultDate}</p>
             </div>
@@ -1857,7 +1875,7 @@ export default function LenormandDivination() {
                     className="rounded-md border border-purple-200 bg-white/60 p-1.5 text-center"
                   >
                     <div className="text-xs text-purple-700">
-                      {idx + 1}. дом {HOUSE_NAMES[idx]}
+                      {idx + 1}. {houseWordOf(resultSystem)} {houseNamesOf(resultSystem, resultSpreadId)[idx]}
                     </div>
                     {resultCardImage(card) && (
                       <img
@@ -1911,7 +1929,7 @@ export default function LenormandDivination() {
           >
             <div className="mb-4 text-center">
               <h3 className="text-2xl font-semibold text-purple-800">
-                Большой расклад Ленорман 9 × 4
+                {spreadOf(prevSpreadId).title}
               </h3>
               <p className="mt-1 text-sm text-purple-500">{prevDate}</p>
             </div>
@@ -1933,7 +1951,7 @@ export default function LenormandDivination() {
                       className="rounded-md border border-purple-200 bg-white/60 p-1.5 text-center"
                     >
                       <div className="text-xs text-purple-700">
-                        {idx + 1}. дом {HOUSE_NAMES[idx]}
+                        {idx + 1}. {houseWordOf(prevSystem)} {houseNamesOf(prevSystem, prevSpreadId)[idx]}
                       </div>
                       {prevCardImage(card) && (
                         <img
