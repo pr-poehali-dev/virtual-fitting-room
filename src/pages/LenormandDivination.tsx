@@ -179,10 +179,11 @@ export default function LenormandDivination() {
   // чужую картинку из колоды Ленорман.
   // Картинка карты берётся из своей колоды: у Ленорман и Таро есть карты
   // с одинаковыми названиями (Луна, Башня, Солнце) — их нельзя перепутать.
-  const getDeckCardImage = (name: string) =>
-    divSystem === "lenormand"
+  const cardImageFor = (system: string, name: string) =>
+    system === "lenormand"
       ? getCardImageByName(name)
       : getTarotImageByName(name);
+  const getDeckCardImage = (name: string) => cardImageFor(divSystem, name);
   // Рубашка колоды — своя для каждой системы карт
   const deckBackImage = divSystem === "lenormand" ? CARD_BACK_IMAGE : TAROT_BACK;
   const selectedCost = getDivinationPrice(divSpread, model);
@@ -209,6 +210,12 @@ export default function LenormandDivination() {
   const [prevResult, setPrevResult] = useState<string | null>(null);
   const [prevLayout, setPrevLayout] = useState<string[]>([]);
   const [prevDate, setPrevDate] = useState<string>("");
+  // Колода сохранённого расклада: у Ленорман и Таро есть карты с одинаковыми
+  // названиями (Солнце, Луна, Башня) — иначе подставится чужая картинка.
+  const [prevSystem, setPrevSystem] = useState<string>("lenormand");
+  const [resultSystem, setResultSystem] = useState<string>("lenormand");
+  const prevCardImage = (name: string) => cardImageFor(prevSystem, name);
+  const resultCardImage = (name: string) => cardImageFor(resultSystem, name);
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultCardRef = useRef<HTMLDivElement>(null);
@@ -344,6 +351,8 @@ export default function LenormandDivination() {
           Array.isArray(meta.layout) && meta.layout.length > 0 ? meta.layout : [];
         setPrevResult(data.ai_response);
         setPrevLayout(layoutArr);
+        // Колода расклада — из его же данных, а не из текущего выбора
+        setPrevSystem(meta.system === "tarot" ? "tarot" : "lenormand");
         setPrevDate(
           data.created_at
             ? new Date(data.created_at).toLocaleDateString("ru-RU", {
@@ -631,6 +640,7 @@ export default function LenormandDivination() {
           setPrevResult(null);
           setResult(data.ai_response || "");
           setResultLayout(submittedLayout);
+          setResultSystem(divSystem);
           setResultDate(
             new Date().toLocaleDateString("ru-RU", {
               day: "numeric",
@@ -1677,9 +1687,9 @@ export default function LenormandDivination() {
                           <div className="text-[10px] leading-tight text-[#c9a84c]">
                             {idx + 1}. дом {HOUSE_NAMES[idx]}
                           </div>
-                          {getDeckCardImage(card) && (
+                          {resultCardImage(card) && (
                             <img
-                              src={getDeckCardImage(card)}
+                              src={resultCardImage(card)}
                               alt={card}
                               className="mx-auto my-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px]"
                               loading="lazy"
@@ -1777,9 +1787,9 @@ export default function LenormandDivination() {
                               <div className="text-[10px] leading-tight text-[#c9a84c]">
                                 {idx + 1}. дом {HOUSE_NAMES[idx]}
                               </div>
-                              {getDeckCardImage(card) && (
+                              {prevCardImage(card) && (
                                 <img
-                                  src={getDeckCardImage(card)}
+                                  src={prevCardImage(card)}
                                   alt={card}
                                   className="mx-auto my-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px]"
                                   loading="lazy"
@@ -1875,9 +1885,9 @@ export default function LenormandDivination() {
                     <div className="text-xs text-purple-700">
                       {idx + 1}. дом {HOUSE_NAMES[idx]}
                     </div>
-                    {getDeckCardImage(card) && (
+                    {resultCardImage(card) && (
                       <img
-                        src={getDeckCardImage(card)}
+                        src={resultCardImage(card)}
                         alt={card}
                         data-card-img="1"
                         className="mx-auto my-1 h-32 w-[82px] rounded object-contain"
@@ -1951,9 +1961,9 @@ export default function LenormandDivination() {
                       <div className="text-xs text-purple-700">
                         {idx + 1}. дом {HOUSE_NAMES[idx]}
                       </div>
-                      {getDeckCardImage(card) && (
+                      {prevCardImage(card) && (
                         <img
-                          src={getDeckCardImage(card)}
+                          src={prevCardImage(card)}
                           alt={card}
                           data-card-img="1"
                           className="mx-auto my-1 h-32 w-[82px] rounded object-contain"
