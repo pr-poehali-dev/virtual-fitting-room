@@ -514,11 +514,12 @@ const DialogChat = ({
                   </p>
                   <Button
                     type="button"
+                    size="lg"
                     onClick={shuffleDeck}
                     disabled={busy}
-                    className={divTheme.btnGhost}
+                    className={`${divTheme.btnHero} w-full sm:w-auto`}
                   >
-                    <Icon name="Shuffle" size={16} className="mr-1.5" />
+                    <Icon name="Shuffle" size={20} className="mr-2" />
                     Перемешать карты
                   </Button>
                 </div>
@@ -553,9 +554,10 @@ const DialogChat = ({
 
           <div className="flex flex-wrap items-center gap-2">
             <Button
+              size="lg"
               onClick={send}
               disabled={!ready || busy}
-              className={`${divTheme.btnPrimary} disabled:opacity-50`}
+              className={`${divTheme.btnHero} w-full disabled:opacity-50 sm:w-auto`}
             >
               {busy ? (
                 <>
@@ -568,7 +570,7 @@ const DialogChat = ({
                 </>
               ) : (
                 <>
-                  <Icon name="Send" size={16} className="mr-1.5" />
+                  <Icon name="Send" size={20} className="mr-2" />
                   Спросить за {stepPrice} &#8381;
                 </>
               )}

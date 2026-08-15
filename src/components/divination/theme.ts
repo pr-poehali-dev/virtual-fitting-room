@@ -27,6 +27,10 @@ export const divTheme = {
   // Кнопки
   btnPrimary:
     "bg-gradient-to-r from-[#c9a84c] to-[#e8c252] text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a] font-semibold shadow-lg shadow-black/25",
+  // Главное действие экрана: «Трактовать с помощью ИИ», «Спросить»,
+  // «Перемешать карты». Крупная, заметная, с золотым свечением.
+  btnHero:
+    "bg-gradient-to-r from-[#c9a84c] to-[#e8c252] text-[#1a1030] font-semibold text-base px-7 py-6 rounded-xl shadow-lg shadow-[#c9a84c]/25 ring-1 ring-[#f0cf6a]/50 transition hover:from-[#d8b75b] hover:to-[#f0cf6a] hover:shadow-xl hover:shadow-[#c9a84c]/35",
   btnGhost:
     "bg-white/5 text-[#e8e0f0] ring-1 ring-white/15 hover:bg-white/10",
 

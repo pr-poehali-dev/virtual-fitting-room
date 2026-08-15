@@ -1460,11 +1460,12 @@ export default function LenormandDivination() {
                 <div className="flex flex-wrap items-center gap-2">
                   {mode === "online" && (
                     <Button
+                      size="lg"
                       onClick={shuffleDeck}
                       disabled={formDisabled}
-                      className="flex-1 bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a] sm:flex-none"
+                      className={`${divTheme.btnHero} w-full sm:w-auto`}
                     >
-                      <Icon name="Shuffle" size={17} className="mr-1.5" />
+                      <Icon name="Shuffle" size={20} className="mr-2" />
                       Перемешать карты
                     </Button>
                   )}
@@ -1575,10 +1576,11 @@ export default function LenormandDivination() {
 
               <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                 <Button
+                  size="lg"
                   onClick={startReading}
                   disabled={isProcessing || !tableReady}
                   title={tableReady ? undefined : tableHint}
-                  className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
+                  className={`${divTheme.btnHero} w-full disabled:opacity-50 sm:w-auto`}
                 >
                   {isProcessing ? (
                     <>
@@ -1587,7 +1589,7 @@ export default function LenormandDivination() {
                     </>
                   ) : (
                     <>
-                      <Icon name="Sparkles" size={18} className="mr-2" />
+                      <Icon name="Sparkles" size={20} className="mr-2" />
                       Трактовать с помощью ИИ ({selectedCost} ₽)
                     </>
                   )}
