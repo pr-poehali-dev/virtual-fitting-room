@@ -110,7 +110,8 @@ const WIZARD_TITLES_FULL = [
   "Сферы",
   "Комментарий",
 ];
-const WIZARD_TITLES_DIALOG = WIZARD_TITLES_FULL.slice(0, 6);
+// В диалогах период не спрашиваем: горизонт задаёт сам вопрос
+const WIZARD_TITLES_DIALOG = WIZARD_TITLES_FULL.slice(0, 5);
 
 type Mode = "online" | "real";
 
@@ -1304,7 +1305,7 @@ export default function LenormandDivination() {
               deckCards={deckCards}
               backImage={deckBackImage}
               model={model}
-              context={{ gender, period, spheres, comment: comment.trim() }}
+              context={{ gender, spheres, comment: comment.trim() }}
               cardsPerStep={6}
               mode={mode}
               deckMode="full"
@@ -1345,11 +1346,15 @@ export default function LenormandDivination() {
                   <span className="text-white/60">Пол:</span>{" "}
                   {GENDERS.find((g) => g.key === gender)?.label}
                 </span>
-                <span className="text-white/40">·</span>
-                <span>
-                  <span className="text-white/60">Период:</span>{" "}
-                  {PERIODS.find((p) => p.key === period)?.label}
-                </span>
+                {!activeSpread.dialog && (
+                  <>
+                    <span className="text-white/40">·</span>
+                    <span>
+                      <span className="text-white/60">Период:</span>{" "}
+                      {PERIODS.find((p) => p.key === period)?.label}
+                    </span>
+                  </>
+                )}
                 <span className="text-white/40">·</span>
                 <span>
                   <span className="text-white/60">Сферы:</span>{" "}

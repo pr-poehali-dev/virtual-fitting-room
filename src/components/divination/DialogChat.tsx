@@ -34,7 +34,7 @@ interface DialogChatProps {
   /** Параметры из мастера — уходят в первый вопрос как контекст */
   context?: {
     gender: string;
-    period: string;
+    period?: string;
     spheres: string[];
     comment: string;
   };
