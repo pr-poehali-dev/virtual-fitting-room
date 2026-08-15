@@ -139,7 +139,9 @@ const DialogChat = ({
   // Сколько карт можно вытянуть на один вопрос (верхняя граница)
   const maxCards = Math.max(1, Math.min(cardsPerStep || 6, spread.size));
   // Отправить можно с любым количеством от 1 до maxCards
-  const ready = question.trim().length > 0 && picked.length >= 1;
+  // Тянуть карты можно, как только вопрос начали печатать
+  const hasQuestion = question.trim().length > 0;
+  const ready = hasQuestion && picked.length >= 1;
   const stepsLeft = maxSteps - steps.length;
 
   // Режим колоды человек выбирает для КАЖДОГО вопроса заново
@@ -562,14 +564,16 @@ const DialogChat = ({
               {!shuffled ? (
                 <div className="text-center">
                   <p className={`mb-2 text-sm ${divTheme.muted}`}>
-                    Сосредоточьтесь на вопросе и перемешайте колоду
+                    {hasQuestion
+                      ? "Сосредоточьтесь на вопросе и перемешайте колоду"
+                      : "Сначала напишите вопрос — потом перемешайте колоду"}
                   </p>
                   <Button
                     type="button"
                     size="lg"
                     onClick={shuffleDeck}
-                    disabled={busy}
-                    className={`${divTheme.btnHero} w-full sm:w-auto`}
+                    disabled={busy || !hasQuestion}
+                    className={`${divTheme.btnHero} w-full sm:w-auto disabled:opacity-40`}
                   >
                     <Icon name="Shuffle" size={20} className="mr-2" />
                     Перемешать карты
