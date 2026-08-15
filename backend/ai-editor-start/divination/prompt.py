@@ -64,9 +64,15 @@ def build_cards_block(spread: dict, deck: dict, layout: list) -> str:
         parts = [f'{i + 1}.']
         if grid and grid.get('cols'):
             cols = grid['cols']
-            row = i // cols + 1
-            col = i % cols + 1
-            if grid.get('rows', 1) > 1 or cols > 1:
+            rows = grid.get('rows', 1)
+            tail = grid.get('tail', 0)
+            main_count = cols * rows
+            if tail and i >= main_count:
+                # Карты нижней отдельной строки
+                parts.append(f'нижний ряд, место {i - main_count + 1} —')
+            elif rows > 1 or cols > 1:
+                row = i // cols + 1
+                col = i % cols + 1
                 parts.append(f'ряд {row}, столбец {col} —')
         if positions and i < len(positions):
             parts.append(f'позиция «{positions[i]}» —')

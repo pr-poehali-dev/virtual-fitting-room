@@ -11,7 +11,7 @@ export interface SpreadDef {
   title: string;
   short: string;
   size: number;
-  grid: { cols: number; rows: number } | null;
+  grid: { cols: number; rows: number; tail?: number } | null;
   positions?: string[];
   /** Расклад-диалог: вопрос → карты → ответ → уточняющий вопрос */
   dialog?: boolean;
@@ -27,6 +27,15 @@ export const SPREADS: SpreadDef[] = [
     size: 36,
     grid: { cols: 9, rows: 4 },
     icon: "LayoutGrid",
+  },
+  {
+    id: "lenormand_big8x4plus4",
+    deck: "lenormand",
+    title: "Большой расклад 8×4 + 4",
+    short: "36 карт: поле 8×4 и 4 итоговые карты внизу",
+    size: 36,
+    grid: { cols: 8, rows: 4, tail: 4 },
+    icon: "Grid2x2",
   },
   {
     id: "lenormand_line3",

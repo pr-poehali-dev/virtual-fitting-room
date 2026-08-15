@@ -45,6 +45,10 @@ export const DIVINATION_PRICES: Record<string, Record<string, number>> = {
     "google/gemini-2.5-flash": 50,
     "anthropic/claude-sonnet-4.6": 100,
   },
+  lenormand_big8x4plus4: {
+    "google/gemini-2.5-flash": 50,
+    "anthropic/claude-sonnet-4.6": 100,
+  },
   tarot_celtic10: {
     "google/gemini-2.5-flash": 50,
     "anthropic/claude-sonnet-4.6": 100,
