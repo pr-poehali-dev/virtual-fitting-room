@@ -13,6 +13,8 @@ export interface SpreadDef {
   size: number;
   grid: { cols: number; rows: number; tail?: number } | null;
   positions?: string[];
+  /** Толковать можно только при полностью выложенном столе */
+  requireFull?: boolean;
   /** Сколько карт можно выбрать (для диалогов) */
   flexible?: { min: number; max: number };
   /** Расклад-диалог: вопрос → карты → ответ → уточняющий вопрос */
@@ -28,6 +30,7 @@ export const SPREADS: SpreadDef[] = [
     short: "36 карт, полная картина жизни",
     size: 36,
     grid: { cols: 9, rows: 4 },
+    requireFull: true,
     icon: "LayoutGrid",
   },
   {
@@ -37,6 +40,7 @@ export const SPREADS: SpreadDef[] = [
     short: "36 карт: поле 8×4 и 4 итоговые карты внизу",
     size: 36,
     grid: { cols: 8, rows: 4, tail: 4 },
+    requireFull: true,
     icon: "Grid2x2",
   },
   {

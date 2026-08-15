@@ -544,7 +544,14 @@ export default function LenormandDivination() {
 
   const startReading = useCallback(async () => {
     if (filledCount === 0) {
-      toast.error("Выберите хотя бы одну карту в раскладе");
+      toast.error("Выложите хотя бы одну карту в раскладе");
+      return;
+    }
+    // Большой расклад читается только целиком
+    if (activeSpread.requireFull && filledCount < spreadSize) {
+      toast.error(
+        `Для этого расклада нужно выложить все ${spreadSize} карт. Сейчас ${filledCount}.`,
+      );
       return;
     }
 
@@ -605,7 +612,7 @@ export default function LenormandDivination() {
       setIsProcessing(false);
       toast.error("Ошибка соединения");
     }
-  }, [filledCount, period, gender, spheres, comment, model, layout, navigate, refreshBalance, selectedCost, divSystem, divSpread]);
+  }, [filledCount, period, gender, spheres, comment, model, layout, navigate, refreshBalance, selectedCost, divSystem, divSpread, activeSpread, spreadSize]);
 
   const pollStatus = (taskId: string, submittedLayout: string[]) => {
     let elapsed = 0;
@@ -786,6 +793,16 @@ export default function LenormandDivination() {
       return "Выберите хотя бы одну сферу";
     return "";
   })();
+
+  // Большие расклады (9x4, 8x4+4) читаются только целиком:
+  // цепочки по рядам и столбцам без полной выкладки не работают.
+  const needFullTable = activeSpread.requireFull === true;
+  const tableReady = needFullTable
+    ? filledCount === spreadSize
+    : filledCount > 0;
+  const tableHint = needFullTable
+    ? `Выложите все ${spreadSize} карт — заполнено ${filledCount}`
+    : "Выложите хотя бы одну карту";
 
   const houseLocked = mode === "online" && !shuffled;
   const formDisabled = isProcessing;
@@ -1555,10 +1572,11 @@ export default function LenormandDivination() {
                 </div>
               )}
 
-              <div className="mt-6 flex items-center gap-3">
+              <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                 <Button
                   onClick={startReading}
-                  disabled={isProcessing}
+                  disabled={isProcessing || !tableReady}
+                  title={tableReady ? undefined : tableHint}
                   className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
                 >
                   {isProcessing ? (
@@ -1569,10 +1587,14 @@ export default function LenormandDivination() {
                   ) : (
                     <>
                       <Icon name="Sparkles" size={18} className="mr-2" />
-                      Разложить ({selectedCost} ₽)
+                      Трактовать с помощью ИИ ({selectedCost} ₽)
                     </>
                   )}
                 </Button>
+
+                {!tableReady && !isProcessing && (
+                  <span className="text-sm text-[#e8d9a8]">{tableHint}</span>
+                )}
               </div>
             </CardContent>
           </Card>
