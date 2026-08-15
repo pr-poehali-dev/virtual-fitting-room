@@ -406,11 +406,11 @@ const DialogChat = ({
       ) : (
         <div className={`${divTheme.panel} p-4 sm:p-5`}>
           <div className="mb-3 flex items-center justify-between gap-2">
-            <span className={`text-sm ${divTheme.muted}`}>
+            <h3 className={`font-serif text-lg ${divTheme.title}`}>
               {steps.length === 0
                 ? "Задайте вопрос картам"
                 : `Уточняющий вопрос ${steps.length + 1}`}
-            </span>
+            </h3>
             <span className="text-sm font-semibold text-[#c9a84c]">
               {stepPrice} &#8381; за вопрос
             </span>
