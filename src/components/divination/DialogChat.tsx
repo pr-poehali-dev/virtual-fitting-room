@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { divTheme } from "./theme";
 import { downloadDialogText } from "./SavedDialogs";
 import type { SpreadDef } from "@/data/divination/spreads";
+import { playReadySound } from "@/components/selection/selectionUtils";
 
 const DIVINATION_DIALOG =
   "https://functions.poehali.dev/336075f7-e6e8-4cd9-bfd5-80e6e23e187a";
@@ -285,6 +286,8 @@ const DialogChat = ({
         return;
       }
 
+      // Ответа ждут — зовём звуком, если вкладка свёрнута
+      playReadySound();
       setSteps((prev) => [
         ...prev,
         {

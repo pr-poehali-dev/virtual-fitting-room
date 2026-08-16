@@ -9,6 +9,7 @@ import LockedFormOverlay from "@/components/LockedFormOverlay";
 import { useAuth } from "@/context/AuthContext";
 import { useBalance } from "@/context/BalanceContext";
 import { useNavigate } from "react-router-dom";
+import { playReadySound } from "@/components/selection/selectionUtils";
 import {
   LENORMAND_AI,
   LENORMAND_SPREAD,
@@ -728,6 +729,8 @@ export default function LenormandDivination() {
           );
           setDownloaded(false);
           refreshBalance();
+          // Расклад считается долго — зовём звуком, если вкладка свёрнута
+          playReadySound();
           toast.success("Расклад готов!");
           setTimeout(() => {
             resultCardRef.current?.scrollIntoView({
