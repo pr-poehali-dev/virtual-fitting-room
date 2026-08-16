@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -23,8 +23,14 @@ export default function Register() {
   const [captchaValid, setCaptchaValid] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [acceptedPersonalData, setAcceptedPersonalData] = useState(false);
-  const { register } = useAuth();
+  const { register, user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Человек уже вошёл — форма ему не нужна: в шапке его аватар, и вид
+  // «Войдите в аккаунт» пугает, будто из аккаунта выкинуло
+  useEffect(() => {
+    if (!authLoading && user) navigate('/profile', { replace: true });
+  }, [authLoading, user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +78,9 @@ export default function Register() {
       setIsLoading(false);
     }
   };
+
+  // Пока идёт проверка или уже переходим в кабинет — форму не мигаем
+  if (authLoading || user) return null;
 
   return (
     <Layout>
