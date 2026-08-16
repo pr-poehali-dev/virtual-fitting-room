@@ -4,7 +4,7 @@ import Icon from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { divTheme } from "./theme";
-import { downloadDialogText } from "./SavedDialogs";
+import { downloadDialogText, shareDialogText } from "./SavedDialogs";
 import type { SpreadDef } from "@/data/divination/spreads";
 import { playReadySound } from "@/components/selection/selectionUtils";
 
@@ -398,8 +398,16 @@ const DialogChat = ({
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
-              onClick={downloadThis}
+              onClick={() => dialogId && shareDialogText(dialogId)}
               className={divTheme.btnPrimary}
+              size="sm"
+            >
+              <Icon name="Share2" size={15} className="mr-1.5" />
+              Поделиться беседой
+            </Button>
+            <Button
+              onClick={downloadThis}
+              className={divTheme.btnGhost}
               size="sm"
             >
               <Icon name="Download" size={15} className="mr-1.5" />
@@ -432,6 +440,30 @@ const DialogChat = ({
           <p className={`mt-1 text-sm ${divTheme.muted}`}>
             Задано вопросов: {steps.length}
           </p>
+          {/* Из закрытых хранится только последний — даём унести беседу с собой */}
+          <p className="mx-auto mt-3 max-w-md text-sm text-[#e8d9a8]">
+            Сохраняется только последняя закрытая беседа — поделитесь ею, чтобы
+            не потерять.
+          </p>
+          <div className="mt-3 flex flex-wrap justify-center gap-2">
+            <Button
+              size="sm"
+              onClick={() => dialogId && shareDialogText(dialogId)}
+              className={divTheme.btnPrimary}
+            >
+              <Icon name="Share2" size={15} className="mr-1.5" />
+              Поделиться беседой
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={downloadThis}
+              className={divTheme.btnGhost}
+            >
+              <Icon name="Download" size={15} className="mr-1.5" />
+              Скачать
+            </Button>
+          </div>
         </div>
       ) : stepsLeft <= 0 ? (
         <div className={`${divTheme.panel} p-5 text-center`}>

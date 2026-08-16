@@ -41,15 +41,15 @@ export const dialogApi = async (payload: Record<string, unknown>) => {
   return { res, data: await res.json() };
 };
 
-/** Собирает беседу в текстовый файл и скачивает. */
-export const downloadDialogText = async (dialogId: string) => {
+/** Забирает беседу с сервера и собирает её в готовый текст. */
+const buildDialogText = async (dialogId: string) => {
   const { res, data } = await dialogApi({
     action: "history",
     dialog_id: dialogId,
   });
   if (!res.ok) {
     toast.error(data.error || "Не удалось получить беседу");
-    return;
+    return null;
   }
 
   const lines: string[] = [
@@ -75,24 +75,53 @@ export const downloadDialogText = async (dialogId: string) => {
 
   lines.push("fitting-room.ru");
 
+  const deckName = data.system === "tarot" ? "Таро" : "Ленорман";
+  const stamp = new Date().toLocaleDateString("ru-RU").replace(/\./g, "-");
+  return {
+    text: lines.join("\r\n"),
+    fileName: `Гадание-${deckName}-${stamp}.txt`,
+  };
+};
+
+/** Собирает беседу в текстовый файл и скачивает. */
+export const downloadDialogText = async (dialogId: string) => {
+  const built = await buildDialogText(dialogId);
+  if (!built) return;
+
   // \uFEFF (BOM) — метка UTF-8 в начале файла. Без неё «Блокнот» на Android
   // и Windows считает текст кириллицей-1251 и показывает кракозябры.
-  // \r\n — перенос строки, понятный всем просмотрщикам, включая мобильные.
-  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], {
+  const blob = new Blob(["\uFEFF" + built.text], {
     type: "text/plain;charset=utf-8",
   });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  // Имя по-русски и с датой — файл легко найти в «Загрузках» телефона
-  const deckName = data.system === "tarot" ? "Таро" : "Ленорман";
-  const stamp = new Date()
-    .toLocaleDateString("ru-RU")
-    .replace(/\./g, "-");
-  a.download = `Гадание-${deckName}-${stamp}.txt`;
+  a.download = built.fileName;
   a.click();
   URL.revokeObjectURL(url);
   toast.success(`Сохранено в «Загрузки»: ${a.download}`);
+};
+
+/**
+ * Отправляет беседу ТЕКСТОМ: на телефоне открывается системное «Поделиться»
+ * и текст уходит прямо в мессенджер, на компьютере — копируется в буфер.
+ */
+export const shareDialogText = async (dialogId: string) => {
+  const built = await buildDialogText(dialogId);
+  if (!built) return;
+
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: "Моё гадание", text: built.text });
+      return;
+    }
+    await navigator.clipboard.writeText(built.text);
+    toast.success("Беседа скопирована — вставьте её в сообщение");
+  } catch (e) {
+    // Человек мог сам закрыть окно «Поделиться» — это не ошибка
+    if ((e as Error)?.name === "AbortError") return;
+    toast.error("Не удалось поделиться беседой");
+  }
 };
 
 const formatDate = (iso: string | null) =>
@@ -237,6 +266,15 @@ const SavedDialogs = ({ reloadKey = 0, onContinue }: SavedDialogsProps) => {
                   >
                     <Icon name="BookOpen" size={15} className="mr-1.5" />
                     Читать беседу
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => shareDialogText(d.dialog_id)}
+                    className={divTheme.btnGhost}
+                  >
+                    <Icon name="Share2" size={15} className="mr-1.5" />
+                    Поделиться
                   </Button>
                   <Button
                     size="sm"

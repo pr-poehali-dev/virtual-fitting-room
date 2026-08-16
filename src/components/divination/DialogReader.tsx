@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import Icon from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { divTheme } from "./theme";
-import { dialogApi, downloadDialogText } from "./SavedDialogs";
+import { dialogApi, downloadDialogText, shareDialogText } from "./SavedDialogs";
 
 interface ReadStep {
   step_no: number;
@@ -120,8 +120,17 @@ const DialogReader = ({ dialogId, onClose }: DialogReaderProps) => {
         <div className="mt-5 flex flex-wrap gap-2">
           <Button
             size="sm"
-            onClick={() => downloadDialogText(dialogId)}
+            onClick={() => shareDialogText(dialogId)}
             className={divTheme.btnPrimary}
+          >
+            <Icon name="Share2" size={15} className="mr-1.5" />
+            Поделиться
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => downloadDialogText(dialogId)}
+            className={divTheme.btnGhost}
           >
             <Icon name="Download" size={15} className="mr-1.5" />
             Скачать беседу
