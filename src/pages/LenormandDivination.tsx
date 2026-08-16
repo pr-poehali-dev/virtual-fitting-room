@@ -809,6 +809,61 @@ export default function LenormandDivination() {
     }
   };
 
+  // Отправка расклада картинкой в мессенджер: на телефоне открывается
+  // системное «Поделиться», на компьютере — просто сохраняем картинку.
+  const shareReading = async (
+    node: HTMLDivElement | null,
+    markDownloaded = false,
+  ) => {
+    if (!node) return;
+    try {
+      await inlineCardImages(node);
+      await waitForImages(node);
+      const html2canvas = await loadHtml2Canvas();
+      const canvas = await html2canvas(node, {
+        backgroundColor: "#faf7ff",
+        scale: 2,
+        useCORS: true,
+        imageTimeout: 15000,
+      });
+      const blob: Blob | null = await new Promise((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/png"),
+      );
+      if (!blob) throw new Error("no blob");
+
+      const file = new File([blob], `raskad-${Date.now()}.png`, {
+        type: "image/png",
+      });
+      const nav = navigator as Navigator & {
+        canShare?: (data: { files: File[] }) => boolean;
+        share?: (data: { files?: File[]; title?: string; text?: string }) => Promise<void>;
+      };
+
+      if (nav.canShare?.({ files: [file] }) && nav.share) {
+        await nav.share({
+          files: [file],
+          title: "Мой расклад",
+          text: "Толкование расклада",
+        });
+        if (markDownloaded) setDownloaded(true);
+        return;
+      }
+
+      // Без системного «Поделиться» просто сохраняем — результат не теряется
+      const link = document.createElement("a");
+      link.download = file.name;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      URL.revokeObjectURL(link.href);
+      if (markDownloaded) setDownloaded(true);
+      toast.success("Картинка сохранена — можно отправить из «Загрузок»");
+    } catch (e) {
+      // Пользователь мог сам закрыть окно «Поделиться» — это не ошибка
+      if ((e as Error)?.name === "AbortError") return;
+      toast.error("Не удалось поделиться раскладом");
+    }
+  };
+
   // Скачивание/копирование для «предыдущего расклада из базы»
   const downloadPrevPng = async () => {
     if (!dbPrevCardRef.current) return;
@@ -1715,6 +1770,29 @@ export default function LenormandDivination() {
                 </Button>
               </div>
             </div>
+            {/* Расклад хранится только один — предупреждаем заранее и даём
+                отправить его себе, пока он не заменён следующим */}
+            <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-[#c9a84c]/40 bg-[#c9a84c]/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-2.5">
+                <Icon
+                  name="TriangleAlert"
+                  size={20}
+                  className="mt-0.5 shrink-0 text-[#c9a84c]"
+                />
+                <p className="text-sm text-[#e8d9a8]">
+                  Сохраняется только последний расклад — следующий заменит этот.
+                  Поделитесь им или скачайте, чтобы не потерять.
+                </p>
+              </div>
+              <Button
+                onClick={() => shareReading(prevCardRef.current, true)}
+                className="shrink-0 bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
+              >
+                <Icon name="Share2" size={16} className="mr-1.5" />
+                Поделиться раскладом
+              </Button>
+            </div>
+
             <div className="rounded-2xl bg-white/[0.04] p-6 shadow-sm ring-1 ring-[#c9a84c]/20">
               <p className="mb-3 text-sm text-[#c9a84c]">{resultDate}</p>
 
@@ -1791,15 +1869,23 @@ export default function LenormandDivination() {
                     Рекомендуем скачать картинку или скопировать текст к себе.
                   </span>
                 </div>
-                <div className="mb-3 flex gap-2">
+                <div className="mb-3 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => shareReading(dbPrevCardRef.current)}
+                    className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
+                  >
+                    <Icon name="Share2" size={16} className="mr-1" /> Поделиться
+                  </Button>
                   <Button variant="ghost"
                     className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white" size="sm" onClick={copyPrevText}>
                     <Icon name="Copy" size={16} className="mr-1" /> Скопировать
                   </Button>
                   <Button
                     size="sm"
+                    variant="ghost"
                     onClick={downloadPrevPng}
-                    className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
+                    className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
                   >
                     <Icon name="Download" size={16} className="mr-1" /> Скачать PNG
                   </Button>

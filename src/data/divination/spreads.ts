@@ -86,6 +86,8 @@ export const SPREADS: SpreadDef[] = [
       "Надежды и опасения",
       "Чем дело кончится",
     ],
+    // Крест читается только целиком: связи 1-2-6-10 без полной выкладки не работают
+    requireFull: true,
     shape: "celtic",
     icon: "Cross",
   },
