@@ -44,7 +44,10 @@ import SpreadTable from "@/components/divination/SpreadTable";
 import OptionGrid from "@/components/divination/OptionGrid";
 import SpreadSummary from "@/components/divination/SpreadSummary";
 import DivinationTabs, { type DivTab } from "@/components/divination/DivinationTabs";
-import SavedDialogs, { type SavedDialog } from "@/components/divination/SavedDialogs";
+import SavedDialogs, {
+  isMobileDevice,
+  type SavedDialog,
+} from "@/components/divination/SavedDialogs";
 import DialogChat from "@/components/divination/DialogChat";
 import { DIALOG_MAX_STEPS } from "@/config/prices";
 
@@ -840,7 +843,7 @@ export default function LenormandDivination() {
         share?: (data: { files?: File[]; title?: string; text?: string }) => Promise<void>;
       };
 
-      if (nav.canShare?.({ files: [file] }) && nav.share) {
+      if (isMobileDevice() && nav.canShare?.({ files: [file] }) && nav.share) {
         await nav.share({
           files: [file],
           title: "Мой расклад",
@@ -1784,15 +1787,21 @@ export default function LenormandDivination() {
                 />
                 <p className="text-sm text-[#e8d9a8]">
                   Сохраняется только последний расклад — следующий заменит этот.
-                  Поделитесь им или скачайте, чтобы не потерять.
+                  {isMobileDevice()
+                    ? " Поделитесь им или скачайте, чтобы не потерять."
+                    : " Сохраните картинку, чтобы не потерять."}
                 </p>
               </div>
               <Button
                 onClick={() => shareReading(prevCardRef.current, true)}
                 className="shrink-0 bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
               >
-                <Icon name="Share2" size={16} className="mr-1.5" />
-                Поделиться раскладом
+                <Icon
+                  name={isMobileDevice() ? "Share2" : "Download"}
+                  size={16}
+                  className="mr-1.5"
+                />
+                {isMobileDevice() ? "Поделиться раскладом" : "Сохранить картинку"}
               </Button>
             </div>
 
@@ -1874,22 +1883,28 @@ export default function LenormandDivination() {
                 </div>
                 <div className="mb-3 flex flex-wrap gap-2">
                   <ReadAloud text={prevResult} compact />
-                  <Button
-                    size="sm"
-                    onClick={() => shareReading(dbPrevCardRef.current)}
-                    className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
-                  >
-                    <Icon name="Share2" size={16} className="mr-1" /> Поделиться
-                  </Button>
+                  {isMobileDevice() && (
+                    <Button
+                      size="sm"
+                      onClick={() => shareReading(dbPrevCardRef.current)}
+                      className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
+                    >
+                      <Icon name="Share2" size={16} className="mr-1" /> Поделиться
+                    </Button>
+                  )}
                   <Button variant="ghost"
                     className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white" size="sm" onClick={copyPrevText}>
                     <Icon name="Copy" size={16} className="mr-1" /> Скопировать
                   </Button>
                   <Button
                     size="sm"
-                    variant="ghost"
+                    variant={isMobileDevice() ? "ghost" : "default"}
                     onClick={downloadPrevPng}
-                    className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
+                    className={
+                      isMobileDevice()
+                        ? "bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
+                        : "bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
+                    }
                   >
                     <Icon name="Download" size={16} className="mr-1" /> Скачать PNG
                   </Button>

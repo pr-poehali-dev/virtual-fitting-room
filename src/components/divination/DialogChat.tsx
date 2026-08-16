@@ -5,7 +5,11 @@ import Icon from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { divTheme } from "./theme";
-import { downloadDialogText, shareDialogText } from "./SavedDialogs";
+import {
+  downloadDialogText,
+  isMobileDevice,
+  shareDialogText,
+} from "./SavedDialogs";
 import type { SpreadDef } from "@/data/divination/spreads";
 import { playReadySound } from "@/components/selection/selectionUtils";
 import ReadAloud from "./ReadAloud";
@@ -409,8 +413,12 @@ const DialogChat = ({
               className={divTheme.btnPrimary}
               size="sm"
             >
-              <Icon name="Share2" size={15} className="mr-1.5" />
-              Поделиться беседой
+              <Icon
+                name={isMobileDevice() ? "Share2" : "Copy"}
+                size={15}
+                className="mr-1.5"
+              />
+              {isMobileDevice() ? "Поделиться беседой" : "Скопировать беседу"}
             </Button>
             <Button
               onClick={downloadThis}
@@ -450,7 +458,7 @@ const DialogChat = ({
           </p>
           {/* Из закрытых хранится только последний — даём унести беседу с собой */}
           <p className="mx-auto mt-3 max-w-md text-sm text-[#e8d9a8]">
-            Сохраняется только последняя закрытая беседа — поделитесь ею, чтобы
+            Сохраняется только последняя закрытая беседа — сохраните её, чтобы
             не потерять.
           </p>
           <div className="mt-3 flex flex-wrap justify-center gap-2">
@@ -459,8 +467,12 @@ const DialogChat = ({
               onClick={() => dialogId && shareDialogText(dialogId)}
               className={divTheme.btnPrimary}
             >
-              <Icon name="Share2" size={15} className="mr-1.5" />
-              Поделиться беседой
+              <Icon
+                name={isMobileDevice() ? "Share2" : "Copy"}
+                size={15}
+                className="mr-1.5"
+              />
+              {isMobileDevice() ? "Поделиться беседой" : "Скопировать беседу"}
             </Button>
             <Button
               size="sm"

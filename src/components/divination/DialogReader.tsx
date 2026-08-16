@@ -4,7 +4,12 @@ import { toast } from "sonner";
 import Icon from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { divTheme } from "./theme";
-import { dialogApi, downloadDialogText, shareDialogText } from "./SavedDialogs";
+import {
+  dialogApi,
+  downloadDialogText,
+  isMobileDevice,
+  shareDialogText,
+} from "./SavedDialogs";
 import ReadAloud from "./ReadAloud";
 
 interface ReadStep {
@@ -150,8 +155,12 @@ const DialogReader = ({ dialogId, onClose }: DialogReaderProps) => {
             onClick={() => shareDialogText(dialogId)}
             className={divTheme.btnPrimary}
           >
-            <Icon name="Share2" size={15} className="mr-1.5" />
-            Поделиться
+            <Icon
+              name={isMobileDevice() ? "Share2" : "Copy"}
+              size={15}
+              className="mr-1.5"
+            />
+            {isMobileDevice() ? "Поделиться" : "Скопировать"}
           </Button>
           <Button
             size="sm"

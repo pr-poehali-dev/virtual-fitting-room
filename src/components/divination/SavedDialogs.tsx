@@ -41,6 +41,16 @@ export const dialogApi = async (payload: Record<string, unknown>) => {
   return { res, data: await res.json() };
 };
 
+/**
+ * Телефон или планшет? На компьютере системное «Поделиться» открывает
+ * окно Windows с плитками приложений — оно пугает и почти бесполезно,
+ * поэтому там просто сохраняем файл или копируем текст.
+ */
+export const isMobileDevice = () =>
+  typeof navigator !== "undefined" &&
+  (navigator.maxTouchPoints || 0) > 0 &&
+  /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+
 /** Забирает беседу с сервера и собирает её в готовый текст. */
 const buildDialogText = async (dialogId: string) => {
   const { res, data } = await dialogApi({
@@ -111,7 +121,7 @@ export const shareDialogText = async (dialogId: string) => {
   if (!built) return;
 
   try {
-    if (navigator.share) {
+    if (isMobileDevice() && navigator.share) {
       await navigator.share({ title: "Моё гадание", text: built.text });
       return;
     }
@@ -273,8 +283,12 @@ const SavedDialogs = ({ reloadKey = 0, onContinue }: SavedDialogsProps) => {
                     onClick={() => shareDialogText(d.dialog_id)}
                     className={divTheme.btnGhost}
                   >
-                    <Icon name="Share2" size={15} className="mr-1.5" />
-                    Поделиться
+                    <Icon
+                      name={isMobileDevice() ? "Share2" : "Copy"}
+                      size={15}
+                      className="mr-1.5"
+                    />
+                    {isMobileDevice() ? "Поделиться" : "Скопировать"}
                   </Button>
                   <Button
                     size="sm"
