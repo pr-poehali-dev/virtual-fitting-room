@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import Icon from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
@@ -56,19 +57,28 @@ const DialogReader = ({ dialogId, onClose }: DialogReaderProps) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    // Пока читаем беседу, страница под окном не должна ехать
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
   }, [onClose]);
 
-  return (
+  // Рисуем окно в корне страницы: внутри блока с размытием фона
+  // оно «запирается» и получает собственный маленький скролл
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 z-[100] flex items-stretch justify-center bg-black/80 p-0 sm:items-center sm:p-6"
       onClick={onClose}
     >
       <div
-        className={`${divTheme.panel} my-auto w-full max-w-2xl p-5 sm:p-6`}
+        className="flex h-full w-full flex-col overflow-hidden bg-[#1a1030] shadow-2xl ring-1 ring-[#c9a84c]/30 sm:h-auto sm:max-h-[88vh] sm:max-w-3xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-start justify-between gap-3">
+        {/* Шапка закреплена: заголовок и крестик всегда на виду */}
+        <div className="flex items-start justify-between gap-3 border-b border-[#c9a84c]/20 bg-[#241845] p-5 sm:p-6">
           <div>
             <h3 className="font-serif text-xl text-[#f3ecff]">
               Беседа с картами
@@ -88,6 +98,8 @@ const DialogReader = ({ dialogId, onClose }: DialogReaderProps) => {
           </button>
         </div>
 
+        {/* Прокручивается только текст беседы, шапка и кнопки на месте */}
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6">
         {loading ? (
           <p className={`py-8 text-center text-sm ${divTheme.muted}`}>
             Открываю беседу…
@@ -110,15 +122,17 @@ const DialogReader = ({ dialogId, onClose }: DialogReaderProps) => {
                     Выпали карты: {s.cards.join(", ")}
                   </p>
                 )}
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#e8e0f0]">
+                <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-[#e8e0f0]">
                   {s.answer}
                 </p>
               </div>
             ))}
           </div>
         )}
+        </div>
 
-        <div className="mt-5 flex flex-wrap gap-2">
+        {/* Кнопки закреплены внизу — не надо докручивать до конца беседы */}
+        <div className="flex flex-wrap gap-2 border-t border-[#c9a84c]/20 bg-[#241845] p-4 sm:p-5">
           {/* Слушать всю беседу подряд: вопрос — ответ — следующий вопрос */}
           {steps.length > 0 && (
             <ReadAloud
@@ -158,7 +172,8 @@ const DialogReader = ({ dialogId, onClose }: DialogReaderProps) => {
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

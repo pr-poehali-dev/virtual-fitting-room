@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import Icon from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
@@ -382,8 +383,8 @@ const DialogChat = ({
 
       {/* Спрашиваем поверх страницы: кнопка «Закрыть диалог» внизу, и врезка
           в потоке уезжала за экран — человек не видел, что у него спросили */}
-      {confirmClose && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      {confirmClose && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
         <div className={`${divTheme.panel} max-h-[90vh] w-full max-w-md overflow-y-auto p-5`}>
           <div className="mb-3 flex items-start gap-2">
             <Icon
@@ -432,7 +433,8 @@ const DialogChat = ({
             </Button>
           </div>
         </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {closed ? (
