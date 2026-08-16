@@ -14,6 +14,8 @@ interface SpreadSummaryProps {
   comment: string;
   /** В диалоге сферы и комментарий не спрашиваются — не показываем их */
   hideTopic?: boolean;
+  /** В диалоге менять параметры на ходу нельзя — беседа уже идёт на этой колоде */
+  hideEdit?: boolean;
   disabled?: boolean;
   onEdit: () => void;
   onClearAll: () => void;
@@ -35,6 +37,7 @@ const SpreadSummary = ({
   spheresLabel,
   comment,
   hideTopic = false,
+  hideEdit = false,
   disabled = false,
   onEdit,
   onClearAll,
@@ -47,15 +50,17 @@ const SpreadSummary = ({
           Параметры расклада
         </h2>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={onEdit}
-            disabled={disabled}
-            className="inline-flex flex-1 items-center justify-center rounded-lg border border-white/25 px-3 py-2 text-sm font-medium text-white transition hover:border-white/60 hover:bg-white/5 disabled:opacity-40 sm:flex-none"
-          >
-            <Icon name="Pencil" size={15} className="mr-1.5" />
-            Изменить
-          </button>
+          {!hideEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              disabled={disabled}
+              className="inline-flex flex-1 items-center justify-center rounded-lg border border-white/25 px-3 py-2 text-sm font-medium text-white transition hover:border-white/60 hover:bg-white/5 disabled:opacity-40 sm:flex-none"
+            >
+              <Icon name="Pencil" size={15} className="mr-1.5" />
+              Изменить
+            </button>
+          )}
           <button
             type="button"
             onClick={onClearAll}

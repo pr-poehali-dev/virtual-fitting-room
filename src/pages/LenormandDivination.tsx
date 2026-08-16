@@ -162,6 +162,8 @@ export default function LenormandDivination() {
   const [savedReload, setSavedReload] = useState(0);
   // Диалог, к которому вернулись из списка сохранённых
   const [resumeDialog, setResumeDialog] = useState<SavedDialog | null>(null);
+  // Меняем ключ, чтобы «Начать заново» полностью пересоздавал чат с нуля
+  const [dialogKey, setDialogKey] = useState(0);
 
   // Активный расклад и колода — из реестра (единый источник правды)
   const activeSpread = getSpread(divSpread) ?? getSpread("lenormand_big9x4")!;
@@ -538,7 +540,7 @@ export default function LenormandDivination() {
     setWizardStep(0);
     setWizardDone(false);
     setDivSystem("lenormand");
-    setDivSpread("big9x4");
+    setDivSpread("lenormand_big9x4");
     setTouchAck(false);
     setResult(null);
     setResultLayout([]);
@@ -554,6 +556,35 @@ export default function LenormandDivination() {
       /* ignore */
     }
     toast.success("Форма очищена — можно начинать новый расклад");
+  };
+
+  // «Начать заново» в диалогах: возвращаемся к состоянию сразу после выбора
+  // категории «Диалоги». Беседа с ответами остаётся на сервере и появляется
+  // в списке «Сохранено у вас» — её можно продолжить позже.
+  const startNewDialog = () => {
+    const firstDialog = spreadsByDeck("lenormand").find((sp) => sp.dialog);
+    setGender("female");
+    setPeriod("now");
+    setSpheres(["all"]);
+    setComment("");
+    setModel(MODELS[0].value);
+    setMode("online");
+    setDivSystem("lenormand");
+    if (firstDialog) {
+      setDivSpread(firstDialog.id);
+      setLayout(EMPTY_LAYOUT(firstDialog.size));
+    }
+    setResumeDialog(null);
+    setWizardStep(0);
+    setWizardDone(false);
+    setDialogKey((k) => k + 1);
+    setSavedReload((k) => k + 1);
+    try {
+      localStorage.removeItem(FORM_STORAGE_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+    toast.success("Можно начать новый диалог");
   };
 
   // Полный сброс старого результата (после запуска нового расклада)
@@ -1338,18 +1369,19 @@ export default function LenormandDivination() {
                 .join(", ")}
               comment={comment}
               hideTopic
+              hideEdit
               disabled={false}
               onEdit={() => {
                 setWizardDone(false);
                 setWizardStep(0);
               }}
-              onClearAll={clearAll}
+              onClearAll={startNewDialog}
             />
           )}
 
           {wizardDone && activeSpread.dialog && (
             <DialogChat
-              key={`${divSpread}-${model}`}
+              key={`${divSpread}-${model}-${dialogKey}`}
               spread={activeSpread}
               deckCards={deckCards}
               backImage={deckBackImage}

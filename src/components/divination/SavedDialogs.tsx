@@ -151,9 +151,9 @@ const SavedDialogs = ({ reloadKey = 0, onContinue }: SavedDialogsProps) => {
             >
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <span className="font-medium text-[#f3ecff]">
-                  {d.system === "tarot" ? "Таро" : "Ленорман"} ·{" "}
+                  {d.system === "tarot" ? "Таро" : "Ленорман"} · до{" "}
                   {d.cards_per_step}{" "}
-                  {d.cards_per_step === 1 ? "карта" : "карты"} на вопрос
+                  {d.cards_per_step === 1 ? "карты" : "карт"} на вопрос
                 </span>
                 {active ? (
                   <span className="rounded-full bg-[#4caf50]/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#8fd694] ring-1 ring-[#4caf50]/40">
