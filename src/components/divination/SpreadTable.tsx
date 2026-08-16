@@ -81,6 +81,72 @@ const SpreadTable = ({
     );
   };
 
+  // Кельтский крест: крест из 6 карт слева и столбец из 4 справа снизу вверх.
+  // Раскладываем по клеткам 4 столбца × 4 ряда, карта 2 лежит поперёк первой.
+  if (spread.shape === "celtic") {
+    const place: Record<number, { col: number; row: number }> = {
+      0: { col: 2, row: 2 }, // 1 — центр
+      1: { col: 2, row: 2 }, // 2 — поверх центра, поперёк
+      2: { col: 2, row: 1 }, // 3 — сверху
+      3: { col: 2, row: 3 }, // 4 — снизу
+      4: { col: 1, row: 2 }, // 5 — слева
+      5: { col: 3, row: 2 }, // 6 — справа
+      6: { col: 4, row: 4 }, // 7 — низ столбца
+      7: { col: 4, row: 3 },
+      8: { col: 4, row: 2 },
+      9: { col: 4, row: 1 }, // 10 — верх столбца
+    };
+
+    return (
+      <div>
+        <div
+          className="overflow-x-auto rounded-2xl border border-[#c9a84c]/25 p-3 sm:p-4"
+          style={{
+            background:
+              "radial-gradient(120% 100% at 50% 0%, #2d1b69 0%, #241845 55%, #1a1030 100%)",
+            boxShadow: "inset 0 0 60px rgba(201,168,76,0.10)",
+          }}
+        >
+          <div
+            className="mx-auto grid min-w-[520px] max-w-[720px] gap-2"
+            style={{
+              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+              gridTemplateRows: "repeat(4, auto)",
+            }}
+          >
+            {Array.from({ length: 10 }, (_, i) => i).map((idx) => {
+              const p = place[idx];
+              // Карта 2 лежит поперёк первой — кладём её тем же местом
+              // и поворачиваем, как на реальном столе
+              const crossed = idx === 1;
+              return (
+                <div
+                  key={idx}
+                  style={{ gridColumn: p.col, gridRow: p.row }}
+                  className={crossed ? "relative z-10 self-center" : ""}
+                >
+                  <div
+                    className={
+                      crossed ? "rotate-90 scale-[0.72] drop-shadow-lg" : ""
+                    }
+                  >
+                    {renderSlot(idx)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-[#9888b8] lg:hidden">
+          <Icon name="ArrowLeft" size={14} />
+          <span>Листайте стол вбок, чтобы увидеть все карты</span>
+          <Icon name="ArrowRight" size={14} />
+        </div>
+      </div>
+    );
+  }
+
   const mainSlots = Array.from({ length: mainCount }, (_, i) => i);
   const tailSlots = tail
     ? Array.from({ length: tail }, (_, i) => mainCount + i)

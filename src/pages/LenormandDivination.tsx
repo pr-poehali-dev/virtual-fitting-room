@@ -10,6 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useBalance } from "@/context/BalanceContext";
 import { useNavigate } from "react-router-dom";
 import { playReadySound } from "@/components/selection/selectionUtils";
+import ReadingText from "@/components/divination/ReadingText";
 import {
   LENORMAND_AI,
   LENORMAND_SPREAD,
@@ -106,7 +107,7 @@ const WIZARD_TITLES_FULL = [
   // Гадалка идёт ДО расклада: цена расклада зависит от выбранной гадалки
   "Нейросеть-гадалка",
   "Расклад",
-  "Пол",
+  "Ваш пол",
   "Период",
   "Сферы",
   "Комментарий",
@@ -1759,14 +1760,9 @@ export default function LenormandDivination() {
                 </div>
               )}
 
-              {/* Длинный текст читают подолгу: тёплый пергамент и тёмные
-                  крупные буквы вместо светлого на тёмном */}
-              <div
-                className="whitespace-pre-wrap rounded-2xl p-5 text-[17px] leading-[1.75] text-[#2f2618] shadow-inner sm:p-7 sm:text-[18px]"
-                style={{ background: "linear-gradient(180deg, #f7f0e1 0%, #f2e9d6 100%)" }}
-              >
-                {result}
-              </div>
+              {/* Длинный текст читают подолгу: тёплый пергамент,
+                  тёмные крупные буквы и настоящие заголовки разделов */}
+              <ReadingText text={result} />
             </div>
           </div>
         )}
@@ -1865,12 +1861,7 @@ export default function LenormandDivination() {
                     </div>
                   )}
 
-                  <div
-                    className="whitespace-pre-wrap rounded-2xl p-5 text-[17px] leading-[1.75] text-[#2f2618] shadow-inner sm:p-7 sm:text-[18px]"
-                    style={{ background: "linear-gradient(180deg, #f7f0e1 0%, #f2e9d6 100%)" }}
-                  >
-                    {prevResult}
-                  </div>
+                  <ReadingText text={prevResult} />
                   <div className="mt-6 border-t border-[#c9a84c]/25 pt-4 text-center text-xs text-[#9888b8]">
                     <p>
                       Трактовки раскладов носят
@@ -1964,9 +1955,7 @@ export default function LenormandDivination() {
                 ) : null
               )}
             </div>
-            <div className="whitespace-pre-wrap text-[17px] leading-[1.75] text-[#2f2618]">
-              {result}
-            </div>
+            <ReadingText text={result} bare />
             <div className="mt-6 border-t border-purple-200 pt-4 text-center text-xs text-purple-400">
               <p>
                 Трактовки раскладов носят
@@ -2042,9 +2031,7 @@ export default function LenormandDivination() {
                 )}
               </div>
             )}
-            <div className="whitespace-pre-wrap text-[17px] leading-[1.75] text-[#2f2618]">
-              {prevResult}
-            </div>
+            <ReadingText text={prevResult} bare />
             <div className="mt-6 border-t border-purple-200 pt-4 text-center text-xs text-purple-400">
               <p>
                 Трактовки раскладов носят
