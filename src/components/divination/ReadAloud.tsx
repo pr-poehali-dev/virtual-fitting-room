@@ -40,6 +40,9 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
   const idxRef = useRef(0);
   const rateRef = useRef(1);
   const stoppedRef = useRef(false);
+  // Номер запуска: команда cancel() «добивает» прошлое чтение и вызывает
+  // его обработчики — по номеру отличаем их от актуального запуска
+  const runRef = useRef(0);
 
   useEffect(() => {
     setSupported(typeof window !== "undefined" && "speechSynthesis" in window);
@@ -64,8 +67,8 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
     return female || ru[0];
   };
 
-  const speakFrom = useCallback((i: number) => {
-    if (stoppedRef.current) return;
+  const speakFrom = useCallback((i: number, run: number) => {
+    if (stoppedRef.current || run !== runRef.current) return;
     const chunks = chunksRef.current;
     if (i >= chunks.length) {
       setSpeaking(false);
@@ -81,8 +84,12 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
     const voice = pickVoice();
     if (voice) u.voice = voice;
 
-    u.onend = () => speakFrom(i + 1);
+    u.onend = () => {
+      if (run === runRef.current) speakFrom(i + 1, run);
+    };
     u.onerror = () => {
+      // Прерывание из-за смены скорости — не ошибка, новый запуск уже идёт
+      if (run !== runRef.current) return;
       setSpeaking(false);
       setPaused(false);
     };
@@ -111,14 +118,16 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
     chunksRef.current = chunks;
     stoppedRef.current = false;
     rateRef.current = rate;
+    const run = ++runRef.current;
     window.speechSynthesis.cancel();
     setSpeaking(true);
     setPaused(false);
-    speakFrom(0);
+    setTimeout(() => speakFrom(0, run), 60);
   };
 
   const stop = () => {
     stoppedRef.current = true;
+    runRef.current++;
     window.speechSynthesis.cancel();
     setSpeaking(false);
     setPaused(false);
@@ -134,16 +143,19 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
     }
   };
 
-  // Скорость применяется к следующим кускам — перезапускаем с текущего места
+  // Скорость меняется на лету: дочитываем с той же фразы, но уже быстрее
   const changeRate = () => {
-    const next = rate >= 1.5 ? 0.75 : rate === 1 ? 1.25 : rate === 1.25 ? 1.5 : 1;
+    const steps = [0.75, 1, 1.25, 1.5, 1.75];
+    const next = steps[(steps.indexOf(rate) + 1) % steps.length];
     setRate(next);
     rateRef.current = next;
     if (speaking) {
       const from = idxRef.current;
+      const run = ++runRef.current;
       window.speechSynthesis.cancel();
       setPaused(false);
-      setTimeout(() => speakFrom(from), 60);
+      // Небольшая пауза: браузеру нужно время оборвать прошлую фразу
+      setTimeout(() => speakFrom(from, run), 80);
     }
   };
 
@@ -193,9 +205,10 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
             size={size}
             variant="ghost"
             onClick={changeRate}
-            title="Скорость чтения"
+            title="Нажмите, чтобы изменить скорость чтения"
             className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
           >
+            <Icon name="Gauge" size={16} className="mr-1.5" />
             {rate}×
           </Button>
         </>
