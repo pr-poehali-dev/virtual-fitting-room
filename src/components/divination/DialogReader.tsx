@@ -4,6 +4,7 @@ import Icon from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { divTheme } from "./theme";
 import { dialogApi, downloadDialogText, shareDialogText } from "./SavedDialogs";
+import ReadAloud from "./ReadAloud";
 
 interface ReadStep {
   step_no: number;
@@ -118,6 +119,18 @@ const DialogReader = ({ dialogId, onClose }: DialogReaderProps) => {
         )}
 
         <div className="mt-5 flex flex-wrap gap-2">
+          {/* Слушать всю беседу подряд: вопрос — ответ — следующий вопрос */}
+          {steps.length > 0 && (
+            <ReadAloud
+              compact
+              text={steps
+                .map(
+                  (s) =>
+                    `Вопрос ${s.step_no}. ${s.question}. Ответ. ${s.answer}`,
+                )
+                .join(" ")}
+            />
+          )}
           <Button
             size="sm"
             onClick={() => shareDialogText(dialogId)}

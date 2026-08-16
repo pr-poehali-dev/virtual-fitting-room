@@ -11,6 +11,7 @@ import { useBalance } from "@/context/BalanceContext";
 import { useNavigate } from "react-router-dom";
 import { playReadySound } from "@/components/selection/selectionUtils";
 import ReadingText from "@/components/divination/ReadingText";
+import ReadAloud from "@/components/divination/ReadAloud";
 import {
   LENORMAND_AI,
   LENORMAND_SPREAD,
@@ -1753,6 +1754,8 @@ export default function LenormandDivination() {
                 Толкование расклада
               </h2>
               <div className="flex flex-wrap gap-2">
+                {/* Толкования длинные — даём возможность слушать, а не читать */}
+                <ReadAloud text={result} />
                 <Button variant="ghost"
                     className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white" onClick={copyText}>
                   <Icon name="Copy" size={16} className="mr-1" /> Скопировать
@@ -1870,6 +1873,7 @@ export default function LenormandDivination() {
                   </span>
                 </div>
                 <div className="mb-3 flex flex-wrap gap-2">
+                  <ReadAloud text={prevResult} compact />
                   <Button
                     size="sm"
                     onClick={() => shareReading(dbPrevCardRef.current)}

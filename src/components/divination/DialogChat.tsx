@@ -7,6 +7,7 @@ import { divTheme } from "./theme";
 import { downloadDialogText, shareDialogText } from "./SavedDialogs";
 import type { SpreadDef } from "@/data/divination/spreads";
 import { playReadySound } from "@/components/selection/selectionUtils";
+import ReadAloud from "./ReadAloud";
 
 const DIVINATION_DIALOG =
   "https://functions.poehali.dev/336075f7-e6e8-4cd9-bfd5-80e6e23e187a";
@@ -371,6 +372,11 @@ const DialogChat = ({
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#e8e0f0]">
             {s.answer}
           </p>
+          {s.answer && (
+            <div className="mt-3">
+              <ReadAloud text={s.answer} compact />
+            </div>
+          )}
         </div>
       ))}
 
