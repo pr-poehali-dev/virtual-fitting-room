@@ -12,6 +12,8 @@ import {
 } from "./SavedDialogs";
 import ReadAloud from "./ReadAloud";
 import ReadingText from "./ReadingText";
+import { getCardImageByName } from "@/data/lenormandImages";
+import { getTarotImageByName } from "@/data/divination/tarotImages";
 
 interface ReadStep {
   step_no: number;
@@ -124,9 +126,32 @@ const DialogReader = ({ dialogId, onClose }: DialogReaderProps) => {
                   <p className="font-medium text-[#f3ecff]">{s.question}</p>
                 </div>
                 {(s.cards || []).length > 0 && (
-                  <p className="mb-2 text-sm text-[#c9a84c]">
-                    Выпали карты: {s.cards.join(", ")}
-                  </p>
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {s.cards.map((c, i) => {
+                      const img =
+                        system === "tarot"
+                          ? getTarotImageByName(c)
+                          : getCardImageByName(c);
+                      return (
+                        <div
+                          key={`${c}-${i}`}
+                          className="rounded-lg bg-white/[0.06] p-1.5 text-center ring-1 ring-[#c9a84c]/25"
+                        >
+                          {img && (
+                            <img
+                              src={img}
+                              alt={c}
+                              className="mx-auto h-24 w-[62px] rounded object-contain sm:h-28 sm:w-[72px]"
+                              loading="lazy"
+                            />
+                          )}
+                          <span className="mt-1 block text-[11px] text-[#c9a84c]">
+                            {c}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
                 <ReadingText text={s.answer} compact />
               </div>
