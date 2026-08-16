@@ -24,6 +24,14 @@ def get_openrouter_proxies():
 
 DB_SCHEMA = 't_p29007832_virtual_fitting_room'
 
+# Как часто сбрасывать в БД уже написанный текст (сек)
+PARTIAL_SAVE_SEC = 15
+# Через сколько секунд работы аккуратно прерваться и дописать следующим заходом.
+# Заметно меньше таймаута облачной функции, чтобы успеть сохранить.
+SOFT_DEADLINE_SEC = 210
+# Сколько раз максимум дописываем один ответ
+MAX_RESUMES = 6
+
 TEXT_EXTENSIONS = {
     '.py', '.js', '.jsx', '.ts', '.tsx', '.html', '.css', '.scss', '.less',
     '.json', '.xml', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.conf',
@@ -296,12 +304,18 @@ def build_result_zip(original_zip_bytes, updated_text_files, deleted_paths=None)
     return result_buffer.getvalue()
 
 
-def call_openrouter(model, prompt_text):
+def call_openrouter(model, prompt_text, on_partial=None, soft_deadline=None):
     """Запрашивает модель в потоковом режиме.
 
     Ответ приходит частями, поэтому соединение не простаивает и шлюз не рвёт его
     по таймауту бездействия. Куски склеиваются в единый текст — результат
     полностью совпадает с обычным (непотоковым) ответом.
+
+    on_partial — колбэк, которому раз в PARTIAL_SAVE_SEC отдаётся накопленный
+    текст: так уже написанное переживёт обрыв функции.
+    soft_deadline — момент (time.time()), после которого поток обрывается
+    аккуратно: возвращаем написанное с пометкой incomplete, чтобы дописать
+    следующим запуском, а не потерять всё по таймауту облака.
     """
     t0 = time.time()
     response = requests.post(
@@ -324,7 +338,7 @@ def call_openrouter(model, prompt_text):
 
     t_headers = time.time() - t0
     if response.status_code != 200:
-        return None, f'OpenRouter ошибка ({response.status_code}): {response.text[:500]}'
+        return None, f'OpenRouter ошибка ({response.status_code}): {response.text[:500]}', False
 
     # Без явной кодировки поток декодируется как latin-1 и кириллица ломается.
     response.encoding = 'utf-8'
@@ -332,8 +346,17 @@ def call_openrouter(model, prompt_text):
     chunks = []
     stream_error = None
     t_first_chunk = None
+    truncated = False
+    last_save = time.time()
 
     for raw_line in response.iter_lines(decode_unicode=True):
+        # Не даём облаку убить функцию на полуслове: сохраняем и выходим сами
+        if soft_deadline and time.time() > soft_deadline:
+            truncated = True
+            break
+        if on_partial and chunks and time.time() - last_save >= PARTIAL_SAVE_SEC:
+            on_partial(''.join(chunks))
+            last_save = time.time()
         if not raw_line:
             continue
         if raw_line.startswith(':'):
@@ -366,16 +389,20 @@ def call_openrouter(model, prompt_text):
     print(
         f'[timing] model={model} prompt_chars={len(prompt_text)} '
         f'headers={t_headers:.1f}s first_chunk={t_first_chunk if t_first_chunk is None else round(t_first_chunk, 1)}s '
-        f'total={total:.1f}s out_chars={sum(len(c) for c in chunks)}'
+        f'total={total:.1f}s out_chars={sum(len(c) for c in chunks)} truncated={truncated}'
     )
 
-    if stream_error:
-        return None, f'OpenRouter ошибка: {stream_error[:500]}'
-
     ai_text = ''.join(chunks)
+
+    if stream_error:
+        # Часть текста уже написана — сохраняем её и дописываем следующим заходом
+        if ai_text:
+            return ai_text, None, True
+        return None, f'OpenRouter ошибка: {stream_error[:500]}', False
+
     if not ai_text:
-        return None, 'Модель не вернула ответ'
-    return ai_text, None
+        return None, 'Модель не вернула ответ', False
+    return ai_text, None, truncated
 
 
 def sql_escape(val):
@@ -468,7 +495,7 @@ def process_archive_step(task_id, model, prompt, archive_base64):
     # --- Шаг 1: построить план ---
     if plan_files is None:
         print(f'[{task_id}] Шаг: планирование, файлов на входе={len(text_files)}')
-        plan_text, error = call_openrouter(model, build_plan_prompt(text_files, prompt))
+        plan_text, error, _ = call_openrouter(model, build_plan_prompt(text_files, prompt))
         if error:
             return True, error
         plan = parse_plan_response(plan_text)
@@ -520,7 +547,7 @@ def process_archive_step(task_id, model, prompt, archive_base64):
         prompt_text = build_step_file_prompt(
             text_files, prompt, path, target.get('what') or '', plan_summary
         )
-        ai_text, error = call_openrouter(model, prompt_text)
+        ai_text, error, _ = call_openrouter(model, prompt_text)
         if error:
             return True, error
 
@@ -662,6 +689,59 @@ def process_archive_task(task_id):
         fail_task(task_id, error)
 
 
+def build_continue_prompt(original_prompt, done_text):
+    """Просит модель дописать оборванный ответ ровно с места разрыва.
+
+    Хвост уже написанного отдаём целиком (последние 4000 знаков), чтобы модель
+    подхватила мысль и не начала пересказывать сначала.
+    """
+    tail = done_text[-4000:]
+    return (
+        f'{original_prompt}\n\n'
+        '=== ВАЖНО ===\n'
+        'Ты уже начал писать этот ответ, но он оборвался на середине. '
+        'Ниже — КОНЕЦ уже написанного текста. Продолжи ровно с того места, '
+        'где он обрывается: не здоровайся заново, не повторяй написанное, '
+        'не пересказывай начало и не пиши вступление. Просто продолжи фразу '
+        'и доведи ответ до конца.\n\n'
+        f'=== КОНЕЦ УЖЕ НАПИСАННОГО ===\n{tail}\n=== ПРОДОЛЖИ ОТСЮДА ==='
+    )
+
+
+def save_partial(task_id, text, bump=False):
+    """Складывает уже написанный кусок в БД, чтобы он пережил обрыв функции.
+    Заодно обновляет stream_lock — признак того, что воркер жив."""
+    safe_id = str(task_id).replace("'", "''")
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
+                    SET partial_text = {sql_escape(text)},
+                        stream_lock = NOW(),
+                        resume_count = resume_count + {1 if bump else 0},
+                        updated_at = NOW()
+                    WHERE id = '{safe_id}'"""
+            )
+        conn.commit()
+    except Exception as e:
+        print(f'[{task_id}] partial save (non-critical): {e}')
+    finally:
+        conn.close()
+
+
+def trigger_self(task_id):
+    """Пинает воркер, чтобы он дописал оборванный ответ. Ответ не ждём:
+    если пинг не дойдёт, следующий опрос статуса всё равно продолжит работу."""
+    try:
+        import urllib.request
+        url = 'https://functions.poehali.dev/d3e4e0ce-9999-45d3-82b4-15d3eeb45425'
+        req = urllib.request.Request(f'{url}?task_id={task_id}', method='GET')
+        urllib.request.urlopen(req, timeout=2)
+    except Exception as e:
+        print(f'[{task_id}] self trigger (non-critical): {e}')
+
+
 def process_task(task_id):
     task_started = time.time()
     safe_id = str(task_id).replace("'", "''")
@@ -669,11 +749,20 @@ def process_task(task_id):
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
+            # Берём задачу под замок. Живой воркер обновляет stream_lock каждые
+            # PARTIAL_SAVE_SEC, поэтому «протухший» замок = функция оборвалась,
+            # и длинный ответ можно дописать с места обрыва.
             cur.execute(
                 f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
-                    SET status = 'processing', updated_at = '{now}'
-                    WHERE id = '{safe_id}' AND status = 'pending'
-                    RETURNING id, mode, model, prompt, filename, file_content, archive_base64"""
+                    SET status = 'processing', updated_at = '{now}', stream_lock = NOW()
+                    WHERE id = '{safe_id}'
+                      AND (status = 'pending'
+                           OR (mode = 'chat' AND status = 'processing'
+                               AND resume_count < {MAX_RESUMES}
+                               AND (stream_lock IS NULL
+                                    OR stream_lock < NOW() - INTERVAL '60 seconds')))
+                    RETURNING id, mode, model, prompt, filename, file_content, archive_base64,
+                              partial_text, resume_count"""
             )
             row = cur.fetchone()
             if not row:
@@ -683,7 +772,8 @@ def process_task(task_id):
     finally:
         conn.close()
 
-    _, mode, model, prompt, filename, file_content, archive_base64 = row
+    (_, mode, model, prompt, filename, file_content, archive_base64,
+     partial_text, resume_count) = row
     print(f'[{task_id}] Задача загружена: mode={mode}, model={model}, archive_size={len(archive_base64) if archive_base64 else 0}')
 
     ai_text = None
@@ -694,14 +784,44 @@ def process_task(task_id):
 
     try:
         if mode == 'chat':
-            print(f'[{task_id}] Отправляю в OpenRouter (chat)...')
-            ai_text, error = call_openrouter(model, prompt)
-            print(f'[{task_id}] OpenRouter ответил: error={error}, len={len(ai_text) if ai_text else 0}')
+            done_before = partial_text or ''
+            # Продолжаем с места обрыва: модель видит начало и дописывает хвост
+            ask = prompt if not done_before else build_continue_prompt(prompt, done_before)
+            print(f'[{task_id}] Отправляю в OpenRouter (chat), уже написано={len(done_before)}, попытка={resume_count}...')
+
+            new_text, error, truncated = call_openrouter(
+                model,
+                ask,
+                on_partial=lambda txt: save_partial(task_id, done_before + txt),
+                soft_deadline=task_started + SOFT_DEADLINE_SEC,
+            )
+            print(f'[{task_id}] OpenRouter ответил: error={error}, len={len(new_text) if new_text else 0}, truncated={truncated}')
+
+            if new_text:
+                ai_text = done_before + new_text
+
+            # Связь оборвалась, но начало уже написано — не теряем его,
+            # дописываем следующим заходом вместо возврата денег
+            if error and done_before:
+                error = None
+                ai_text = done_before
+                truncated = True
+
+            # Дописали не всё — сохраняем черновик и просим себя же продолжить.
+            # Если попытки исчерпаны, отдаём человеку то, что есть: почти
+            # полный расклад лучше, чем ошибка и возврат денег.
+            if truncated and ai_text:
+                if resume_count + 1 < MAX_RESUMES:
+                    save_partial(task_id, ai_text, bump=True)
+                    print(f'[{task_id}] Сохранено {len(ai_text)} знаков, продолжу следующим заходом')
+                    trigger_self(task_id)
+                    return
+                print(f'[{task_id}] Лимит продолжений исчерпан, отдаю {len(ai_text)} знаков')
 
         elif mode == 'file':
             prompt_text = build_file_prompt(filename or 'file.txt', file_content or '', prompt)
             print(f'[{task_id}] Отправляю в OpenRouter (file), prompt_len={len(prompt_text)}...')
-            ai_text, error = call_openrouter(model, prompt_text)
+            ai_text, error, _ = call_openrouter(model, prompt_text)
             print(f'[{task_id}] OpenRouter ответил: error={error}, len={len(ai_text) if ai_text else 0}')
             if ai_text:
                 result_file_content = parse_single_file_response(ai_text, filename or 'file.txt', file_content or '')
@@ -716,7 +836,7 @@ def process_task(task_id):
             else:
                 prompt_text = build_archive_prompt(text_files, prompt)
                 print(f'[{task_id}] Отправляю в OpenRouter (archive), prompt_len={len(prompt_text)}...')
-                ai_text, error = call_openrouter(model, prompt_text)
+                ai_text, error, _ = call_openrouter(model, prompt_text)
                 print(f'[{task_id}] OpenRouter ответил: error={error}, len={len(ai_text) if ai_text else 0}')
                 if ai_text:
                     updated_files = parse_ai_response(ai_text, text_files)
@@ -748,7 +868,8 @@ def process_task(task_id):
                 files_count_sql = str(int(files_count)) if files_count is not None else 'NULL'
                 cur.execute(
                     f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
-                        SET status = 'completed', ai_response = {sql_escape(ai_response_b64)},
+                        SET status = 'completed', partial_text = NULL, stream_lock = NULL,
+                            ai_response = {sql_escape(ai_response_b64)},
                             result_file_content = {sql_escape(result_file_b64)},
                             result_archive_base64 = {sql_escape(result_archive_base64)},
                             files_count = {files_count_sql}, model_used = {sql_escape(model)}, updated_at = '{now}'

@@ -1,0 +1,4 @@
+ALTER TABLE t_p29007832_virtual_fitting_room.ai_editor_tasks
+  ADD COLUMN IF NOT EXISTS partial_text TEXT,
+  ADD COLUMN IF NOT EXISTS stream_lock TIMESTAMP,
+  ADD COLUMN IF NOT EXISTS resume_count INTEGER NOT NULL DEFAULT 0;

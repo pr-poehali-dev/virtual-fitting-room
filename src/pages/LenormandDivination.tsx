@@ -703,6 +703,12 @@ export default function LenormandDivination() {
       try {
         const res = await fetch(`${AI_EDITOR_STATUS}?task_id=${taskId}`);
         const data = await res.json();
+        // Толкование пишется на глазах — показываем, что работа идёт
+        if (data.written_chars > 0 && data.status !== "completed") {
+          setStatusText(
+            `Толкование пишется... ${Math.round(data.written_chars / 1000)} тыс. знаков готово`,
+          );
+        }
         if (data.status === "completed") {
           if (pollRef.current) clearInterval(pollRef.current);
           setIsProcessing(false);

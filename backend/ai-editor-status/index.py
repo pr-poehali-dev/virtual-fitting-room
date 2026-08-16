@@ -50,7 +50,7 @@ def build_progress(mode, status, plan_files, step_index):
 def build_result(task_id, row):
     (status, mode, ai_response, result_file_content, result_archive_base64,
      files_count, model_used, error_message, filename, created_at,
-     task_type, divination_meta, plan_files, step_index) = row
+     task_type, divination_meta, plan_files, step_index, partial_len) = row
 
     result = {
         'task_id': str(task_id),
@@ -67,6 +67,10 @@ def build_result(task_id, row):
     progress = build_progress(mode, status, plan_files, step_index)
     if progress:
         result['progress'] = progress
+
+    # Сколько текста уже написано — фронт показывает это вместо пустого ожидания
+    if status in ('pending', 'processing') and partial_len:
+        result['written_chars'] = int(partial_len)
 
     if status == 'completed':
         if ai_response:
@@ -136,7 +140,11 @@ def handler(event, context):
                 cur.execute(
                     f"""SELECT id, status, mode, ai_response, result_file_content, result_archive_base64,
                                files_count, model_used, error_message, filename, created_at,
-                               task_type, divination_meta, plan_files, step_index
+                               task_type, divination_meta, plan_files, step_index,
+                               COALESCE(LENGTH(partial_text), 0),
+                               (stream_lock IS NOT NULL
+                                AND stream_lock < NOW() - INTERVAL '60 seconds'
+                                AND resume_count < 6) AS stalled
                         FROM {DB_SCHEMA}.ai_editor_tasks
                         WHERE status IN ('completed', 'failed', 'processing')
                           AND user_id = '{safe_uid}'
@@ -154,7 +162,11 @@ def handler(event, context):
                 cur.execute(
                     f"""SELECT status, mode, ai_response, result_file_content, result_archive_base64,
                                files_count, model_used, error_message, filename, created_at,
-                               task_type, divination_meta, plan_files, step_index
+                               task_type, divination_meta, plan_files, step_index,
+                               COALESCE(LENGTH(partial_text), 0),
+                               (stream_lock IS NOT NULL
+                                AND stream_lock < NOW() - INTERVAL '60 seconds'
+                                AND resume_count < 6) AS stalled
                         FROM {DB_SCHEMA}.ai_editor_tasks WHERE id = '{safe_id}'"""
                 )
                 row = cur.fetchone()
@@ -165,11 +177,17 @@ def handler(event, context):
     finally:
         conn.close()
 
-    result = build_result(found_id, data_row)
+    stalled = bool(data_row[-1])
+    result = build_result(found_id, data_row[:-1])
 
     # Архивные задачи выполняются по шагам: каждый опрос статуса продвигает
     # следующий шаг. Вызов fire-and-forget, ответ не ждём.
     if data_row[0] in ('pending', 'processing') and data_row[1] == 'archive':
+        trigger_next_step(found_id)
+
+    # Длинный ответ мог оборваться вместе с функцией. Если воркер давно не
+    # подавал признаков жизни — будим его, он допишет с места обрыва.
+    if data_row[0] == 'processing' and data_row[1] == 'chat' and stalled:
         trigger_next_step(found_id)
 
     return {
