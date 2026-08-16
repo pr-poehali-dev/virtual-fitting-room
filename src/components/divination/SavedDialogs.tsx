@@ -74,16 +74,24 @@ export const downloadDialogText = async (dialogId: string) => {
 
   lines.push("fitting-room.ru");
 
-  const blob = new Blob([lines.join("\n")], {
+  // \uFEFF (BOM) — метка UTF-8 в начале файла. Без неё «Блокнот» на Android
+  // и Windows считает текст кириллицей-1251 и показывает кракозябры.
+  // \r\n — перенос строки, понятный всем просмотрщикам, включая мобильные.
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], {
     type: "text/plain;charset=utf-8",
   });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `dialog-${dialogId.slice(0, 8)}.txt`;
+  // Имя по-русски и с датой — файл легко найти в «Загрузках» телефона
+  const deckName = data.system === "tarot" ? "Таро" : "Ленорман";
+  const stamp = new Date()
+    .toLocaleDateString("ru-RU")
+    .replace(/\./g, "-");
+  a.download = `Гадание-${deckName}-${stamp}.txt`;
   a.click();
   URL.revokeObjectURL(url);
-  toast.success("Беседа скачана");
+  toast.success(`Сохранено в «Загрузки»: ${a.download}`);
 };
 
 const formatDate = (iso: string | null) =>
