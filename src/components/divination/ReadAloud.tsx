@@ -80,19 +80,29 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
   const restartAt = useCallback(
     (i: number, run: number, from = 0) => {
       window.speechSynthesis.cancel();
+
+      // Android разрешает запускать голос ТОЛЬКО в момент нажатия кнопки.
+      // Поэтому читаем сразу же, не откладывая ни на миг.
+      speakFromRef.current?.(i, run, from);
+
+      // Настольный Chrome выполняет «замолчи» с задержкой и может убить
+      // только что запущенную фразу. Если через полсекунды тишина —
+      // запускаем ещё раз: к этому моменту браузер уже освободился.
       let waited = 0;
-      const tick = () => {
+      const check = () => {
         if (run !== runRef.current || stoppedRef.current) return;
-        const busy =
-          window.speechSynthesis.speaking || window.speechSynthesis.pending;
-        if (!busy || waited > 1500) {
+        if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+          return;
+        }
+        if (waited > 1500) return;
+        waited += 250;
+        if (waited >= 500) {
           speakFromRef.current?.(i, run, from);
           return;
         }
-        waited += 50;
-        setTimeout(tick, 50);
+        setTimeout(check, 250);
       };
-      tick();
+      setTimeout(check, 250);
     },
     [],
   );
