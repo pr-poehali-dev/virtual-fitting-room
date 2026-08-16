@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import Icon from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { divTheme } from "./theme";
+import DialogReader from "./DialogReader";
 
 const DIVINATION_DIALOG =
   "https://functions.poehali.dev/336075f7-e6e8-4cd9-bfd5-80e6e23e187a";
@@ -111,6 +112,8 @@ const SavedDialogs = ({ reloadKey = 0, onContinue }: SavedDialogsProps) => {
   const [items, setItems] = useState<SavedDialog[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  // Беседа, открытая на чтение (окно поверх страницы)
+  const [readId, setReadId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -225,6 +228,16 @@ const SavedDialogs = ({ reloadKey = 0, onContinue }: SavedDialogsProps) => {
                       Вернуться к диалогу
                     </Button>
                   )}
+                  {/* Закрытую беседу продолжить нельзя, но перечитать — можно */}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setReadId(d.dialog_id)}
+                    className={active ? divTheme.btnGhost : divTheme.btnPrimary}
+                  >
+                    <Icon name="BookOpen" size={15} className="mr-1.5" />
+                    Читать беседу
+                  </Button>
                   <Button
                     size="sm"
                     variant="ghost"
@@ -249,6 +262,10 @@ const SavedDialogs = ({ reloadKey = 0, onContinue }: SavedDialogsProps) => {
           );
         })}
       </div>
+
+      {readId && (
+        <DialogReader dialogId={readId} onClose={() => setReadId(null)} />
+      )}
     </div>
   );
 };

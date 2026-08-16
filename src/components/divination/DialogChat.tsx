@@ -374,8 +374,11 @@ const DialogChat = ({
         </div>
       ))}
 
+      {/* Спрашиваем поверх страницы: кнопка «Закрыть диалог» внизу, и врезка
+          в потоке уезжала за экран — человек не видел, что у него спросили */}
       {confirmClose && (
-        <div className={`${divTheme.panel} p-5`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div className={`${divTheme.panel} max-h-[90vh] w-full max-w-md overflow-y-auto p-5`}>
           <div className="mb-3 flex items-start gap-2">
             <Icon
               name="TriangleAlert"
@@ -414,6 +417,7 @@ const DialogChat = ({
               Отмена
             </Button>
           </div>
+        </div>
         </div>
       )}
 
