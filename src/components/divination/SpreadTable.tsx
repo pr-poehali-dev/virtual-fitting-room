@@ -40,7 +40,8 @@ const SpreadTable = ({
     return `Карта ${idx + 1}`;
   };
 
-  const renderSlot = (idx: number) => {
+  /** rotated — карта лежит поперёк: поворачиваем ТОЛЬКО картинку, не подписи */
+  const renderSlot = (idx: number, rotated = false) => {
     const card = layout[idx];
     const isActive = activeIndex === idx && !locked;
     const img = card ? getCardImage(card) : undefined;
@@ -51,7 +52,7 @@ const SpreadTable = ({
         type="button"
         onClick={() => onSlotClick(idx)}
         disabled={disabled}
-        className={`flex min-h-[64px] flex-col rounded-lg border p-1.5 text-left transition disabled:cursor-not-allowed ${
+        className={`flex h-full min-h-[64px] w-full flex-col rounded-lg border p-1.5 text-left transition disabled:cursor-not-allowed ${
           isActive
             ? "border-[#c9a84c] ring-2 ring-[#c9a84c]/60"
             : card
@@ -62,14 +63,25 @@ const SpreadTable = ({
         <span className="text-[10px] leading-tight text-[#c9a84c]">
           {slotLabel(idx)}
         </span>
-        {img && (
-          <img
-            src={img}
-            alt={card}
-            className="mx-auto mt-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px]"
-            loading="lazy"
-          />
-        )}
+        {img &&
+          (rotated ? (
+            // Место под карту оставляем «лежачим», картинку кладём набок
+            <span className="mx-auto mt-1 flex h-[62px] w-full items-center justify-center sm:h-[82px]">
+              <img
+                src={img}
+                alt={card}
+                className="h-24 w-[62px] rotate-90 rounded object-contain sm:h-32 sm:w-[82px]"
+                loading="lazy"
+              />
+            </span>
+          ) : (
+            <img
+              src={img}
+              alt={card}
+              className="mx-auto mt-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px]"
+              loading="lazy"
+            />
+          ))}
         <span
           className={`mt-auto flex min-h-[28px] items-end text-[11px] font-semibold leading-tight sm:text-xs ${
             card ? "text-[#f3ecff]" : "text-[#9888b8]"
@@ -81,20 +93,21 @@ const SpreadTable = ({
     );
   };
 
-  // Кельтский крест: крест из 6 карт слева и столбец из 4 справа снизу вверх.
-  // Раскладываем по клеткам 4 столбца × 4 ряда, карта 2 лежит поперёк первой.
+  // Кельтский крест. Сетка 5 колонок × 4 ряда, все ячейки одного размера:
+  // колонки 1-3 — крест, колонка 4 пустая (воздух), колонка 5 — столбец 7-10.
+  // Карта 2 лежит поперёк первой, поэтому занимает соседнюю клетку справа.
   if (spread.shape === "celtic") {
     const place: Record<number, { col: number; row: number }> = {
-      0: { col: 2, row: 2 }, // 1 — центр
-      1: { col: 2, row: 2 }, // 2 — поверх центра, поперёк
-      2: { col: 2, row: 1 }, // 3 — сверху
-      3: { col: 2, row: 3 }, // 4 — снизу
+      0: { col: 2, row: 2 }, // 1 — центр креста
+      1: { col: 3, row: 2 }, // 2 — поперёк первой, рядом
+      2: { col: 2, row: 1 }, // 3 — над центром
+      3: { col: 2, row: 3 }, // 4 — под центром
       4: { col: 1, row: 2 }, // 5 — слева
-      5: { col: 3, row: 2 }, // 6 — справа
-      6: { col: 4, row: 4 }, // 7 — низ столбца
-      7: { col: 4, row: 3 },
-      8: { col: 4, row: 2 },
-      9: { col: 4, row: 1 }, // 10 — верх столбца
+      5: { col: 4, row: 2 }, // 6 — справа
+      6: { col: 5, row: 4 }, // 7 — низ столбца
+      7: { col: 5, row: 3 }, // 8
+      8: { col: 5, row: 2 }, // 9
+      9: { col: 5, row: 1 }, // 10 — верх столбца
     };
 
     return (
@@ -108,30 +121,21 @@ const SpreadTable = ({
           }}
         >
           <div
-            className="mx-auto grid min-w-[520px] max-w-[720px] gap-2"
+            className="mx-auto grid min-w-[640px] max-w-[860px] gap-2"
             style={{
-              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-              gridTemplateRows: "repeat(4, auto)",
+              gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+              gridAutoRows: "1fr",
             }}
           >
             {Array.from({ length: 10 }, (_, i) => i).map((idx) => {
               const p = place[idx];
-              // Карта 2 лежит поперёк первой — кладём её тем же местом
-              // и поворачиваем, как на реальном столе
-              const crossed = idx === 1;
               return (
                 <div
                   key={idx}
                   style={{ gridColumn: p.col, gridRow: p.row }}
-                  className={crossed ? "relative z-10 self-center" : ""}
+                  className="flex"
                 >
-                  <div
-                    className={
-                      crossed ? "rotate-90 scale-[0.72] drop-shadow-lg" : ""
-                    }
-                  >
-                    {renderSlot(idx)}
-                  </div>
+                  {renderSlot(idx, idx === 1)}
                 </div>
               );
             })}
