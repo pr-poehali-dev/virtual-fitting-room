@@ -155,14 +155,19 @@ export default function LenormandDivination() {
   const [wizardDone, setWizardDone] = useState(false);
   const [divSystem, setDivSystem] = useState<"lenormand" | "tarot">("lenormand");
   const [divSpread, setDivSpread] = useState("lenormand_big9x4");
-  // Вкладка раздела: обычные расклады или диалоги
-  const [tab, setTab] = useState<DivTab>("spreads");
+  // Вкладка раздела: обычные расклады или диалоги.
+  // null — страницу только открыли и категорию ещё не выбирали:
+  // тогда ни одна кнопка не подсвечена, чтобы подсветка не врала.
+  const [tabChoice, setTabChoice] = useState<DivTab | null>(null);
   const [savedReload, setSavedReload] = useState(0);
   // Диалог, к которому вернулись из списка сохранённых
   const [resumeDialog, setResumeDialog] = useState<SavedDialog | null>(null);
 
   // Активный расклад и колода — из реестра (единый источник правды)
   const activeSpread = getSpread(divSpread) ?? getSpread("lenormand_big9x4")!;
+  // Пока категорию явно не выбрали, ориентируемся на восстановленный расклад —
+  // иначе форма показывала бы шаги не от того типа расклада.
+  const tab: DivTab = tabChoice ?? (activeSpread.dialog ? "dialogs" : "spreads");
   const activeDeck = getDeck(divSystem as DeckId);
   const spreadSize = activeSpread.size;
   // Карты активной колоды (Ленорман/Таро)
@@ -879,9 +884,9 @@ export default function LenormandDivination() {
 
         {/* Две категории: расклады и диалоги — со своими правилами хранения */}
         <DivinationTabs
-          value={tab}
+          value={tabChoice}
           onChange={(next) => {
-            setTab(next);
+            setTabChoice(next);
             const list = spreadsByDeck(divSystem as DeckId).filter((sp) =>
               next === "dialogs" ? sp.dialog : !sp.dialog,
             );
@@ -899,6 +904,7 @@ export default function LenormandDivination() {
           <SavedDialogs
             reloadKey={savedReload}
             onContinue={(d) => {
+              setTabChoice("dialogs");
               setDivSystem(d.system as DeckId);
               setDivSpread(d.spread);
               setResumeDialog(d);
@@ -1587,7 +1593,7 @@ export default function LenormandDivination() {
           {isProcessing && (
             <div
               ref={loaderRef}
-              className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-[#c9a84c]/20 bg-white/[0.04] py-12"
+              className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-[#c9a84c]/20 bg-white/[0.04] px-4 py-12 text-center sm:px-6"
             >
               <Icon
                 name="Loader2"
@@ -1598,7 +1604,8 @@ export default function LenormandDivination() {
                 {statusText || "Карты раскрываются…"}
               </p>
               <p className="mt-1 text-sm text-[#9888b8]">
-                Это может занять до минуты. Не закрывайте страницу.
+                Большой расклад обычно готовится 3–5 минут. Можно свернуть
+                вкладку — расчёт не прервётся, результат сохранится.
               </p>
             </div>
           )}

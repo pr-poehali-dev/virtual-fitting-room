@@ -6,6 +6,7 @@
 
 import json
 import os
+import time
 import uuid
 
 import psycopg2
@@ -45,6 +46,7 @@ def call_openrouter(model: str, prompt_text: str):
     if not api_key:
         return None, 'Ключ OpenRouter не настроен'
 
+    t0 = time.time()
     try:
         r = requests.post(
             'https://openrouter.ai/api/v1/chat/completions',
@@ -63,6 +65,11 @@ def call_openrouter(model: str, prompt_text: str):
         )
     except Exception as e:
         return None, f'Сеть: {str(e)[:200]}'
+
+    print(
+        f'[timing] dialog model={model} prompt_chars={len(prompt_text)} '
+        f'total={time.time() - t0:.1f}s status={r.status_code}'
+    )
 
     if r.status_code != 200:
         return None, f'Сервис ответил {r.status_code}: {r.text[:200]}'

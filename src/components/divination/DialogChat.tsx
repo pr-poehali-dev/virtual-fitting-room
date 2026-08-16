@@ -102,17 +102,25 @@ const DialogChat = ({
     return { res, data: await res.json() };
   };
 
-  // Возвращаемся к сохранённой беседе (по кнопке) либо к последней незакрытой
+  // Историю подтягиваем ТОЛЬКО по явной кнопке «Вернуться к диалогу».
+  // Иначе новый диалог молча подхватывал прошлую беседу.
   useEffect(() => {
     let cancelled = false;
+    if (!resumeDialog?.dialog_id) {
+      // Новый диалог — всегда с чистого листа
+      setDialogId(null);
+      setSteps([]);
+      setUsedCards([]);
+      setClosed(false);
+      return;
+    }
     (async () => {
       try {
-        const payload = resumeDialog?.dialog_id
-          ? { action: "history", dialog_id: resumeDialog.dialog_id }
-          : { action: "last" };
-        const { res, data } = await api(payload);
+        const { res, data } = await api({
+          action: "history",
+          dialog_id: resumeDialog.dialog_id,
+        });
         if (cancelled || !res.ok || data.empty) return;
-        if (!resumeDialog && data.spread !== spread.id) return;
 
         setDialogId(data.dialog_id);
         setSteps(data.steps || []);
@@ -159,10 +167,11 @@ const DialogChat = ({
   const changeStepDeckMode = (mode: "full" | "single") => {
     if (busy || mode === stepDeckMode) return;
     setStepDeckMode(mode);
-    if (mode === "full") setUsedCards([]);
+    // Историю выпавших карт не стираем: в режиме «Полная колода» она просто
+    // не учитывается, но нужна, чтобы можно было вернуться к «Той же колоде».
     setPicked([]);
     setShuffled(false);
-    setDeck(shuffle(availableCards(mode, [], mode === "full" ? [] : usedCards)));
+    setDeck(shuffle(availableCards(mode, [], usedCards)));
   };
 
   const shuffleDeck = () => {
@@ -286,12 +295,11 @@ const DialogChat = ({
         },
       ]);
       setQuestion("");
-      if (stepDeckMode === "single") {
-        setUsedCards((prev) => [...prev, ...(ready.cards || [])]);
-      } else {
-        // Тянули из полной колоды — отбор начинается заново
-        setUsedCards([...(ready.cards || [])]);
-      }
+      // Копим все выпавшие карты диалога независимо от режима:
+      // «Полная колода» их просто не учитывает при отборе.
+      setUsedCards((prev) => [
+        ...new Set([...prev, ...((ready.cards || []) as string[])]),
+      ]);
       setPicked([]);
       setShuffled(false);
       onDialogChanged?.();

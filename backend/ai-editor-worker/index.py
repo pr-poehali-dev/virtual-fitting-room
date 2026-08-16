@@ -6,6 +6,7 @@ import base64
 import zipfile
 import io
 import re
+import time
 import requests
 import psycopg2
 from datetime import datetime
@@ -302,6 +303,7 @@ def call_openrouter(model, prompt_text):
     по таймауту бездействия. Куски склеиваются в единый текст — результат
     полностью совпадает с обычным (непотоковым) ответом.
     """
+    t0 = time.time()
     response = requests.post(
         OPENROUTER_URL,
         headers={
@@ -320,6 +322,7 @@ def call_openrouter(model, prompt_text):
         stream=True,
     )
 
+    t_headers = time.time() - t0
     if response.status_code != 200:
         return None, f'OpenRouter ошибка ({response.status_code}): {response.text[:500]}'
 
@@ -328,6 +331,7 @@ def call_openrouter(model, prompt_text):
 
     chunks = []
     stream_error = None
+    t_first_chunk = None
 
     for raw_line in response.iter_lines(decode_unicode=True):
         if not raw_line:
@@ -354,7 +358,16 @@ def call_openrouter(model, prompt_text):
         for choice in parsed.get('choices') or []:
             piece = (choice.get('delta') or {}).get('content')
             if piece:
+                if t_first_chunk is None:
+                    t_first_chunk = time.time() - t0
                 chunks.append(piece)
+
+    total = time.time() - t0
+    print(
+        f'[timing] model={model} prompt_chars={len(prompt_text)} '
+        f'headers={t_headers:.1f}s first_chunk={t_first_chunk if t_first_chunk is None else round(t_first_chunk, 1)}s '
+        f'total={total:.1f}s out_chars={sum(len(c) for c in chunks)}'
+    )
 
     if stream_error:
         return None, f'OpenRouter ошибка: {stream_error[:500]}'
@@ -650,6 +663,7 @@ def process_archive_task(task_id):
 
 
 def process_task(task_id):
+    task_started = time.time()
     safe_id = str(task_id).replace("'", "''")
     now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
     conn = get_db_connection()
@@ -741,7 +755,10 @@ def process_task(task_id):
                         WHERE id = '{safe_id}'"""
                 )
         conn2.commit()
-        print(f'Task {task_id} finished: {"failed" if error else "completed"}')
+        print(
+            f'Task {task_id} finished: {"failed" if error else "completed"} '
+            f'[timing] mode={mode} model={model} total={time.time() - task_started:.1f}s'
+        )
     except Exception as e:
         print(f'Task {task_id} save error: {e}')
     finally:

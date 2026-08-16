@@ -3,7 +3,8 @@ import Icon from "@/components/ui/icon";
 export type DivTab = "spreads" | "dialogs";
 
 interface DivinationTabsProps {
-  value: DivTab;
+  /** null — после перезагрузки страницы ничего не подсвечено, пока не выбрали */
+  value: DivTab | null;
   onChange: (tab: DivTab) => void;
 }
 
