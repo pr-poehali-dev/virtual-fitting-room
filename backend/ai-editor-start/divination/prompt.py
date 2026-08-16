@@ -69,11 +69,15 @@ def build_cards_block(spread: dict, deck: dict, layout: list) -> str:
             main_count = cols * rows
             if tail and i >= main_count:
                 # Карты нижней отдельной строки
-                parts.append(f'нижний ряд, место {i - main_count + 1} —')
+                parts.append(
+                    f'ИТОГОВАЯ СТРОКА (отдельно под полем), '
+                    f'место {i - main_count + 1} из {tail} —'
+                )
             elif rows > 1 or cols > 1:
                 row = i // cols + 1
                 col = i % cols + 1
-                parts.append(f'ряд {row}, столбец {col} —')
+                # «из N» не даёт модели домыслить другую ширину поля
+                parts.append(f'ряд {row}, столбец {col} из {cols} —')
         if positions and i < len(positions):
             parts.append(f'позиция «{positions[i]}» —')
         elif house_names and i < len(house_names):

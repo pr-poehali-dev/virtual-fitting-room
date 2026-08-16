@@ -867,12 +867,27 @@ export default function LenormandDivination() {
     setActiveHouse((prev) => (prev >= spreadSize ? 0 : prev));
   }, [spreadSize]);
 
-  // Сколько колонок рисовать для готового расклада (по количеству карт)
-  const resultCols = (len: number) => {
+  // Сколько колонок рисовать для готового расклада.
+  // Берём форму из самого расклада, а не из числа карт: 36 карт бывают
+  // и 9x4, и 8x4+4 — иначе второй рисовался как первый.
+  const resultCols = (len: number, spreadId?: string) => {
+    const g = spreadId ? getSpread(spreadId)?.grid : null;
+    if (g?.cols) return g.cols;
     if (len >= 36) return 9;
     if (len >= 10) return 5;
     if (len >= 3) return len;
     return 1;
+  };
+
+  // Итоговые карты (8x4+4) лежат отдельной строкой по центру под полем.
+  // Первой из них задаём отступ, чтобы строка встала по середине.
+  const cellStyle = (idx: number, spreadId?: string) => {
+    const g = spreadId ? getSpread(spreadId)?.grid : null;
+    if (!g?.tail || !g.cols || !g.rows) return undefined;
+    const start = g.cols * g.rows;
+    if (idx !== start) return undefined;
+    const offset = Math.max(1, Math.floor((g.cols - g.tail) / 2) + 1);
+    return { gridColumnStart: offset };
   };
 
   // Можно ли уйти с текущего шага мастера дальше.
@@ -1714,12 +1729,13 @@ export default function LenormandDivination() {
                 >
                   <div
                     className="grid min-w-[760px] gap-1.5"
-                    style={{ gridTemplateColumns: `repeat(${resultCols(resultLayout.length)}, minmax(0, 1fr))` }}
+                    style={{ gridTemplateColumns: `repeat(${resultCols(resultLayout.length, resultSpreadId)}, minmax(0, 1fr))` }}
                   >
                     {resultLayout.map((card, idx) =>
                       card ? (
                         <div
                           key={idx}
+                          style={cellStyle(idx, resultSpreadId)}
                           className="rounded-md border border-[#c9a84c]/25 bg-white/[0.06] p-1.5 text-center"
                         >
                           <div className="text-[10px] leading-tight text-[#c9a84c]">
@@ -1743,7 +1759,12 @@ export default function LenormandDivination() {
                 </div>
               )}
 
-              <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-[#e8e0f0]">
+              {/* Длинный текст читают подолгу: тёплый пергамент и тёмные
+                  крупные буквы вместо светлого на тёмном */}
+              <div
+                className="whitespace-pre-wrap rounded-2xl p-5 text-[17px] leading-[1.75] text-[#2f2618] shadow-inner sm:p-7 sm:text-[18px]"
+                style={{ background: "linear-gradient(180deg, #f7f0e1 0%, #f2e9d6 100%)" }}
+              >
                 {result}
               </div>
             </div>
@@ -1814,12 +1835,13 @@ export default function LenormandDivination() {
                     >
                       <div
                         className="grid min-w-[760px] gap-1.5"
-                        style={{ gridTemplateColumns: `repeat(${resultCols(prevLayout.length)}, minmax(0, 1fr))` }}
+                        style={{ gridTemplateColumns: `repeat(${resultCols(prevLayout.length, prevSpreadId)}, minmax(0, 1fr))` }}
                       >
                         {prevLayout.map((card, idx) =>
                           card ? (
                             <div
                               key={idx}
+                              style={cellStyle(idx, prevSpreadId)}
                               className="rounded-md border border-[#c9a84c]/25 bg-white/[0.06] p-1.5 text-center"
                             >
                               <div className="text-[10px] leading-tight text-[#c9a84c]">
@@ -1843,7 +1865,10 @@ export default function LenormandDivination() {
                     </div>
                   )}
 
-                  <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-[#e8e0f0]">
+                  <div
+                    className="whitespace-pre-wrap rounded-2xl p-5 text-[17px] leading-[1.75] text-[#2f2618] shadow-inner sm:p-7 sm:text-[18px]"
+                    style={{ background: "linear-gradient(180deg, #f7f0e1 0%, #f2e9d6 100%)" }}
+                  >
                     {prevResult}
                   </div>
                   <div className="mt-6 border-t border-[#c9a84c]/25 pt-4 text-center text-xs text-[#9888b8]">
@@ -1907,7 +1932,7 @@ export default function LenormandDivination() {
             <div
               className="mb-6 grid gap-1.5 rounded-2xl border border-purple-200 p-4"
               style={{
-                gridTemplateColumns: `repeat(${resultCols(resultLayout.length)}, minmax(0, 1fr))`,
+                gridTemplateColumns: `repeat(${resultCols(resultLayout.length, resultSpreadId)}, minmax(0, 1fr))`,
                 background:
                   "radial-gradient(120% 100% at 50% 0%, #ede9fe 0%, #ddd6fe 55%, #c7bdf4 100%)",
                 boxShadow:
@@ -1918,6 +1943,7 @@ export default function LenormandDivination() {
                 card ? (
                   <div
                     key={idx}
+                    style={cellStyle(idx, resultSpreadId)}
                     className="rounded-md border border-purple-200 bg-white/60 p-1.5 text-center"
                   >
                     <div className="text-xs text-purple-700">
@@ -1938,7 +1964,7 @@ export default function LenormandDivination() {
                 ) : null
               )}
             </div>
-            <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-gray-800">
+            <div className="whitespace-pre-wrap text-[17px] leading-[1.75] text-[#2f2618]">
               {result}
             </div>
             <div className="mt-6 border-t border-purple-200 pt-4 text-center text-xs text-purple-400">
@@ -1983,7 +2009,7 @@ export default function LenormandDivination() {
               <div
                 className="mb-6 grid gap-1.5 rounded-2xl border border-purple-200 p-4"
                 style={{
-                  gridTemplateColumns: `repeat(${resultCols(prevLayout.length)}, minmax(0, 1fr))`,
+                  gridTemplateColumns: `repeat(${resultCols(prevLayout.length, prevSpreadId)}, minmax(0, 1fr))`,
                   background:
                     "radial-gradient(120% 100% at 50% 0%, #ede9fe 0%, #ddd6fe 55%, #c7bdf4 100%)",
                   boxShadow:
@@ -1994,6 +2020,7 @@ export default function LenormandDivination() {
                   card ? (
                     <div
                       key={idx}
+                      style={cellStyle(idx, prevSpreadId)}
                       className="rounded-md border border-purple-200 bg-white/60 p-1.5 text-center"
                     >
                       <div className="text-xs text-purple-700">
@@ -2015,7 +2042,7 @@ export default function LenormandDivination() {
                 )}
               </div>
             )}
-            <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-gray-800">
+            <div className="whitespace-pre-wrap text-[17px] leading-[1.75] text-[#2f2618]">
               {prevResult}
             </div>
             <div className="mt-6 border-t border-purple-200 pt-4 text-center text-xs text-purple-400">
