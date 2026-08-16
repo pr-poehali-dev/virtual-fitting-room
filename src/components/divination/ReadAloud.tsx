@@ -133,12 +133,37 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
     setPaused(false);
   };
 
+  // Свернули вкладку — телефон обрывает речь. Показываем это как паузу,
+  // чтобы кнопка «Продолжить» вернула чтение с той же фразы
+  useEffect(() => {
+    const onHide = () => {
+      if (document.hidden && speaking && !paused) {
+        runRef.current++;
+        window.speechSynthesis.cancel();
+        setPaused(true);
+      }
+    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => document.removeEventListener("visibilitychange", onHide);
+  }, [speaking, paused]);
+
+  /**
+   * Пауза и продолжение. На Android команда resume() почти всегда не работает
+   * — голос замолкает навсегда. Поэтому паузу делаем сами: останавливаем
+   * чтение и запоминаем фразу, а «Продолжить» читает её заново с начала.
+   */
   const togglePause = () => {
     if (paused) {
-      window.speechSynthesis.resume();
+      const from = idxRef.current;
+      const run = ++runRef.current;
+      stoppedRef.current = false;
+      window.speechSynthesis.cancel();
       setPaused(false);
+      setTimeout(() => speakFrom(from, run), 80);
     } else {
-      window.speechSynthesis.pause();
+      // Номер запуска меняем, чтобы обрыв не запустил следующую фразу
+      runRef.current++;
+      window.speechSynthesis.cancel();
       setPaused(true);
     }
   };
@@ -149,7 +174,8 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
     const next = steps[(steps.indexOf(rate) + 1) % steps.length];
     setRate(next);
     rateRef.current = next;
-    if (speaking) {
+    // На паузе просто запоминаем скорость — она сработает при продолжении
+    if (speaking && !paused) {
       const from = idxRef.current;
       const run = ++runRef.current;
       window.speechSynthesis.cancel();
