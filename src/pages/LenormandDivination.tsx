@@ -900,7 +900,7 @@ export default function LenormandDivination() {
           }}
         />
 
-        {tab === "dialogs" && (
+        {tabChoice === "dialogs" && (
           <SavedDialogs
             reloadKey={savedReload}
             onContinue={(d) => {
@@ -913,6 +913,26 @@ export default function LenormandDivination() {
           />
         )}
 
+        {/* Пока категория не выбрана — форму не показываем: неизвестно,
+            расклад это или диалог, а наборы шагов у них разные */}
+        {!tabChoice && (
+          <div className="rounded-2xl border border-dashed border-[#c9a84c]/30 bg-white/[0.03] px-4 py-10 text-center sm:px-6">
+            <Icon
+              name="Hand"
+              size={32}
+              className="mx-auto mb-3 text-[#c9a84c]"
+            />
+            <p className="text-base font-medium text-[#f3ecff]">
+              Выберите, что хотите сделать
+            </p>
+            <p className="mx-auto mt-1 max-w-md text-sm text-[#9888b8]">
+              «Расклады» — одно подробное толкование. «Диалоги» — разговор с
+              картами: вопрос, ответ и уточнения.
+            </p>
+          </div>
+        )}
+
+        {tabChoice && (
         <LockedFormOverlay cost={LENORMAND_MIN_COST}>
           <div className="relative">
           {/* Блокировка всей формы, пока есть несохранённый прошлый результат.
@@ -1611,6 +1631,7 @@ export default function LenormandDivination() {
           )}
           </div>
         </LockedFormOverlay>
+        )}
 
         {/* ТОЛЬКО ТЕКСТ результата под столом */}
         {result && !isProcessing && !activeSpread.dialog && (
