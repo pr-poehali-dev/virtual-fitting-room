@@ -6,6 +6,8 @@ interface ReadingTextProps {
   className?: string;
   /** Без своей подложки — для картинки-результата, где фон уже светлый */
   bare?: boolean;
+  /** Плотнее и мельче — для коротких ответов в диалоге */
+  compact?: boolean;
 }
 
 /**
@@ -13,12 +15,19 @@ interface ReadingTextProps {
  * Нейросеть присылает разметку значками (# ## **жирный**) — без разбора
  * они видны в тексте как мусор. Здесь превращаем их в оформление.
  */
-const ReadingText = ({ text, className = "", bare = false }: ReadingTextProps) => (
+const ReadingText = ({
+  text,
+  className = "",
+  bare = false,
+  compact = false,
+}: ReadingTextProps) => (
   <div
     className={
       bare
         ? `text-[17px] leading-[1.75] text-[#2f2618] ${className}`
-        : `rounded-2xl p-5 text-[17px] leading-[1.75] text-[#2f2618] shadow-inner sm:p-7 sm:text-[18px] ${className}`
+        : compact
+          ? `rounded-xl p-4 text-[15px] leading-[1.7] text-[#2f2618] shadow-inner sm:p-5 sm:text-[16px] ${className}`
+          : `rounded-2xl p-5 text-[17px] leading-[1.75] text-[#2f2618] shadow-inner sm:p-7 sm:text-[18px] ${className}`
     }
     style={
       bare

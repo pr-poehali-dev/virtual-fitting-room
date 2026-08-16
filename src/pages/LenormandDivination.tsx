@@ -931,6 +931,8 @@ export default function LenormandDivination() {
   // Берём форму из самого расклада, а не из числа карт: 36 карт бывают
   // и 9x4, и 8x4+4 — иначе второй рисовался как первый.
   const resultCols = (len: number, spreadId?: string) => {
+    // Кельтский крест — фигура, а не ряды: 5 колонок под крест и столбец
+    if (spreadId && getSpread(spreadId)?.shape === "celtic") return 5;
     const g = spreadId ? getSpread(spreadId)?.grid : null;
     if (g?.cols) return g.cols;
     if (len >= 36) return 9;
@@ -941,7 +943,29 @@ export default function LenormandDivination() {
 
   // Итоговые карты (8x4+4) лежат отдельной строкой по центру под полем.
   // Первой из них задаём отступ, чтобы строка встала по середине.
+  // Места карт Кельтского креста в сетке 5×4 (как на столе выкладки)
+  const CELTIC_PLACE: { col: number; row: number }[] = [
+    { col: 2, row: 2 }, // 1 — центр
+    { col: 3, row: 2 }, // 2 — поперёк первой
+    { col: 2, row: 1 }, // 3 — над центром
+    { col: 2, row: 3 }, // 4 — под центром
+    { col: 1, row: 2 }, // 5 — слева
+    { col: 4, row: 2 }, // 6 — справа
+    { col: 5, row: 4 }, // 7 — низ столбца
+    { col: 5, row: 3 }, // 8
+    { col: 5, row: 2 }, // 9
+    { col: 5, row: 1 }, // 10 — верх столбца
+  ];
+
+  // Вторая карта Кельтского креста лежит поперёк первой
+  const isCrossed = (idx: number, spreadId?: string) =>
+    idx === 1 && !!spreadId && getSpread(spreadId)?.shape === "celtic";
+
   const cellStyle = (idx: number, spreadId?: string) => {
+    if (spreadId && getSpread(spreadId)?.shape === "celtic") {
+      const p = CELTIC_PLACE[idx];
+      return p ? { gridColumn: p.col, gridRow: p.row } : undefined;
+    }
     const g = spreadId ? getSpread(spreadId)?.grid : null;
     if (!g?.tail || !g.cols || !g.rows) return undefined;
     const start = g.cols * g.rows;
@@ -1819,7 +1843,7 @@ export default function LenormandDivination() {
                   }}
                 >
                   <div
-                    className="grid min-w-[760px] gap-1.5"
+                    className="grid min-w-[760px] gap-1.5 [grid-auto-rows:1fr]"
                     style={{ gridTemplateColumns: `repeat(${resultCols(resultLayout.length, resultSpreadId)}, minmax(0, 1fr))` }}
                   >
                     {resultLayout.map((card, idx) =>
@@ -1836,7 +1860,9 @@ export default function LenormandDivination() {
                             <img
                               src={resultCardImage(card)}
                               alt={card}
-                              className="mx-auto my-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px]"
+                              className={`mx-auto my-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px] ${
+                                isCrossed(idx, resultSpreadId) ? "rotate-90" : ""
+                              }`}
                               loading="lazy"
                             />
                           )}
@@ -1935,7 +1961,7 @@ export default function LenormandDivination() {
                       }}
                     >
                       <div
-                        className="grid min-w-[760px] gap-1.5"
+                        className="grid min-w-[760px] gap-1.5 [grid-auto-rows:1fr]"
                         style={{ gridTemplateColumns: `repeat(${resultCols(prevLayout.length, prevSpreadId)}, minmax(0, 1fr))` }}
                       >
                         {prevLayout.map((card, idx) =>
@@ -1952,7 +1978,9 @@ export default function LenormandDivination() {
                                 <img
                                   src={prevCardImage(card)}
                                   alt={card}
-                                  className="mx-auto my-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px]"
+                                  className={`mx-auto my-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px] ${
+                                    isCrossed(idx, prevSpreadId) ? "rotate-90" : ""
+                                  }`}
                                   loading="lazy"
                                 />
                               )}
@@ -2026,7 +2054,7 @@ export default function LenormandDivination() {
               <p className="mt-1 text-sm text-purple-500">{resultDate}</p>
             </div>
             <div
-              className="mb-6 grid gap-1.5 rounded-2xl border border-purple-200 p-4"
+              className="mb-6 grid gap-1.5 rounded-2xl border border-purple-200 p-4 [grid-auto-rows:1fr]"
               style={{
                 gridTemplateColumns: `repeat(${resultCols(resultLayout.length, resultSpreadId)}, minmax(0, 1fr))`,
                 background:
@@ -2050,7 +2078,9 @@ export default function LenormandDivination() {
                         src={resultCardImage(card)}
                         alt={card}
                         data-card-img="1"
-                        className="mx-auto my-1 h-32 w-[82px] rounded object-contain"
+                        className={`mx-auto my-1 h-32 w-[82px] rounded object-contain ${
+                          isCrossed(idx, resultSpreadId) ? "rotate-90" : ""
+                        }`}
                       />
                     )}
                     <div className="text-sm font-semibold text-purple-900">
@@ -2101,7 +2131,7 @@ export default function LenormandDivination() {
             </div>
             {prevLayout.length > 0 && (
               <div
-                className="mb-6 grid gap-1.5 rounded-2xl border border-purple-200 p-4"
+                className="mb-6 grid gap-1.5 rounded-2xl border border-purple-200 p-4 [grid-auto-rows:1fr]"
                 style={{
                   gridTemplateColumns: `repeat(${resultCols(prevLayout.length, prevSpreadId)}, minmax(0, 1fr))`,
                   background:
@@ -2125,7 +2155,9 @@ export default function LenormandDivination() {
                           src={prevCardImage(card)}
                           alt={card}
                           data-card-img="1"
-                          className="mx-auto my-1 h-32 w-[82px] rounded object-contain"
+                          className={`mx-auto my-1 h-32 w-[82px] rounded object-contain ${
+                            isCrossed(idx, prevSpreadId) ? "rotate-90" : ""
+                          }`}
                         />
                       )}
                       <div className="text-sm font-semibold text-purple-900">

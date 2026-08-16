@@ -11,6 +11,7 @@ import {
   shareDialogText,
 } from "./SavedDialogs";
 import ReadAloud from "./ReadAloud";
+import ReadingText from "./ReadingText";
 
 interface ReadStep {
   step_no: number;
@@ -127,9 +128,7 @@ const DialogReader = ({ dialogId, onClose }: DialogReaderProps) => {
                     Выпали карты: {s.cards.join(", ")}
                   </p>
                 )}
-                <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-[#e8e0f0]">
-                  {s.answer}
-                </p>
+                <ReadingText text={s.answer} compact />
               </div>
             ))}
           </div>

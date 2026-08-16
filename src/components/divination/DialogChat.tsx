@@ -13,6 +13,7 @@ import {
 import type { SpreadDef } from "@/data/divination/spreads";
 import { playReadySound } from "@/components/selection/selectionUtils";
 import ReadAloud from "./ReadAloud";
+import ReadingText from "./ReadingText";
 
 const DIVINATION_DIALOG =
   "https://functions.poehali.dev/336075f7-e6e8-4cd9-bfd5-80e6e23e187a";
@@ -374,9 +375,8 @@ const DialogChat = ({
             })}
           </div>
 
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#e8e0f0]">
-            {s.answer}
-          </p>
+          {/* Ответ читают вдумчиво — тёплый пергамент, как в раскладах */}
+          <ReadingText text={s.answer} compact />
           {s.answer && (
             <div className="mt-3">
               <ReadAloud text={s.answer} compact />
