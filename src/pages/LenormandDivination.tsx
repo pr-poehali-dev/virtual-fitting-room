@@ -706,7 +706,7 @@ export default function LenormandDivination() {
         // Толкование пишется на глазах — показываем, что работа идёт
         if (data.written_chars > 0 && data.status !== "completed") {
           setStatusText(
-            `Толкование пишется... ${Math.round(data.written_chars / 1000)} тыс. знаков готово`,
+            `Толкование пишется... ${Math.round(data.written_chars / 1000)} тыс. знаков · ${elapsed} сек`,
           );
         }
         if (data.status === "completed") {
