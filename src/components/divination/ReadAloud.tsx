@@ -43,6 +43,11 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
   // Номер запуска: команда cancel() «добивает» прошлое чтение и вызывает
   // его обработчики — по номеру отличаем их от актуального запуска
   const runRef = useRef(0);
+  const speakFromRef = useRef<
+    ((i: number, run: number, from?: number) => void) | null
+  >(null);
+  // Сколько знаков текущей фразы уже прочитано — чтобы продолжить с этого места
+  const charRef = useRef(0);
 
   useEffect(() => {
     setSupported(typeof window !== "undefined" && "speechSynthesis" in window);
@@ -67,7 +72,32 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
     return female || ru[0];
   };
 
-  const speakFrom = useCallback((i: number, run: number) => {
+  /**
+   * Запускает чтение ТОЛЬКО после того, как браузер реально замолчал.
+   * Команда cancel() выполняется с задержкой и, если позвать speak() сразу,
+   * она убивает уже запущенную новую фразу — голос просто пропадает.
+   */
+  const restartAt = useCallback(
+    (i: number, run: number, from = 0) => {
+      window.speechSynthesis.cancel();
+      let waited = 0;
+      const tick = () => {
+        if (run !== runRef.current || stoppedRef.current) return;
+        const busy =
+          window.speechSynthesis.speaking || window.speechSynthesis.pending;
+        if (!busy || waited > 1500) {
+          speakFromRef.current?.(i, run, from);
+          return;
+        }
+        waited += 50;
+        setTimeout(tick, 50);
+      };
+      tick();
+    },
+    [],
+  );
+
+  const speakFrom = useCallback((i: number, run: number, from = 0) => {
     if (stoppedRef.current || run !== runRef.current) return;
     const chunks = chunksRef.current;
     if (i >= chunks.length) {
@@ -77,15 +107,34 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
     }
     idxRef.current = i;
 
-    const u = new SpeechSynthesisUtterance(chunks[i]);
+    // Продолжаем с середины фразы — но только с границы слова,
+    // иначе голос начнёт с обрывка вроде «ложение карт»
+    const full = chunks[i];
+    let offset = 0;
+    if (from > 0 && from < full.length - 1) {
+      const cut = full.lastIndexOf(" ", from);
+      offset = cut > 0 ? cut + 1 : 0;
+    }
+    charRef.current = offset;
+
+    const u = new SpeechSynthesisUtterance(full.slice(offset));
     u.lang = "ru-RU";
     u.rate = rateRef.current;
     u.pitch = 1;
     const voice = pickVoice();
     if (voice) u.voice = voice;
 
+    // Браузер сообщает, какое слово читает — запоминаем позицию,
+    // чтобы после паузы продолжить с неё, а не с начала фразы
+    u.onboundary = (e) => {
+      if (run === runRef.current && typeof e.charIndex === "number") {
+        charRef.current = offset + e.charIndex;
+      }
+    };
     u.onend = () => {
-      if (run === runRef.current) speakFrom(i + 1, run);
+      if (run !== runRef.current) return;
+      charRef.current = 0;
+      speakFrom(i + 1, run);
     };
     u.onerror = () => {
       // Прерывание из-за смены скорости — не ошибка, новый запуск уже идёт
@@ -93,8 +142,13 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
       setSpeaking(false);
       setPaused(false);
     };
+    // Chrome иногда остаётся в «поставленном на паузу» состоянии после
+    // прошлых команд — тогда новая фраза молчит. Снимаем это принудительно.
+    window.speechSynthesis.resume();
     window.speechSynthesis.speak(u);
   }, []);
+
+  speakFromRef.current = speakFrom;
 
   const start = () => {
     const clean = cleanForSpeech(text);
@@ -116,13 +170,13 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
     if (buf.trim()) chunks.push(buf.trim());
 
     chunksRef.current = chunks;
+    charRef.current = 0;
     stoppedRef.current = false;
     rateRef.current = rate;
     const run = ++runRef.current;
-    window.speechSynthesis.cancel();
     setSpeaking(true);
     setPaused(false);
-    setTimeout(() => speakFrom(0, run), 60);
+    restartAt(0, run);
   };
 
   const stop = () => {
@@ -148,20 +202,20 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
   }, [speaking, paused]);
 
   /**
-   * Пауза и продолжение. На Android команда resume() почти всегда не работает
-   * — голос замолкает навсегда. Поэтому паузу делаем сами: останавливаем
-   * чтение и запоминаем фразу, а «Продолжить» читает её заново с начала.
+   * Пауза и продолжение. Штатная команда «продолжить» не работает
+   * на Android и часто виснет в Chrome, поэтому продолжаем сами —
+   * дочитываем с той фразы, на которой остановились.
    */
   const togglePause = () => {
     if (paused) {
-      const from = idxRef.current;
-      const run = ++runRef.current;
+      const at = idxRef.current;
+      const fromChar = charRef.current;
       stoppedRef.current = false;
-      window.speechSynthesis.cancel();
+      const run = ++runRef.current;
       setPaused(false);
-      setTimeout(() => speakFrom(from, run), 80);
+      restartAt(at, run, fromChar);
     } else {
-      // Номер запуска меняем, чтобы обрыв не запустил следующую фразу
+      // Меняем номер запуска, чтобы обрыв не потянул за собой следующую фразу
       runRef.current++;
       window.speechSynthesis.cancel();
       setPaused(true);
@@ -176,12 +230,10 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
     rateRef.current = next;
     // На паузе просто запоминаем скорость — она сработает при продолжении
     if (speaking && !paused) {
-      const from = idxRef.current;
+      const at = idxRef.current;
+      const fromChar = charRef.current;
       const run = ++runRef.current;
-      window.speechSynthesis.cancel();
-      setPaused(false);
-      // Небольшая пауза: браузеру нужно время оборвать прошлую фразу
-      setTimeout(() => speakFrom(from, run), 80);
+      restartAt(at, run, fromChar);
     }
   };
 
