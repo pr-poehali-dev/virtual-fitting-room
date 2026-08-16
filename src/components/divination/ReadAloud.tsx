@@ -46,6 +46,10 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
   const speakFromRef = useRef<
     ((i: number, run: number, from?: number) => void) | null
   >(null);
+  // Мягкая пауза: текущую фразу дочитываем, следующую не начинаем.
+  // Прерывать речь на полуслове нельзя — Android после этого не даёт
+  // запустить голос заново, и «Продолжить» просто молчит.
+  const pauseRef = useRef(false);
   // Сколько знаков текущей фразы уже прочитано — чтобы продолжить с этого места
   const charRef = useRef(0);
 
@@ -73,39 +77,15 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
   };
 
   /**
-   * Запускает чтение ТОЛЬКО после того, как браузер реально замолчал.
-   * Команда cancel() выполняется с задержкой и, если позвать speak() сразу,
-   * она убивает уже запущенную новую фразу — голос просто пропадает.
+   * Старт с нуля: глушим прошлое чтение и сразу запускаем новое.
+   * Запуск делаем в тот же миг, что и нажатие, — Android не даёт
+   * включать голос отложенно.
    */
-  const restartAt = useCallback(
-    (i: number, run: number, from = 0) => {
-      window.speechSynthesis.cancel();
-
-      // Android разрешает запускать голос ТОЛЬКО в момент нажатия кнопки.
-      // Поэтому читаем сразу же, не откладывая ни на миг.
-      speakFromRef.current?.(i, run, from);
-
-      // Настольный Chrome выполняет «замолчи» с задержкой и может убить
-      // только что запущенную фразу. Если через полсекунды тишина —
-      // запускаем ещё раз: к этому моменту браузер уже освободился.
-      let waited = 0;
-      const check = () => {
-        if (run !== runRef.current || stoppedRef.current) return;
-        if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
-          return;
-        }
-        if (waited > 1500) return;
-        waited += 250;
-        if (waited >= 500) {
-          speakFromRef.current?.(i, run, from);
-          return;
-        }
-        setTimeout(check, 250);
-      };
-      setTimeout(check, 250);
-    },
-    [],
-  );
+  const restartAt = useCallback((i: number, run: number, from = 0) => {
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.resume();
+    speakFromRef.current?.(i, run, from);
+  }, []);
 
   const speakFrom = useCallback((i: number, run: number, from = 0) => {
     if (stoppedRef.current || run !== runRef.current) return;
@@ -144,6 +124,9 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
     u.onend = () => {
       if (run !== runRef.current) return;
       charRef.current = 0;
+      idxRef.current = i + 1;
+      // Нажали «Пауза» — останавливаемся на границе фраз
+      if (pauseRef.current) return;
       speakFrom(i + 1, run);
     };
     u.onerror = () => {
@@ -164,13 +147,14 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
     const clean = cleanForSpeech(text);
     if (!clean) return;
 
-    // Режем по предложениям и склеиваем до ~200 знаков:
-    // так голос не обрывается и звучит естественно
+    // Режем по предложениям и склеиваем до ~120 знаков. Короткие куски
+    // нужны для паузы: она срабатывает на границе фраз, и с длинными
+    // кусками пришлось бы ждать окончания слишком долго.
     const sentences = clean.match(/[^.!?…]+[.!?…]*/g) || [clean];
     const chunks: string[] = [];
     let buf = "";
     sentences.forEach((s) => {
-      if ((buf + s).length > 200) {
+      if ((buf + s).length > 120) {
         if (buf) chunks.push(buf.trim());
         buf = s;
       } else {
@@ -182,6 +166,7 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
     chunksRef.current = chunks;
     charRef.current = 0;
     stoppedRef.current = false;
+    pauseRef.current = false;
     rateRef.current = rate;
     const run = ++runRef.current;
     setSpeaking(true);
@@ -191,6 +176,7 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
 
   const stop = () => {
     stoppedRef.current = true;
+    pauseRef.current = false;
     runRef.current++;
     window.speechSynthesis.cancel();
     setSpeaking(false);
@@ -202,8 +188,7 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
   useEffect(() => {
     const onHide = () => {
       if (document.hidden && speaking && !paused) {
-        runRef.current++;
-        window.speechSynthesis.cancel();
+        pauseRef.current = true;
         setPaused(true);
       }
     };
@@ -212,39 +197,36 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
   }, [speaking, paused]);
 
   /**
-   * Пауза и продолжение. Штатная команда «продолжить» не работает
-   * на Android и часто виснет в Chrome, поэтому продолжаем сами —
-   * дочитываем с той фразы, на которой остановились.
+   * Пауза и продолжение.
+   *
+   * Речь НЕ обрываем: ставим флаг, текущая фраза дочитывается до точки,
+   * а следующая не начинается. Так надёжно на всех устройствах — Android
+   * после принудительного обрыва отказывается запускать голос снова.
    */
   const togglePause = () => {
     if (paused) {
-      const at = idxRef.current;
-      const fromChar = charRef.current;
+      pauseRef.current = false;
       stoppedRef.current = false;
-      const run = ++runRef.current;
       setPaused(false);
-      restartAt(at, run, fromChar);
+      // Речь уже идёт (фраза не успела дочитаться) — просто снимаем флаг
+      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+        return;
+      }
+      const run = ++runRef.current;
+      speakFrom(idxRef.current, run);
     } else {
-      // Меняем номер запуска, чтобы обрыв не потянул за собой следующую фразу
-      runRef.current++;
-      window.speechSynthesis.cancel();
+      pauseRef.current = true;
       setPaused(true);
     }
   };
 
-  // Скорость меняется на лету: дочитываем с той же фразы, но уже быстрее
+  // Скорость применяется со следующей фразы: обрывать текущую нельзя,
+  // иначе на телефоне голос больше не запустится
   const changeRate = () => {
     const steps = [0.75, 1, 1.25, 1.5, 1.75];
     const next = steps[(steps.indexOf(rate) + 1) % steps.length];
     setRate(next);
     rateRef.current = next;
-    // На паузе просто запоминаем скорость — она сработает при продолжении
-    if (speaking && !paused) {
-      const at = idxRef.current;
-      const fromChar = charRef.current;
-      const run = ++runRef.current;
-      restartAt(at, run, fromChar);
-    }
   };
 
   if (!supported) return null;
@@ -275,6 +257,11 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
             size={size}
             variant="ghost"
             onClick={togglePause}
+            title={
+              paused
+                ? "Продолжить чтение"
+                : "Пауза — голос договорит фразу и остановится"
+            }
             className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
           >
             <Icon name={paused ? "Play" : "Pause"} size={16} className="mr-1.5" />
@@ -293,7 +280,7 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
             size={size}
             variant="ghost"
             onClick={changeRate}
-            title="Нажмите, чтобы изменить скорость чтения"
+            title="Скорость чтения — применится со следующей фразы"
             className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
           >
             <Icon name="Gauge" size={16} className="mr-1.5" />
