@@ -75,6 +75,7 @@ export default function ProfileHistoryDivination() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [readDialogId, setReadDialogId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [confirmDialogId, setConfirmDialogId] = useState<string | null>(null);
 
   const token = () => localStorage.getItem("session_token") || "";
 
@@ -145,6 +146,24 @@ export default function ProfileHistoryDivination() {
     setTotal((t) => Math.max(0, t - 1));
     setConfirmId(null);
     toast.success("Расклад удалён");
+  };
+
+  const removeDialog = async (id: string) => {
+    const res = await fetch(DIALOG_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Session-Token": token(),
+      },
+      body: JSON.stringify({ action: "delete", dialog_id: id }),
+    });
+    if (!res.ok) {
+      toast.error("Не удалось удалить беседу");
+      return;
+    }
+    setDialogs((prev) => prev.filter((d) => d.dialog_id !== id));
+    setConfirmDialogId(null);
+    toast.success("Беседа удалена");
   };
 
   if (authLoading || isLoading) {
@@ -383,7 +402,40 @@ export default function ProfileHistoryDivination() {
                               Вернуться к диалогу
                             </Button>
                           )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1.5"
+                            onClick={() => setConfirmDialogId(d.dialog_id)}
+                          >
+                            <Icon name="Trash2" size={15} />
+                            Удалить
+                          </Button>
                         </div>
+
+                        {confirmDialogId === d.dialog_id && (
+                          <div className="mt-3 rounded-lg border border-destructive/40 bg-destructive/5 p-3">
+                            <p className="mb-2 text-sm">
+                              Удалить эту беседу? Вернуть её будет нельзя.
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => removeDialog(d.dialog_id)}
+                              >
+                                Да, удалить
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setConfirmDialogId(null)}
+                              >
+                                Отмена
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
