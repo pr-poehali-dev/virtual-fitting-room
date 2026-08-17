@@ -1128,7 +1128,7 @@ export default function LenormandDivination() {
         {/* Пока категория не выбрана — форму не показываем: неизвестно,
             расклад это или диалог, а наборы шагов у них разные */}
         {!tabChoice && (
-          <div className="rounded-2xl border border-dashed border-[#c9a84c]/30 bg-white/[0.03] px-4 py-10 text-center sm:px-6">
+          <div className="mb-8 rounded-2xl border border-dashed border-[#c9a84c]/30 bg-white/[0.03] px-4 py-10 text-center sm:px-6">
             <Icon
               name="Hand"
               size={32}
