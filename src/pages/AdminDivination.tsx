@@ -90,6 +90,7 @@ export default function AdminDivination() {
   const [tab, setTab] = useState<"readings" | "dialogs">("readings");
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
   const itemsPerPage = 20;
 
   const fetchUsers = async () => {
@@ -133,6 +134,29 @@ export default function AdminDivination() {
   useEffect(() => {
     fetchHistory();
   }, [fetchHistory]);
+
+  const removeItem = async (id: string) => {
+    const kind = tab === "dialogs" ? "dialog" : "reading";
+    try {
+      const res = await fetch(
+        `${ADMIN_API}?action=delete_divination&id=${id}&kind=${kind}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${getAdminToken()}` },
+        },
+      );
+      if (!res.ok) throw new Error();
+      if (kind === "dialog") {
+        setDialogs((prev) => prev.filter((d) => d.id !== id));
+      } else {
+        setReadings((prev) => prev.filter((r) => r.id !== id));
+      }
+      setConfirmId(null);
+      toast.success("Запись удалена. Списание осталось в истории платежей");
+    } catch {
+      toast.error("Не удалось удалить");
+    }
+  };
 
   const rows = tab === "readings" ? readings : dialogs;
   const paginated = rows.slice(
@@ -254,6 +278,7 @@ export default function AdminDivination() {
                           )}
                           <th className="p-3 font-medium">Стоимость</th>
                           <th className="p-3 font-medium">Статус</th>
+                          <th className="p-3 font-medium"> </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -299,6 +324,35 @@ export default function AdminDivination() {
                                   : r.status === "completed"
                                     ? "Готов"
                                     : r.status}
+                              </td>
+                              <td className="whitespace-nowrap p-3 text-right">
+                                {confirmId === row.id ? (
+                                  <span className="flex justify-end gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => removeItem(row.id)}
+                                      className="rounded-md bg-destructive px-2 py-1 text-xs font-medium text-destructive-foreground"
+                                    >
+                                      Удалить
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setConfirmId(null)}
+                                      className="rounded-md border px-2 py-1 text-xs"
+                                    >
+                                      Отмена
+                                    </button>
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setConfirmId(row.id)}
+                                    title="Удалить запись (списание останется в платежах)"
+                                    className="rounded-md p-1.5 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                                  >
+                                    <Icon name="Trash2" size={16} />
+                                  </button>
+                                )}
                               </td>
                             </tr>
                           );

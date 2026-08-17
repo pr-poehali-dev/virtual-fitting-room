@@ -217,7 +217,9 @@ export default function AiEditor() {
       setStatusText(`Обрабатываю... ${elapsed} сек`);
 
       try {
-        const res = await fetch(`${AI_EDITOR_STATUS}?task_id=${taskId}`);
+        const res = await fetch(`${AI_EDITOR_STATUS}?task_id=${taskId}`, {
+          headers: authHeaders(),
+        });
         const data = await res.json();
 
         if (data.progress?.text) {

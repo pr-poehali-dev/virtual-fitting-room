@@ -666,6 +666,49 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'readings': readings, 'dialogs': dialogs})
             }
 
+        elif action == 'delete_divination' and method == 'DELETE':
+            # Удаление расклада или беседы из админки.
+            # Запись о списании в balance_transactions НЕ трогаем:
+            # финансовая история должна сохраняться.
+            item_id = query_params.get('id')
+            kind = query_params.get('kind') or 'reading'
+            if not item_id:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': get_cors_origin(event),
+                    },
+                    'isBase64Encoded': False,
+                    'body': json.dumps({'error': 'id required'})
+                }
+
+            if kind == 'dialog':
+                cursor.execute(
+                    "DELETE FROM divination_dialog_steps WHERE dialog_id = %s",
+                    (item_id,)
+                )
+                cursor.execute(
+                    "DELETE FROM divination_dialogs WHERE id = %s",
+                    (item_id,)
+                )
+            else:
+                cursor.execute(
+                    "DELETE FROM ai_editor_tasks WHERE id = %s AND task_type = 'lenormand'",
+                    (item_id,)
+                )
+            conn.commit()
+
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps({'success': True})
+            }
+
         elif action == 'colorguide_history':
             # Список задач Гида по цвету для админки
             filters = []

@@ -166,14 +166,26 @@ def handler(event, context):
                                COALESCE(LENGTH(partial_text), 0),
                                (stream_lock IS NOT NULL
                                 AND stream_lock < NOW() - INTERVAL '60 seconds'
-                                AND resume_count < 6) AS stalled
+                                AND resume_count < 6) AS stalled,
+                               user_id
                         FROM {DB_SCHEMA}.ai_editor_tasks WHERE id = '{safe_id}'"""
                 )
                 row = cur.fetchone()
                 if not row:
                     return {'statusCode': 404, 'headers': cors_headers, 'body': json.dumps({'error': 'Задача не найдена'})}
+
+                # Результат отдаём ТОЛЬКО тому, кто его заказал.
+                # У задач гостей владельца нет — они доступны по своему
+                # номеру, который знает лишь сам заказавший.
+                owner_id = row[-1]
+                if owner_id is not None:
+                    is_valid, user_id, _ = validate_session(event)
+                    if not is_valid or str(user_id) != str(owner_id):
+                        return {'statusCode': 403, 'headers': cors_headers,
+                                'body': json.dumps({'error': 'Нет доступа к этой задаче'})}
+
                 found_id = task_id
-                data_row = row
+                data_row = row[:-1]
     finally:
         conn.close()
 

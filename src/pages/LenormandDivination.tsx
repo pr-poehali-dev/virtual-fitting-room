@@ -251,6 +251,8 @@ export default function LenormandDivination() {
 
   // Предыдущий расклад из базы (последний завершённый) — для показа после перезагрузки
   const [prevResult, setPrevResult] = useState<string | null>(null);
+  // Номер расклада в базе — нужен, чтобы отправить его себе на почту
+  const [prevTaskId, setPrevTaskId] = useState<string | null>(null);
   const [prevLayout, setPrevLayout] = useState<string[]>([]);
   const [prevDate, setPrevDate] = useState<string>("");
   // Колода сохранённого расклада: у Ленорман и Таро есть карты с одинаковыми
@@ -407,6 +409,7 @@ export default function LenormandDivination() {
         const layoutArr =
           Array.isArray(meta.layout) && meta.layout.length > 0 ? meta.layout : [];
         setPrevResult(data.ai_response);
+        setPrevTaskId(data.id || null);
         setPrevLayout(layoutArr);
         // Колода расклада — из его же данных, а не из текущего выбора
         setPrevSystem(meta.system === "tarot" ? "tarot" : "lenormand");
@@ -627,6 +630,39 @@ export default function LenormandDivination() {
     }
   };
 
+  // Отправка расклада себе на почту — вместо «Поделиться» на компьютере,
+  // где системного меню отправки нет
+  const [sendingMail, setSendingMail] = useState(false);
+
+  const emailShownReading = async () => {
+    if (!prevTaskId) {
+      toast.error("Расклад ещё сохраняется, попробуйте через пару секунд");
+      return;
+    }
+    setSendingMail(true);
+    try {
+      const token = localStorage.getItem("session_token");
+      const res = await fetch(LENORMAND_LAST, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "X-Session-Token": token } : {}),
+        },
+        body: JSON.stringify({ action: "email", id: prevTaskId }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.sent) {
+        toast.error(data.error || "Не удалось отправить письмо");
+        return;
+      }
+      toast.success(`Расклад отправлен на ${data.email}`);
+    } catch {
+      toast.error("Ошибка соединения");
+    } finally {
+      setSendingMail(false);
+    }
+  };
+
   // Делимся тем же раскладом, который сейчас показан на экране
   const shareShownPng = () => {
     if (result) {
@@ -715,6 +751,8 @@ export default function LenormandDivination() {
       }
 
       refreshBalance();
+      // Номер задачи пригодится для отправки расклада на почту
+      setPrevTaskId(data.task_id || null);
       pollStatus(data.task_id, [...layout]);
     } catch (e) {
       setIsProcessing(false);
@@ -729,7 +767,11 @@ export default function LenormandDivination() {
       elapsed += POLLING_INTERVAL / 1000;
       setStatusText(`Карты раскрываются... ${elapsed} сек`);
       try {
-        const res = await fetch(`${AI_EDITOR_STATUS}?task_id=${taskId}`);
+        // Токен обязателен: результат отдаётся только тому, кто его заказал
+        const statusToken = localStorage.getItem("session_token");
+        const res = await fetch(`${AI_EDITOR_STATUS}?task_id=${taskId}`, {
+          headers: statusToken ? { "X-Session-Token": statusToken } : {},
+        });
         const data = await res.json();
         // Толкование пишется на глазах — показываем, что работа идёт
         if (data.written_chars > 0 && data.status !== "completed") {
@@ -755,6 +797,9 @@ export default function LenormandDivination() {
             })
           );
           setDownloaded(false);
+          // Стол освобождаем: расклад уже сохранён и показан ниже,
+          // а карты прошлого расклада мешают начать новый
+          resetTable();
           refreshBalance();
           // Расклад считается долго — зовём звуком, если вкладка свёрнута
           playReadySound();
@@ -1036,7 +1081,7 @@ export default function LenormandDivination() {
           Фон тянется на всю ширину области контента, чтобы тёмный блок
           не выглядел «заплаткой» на белом. */}
       <div className={`min-h-screen ${divTheme.surface}`}>
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-6xl px-2 py-10 sm:px-6">
         <div className="mb-8 text-center">
           <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full ${divTheme.accentSoft}`}>
             <Icon name="Sparkles" size={28} className="text-[#c9a84c]" />
@@ -1116,7 +1161,7 @@ export default function LenormandDivination() {
               />
             </button>
             {prevOpen && (
-              <div className="border-t border-[#c9a84c]/20 p-5">
+              <div className="border-t border-[#c9a84c]/20 p-3 sm:p-5">
                 <div className="mb-3 flex items-start gap-2 rounded-lg bg-[#c9a84c]/12 p-3 text-sm text-[#e8d9a8] ring-1 ring-[#c9a84c]/30">
                   <Icon name="Bookmark" size={18} className="mt-0.5 shrink-0" />
                   <span>
@@ -1140,6 +1185,23 @@ export default function LenormandDivination() {
                       className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
                     >
                       <Icon name="Share2" size={16} className="mr-1" /> Поделиться
+                    </Button>
+                  )}
+                  {/* На компьютере системного «Поделиться» нет — шлём письмо себе */}
+                  {!isMobileDevice() && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={sendingMail}
+                      onClick={emailShownReading}
+                      className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
+                    >
+                      <Icon
+                        name={sendingMail ? "Loader2" : "Mail"}
+                        size={16}
+                        className={`mr-1 ${sendingMail ? "animate-spin" : ""}`}
+                      />
+                      Отправить на почту
                     </Button>
                   )}
                   <Button variant="ghost"
@@ -1994,6 +2056,22 @@ export default function LenormandDivination() {
                 >
                   <Icon name="Download" size={16} className="mr-1" /> Скачать PNG
                 </Button>
+                {/* На компьютере системного «Поделиться» нет — шлём письмо себе */}
+                {!isMobileDevice() && (
+                  <Button
+                    variant="ghost"
+                    disabled={sendingMail}
+                    onClick={emailShownReading}
+                    className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
+                  >
+                    <Icon
+                      name={sendingMail ? "Loader2" : "Mail"}
+                      size={16}
+                      className={`mr-1 ${sendingMail ? "animate-spin" : ""}`}
+                    />
+                    Отправить на почту
+                  </Button>
+                )}
                 <Button variant="ghost"
                     className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white" onClick={startNewReadingNow}>
                   <Icon name="RotateCcw" size={16} className="mr-1" /> Очистить
@@ -2030,7 +2108,7 @@ export default function LenormandDivination() {
               </Button>
             </div>
 
-            <div className="rounded-2xl bg-white/[0.04] p-6 shadow-sm ring-1 ring-[#c9a84c]/20">
+            <div className="rounded-2xl bg-white/[0.04] p-3 shadow-sm ring-1 ring-[#c9a84c]/20 sm:p-6">
               <p className="mb-3 text-sm text-[#c9a84c]">{resultDate}</p>
 
               {resultLayout.length > 0 && (
