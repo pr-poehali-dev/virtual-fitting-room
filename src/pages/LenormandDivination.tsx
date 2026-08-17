@@ -22,6 +22,7 @@ import {
   LENORMAND_SPREAD,
   getDivinationPrice,
   getDivinationMinPrice,
+  DIALOG_STEP_PRICES,
 } from "@/config/prices";
 const loadHtml2Canvas = async () => (await import("html2canvas")).default;
 import {
@@ -149,6 +150,11 @@ export default function LenormandDivination() {
   const isLockedByBalanceOrAuth =
     !user || (!hasUnlimited && currentBalance < LENORMAND_MIN_COST);
 
+  // Порог блокировки формы. В диалогах платят за ОДИН шаг, а не за расклад,
+  // поэтому денег нужно меньше: в открытом диалоге — цена шага выбранной
+  // гадалки, до выбора диалога — цена шага самой недорогой.
+  const DIALOG_MIN_STEP = Math.min(...Object.values(DIALOG_STEP_PRICES));
+
   const [period, setPeriod] = useState<PeriodKey>("now");
   const [gender, setGender] = useState<GenderKey>("female");
   const [spheres, setSpheres] = useState<SphereKey[]>(["all"]);
@@ -181,6 +187,17 @@ export default function LenormandDivination() {
   // Пока категорию явно не выбрали, ориентируемся на восстановленный расклад —
   // иначе форма показывала бы шаги не от того типа расклада.
   const tab: DivTab = tabChoice ?? (activeSpread.dialog ? "dialogs" : "spreads");
+  // Сколько денег нужно, чтобы форма не была закрыта окном «Пополните баланс»:
+  // в открытом диалоге — цена одного шага выбранной гадалки (10 или 25 ₽),
+  // на вкладке диалогов до открытия — цена шага самой недорогой (10 ₽),
+  // в обычных раскладах — цена самого дешёвого расклада.
+  const lockCost =
+    tab === "dialogs"
+      ? wizardDone && activeSpread.dialog
+        ? getDivinationPrice(divSpread, model)
+        : DIALOG_MIN_STEP
+      : LENORMAND_MIN_COST;
+
   const activeDeck = getDeck(divSystem as DeckId);
   const spreadSize = activeSpread.size;
   // Карты активной колоды (Ленорман/Таро)
@@ -1311,7 +1328,7 @@ export default function LenormandDivination() {
         )}
 
         {tabChoice && (
-        <LockedFormOverlay cost={LENORMAND_MIN_COST}>
+        <LockedFormOverlay cost={lockCost}>
           <div className="relative">
           {/* Блокировка всей формы, пока есть несохранённый прошлый результат.
               Если форма уже закрыта балансовым/авторизационным оверлеем —
