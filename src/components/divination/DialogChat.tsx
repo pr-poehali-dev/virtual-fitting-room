@@ -54,6 +54,8 @@ interface DialogChatProps {
   getCardImage: (name: string) => string | undefined;
   onBalanceChange: () => void;
   onNeedTopup: () => void;
+  /** Денег не хватает на следующий вопрос: переписку показываем, отправку — нет */
+  lowBalance?: boolean;
 }
 
 const shuffle = <T,>(arr: T[]): T[] => {
@@ -85,6 +87,7 @@ const DialogChat = ({
   getCardImage,
   onBalanceChange,
   onNeedTopup,
+  lowBalance = false,
 }: DialogChatProps) => {
   const [dialogId, setDialogId] = useState<string | null>(null);
   const [steps, setSteps] = useState<DialogStep[]>([]);
@@ -162,7 +165,7 @@ const DialogChat = ({
   // Отправить можно с любым количеством от 1 до maxCards
   // Тянуть карты можно, как только вопрос начали печатать
   const hasQuestion = question.trim().length > 0;
-  const ready = hasQuestion && picked.length >= 1;
+  const ready = hasQuestion && picked.length >= 1 && !lowBalance;
   const stepsLeft = maxSteps - steps.length;
 
   // Режим колоды человек выбирает для КАЖДОГО вопроса заново
@@ -552,7 +555,7 @@ const DialogChat = ({
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="Например: как сложится этот проект?"
-            disabled={busy}
+            disabled={busy || lowBalance}
             className="mb-3 min-h-[80px] border-white/15 bg-white/[0.04] text-[#e8e0f0] placeholder:text-[#9888b8]"
           />
 
@@ -728,13 +731,27 @@ const DialogChat = ({
             </div>
           )}
 
-          {/* Понятно, чего не хватает для отправки */}
-          {!busy && !ready && (
-            <p className="mb-2 text-sm text-[#c9a84c]">
-              {!hasQuestion
-                ? "Напишите вопрос — без него карты не трактуем"
-                : "Выберите хотя бы одну карту"}
-            </p>
+          {/* Денег не хватает: переписка остаётся видна, закрыт только новый вопрос */}
+          {lowBalance ? (
+            <div className="mb-3 rounded-xl border border-[#c9a84c]/40 bg-[#c9a84c]/10 p-3">
+              <p className="mb-2 text-sm text-[#f3ecff]">
+                Не хватает средств на следующий вопрос — нужно {stepPrice} &#8381;.
+                Ответы гадалки выше остаются с вами.
+              </p>
+              <Button size="sm" onClick={onNeedTopup} className={divTheme.btnHero}>
+                <Icon name="Wallet" size={16} className="mr-1.5" />
+                Пополнить счёт
+              </Button>
+            </div>
+          ) : (
+            !busy &&
+            !ready && (
+              <p className="mb-2 text-sm text-[#c9a84c]">
+                {!hasQuestion
+                  ? "Напишите вопрос — без него карты не трактуем"
+                  : "Выберите хотя бы одну карту"}
+              </p>
+            )
           )}
 
           <div className="flex flex-wrap items-center gap-2">

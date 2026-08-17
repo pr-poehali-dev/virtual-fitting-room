@@ -191,12 +191,21 @@ export default function LenormandDivination() {
   // в открытом диалоге — цена одного шага выбранной гадалки (10 или 25 ₽),
   // на вкладке диалогов до открытия — цена шага самой недорогой (10 ₽),
   // в обычных раскладах — цена самого дешёвого расклада.
-  const lockCost =
-    tab === "dialogs"
-      ? wizardDone && activeSpread.dialog
-        ? getDivinationPrice(divSpread, model)
-        : DIALOG_MIN_STEP
+  const inOpenDialog = tab === "dialogs" && wizardDone && activeSpread.dialog;
+  // В открытом диалоге переписку окном пополнения НЕ закрываем: иначе ответ,
+  // за который уже заплатили, окажется размытым. Там блокируем только
+  // отправку нового вопроса — это делает сам чат (lowBalance).
+  const lockCost = inOpenDialog
+    ? 0
+    : tab === "dialogs"
+      ? DIALOG_MIN_STEP
       : LENORMAND_MIN_COST;
+
+  // Денег не хватает на следующий вопрос выбранной гадалки
+  const dialogLowBalance =
+    !!user &&
+    !hasUnlimited &&
+    currentBalance < getDivinationPrice(divSpread, model);
 
   const activeDeck = getDeck(divSystem as DeckId);
   const spreadSize = activeSpread.size;
@@ -1788,6 +1797,7 @@ export default function LenormandDivination() {
               getCardImage={getDeckCardImage}
               onBalanceChange={refreshBalance}
               onNeedTopup={() => navigate("/profile/wallet")}
+              lowBalance={dialogLowBalance}
             />
           )}
 
