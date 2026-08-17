@@ -225,7 +225,7 @@ const SpreadTable = ({
             className="grid gap-1.5"
             style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
           >
-            {mainSlots.map(renderSlot)}
+            {mainSlots.map((idx) => renderSlot(idx))}
           </div>
 
           {tailSlots.length > 0 && (
@@ -239,7 +239,7 @@ const SpreadTable = ({
                     width: `${(tailSlots.length / cols) * 100}%`,
                   }}
                 >
-                  {tailSlots.map(renderSlot)}
+                  {tailSlots.map((idx) => renderSlot(idx))}
                 </div>
               </div>
             </>
