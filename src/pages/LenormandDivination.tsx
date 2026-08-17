@@ -190,8 +190,15 @@ export default function LenormandDivination() {
   const spreadChoiceCount = spreadsByDeck(divSystem as DeckId).filter((sp) =>
     tab === "dialogs" ? sp.dialog : !sp.dialog,
   ).length;
-  const isStepVisible = (step: number) =>
-    !(WIZARD_TITLES[step] === "Расклад" && spreadChoiceCount <= 1);
+  // Кельтский крест гадают на одну конкретную ситуацию: сферы жизни
+  // ему не нужны, вместо свободного комментария спрашиваем вопрос
+  const isCeltic = activeSpread.shape === "celtic";
+  const isStepVisible = (step: number) => {
+    const title = WIZARD_TITLES[step];
+    if (title === "Расклад" && spreadChoiceCount <= 1) return false;
+    if (title === "Сферы" && isCeltic) return false;
+    return true;
+  };
   // Номера показываемых шагов — для счётчика «Шаг X из Y»
   const visibleSteps = Array.from(
     { length: WIZARD_STEPS_COUNT },
@@ -666,7 +673,8 @@ export default function LenormandDivination() {
       spread: divSpread,
       period,
       gender,
-      spheres,
+      // У креста шага «Сферы» нет — не отправляем то, чего не выбирали
+      spheres: activeSpread.shape === "celtic" ? [] : spheres,
       comment: comment.trim(),
       layout,
     };
@@ -922,7 +930,9 @@ export default function LenormandDivination() {
       return isStepVisible(cur) ? cur : stepTo(cur, 1);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [WIZARD_STEPS_COUNT, spreadChoiceCount, tab, divSystem]);
+    // divSpread в списке: у Кельтского креста шаг «Сферы» пропадает,
+    // и на нём нельзя остаться
+  }, [WIZARD_STEPS_COUNT, spreadChoiceCount, tab, divSystem, divSpread]);
 
   // Страховка: длина стола всегда соответствует выбранному раскладу
   // (например, после восстановления старой формы из браузера).
@@ -994,6 +1004,10 @@ export default function LenormandDivination() {
     if (title === "Расклад" && !spreadChosen) return "Выберите расклад";
     if (title === "Сферы" && spheres.length === 0)
       return "Выберите хотя бы одну сферу";
+    // Крест раскладывают на конкретную ситуацию — без вопроса
+    // толкование получится размытым
+    if (title === "Комментарий" && isCeltic && !comment.trim())
+      return "Напишите вопрос";
     return "";
   })();
 
@@ -1297,7 +1311,9 @@ export default function LenormandDivination() {
                     />
                   </div>
                   <h2 className="mt-3 font-serif text-2xl text-[#f3ecff]">
-                    {WIZARD_TITLES[wizardStep]}
+                    {WIZARD_TITLES[wizardStep] === "Комментарий" && isCeltic
+                      ? "Вопрос"
+                      : WIZARD_TITLES[wizardStep]}
                   </h2>
                 </div>
 
@@ -1560,12 +1576,16 @@ export default function LenormandDivination() {
                     </div>
                   )}
 
-                  {/* Шаг 7: Комментарий */}
+                  {/* Шаг 7: Комментарий, у Кельтского креста — вопрос */}
                   {wizardStep === 7 && (
                     <Textarea
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
-                      placeholder="Например: стоит ли обновить гардероб этой весной и каким будет мой новый образ…"
+                      placeholder={
+                        isCeltic
+                          ? "Например: чем закончится эта ситуация и как мне поступить…"
+                          : "Например: стоит ли обновить гардероб этой весной и каким будет мой новый образ…"
+                      }
                       rows={3}
                       className="border-2 border-white/50 bg-transparent text-white placeholder:text-white/60 focus-visible:ring-white/40"
                     />
@@ -1702,16 +1722,23 @@ export default function LenormandDivination() {
                     </span>
                   </>
                 )}
+                {/* У креста сфер нет — в сводке их тоже не показываем */}
+                {!isCeltic && (
+                  <>
+                    <span className="text-white/40">·</span>
+                    <span>
+                      <span className="text-white/60">Сферы:</span>{" "}
+                      {SPHERES.filter((s) => spheres.includes(s.key))
+                        .map((s) => s.label)
+                        .join(", ")}
+                    </span>
+                  </>
+                )}
                 <span className="text-white/40">·</span>
                 <span>
-                  <span className="text-white/60">Сферы:</span>{" "}
-                  {SPHERES.filter((s) => spheres.includes(s.key))
-                    .map((s) => s.label)
-                    .join(", ")}
-                </span>
-                <span className="text-white/40">·</span>
-                <span>
-                  <span className="text-white/60">Комментарий:</span>{" "}
+                  <span className="text-white/60">
+                    {isCeltic ? "Вопрос:" : "Комментарий:"}
+                  </span>{" "}
                   {comment.trim() || "—"}
                 </span>
               </div>

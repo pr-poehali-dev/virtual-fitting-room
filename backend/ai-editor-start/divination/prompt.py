@@ -114,17 +114,28 @@ def build_divination_prompt(meta: dict) -> str:
             'дом задаёт тему, карта отвечает на неё.'
         )
 
+    # Кельтский крест раскладывают на один конкретный вопрос:
+    # сферы жизни у него не спрашивают, а вопрос — главный ориентир
+    is_celtic = spread_id == 'tarot_celtic10'
+
     parts = [
         ROLE_INTRO,
         '',
         f'Расшифруй {spread["title"]}. {gender_label.capitalize()}. '
         f'Период: {period_label}.',
-        f'Сферы для анализа: {spheres_text}.',
     ]
+    if not is_celtic:
+        parts.append(f'Сферы для анализа: {spheres_text}.')
 
     if comment:
         parts.append('')
-        parts.append(f'Дополнительный вопрос / уточнение от человека: {comment}')
+        if is_celtic:
+            parts.append(
+                f'Вопрос человека, ради которого сделан расклад: {comment}\n'
+                'Весь разбор веди вокруг этого вопроса и в конце дай прямой ответ на него.'
+            )
+        else:
+            parts.append(f'Дополнительный вопрос / уточнение от человека: {comment}')
 
     parts.append('')
     parts.append(spread['geometry'])
