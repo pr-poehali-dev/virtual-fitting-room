@@ -20,7 +20,9 @@ export interface SpreadDef {
   /** Расклад-диалог: вопрос → карты → ответ → уточняющий вопрос */
   dialog?: boolean;
   /** Особая фигура на столе (не прямоугольная сетка) */
-  shape?: "celtic";
+  shape?: "celtic" | "plan5";
+  /** Расклад на конкретный вопрос: сферы не спрашиваем, вопрос обязателен */
+  askQuestion?: boolean;
   icon: string;
 }
 
@@ -89,7 +91,28 @@ export const SPREADS: SpreadDef[] = [
     // Крест читается только целиком: связи 1-2-6-10 без полной выкладки не работают
     requireFull: true,
     shape: "celtic",
+    askQuestion: true,
     icon: "Cross",
+  },
+  {
+    id: "tarot_plan5",
+    deck: "tarot",
+    title: "Расклад на план",
+    short: "5 карт: как достичь цели",
+    size: 5,
+    grid: null,
+    positions: [
+      "О чём идёт речь",
+      "Ведущая сила",
+      "Извне: помеха или поддержка",
+      "Так не получится",
+      "Так получится",
+    ],
+    // Места 4 и 5 — это два пути; порознь, без остальных карт, они не читаются
+    requireFull: true,
+    shape: "plan5",
+    askQuestion: true,
+    icon: "Target",
   },
 ];
 

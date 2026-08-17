@@ -53,6 +53,10 @@ export const DIVINATION_PRICES: Record<string, Record<string, number>> = {
     "google/gemini-2.5-flash": 50,
     "anthropic/claude-sonnet-4.6": 100,
   },
+  tarot_plan5: {
+    "google/gemini-2.5-flash": 50,
+    "anthropic/claude-sonnet-4.6": 100,
+  },
   // Расклады-диалоги: цена за ОДИН шаг (вопрос + карты + ответ)
   lenormand_dialog: DIALOG_STEP_PRICES,
   tarot_dialog: DIALOG_STEP_PRICES,

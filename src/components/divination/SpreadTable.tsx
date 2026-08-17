@@ -151,6 +151,58 @@ const SpreadTable = ({
     );
   }
 
+  // Расклад на план. Карта 1 в центре, 2 слева от неё, 3 справа,
+  // 4 и 5 — два возможных пути внизу
+  if (spread.shape === "plan5") {
+    const place: Record<number, { col: number; row: number }> = {
+      0: { col: 2, row: 1 }, // 1 — центр
+      1: { col: 1, row: 1 }, // 2 — слева
+      2: { col: 3, row: 1 }, // 3 — справа
+      3: { col: 1, row: 2 }, // 4 — так не получится
+      4: { col: 2, row: 2 }, // 5 — так получится
+    };
+
+    return (
+      <div>
+        <div
+          className="overflow-x-auto rounded-2xl border border-[#c9a84c]/25 p-3 sm:p-4"
+          style={{
+            background:
+              "radial-gradient(120% 100% at 50% 0%, #2d1b69 0%, #241845 55%, #1a1030 100%)",
+            boxShadow: "inset 0 0 60px rgba(201,168,76,0.10)",
+          }}
+        >
+          <div
+            className="mx-auto grid min-w-[380px] max-w-[560px] gap-2"
+            style={{
+              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+              gridAutoRows: "1fr",
+            }}
+          >
+            {Array.from({ length: 5 }, (_, i) => i).map((idx) => {
+              const p = place[idx];
+              return (
+                <div
+                  key={idx}
+                  style={{ gridColumn: p.col, gridRow: p.row }}
+                  className="flex"
+                >
+                  {renderSlot(idx)}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-[#9888b8] sm:hidden">
+          <Icon name="ArrowLeft" size={14} />
+          <span>Листайте стол вбок, чтобы увидеть все карты</span>
+          <Icon name="ArrowRight" size={14} />
+        </div>
+      </div>
+    );
+  }
+
   const mainSlots = Array.from({ length: mainCount }, (_, i) => i);
   const tailSlots = tail
     ? Array.from({ length: tail }, (_, i) => mainCount + i)

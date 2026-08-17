@@ -114,9 +114,9 @@ def build_divination_prompt(meta: dict) -> str:
             'дом задаёт тему, карта отвечает на неё.'
         )
 
-    # Кельтский крест раскладывают на один конкретный вопрос:
-    # сферы жизни у него не спрашивают, а вопрос — главный ориентир
-    is_celtic = spread_id == 'tarot_celtic10'
+    # Часть раскладов делают на один конкретный вопрос: сферы жизни
+    # у них не спрашивают, а вопрос — главный ориентир разбора
+    asks_question = spread_id in ('tarot_celtic10', 'tarot_plan5')
 
     parts = [
         ROLE_INTRO,
@@ -124,12 +124,12 @@ def build_divination_prompt(meta: dict) -> str:
         f'Расшифруй {spread["title"]}. {gender_label.capitalize()}. '
         f'Период: {period_label}.',
     ]
-    if not is_celtic:
+    if not asks_question:
         parts.append(f'Сферы для анализа: {spheres_text}.')
 
     if comment:
         parts.append('')
-        if is_celtic:
+        if asks_question:
             parts.append(
                 f'Вопрос человека, ради которого сделан расклад: {comment}\n'
                 'Весь разбор веди вокруг этого вопроса и в конце дай прямой ответ на него.'

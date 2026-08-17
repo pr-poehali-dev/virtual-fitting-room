@@ -190,13 +190,13 @@ export default function LenormandDivination() {
   const spreadChoiceCount = spreadsByDeck(divSystem as DeckId).filter((sp) =>
     tab === "dialogs" ? sp.dialog : !sp.dialog,
   ).length;
-  // Кельтский крест гадают на одну конкретную ситуацию: сферы жизни
-  // ему не нужны, вместо свободного комментария спрашиваем вопрос
-  const isCeltic = activeSpread.shape === "celtic";
+  // Расклады на конкретный вопрос (Кельтский крест, Расклад на план):
+  // сферы жизни им не нужны, вместо комментария спрашиваем вопрос
+  const asksQuestion = activeSpread.askQuestion === true;
   const isStepVisible = (step: number) => {
     const title = WIZARD_TITLES[step];
     if (title === "Расклад" && spreadChoiceCount <= 1) return false;
-    if (title === "Сферы" && isCeltic) return false;
+    if (title === "Сферы" && asksQuestion) return false;
     return true;
   };
   // Номера показываемых шагов — для счётчика «Шаг X из Y»
@@ -673,8 +673,8 @@ export default function LenormandDivination() {
       spread: divSpread,
       period,
       gender,
-      // У креста шага «Сферы» нет — не отправляем то, чего не выбирали
-      spheres: activeSpread.shape === "celtic" ? [] : spheres,
+      // Шага «Сферы» не было — не отправляем то, чего не выбирали
+      spheres: asksQuestion ? [] : spheres,
       comment: comment.trim(),
       layout,
     };
@@ -930,7 +930,7 @@ export default function LenormandDivination() {
       return isStepVisible(cur) ? cur : stepTo(cur, 1);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    // divSpread в списке: у Кельтского креста шаг «Сферы» пропадает,
+    // divSpread в списке: у таких раскладов шаг «Сферы» пропадает,
     // и на нём нельзя остаться
   }, [WIZARD_STEPS_COUNT, spreadChoiceCount, tab, divSystem, divSpread]);
 
@@ -1004,9 +1004,9 @@ export default function LenormandDivination() {
     if (title === "Расклад" && !spreadChosen) return "Выберите расклад";
     if (title === "Сферы" && spheres.length === 0)
       return "Выберите хотя бы одну сферу";
-    // Крест раскладывают на конкретную ситуацию — без вопроса
+    // Такие расклады делают на конкретную ситуацию — без вопроса
     // толкование получится размытым
-    if (title === "Комментарий" && isCeltic && !comment.trim())
+    if (title === "Комментарий" && asksQuestion && !comment.trim())
       return "Напишите вопрос";
     return "";
   })();
@@ -1311,7 +1311,7 @@ export default function LenormandDivination() {
                     />
                   </div>
                   <h2 className="mt-3 font-serif text-2xl text-[#f3ecff]">
-                    {WIZARD_TITLES[wizardStep] === "Комментарий" && isCeltic
+                    {WIZARD_TITLES[wizardStep] === "Комментарий" && asksQuestion
                       ? "Вопрос"
                       : WIZARD_TITLES[wizardStep]}
                   </h2>
@@ -1582,7 +1582,7 @@ export default function LenormandDivination() {
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
                       placeholder={
-                        isCeltic
+                        asksQuestion
                           ? "Например: чем закончится эта ситуация и как мне поступить…"
                           : "Например: стоит ли обновить гардероб этой весной и каким будет мой новый образ…"
                       }
@@ -1722,8 +1722,8 @@ export default function LenormandDivination() {
                     </span>
                   </>
                 )}
-                {/* У креста сфер нет — в сводке их тоже не показываем */}
-                {!isCeltic && (
+                {/* Сфер не было — в сводке их тоже не показываем */}
+                {!asksQuestion && (
                   <>
                     <span className="text-white/40">·</span>
                     <span>
@@ -1737,7 +1737,7 @@ export default function LenormandDivination() {
                 <span className="text-white/40">·</span>
                 <span>
                   <span className="text-white/60">
-                    {isCeltic ? "Вопрос:" : "Комментарий:"}
+                    {asksQuestion ? "Вопрос:" : "Комментарий:"}
                   </span>{" "}
                   {comment.trim() || "—"}
                 </span>

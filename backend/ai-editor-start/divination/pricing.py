@@ -27,6 +27,7 @@ SPREAD_PRICES = {
     'lenormand_big9x4': FULL_SPREAD_PRICES,
     'lenormand_big8x4plus4': FULL_SPREAD_PRICES,
     'tarot_celtic10': FULL_SPREAD_PRICES,
+    'tarot_plan5': FULL_SPREAD_PRICES,
     'lenormand_dialog': DIALOG_STEP_PRICES,
     'tarot_dialog': DIALOG_STEP_PRICES,
 }
