@@ -1876,6 +1876,12 @@ export default function LenormandDivination() {
                 </div>
               )}
 
+              {/* Кнопка прямо над толкованием: текст длинный, и искать
+                  «Слушать» в шапке приходится прокруткой вверх */}
+              <div className="mb-3">
+                <ReadAloud text={result} compact />
+              </div>
+
               {/* Длинный текст читают подолгу: тёплый пергамент,
                   тёмные крупные буквы и настоящие заголовки разделов */}
               <ReadingText text={result} />
@@ -1993,6 +1999,11 @@ export default function LenormandDivination() {
                       </div>
                     </div>
                   )}
+
+                  {/* Дубль кнопки у самого текста — не надо прокручивать вверх */}
+                  <div className="mb-3">
+                    <ReadAloud text={prevResult} compact />
+                  </div>
 
                   <ReadingText text={prevResult} />
                   <div className="mt-6 border-t border-[#c9a84c]/25 pt-4 text-center text-xs text-[#9888b8]">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import Icon from "@/components/ui/icon";
@@ -96,6 +96,10 @@ const DialogChat = ({
   const [closed, setClosed] = useState(false);
   const [shuffled, setShuffled] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
+  // Шаги-карточки: к началу свежего ответа подкручиваем страницу
+  const stepRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  // Сколько ответов было в прошлый раз — чтобы отличить новый от загрузки истории
+  const prevCountRef = useRef(0);
 
   const api = async (payload: Record<string, unknown>) => {
     const token = localStorage.getItem("session_token");
@@ -320,6 +324,28 @@ const DialogChat = ({
     }
   };
 
+  /**
+   * Пришёл новый ответ — плавно подкручиваем к его началу.
+   * Ответы длинные: без этого человек остаётся у формы вопроса
+   * и не видит, что ответ уже пришёл выше.
+   */
+  useEffect(() => {
+    const isNew = steps.length > prevCountRef.current && prevCountRef.current > 0;
+    const first = prevCountRef.current === 0 && steps.length > 0 && !resumeDialog;
+    prevCountRef.current = steps.length;
+    if (!isNew && !first) return;
+
+    const last = steps[steps.length - 1];
+    const el = last && stepRefs.current[last.step_no];
+    if (!el) return;
+    // Ждём отрисовку текста, иначе прокрутим не туда
+    const t = setTimeout(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [steps.length]);
+
   const closeDialog = async () => {
     if (!dialogId) {
       setClosed(true);
@@ -343,7 +369,13 @@ const DialogChat = ({
   return (
     <div className="space-y-4">
       {steps.map((s) => (
-        <div key={s.step_no} className={`${divTheme.panel} p-4 sm:p-5`}>
+        <div
+          key={s.step_no}
+          ref={(el) => {
+            stepRefs.current[s.step_no] = el;
+          }}
+          className={`${divTheme.panel} scroll-mt-20 p-4 sm:p-5`}
+        >
           <div className="mb-3 flex items-start gap-2">
             <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#c9a84c]/20 text-xs font-semibold text-[#c9a84c]">
               {s.step_no}
@@ -374,6 +406,14 @@ const DialogChat = ({
               );
             })}
           </div>
+
+          {/* Кнопка над текстом: длинный ответ, и докручивать до низа
+              ради «Слушать» неудобно */}
+          {s.answer && (
+            <div className="mb-3">
+              <ReadAloud text={s.answer} compact />
+            </div>
+          )}
 
           {/* Ответ читают вдумчиво — тёплый пергамент, как в раскладах */}
           <ReadingText text={s.answer} compact />
