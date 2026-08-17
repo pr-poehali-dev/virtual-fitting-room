@@ -7,11 +7,12 @@ import { useAuth } from "@/context/AuthContext";
 import ProfileMenu from "@/components/ProfileMenu";
 import { toast } from "sonner";
 import { getSpread } from "@/data/divination/spreads";
+import { PERIODS, SPHERES } from "@/data/lenormand";
 
 const READINGS_API = "https://functions.poehali.dev/9d61578b-0a21-4bba-9fcc-37dbd5a4454d";
 const DIALOG_API = "https://functions.poehali.dev/336075f7-e6e8-4cd9-bfd5-80e6e23e187a";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 interface Reading {
   id: string;
@@ -20,6 +21,10 @@ interface Reading {
     system?: string;
     spread?: string;
     layout?: string[];
+    period?: string;
+    gender?: string;
+    spheres?: string[];
+    comment?: string;
   };
   cost: number;
   created_at: string;
@@ -68,6 +73,7 @@ export default function ProfileHistoryDivination() {
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
   const [confirmDialogId, setConfirmDialogId] = useState<string | null>(null);
 
   const token = () => localStorage.getItem("session_token") || "";
@@ -79,9 +85,7 @@ export default function ProfileHistoryDivination() {
     );
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Не удалось загрузить");
-    setReadings((prev) =>
-      offset === 0 ? data.items || [] : [...prev, ...(data.items || [])],
-    );
+    setReadings(data.items || []);
     setTotal(data.total || 0);
   }, []);
 
@@ -111,16 +115,20 @@ export default function ProfileHistoryDivination() {
       .finally(() => setIsLoading(false));
   }, [authLoading, user, navigate, loadReadings, loadDialogs]);
 
-  const loadMore = async () => {
+  const goToPage = async (next: number) => {
     setIsLoadingMore(true);
     try {
-      await loadReadings(readings.length);
+      await loadReadings((next - 1) * PAGE_SIZE);
+      setPage(next);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
       setIsLoadingMore(false);
     }
   };
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const removeDialog = async (id: string) => {
     const res = await fetch(DIALOG_API, {
@@ -202,48 +210,85 @@ export default function ProfileHistoryDivination() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {readings.map((r) => (
-                      <button
-                        key={r.id}
-                        type="button"
-                        onClick={() =>
-                          navigate(`/profile/reading/${r.id}`)
-                        }
-                        className="flex w-full items-center justify-between gap-3 rounded-2xl border p-4 text-left transition hover:bg-muted/50"
-                      >
-                        <span className="min-w-0">
-                          <span className="block font-medium">
-                            {spreadTitle(r.divination_meta)}
-                          </span>
-                          <span className="block text-sm text-muted-foreground">
-                            {formatDate(r.created_at)}
-                            {r.cost ? ` \u00b7 ${r.cost} \u20bd` : ""}
-                          </span>
-                        </span>
-                        <Icon
-                          name="ChevronRight"
-                          size={20}
-                          className="shrink-0 text-muted-foreground"
-                        />
-                      </button>
-                    ))}
+                    {readings.map((r) => {
+                      const m = r.divination_meta || {};
+                      const asksQuestion =
+                        (m.spread ? getSpread(m.spread) : undefined)
+                          ?.askQuestion === true;
+                      const periodLabel =
+                        PERIODS.find((p) => p.key === m.period)?.label || "";
+                      const sphereLabels = SPHERES.filter((sp) =>
+                        (m.spheres || []).includes(sp.key),
+                      )
+                        .map((sp) => sp.label)
+                        .join(", ");
 
-                    {readings.length < total && (
-                      <div className="pt-2 text-center">
+                      return (
+                        <button
+                          key={r.id}
+                          type="button"
+                          onClick={() => navigate(`/profile/reading/${r.id}`)}
+                          className="flex w-full items-start justify-between gap-3 rounded-2xl border p-4 text-left transition hover:bg-muted/50"
+                        >
+                          <span className="min-w-0 flex-1">
+                            <span className="block font-medium">
+                              {spreadTitle(m)}
+                            </span>
+                            <span className="mt-0.5 block text-sm text-muted-foreground">
+                              {formatDate(r.created_at)}
+                              {r.cost ? ` \u00b7 ${r.cost} \u20bd` : ""}
+                              {m.system === "tarot" ? " \u00b7 Таро" : " \u00b7 Ленорман"}
+                            </span>
+
+                            {/* Что спрашивали — главное, по чему узнают расклад */}
+                            {m.comment && (
+                              <span className="mt-2 block text-sm">
+                                <span className="text-muted-foreground">
+                                  {asksQuestion ? "Вопрос: " : "Комментарий: "}
+                                </span>
+                                {m.comment}
+                              </span>
+                            )}
+
+                            <span className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                              {periodLabel && <span>Период: {periodLabel}</span>}
+                              {sphereLabels && <span>Сферы: {sphereLabels}</span>}
+                              {(m.layout || []).filter(Boolean).length > 0 && (
+                                <span>
+                                  Карт: {(m.layout || []).filter(Boolean).length}
+                                </span>
+                              )}
+                            </span>
+                          </span>
+                          <Icon
+                            name="ChevronRight"
+                            size={20}
+                            className="mt-1 shrink-0 text-muted-foreground"
+                          />
+                        </button>
+                      );
+                    })}
+
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center gap-3 pt-2">
                         <Button
                           variant="outline"
-                          onClick={loadMore}
-                          disabled={isLoadingMore}
-                          className="gap-2"
+                          size="sm"
+                          disabled={page === 1 || isLoadingMore}
+                          onClick={() => goToPage(page - 1)}
                         >
-                          {isLoadingMore && (
-                            <Icon
-                              name="Loader2"
-                              size={15}
-                              className="animate-spin"
-                            />
-                          )}
-                          Показать ещё
+                          Назад
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          {page} из {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={page === totalPages || isLoadingMore}
+                          onClick={() => goToPage(page + 1)}
+                        >
+                          Вперёд
                         </Button>
                       </div>
                     )}

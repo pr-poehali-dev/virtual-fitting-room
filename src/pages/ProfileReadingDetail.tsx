@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Layout from "@/components/Layout";
 import Icon from "@/components/ui/icon";
@@ -14,6 +14,10 @@ import { PERIODS, GENDERS, SPHERES } from "@/data/lenormand";
 import { getCardImageByName } from "@/data/lenormandImages";
 import { getTarotImageByName } from "@/data/divination/tarotImages";
 import { isMobileDevice } from "@/components/divination/SavedDialogs";
+import {
+  downloadReadingPng,
+  shareReadingPng,
+} from "@/components/divination/readingImage";
 
 const READINGS_API = "https://functions.poehali.dev/9d61578b-0a21-4bba-9fcc-37dbd5a4454d";
 
@@ -53,6 +57,9 @@ export default function ProfileReadingDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [confirm, setConfirm] = useState(false);
   const [sendingMail, setSendingMail] = useState(false);
+  const [makingPng, setMakingPng] = useState(false);
+  // Блок, который попадёт на картинку: карты и текст толкования
+  const shotRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -104,6 +111,16 @@ export default function ProfileReadingDetail() {
     }
     toast.success("Расклад удалён");
     navigate("/profile/history-divination");
+  };
+
+  /** Снимок делается несколько секунд — показываем ожидание на кнопке */
+  const withPng = async (fn: () => Promise<void>) => {
+    setMakingPng(true);
+    try {
+      await fn();
+    } finally {
+      setMakingPng(false);
+    }
   };
 
   /** Поделиться раскладом текстом: на телефоне — системное меню отправки */
@@ -240,6 +257,65 @@ export default function ProfileReadingDetail() {
                 </dl>
               </div>
 
+              {/* Всё, что попадает на картинку: стол и толкование */}
+              <div className="mb-4 flex flex-wrap gap-2">
+                <ReadAloud text={reading.ai_response} onLight />
+
+                {/* Текстом — удобно переслать в переписке */}
+                <Button
+                  variant="outline"
+                  className="gap-1.5"
+                  onClick={shareReading}
+                >
+                  <Icon name={isMobileDevice() ? "Share2" : "Copy"} size={16} />
+                  {isMobileDevice() ? "Поделиться текстом" : "Скопировать текст"}
+                </Button>
+
+                {/* Картинкой — видно сам расклад с картами */}
+                <Button
+                  variant="outline"
+                  className="gap-1.5"
+                  disabled={makingPng}
+                  onClick={() =>
+                    withPng(() =>
+                      isMobileDevice()
+                        ? shareReadingPng(shotRef.current)
+                        : downloadReadingPng(shotRef.current),
+                    )
+                  }
+                >
+                  <Icon
+                    name={
+                      makingPng
+                        ? "Loader2"
+                        : isMobileDevice()
+                          ? "Share2"
+                          : "Download"
+                    }
+                    size={16}
+                    className={makingPng ? "animate-spin" : ""}
+                  />
+                  {isMobileDevice()
+                    ? "Поделиться картинкой"
+                    : "Скачать картинкой"}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="gap-1.5"
+                  disabled={sendingMail}
+                  onClick={emailReading}
+                >
+                  <Icon
+                    name={sendingMail ? "Loader2" : "Mail"}
+                    size={16}
+                    className={sendingMail ? "animate-spin" : ""}
+                  />
+                  Отправить на почту
+                </Button>
+              </div>
+
+              <div ref={shotRef} className="rounded-2xl bg-[#faf7ff] p-1">
               {/* Стол: карты лежат так же, как их выложили */}
               {(meta.layout || []).length > 0 && (
                 <div className="mb-5">
@@ -252,49 +328,13 @@ export default function ProfileReadingDetail() {
                 </div>
               )}
 
-              <div className="mb-4 flex flex-wrap gap-2">
-                <ReadAloud text={reading.ai_response} onLight />
-                {isMobileDevice() ? (
-                  <Button
-                    variant="outline"
-                    className="gap-1.5"
-                    onClick={shareReading}
-                  >
-                    <Icon name="Share2" size={16} />
-                    Поделиться
-                  </Button>
-                ) : (
-                  <>
-                    <Button
-                      variant="outline"
-                      className="gap-1.5"
-                      onClick={shareReading}
-                    >
-                      <Icon name="Copy" size={16} />
-                      Скопировать
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="gap-1.5"
-                      disabled={sendingMail}
-                      onClick={emailReading}
-                    >
-                      <Icon
-                        name={sendingMail ? "Loader2" : "Mail"}
-                        size={16}
-                        className={sendingMail ? "animate-spin" : ""}
-                      />
-                      Отправить на почту
-                    </Button>
-                  </>
-                )}
-              </div>
 
               <ReadingText text={reading.ai_response} />
 
-              <p className="mt-5 text-xs text-muted-foreground">
+              <p className="p-3 text-xs text-muted-foreground">
                 {DISCLAIMER_SHORT}
               </p>
+              </div>
 
               {confirm ? (
                 <div className="mt-6 rounded-lg border border-destructive/40 bg-destructive/5 p-4">
