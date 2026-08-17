@@ -91,6 +91,9 @@ export default function AdminDivination() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  // Безлимитные (0 ₽) — это мои собственные проверки сервиса,
+  // в общей картине они только мешают, поэтому по умолчанию скрыты
+  const [hideUnlimited, setHideUnlimited] = useState(true);
   const itemsPerPage = 20;
 
   const fetchUsers = async () => {
@@ -158,7 +161,14 @@ export default function AdminDivination() {
     }
   };
 
-  const rows = tab === "readings" ? readings : dialogs;
+  const visibleReadings = hideUnlimited
+    ? readings.filter((r) => (r.cost || 0) > 0)
+    : readings;
+  const visibleDialogs = hideUnlimited
+    ? dialogs.filter((d) => (d.total_spent || 0) > 0)
+    : dialogs;
+
+  const rows = tab === "readings" ? visibleReadings : visibleDialogs;
   const paginated = rows.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
@@ -166,8 +176,8 @@ export default function AdminDivination() {
   const totalPages = Math.ceil(rows.length / itemsPerPage);
 
   const spentTotal =
-    readings.reduce((sum, r) => sum + (r.refunded ? 0 : r.cost || 0), 0) +
-    dialogs.reduce((sum, d) => sum + (d.total_spent || 0), 0);
+    visibleReadings.reduce((sum, r) => sum + (r.refunded ? 0 : r.cost || 0), 0) +
+    visibleDialogs.reduce((sum, d) => sum + (d.total_spent || 0), 0);
 
   return (
     <Layout>
@@ -188,13 +198,13 @@ export default function AdminDivination() {
               <Card>
                 <CardContent className="p-4">
                   <p className="text-sm text-muted-foreground">Раскладов</p>
-                  <p className="text-2xl font-bold">{readings.length}</p>
+                  <p className="text-2xl font-bold">{visibleReadings.length}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
                   <p className="text-sm text-muted-foreground">Бесед</p>
-                  <p className="text-2xl font-bold">{dialogs.length}</p>
+                  <p className="text-2xl font-bold">{visibleDialogs.length}</p>
                 </CardContent>
               </Card>
               <Card>
@@ -236,6 +246,19 @@ export default function AdminDivination() {
                   Беседы
                 </button>
               </div>
+
+              <label className="flex cursor-pointer select-none items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 cursor-pointer accent-primary"
+                  checked={hideUnlimited}
+                  onChange={(e) => {
+                    setHideUnlimited(e.target.checked);
+                    setCurrentPage(1);
+                  }}
+                />
+                Скрыть безлимитные (0 &#8381;)
+              </label>
 
               <Select value={userFilter} onValueChange={setUserFilter}>
                 <SelectTrigger className="w-full sm:w-72">
