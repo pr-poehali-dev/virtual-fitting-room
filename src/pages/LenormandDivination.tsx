@@ -296,6 +296,7 @@ export default function LenormandDivination() {
         if (d.period) setPeriod(d.period);
         if (d.gender) setGender(d.gender);
         if (Array.isArray(d.spheres)) setSpheres(d.spheres);
+        if (typeof d.comment === "string") setComment(d.comment);
         if (d.model) setModel(d.model);
         if (Array.isArray(d.layout) && d.layout.length > 0) setLayout(d.layout);
         if (typeof d.wizardStep === "number") setWizardStep(d.wizardStep);
@@ -328,6 +329,7 @@ export default function LenormandDivination() {
           period,
           gender,
           spheres,
+          comment,
           model,
           layout,
           wizardStep,
@@ -344,6 +346,7 @@ export default function LenormandDivination() {
     period,
     gender,
     spheres,
+    comment,
     model,
     layout,
     wizardStep,
@@ -799,6 +802,14 @@ export default function LenormandDivination() {
           resetTable();
           // Вопрос относился к этому раскладу — в новом он будет свой
           setComment("");
+          // Черновик формы больше не нужен: он бережёт заполнение
+          // от случайной перезагрузки, но расклад уже отправлен —
+          // иначе после перезагрузки вернутся старые карты и вопрос
+          try {
+            localStorage.removeItem(FORM_STORAGE_KEY);
+          } catch (e) {
+            /* ignore */
+          }
           refreshBalance();
           // Расклад считается долго — зовём звуком, если вкладка свёрнута
           playReadySound();
