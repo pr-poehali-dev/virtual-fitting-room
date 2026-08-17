@@ -171,10 +171,6 @@ const SavedDialogs = ({ reloadKey = 0, onContinue }: SavedDialogsProps) => {
     load();
   }, [load, reloadKey]);
 
-  // Есть незакрытая беседа — раскрываем сразу: её ждут, чтобы продолжить
-  useEffect(() => {
-    if (items.some((i) => i.status === "active")) setOpen(true);
-  }, [items]);
 
   const remove = async (id: string) => {
     const { res, data } = await dialogApi({ action: "delete", dialog_id: id });
@@ -203,6 +199,12 @@ const SavedDialogs = ({ reloadKey = 0, onContinue }: SavedDialogsProps) => {
             Сохранённые диалоги
           </h2>
           <span className={`text-sm ${divTheme.muted}`}>({items.length})</span>
+          {/* Список закрыт — подсказываем, что внутри есть беседа для продолжения */}
+          {!open && items.some((i) => i.status === "active") && (
+            <span className="rounded-full bg-[#4caf50]/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#8fd694] ring-1 ring-[#4caf50]/40">
+              Можно продолжить
+            </span>
+          )}
         </span>
         <Icon
           name={open ? "ChevronUp" : "ChevronDown"}
