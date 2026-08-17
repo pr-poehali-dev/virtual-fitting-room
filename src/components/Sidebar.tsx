@@ -118,14 +118,14 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       >
         <div className="flex flex-col h-full">
           {/* Burger Button */}
-          <div className="flex items-center px-3 py-4">
+          <div className="flex items-center px-3 py-3">
             <button
               onClick={onToggle}
               className={`
                 flex items-center rounded-lg
                 transition-all duration-200 text-gray-300 hover:bg-gray-700 hover:text-white
                 ${
-                  isOpen ? "px-4 py-3 justify-start" : "lg:w-14 lg:h-14 lg:p-0 lg:justify-center justify-center"
+                  isOpen ? "px-4 py-2.5 justify-start" : "lg:w-12 lg:h-12 lg:p-0 lg:justify-center justify-center"
                 }
               `}
               aria-label="Toggle menu"
@@ -135,7 +135,8 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
           </div>
 
           {/* Menu Items */}
-          <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 py-4 space-y-2">
+          <div className="relative flex-1 min-h-0">
+          <nav className="sidebar-nav h-full overflow-y-auto overflow-x-hidden px-3 py-2 space-y-1">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
 
@@ -157,7 +158,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
                         : "text-gray-300 hover:bg-gray-700 hover:text-white"
                     }
                     ${
-                      isOpen ? "px-4 py-3 justify-start" : "lg:w-14 lg:h-14 lg:p-0 lg:justify-center justify-center"
+                      isOpen ? "px-4 py-2.5 justify-start" : "lg:w-12 lg:h-12 lg:p-0 lg:justify-center justify-center"
                     }
                   `}
                   title={!isOpen ? item.label : undefined}
@@ -182,6 +183,9 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
               );
             })}
           </nav>
+          {/* Мягкое затухание у нижнего края — видно, что список продолжается */}
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-gray-800 to-transparent" />
+          </div>
         </div>
       </aside>
     </>
