@@ -345,61 +345,34 @@ def handler(event, context):
         conn.commit()
     report.append({'table': 'freegen_history', 'column': 'references', 'cleaned': fh_count, 'saved_bytes': fh_saved})
 
-    # 12. ai_editor_tasks — оставляем последнюю строку каждого пользователя.
-    # Для строк без user_id (старый AI-редактор) оставляем одну общую последнюю.
+    # 12. ai_editor_tasks — только задачи AI-редактора, по одной последней
+    # на пользователя. Расклады (task_type = 'lenormand') НЕ трогаем:
+    # они хранятся у людей в личном кабинете и удаляются только вручную.
     keep_ids_sql = """
         SELECT DISTINCT ON (COALESCE(user_id::text, '__anon__')) id
         FROM ai_editor_tasks
+        WHERE task_type IS DISTINCT FROM 'lenormand'
         ORDER BY COALESCE(user_id::text, '__anon__'), created_at DESC
     """
     cursor.execute(f"""
         SELECT COUNT(*) as cnt FROM ai_editor_tasks
-        WHERE id NOT IN ({keep_ids_sql})
+        WHERE task_type IS DISTINCT FROM 'lenormand'
+          AND id NOT IN ({keep_ids_sql})
     """)
     r = cursor.fetchone()
     ai_deleted = int(r['cnt'])
     if ai_deleted > 0:
         cursor.execute(f"""
             DELETE FROM ai_editor_tasks
-            WHERE id NOT IN ({keep_ids_sql})
+            WHERE task_type IS DISTINCT FROM 'lenormand'
+              AND id NOT IN ({keep_ids_sql})
         """)
         conn.commit()
-    report.append({'table': 'ai_editor_tasks', 'column': 'все строки кроме последней у каждого пользователя', 'cleaned': ai_deleted, 'saved_bytes': 0})
+    report.append({'table': 'ai_editor_tasks', 'column': 'задачи AI-редактора кроме последней у каждого пользователя (расклады не трогаем)', 'cleaned': ai_deleted, 'saved_bytes': 0})
 
-    # 13. Диалоги-гадания — ОТДЕЛЬНАЯ категория от раскладов.
-    # Незакрытые беседы не удаляем никогда (человек может к ним вернуться).
-    # Из закрытых оставляем последнюю у каждого пользователя.
-    keep_dialogs_sql = """
-        SELECT id FROM divination_dialogs WHERE status <> 'closed'
-        UNION
-        SELECT id FROM (
-            SELECT DISTINCT ON (user_id) id
-            FROM divination_dialogs
-            WHERE status = 'closed'
-            ORDER BY user_id, updated_at DESC
-        ) AS last_closed
-    """
-    cursor.execute(f"""
-        SELECT COUNT(*) as cnt FROM divination_dialogs
-        WHERE id NOT IN ({keep_dialogs_sql})
-    """)
-    dlg_deleted = int(cursor.fetchone()['cnt'])
-    if dlg_deleted > 0:
-        cursor.execute(f"""
-            DELETE FROM divination_dialog_steps
-            WHERE dialog_id NOT IN ({keep_dialogs_sql})
-        """)
-        cursor.execute(f"""
-            DELETE FROM divination_dialogs
-            WHERE id NOT IN ({keep_dialogs_sql})
-        """)
-        conn.commit()
-    report.append({
-        'table': 'divination_dialogs',
-        'column': 'закрытые беседы кроме последней (незакрытые сохраняются)',
-        'cleaned': dlg_deleted,
-        'saved_bytes': 0,
-    })
+    # 13. Беседы-гадания очистка НЕ трогает: они хранятся у людей
+    # в личном кабинете и удаляются только вручную — самим пользователем
+    # или из админки, в разделе «Гадания».
 
     cursor.close()
     conn.close()

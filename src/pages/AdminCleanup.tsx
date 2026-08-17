@@ -126,6 +126,14 @@ export default function AdminCleanup() {
                   <Icon name="X" size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
                   <span>Картинки в облаке (Yandex/CDN) <strong>НЕ удаляются</strong></span>
                 </div>
+                <div className="flex items-start gap-2">
+                  <Icon name="X" size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+                  <span>
+                    Расклады и беседы на картах <strong>НЕ удаляются</strong> — они
+                    хранятся у пользователей в личном кабинете. Удалить их можно
+                    вручную в разделе «Гадания»
+                  </span>
+                </div>
               </CardContent>
             </Card>
 
