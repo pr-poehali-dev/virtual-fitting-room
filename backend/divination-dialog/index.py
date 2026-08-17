@@ -475,7 +475,13 @@ def action_last(body, user_id, event):
 
 
 def action_list(body, user_id, event):
-    """Все беседы пользователя: незакрытые + последняя закрытая."""
+    """Беседы пользователя.
+
+    На странице гаданий (по умолчанию) показываем только незакрытые —
+    их можно продолжить. Закрытые беседы живут в личном кабинете,
+    он запрашивает список с флагом all=true.
+    """
+    show_all = bool(body.get('all'))
     conn = get_db()
     try:
         with conn.cursor() as cur:
@@ -498,14 +504,12 @@ def action_list(body, user_id, event):
         conn.close()
 
     items = []
-    closed_seen = False
     for r in rows:
         status = r[4]
-        # Показываем все незакрытые и только последнюю закрытую
-        if status != 'active':
-            if closed_seen:
-                continue
-            closed_seen = True
+        # На странице гаданий закрытые беседы не показываем: их место —
+        # в личном кабинете, в разделе «Мои гадания»
+        if status != 'active' and not show_all:
+            continue
         items.append({
             'dialog_id': str(r[0]),
             'system': r[1],
@@ -560,8 +564,8 @@ def action_delete(body, user_id, event):
 
 
 def action_close(body, user_id, event):
-    """Закрывает диалог. Прежняя закрытая беседа при этом удаляется —
-    хранится только последняя закрытая. Незакрытые не трогаем."""
+    """Закрывает диалог. Прежние закрытые беседы НЕ удаляем: они хранятся
+    в личном кабинете, пока пользователь сам их не удалит."""
     dialog_id = (body.get('dialog_id') or '').strip()
     try:
         uuid.UUID(dialog_id)
@@ -577,27 +581,10 @@ def action_close(body, user_id, event):
                     WHERE id = %s AND user_id = %s""",
                 (dialog_id, user_id),
             )
-            # Оставляем только последнюю закрытую беседу
-            cur.execute(
-                f"""SELECT id FROM {DB_SCHEMA}.divination_dialogs
-                    WHERE user_id = %s AND status = 'closed'
-                    ORDER BY updated_at DESC OFFSET 1""",
-                (user_id,),
-            )
-            old_ids = [str(r[0]) for r in cur.fetchall()]
-            for old_id in old_ids:
-                cur.execute(
-                    f"DELETE FROM {DB_SCHEMA}.divination_dialog_steps WHERE dialog_id = %s",
-                    (old_id,),
-                )
-                cur.execute(
-                    f"DELETE FROM {DB_SCHEMA}.divination_dialogs WHERE id = %s",
-                    (old_id,),
-                )
         conn.commit()
     finally:
         conn.close()
-    return resp(200, {'status': 'closed', 'deleted_old': len(old_ids)}, event)
+    return resp(200, {'status': 'closed'}, event)
 
 
 def handler(event: dict, context) -> dict:

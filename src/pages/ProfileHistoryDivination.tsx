@@ -99,7 +99,8 @@ export default function ProfileHistoryDivination() {
         "Content-Type": "application/json",
         "X-Session-Token": token(),
       },
-      body: JSON.stringify({ action: "list" }),
+      // all: нужны и закрытые беседы — на странице гаданий их уже нет
+      body: JSON.stringify({ action: "list", all: true }),
     });
     const data = await res.json();
     if (res.ok) setDialogs(data.items || []);

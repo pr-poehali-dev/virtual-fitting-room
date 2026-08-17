@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import Icon from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
@@ -196,7 +197,7 @@ const SavedDialogs = ({ reloadKey = 0, onContinue }: SavedDialogsProps) => {
         <span className="flex items-center gap-2">
           <Icon name="Bookmark" size={18} className="text-[#c9a84c]" />
           <h2 className={`font-serif text-lg ${divTheme.title}`}>
-            Сохранённые диалоги
+            Незавершённые диалоги
           </h2>
           <span className={`text-sm ${divTheme.muted}`}>({items.length})</span>
           {/* Список закрыт — подсказываем, что внутри есть беседа для продолжения */}
@@ -336,6 +337,18 @@ const SavedDialogs = ({ reloadKey = 0, onContinue }: SavedDialogsProps) => {
             </div>
           );
         })}
+
+        {/* Закрытые беседы теперь живут в кабинете — подсказываем, где искать */}
+        <p className={`pt-1 text-sm ${divTheme.muted}`}>
+          Завершённые беседы и прошлые расклады — в личном кабинете,{" "}
+          <Link
+            to="/profile/history-divination"
+            className="font-semibold text-[#c9a84c] underline underline-offset-2"
+          >
+            Мои гадания
+          </Link>
+          .
+        </p>
       </div>
       )}
 
