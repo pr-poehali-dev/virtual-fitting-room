@@ -1171,7 +1171,7 @@ export default function LenormandDivination() {
               />
             </button>
             {prevOpen && (
-              <div className="border-t border-[#c9a84c]/20 p-2 sm:p-5">
+              <div className="border-t border-[#c9a84c]/20 p-1 sm:p-5">
                 <div className="mb-3 flex items-start gap-2 rounded-lg bg-[#c9a84c]/12 p-3 text-sm text-[#e8d9a8] ring-1 ring-[#c9a84c]/30">
                   <Icon name="Bookmark" size={18} className="mt-0.5 shrink-0" />
                   <span>
@@ -1248,7 +1248,7 @@ export default function LenormandDivination() {
 
                   {prevLayout.length > 0 && (
                     <div
-                      className="mb-6 overflow-x-auto rounded-2xl border border-[#c9a84c]/25 p-3 sm:p-4"
+                      className="mb-4 overflow-x-auto rounded-2xl border border-[#c9a84c]/25 p-1.5 sm:mb-6 sm:p-4"
                       style={{
                         background:
                           "radial-gradient(120% 100% at 50% 0%, #2d1b69 0%, #241845 55%, #1a1030 100%)",
@@ -2118,12 +2118,12 @@ export default function LenormandDivination() {
               </Button>
             </div>
 
-            <div className="rounded-2xl bg-white/[0.04] p-2 shadow-sm ring-1 ring-[#c9a84c]/20 sm:p-6">
-              <p className="mb-3 text-sm text-[#c9a84c]">{resultDate}</p>
+            <div className="rounded-2xl bg-white/[0.04] p-0 shadow-sm ring-1 ring-[#c9a84c]/20 sm:p-6">
+              <p className="mb-2 px-2 pt-2 text-sm text-[#c9a84c] sm:px-0 sm:pt-0">{resultDate}</p>
 
               {resultLayout.length > 0 && (
                 <div
-                  className="mb-6 overflow-x-auto rounded-2xl border border-[#c9a84c]/25 p-3 sm:p-4"
+                  className="mb-4 overflow-x-auto rounded-2xl border border-[#c9a84c]/25 p-1.5 sm:mb-6 sm:p-4"
                   style={{
                     background:
                       "radial-gradient(120% 100% at 50% 0%, #2d1b69 0%, #241845 55%, #1a1030 100%)",

@@ -26,8 +26,8 @@ const ReadingText = ({
       bare
         ? `text-[17px] leading-[1.75] text-[#2f2618] ${className}`
         : compact
-          ? `rounded-xl p-2.5 text-[15px] leading-[1.7] text-[#2f2618] shadow-inner sm:p-5 sm:text-[16px] ${className}`
-          : `rounded-2xl p-3 text-[17px] leading-[1.75] text-[#2f2618] shadow-inner sm:p-7 sm:text-[18px] ${className}`
+          ? `rounded-xl p-2 text-[15px] leading-[1.7] text-[#2f2618] shadow-inner sm:p-5 sm:text-[16px] ${className}`
+          : `rounded-2xl p-2.5 text-[17px] leading-[1.75] text-[#2f2618] shadow-inner sm:p-7 sm:text-[18px] ${className}`
     }
     style={
       bare
