@@ -9,6 +9,10 @@ import ReadingText from "@/components/divination/ReadingText";
 import ReadAloud from "@/components/divination/ReadAloud";
 import { DISCLAIMER_SHORT } from "@/components/divination/texts";
 import { getSpread } from "@/data/divination/spreads";
+import ReadingLayout from "@/components/divination/ReadingLayout";
+import { PERIODS, GENDERS, SPHERES } from "@/data/lenormand";
+import { getCardImageByName } from "@/data/lenormandImages";
+import { getTarotImageByName } from "@/data/divination/tarotImages";
 
 const READINGS_API = "https://functions.poehali.dev/9d61578b-0a21-4bba-9fcc-37dbd5a4454d";
 
@@ -19,6 +23,10 @@ interface Reading {
     system?: string;
     spread?: string;
     layout?: string[];
+    period?: string;
+    gender?: string;
+    spheres?: string[];
+    comment?: string;
   };
   cost: number;
   created_at: string;
@@ -96,6 +104,23 @@ export default function ProfileReadingDetail() {
     navigate("/profile/history-divination");
   };
 
+  const meta = reading?.divination_meta || {};
+  const spreadDef = meta.spread ? getSpread(meta.spread) : undefined;
+  const asksQuestion = spreadDef?.askQuestion === true;
+
+  const periodLabel = PERIODS.find((p) => p.key === meta.period)?.label || "";
+  const genderLabel = GENDERS.find((g) => g.key === meta.gender)?.label || "";
+  const sphereLabels = SPHERES.filter((sp) =>
+    (meta.spheres || []).includes(sp.key),
+  )
+    .map((sp) => sp.label)
+    .join(", ");
+
+  const cardImage = (name: string) =>
+    meta.system === "tarot"
+      ? getTarotImageByName(name)
+      : getCardImageByName(name);
+
   const spreadTitle = () => {
     const meta = reading?.divination_meta;
     const found = meta?.spread ? getSpread(meta.spread) : undefined;
@@ -130,13 +155,54 @@ export default function ProfileReadingDetail() {
                 </p>
               </div>
 
-              {(reading.divination_meta?.layout || []).length > 0 && (
-                <p className="mb-4 text-sm text-muted-foreground">
-                  Карты:{" "}
-                  {(reading.divination_meta.layout || [])
-                    .filter(Boolean)
-                    .join(", ")}
-                </p>
+              {/* Что было заполнено в шагах — чтобы понимать, на что расклад */}
+              <div className="mb-5 rounded-xl border p-4 text-sm">
+                <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                  <div>
+                    <dt className="text-muted-foreground">Колода</dt>
+                    <dd className="font-medium">
+                      {meta.system === "tarot" ? "Таро" : "Ленорман"}
+                    </dd>
+                  </div>
+                  {periodLabel && (
+                    <div>
+                      <dt className="text-muted-foreground">Период</dt>
+                      <dd className="font-medium">{periodLabel}</dd>
+                    </div>
+                  )}
+                  {genderLabel && (
+                    <div>
+                      <dt className="text-muted-foreground">Пол</dt>
+                      <dd className="font-medium">{genderLabel}</dd>
+                    </div>
+                  )}
+                  {sphereLabels && (
+                    <div>
+                      <dt className="text-muted-foreground">Сферы</dt>
+                      <dd className="font-medium">{sphereLabels}</dd>
+                    </div>
+                  )}
+                  {meta.comment && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-muted-foreground">
+                        {asksQuestion ? "Вопрос" : "Комментарий"}
+                      </dt>
+                      <dd className="font-medium">{meta.comment}</dd>
+                    </div>
+                  )}
+                </dl>
+              </div>
+
+              {/* Стол: карты лежат так же, как их выложили */}
+              {(meta.layout || []).length > 0 && (
+                <div className="mb-5">
+                  <ReadingLayout
+                    system={meta.system || "lenormand"}
+                    spreadId={meta.spread || ""}
+                    layout={meta.layout || []}
+                    getCardImage={cardImage}
+                  />
+                </div>
               )}
 
               <div className="mb-4">
