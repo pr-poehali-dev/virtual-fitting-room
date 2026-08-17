@@ -22,9 +22,10 @@ const ProfileMenu = () => {
     { path: '/profile/history-colorguide', icon: 'BookOpen', label: 'История гидов, стилевых анализов и подбора образов' },
     { path: '/profile/history-kibbe', icon: 'Ruler', label: 'История тестов Кибби' },
     { path: '/profile/history-archetype', icon: 'Brain', label: 'История тестов на архетип' },
+    { path: '/profile/history-divination', icon: 'Sparkle', label: 'Мои гадания' },
   ];
 
-  const isHistoryActive = location.pathname === '/profile/history' || location.pathname === '/profile/history-colortypes' || location.pathname === '/profile/history-freegen' || location.pathname === '/profile/history-colorguide' || location.pathname === '/profile/history-kibbe' || location.pathname === '/profile/history-archetype';
+  const isHistoryActive = location.pathname === '/profile/history' || location.pathname === '/profile/history-colortypes' || location.pathname === '/profile/history-freegen' || location.pathname === '/profile/history-colorguide' || location.pathname === '/profile/history-kibbe' || location.pathname === '/profile/history-archetype' || location.pathname === '/profile/history-divination';
 
   return (
     <>

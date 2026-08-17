@@ -15,8 +15,25 @@
       "bodyMatcher": "partial"
     },
     {
-      "name": "POST not allowed",
+      "name": "GET history without session returns 401",
+      "method": "GET",
+      "path": "/?action=history",
+      "expectedStatus": 401,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST delete without session returns 401",
       "method": "POST",
+      "path": "/",
+      "body": {"action": "delete", "id": "00000000-0000-0000-0000-000000000000"},
+      "expectedStatus": 401,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "PUT not allowed",
+      "method": "PUT",
       "path": "/",
       "expectedStatus": 405,
       "expectedBody": {"error": "string"},

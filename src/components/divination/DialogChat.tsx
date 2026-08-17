@@ -5,6 +5,7 @@ import Icon from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { divTheme } from "./theme";
+import { QUESTION_HINT } from "./texts";
 import {
   downloadDialogText,
   isMobileDevice,
@@ -554,6 +555,13 @@ const DialogChat = ({
             disabled={busy}
             className="mb-3 min-h-[80px] border-white/15 bg-white/[0.04] text-[#e8e0f0] placeholder:text-[#9888b8]"
           />
+
+          {/* Подсказка нужна у первого вопроса: дальше человек уже понял правила */}
+          {steps.length === 0 && (
+            <p className={`mb-3 text-sm leading-relaxed ${divTheme.muted}`}>
+              {QUESTION_HINT}
+            </p>
+          )}
 
           {/* Колода для ЭТОГО вопроса: выбирается заново каждый раз.
               У первого вопроса выбора нет — колода ещё полная. */}

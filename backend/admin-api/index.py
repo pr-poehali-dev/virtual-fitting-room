@@ -562,6 +562,110 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps(result_list)
             }
 
+        elif action == 'divination_history':
+            # Список гаданий для админки.
+            # ВАЖНО: вопросы пользователей и тексты толкований НЕ выбираем —
+            # это личная переписка, админке она не нужна.
+            filters = []
+            filter_values = []
+
+            user_id_filter = query_params.get('user_id')
+            if user_id_filter:
+                filters.append("t.user_id::text = %s")
+                filter_values.append(user_id_filter)
+
+            where_clause = " AND ".join(filters) if filters else "1=1"
+
+            query = f"""
+                SELECT
+                    t.id,
+                    t.user_id,
+                    u.email as user_email,
+                    u.name as account_name,
+                    t.divination_meta->>'system' as system,
+                    t.divination_meta->>'spread' as spread,
+                    t.model,
+                    t.cost,
+                    t.refunded,
+                    t.status,
+                    t.created_at
+                FROM ai_editor_tasks t
+                LEFT JOIN users u ON t.user_id = u.id
+                WHERE t.task_type = 'lenormand' AND {where_clause}
+                ORDER BY t.created_at DESC
+                LIMIT 500
+            """
+
+            cursor.execute(query, filter_values)
+            rows = cursor.fetchall()
+
+            readings = [{
+                'id': str(r['id']),
+                'user_id': str(r['user_id']) if r['user_id'] else None,
+                'user_email': r['user_email'],
+                'account_name': r['account_name'],
+                'system': r['system'],
+                'spread': r['spread'],
+                'model': r['model'],
+                'cost': r['cost'] or 0,
+                'refunded': r['refunded'],
+                'status': r['status'],
+                'created_at': r['created_at'].isoformat() if r['created_at'] else None,
+            } for r in rows]
+
+            # Беседы: показываем только факт и объём, без вопросов и ответов
+            dialog_filters = []
+            dialog_values = []
+            if user_id_filter:
+                dialog_filters.append("d.user_id::text = %s")
+                dialog_values.append(user_id_filter)
+            dialog_where = " AND ".join(dialog_filters) if dialog_filters else "1=1"
+
+            cursor.execute(f"""
+                SELECT
+                    d.id,
+                    d.user_id,
+                    u.email as user_email,
+                    u.name as account_name,
+                    d.deck as system,
+                    d.spread,
+                    d.model,
+                    d.status,
+                    d.steps_count,
+                    d.total_spent,
+                    d.created_at
+                FROM divination_dialogs d
+                LEFT JOIN users u ON d.user_id = u.id
+                WHERE {dialog_where}
+                ORDER BY d.created_at DESC
+                LIMIT 500
+            """, dialog_values)
+            drows = cursor.fetchall()
+
+            dialogs = [{
+                'id': str(r['id']),
+                'user_id': str(r['user_id']) if r['user_id'] else None,
+                'user_email': r['user_email'],
+                'account_name': r['account_name'],
+                'system': r['system'],
+                'spread': r['spread'],
+                'model': r['model'],
+                'status': r['status'],
+                'steps_count': r['steps_count'],
+                'total_spent': float(r['total_spent'] or 0),
+                'created_at': r['created_at'].isoformat() if r['created_at'] else None,
+            } for r in drows]
+
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': get_cors_origin(event),
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps({'readings': readings, 'dialogs': dialogs})
+            }
+
         elif action == 'colorguide_history':
             # Список задач Гида по цвету для админки
             filters = []

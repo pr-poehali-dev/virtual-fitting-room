@@ -151,6 +151,16 @@ const Home = () => {
       icon: "Sparkles",
       path: "/freegeneration",
     },
+    {
+      id: "divination",
+      title: "Гадания на картах",
+      description:
+        "Расклады Таро и Ленорман с ИИ — повод для размышления и взгляд на ситуацию со стороны",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/6b7b3c6b-d705-40ee-959a-0af908f8b1b5.jpg",
+      icon: "Sparkle",
+      path: "/divination",
+    },
   ];
 
   return (

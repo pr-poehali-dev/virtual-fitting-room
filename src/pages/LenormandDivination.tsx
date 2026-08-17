@@ -8,9 +8,14 @@ import Layout from "@/components/Layout";
 import LockedFormOverlay from "@/components/LockedFormOverlay";
 import { useAuth } from "@/context/AuthContext";
 import { useBalance } from "@/context/BalanceContext";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { playReadySound } from "@/components/selection/selectionUtils";
 import ReadingText from "@/components/divination/ReadingText";
+import {
+  DISCLAIMER_FULL,
+  DISCLAIMER_SHORT,
+  QUESTION_HINT,
+} from "@/components/divination/texts";
 import ReadAloud from "@/components/divination/ReadAloud";
 import {
   LENORMAND_AI,
@@ -1113,10 +1118,17 @@ export default function LenormandDivination() {
             {prevOpen && (
               <div className="border-t border-[#c9a84c]/20 p-5">
                 <div className="mb-3 flex items-start gap-2 rounded-lg bg-[#c9a84c]/12 p-3 text-sm text-[#e8d9a8] ring-1 ring-[#c9a84c]/30">
-                  <Icon name="TriangleAlert" size={18} className="mt-0.5 shrink-0" />
+                  <Icon name="Bookmark" size={18} className="mt-0.5 shrink-0" />
                   <span>
-                    Этот расклад удалится, как только вы запустите новый.
-                    Рекомендуем скачать картинку или скопировать текст к себе.
+                    Здесь показан последний расклад. Все ваши расклады
+                    сохраняются в личном кабинете —{" "}
+                    <Link
+                      to="/profile/history-divination"
+                      className="font-semibold text-[#c9a84c] underline underline-offset-2"
+                    >
+                      Мои гадания
+                    </Link>
+                    .
                   </span>
                 </div>
                 <div className="mb-3 flex flex-wrap gap-2">
@@ -1214,10 +1226,7 @@ export default function LenormandDivination() {
                   <ReadingText text={prevResult} />
                   <div className="mt-6 border-t border-[#c9a84c]/25 pt-4 text-center text-xs text-[#9888b8]">
                     <p>
-                      Трактовки раскладов носят
-                      развлекательно-информационно-рекомендательный характер,
-                      создаются нейросетью, мы не несём ответственность за текст
-                      ответа нейросети.
+                      {DISCLAIMER_SHORT}
                     </p>
                     <p className="mt-1 font-medium text-[#c9a84c]">
                       fitting-room.ru
@@ -1245,8 +1254,9 @@ export default function LenormandDivination() {
                   У вас есть готовый расклад
                 </h3>
                 <p className="mb-4 text-sm text-[#c9bfe0]">
-                  Скачайте его, если нужно — после начала нового расклада он будет
-                  удалён.
+                  Он сохранён в личном кабинете, в разделе «Мои гадания».
+                  Здесь его заменит новый расклад — при желании сохраните
+                  картинку себе.
                 </p>
                 <div className="flex flex-col gap-2">
                   {/* На телефоне удобнее отправить расклад сразу в мессенджер,
@@ -1578,17 +1588,23 @@ export default function LenormandDivination() {
 
                   {/* Шаг 7: Комментарий, у Кельтского креста — вопрос */}
                   {wizardStep === 7 && (
-                    <Textarea
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      placeholder={
-                        asksQuestion
-                          ? "Например: чем закончится эта ситуация и как мне поступить…"
-                          : "Например: стоит ли обновить гардероб этой весной и каким будет мой новый образ…"
-                      }
-                      rows={3}
-                      className="border-2 border-white/50 bg-transparent text-white placeholder:text-white/60 focus-visible:ring-white/40"
-                    />
+                    <div className="w-full">
+                      <Textarea
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        placeholder={
+                          asksQuestion
+                            ? "Например: чем закончится эта ситуация и как мне поступить…"
+                            : "Например: стоит ли обновить гардероб этой весной и каким будет мой новый образ…"
+                        }
+                        rows={3}
+                        className="border-2 border-white/50 bg-transparent text-white placeholder:text-white/60 focus-visible:ring-white/40"
+                      />
+                      {/* Подсказываем, какие вопросы карты раскрывают лучше */}
+                      <p className="mt-3 text-sm leading-relaxed text-white/70">
+                        {QUESTION_HINT}
+                      </p>
+                    </div>
                   )}
                   </div>
                 </fieldset>
@@ -1995,10 +2011,10 @@ export default function LenormandDivination() {
                   className="mt-0.5 shrink-0 text-[#c9a84c]"
                 />
                 <p className="text-sm text-[#e8d9a8]">
-                  Сохраняется только последний расклад — следующий заменит этот.
+                  Расклад сохранён в личном кабинете — раздел «Мои гадания».
                   {isMobileDevice()
-                    ? " Поделитесь им или скачайте, чтобы не потерять."
-                    : " Сохраните картинку, чтобы не потерять."}
+                    ? " А ещё им можно поделиться или скачать картинкой."
+                    : " А ещё его можно сохранить картинкой."}
                 </p>
               </div>
               <Button
@@ -2078,11 +2094,7 @@ export default function LenormandDivination() {
         {/* Дисклеймер */}
         <div className="mt-10 flex items-start gap-3 rounded-xl border border-[#c9a84c]/35 bg-[#c9a84c]/10 p-4 text-sm text-[#e8d9a8]">
           <Icon name="Info" size={20} className="mt-0.5 shrink-0 text-amber-600" />
-          <p>
-            Трактовки раскладов носят развлекательно-информационно-рекомендательный
-            характер, создаются нейросетью, мы не несём ответственность за текст
-            ответа нейросети.
-          </p>
+          <p>{DISCLAIMER_FULL}</p>
         </div>
 
         <p className="mt-6 text-center text-sm font-medium text-[#c9a84c]">
@@ -2156,10 +2168,7 @@ export default function LenormandDivination() {
             <ReadingText text={result} bare />
             <div className="mt-6 border-t border-purple-200 pt-4 text-center text-xs text-purple-400">
               <p>
-                Трактовки раскладов носят
-                развлекательно-информационно-рекомендательный характер,
-                создаются нейросетью, мы не несём ответственность за текст ответа
-                нейросети.
+                {DISCLAIMER_SHORT}
               </p>
               <p className="mt-1 font-medium text-purple-500">fitting-room.ru</p>
             </div>
@@ -2234,10 +2243,7 @@ export default function LenormandDivination() {
             <ReadingText text={prevResult} bare />
             <div className="mt-6 border-t border-purple-200 pt-4 text-center text-xs text-purple-400">
               <p>
-                Трактовки раскладов носят
-                развлекательно-информационно-рекомендательный характер,
-                создаются нейросетью, мы не несём ответственность за текст ответа
-                нейросети.
+                {DISCLAIMER_SHORT}
               </p>
               <p className="mt-1 font-medium text-purple-500">fitting-room.ru</p>
             </div>

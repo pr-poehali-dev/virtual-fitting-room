@@ -23,6 +23,9 @@ const ProfileOutfitProfiles = lazy(() => import("./pages/ProfileOutfitProfiles")
 const ProfileHistory = lazy(() => import("./pages/ProfileHistory"));
 const ProfileHistoryColortypes = lazy(() => import("./pages/ProfileHistoryColortypes"));
 const ProfileHistoryFreegen = lazy(() => import("./pages/ProfileHistoryFreegen"));
+const ProfileHistoryDivination = lazy(
+  () => import("./pages/ProfileHistoryDivination"),
+);
 const ProfileWallet = lazy(() => import("./pages/ProfileWallet"));
 const ProfileSettings = lazy(() => import("./pages/ProfileSettings"));
 const PalettePage = lazy(() => import("./pages/PalettePage"));
@@ -59,6 +62,7 @@ const ArchetypeTest = lazy(() => import("./pages/ArchetypeTest"));
 const ArchetypeResultDetail = lazy(() => import("./pages/ArchetypeResultDetail"));
 const ProfileHistoryArchetype = lazy(() => import("./pages/ProfileHistoryArchetype"));
 const AdminArchetype = lazy(() => import("./pages/AdminArchetype"));
+const AdminDivination = lazy(() => import("./pages/AdminDivination"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Payment = lazy(() => import("./pages/Payment"));
 const Offer = lazy(() => import("./pages/Offer"));
@@ -152,6 +156,7 @@ const App = () => (
             <Route path="/profile/history-colortypes" element={<ProfileHistoryColortypes />} />
             <Route path="/profile/history-colorguide" element={<ProfileHistoryColorGuide />} />
             <Route path="/profile/history-freegen" element={<ProfileHistoryFreegen />} />
+            <Route path="/profile/history-divination" element={<ProfileHistoryDivination />} />
             <Route path="/profile/history-kibbe" element={<ProfileHistoryKibbe />} />
             <Route path="/profile/history-archetype" element={<ProfileHistoryArchetype />} />
             <Route path="/profile/wallet" element={<ProfileWallet />} />
@@ -172,6 +177,7 @@ const App = () => (
             <Route path="/vf-console/colorguides" element={<AdminColorGuide />} />
             <Route path="/vf-console/kibbe" element={<AdminKibbe />} />
             <Route path="/vf-console/archetype" element={<AdminArchetype />} />
+            <Route path="/vf-console/divination" element={<AdminDivination />} />
             <Route path="/vf-console/knowledge" element={<AdminKnowledge />} />
             <Route path="/vf-console/cleanup" element={<AdminCleanup />} />
             

@@ -80,6 +80,12 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       icon: "Brain",
       label: "Архетип по Юнгу",
     },
+    {
+      id: "divination",
+      path: "/divination",
+      icon: "Sparkle",
+      label: "Гадания на картах",
+    },
     ...(user?.email === OWNER_EMAIL
       ? [
           {

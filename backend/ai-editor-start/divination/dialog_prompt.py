@@ -7,7 +7,7 @@
 from .decks import get_deck
 from .spreads import get_spread
 from .prompt import (
-    ROLE_INTRO, COMMON_RULES,
+    ROLE_INTRO, COMMON_RULES, CARE_RULES,
     PERIOD_LABELS, GENDER_LABELS, SPHERE_LABELS,
 )
 
@@ -124,6 +124,8 @@ def build_dialog_prompt(
         '',
         'Отвечай именно на текущий вопрос, опираясь на выпавшие сейчас карты. '
         'Объём ответа выбирай сам по сути вопроса.',
+        '',
+        CARE_RULES,
         '',
         COMMON_RULES,
         '',
