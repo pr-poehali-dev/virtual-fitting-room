@@ -7,6 +7,8 @@ interface ReadAloudProps {
   text: string;
   /** Компактный вид — для ответов внутри диалога */
   compact?: boolean;
+  /** Своя подпись на кнопке: рядом могут стоять кнопки на разный текст */
+  label?: string;
 }
 
 /** Убирает значки разметки, чтобы голос не читал «решётка решётка звёздочка». */
@@ -30,7 +32,11 @@ const cleanForSpeech = (raw: string) =>
  * Длинный текст режем на предложения: браузеры обрывают чтение
  * на длинных кусках (в Chrome — примерно через 15 секунд).
  */
-const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
+const ReadAloud = ({
+  text,
+  compact = false,
+  label = "Слушать",
+}: ReadAloudProps) => {
   const [supported, setSupported] = useState(true);
   const [speaking, setSpeaking] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -249,7 +255,7 @@ const ReadAloud = ({ text, compact = false }: ReadAloudProps) => {
           className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
         >
           <Icon name="Volume2" size={16} className="mr-1.5" />
-          Слушать
+          {label}
         </Button>
       ) : (
         <>

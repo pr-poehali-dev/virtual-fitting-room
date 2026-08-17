@@ -153,6 +153,12 @@ const DialogReader = ({ dialogId, onClose }: DialogReaderProps) => {
                     })}
                   </div>
                 )}
+                {/* Слушать один этот ответ — кнопка внизу читает всю беседу */}
+                {s.answer && (
+                  <div className="mb-3">
+                    <ReadAloud text={s.answer} compact />
+                  </div>
+                )}
                 <ReadingText text={s.answer} compact />
               </div>
             ))}
@@ -166,6 +172,7 @@ const DialogReader = ({ dialogId, onClose }: DialogReaderProps) => {
           {steps.length > 0 && (
             <ReadAloud
               compact
+              label="Слушать всю беседу"
               text={steps
                 .map(
                   (s) =>
