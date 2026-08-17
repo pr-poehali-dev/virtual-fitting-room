@@ -282,7 +282,7 @@ export default function LenormandDivination() {
   const dbPrevCardRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
 
-  const FORM_STORAGE_KEY = "lenormand_form_v1";
+  const FORM_STORAGE_KEY = "lenormand_form_v2";
   // Восстанавливать форму из localStorage можно только после проверки наличия
   // предыдущего результата (если он есть — форма должна стартовать чистой).
   const [formReady, setFormReady] = useState(false);
@@ -296,7 +296,6 @@ export default function LenormandDivination() {
         if (d.period) setPeriod(d.period);
         if (d.gender) setGender(d.gender);
         if (Array.isArray(d.spheres)) setSpheres(d.spheres);
-        if (typeof d.comment === "string") setComment(d.comment);
         if (d.model) setModel(d.model);
         if (Array.isArray(d.layout) && d.layout.length > 0) setLayout(d.layout);
         if (typeof d.wizardStep === "number") setWizardStep(d.wizardStep);
@@ -329,7 +328,6 @@ export default function LenormandDivination() {
           period,
           gender,
           spheres,
-          comment,
           model,
           layout,
           wizardStep,
@@ -346,7 +344,6 @@ export default function LenormandDivination() {
     period,
     gender,
     spheres,
-    comment,
     model,
     layout,
     wizardStep,
