@@ -1083,7 +1083,7 @@ export default function LenormandDivination() {
           Фон тянется на всю ширину области контента, чтобы тёмный блок
           не выглядел «заплаткой» на белом. */}
       <div className={`min-h-screen ${divTheme.surface}`}>
-      <div className="mx-auto max-w-6xl px-2 py-10 sm:px-6">
+      <div className="mx-auto max-w-6xl px-1 py-10 sm:px-6">
         <div className="mb-8 text-center">
           <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full ${divTheme.accentSoft}`}>
             <Icon name="Sparkles" size={28} className="text-[#c9a84c]" />
@@ -1163,7 +1163,7 @@ export default function LenormandDivination() {
               />
             </button>
             {prevOpen && (
-              <div className="border-t border-[#c9a84c]/20 p-3 sm:p-5">
+              <div className="border-t border-[#c9a84c]/20 p-2 sm:p-5">
                 <div className="mb-3 flex items-start gap-2 rounded-lg bg-[#c9a84c]/12 p-3 text-sm text-[#e8d9a8] ring-1 ring-[#c9a84c]/30">
                   <Icon name="Bookmark" size={18} className="mt-0.5 shrink-0" />
                   <span>
@@ -2110,7 +2110,7 @@ export default function LenormandDivination() {
               </Button>
             </div>
 
-            <div className="rounded-2xl bg-white/[0.04] p-3 shadow-sm ring-1 ring-[#c9a84c]/20 sm:p-6">
+            <div className="rounded-2xl bg-white/[0.04] p-2 shadow-sm ring-1 ring-[#c9a84c]/20 sm:p-6">
               <p className="mb-3 text-sm text-[#c9a84c]">{resultDate}</p>
 
               {resultLayout.length > 0 && (

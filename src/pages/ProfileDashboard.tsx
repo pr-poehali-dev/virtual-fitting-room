@@ -61,6 +61,13 @@ export default function ProfileDashboard() {
           icon: 'Palette',
           path: '/profile/history-colortypes',
           color: 'bg-amber-100 text-amber-700'
+        },
+        {
+          title: 'Мои гадания',
+          description: 'Расклады на картах и беседы с картами',
+          icon: 'Sparkle',
+          path: '/profile/history-divination',
+          color: 'bg-purple-100 text-purple-700'
         }
       ]
     },
