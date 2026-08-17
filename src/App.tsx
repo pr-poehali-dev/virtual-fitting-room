@@ -26,6 +26,8 @@ const ProfileHistoryFreegen = lazy(() => import("./pages/ProfileHistoryFreegen")
 const ProfileHistoryDivination = lazy(
   () => import("./pages/ProfileHistoryDivination"),
 );
+const ProfileReadingDetail = lazy(() => import("./pages/ProfileReadingDetail"));
+const ProfileDialogDetail = lazy(() => import("./pages/ProfileDialogDetail"));
 const ProfileWallet = lazy(() => import("./pages/ProfileWallet"));
 const ProfileSettings = lazy(() => import("./pages/ProfileSettings"));
 const PalettePage = lazy(() => import("./pages/PalettePage"));
@@ -157,6 +159,8 @@ const App = () => (
             <Route path="/profile/history-colorguide" element={<ProfileHistoryColorGuide />} />
             <Route path="/profile/history-freegen" element={<ProfileHistoryFreegen />} />
             <Route path="/profile/history-divination" element={<ProfileHistoryDivination />} />
+            <Route path="/profile/reading/:id" element={<ProfileReadingDetail />} />
+            <Route path="/profile/dialog/:id" element={<ProfileDialogDetail />} />
             <Route path="/profile/history-kibbe" element={<ProfileHistoryKibbe />} />
             <Route path="/profile/history-archetype" element={<ProfileHistoryArchetype />} />
             <Route path="/profile/wallet" element={<ProfileWallet />} />

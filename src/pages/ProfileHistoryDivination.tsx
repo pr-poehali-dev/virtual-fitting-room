@@ -6,10 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import ProfileMenu from "@/components/ProfileMenu";
 import { toast } from "sonner";
-import ReadingText from "@/components/divination/ReadingText";
-import ReadAloud from "@/components/divination/ReadAloud";
-import DialogReader from "@/components/divination/DialogReader";
-import { DISCLAIMER_SHORT } from "@/components/divination/texts";
 import { getSpread } from "@/data/divination/spreads";
 
 const READINGS_API = "https://functions.poehali.dev/9d61578b-0a21-4bba-9fcc-37dbd5a4454d";
@@ -72,9 +68,6 @@ export default function ProfileHistoryDivination() {
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
-  const [readDialogId, setReadDialogId] = useState<string | null>(null);
-  const [confirmId, setConfirmId] = useState<string | null>(null);
   const [confirmDialogId, setConfirmDialogId] = useState<string | null>(null);
 
   const token = () => localStorage.getItem("session_token") || "";
@@ -127,26 +120,6 @@ export default function ProfileHistoryDivination() {
     } finally {
       setIsLoadingMore(false);
     }
-  };
-
-  const removeReading = async (id: string) => {
-    const res = await fetch(READINGS_API, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Session-Token": token(),
-      },
-      body: JSON.stringify({ action: "delete", id }),
-    });
-    const data = await res.json();
-    if (!res.ok || !data.deleted) {
-      toast.error("Не удалось удалить расклад");
-      return;
-    }
-    setReadings((prev) => prev.filter((r) => r.id !== id));
-    setTotal((t) => Math.max(0, t - 1));
-    setConfirmId(null);
-    toast.success("Расклад удалён");
   };
 
   const removeDialog = async (id: string) => {
@@ -229,94 +202,31 @@ export default function ProfileHistoryDivination() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {readings.map((r) => {
-                      const open = openId === r.id;
-                      return (
-                        <div
-                          key={r.id}
-                          className="overflow-hidden rounded-2xl border"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => setOpenId(open ? null : r.id)}
-                            className="flex w-full items-center justify-between gap-3 p-4 text-left"
-                          >
-                            <span className="min-w-0">
-                              <span className="block font-medium">
-                                {spreadTitle(r.divination_meta)}
-                              </span>
-                              <span className="block text-sm text-muted-foreground">
-                                {formatDate(r.created_at)}
-                                {r.cost ? ` · ${r.cost} \u20bd` : ""}
-                              </span>
-                            </span>
-                            <Icon
-                              name={open ? "ChevronUp" : "ChevronDown"}
-                              size={20}
-                              className="shrink-0 text-muted-foreground"
-                            />
-                          </button>
-
-                          {open && (
-                            <div className="border-t p-4">
-                              {(r.divination_meta?.layout || []).length > 0 && (
-                                <p className="mb-3 text-sm text-muted-foreground">
-                                  Карты:{" "}
-                                  {(r.divination_meta.layout || [])
-                                    .filter(Boolean)
-                                    .join(", ")}
-                                </p>
-                              )}
-
-                              <div className="mb-3">
-                                <ReadAloud text={r.ai_response} compact />
-                              </div>
-
-                              <ReadingText text={r.ai_response} />
-
-                              <p className="mt-4 text-xs text-muted-foreground">
-                                {DISCLAIMER_SHORT}
-                              </p>
-
-                              {confirmId === r.id ? (
-                                <div className="mt-4 rounded-lg border border-destructive/40 bg-destructive/5 p-3">
-                                  <p className="mb-2 text-sm">
-                                    Удалить этот расклад? Вернуть его будет
-                                    нельзя.
-                                  </p>
-                                  <div className="flex flex-wrap gap-2">
-                                    <Button
-                                      size="sm"
-                                      variant="destructive"
-                                      onClick={() => removeReading(r.id)}
-                                    >
-                                      Да, удалить
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => setConfirmId(null)}
-                                    >
-                                      Отмена
-                                    </Button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="mt-4 gap-1.5"
-                                  onClick={() => setConfirmId(r.id)}
-                                >
-                                  <Icon name="Trash2" size={15} />
-                                  Удалить
-                                </Button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                    {readings.map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() =>
+                          navigate(`/profile/reading/${r.id}`)
+                        }
+                        className="flex w-full items-center justify-between gap-3 rounded-2xl border p-4 text-left transition hover:bg-muted/50"
+                      >
+                        <span className="min-w-0">
+                          <span className="block font-medium">
+                            {spreadTitle(r.divination_meta)}
+                          </span>
+                          <span className="block text-sm text-muted-foreground">
+                            {formatDate(r.created_at)}
+                            {r.cost ? ` \u00b7 ${r.cost} \u20bd` : ""}
+                          </span>
+                        </span>
+                        <Icon
+                          name="ChevronRight"
+                          size={20}
+                          className="shrink-0 text-muted-foreground"
+                        />
+                      </button>
+                    ))}
 
                     {readings.length < total && (
                       <div className="pt-2 text-center">
@@ -388,7 +298,9 @@ export default function ProfileHistoryDivination() {
                             size="sm"
                             variant="outline"
                             className="gap-1.5"
-                            onClick={() => setReadDialogId(d.dialog_id)}
+                            onClick={() =>
+                              navigate(`/profile/dialog/${d.dialog_id}`)
+                            }
                           >
                             <Icon name="BookOpen" size={15} />
                             Читать беседу
@@ -447,12 +359,6 @@ export default function ProfileHistoryDivination() {
         </div>
       </div>
 
-      {readDialogId && (
-        <DialogReader
-          dialogId={readDialogId}
-          onClose={() => setReadDialogId(null)}
-        />
-      )}
     </Layout>
   );
 }

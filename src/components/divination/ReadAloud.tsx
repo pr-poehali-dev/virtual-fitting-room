@@ -9,6 +9,8 @@ interface ReadAloudProps {
   compact?: boolean;
   /** Своя подпись на кнопке: рядом могут стоять кнопки на разный текст */
   label?: string;
+  /** Светлый фон (личный кабинет): на нём белые кнопки не читаются */
+  onLight?: boolean;
 }
 
 /** Убирает значки разметки, чтобы голос не читал «решётка решётка звёздочка». */
@@ -36,6 +38,7 @@ const ReadAloud = ({
   text,
   compact = false,
   label = "Слушать",
+  onLight = false,
 }: ReadAloudProps) => {
   const [supported, setSupported] = useState(true);
   const [speaking, setSpeaking] = useState(false);
@@ -238,6 +241,10 @@ const ReadAloud = ({
   if (!supported) return null;
 
   const size = compact ? "sm" : "default";
+  // В разделе гаданий фон тёмный, в личном кабинете — светлый
+  const btnClass = onLight
+    ? "border bg-background text-foreground hover:bg-muted"
+    : "bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white";
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -252,7 +259,7 @@ const ReadAloud = ({
             }
             start();
           }}
-          className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
+          className={btnClass}
         >
           <Icon name="Volume2" size={16} className="mr-1.5" />
           {label}
@@ -268,7 +275,7 @@ const ReadAloud = ({
                 ? "Продолжить чтение"
                 : "Пауза — голос договорит фразу и остановится"
             }
-            className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
+            className={btnClass}
           >
             <Icon name={paused ? "Play" : "Pause"} size={16} className="mr-1.5" />
             {paused ? "Продолжить" : "Пауза"}
@@ -277,7 +284,7 @@ const ReadAloud = ({
             size={size}
             variant="ghost"
             onClick={stop}
-            className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
+            className={btnClass}
           >
             <Icon name="Square" size={16} className="mr-1.5" />
             Стоп
@@ -287,7 +294,7 @@ const ReadAloud = ({
             variant="ghost"
             onClick={changeRate}
             title="Скорость чтения — применится со следующей фразы"
-            className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
+            className={btnClass}
           >
             <Icon name="Gauge" size={16} className="mr-1.5" />
             {rate}×
