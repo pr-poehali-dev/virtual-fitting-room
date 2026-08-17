@@ -615,6 +615,15 @@ export default function LenormandDivination() {
     }
   };
 
+  // Делимся тем же раскладом, который сейчас показан на экране
+  const shareShownPng = () => {
+    if (result) {
+      shareReading(prevCardRef.current, true);
+    } else if (prevResult) {
+      shareReading(dbPrevCardRef.current);
+    }
+  };
+
   // «Очистить форму и начать новый расклад» — всё обновляет (до перезагрузки)
   const startNewReadingNow = () => {
     if (isProcessing) return;
@@ -1071,6 +1080,141 @@ export default function LenormandDivination() {
           </div>
         )}
 
+        {/* Предыдущий расклад — над формой: иначе он теряется внизу,
+            а окно «У вас есть готовый расклад» закрывает форму */}
+        {prevResult && !result && !isProcessing && !activeSpread.dialog && (
+          <div className="mb-8 rounded-2xl border border-[#c9a84c]/20">
+            <button
+              type="button"
+              onClick={() => setPrevOpen((o) => !o)}
+              className="flex w-full items-center justify-between px-5 py-3 text-left"
+            >
+              <span className="font-medium text-[#f3ecff]">Предыдущий расклад</span>
+              <Icon
+                name={prevOpen ? "ChevronUp" : "ChevronDown"}
+                size={20}
+                className="text-[#9888b8]"
+              />
+            </button>
+            {prevOpen && (
+              <div className="border-t border-[#c9a84c]/20 p-5">
+                <div className="mb-3 flex items-start gap-2 rounded-lg bg-[#c9a84c]/12 p-3 text-sm text-[#e8d9a8] ring-1 ring-[#c9a84c]/30">
+                  <Icon name="TriangleAlert" size={18} className="mt-0.5 shrink-0" />
+                  <span>
+                    Этот расклад удалится, как только вы запустите новый.
+                    Рекомендуем скачать картинку или скопировать текст к себе.
+                  </span>
+                </div>
+                <div className="mb-3 flex flex-wrap gap-2">
+                  <ReadAloud text={prevResult} compact />
+                  {isMobileDevice() && (
+                    <Button
+                      size="sm"
+                      onClick={() => shareReading(dbPrevCardRef.current)}
+                      className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
+                    >
+                      <Icon name="Share2" size={16} className="mr-1" /> Поделиться
+                    </Button>
+                  )}
+                  <Button variant="ghost"
+                    className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white" size="sm" onClick={copyPrevText}>
+                    <Icon name="Copy" size={16} className="mr-1" /> Скопировать
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={isMobileDevice() ? "ghost" : "default"}
+                    onClick={downloadPrevPng}
+                    className={
+                      isMobileDevice()
+                        ? "bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
+                        : "bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
+                    }
+                  >
+                    <Icon name="Download" size={16} className="mr-1" /> Скачать PNG
+                  </Button>
+                </div>
+
+                <div
+                  className="rounded-2xl border border-[#c9a84c]/20 p-6 shadow-sm"
+                  style={{
+                    background:
+                      "linear-gradient(180deg, #241845 0%, #1a1030 100%)",
+                  }}
+                >
+                  <div className="mb-4 text-center">
+                    <h3 className="text-2xl font-semibold text-[#f3ecff]">
+                      {spreadOf(prevSpreadId).title}
+                    </h3>
+                    <p className="mt-1 text-sm text-[#c9a84c]">{prevDate}</p>
+                  </div>
+
+                  {prevLayout.length > 0 && (
+                    <div
+                      className="mb-6 overflow-x-auto rounded-2xl border border-[#c9a84c]/25 p-3 sm:p-4"
+                      style={{
+                        background:
+                          "radial-gradient(120% 100% at 50% 0%, #2d1b69 0%, #241845 55%, #1a1030 100%)",
+                        boxShadow:
+                          "inset 0 0 50px rgba(124,58,237,0.18), inset 0 0 6px rgba(124,58,237,0.12)",
+                      }}
+                    >
+                      <div
+                        className="grid min-w-[760px] gap-1.5 [grid-auto-rows:1fr]"
+                        style={{ gridTemplateColumns: `repeat(${resultCols(prevLayout.length, prevSpreadId)}, minmax(0, 1fr))` }}
+                      >
+                        {prevLayout.map((card, idx) =>
+                          card ? (
+                            <div
+                              key={idx}
+                              style={cellStyle(idx, prevSpreadId)}
+                              className="rounded-md border border-[#c9a84c]/25 bg-white/[0.06] p-1.5 text-center"
+                            >
+                              <div className="text-[10px] leading-tight text-[#c9a84c]">
+                                {idx + 1}. {houseWordOf(prevSystem)} {houseNamesOf(prevSystem, prevSpreadId)[idx]}
+                              </div>
+                              {prevCardImage(card) && (
+                                <img
+                                  src={prevCardImage(card)}
+                                  alt={card}
+                                  className={`mx-auto my-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px] ${
+                                    isCrossed(idx, prevSpreadId) ? "rotate-90" : ""
+                                  }`}
+                                  loading="lazy"
+                                />
+                              )}
+                              <div className="text-[11px] font-semibold leading-tight text-[#f3ecff] sm:text-xs">
+                                карта {card}
+                              </div>
+                            </div>
+                          ) : null
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Дубль кнопки у самого текста — не надо прокручивать вверх */}
+                  <div className="mb-3">
+                    <ReadAloud text={prevResult} compact />
+                  </div>
+
+                  <ReadingText text={prevResult} />
+                  <div className="mt-6 border-t border-[#c9a84c]/25 pt-4 text-center text-xs text-[#9888b8]">
+                    <p>
+                      Трактовки раскладов носят
+                      развлекательно-информационно-рекомендательный характер,
+                      создаются нейросетью, мы не несём ответственность за текст
+                      ответа нейросети.
+                    </p>
+                    <p className="mt-1 font-medium text-[#c9a84c]">
+                      fitting-room.ru
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {tabChoice && (
         <LockedFormOverlay cost={LENORMAND_MIN_COST}>
           <div className="relative">
@@ -1091,6 +1235,20 @@ export default function LenormandDivination() {
                   удалён.
                 </p>
                 <div className="flex flex-col gap-2">
+                  {/* На телефоне удобнее отправить расклад сразу в мессенджер,
+                      чем искать скачанный файл в папке загрузок */}
+                  {isMobileDevice() && (
+                    <Button
+                      onClick={() => {
+                        setTouchAck(true);
+                        shareShownPng();
+                      }}
+                      className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
+                    >
+                      <Icon name="Share2" size={16} className="mr-1.5" />
+                      Поделиться
+                    </Button>
+                  )}
                   <Button
                     onClick={() => {
                       setTouchAck(true);
@@ -1889,139 +2047,6 @@ export default function LenormandDivination() {
           </div>
         )}
 
-        {/* Предыдущий расклад из базы (после перезагрузки, пока нет свежего) */}
-        {prevResult && !result && !isProcessing && !activeSpread.dialog && (
-          <div className="mt-8 rounded-2xl border border-[#c9a84c]/20">
-            <button
-              type="button"
-              onClick={() => setPrevOpen((o) => !o)}
-              className="flex w-full items-center justify-between px-5 py-3 text-left"
-            >
-              <span className="font-medium text-[#f3ecff]">Предыдущий расклад</span>
-              <Icon
-                name={prevOpen ? "ChevronUp" : "ChevronDown"}
-                size={20}
-                className="text-[#9888b8]"
-              />
-            </button>
-            {prevOpen && (
-              <div className="border-t border-[#c9a84c]/20 p-5">
-                <div className="mb-3 flex items-start gap-2 rounded-lg bg-[#c9a84c]/12 p-3 text-sm text-[#e8d9a8] ring-1 ring-[#c9a84c]/30">
-                  <Icon name="TriangleAlert" size={18} className="mt-0.5 shrink-0" />
-                  <span>
-                    Этот расклад удалится, как только вы запустите новый.
-                    Рекомендуем скачать картинку или скопировать текст к себе.
-                  </span>
-                </div>
-                <div className="mb-3 flex flex-wrap gap-2">
-                  <ReadAloud text={prevResult} compact />
-                  {isMobileDevice() && (
-                    <Button
-                      size="sm"
-                      onClick={() => shareReading(dbPrevCardRef.current)}
-                      className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
-                    >
-                      <Icon name="Share2" size={16} className="mr-1" /> Поделиться
-                    </Button>
-                  )}
-                  <Button variant="ghost"
-                    className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white" size="sm" onClick={copyPrevText}>
-                    <Icon name="Copy" size={16} className="mr-1" /> Скопировать
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={isMobileDevice() ? "ghost" : "default"}
-                    onClick={downloadPrevPng}
-                    className={
-                      isMobileDevice()
-                        ? "bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
-                        : "bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
-                    }
-                  >
-                    <Icon name="Download" size={16} className="mr-1" /> Скачать PNG
-                  </Button>
-                </div>
-
-                <div
-                  className="rounded-2xl border border-[#c9a84c]/20 p-6 shadow-sm"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, #241845 0%, #1a1030 100%)",
-                  }}
-                >
-                  <div className="mb-4 text-center">
-                    <h3 className="text-2xl font-semibold text-[#f3ecff]">
-                      {spreadOf(prevSpreadId).title}
-                    </h3>
-                    <p className="mt-1 text-sm text-[#c9a84c]">{prevDate}</p>
-                  </div>
-
-                  {prevLayout.length > 0 && (
-                    <div
-                      className="mb-6 overflow-x-auto rounded-2xl border border-[#c9a84c]/25 p-3 sm:p-4"
-                      style={{
-                        background:
-                          "radial-gradient(120% 100% at 50% 0%, #2d1b69 0%, #241845 55%, #1a1030 100%)",
-                        boxShadow:
-                          "inset 0 0 50px rgba(124,58,237,0.18), inset 0 0 6px rgba(124,58,237,0.12)",
-                      }}
-                    >
-                      <div
-                        className="grid min-w-[760px] gap-1.5 [grid-auto-rows:1fr]"
-                        style={{ gridTemplateColumns: `repeat(${resultCols(prevLayout.length, prevSpreadId)}, minmax(0, 1fr))` }}
-                      >
-                        {prevLayout.map((card, idx) =>
-                          card ? (
-                            <div
-                              key={idx}
-                              style={cellStyle(idx, prevSpreadId)}
-                              className="rounded-md border border-[#c9a84c]/25 bg-white/[0.06] p-1.5 text-center"
-                            >
-                              <div className="text-[10px] leading-tight text-[#c9a84c]">
-                                {idx + 1}. {houseWordOf(prevSystem)} {houseNamesOf(prevSystem, prevSpreadId)[idx]}
-                              </div>
-                              {prevCardImage(card) && (
-                                <img
-                                  src={prevCardImage(card)}
-                                  alt={card}
-                                  className={`mx-auto my-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px] ${
-                                    isCrossed(idx, prevSpreadId) ? "rotate-90" : ""
-                                  }`}
-                                  loading="lazy"
-                                />
-                              )}
-                              <div className="text-[11px] font-semibold leading-tight text-[#f3ecff] sm:text-xs">
-                                карта {card}
-                              </div>
-                            </div>
-                          ) : null
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Дубль кнопки у самого текста — не надо прокручивать вверх */}
-                  <div className="mb-3">
-                    <ReadAloud text={prevResult} compact />
-                  </div>
-
-                  <ReadingText text={prevResult} />
-                  <div className="mt-6 border-t border-[#c9a84c]/25 pt-4 text-center text-xs text-[#9888b8]">
-                    <p>
-                      Трактовки раскладов носят
-                      развлекательно-информационно-рекомендательный характер,
-                      создаются нейросетью, мы не несём ответственность за текст
-                      ответа нейросети.
-                    </p>
-                    <p className="mt-1 font-medium text-[#c9a84c]">
-                      fitting-room.ru
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Дисклеймер */}
         <div className="mt-10 flex items-start gap-3 rounded-xl border border-[#c9a84c]/35 bg-[#c9a84c]/10 p-4 text-sm text-[#e8d9a8]">

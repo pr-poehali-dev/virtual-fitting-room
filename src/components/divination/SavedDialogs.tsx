@@ -153,6 +153,8 @@ const SavedDialogs = ({ reloadKey = 0, onContinue }: SavedDialogsProps) => {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   // Беседа, открытая на чтение (окно поверх страницы)
   const [readId, setReadId] = useState<string | null>(null);
+  // Список свёрнут: при заходе виден только заголовок со стрелкой
+  const [open, setOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -169,6 +171,11 @@ const SavedDialogs = ({ reloadKey = 0, onContinue }: SavedDialogsProps) => {
     load();
   }, [load, reloadKey]);
 
+  // Есть незакрытая беседа — раскрываем сразу: её ждут, чтобы продолжить
+  useEffect(() => {
+    if (items.some((i) => i.status === "active")) setOpen(true);
+  }, [items]);
+
   const remove = async (id: string) => {
     const { res, data } = await dialogApi({ action: "delete", dialog_id: id });
     if (!res.ok) {
@@ -183,15 +190,29 @@ const SavedDialogs = ({ reloadKey = 0, onContinue }: SavedDialogsProps) => {
   if (loading || items.length === 0) return null;
 
   return (
-    <div className={`${divTheme.panel} mb-6 p-5`}>
-      <div className="mb-4 flex items-center gap-2">
-        <Icon name="Bookmark" size={18} className="text-[#c9a84c]" />
-        <h2 className={`font-serif text-lg ${divTheme.title}`}>
-          Сохранено у вас
-        </h2>
-      </div>
+    <div className={`${divTheme.panel} mb-6`}>
+      {/* Список сворачиваем: бесед бывает много, и они занимали весь экран */}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between gap-2 p-5 text-left"
+      >
+        <span className="flex items-center gap-2">
+          <Icon name="Bookmark" size={18} className="text-[#c9a84c]" />
+          <h2 className={`font-serif text-lg ${divTheme.title}`}>
+            Сохранённые диалоги
+          </h2>
+          <span className={`text-sm ${divTheme.muted}`}>({items.length})</span>
+        </span>
+        <Icon
+          name={open ? "ChevronUp" : "ChevronDown"}
+          size={20}
+          className="shrink-0 text-[#9888b8]"
+        />
+      </button>
 
-      <div className="space-y-3">
+      {open && (
+      <div className="space-y-3 px-5 pb-5">
         {items.map((d) => {
           const active = d.status === "active";
           return (
@@ -314,6 +335,7 @@ const SavedDialogs = ({ reloadKey = 0, onContinue }: SavedDialogsProps) => {
           );
         })}
       </div>
+      )}
 
       {readId && (
         <DialogReader dialogId={readId} onClose={() => setReadId(null)} />
