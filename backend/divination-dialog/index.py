@@ -367,6 +367,114 @@ def action_step_status(body, user_id, event):
 
 
 
+def _send_email(to_email, subject, body_text):
+    """Письмо с того же ящика, что и остальные письма сервиса."""
+    import html as html_lib
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    smtp_host = os.environ.get('SMTP_HOST')
+    smtp_port = int(os.environ.get('SMTP_PORT', '587'))
+    smtp_user = os.environ.get('SMTP_USER')
+    smtp_password = os.environ.get('SMTP_PASSWORD')
+
+    if not (smtp_host and smtp_user and smtp_password):
+        raise Exception('Почта не настроена')
+
+    message = MIMEMultipart('alternative')
+    message['Subject'] = subject
+    message['From'] = 'virtualfitting@mail.ru'
+    message['To'] = to_email
+
+    paragraphs = ''.join(
+        f'<p style="margin:0 0 14px;line-height:1.7">{html_lib.escape(par.strip())}</p>'
+        for par in body_text.split('\n\n') if par.strip()
+    )
+    html_content = (
+        '<!DOCTYPE html><html><head><meta charset="utf-8"></head>'
+        '<body style="font-family:Arial,sans-serif;color:#2f2618;background:#f7f0e1;padding:24px">'
+        '<div style="max-width:640px;margin:0 auto;background:#fffdf7;padding:28px;border-radius:14px">'
+        f'<h1 style="font-size:20px;margin:0 0 18px">{html_lib.escape(subject)}</h1>'
+        f'{paragraphs}'
+        '<p style="margin-top:22px;font-size:12px;color:#8a7f6b">'
+        'Толкование создано нейросетью и носит информационно-рекомендательный характер. '
+        'Расклад — повод для размышления, а не предсказание.</p>'
+        '<p style="font-size:12px;color:#8a7f6b">fitting-room.ru</p>'
+        '</div></body></html>'
+    )
+
+    message.attach(MIMEText(body_text, 'plain', 'utf-8'))
+    message.attach(MIMEText(html_content, 'html', 'utf-8'))
+
+    if smtp_port == 465:
+        with smtplib.SMTP_SSL(smtp_host, smtp_port) as server:
+            server.login(smtp_user, smtp_password)
+            server.send_message(message)
+    else:
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.send_message(message)
+
+
+def action_email(body, user_id, event):
+    """Отправляет всю беседу на почту владельца аккаунта."""
+    dialog_id = (body.get('dialog_id') or '').strip()
+    try:
+        uuid.UUID(dialog_id)
+    except (ValueError, AttributeError):
+        return resp(404, {'error': 'Диалог не найден'}, event)
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"SELECT user_id, deck FROM {DB_SCHEMA}.divination_dialogs WHERE id = %s",
+                (dialog_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return resp(404, {'error': 'Диалог не найден'}, event)
+            if str(row[0]) != str(user_id):
+                return resp(403, {'error': 'Чужой диалог'}, event)
+
+            cur.execute(
+                f"SELECT email FROM {DB_SCHEMA}.users WHERE id = %s",
+                (user_id,),
+            )
+            urow = cur.fetchone()
+            if not urow or not urow[0]:
+                return resp(200, {'sent': False, 'error': 'У аккаунта нет почты'}, event)
+            to_email = urow[0]
+
+            cur.execute(
+                f"""SELECT step_no, question, cards, answer_text
+                    FROM {DB_SCHEMA}.divination_dialog_steps
+                    WHERE dialog_id = %s AND status = 'done'
+                    ORDER BY step_no""",
+                (dialog_id,),
+            )
+            steps = cur.fetchall()
+    finally:
+        conn.close()
+
+    if not steps:
+        return resp(200, {'sent': False, 'error': 'В беседе пока нет ответов'}, event)
+
+    parts = []
+    for step_no, question, cards, answer in steps:
+        card_list = ', '.join(cards or []) if isinstance(cards, list) else ''
+        parts.append(f'Вопрос {step_no}: {question}')
+        if card_list:
+            parts.append(f'Карты: {card_list}')
+        parts.append(answer or '')
+    text = '\n\n'.join(p for p in parts if p)
+
+    _send_email(to_email, 'Ваша беседа с картами', text)
+    return resp(200, {'sent': True, 'email': to_email}, event)
+
+
 def action_history(body, user_id, event):
     dialog_id = (body.get('dialog_id') or '').strip()
     try:
@@ -621,6 +729,8 @@ def handler(event: dict, context) -> dict:
         return action_list(body, user_id, event)
     if action == 'last':
         return action_last(body, user_id, event)
+    if action == 'email':
+        return action_email(body, user_id, event)
     if action == 'history':
         return action_history(body, user_id, event)
     if action == 'close':

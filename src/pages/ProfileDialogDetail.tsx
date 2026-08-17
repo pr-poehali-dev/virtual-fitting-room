@@ -33,6 +33,7 @@ export default function ProfileDialogDetail() {
   const [system, setSystem] = useState("lenormand");
   const [isLoading, setIsLoading] = useState(true);
   const [confirm, setConfirm] = useState(false);
+  const [sendingMail, setSendingMail] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -70,6 +71,24 @@ export default function ProfileDialogDetail() {
     }
     toast.success("Беседа удалена");
     navigate("/profile/history-divination");
+  };
+
+  /** Письмо себе: на компьютере системного «Поделиться» нет */
+  const emailDialog = async () => {
+    setSendingMail(true);
+    try {
+      const { res, data } = await dialogApi({
+        action: "email",
+        dialog_id: id,
+      });
+      if (!res.ok || !data.sent) {
+        toast.error(data.error || "Не удалось отправить письмо");
+        return;
+      }
+      toast.success(`Беседа отправлена на ${data.email}`);
+    } finally {
+      setSendingMail(false);
+    }
   };
 
   const cardImage = (name: string) =>
@@ -125,6 +144,21 @@ export default function ProfileDialogDetail() {
                   />
                   {isMobileDevice() ? "Поделиться" : "Скопировать"}
                 </Button>
+                {!isMobileDevice() && (
+                  <Button
+                    variant="outline"
+                    className="gap-1.5"
+                    disabled={sendingMail}
+                    onClick={emailDialog}
+                  >
+                    <Icon
+                      name={sendingMail ? "Loader2" : "Mail"}
+                      size={16}
+                      className={sendingMail ? "animate-spin" : ""}
+                    />
+                    Отправить на почту
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   className="gap-1.5"

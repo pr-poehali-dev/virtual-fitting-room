@@ -13,6 +13,7 @@ import ReadingLayout from "@/components/divination/ReadingLayout";
 import { PERIODS, GENDERS, SPHERES } from "@/data/lenormand";
 import { getCardImageByName } from "@/data/lenormandImages";
 import { getTarotImageByName } from "@/data/divination/tarotImages";
+import { isMobileDevice } from "@/components/divination/SavedDialogs";
 
 const READINGS_API = "https://functions.poehali.dev/9d61578b-0a21-4bba-9fcc-37dbd5a4454d";
 
@@ -51,6 +52,7 @@ export default function ProfileReadingDetail() {
   const [reading, setReading] = useState<Reading | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [confirm, setConfirm] = useState(false);
+  const [sendingMail, setSendingMail] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -102,6 +104,51 @@ export default function ProfileReadingDetail() {
     }
     toast.success("Расклад удалён");
     navigate("/profile/history-divination");
+  };
+
+  /** Поделиться раскладом текстом: на телефоне — системное меню отправки */
+  const shareReading = async () => {
+    if (!reading) return;
+    const text = reading.ai_response;
+    try {
+      if (isMobileDevice() && navigator.share) {
+        await navigator.share({ title: "Мой расклад", text });
+        return;
+      }
+      await navigator.clipboard.writeText(text);
+      toast.success("Расклад скопирован — вставьте его в сообщение");
+    } catch (e) {
+      // Человек мог сам закрыть окно «Поделиться» — это не ошибка
+      if ((e as Error)?.name === "AbortError") return;
+      toast.error("Не удалось поделиться раскладом");
+    }
+  };
+
+  /** Письмо себе: на компьютере системного «Поделиться» нет */
+  const emailReading = async () => {
+    if (!reading) return;
+    setSendingMail(true);
+    try {
+      const token = localStorage.getItem("session_token") || "";
+      const res = await fetch(READINGS_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Session-Token": token,
+        },
+        body: JSON.stringify({ action: "email", id: reading.id }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.sent) {
+        toast.error(data.error || "Не удалось отправить письмо");
+        return;
+      }
+      toast.success(`Расклад отправлен на ${data.email}`);
+    } catch {
+      toast.error("Ошибка соединения");
+    } finally {
+      setSendingMail(false);
+    }
   };
 
   const meta = reading?.divination_meta || {};
@@ -205,8 +252,42 @@ export default function ProfileReadingDetail() {
                 </div>
               )}
 
-              <div className="mb-4">
+              <div className="mb-4 flex flex-wrap gap-2">
                 <ReadAloud text={reading.ai_response} onLight />
+                {isMobileDevice() ? (
+                  <Button
+                    variant="outline"
+                    className="gap-1.5"
+                    onClick={shareReading}
+                  >
+                    <Icon name="Share2" size={16} />
+                    Поделиться
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="gap-1.5"
+                      onClick={shareReading}
+                    >
+                      <Icon name="Copy" size={16} />
+                      Скопировать
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="gap-1.5"
+                      disabled={sendingMail}
+                      onClick={emailReading}
+                    >
+                      <Icon
+                        name={sendingMail ? "Loader2" : "Mail"}
+                        size={16}
+                        className={sendingMail ? "animate-spin" : ""}
+                      />
+                      Отправить на почту
+                    </Button>
+                  </>
+                )}
               </div>
 
               <ReadingText text={reading.ai_response} />
