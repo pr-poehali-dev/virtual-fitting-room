@@ -1233,7 +1233,7 @@ export default function LenormandDivination() {
                 </div>
 
                 <div
-                  className="rounded-2xl border border-[#c9a84c]/20 p-6 shadow-sm"
+                  className="rounded-2xl border border-[#c9a84c]/20 p-1.5 shadow-sm sm:p-6"
                   style={{
                     background:
                       "linear-gradient(180deg, #241845 0%, #1a1030 100%)",
