@@ -554,7 +554,7 @@ const DialogChat = ({
           <Textarea
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            placeholder="Например: как сложится этот проект?"
+            placeholder="Например: как сложится новый проект?"
             disabled={busy || lowBalance}
             className="mb-3 min-h-[80px] border-white/15 bg-white/[0.04] text-[#e8e0f0] placeholder:text-[#9888b8]"
           />

@@ -1692,7 +1692,7 @@ export default function LenormandDivination() {
                         onChange={(e) => setComment(e.target.value)}
                         placeholder={
                           asksQuestion
-                            ? "Например: чем закончится эта ситуация и как мне поступить…"
+                            ? "Например: как сложится новый проект?"
                             : "Например: стоит ли обновить гардероб этой весной и каким будет мой новый образ…"
                         }
                         rows={3}
