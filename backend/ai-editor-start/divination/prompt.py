@@ -89,6 +89,28 @@ COMMON_RULES = (
 )
 
 
+# Словарь ролей. Имена домов и имена карт — одни и те же 36 слов,
+# поэтому модель их путает. Разводим термины явно и один раз.
+LENORMAND_GLOSSARY = (
+    'СЛОВАРЬ (запомни, дальше используй только эти слова).\n'
+    '- МЕСТО — номер клетки на столе, от 1 до 36. Это не номер карты.\n'
+    '- ДОМ — постоянная тема места. Дом никогда не двигается: '
+    'место 25 всегда дом Кольца, что бы в нём ни лежало.\n'
+    '- КАРТА — то, что выпало в этом месте. Карты каждый раз разные.\n'
+    '- ВНИМАНИЕ: дома и карты называются одинаковыми словами. '
+    '«Дом Кольца» и «карта Кольцо» — РАЗНЫЕ вещи. В одном месте '
+    'всегда РОВНО ОДИН дом и РОВНО ОДНА карта, и они почти всегда '
+    'называются по-разному.\n'
+    '- КАК ПИСАТЬ: всегда в форме «карта Луна в доме Кольца». '
+    'Сначала карта, потом дом. Никогда не пиши два названия подряд '
+    'без слов «карта» и «дом».\n'
+    '- СИГНИФИКАТОР — это САМА карта Женщина (для женщины) или '
+    'сама карта Мужчина (для мужчины), в том месте, где она выпала. '
+    'Карта, выпавшая в доме Женщины или в доме Мужчины, '
+    'сигнификатором НЕ является — это обычная карта в этом доме.'
+)
+
+
 def _clean_card(value) -> str:
     if isinstance(value, str) and value.strip():
         return value.strip()
@@ -155,7 +177,7 @@ def _build_table_block(spread: dict, deck: dict, layout: list) -> str:
         if not card:
             return ''
         house = house_names[i] if i < len(house_names) else ''
-        return f'{i + 1}. дом {house} / карта {card}'
+        return f'место {i + 1} · дом «{house}» · выпала карта «{card}»'
 
     def fmt_row(cells: list) -> str:
         return '| ' + ' | '.join(c if c else ' ' for c in cells) + ' |'
@@ -174,6 +196,78 @@ def _build_table_block(spread: dict, deck: dict, layout: list) -> str:
         lines.append(fmt_row(cells))
 
     return '\n'.join(lines)
+
+
+def _build_figures_block(spread: dict, deck: dict, layout: list, gender: str) -> str:
+    """Готовые координаты фигур: модель их не ищет и не может ошибиться."""
+    house_names = deck.get('house_names')
+    if not house_names:
+        return ''
+
+    grid = spread.get('grid') or {}
+    cols = grid.get('cols') or 0
+    rows = grid.get('rows') or 0
+
+    def find(card_name: str):
+        for i in range(spread['size']):
+            if _clean_card(layout[i] if i < len(layout) else '') == card_name:
+                return i
+        return None
+
+    def describe(i: int) -> str:
+        house = house_names[i] if i < len(house_names) else ''
+        where = ''
+        if cols:
+            main = cols * rows
+            if i < main:
+                where = f', ряд {i // cols + 1}, столбец {i % cols + 1}'
+            else:
+                where = f', итоговый ряд, место {i - main + 1}'
+        return f'место {i + 1}{where}, дом «{house}»'
+
+    own, other = ('Женщина', 'Мужчина') if gender == 'female' else ('Мужчина', 'Женщина')
+    lines = []
+    i_own = find(own)
+    if i_own is not None:
+        lines.append(
+            f'- СИГНИФИКАТОР (сам человек) — карта «{own}». '
+            f'Она лежит: {describe(i_own)}. Весь разбор веди от неё.'
+        )
+    i_other = find(other)
+    if i_other is not None:
+        lines.append(
+            f'- ВТОРАЯ ФИГУРА (партнёр) — карта «{other}». '
+            f'Она лежит: {describe(i_other)}.'
+        )
+    if not lines:
+        return ''
+
+    lines.append(
+        f'Не путай: карта, выпавшая В ДОМЕ «{own}», — это НЕ сигнификатор. '
+        f'Сигнификатор — только сама карта «{own}» в указанном выше месте.'
+    )
+    return 'ГДЕ ЛЕЖАТ ФИГУРЫ (посчитано за тебя, бери готовым).\n' + '\n'.join(lines)
+
+
+def _build_index_block(spread: dict, deck: dict, layout: list) -> str:
+    """Обратный указатель: карта -> где лежит. Чтобы не искать глазами."""
+    if not deck.get('house_names'):
+        return ''
+    house_names = deck['house_names']
+    items = []
+    for i in range(spread['size']):
+        card = _clean_card(layout[i] if i < len(layout) else '')
+        if not card:
+            continue
+        house = house_names[i] if i < len(house_names) else ''
+        items.append((card, f'карта «{card}» — место {i + 1}, дом «{house}»'))
+    if not items:
+        return ''
+    items.sort(key=lambda x: x[0])
+    return (
+        'ГДЕ ИСКАТЬ КАРТУ (алфавитный указатель, бери готовым):\n'
+        + '; '.join(t for _, t in items) + '.'
+    )
 
 
 def build_divination_prompt(meta: dict) -> str:
@@ -197,13 +291,10 @@ def build_divination_prompt(meta: dict) -> str:
     house_hint = ''
     if deck.get('house_names') and not spread.get('positions'):
         house_hint = (
-            '\nВ этом раскладе у каждой позиции есть собственное значение — '
-            '«дом». Дом задаёт тему, а выпавшая в нём карта отвечает на неё: '
-            'всегда читай их вместе. Кратко: дом — это вопрос, карта — ответ. '
-            'НЕ разбирай все 36 домов подряд отдельными пунктами — это делает '
-            'текст длинным списком. Иди по цепочкам и смысловым блокам, '
-            'а отдельные дома называй только там, где они действительно важны '
-            'для ответа.'
+            'Дом — это вопрос, карта — ответ на него: читай их вместе. '
+            'НЕ разбирай все 36 мест подряд отдельными пунктами. '
+            'Иди цепочками и смысловыми блоками, а дома называй там, '
+            'где они важны для ответа.'
         )
 
     table_block = _build_table_block(spread, deck, layout)
@@ -212,27 +303,14 @@ def build_divination_prompt(meta: dict) -> str:
     nav_hint = ''
     if deck.get('house_names') and cols > 1:
         nav_hint = (
-            'КАК ОРИЕНТИРОВАТЬСЯ НА СТОЛЕ (не ошибись с номерами).\n'
-            f'- число в начале каждой строки — это НОМЕР МЕСТА на столе '
-            f'(1-{spread["size"]}), а не номер карты в колоде. Собственные '
-            'номера карт из колоды не используй и не путай с местами;\n'
-            '- НИЧЕГО НЕ ВЫЧИСЛЯЙ. Ниже дана ТАБЛИЦА СТОЛА: строка таблицы — '
-            'это ряд стола, ячейка — это место с домом и картой. Соседей '
-            'бери из таблицы глазами, не складывай и не вычитай номера;\n'
-            '- НАД картой — ячейка ровно ВЫШЕ в том же столбце, ПОД картой — '
-            'ячейка ровно НИЖЕ в том же столбце, слева и справа — соседние '
-            'ячейки в той же строке;\n'
-            '- ДИАГОНАЛИ — четыре ячейки по УГЛАМ от нужной: в строке выше '
-            'слева и справа, в строке ниже слева и справа;\n'
-            '- диагонали идут в обе стороны: и ПЕРЕД картой, и ЗА картой, '
-            'и СВЕРХУ, и СНИЗУ. Если карта не в первом и не в последнем '
-            'столбце и не в первом и не в последнем ряду, то у неё есть '
-            'ровно ЧЕТЫРЕ диагональные карты. У края стола часть диагоналей '
-            'отсутствует — их просто нет, не придумывай;\n'
-            '- карта в ТОМ ЖЕ столбце — это строго НАД или ПОД, '
-            'это НЕ диагональ. Диагональ всегда меняет и ряд, и столбец;\n'
-            '- назвав любую карту, сверься с таблицей: место, дом и карта '
-            'должны совпасть дословно.'
+            'КАК СМОТРЕТЬ НА СТОЛ. Ниже таблица: строка — ряд стола, '
+            'ячейка — одно место. Ничего не вычисляй, смотри в таблицу.\n'
+            '- НАД картой — ячейка выше в том же столбце, ПОД — ниже '
+            'в том же столбце, слева и справа — соседние ячейки строки;\n'
+            '- ДИАГОНАЛИ — четыре ячейки по углам: выше слева, выше справа, '
+            'ниже слева, ниже справа. У края стола часть из них '
+            'отсутствует — не придумывай их;\n'
+            '- тот же столбец — это НАД или ПОД, а не диагональ.'
         )
 
     # Часть раскладов делают на один конкретный вопрос: сферы жизни
@@ -259,9 +337,10 @@ def build_divination_prompt(meta: dict) -> str:
             parts.append(f'Дополнительный вопрос / уточнение от человека: {comment}')
 
     parts.append('')
+    if deck.get('house_names') and not spread.get('positions'):
+        parts.append(LENORMAND_GLOSSARY)
+        parts.append('')
     parts.append(spread['geometry'])
-    if house_hint:
-        parts.append(house_hint.strip())
     if nav_hint:
         parts.append('')
         parts.append(nav_hint)
@@ -276,8 +355,20 @@ def build_divination_prompt(meta: dict) -> str:
         parts.append('Карты на столе:')
     parts.append(cards_block)
 
+    figures_block = _build_figures_block(spread, deck, layout, gender)
+    if figures_block:
+        parts.append('')
+        parts.append(figures_block)
+
+    index_block = _build_index_block(spread, deck, layout)
+    if index_block:
+        parts.append('')
+        parts.append(index_block)
+
     parts.append('')
     parts.append(spread['chains'])
+    if house_hint:
+        parts.append(house_hint.strip())
 
     # Фокус разбора: «вся картина жизни» — только если выбраны все сферы.
     # Иначе весь расклад читается через выбранные сферы и вопрос.

@@ -328,7 +328,7 @@ def call_openrouter(model, prompt_text, on_partial=None, soft_deadline=None):
         json={
             'model': model,
             'messages': [{'role': 'user', 'content': prompt_text}],
-            'max_tokens': 64000,
+            'max_tokens': 100000,
             'stream': True,
         },
         timeout=(30, 570),
