@@ -15,11 +15,22 @@ const PageSeo = () => {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const { title, description } = getPageSeo(pathname);
+    const { title, description, noindex } = getPageSeo(pathname);
     document.title = title;
     setMeta('meta[name="description"]', description);
     setMeta('meta[property="og:title"]', title);
     setMeta('meta[property="og:description"]', description);
+
+    // Служебные страницы прячем от поисковиков, обычные — открываем обратно
+    let robots = document.head.querySelector<HTMLMetaElement>(
+      'meta[name="robots"]',
+    );
+    if (!robots) {
+      robots = document.createElement("meta");
+      robots.setAttribute("name", "robots");
+      document.head.appendChild(robots);
+    }
+    robots.setAttribute("content", noindex ? "noindex, follow" : "index, follow");
   }, [pathname]);
 
   return null;

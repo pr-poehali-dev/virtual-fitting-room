@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Запрет индексации служебных страниц
-Disallow: /payment-info
+Disallow: /payment
 Disallow: /offer
 Disallow: /privacy
 Disallow: /personal-data

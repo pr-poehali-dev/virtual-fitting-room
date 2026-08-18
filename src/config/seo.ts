@@ -6,6 +6,8 @@
 export interface PageSeo {
   title: string;
   description: string;
+  /** Служебная страница: просим поисковики её не индексировать */
+  noindex?: boolean;
 }
 
 export const DEFAULT_SEO: PageSeo = {
@@ -77,25 +79,30 @@ export const PAGE_SEO: Record<string, PageSeo> = {
       "Статьи, инструкции и советы о стиле, цветотипе, типажах и уходе за образом. Полезные материалы от StyleSelect",
   },
   "/payment": {
+    noindex: true,
     title: "Оплата и тарифы — StyleSelect",
     description:
       "Информация об оплате услуг StyleSelect: способы пополнения баланса, стоимость сервисов и возврат средств",
   },
   "/contacts": {
+    noindex: true,
     title: "Контакты — StyleSelect",
     description:
       "Свяжитесь со StyleSelect: почта для обращений, сообщества в Telegram и ВКонтакте, реквизиты",
   },
   "/offer": {
+    noindex: true,
     title: "Публичная оферта — StyleSelect",
     description: "Условия оказания услуг сервиса StyleSelect: публичная оферта",
   },
   "/privacy": {
+    noindex: true,
     title: "Политика конфиденциальности — StyleSelect",
     description:
       "Как StyleSelect собирает, хранит и защищает данные пользователей",
   },
   "/personal-data": {
+    noindex: true,
     title: "Обработка персональных данных — StyleSelect",
     description:
       "Согласие и правила обработки персональных данных в сервисе StyleSelect",
@@ -116,13 +123,14 @@ export const SECTION_SEO: { prefix: string; seo: PageSeo }[] = [
   {
     prefix: "/profile",
     seo: {
+      noindex: true,
       title: "Личный кабинет — StyleSelect",
       description: "Ваши образы, история сервисов и баланс в личном кабинете",
     },
   },
   {
     prefix: "/vf-console",
-    seo: { title: "Панель управления", description: "" },
+    seo: { noindex: true, title: "Панель управления", description: "" },
   },
 ];
 
