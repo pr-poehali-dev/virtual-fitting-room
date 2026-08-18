@@ -40,6 +40,8 @@ interface DialogChatProps {
   resumeDialog?: { dialog_id: string } | null;
   /** Сообщить наружу, что список бесед изменился */
   onDialogChanged?: () => void;
+  /** Сообщить наружу, сколько ответов уже есть в беседе */
+  onStepsChange?: (count: number) => void;
   /** Параметры из мастера — уходят в первый вопрос как контекст */
   context?: {
     gender: string;
@@ -79,6 +81,7 @@ const DialogChat = ({
   deckMode,
   resumeDialog,
   onDialogChanged,
+  onStepsChange,
   context,
   deckCards,
   model,
@@ -91,6 +94,11 @@ const DialogChat = ({
 }: DialogChatProps) => {
   const [dialogId, setDialogId] = useState<string | null>(null);
   const [steps, setSteps] = useState<DialogStep[]>([]);
+
+  // Наверху по числу ответов меняется подпись кнопки «Начать заново»
+  useEffect(() => {
+    onStepsChange?.(steps.length);
+  }, [steps.length, onStepsChange]);
   const [question, setQuestion] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
   const [deck, setDeck] = useState<string[]>(() => shuffle(deckCards));

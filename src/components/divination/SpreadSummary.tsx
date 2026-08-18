@@ -18,6 +18,8 @@ interface SpreadSummaryProps {
   hideEdit?: boolean;
   /** Диалог: меняются заголовок и подписи полей */
   isDialog?: boolean;
+  /** Подпись кнопки сброса */
+  clearLabel?: string;
   disabled?: boolean;
   onEdit: () => void;
   onClearAll: () => void;
@@ -41,40 +43,16 @@ const SpreadSummary = ({
   hideTopic = false,
   hideEdit = false,
   isDialog = false,
+  clearLabel = "Очистить всё и начать заново",
   disabled = false,
   onEdit,
   onClearAll,
 }: SpreadSummaryProps) => (
   <Card className="mb-6 overflow-hidden border-0 bg-gradient-to-br from-[#2d1b69] via-[#241845] to-[#1a1030] text-white shadow-lg ring-1 ring-[#c9a84c]/25">
     <CardContent className="p-5 sm:p-6">
-      {/* Заголовок и действия в одну линию; на мобильном — друг под другом */}
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="font-serif text-xl text-[#f3ecff]">
-          {isDialog ? "Параметры диалога" : "Параметры расклада"}
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {!hideEdit && (
-            <button
-              type="button"
-              onClick={onEdit}
-              disabled={disabled}
-              className="inline-flex flex-1 items-center justify-center rounded-lg border border-white/25 px-3 py-2 text-sm font-medium text-white transition hover:border-white/60 hover:bg-white/5 disabled:opacity-40 sm:flex-none"
-            >
-              <Icon name="Pencil" size={15} className="mr-1.5" />
-              Изменить
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onClearAll}
-            disabled={disabled}
-            className="inline-flex flex-1 items-center justify-center rounded-lg border border-white/25 px-3 py-2 text-sm font-medium text-white transition hover:border-white/60 hover:bg-white/5 disabled:opacity-40 sm:flex-none"
-          >
-            <Icon name="RotateCcw" size={15} className="mr-1.5" />
-            Начать заново
-          </button>
-        </div>
-      </div>
+      <h2 className="mb-3 font-serif text-xl text-[#f3ecff]">
+        {isDialog ? "Параметры диалога" : "Параметры расклада"}
+      </h2>
 
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-relaxed text-white sm:text-[15px]">
         <span>
@@ -124,6 +102,29 @@ const SpreadSummary = ({
         )}
       </div>
 
+      {/* Кнопки под параметрами — как в обычных раскладах */}
+      <div className="mt-5 flex flex-wrap gap-2">
+        {!hideEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            disabled={disabled}
+            className="inline-flex items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
+          >
+            <Icon name="Pencil" size={16} className="mr-1.5" />
+            Редактировать
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onClearAll}
+          disabled={disabled}
+          className="inline-flex items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
+        >
+          <Icon name="RotateCcw" size={16} className="mr-1.5" />
+          {clearLabel}
+        </button>
+      </div>
     </CardContent>
   </Card>
 );

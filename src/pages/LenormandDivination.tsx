@@ -177,6 +177,8 @@ export default function LenormandDivination() {
   // тогда ни одна кнопка не подсвечена, чтобы подсветка не врала.
   const [tabChoice, setTabChoice] = useState<DivTab | null>(null);
   const [savedReload, setSavedReload] = useState(0);
+  // Сколько ответов уже есть в текущей беседе — от этого зависит подпись кнопки
+  const [dialogStepsCount, setDialogStepsCount] = useState(0);
   // Диалог, к которому вернулись из списка сохранённых
   const [resumeDialog, setResumeDialog] = useState<SavedDialog | null>(null);
   // Меняем ключ, чтобы «Начать заново» полностью пересоздавал чат с нуля
@@ -1730,6 +1732,11 @@ export default function LenormandDivination() {
               hideTopic
               hideEdit
               isDialog
+              clearLabel={
+                dialogStepsCount > 0
+                  ? "Начать новый диалог"
+                  : "Очистить всё и начать заново"
+              }
               disabled={false}
               onEdit={() => {
                 setWizardDone(false);
@@ -1752,6 +1759,7 @@ export default function LenormandDivination() {
               deckMode="full"
               resumeDialog={resumeDialog}
               onDialogChanged={() => setSavedReload((k) => k + 1)}
+              onStepsChange={setDialogStepsCount}
               stepPrice={selectedCost}
               maxSteps={DIALOG_MAX_STEPS}
               getCardImage={getDeckCardImage}
