@@ -135,6 +135,47 @@ def _build_cards_block(spread: dict, deck: dict, layout: list) -> str:
     return '\n'.join(lines)
 
 
+def _build_table_block(spread: dict, deck: dict, layout: list) -> str:
+    """Стол как таблица: строка = ряд стола, ячейка = место, дом и карта.
+
+    Так модели не нужно вычислять соседей арифметикой — она видит их
+    глазами: над картой это ячейка выше в том же столбце, под ней — ниже,
+    диагонали — соседние ячейки по углам.
+    """
+    grid = spread.get('grid') or {}
+    cols = grid.get('cols') or 0
+    rows = grid.get('rows') or 0
+    tail = grid.get('tail') or 0
+    house_names = deck.get('house_names')
+    if not cols or not rows or not house_names:
+        return ''
+
+    def cell(i: int) -> str:
+        card = _clean_card(layout[i] if i < len(layout) else '')
+        if not card:
+            return ''
+        house = house_names[i] if i < len(house_names) else ''
+        return f'{i + 1}. дом {house} / карта {card}'
+
+    def fmt_row(cells: list) -> str:
+        return '| ' + ' | '.join(c if c else ' ' for c in cells) + ' |'
+
+    lines = ['| ' + ' | '.join(f'столбец {c + 1}' for c in range(cols)) + ' |']
+    lines.append('|' + '---|' * cols)
+    for r in range(rows):
+        lines.append(fmt_row([cell(r * cols + c) for c in range(cols)]))
+
+    if tail:
+        # Итоговые карты лежат по центру: слева и справа ячейки пустые
+        pad = (cols - tail) // 2
+        cells = [''] * cols
+        for k in range(tail):
+            cells[pad + k] = cell(rows * cols + k)
+        lines.append(fmt_row(cells))
+
+    return '\n'.join(lines)
+
+
 def build_divination_prompt(meta: dict) -> str:
     """Собирает промпт расклада из divination_meta."""
     spread_id = meta.get('spread') or meta.get('spread_id') or 'lenormand_big9x4'
@@ -165,6 +206,7 @@ def build_divination_prompt(meta: dict) -> str:
             'для ответа.'
         )
 
+    table_block = _build_table_block(spread, deck, layout)
     grid = spread.get('grid') or {}
     cols = grid.get('cols') or 0
     nav_hint = ''
@@ -174,14 +216,14 @@ def build_divination_prompt(meta: dict) -> str:
             f'- число в начале каждой строки — это НОМЕР МЕСТА на столе '
             f'(1-{spread["size"]}), а не номер карты в колоде. Собственные '
             'номера карт из колоды не используй и не путай с местами;\n'
-            '- у каждого места указаны ряд и столбец — бери их готовыми, '
-            'не вычисляй заново;\n'
-            f'- ширина стола {cols} карт, поэтому соседей ищи по номерам мест: '
-            f'НАД картой — минус {cols}, ПОД картой — плюс {cols}, '
-            'слева — минус 1, справа — плюс 1;\n'
-            f'- ДИАГОНАЛИ: вверх-влево — минус {cols + 1}, вверх-вправо — '
-            f'минус {cols - 1}, вниз-влево — плюс {cols - 1}, вниз-вправо — '
-            f'плюс {cols + 1};\n'
+            '- НИЧЕГО НЕ ВЫЧИСЛЯЙ. Ниже дана ТАБЛИЦА СТОЛА: строка таблицы — '
+            'это ряд стола, ячейка — это место с домом и картой. Соседей '
+            'бери из таблицы глазами, не складывай и не вычитай номера;\n'
+            '- НАД картой — ячейка ровно ВЫШЕ в том же столбце, ПОД картой — '
+            'ячейка ровно НИЖЕ в том же столбце, слева и справа — соседние '
+            'ячейки в той же строке;\n'
+            '- ДИАГОНАЛИ — четыре ячейки по УГЛАМ от нужной: в строке выше '
+            'слева и справа, в строке ниже слева и справа;\n'
             '- диагонали идут в обе стороны: и ПЕРЕД картой, и ЗА картой, '
             'и СВЕРХУ, и СНИЗУ. Если карта не в первом и не в последнем '
             'столбце и не в первом и не в последнем ряду, то у неё есть '
@@ -189,8 +231,8 @@ def build_divination_prompt(meta: dict) -> str:
             'отсутствует — их просто нет, не придумывай;\n'
             '- карта в ТОМ ЖЕ столбце — это строго НАД или ПОД, '
             'это НЕ диагональ. Диагональ всегда меняет и ряд, и столбец;\n'
-            '- назвав соседнюю или диагональную карту, сверься со списком '
-            'ниже: место, дом и карта должны совпасть дословно.'
+            '- назвав любую карту, сверься с таблицей: место, дом и карта '
+            'должны совпасть дословно.'
         )
 
     # Часть раскладов делают на один конкретный вопрос: сферы жизни
@@ -225,7 +267,13 @@ def build_divination_prompt(meta: dict) -> str:
         parts.append(nav_hint)
 
     parts.append('')
-    parts.append('Карты на столе:')
+    if table_block:
+        parts.append('ТАБЛИЦА СТОЛА (так карты лежат перед тобой):')
+        parts.append(table_block)
+        parts.append('')
+        parts.append('Те же карты списком, по порядку:')
+    else:
+        parts.append('Карты на столе:')
     parts.append(cards_block)
 
     parts.append('')
