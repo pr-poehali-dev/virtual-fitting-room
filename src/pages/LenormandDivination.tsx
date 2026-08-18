@@ -1360,7 +1360,10 @@ export default function LenormandDivination() {
                 <div className="mb-5">
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-sm font-medium text-white/90">
-                      Шаг {visibleNo} из {visibleTotal}
+                      <span className="font-semibold text-[#e8c252]">
+                        {activeSpread.dialog ? "Новый диалог" : "Новый расклад"}
+                      </span>
+                      {" · "}Шаг {visibleNo} из {visibleTotal}
                     </span>
                     <span className="text-xs text-white/70">
                       {visibleNo}/{visibleTotal}
