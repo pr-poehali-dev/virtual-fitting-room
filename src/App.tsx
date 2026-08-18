@@ -77,6 +77,7 @@ const Knowledge = lazy(() => import("./pages/Knowledge"));
 const KnowledgePost = lazy(() => import("./pages/KnowledgePost"));
 const AdminKnowledge = lazy(() => import("./pages/AdminKnowledge"));
 import ScrollToTop from "./components/ScrollToTop";
+import PageSeo from "./components/PageSeo";
 import MaintenanceBanner from "./components/MaintenanceBanner";
 
 const APP_VERSION = "2.0.0";
@@ -126,6 +127,7 @@ const App = () => (
             <BrowserRouter>
             <MaintenanceBanner />
             <ScrollToTop />
+            <PageSeo />
             <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Home />} />
