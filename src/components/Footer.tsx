@@ -55,15 +55,6 @@ const Footer = () => {
                   Свадебный образ
                 </Link>
               </li>
-            </ul>
-          </div>
-
-          {/* Продолжение списка сервисов: без заголовка — читается как одна колонка */}
-          <div>
-            <h3 className="text-white font-semibold mb-4 invisible hidden lg:block">
-              Сервисы
-            </h3>
-            <ul className="space-y-2">
               <li>
                 <Link to="/gift-selection" className="hover:text-white transition-colors">
                   Подбор подарков
@@ -126,9 +117,10 @@ const Footer = () => {
                 </Link>
               </li>
             </ul>
+          </div>
 
-            {/* Вход и кабинет — вторым блоком в этой же колонке */}
-            <h3 className="text-white font-semibold mb-4 mt-8">
+          <div>
+            <h3 className="text-white font-semibold mb-4">
               {user ? "Аккаунт" : "Вход"}
             </h3>
             <ul className="space-y-2">
