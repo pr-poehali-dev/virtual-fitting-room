@@ -550,12 +550,12 @@ const DialogChat = ({
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="Например: как сложится новый проект?"
             disabled={busy || lowBalance}
-            className="mb-3 min-h-[80px] border-white/15 bg-white/[0.04] text-[#e8e0f0] placeholder:text-[#9888b8]"
+            className="mb-3 min-h-[80px] border-2 border-white/50 bg-transparent text-white placeholder:text-white/60 focus-visible:ring-white/40"
           />
 
           {/* Подсказка нужна у первого вопроса: дальше человек уже понял правила */}
           {steps.length === 0 && (
-            <p className={`mb-3 text-sm leading-relaxed ${divTheme.muted}`}>
+            <p className="mb-3 text-sm leading-relaxed text-white/70">
               {QUESTION_HINT}
             </p>
           )}
