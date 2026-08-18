@@ -19,6 +19,10 @@ import ReadingText from "./ReadingText";
 const DIVINATION_DIALOG =
   "https://functions.poehali.dev/336075f7-e6e8-4cd9-bfd5-80e6e23e187a";
 
+// Предел длины вопроса: хватает на несколько подвопросов,
+// но не даёт вставить в поле большой текст
+const QUESTION_MAX = 700;
+
 export interface DialogStep {
   step_no: number;
   question: string;
@@ -555,11 +559,17 @@ const DialogChat = ({
 
           <Textarea
             value={question}
-            onChange={(e) => setQuestion(e.target.value)}
+            onChange={(e) => setQuestion(e.target.value.slice(0, QUESTION_MAX))}
+            maxLength={QUESTION_MAX}
             placeholder="Например: как сложится новый проект?"
             disabled={busy || lowBalance}
-            className="mb-3 min-h-[80px] border-2 border-white/50 bg-transparent text-white placeholder:text-white/60 focus-visible:ring-white/40"
+            className="mb-1 min-h-[80px] border-2 border-white/50 bg-transparent text-white placeholder:text-white/60 focus-visible:ring-white/40"
           />
+
+          {/* Счётчик появляется, когда до предела остаётся немного */}
+          <p className="mb-3 text-right text-xs text-white/50">
+            {question.length} / {QUESTION_MAX}
+          </p>
 
           {/* Подсказка нужна у первого вопроса: дальше человек уже понял правила */}
           {steps.length === 0 && (

@@ -13,14 +13,15 @@ import uuid
 from datetime import datetime
 
 import psycopg2
-import requests
 
 from session_utils import validate_session
 from divination import pricing
 from divination.spreads import get_spread
-from divination.dialog_prompt import build_dialog_prompt, split_answer_and_summary
 
 DB_SCHEMA = 't_p29007832_virtual_fitting_room'
+
+# Предел длины вопроса: тот же, что и на форме
+QUESTION_MAX = 700
 
 ALLOWED_ORIGINS = [
     'https://fitting-room.ru',
@@ -73,59 +74,6 @@ def resp(status, body, event):
         'isBase64Encoded': False,
         'body': json.dumps(body, ensure_ascii=False),
     }
-
-
-def get_openrouter_proxies():
-    proxy_url = (os.environ.get('OPENROUTER_PROXY_URL') or '').strip()
-    if not proxy_url:
-        return None
-    return {'http': proxy_url, 'https': proxy_url}
-
-
-def call_openrouter(model: str, prompt_text: str):
-    """Возвращает (текст, ошибка)."""
-    api_key = (
-        os.environ.get('OPENROUTER_API_KEY_NEW')
-        or os.environ.get('OPENROUTER_API_KEY_OLD')
-        or ''
-    ).strip()
-    if not api_key:
-        return None, 'Ключ OpenRouter не настроен'
-
-    try:
-        r = requests.post(
-            'https://openrouter.ai/api/v1/chat/completions',
-            headers={
-                'Authorization': f'Bearer {api_key}',
-                'Content-Type': 'application/json',
-            },
-            json={
-                'model': model,
-                'messages': [{'role': 'user', 'content': prompt_text}],
-                'max_tokens': 2000,
-                'temperature': 0.8,
-            },
-            timeout=120,
-            proxies=get_openrouter_proxies(),
-        )
-    except Exception as e:
-        return None, f'Сеть: {str(e)[:200]}'
-
-    if r.status_code != 200:
-        return None, f'Сервис ответил {r.status_code}'
-
-    try:
-        data = r.json()
-        choice = (data.get('choices') or [{}])[0]
-        finish = choice.get('finish_reason') or choice.get('native_finish_reason')
-        content = (choice.get('message') or {}).get('content')
-        if not content:
-            return None, f'Пустой ответ (finish_reason={finish})'
-        if finish and str(finish).lower() == 'error':
-            return None, 'Ответ оборван'
-        return content, None
-    except Exception as e:
-        return None, f'Разбор ответа: {str(e)[:200]}'
 
 
 def load_history(cur, dialog_id):
@@ -222,6 +170,10 @@ def action_ask(body, user_id, event):
         return resp(404, {'error': 'Диалог не найден'}, event)
     if not question:
         return resp(400, {'error': 'Напишите вопрос'}, event)
+    if len(question) > QUESTION_MAX:
+        return resp(400, {
+            'error': f'Вопрос слишком длинный: не больше {QUESTION_MAX} знаков'
+        }, event)
     if not cards:
         return resp(400, {'error': 'Вытяните карты'}, event)
 
