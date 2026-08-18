@@ -16,6 +16,8 @@ interface SpreadSummaryProps {
   hideTopic?: boolean;
   /** В диалоге менять параметры на ходу нельзя — беседа уже идёт на этой колоде */
   hideEdit?: boolean;
+  /** Диалог: меняются заголовок и подписи полей */
+  isDialog?: boolean;
   disabled?: boolean;
   onEdit: () => void;
   onClearAll: () => void;
@@ -38,6 +40,7 @@ const SpreadSummary = ({
   comment,
   hideTopic = false,
   hideEdit = false,
+  isDialog = false,
   disabled = false,
   onEdit,
   onClearAll,
@@ -47,7 +50,7 @@ const SpreadSummary = ({
       {/* Заголовок и действия в одну линию; на мобильном — друг под другом */}
       <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="font-serif text-xl text-[#f3ecff]">
-          Параметры расклада
+          {isDialog ? "Параметры диалога" : "Параметры расклада"}
         </h2>
         <div className="flex flex-wrap gap-2">
           {!hideEdit && (
@@ -76,11 +79,18 @@ const SpreadSummary = ({
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-relaxed text-white sm:text-[15px]">
         <span>
           <span className="text-white/60">Способ:</span>{" "}
-          {mode === "online" ? "Онлайн-расклад" : "Реальный расклад"}
+          {mode === "online"
+            ? isDialog
+              ? "Онлайн-карты"
+              : "Онлайн-расклад"
+            : isDialog
+              ? "Реальные карты"
+              : "Реальный расклад"}
         </span>
         <span className="text-white/40">·</span>
         <span>
-          <span className="text-white/60">Расклад:</span> {spreadTitle}
+          <span className="text-white/60">{isDialog ? "Диалог:" : "Расклад:"}</span>{" "}
+          {spreadTitle}
         </span>
         <span className="text-white/40">·</span>
         <span>

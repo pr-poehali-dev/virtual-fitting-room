@@ -1415,15 +1415,15 @@ export default function LenormandDivination() {
                             disabled={formDisabled}
                             className={`flex flex-col gap-1.5 rounded-xl border-2 p-4 text-left transition disabled:opacity-50 ${
                               active
-                                ? "border-white bg-white/15"
-                                : "border-white/40 hover:border-white"
+                                ? "border-[#c9a84c] bg-[#c9a84c]/15"
+                                : "border-white/20 hover:border-[#c9a84c]/60"
                             }`}
                           >
                             <span className="flex items-center gap-2">
                               <Icon
                                 name={active ? "CircleDot" : "Circle"}
                                 size={16}
-                                className="shrink-0 text-white"
+                                className={`shrink-0 ${active ? "text-[#c9a84c]" : "text-white/70"}`}
                               />
                               <span className="font-semibold text-white">
                                 {opt.title}
@@ -1527,8 +1527,8 @@ export default function LenormandDivination() {
                               onClick={() => setModel(m.value)}
                               className={`flex flex-col gap-1.5 rounded-xl border-2 p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
                                 selected
-                                  ? "border-white bg-white/15"
-                                  : "border-white/40 hover:border-white"
+                                  ? "border-[#c9a84c] bg-[#c9a84c]/15"
+                                  : "border-white/20 hover:border-[#c9a84c]/60"
                               }`}
                             >
                               <span className="flex items-center justify-between gap-2">
@@ -1538,7 +1538,7 @@ export default function LenormandDivination() {
                                 <Icon
                                   name={selected ? "CircleDot" : "Circle"}
                                   size={18}
-                                  className="shrink-0 text-white"
+                                  className={`shrink-0 ${selected ? "text-[#c9a84c]" : "text-white/70"}`}
                                 />
                               </span>
                               <span className="text-sm font-medium text-white/90">
@@ -1574,14 +1574,14 @@ export default function LenormandDivination() {
                             onClick={() => setGender(g.key as GenderKey)}
                             className={`flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition ${
                               active
-                                ? "border-white bg-white/15 text-white"
-                                : "border-white/40 text-white/80 hover:border-white hover:text-white"
+                                ? "border-[#c9a84c] bg-[#c9a84c]/15 text-white"
+                                : "border-white/20 text-white/80 hover:border-[#c9a84c]/60 hover:text-white"
                             }`}
                           >
                             <Icon
                               name={active ? "CircleDot" : "Circle"}
                               size={16}
-                              className="text-white"
+                              className={active ? "text-[#c9a84c]" : "text-white/70"}
                             />
                             {g.label}
                           </button>
@@ -1602,14 +1602,14 @@ export default function LenormandDivination() {
                             onClick={() => setPeriod(p.key as PeriodKey)}
                             className={`flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition ${
                               active
-                                ? "border-white bg-white/15 text-white"
-                                : "border-white/40 text-white/80 hover:border-white hover:text-white"
+                                ? "border-[#c9a84c] bg-[#c9a84c]/15 text-white"
+                                : "border-white/20 text-white/80 hover:border-[#c9a84c]/60 hover:text-white"
                             }`}
                           >
                             <Icon
                               name={active ? "CircleDot" : "Circle"}
                               size={16}
-                              className="text-white"
+                              className={active ? "text-[#c9a84c]" : "text-white/70"}
                             />
                             {p.label}
                           </button>
@@ -1628,8 +1628,8 @@ export default function LenormandDivination() {
                           onClick={() => toggleSphere(s.key)}
                           className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-left text-sm font-medium transition ${
                             spheres.includes(s.key)
-                              ? "border-white bg-white/15 text-white"
-                              : "border-white/40 text-white/80 hover:border-white hover:text-white"
+                              ? "border-[#c9a84c] bg-[#c9a84c]/15 text-white"
+                              : "border-white/20 text-white/80 hover:border-[#c9a84c]/60 hover:text-white"
                           }`}
                         >
                           <Icon
@@ -1729,6 +1729,7 @@ export default function LenormandDivination() {
               comment={comment}
               hideTopic
               hideEdit
+              isDialog
               disabled={false}
               onEdit={() => {
                 setWizardDone(false);
@@ -2037,7 +2038,10 @@ export default function LenormandDivination() {
           <div className="mt-8" ref={resultCardRef}>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-xl font-semibold text-[#f3ecff]">
-                Толкование расклада
+                Толкование{" "}
+                <span className="text-[#e8c252]">
+                  {spreadOf(resultSpreadId).title}
+                </span>
               </h2>
               <div className="flex flex-wrap gap-2">
                 {/* Толкования длинные — даём возможность слушать, а не читать */}
