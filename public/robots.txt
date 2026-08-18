@@ -7,3 +7,8 @@ Disallow: /offer
 Disallow: /privacy
 Disallow: /personal-data
 Disallow: /contacts
+Disallow: /profile
+Disallow: /vf-console
+Disallow: /ai-editor
+
+Sitemap: https://fitting-room.ru/sitemap.xml
