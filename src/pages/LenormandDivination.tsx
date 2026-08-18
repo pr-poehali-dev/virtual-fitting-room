@@ -647,15 +647,6 @@ export default function LenormandDivination() {
     setTouchAck(false);
   };
 
-  // Скачать показанный результат: свежий (из сессии) или из базы
-  const downloadShownPng = () => {
-    if (result) {
-      downloadPng();
-    } else if (prevResult) {
-      downloadPrevPng();
-    }
-  };
-
   // Отправка расклада себе на почту — вместо «Поделиться» на компьютере,
   // где системного меню отправки нет
   const [sendingMail, setSendingMail] = useState(false);
@@ -686,15 +677,6 @@ export default function LenormandDivination() {
       toast.error("Ошибка соединения");
     } finally {
       setSendingMail(false);
-    }
-  };
-
-  // Делимся тем же раскладом, который сейчас показан на экране
-  const shareShownPng = () => {
-    if (result) {
-      shareReading(prevCardRef.current, true);
-    } else if (prevResult) {
-      shareReading(dbPrevCardRef.current);
     }
   };
 
@@ -1353,41 +1335,15 @@ export default function LenormandDivination() {
                 </h3>
                 <p className="mb-4 text-sm text-[#c9bfe0]">
                   Он сохранён в личном кабинете, в разделе «Мои гадания».
-                  Здесь его заменит новый расклад — при желании сохраните
-                  картинку себе.
+                  Здесь его заменит новый расклад.
                 </p>
                 <div className="flex flex-col gap-2">
-                  {/* На телефоне удобнее отправить расклад сразу в мессенджер,
-                      чем искать скачанный файл в папке загрузок */}
-                  {isMobileDevice() && (
-                    <Button
-                      onClick={() => {
-                        setTouchAck(true);
-                        shareShownPng();
-                      }}
-                      className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
-                    >
-                      <Icon name="Share2" size={16} className="mr-1.5" />
-                      Поделиться
-                    </Button>
-                  )}
                   <Button
-                    onClick={() => {
-                      setTouchAck(true);
-                      downloadShownPng();
-                    }}
-                    className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
-                  >
-                    <Icon name="Download" size={16} className="mr-1.5" />
-                    Скачать результат
-                  </Button>
-                  <Button
-                    variant="ghost"
                     onClick={() => {
                       setTouchAck(true);
                       dropPrevResult();
                     }}
-                    className="bg-white/5 text-[#e8e0f0] ring-1 ring-white/20 hover:bg-white/10 hover:text-white"
+                    className="bg-gradient-to-r from-[#c9a84c] to-[#e8c252] font-semibold text-[#1a1030] hover:from-[#d8b75b] hover:to-[#f0cf6a]"
                   >
                     <Icon name="RotateCcw" size={16} className="mr-1.5" />
                     Начать новый расклад

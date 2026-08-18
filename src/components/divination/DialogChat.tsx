@@ -445,35 +445,23 @@ const DialogChat = ({
                 Закрыть эту беседу?
               </p>
               <p>
-                Незакрытые диалоги хранятся всегда, а из закрытых остаётся
-                только последний. Прежняя закрытая беседа будет удалена —
-                скачайте её, если она нужна.
+                Незакрытая беседа остаётся здесь: к ней можно вернуться
+                и продолжить разговор — гадалка помнит всё, о чём вы говорили.
+                Закрытые беседы тут не показываются, но сохраняются
+                в личном кабинете, в разделе{" "}
+                <a
+                  href="/profile/history-divination"
+                  className="font-medium text-[#c9a84c] underline underline-offset-2"
+                >
+                  «Мои гадания»
+                </a>
+                {" "}— там их можно перечитать.
               </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={() => dialogId && shareDialogText(dialogId)}
-              className={divTheme.btnPrimary}
-              size="sm"
-            >
-              <Icon
-                name={isMobileDevice() ? "Share2" : "Copy"}
-                size={15}
-                className="mr-1.5"
-              />
-              {isMobileDevice() ? "Поделиться беседой" : "Скопировать беседу"}
-            </Button>
-            <Button
-              onClick={downloadThis}
-              className={divTheme.btnGhost}
-              size="sm"
-            >
-              <Icon name="Download" size={15} className="mr-1.5" />
-              Скачать эту беседу
-            </Button>
-            <Button onClick={closeDialog} size="sm" className={divTheme.btnGhost}>
-              Всё равно закрыть
+            <Button onClick={closeDialog} size="sm" className={divTheme.btnPrimary}>
+              Закрыть беседу
             </Button>
             <Button
               variant="ghost"
@@ -500,10 +488,16 @@ const DialogChat = ({
           <p className={`mt-1 text-sm ${divTheme.muted}`}>
             Задано вопросов: {steps.length}
           </p>
-          {/* Из закрытых хранится только последний — даём унести беседу с собой */}
+          {/* Беседа осталась в кабинете — подсказываем, где её перечитать */}
           <p className="mx-auto mt-3 max-w-md text-sm text-[#e8d9a8]">
-            Сохраняется только последняя закрытая беседа — сохраните её, чтобы
-            не потерять.
+            Беседа сохранена в личном кабинете, в разделе{" "}
+            <a
+              href="/profile/history-divination"
+              className="font-medium text-[#c9a84c] underline underline-offset-2"
+            >
+              «Мои гадания»
+            </a>
+            .
           </p>
           <div className="mt-3 flex flex-wrap justify-center gap-2">
             <Button
