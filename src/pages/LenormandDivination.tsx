@@ -120,7 +120,7 @@ const WIZARD_TITLES_FULL = [
   "Ваш пол",
   "Период",
   "Сферы",
-  "Комментарий",
+  "Что уточнить",
 ];
 // В диалогах период не спрашиваем: горизонт задаёт сам вопрос
 const WIZARD_TITLES_DIALOG = WIZARD_TITLES_FULL.slice(0, 5);
@@ -1092,7 +1092,7 @@ export default function LenormandDivination() {
       return "Выберите хотя бы одну сферу";
     // Такие расклады делают на конкретную ситуацию — без вопроса
     // толкование получится размытым
-    if (title === "Комментарий" && asksQuestion && !comment.trim())
+    if (title === "Что уточнить" && asksQuestion && !comment.trim())
       return "Напишите вопрос";
     return "";
   })();
@@ -1126,7 +1126,7 @@ export default function LenormandDivination() {
             Гадания на картах онлайн с ИИ
           </h1>
           <p className={`mt-2 ${divTheme.muted}`}>
-            Выберите расклад и нейросеть-гадалку — получите подробное толкование за минуту
+            Выберите расклад и гадалку — и получите подробное личное толкование
           </p>
         </div>
 
@@ -1419,8 +1419,8 @@ export default function LenormandDivination() {
                     />
                   </div>
                   <h2 className="mt-3 font-serif text-2xl text-[#f3ecff]">
-                    {WIZARD_TITLES[wizardStep] === "Комментарий" && asksQuestion
-                      ? "Вопрос"
+                    {WIZARD_TITLES[wizardStep] === "Что уточнить" && asksQuestion
+                      ? "Ваш вопрос"
                       : WIZARD_TITLES[wizardStep]}
                   </h2>
                 </div>
@@ -1693,7 +1693,7 @@ export default function LenormandDivination() {
                         placeholder={
                           asksQuestion
                             ? "Например: как сложится новый проект?"
-                            : "Например: стоит ли обновить гардероб этой весной и каким будет мой новый образ…"
+                            : "Например: каким будет мой новый образ этой весной?"
                         }
                         rows={3}
                         className="border-2 border-white/50 bg-transparent text-white placeholder:text-white/60 focus-visible:ring-white/40"
