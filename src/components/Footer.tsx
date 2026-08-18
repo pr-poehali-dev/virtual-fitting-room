@@ -31,8 +31,23 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/freegeneration" className="hover:text-white transition-colors">
+                  Генерация изображений
+                </Link>
+              </li>
+              <li>
                 <Link to="/colortype" className="hover:text-white transition-colors">
                   Определение цветотипа
+                </Link>
+              </li>
+              <li>
+                <Link to="/style-analysis" className="hover:text-white transition-colors">
+                  Стилевой анализ внешности
+                </Link>
+              </li>
+              <li>
+                <Link to="/outfit-selection" className="hover:text-white transition-colors">
+                  Подбор образов
                 </Link>
               </li>
               <li>
@@ -40,6 +55,15 @@ const Footer = () => {
                   Свадебный образ
                 </Link>
               </li>
+            </ul>
+          </div>
+
+          {/* Продолжение списка сервисов: без заголовка — читается как одна колонка */}
+          <div>
+            <h3 className="text-white font-semibold mb-4 invisible hidden lg:block">
+              Сервисы
+            </h3>
+            <ul className="space-y-2">
               <li>
                 <Link to="/gift-selection" className="hover:text-white transition-colors">
                   Подбор подарков
@@ -48,6 +72,21 @@ const Footer = () => {
               <li>
                 <Link to="/perfume-selection" className="hover:text-white transition-colors">
                   Подбор ароматов
+                </Link>
+              </li>
+              <li>
+                <Link to="/kibbe-test" className="hover:text-white transition-colors">
+                  Типаж по Кибби
+                </Link>
+              </li>
+              <li>
+                <Link to="/archetype-test" className="hover:text-white transition-colors">
+                  Архетип по Юнгу
+                </Link>
+              </li>
+              <li>
+                <Link to="/divination" className="hover:text-white transition-colors">
+                  Гадания на картах
                 </Link>
               </li>
             </ul>
@@ -87,10 +126,9 @@ const Footer = () => {
                 </Link>
               </li>
             </ul>
-          </div>
 
-          <div>
-            <h3 className="text-white font-semibold mb-4">
+            {/* Вход и кабинет — вторым блоком в этой же колонке */}
+            <h3 className="text-white font-semibold mb-4 mt-8">
               {user ? "Аккаунт" : "Вход"}
             </h3>
             <ul className="space-y-2">
