@@ -40,11 +40,11 @@ TONE_RULES = (
     'в любезностях. Тепло — в том, что ты честен и говоришь по существу.'
 )
 
-# Ориентир по объёму не должен рвать мысль на середине
+# Правило завершённости: ориентир по объёму не должен рвать мысль
 COMPLETENESS_RULE = (
     'Уложись в ориентир по объёму, но мысль всегда доводи до конца — '
     'обрывать ответ на середине нельзя. Лаконично не значит поверхностно: '
-    'лучше убрать воду и повторы, чем суть. Разбор должен выглядеть '
+    'лучше убрать воду и повторы, чем суть. Текст должен выглядеть '
     'законченным, и человек должен уловить главное.'
 )
 
@@ -95,7 +95,7 @@ def _clean_card(value) -> str:
     return ''
 
 
-def build_cards_block(spread: dict, deck: dict, layout: list) -> str:
+def _build_cards_block(spread: dict, deck: dict, layout: list) -> str:
     """Строки вида «12. ряд 2, столбец 3 — дом Птицы — карта Ключ»."""
     grid = spread.get('grid')
     positions = spread.get('positions')
@@ -152,7 +152,7 @@ def build_divination_prompt(meta: dict) -> str:
     sphere_labels = [SPHERE_LABELS.get(s, s) for s in spheres]
     spheres_text = ', '.join(sphere_labels) if sphere_labels else 'общая ситуация'
 
-    cards_block = build_cards_block(spread, deck, layout)
+    cards_block = _build_cards_block(spread, deck, layout)
     house_hint = ''
     if deck.get('house_names') and not spread.get('positions'):
         house_hint = (

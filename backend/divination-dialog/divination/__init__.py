@@ -3,6 +3,6 @@
 а в нейросеть ходит divination-dialog-worker.
 """
 
-from .spreads import SPREADS, DEFAULT_SPREAD, get_spread, spread_exists
+from .spreads import SPREADS, DEFAULT_SPREAD, get_spread
 
-__all__ = ['SPREADS', 'DEFAULT_SPREAD', 'get_spread', 'spread_exists']
+__all__ = ['SPREADS', 'DEFAULT_SPREAD', 'get_spread']

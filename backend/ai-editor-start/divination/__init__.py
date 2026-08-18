@@ -1,11 +1,11 @@
-"""Гадания: колоды, расклады, сборка промптов."""
+"""Гадания: колоды, расклады, сборка промпта расклада."""
 
-from .decks import DECKS, get_deck, deck_cards
-from .spreads import SPREADS, DEFAULT_SPREAD, get_spread, spread_exists
+from .decks import DECKS, get_deck
+from .spreads import SPREADS, DEFAULT_SPREAD, get_spread
 from .prompt import build_divination_prompt
 
 __all__ = [
-    'DECKS', 'get_deck', 'deck_cards',
-    'SPREADS', 'DEFAULT_SPREAD', 'get_spread', 'spread_exists',
+    'DECKS', 'get_deck',
+    'SPREADS', 'DEFAULT_SPREAD', 'get_spread',
     'build_divination_prompt',
 ]

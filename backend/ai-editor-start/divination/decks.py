@@ -60,7 +60,3 @@ DECKS = {
 
 def get_deck(deck_id: str) -> dict:
     return DECKS.get(deck_id) or DECKS['lenormand']
-
-
-def deck_cards(deck_id: str) -> list:
-    return list(get_deck(deck_id)['cards'])

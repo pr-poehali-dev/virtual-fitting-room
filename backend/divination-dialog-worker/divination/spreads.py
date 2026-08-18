@@ -5,6 +5,9 @@ ai-editor-start и сюда не попадают: диалог их никог�
 Держать здесь их копию опасно — копии расходятся между собой.
 """
 
+# Ориентир по объёму ответа в диалоге — в одном месте на оба расклада.
+LENGTH_DIALOG = 'ОБЪЁМ ОТВЕТА. Ориентир примерно 1500-3000 знаков.'
+
 SPREADS = {
     # Диалоговые расклады: количество карт человек выбирает сам (1..6).
     'lenormand_dialog': {
@@ -14,9 +17,7 @@ SPREADS = {
         'flexible': (1, 6),
         'grid': {'cols': 6, 'rows': 1},
         'positions': None,
-        'length': (
-            'ОБЪЁМ ОТВЕТА. Ориентир примерно 1500-3000 знаков.'
-        ),
+        'length': LENGTH_DIALOG,
         'geometry': (
             'Геометрия: карты выложены в ОДИН ряд слева направо, рядом друг с другом.'
         ),
@@ -34,9 +35,7 @@ SPREADS = {
         'flexible': (1, 6),
         'grid': {'cols': 6, 'rows': 1},
         'positions': None,
-        'length': (
-            'ОБЪЁМ ОТВЕТА. Ориентир примерно 1500-3000 знаков.'
-        ),
+        'length': LENGTH_DIALOG,
         'geometry': (
             'Геометрия: карты выложены в ОДИН ряд слева направо, рядом друг с другом.'
         ),
@@ -53,7 +52,3 @@ DEFAULT_SPREAD = 'lenormand_dialog'
 
 def get_spread(spread_id: str) -> dict:
     return SPREADS.get(spread_id) or SPREADS[DEFAULT_SPREAD]
-
-
-def spread_exists(spread_id: str) -> bool:
-    return spread_id in SPREADS
