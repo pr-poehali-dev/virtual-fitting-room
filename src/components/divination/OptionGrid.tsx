@@ -5,6 +5,8 @@ export interface OptionItem {
   value: string;
   label: string;
   desc?: string;
+  /** Вторая строка под описанием: когда этот вариант уместен */
+  hint?: string;
   icon?: string;
   /** Приписка справа, например цена */
   note?: string;
@@ -91,6 +93,11 @@ const OptionGrid = ({
                 {opt.desc && (
                   <p className="mt-0.5 text-xs leading-snug text-[#9888b8]">
                     {opt.desc}
+                  </p>
+                )}
+                {opt.hint && (
+                  <p className="mt-1 text-xs leading-snug text-[#c9a84c]/75">
+                    {opt.hint}
                   </p>
                 )}
               </div>

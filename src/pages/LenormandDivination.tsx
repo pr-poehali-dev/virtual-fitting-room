@@ -1499,6 +1499,8 @@ export default function LenormandDivination() {
                         desc: sp.dialog
                           ? `${sp.short}. Режим диалога: можно задавать уточняющие вопросы`
                           : `${sp.short}. Одно подробное толкование, без диалога`,
+                        // Подсказка, в каких случаях расклад уместен
+                        hint: sp.whenToUse,
                         icon: sp.icon,
                         badge: sp.dialog ? "Диалог" : undefined,
                         note: sp.dialog
@@ -1659,6 +1661,24 @@ export default function LenormandDivination() {
                         rows={3}
                         className="border-2 border-white/50 bg-transparent text-white placeholder:text-white/60 focus-visible:ring-white/40"
                       />
+                      {/* Примеры вопросов именно этого расклада */}
+                      {activeSpread.typicalQuestions?.length ? (
+                        <div className="mt-3 rounded-xl border border-[#c9a84c]/30 bg-[#c9a84c]/10 p-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-[#c9a84c]">
+                            С такими вопросами расклад работает лучше всего
+                          </p>
+                          <ul className="mt-1.5 space-y-1">
+                            {activeSpread.typicalQuestions.map((q) => (
+                              <li
+                                key={q}
+                                className="text-sm leading-snug text-white/80"
+                              >
+                                — {q}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
                       {/* Подсказываем, какие вопросы карты раскрывают лучше */}
                       <p className="mt-3 text-sm leading-relaxed text-white/70">
                         {QUESTION_HINT}

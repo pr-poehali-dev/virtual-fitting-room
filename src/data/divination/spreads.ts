@@ -23,6 +23,10 @@ export interface SpreadDef {
   shape?: "celtic" | "plan5";
   /** Расклад на конкретный вопрос: сферы не спрашиваем, вопрос обязателен */
   askQuestion?: boolean;
+  /** Когда этот расклад уместен — вторая строка в карточке выбора */
+  whenToUse?: string;
+  /** Примеры вопросов, которые расклад раскрывает лучше всего (шаг вопроса) */
+  typicalQuestions?: string[];
   icon: string;
 }
 
@@ -92,6 +96,13 @@ export const SPREADS: SpreadDef[] = [
     requireFull: true,
     shape: "celtic",
     askQuestion: true,
+    whenToUse:
+      "Подходит для любого вопроса. Если не знаете, что выбрать, — берите этот",
+    typicalQuestions: [
+      "Как развивается моё намерение?",
+      "Как всё пойдёт дальше?",
+      "Как обстоят дела на работе?",
+    ],
     icon: "Cross",
   },
   {
@@ -112,6 +123,12 @@ export const SPREADS: SpreadDef[] = [
     requireFull: true,
     shape: "plan5",
     askQuestion: true,
+    whenToUse: "Когда цель уже ясна и нужен путь к ней. Даёт конкретный совет",
+    typicalQuestions: [
+      "Как мне достичь цели?",
+      "Как получить больше денег, порядка, удовлетворения?",
+      "Как я могу расположить его к себе?",
+    ],
     icon: "Target",
   },
 ];
