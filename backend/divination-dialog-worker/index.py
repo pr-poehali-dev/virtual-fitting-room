@@ -176,6 +176,15 @@ def process_step(step_id: str) -> dict:
             history,
             context=ctx if isinstance(ctx, dict) else None,
         )
+        # Сохраняем отправленный текст — так его видно в базе для проверки
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""UPDATE {DB_SCHEMA}.divination_dialog_steps
+                    SET prompt = %s WHERE id = %s""",
+                (prompt_text, step_id),
+            )
+        conn.commit()
+
         ai_text, error = call_openrouter(model, prompt_text)
 
         if error or not ai_text:
