@@ -7,7 +7,7 @@
 from .decks import get_deck
 from .spreads import get_spread
 from .prompt import (
-    ROLE_INTRO, COMMON_RULES, CARE_RULES, TONE_RULES, COMPLETENESS_RULE,
+    ROLE_INTRO, TONE_RULES, COMPLETENESS_RULE,
     PERIOD_LABELS, GENDER_LABELS, SPHERE_LABELS,
 )
 
@@ -138,10 +138,6 @@ def build_dialog_prompt(
         COMPLETENESS_RULE,
         '',
         TONE_RULES,
-        '',
-        CARE_RULES,
-        '',
-        COMMON_RULES,
         '',
         _SUMMARY_RULE,
     ]
