@@ -81,52 +81,42 @@ const SpreadSummary = ({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-relaxed text-white sm:text-[15px]">
-        <span>
-          <span className="text-white/60">Способ:</span>{" "}
-          {mode === "online"
-            ? isDialog
-              ? "Онлайн-карты"
-              : "Онлайн-расклад"
-            : isDialog
-              ? "Реальные карты"
-              : "Реальный расклад"}
-        </span>
-        <span className="text-white/40">·</span>
-        <span>
-          <span className="text-white/60">{isDialog ? "Диалог:" : "Расклад:"}</span>{" "}
-          {spreadTitle}
-        </span>
-        <span className="text-white/40">·</span>
-        <span>
-          <span className="text-white/60">Гадалка:</span> {modelLabel} —{" "}
-          {cost} &#8381;{costSuffix}
-        </span>
-        <span className="text-white/40">·</span>
-        <span>
-          <span className="text-white/60">Пол:</span> {genderLabel}
-        </span>
-        {periodLabel && (
-          <>
-            <span className="text-white/40">·</span>
-            <span>
-              <span className="text-white/60">Период:</span> {periodLabel}
-            </span>
-          </>
-        )}
-        {!hideTopic && (
-          <>
-            <span className="text-white/40">·</span>
-            <span>
-              <span className="text-white/60">Сферы:</span> {spheresLabel}
-            </span>
-            <span className="text-white/40">·</span>
-            <span>
-              <span className="text-white/60">Комментарий:</span>{" "}
-              {comment.trim() || "—"}
-            </span>
-          </>
-        )}
+      {/* Те же таблетки, что в раскладах, но без перехода к редактированию */}
+      <div className="flex flex-wrap gap-1.5">
+        {[
+          {
+            label: "Способ",
+            value:
+              mode === "online"
+                ? isDialog
+                  ? "Онлайн-карты"
+                  : "Онлайн-расклад"
+                : isDialog
+                  ? "Реальные карты"
+                  : "Реальный расклад",
+          },
+          { label: isDialog ? "Диалог" : "Расклад", value: spreadTitle },
+          {
+            label: "Гадалка",
+            value: `${modelLabel} — ${cost} \u20bd${costSuffix}`,
+          },
+          { label: "Пол", value: genderLabel },
+          ...(periodLabel ? [{ label: "Период", value: periodLabel }] : []),
+          ...(!hideTopic
+            ? [
+                { label: "Сферы", value: spheresLabel },
+                { label: "Комментарий", value: comment.trim() || "—" },
+              ]
+            : []),
+        ].map((it) => (
+          <span
+            key={it.label}
+            className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-white/15 px-3 py-1 text-sm leading-relaxed text-white sm:text-[15px]"
+          >
+            <span className="text-white/60">{it.label}:</span>
+            <span className="truncate">{it.value}</span>
+          </span>
+        ))}
       </div>
     </CardContent>
   </Card>
