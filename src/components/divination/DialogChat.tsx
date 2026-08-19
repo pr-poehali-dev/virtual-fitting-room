@@ -99,6 +99,8 @@ const DialogChat = ({
 }: DialogChatProps) => {
   const [dialogId, setDialogId] = useState<string | null>(null);
   const [steps, setSteps] = useState<DialogStep[]>([]);
+  // Свёрнутые ответы: по умолчанию открыт только последний
+  const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
 
   // Наверху по числу ответов меняется подпись кнопки «Начать заново»
   useEffect(() => {
@@ -139,6 +141,7 @@ const DialogChat = ({
       // Новый диалог — всегда с чистого листа
       setDialogId(null);
       setSteps([]);
+      setCollapsed({});
       setUsedCards([]);
       setClosed(false);
       return;
@@ -152,7 +155,14 @@ const DialogChat = ({
         if (cancelled || !res.ok || data.empty) return;
 
         setDialogId(data.dialog_id);
-        setSteps(data.steps || []);
+        const loaded: DialogStep[] = data.steps || [];
+        setSteps(loaded);
+        // Открытым оставляем только последний ответ — остальные сворачиваем
+        setCollapsed(
+          Object.fromEntries(
+            loaded.slice(0, -1).map((st) => [st.step_no, true]),
+          ),
+        );
         // В режиме «одна колода» помним, что уже выпало
         const used = (data.steps || []).flatMap(
           (st: { cards?: string[] }) => st.cards || [],
@@ -320,15 +330,21 @@ const DialogChat = ({
 
       // Ответа ждут — зовём звуком, если вкладка свёрнута
       playReadySound();
-      setSteps((prev) => [
-        ...prev,
-        {
-          step_no: ready.step_no,
-          question: ready.question,
-          cards: ready.cards || [],
-          answer: ready.answer || "",
-        },
-      ]);
+      setSteps((prev) => {
+        // Прежние ответы сворачиваем: новый и так самый важный
+        setCollapsed(
+          Object.fromEntries(prev.map((st) => [st.step_no, true])),
+        );
+        return [
+          ...prev,
+          {
+            step_no: ready.step_no,
+            question: ready.question,
+            cards: ready.cards || [],
+            answer: ready.answer || "",
+          },
+        ];
+      });
       setQuestion("");
       // Копим все выпавшие карты диалога независимо от режима:
       // «Полная колода» их просто не учитывает при отборе.
@@ -391,7 +407,9 @@ const DialogChat = ({
 
   return (
     <div className="space-y-4">
-      {steps.map((s) => (
+      {steps.map((s) => {
+        const isOpen = !collapsed[s.step_no];
+        return (
         <div
           key={s.step_no}
           ref={(el) => {
@@ -399,12 +417,27 @@ const DialogChat = ({
           }}
           className={`${divTheme.panel} scroll-mt-20 p-4 sm:p-5`}
         >
-          <div className="mb-3 flex items-start gap-2">
+          {/* Клик по вопросу разворачивает и сворачивает ответ */}
+          <button
+            type="button"
+            onClick={() =>
+              setCollapsed((c) => ({ ...c, [s.step_no]: isOpen }))
+            }
+            aria-expanded={isOpen}
+            className="mb-3 flex w-full items-start gap-2 text-left"
+          >
             <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#c9a84c]/20 text-xs font-semibold text-[#c9a84c]">
               {s.step_no}
             </span>
             <p className="flex-1 font-medium text-[#f3ecff]">{s.question}</p>
-          </div>
+            <Icon
+              name="ChevronDown"
+              size={18}
+              className={`mt-0.5 shrink-0 text-[#c9a84c] transition-transform ${
+                isOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
 
           <div className="mb-3 flex flex-wrap gap-2">
             {s.cards.map((c, i) => {
@@ -430,23 +463,29 @@ const DialogChat = ({
             })}
           </div>
 
-          {/* Кнопка над текстом: длинный ответ, и докручивать до низа
-              ради «Слушать» неудобно */}
-          {s.answer && (
-            <div className="mb-3">
-              <ReadAloud text={s.answer} compact />
-            </div>
-          )}
+          {/* Свёрнутым остаётся только ответ: вопрос и карты видны всегда */}
+          {isOpen && (
+            <>
+              {/* Кнопка над текстом: длинный ответ, и докручивать до низа
+                  ради «Слушать» неудобно */}
+              {s.answer && (
+                <div className="mb-3">
+                  <ReadAloud text={s.answer} compact />
+                </div>
+              )}
 
-          {/* Ответ читают вдумчиво — тёплый пергамент, как в раскладах */}
-          <ReadingText text={s.answer} compact />
-          {s.answer && (
-            <div className="mt-3">
-              <ReadAloud text={s.answer} compact />
-            </div>
+              {/* Ответ читают вдумчиво — тёплый пергамент, как в раскладах */}
+              <ReadingText text={s.answer} compact />
+              {s.answer && (
+                <div className="mt-3">
+                  <ReadAloud text={s.answer} compact />
+                </div>
+              )}
+            </>
           )}
         </div>
-      ))}
+        );
+      })}
 
       {/* Спрашиваем поверх страницы: кнопка «Закрыть диалог» внизу, и врезка
           в потоке уезжала за экран — человек не видел, что у него спросили */}
