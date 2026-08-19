@@ -748,7 +748,7 @@ const DialogChat = ({
             )
           )}
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="mb-4 flex flex-wrap items-center gap-2">
             <Button
               size="lg"
               onClick={send}
