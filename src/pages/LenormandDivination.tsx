@@ -50,6 +50,7 @@ import SpreadTable from "@/components/divination/SpreadTable";
 import OptionGrid from "@/components/divination/OptionGrid";
 import SpreadSummary from "@/components/divination/SpreadSummary";
 import HintPopover from "@/components/divination/HintPopover";
+import StepTrail from "@/components/divination/StepTrail";
 import DivinationTabs, { type DivTab } from "@/components/divination/DivinationTabs";
 import SavedDialogs, {
   isMobileDevice,
@@ -238,8 +239,6 @@ export default function LenormandDivination() {
     { length: WIZARD_STEPS_COUNT },
     (_, i) => i,
   ).filter(isStepVisible);
-  const visibleTotal = visibleSteps.length;
-  const visibleNo = Math.max(1, visibleSteps.indexOf(wizardStep) + 1);
   // Переход вперёд/назад с пропуском скрытых шагов
   const stepTo = (from: number, dir: 1 | -1) => {
     let n = from + dir;
@@ -1370,25 +1369,15 @@ export default function LenormandDivination() {
             <Card className="mb-6 overflow-hidden border-0 bg-gradient-to-br from-[#2d1b69] via-[#241845] to-[#1a1030] text-white shadow-lg ring-1 ring-[#c9a84c]/25">
               <CardContent className="p-6">
                 <div className="mb-5">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-medium text-white/90">
-                      <span className="font-semibold text-[#e8c252]">
-                        {activeSpread.dialog ? "Новый диалог" : "Новый расклад"}
-                      </span>
-                      {" · "}Шаг {visibleNo} из {visibleTotal}
-                    </span>
-                    <span className="text-xs text-white/70">
-                      {visibleNo}/{visibleTotal}
-                    </span>
-                  </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/15">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#c9a84c] to-[#e8c252] transition-all"
-                      style={{
-                        width: `${(visibleNo / visibleTotal) * 100}%`,
-                      }}
-                    />
-                  </div>
+                  <StepTrail
+                    label={
+                      activeSpread.dialog ? "Новый диалог" : "Новый расклад"
+                    }
+                    steps={visibleSteps}
+                    current={wizardStep}
+                    onGo={setWizardStep}
+                    disabled={formDisabled}
+                  />
                   {/* Навигация в шапке: на широком экране слева и справа
                       от заголовка, на телефоне — строкой над ним */}
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
@@ -1824,54 +1813,74 @@ export default function LenormandDivination() {
                   </button>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[15px] leading-relaxed text-white">
-                <span>
-                  <span className="text-white/60">Способ:</span>{" "}
-                  {mode === "online" ? "Онлайн-расклад" : "Реальный расклад"}
-                </span>
-                <span className="text-white/40">·</span>
-                <span>
-                  <span className="text-white/60">Расклад:</span> {activeSpread.title}
-                </span>
-                <span className="text-white/40">·</span>
-                <span>
-                  <span className="text-white/60">Гадалка:</span>{" "}
-                  {MODELS.find((m) => m.value === model)?.label} —{" "}
-                  {selectedCost} ₽
-                </span>
-                <span className="text-white/40">·</span>
-                <span>
-                  <span className="text-white/60">Пол:</span>{" "}
-                  {GENDERS.find((g) => g.key === gender)?.label}
-                </span>
-                {!activeSpread.dialog && (
-                  <>
-                    <span className="text-white/40">·</span>
-                    <span>
-                      <span className="text-white/60">Период:</span>{" "}
-                      {PERIODS.find((p) => p.key === period)?.label}
-                    </span>
-                  </>
-                )}
-                {/* Сфер не было — в сводке их тоже не показываем */}
-                {!asksQuestion && (
-                  <>
-                    <span className="text-white/40">·</span>
-                    <span>
-                      <span className="text-white/60">Сферы:</span>{" "}
-                      {SPHERES.filter((s) => spheres.includes(s.key))
-                        .map((s) => s.label)
-                        .join(", ")}
-                    </span>
-                  </>
-                )}
-                <span className="text-white/40">·</span>
-                <span>
-                  <span className="text-white/60">
-                    {asksQuestion ? "Вопрос:" : "Комментарий:"}
-                  </span>{" "}
-                  {comment.trim() || "—"}
-                </span>
+              {/* Каждый пункт ведёт на свой шаг мастера */}
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  {
+                    step: 0,
+                    label: "Способ",
+                    value:
+                      mode === "online" ? "Онлайн-расклад" : "Реальный расклад",
+                  },
+                  { step: 3, label: "Расклад", value: activeSpread.title },
+                  {
+                    step: 2,
+                    label: "Гадалка",
+                    value: `${MODELS.find((m) => m.value === model)?.label} — ${selectedCost} \u20bd`,
+                  },
+                  {
+                    step: 4,
+                    label: "Пол",
+                    value: GENDERS.find((g) => g.key === gender)?.label || "",
+                  },
+                  ...(!activeSpread.dialog
+                    ? [
+                        {
+                          step: 5,
+                          label: "Период",
+                          value:
+                            PERIODS.find((p) => p.key === period)?.label || "",
+                        },
+                      ]
+                    : []),
+                  // Сфер не было — в сводке их тоже не показываем
+                  ...(!asksQuestion
+                    ? [
+                        {
+                          step: 6,
+                          label: "Сферы",
+                          value: SPHERES.filter((s) => spheres.includes(s.key))
+                            .map((s) => s.label)
+                            .join(", "),
+                        },
+                      ]
+                    : []),
+                  {
+                    step: 7,
+                    label: asksQuestion ? "Вопрос" : "Комментарий",
+                    value: comment.trim() || "—",
+                  },
+                ].map((it) => (
+                  <button
+                    key={it.label}
+                    type="button"
+                    onClick={() => {
+                      setWizardDone(false);
+                      setWizardStep(it.step);
+                    }}
+                    disabled={formDisabled}
+                    title={`Изменить: ${it.label.toLowerCase()}`}
+                    className="group inline-flex max-w-full items-center gap-1.5 rounded-full border border-white/15 px-3 py-1 text-[15px] leading-relaxed text-white transition hover:border-[#c9a84c]/60 hover:bg-[#c9a84c]/10 disabled:opacity-40"
+                  >
+                    <span className="text-white/60">{it.label}:</span>
+                    <span className="truncate">{it.value}</span>
+                    <Icon
+                      name="Pencil"
+                      size={12}
+                      className="shrink-0 text-[#c9a84c]/0 transition group-hover:text-[#c9a84c]"
+                    />
+                  </button>
+                ))}
               </div>
             </CardContent>
           </Card>
