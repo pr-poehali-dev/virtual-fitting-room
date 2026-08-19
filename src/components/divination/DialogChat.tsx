@@ -411,7 +411,7 @@ const DialogChat = ({
                     <img
                       src={img}
                       alt={c}
-                      className="mx-auto h-20 w-[52px] rounded object-contain"
+                      className="mx-auto h-[86px] w-[56px] rounded object-contain sm:h-[112px] sm:w-[72px]"
                       loading="lazy"
                     />
                   )}
@@ -640,7 +640,7 @@ const DialogChat = ({
                       <img
                         src={img}
                         alt={c}
-                        className="mx-auto h-20 w-[52px] rounded object-contain"
+                        className="mx-auto h-[86px] w-[56px] rounded object-contain sm:h-[112px] sm:w-[72px]"
                         loading="lazy"
                       />
                     )}
@@ -652,7 +652,7 @@ const DialogChat = ({
               })}
 
               {picked.length < maxCards && (
-                <div className="flex h-[104px] w-[68px] flex-col items-center justify-center rounded-lg border border-dashed border-[#c9a84c]/30 px-1 text-center text-[10px] leading-tight text-[#9888b8]">
+                <div className="flex h-[86px] w-[56px] flex-col items-center justify-center rounded-lg border border-dashed border-[#c9a84c]/30 px-1 text-center text-[10px] leading-tight text-[#9888b8] sm:h-[112px] sm:w-[72px]">
                   {picked.length === 0 ? "Вытяните карту" : "Можно ещё"}
                 </div>
               )}
@@ -727,7 +727,7 @@ const DialogChat = ({
                         onClick={() => drawCardAt(i)}
                         disabled={busy}
                         aria-label="Вытянуть карту"
-                        className="h-[62px] w-[42px] overflow-hidden rounded border border-[#c9a84c]/30 transition hover:-translate-y-1 hover:border-[#c9a84c] disabled:opacity-50"
+                        className="h-[86px] w-[56px] overflow-hidden rounded border border-[#c9a84c]/30 transition hover:-translate-y-1 hover:border-[#c9a84c] disabled:opacity-50 sm:h-[112px] sm:w-[72px]"
                       >
                         <img
                           src={backImage}

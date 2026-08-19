@@ -66,11 +66,11 @@ const SpreadTable = ({
         {img &&
           (rotated ? (
             // Место под карту оставляем «лежачим», картинку кладём набок
-            <span className="mx-auto mt-1 flex h-[62px] w-full items-center justify-center sm:h-[82px]">
+            <span className="mx-auto mt-1 flex h-[56px] w-full items-center justify-center sm:h-[72px]">
               <img
                 src={img}
                 alt={card}
-                className="h-24 w-[62px] rotate-90 rounded object-contain sm:h-32 sm:w-[82px]"
+                className="h-[86px] w-[56px] rotate-90 rounded object-contain sm:h-[112px] sm:w-[72px]"
                 loading="lazy"
               />
             </span>
@@ -78,7 +78,7 @@ const SpreadTable = ({
             <img
               src={img}
               alt={card}
-              className="mx-auto mt-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px]"
+              className="mx-auto mt-1 h-[86px] w-[56px] rounded object-contain sm:h-[112px] sm:w-[72px]"
               loading="lazy"
             />
           ))}

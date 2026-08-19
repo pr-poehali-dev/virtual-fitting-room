@@ -1968,7 +1968,7 @@ export default function LenormandDivination() {
                         onClick={drawBlindCard}
                         disabled={formDisabled}
                         title="Вытянуть карту"
-                        className="h-24 w-[62px] overflow-hidden rounded-md border border-[#c9a84c]/35 shadow-sm transition hover:-translate-y-1 sm:h-32 sm:w-[82px]"
+                        className="h-[86px] w-[56px] overflow-hidden rounded-md border border-[#c9a84c]/35 shadow-sm transition hover:-translate-y-1 sm:h-[112px] sm:w-[72px]"
                       >
                         <img
                           src={deckBackImage}
