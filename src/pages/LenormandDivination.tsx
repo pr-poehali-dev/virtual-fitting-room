@@ -309,6 +309,8 @@ export default function LenormandDivination() {
   const prevCardRef = useRef<HTMLDivElement>(null);
   const dbPrevCardRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
+  // Шапка «Параметры диалога» — к ней возвращаемся из списка бесед
+  const dialogTopRef = useRef<HTMLDivElement>(null);
 
   const FORM_STORAGE_KEY = "lenormand_form_v2";
   // Восстанавливать форму из localStorage можно только после проверки наличия
@@ -1141,6 +1143,13 @@ export default function LenormandDivination() {
               setDivSpread(d.spread);
               setResumeDialog(d);
               setWizardDone(true);
+              // Диалог открывается ниже списка бесед — подводим к его началу
+              requestAnimationFrame(() => {
+                dialogTopRef.current?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+              });
             }}
           />
         )}
@@ -1740,6 +1749,7 @@ export default function LenormandDivination() {
           {/* СВОДКА + СТОЛ РАСКЛАДА (после завершения мастера) */}
           {/* Расклады-диалоги идут отдельным сценарием: вопрос → карты → ответ */}
           {wizardDone && activeSpread.dialog && (
+            <div ref={dialogTopRef} className="scroll-mt-20">
             <SpreadSummary
               mode={mode}
               spreadTitle={activeSpread.title}
@@ -1766,6 +1776,7 @@ export default function LenormandDivination() {
               }}
               onClearAll={startNewDialog}
             />
+            </div>
           )}
 
           {wizardDone && activeSpread.dialog && (
