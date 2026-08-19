@@ -50,9 +50,36 @@ const SpreadSummary = ({
 }: SpreadSummaryProps) => (
   <Card className="mb-6 overflow-hidden border-0 bg-gradient-to-br from-[#2d1b69] via-[#241845] to-[#1a1030] text-white shadow-lg ring-1 ring-[#c9a84c]/25">
     <CardContent className="p-5 sm:p-6">
-      <h2 className="mb-3 font-serif text-xl text-[#f3ecff]">
-        {isDialog ? "Параметры диалога" : "Параметры расклада"}
-      </h2>
+      {/* Кнопки: на широком экране справа от заголовка,
+          на телефоне — над ним, по левому краю */}
+      <div className="mb-3 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="font-serif text-2xl text-[#f3ecff]">
+          {isDialog ? "Параметры диалога" : "Параметры расклада"}
+        </h2>
+
+        <div className="flex flex-wrap gap-2 sm:justify-end">
+          {!hideEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              disabled={disabled}
+              className="inline-flex items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
+            >
+              <Icon name="Pencil" size={16} className="mr-1.5" />
+              Редактировать
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClearAll}
+            disabled={disabled}
+            className="inline-flex items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
+          >
+            <Icon name="RotateCcw" size={16} className="mr-1.5" />
+            {clearLabel}
+          </button>
+        </div>
+      </div>
 
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-relaxed text-white sm:text-[15px]">
         <span>
@@ -100,30 +127,6 @@ const SpreadSummary = ({
             </span>
           </>
         )}
-      </div>
-
-      {/* Кнопки под параметрами — как в обычных раскладах */}
-      <div className="mt-5 flex flex-wrap gap-2">
-        {!hideEdit && (
-          <button
-            type="button"
-            onClick={onEdit}
-            disabled={disabled}
-            className="inline-flex items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
-          >
-            <Icon name="Pencil" size={16} className="mr-1.5" />
-            Редактировать
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={onClearAll}
-          disabled={disabled}
-          className="inline-flex items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
-        >
-          <Icon name="RotateCcw" size={16} className="mr-1.5" />
-          {clearLabel}
-        </button>
       </div>
     </CardContent>
   </Card>
