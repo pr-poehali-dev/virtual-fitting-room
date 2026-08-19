@@ -45,6 +45,8 @@ export default function WalletTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  // История длинная — по умолчанию свёрнута
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [totalTransactions, setTotalTransactions] = useState(0);
   const transactionsPerPage = 50;
 
@@ -246,13 +248,32 @@ export default function WalletTab() {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader
+          role="button"
+          tabIndex={0}
+          onClick={() => setHistoryOpen((v) => !v)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setHistoryOpen((v) => !v);
+            }
+          }}
+          aria-expanded={historyOpen}
+          className="cursor-pointer select-none"
+        >
           <CardTitle className="flex items-center gap-2">
             <Icon name="Receipt" size={24} />
             История операций
+            <Icon
+              name="ChevronDown"
+              size={20}
+              className={`ml-auto text-muted-foreground transition-transform ${
+                historyOpen ? "rotate-180" : ""
+              }`}
+            />
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className={historyOpen ? undefined : "hidden"}>
           {balanceHistory.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Icon
