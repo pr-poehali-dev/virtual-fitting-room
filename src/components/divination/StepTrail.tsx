@@ -33,7 +33,7 @@ const StepTrail = ({
           <span className="font-serif text-base text-[#e8c252]">{label}</span>
         </span>
         <span className="text-xs text-white/45">
-          {pos + 1} из {steps.length}
+          Шаг {pos + 1} из {steps.length}
         </span>
       </div>
 
