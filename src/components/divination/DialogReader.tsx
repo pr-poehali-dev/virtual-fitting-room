@@ -141,7 +141,7 @@ const DialogReader = ({ dialogId, onClose }: DialogReaderProps) => {
                             <img
                               src={img}
                               alt={c}
-                              className="mx-auto h-24 w-[62px] rounded object-contain sm:h-28 sm:w-[72px]"
+                              className="mx-auto h-[86px] w-[56px] rounded object-contain sm:h-[112px] sm:w-[72px]"
                               loading="lazy"
                             />
                           )}

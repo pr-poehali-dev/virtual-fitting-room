@@ -1294,7 +1294,7 @@ export default function LenormandDivination() {
                                 <img
                                   src={prevCardImage(card)}
                                   alt={card}
-                                  className={`mx-auto my-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px] ${
+                                  className={`mx-auto my-1 h-[86px] w-[56px] rounded object-contain sm:h-[112px] sm:w-[72px] ${
                                     isCrossed(idx, prevSpreadId) ? "rotate-90" : ""
                                   }`}
                                   loading="lazy"
@@ -2188,7 +2188,7 @@ export default function LenormandDivination() {
                             <img
                               src={resultCardImage(card)}
                               alt={card}
-                              className={`mx-auto my-1 h-24 w-[62px] rounded object-contain sm:h-32 sm:w-[82px] ${
+                              className={`mx-auto my-1 h-[86px] w-[56px] rounded object-contain sm:h-[112px] sm:w-[72px] ${
                                 isCrossed(idx, resultSpreadId) ? "rotate-90" : ""
                               }`}
                               loading="lazy"

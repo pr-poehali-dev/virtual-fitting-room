@@ -112,7 +112,7 @@ const ReadingLayout = ({
                   <img
                     src={getCardImage(card)}
                     alt={card}
-                    className={`mx-auto my-1 h-20 w-[52px] rounded object-contain sm:h-28 sm:w-[72px] ${
+                    className={`mx-auto my-1 h-[86px] w-[56px] rounded object-contain sm:h-[112px] sm:w-[72px] ${
                       isCrossed(idx) ? "rotate-90" : ""
                     }`}
                     loading="lazy"
