@@ -49,6 +49,7 @@ import { divTheme } from "@/components/divination/theme";
 import SpreadTable from "@/components/divination/SpreadTable";
 import OptionGrid from "@/components/divination/OptionGrid";
 import SpreadSummary from "@/components/divination/SpreadSummary";
+import HintPopover from "@/components/divination/HintPopover";
 import DivinationTabs, { type DivTab } from "@/components/divination/DivinationTabs";
 import SavedDialogs, {
   isMobileDevice,
@@ -1401,11 +1402,18 @@ export default function LenormandDivination() {
                       Назад
                     </button>
 
-                    <h2 className="order-last w-full text-center font-serif text-2xl text-[#f3ecff] sm:order-none sm:w-auto sm:flex-1">
+                    <h2 className="order-last flex w-full items-center justify-center gap-2 text-center font-serif text-2xl text-[#f3ecff] sm:order-none sm:w-auto sm:flex-1">
                       {WIZARD_TITLES[wizardStep] === "Что уточнить" &&
                       asksQuestion
                         ? "Ваш вопрос"
                         : WIZARD_TITLES[wizardStep]}
+                      {/* На шаге вопроса — пояснение, о чём спрашивать */}
+                      {wizardStep === 7 && (
+                        <HintPopover
+                          title="О чём спрашивать карты"
+                          text={QUESTION_HINT}
+                        />
+                      )}
                     </h2>
 
                     {wizardStep === WIZARD_STEPS_COUNT - 1 ? (
@@ -1734,10 +1742,6 @@ export default function LenormandDivination() {
                           </ul>
                         </div>
                       ) : null}
-                      {/* Подсказываем, какие вопросы карты раскрывают лучше */}
-                      <p className="mt-3 text-sm leading-relaxed text-white/70">
-                        {QUESTION_HINT}
-                      </p>
                     </div>
                   )}
                   </div>

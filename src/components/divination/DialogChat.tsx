@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { divTheme } from "./theme";
 import { QUESTION_HINT } from "./texts";
+import HintPopover from "./HintPopover";
 import {
   downloadDialogText,
   isMobileDevice,
@@ -547,10 +548,16 @@ const DialogChat = ({
       ) : (
         <div className={`${divTheme.panel} p-4 sm:p-5`}>
           <div className="mb-3 flex items-center justify-between gap-2">
-            <h3 className={`font-serif text-lg ${divTheme.title}`}>
+            <h3
+              className={`flex items-center gap-2 font-serif text-xl ${divTheme.title} sm:text-2xl`}
+            >
               {steps.length === 0
                 ? "Задайте вопрос картам"
                 : `Уточняющий вопрос ${steps.length + 1}`}
+              <HintPopover
+                title="О чём спрашивать карты"
+                text={QUESTION_HINT}
+              />
             </h3>
             <span className="text-sm font-semibold text-[#c9a84c]">
               {stepPrice} &#8381; за вопрос
@@ -571,12 +578,6 @@ const DialogChat = ({
             {question.length} / {QUESTION_MAX}
           </p>
 
-          {/* Подсказка нужна у первого вопроса: дальше человек уже понял правила */}
-          {steps.length === 0 && (
-            <p className="mb-3 text-sm leading-relaxed text-white/70">
-              {QUESTION_HINT}
-            </p>
-          )}
 
           {/* Колода для ЭТОГО вопроса: выбирается заново каждый раз.
               У первого вопроса выбора нет — колода ещё полная. */}
