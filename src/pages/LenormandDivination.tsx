@@ -1907,7 +1907,7 @@ export default function LenormandDivination() {
                   </span>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                   {mode === "online" && (
                     <Button
                       size="lg"
