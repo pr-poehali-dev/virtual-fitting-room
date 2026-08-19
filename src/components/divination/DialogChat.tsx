@@ -186,7 +186,11 @@ const DialogChat = ({
   // «Та же колода» — выпавшие карты больше не участвуют.
   // «Полная колода» — колода собирается заново, отбор начинается с нуля.
   // Карты, уже вытянутые на ЭТОТ вопрос, второй раз не предлагаем
-  const availableCards = (mode = stepDeckMode, drawn = picked, used = usedCards) =>
+  const availableCards = (
+    mode = stepDeckMode,
+    drawn = picked,
+    used = usedCards,
+  ) =>
     (mode === "single"
       ? deckCards.filter((c) => !used.includes(c))
       : deckCards
@@ -347,8 +351,10 @@ const DialogChat = ({
    * и не видит, что ответ уже пришёл выше.
    */
   useEffect(() => {
-    const isNew = steps.length > prevCountRef.current && prevCountRef.current > 0;
-    const first = prevCountRef.current === 0 && steps.length > 0 && !resumeDialog;
+    const isNew =
+      steps.length > prevCountRef.current && prevCountRef.current > 0;
+    const first =
+      prevCountRef.current === 0 && steps.length > 0 && !resumeDialog;
     prevCountRef.current = steps.length;
     if (!isNew && !first) return;
 
@@ -444,51 +450,58 @@ const DialogChat = ({
 
       {/* Спрашиваем поверх страницы: кнопка «Закрыть диалог» внизу, и врезка
           в потоке уезжала за экран — человек не видел, что у него спросили */}
-      {confirmClose && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
-        <div className={`${divTheme.panel} max-h-[90vh] w-full max-w-md overflow-y-auto p-5`}>
-          <div className="mb-3 flex items-start gap-2">
-            <Icon
-              name="TriangleAlert"
-              size={20}
-              className="mt-0.5 shrink-0 text-[#c9a84c]"
-            />
-            <div className="text-sm text-[#e8d9a8]">
-              <p className="mb-1 font-medium text-[#f3ecff]">
-                Закрыть эту беседу?
-              </p>
-              <p>
-                Незакрытая беседа остаётся здесь: к ней можно вернуться
-                и продолжить разговор — гадалка помнит всё, о чём вы говорили.
-                Закрытые беседы тут не показываются, но сохраняются
-                в личном кабинете, в разделе{" "}
-                <a
-                  href="/profile/history-divination"
-                  className="font-medium text-[#c9a84c] underline underline-offset-2"
-                >
-                  «Мои гадания»
-                </a>
-                {" "}— там их можно перечитать.
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={closeDialog} size="sm" className={divTheme.btnPrimary}>
-              Закрыть беседу
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => setConfirmClose(false)}
-              size="sm"
-              className={divTheme.btnGhost}
+      {confirmClose &&
+        createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
+            <div
+              className={`${divTheme.panel} max-h-[90vh] w-full max-w-md overflow-y-auto p-5`}
             >
-              Отмена
-            </Button>
-          </div>
-        </div>
-        </div>,
-        document.body,
-      )}
+              <div className="mb-3 flex items-start gap-2">
+                <Icon
+                  name="TriangleAlert"
+                  size={20}
+                  className="mt-0.5 shrink-0 text-[#c9a84c]"
+                />
+                <div className="text-sm text-[#e8d9a8]">
+                  <p className="mb-1 font-medium text-[#f3ecff]">
+                    Закрыть эту беседу?
+                  </p>
+                  <p>
+                    Незакрытая беседа остаётся здесь: к ней можно вернуться и
+                    продолжить разговор — гадалка помнит всё, о чём вы говорили.
+                    Закрытые беседы тут не показываются, но сохраняются в личном
+                    кабинете, в разделе{" "}
+                    <a
+                      href="/profile/history-divination"
+                      className="font-medium text-[#c9a84c] underline underline-offset-2"
+                    >
+                      «Мои гадания»
+                    </a>{" "}
+                    — там их можно перечитать.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={closeDialog}
+                  size="sm"
+                  className={divTheme.btnPrimary}
+                >
+                  Закрыть беседу
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => setConfirmClose(false)}
+                  size="sm"
+                  className={divTheme.btnGhost}
+                >
+                  Отмена
+                </Button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
 
       {closed ? (
         <div className={`${divTheme.panel} p-5 text-center`}>
@@ -559,7 +572,7 @@ const DialogChat = ({
                 text={QUESTION_HINT}
               />
             </h3>
-            <span className="text-sm font-semibold text-[#c9a84c]">
+            <span className="text-right text-sm font-semibold text-[#c9a84c]">
               {stepPrice} &#8381; за вопрос
             </span>
           </div>
@@ -578,37 +591,46 @@ const DialogChat = ({
             {question.length} / {QUESTION_MAX}
           </p>
 
-
           {/* Колода для ЭТОГО вопроса: выбирается заново каждый раз.
               У первого вопроса выбора нет — колода ещё полная. */}
           {steps.length > 0 && (
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <span className={`text-sm ${divTheme.muted}`}>Колода:</span>
-            {([
-              { key: "single", label: "Та же колода", hint: "Выпавшие карты не возвращаются" },
-              { key: "full", label: "Полная колода", hint: "Колода собирается заново" },
-            ] as const).map((o) => (
-              <button
-                key={o.key}
-                type="button"
-                title={o.hint}
-                onClick={() => changeStepDeckMode(o.key)}
-                disabled={busy}
-                className={`rounded-lg px-3 py-1.5 text-xs ring-1 transition ${
-                  stepDeckMode === o.key
-                    ? "bg-[#c9a84c]/18 text-[#f3ecff] ring-[#c9a84c]/60"
-                    : "bg-white/[0.03] text-[#9888b8] ring-white/10 hover:text-[#e8e0f0]"
-                }`}
-              >
-                {o.label}
-              </button>
-            ))}
-            <span className="text-xs text-[#9888b8]">
-              {stepDeckMode === "single"
-                ? `осталось ${availableCards().length} карт`
-                : "все карты доступны"}
-            </span>
-          </div>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <span className={`text-sm ${divTheme.muted}`}>Колода:</span>
+              {(
+                [
+                  {
+                    key: "single",
+                    label: "Та же колода",
+                    hint: "Выпавшие карты не возвращаются",
+                  },
+                  {
+                    key: "full",
+                    label: "Полная колода",
+                    hint: "Колода собирается заново",
+                  },
+                ] as const
+              ).map((o) => (
+                <button
+                  key={o.key}
+                  type="button"
+                  title={o.hint}
+                  onClick={() => changeStepDeckMode(o.key)}
+                  disabled={busy}
+                  className={`rounded-lg px-3 py-1.5 text-xs ring-1 transition ${
+                    stepDeckMode === o.key
+                      ? "bg-[#c9a84c]/18 text-[#f3ecff] ring-[#c9a84c]/60"
+                      : "bg-white/[0.03] text-[#9888b8] ring-white/10 hover:text-[#e8e0f0]"
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+              <span className="text-xs text-[#9888b8]">
+                {stepDeckMode === "single"
+                  ? `осталось ${availableCards().length} карт`
+                  : "все карты доступны"}
+              </span>
+            </div>
           )}
 
           <div className="mb-3">
@@ -748,10 +770,14 @@ const DialogChat = ({
           {lowBalance ? (
             <div className="mb-3 rounded-xl border border-[#c9a84c]/40 bg-[#c9a84c]/10 p-3">
               <p className="mb-2 text-sm text-[#f3ecff]">
-                Не хватает средств на следующий вопрос — нужно {stepPrice} &#8381;.
-                Ответы гадалки выше остаются с вами.
+                Не хватает средств на следующий вопрос — нужно {stepPrice}{" "}
+                &#8381;. Ответы гадалки выше остаются с вами.
               </p>
-              <Button size="sm" onClick={onNeedTopup} className={divTheme.btnHero}>
+              <Button
+                size="sm"
+                onClick={onNeedTopup}
+                className={divTheme.btnHero}
+              >
                 <Icon name="Wallet" size={16} className="mr-1.5" />
                 Пополнить счёт
               </Button>
