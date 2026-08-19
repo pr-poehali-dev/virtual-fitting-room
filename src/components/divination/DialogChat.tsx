@@ -652,7 +652,7 @@ const DialogChat = ({
               })}
 
               {picked.length < maxCards && (
-                <div className="flex h-[86px] w-[56px] flex-col items-center justify-center rounded-lg border border-dashed border-[#c9a84c]/30 px-1 text-center text-[10px] leading-tight text-[#9888b8] sm:h-[112px] sm:w-[72px]">
+                <div className="flex h-[122px] w-[68px] flex-col items-center justify-center rounded-lg border border-dashed border-[#c9a84c]/30 px-1 text-center text-[10px] leading-tight text-[#9888b8] sm:h-[148px] sm:w-[84px]">
                   {picked.length === 0 ? "Вытяните карту" : "Можно ещё"}
                 </div>
               )}
@@ -720,7 +720,7 @@ const DialogChat = ({
                     Выберите карту из колоды — она откроется только после выбора
                   </p>
                   <div className="flex flex-wrap justify-center gap-1">
-                    {deck.slice(0, 40).map((_, i) => (
+                    {deck.map((_, i) => (
                       <button
                         key={i}
                         type="button"
