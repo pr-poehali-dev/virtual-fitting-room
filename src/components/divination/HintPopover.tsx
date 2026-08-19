@@ -7,6 +7,10 @@ interface HintPopoverProps {
   title: string;
   /** Текст подсказки */
   text: string;
+  /** Заголовок списка примеров */
+  itemsTitle?: string;
+  /** Примеры — показываем списком под текстом */
+  items?: string[];
   /** Подпись для читалок */
   label?: string;
 }
@@ -18,6 +22,8 @@ interface HintPopoverProps {
 const HintPopover = ({
   title,
   text,
+  itemsTitle,
+  items,
   label = "Показать подсказку",
 }: HintPopoverProps) => {
   const [open, setOpen] = useState(false);
@@ -58,6 +64,26 @@ const HintPopover = ({
                 </button>
               </div>
               <p className="text-sm leading-relaxed text-[#e8e0f0]">{text}</p>
+
+              {items?.length ? (
+                <div className="mt-4 rounded-xl border border-[#c9a84c]/30 bg-[#c9a84c]/10 p-3">
+                  {itemsTitle && (
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[#c9a84c]">
+                      {itemsTitle}
+                    </p>
+                  )}
+                  <ul className="mt-1.5 space-y-1">
+                    {items.map((it) => (
+                      <li
+                        key={it}
+                        className="text-sm leading-snug text-[#e8e0f0]"
+                      >
+                        — {it}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
           </div>,
           document.body,

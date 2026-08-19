@@ -1412,6 +1412,8 @@ export default function LenormandDivination() {
                         <HintPopover
                           title="О чём спрашивать карты"
                           text={QUESTION_HINT}
+                          itemsTitle="С такими вопросами расклад работает лучше всего"
+                          items={activeSpread.typicalQuestions}
                         />
                       )}
                     </h2>
@@ -1724,24 +1726,6 @@ export default function LenormandDivination() {
                         rows={3}
                         className="border-2 border-white/50 bg-transparent text-white placeholder:text-white/60 focus-visible:ring-white/40"
                       />
-                      {/* Примеры вопросов именно этого расклада */}
-                      {activeSpread.typicalQuestions?.length ? (
-                        <div className="mt-3 rounded-xl border border-[#c9a84c]/30 bg-[#c9a84c]/10 p-3">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-[#c9a84c]">
-                            С такими вопросами расклад работает лучше всего
-                          </p>
-                          <ul className="mt-1.5 space-y-1">
-                            {activeSpread.typicalQuestions.map((q) => (
-                              <li
-                                key={q}
-                                className="text-sm leading-snug text-white/80"
-                              >
-                                — {q}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : null}
                     </div>
                   )}
                   </div>
