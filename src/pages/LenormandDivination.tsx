@@ -1379,11 +1379,57 @@ export default function LenormandDivination() {
                       }}
                     />
                   </div>
-                  <h2 className="mt-3 font-serif text-2xl text-[#f3ecff]">
-                    {WIZARD_TITLES[wizardStep] === "Что уточнить" && asksQuestion
-                      ? "Ваш вопрос"
-                      : WIZARD_TITLES[wizardStep]}
-                  </h2>
+                  {/* Навигация в шапке: на широком экране слева и справа
+                      от заголовка, на телефоне — строкой над ним */}
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                    <button
+                      type="button"
+                      onClick={() => setWizardStep((s) => stepTo(s, -1))}
+                      disabled={wizardStep === 0 || formDisabled}
+                      className="inline-flex shrink-0 items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
+                    >
+                      <Icon name="ArrowLeft" size={16} className="mr-1.5" />
+                      Назад
+                    </button>
+
+                    <h2 className="order-last w-full text-center font-serif text-2xl text-[#f3ecff] sm:order-none sm:w-auto sm:flex-1">
+                      {WIZARD_TITLES[wizardStep] === "Что уточнить" &&
+                      asksQuestion
+                        ? "Ваш вопрос"
+                        : WIZARD_TITLES[wizardStep]}
+                    </h2>
+
+                    {wizardStep === WIZARD_STEPS_COUNT - 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => setWizardDone(true)}
+                        disabled={formDisabled || !!stepBlockReason}
+                        title={stepBlockReason || undefined}
+                        className="inline-flex shrink-0 items-center rounded-xl bg-gradient-to-r from-[#c9a84c] to-[#e8c252] px-6 py-2.5 text-sm font-semibold text-[#1a1030] shadow-lg transition hover:from-[#d8b75b] hover:to-[#f0cf6a] disabled:opacity-40"
+                      >
+                        <Icon name="Check" size={16} className="mr-1.5" />
+                        Готово
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setWizardStep((s) => stepTo(s, 1))}
+                        disabled={formDisabled || !!stepBlockReason}
+                        title={stepBlockReason || undefined}
+                        className="inline-flex shrink-0 items-center rounded-xl bg-gradient-to-r from-[#c9a84c] to-[#e8c252] px-6 py-2.5 text-sm font-semibold text-[#1a1030] shadow-lg transition hover:from-[#d8b75b] hover:to-[#f0cf6a] disabled:opacity-40"
+                      >
+                        Далее
+                        <Icon name="ArrowRight" size={16} className="ml-1.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Почему шаг нельзя пройти дальше */}
+                  {stepBlockReason && (
+                    <p className="mt-2 text-center text-sm text-[#e8d9a8]">
+                      {stepBlockReason}
+                    </p>
+                  )}
                 </div>
 
                 <fieldset
@@ -1687,50 +1733,6 @@ export default function LenormandDivination() {
                   )}
                   </div>
                 </fieldset>
-
-                {/* Навигация мастера */}
-                <div className="mt-5 flex items-center justify-between border-t border-white/15 pt-5">
-                  <button
-                    type="button"
-                    onClick={() => setWizardStep((s) => stepTo(s, -1))}
-                    disabled={wizardStep === 0 || formDisabled}
-                    className="inline-flex items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
-                  >
-                    <Icon name="ArrowLeft" size={16} className="mr-1.5" />
-                    Назад
-                  </button>
-
-                  {stepBlockReason && (
-                    <span className="order-last w-full text-center text-sm text-[#e8d9a8] sm:order-none sm:w-auto">
-                      {stepBlockReason}
-                    </span>
-                  )}
-                  {wizardStep === WIZARD_STEPS_COUNT - 1 ? (
-                    <button
-                      type="button"
-                      onClick={() => setWizardDone(true)}
-                      disabled={formDisabled || !!stepBlockReason}
-                      title={stepBlockReason || undefined}
-                      className="inline-flex items-center rounded-xl bg-gradient-to-r from-[#c9a84c] to-[#e8c252] px-6 py-2.5 text-sm font-semibold text-[#1a1030] shadow-lg transition hover:from-[#d8b75b] hover:to-[#f0cf6a] disabled:opacity-40"
-                    >
-                      <Icon name="Check" size={16} className="mr-1.5" />
-                      Готово
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setWizardStep((s) => stepTo(s, 1))
-                      }
-                      disabled={formDisabled || !!stepBlockReason}
-                      title={stepBlockReason || undefined}
-                      className="inline-flex items-center rounded-xl bg-gradient-to-r from-[#c9a84c] to-[#e8c252] px-6 py-2.5 text-sm font-semibold text-[#1a1030] shadow-lg transition hover:from-[#d8b75b] hover:to-[#f0cf6a] disabled:opacity-40"
-                    >
-                      Далее
-                      <Icon name="ArrowRight" size={16} className="ml-1.5" />
-                    </button>
-                  )}
-                </div>
               </CardContent>
             </Card>
           )}
