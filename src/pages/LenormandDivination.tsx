@@ -1795,9 +1795,36 @@ export default function LenormandDivination() {
           <>
           <Card className="mb-6 overflow-hidden border-0 bg-gradient-to-br from-[#2d1b69] via-[#241845] to-[#1a1030] text-white shadow-lg ring-1 ring-[#c9a84c]/25">
             <CardContent className="p-6">
-              <h2 className="mb-4 text-xl font-semibold text-white">
-                Параметры расклада
-              </h2>
+              {/* Кнопки: на широком экране справа от заголовка,
+                  на телефоне — над ним, по левому краю */}
+              <div className="mb-4 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="font-serif text-2xl text-[#f3ecff]">
+                  Параметры расклада
+                </h2>
+                <div className="flex flex-wrap gap-2 sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setWizardDone(false);
+                      setWizardStep(0);
+                    }}
+                    disabled={formDisabled}
+                    className="inline-flex items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
+                  >
+                    <Icon name="Pencil" size={16} className="mr-1.5" />
+                    Редактировать
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearAll}
+                    disabled={formDisabled}
+                    className="inline-flex items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
+                  >
+                    <Icon name="RotateCcw" size={16} className="mr-1.5" />
+                    Очистить всё и начать заново
+                  </button>
+                </div>
+              </div>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[15px] leading-relaxed text-white">
                 <span>
                   <span className="text-white/60">Способ:</span>{" "}
@@ -1846,29 +1873,6 @@ export default function LenormandDivination() {
                   </span>{" "}
                   {comment.trim() || "—"}
                 </span>
-              </div>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setWizardDone(false);
-                    setWizardStep(0);
-                  }}
-                  disabled={formDisabled}
-                  className="inline-flex items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
-                >
-                  <Icon name="Pencil" size={16} className="mr-1.5" />
-                  Редактировать
-                </button>
-                <button
-                  type="button"
-                  onClick={clearAll}
-                  disabled={formDisabled}
-                  className="inline-flex items-center rounded-xl border-2 border-white/50 px-4 py-2 text-sm font-semibold text-white transition hover:border-white disabled:opacity-40"
-                >
-                  <Icon name="RotateCcw" size={16} className="mr-1.5" />
-                  Очистить всё и начать заново
-                </button>
               </div>
             </CardContent>
           </Card>
