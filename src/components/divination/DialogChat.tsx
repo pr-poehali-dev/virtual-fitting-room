@@ -721,6 +721,79 @@ const DialogChat = ({
             </div>
           </div>
 
+          {/* Денег не хватает: переписка остаётся видна, закрыт только новый вопрос */}
+          {lowBalance ? (
+            <div className="mb-3 rounded-xl border border-[#c9a84c]/40 bg-[#c9a84c]/10 p-3">
+              <p className="mb-2 text-sm text-[#f3ecff]">
+                Не хватает средств на следующий вопрос — нужно {stepPrice}{" "}
+                &#8381;. Ответы гадалки выше остаются с вами.
+              </p>
+              <Button
+                size="sm"
+                onClick={onNeedTopup}
+                className={divTheme.btnHero}
+              >
+                <Icon name="Wallet" size={16} className="mr-1.5" />
+                Пополнить счёт
+              </Button>
+            </div>
+          ) : (
+            !busy &&
+            !ready && (
+              <p className="mb-2 text-sm text-[#c9a84c]">
+                {!hasQuestion
+                  ? "Напишите вопрос — без него карты не трактуем"
+                  : "Выберите хотя бы одну карту"}
+              </p>
+            )
+          )}
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="lg"
+              onClick={send}
+              disabled={!ready || busy}
+              title={
+                !ready
+                  ? !hasQuestion
+                    ? "Сначала напишите вопрос"
+                    : "Выберите хотя бы одну карту"
+                  : undefined
+              }
+              className={`${divTheme.btnHero} w-full disabled:opacity-50 sm:w-auto`}
+            >
+              {busy ? (
+                <>
+                  <Icon
+                    name="Loader2"
+                    size={16}
+                    className="mr-1.5 animate-spin"
+                  />
+                  Карты отвечают, подождите...
+                </>
+              ) : (
+                <>
+                  <Icon name="Sparkles" size={20} className="mr-2" />
+                  Трактовать с помощью ИИ ({stepPrice} &#8381;)
+                </>
+              )}
+            </Button>
+
+            {steps.length > 0 && (
+              <Button
+                variant="ghost"
+                onClick={() => setConfirmClose(true)}
+                disabled={busy}
+                className={divTheme.btnGhost}
+              >
+                Закрыть диалог
+              </Button>
+            )}
+
+            <span className={`ml-auto text-xs ${divTheme.muted}`}>
+              Осталось вопросов: {stepsLeft}
+            </span>
+          </div>
           {/* РЕАЛЬНЫЙ расклад: карты лицом — вы уже разложили их у себя
               и просто отмечаете, что выпало. */}
           {picked.length < maxCards && mode === "real" && (
@@ -805,79 +878,6 @@ const DialogChat = ({
             </div>
           )}
 
-          {/* Денег не хватает: переписка остаётся видна, закрыт только новый вопрос */}
-          {lowBalance ? (
-            <div className="mb-3 rounded-xl border border-[#c9a84c]/40 bg-[#c9a84c]/10 p-3">
-              <p className="mb-2 text-sm text-[#f3ecff]">
-                Не хватает средств на следующий вопрос — нужно {stepPrice}{" "}
-                &#8381;. Ответы гадалки выше остаются с вами.
-              </p>
-              <Button
-                size="sm"
-                onClick={onNeedTopup}
-                className={divTheme.btnHero}
-              >
-                <Icon name="Wallet" size={16} className="mr-1.5" />
-                Пополнить счёт
-              </Button>
-            </div>
-          ) : (
-            !busy &&
-            !ready && (
-              <p className="mb-2 text-sm text-[#c9a84c]">
-                {!hasQuestion
-                  ? "Напишите вопрос — без него карты не трактуем"
-                  : "Выберите хотя бы одну карту"}
-              </p>
-            )
-          )}
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              size="lg"
-              onClick={send}
-              disabled={!ready || busy}
-              title={
-                !ready
-                  ? !hasQuestion
-                    ? "Сначала напишите вопрос"
-                    : "Выберите хотя бы одну карту"
-                  : undefined
-              }
-              className={`${divTheme.btnHero} w-full disabled:opacity-50 sm:w-auto`}
-            >
-              {busy ? (
-                <>
-                  <Icon
-                    name="Loader2"
-                    size={16}
-                    className="mr-1.5 animate-spin"
-                  />
-                  Карты отвечают, подождите...
-                </>
-              ) : (
-                <>
-                  <Icon name="Sparkles" size={20} className="mr-2" />
-                  Трактовать с помощью ИИ ({stepPrice} &#8381;)
-                </>
-              )}
-            </Button>
-
-            {steps.length > 0 && (
-              <Button
-                variant="ghost"
-                onClick={() => setConfirmClose(true)}
-                disabled={busy}
-                className={divTheme.btnGhost}
-              >
-                Закрыть диалог
-              </Button>
-            )}
-
-            <span className={`ml-auto text-xs ${divTheme.muted}`}>
-              Осталось вопросов: {stepsLeft}
-            </span>
-          </div>
         </div>
       )}
     </div>

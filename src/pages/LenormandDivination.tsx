@@ -1949,6 +1949,32 @@ export default function LenormandDivination() {
                 getCardImage={getDeckCardImage}
               />
 
+              <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                <Button
+                  size="lg"
+                  onClick={startReading}
+                  disabled={isProcessing || !tableReady}
+                  title={tableReady ? undefined : tableHint}
+                  className={`${divTheme.btnHero} w-full disabled:opacity-50 sm:w-auto`}
+                >
+                  {isProcessing ? (
+                    <>
+                      <Icon name="Loader2" size={18} className="mr-2 animate-spin" />
+                      {statusText || "Обработка…"}
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="Sparkles" size={20} className="mr-2" />
+                      Трактовать с помощью ИИ ({selectedCost} ₽)
+                    </>
+                  )}
+                </Button>
+
+                {!tableReady && !isProcessing && (
+                  <span className="text-sm text-[#e8d9a8]">{tableHint}</span>
+                )}
+              </div>
+
               {/* ОНЛАЙН: колода рубашкой вверх (под столом) */}
               {mode === "online" && shuffled && (
                 <div
@@ -2021,31 +2047,6 @@ export default function LenormandDivination() {
                 </div>
               )}
 
-              <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                <Button
-                  size="lg"
-                  onClick={startReading}
-                  disabled={isProcessing || !tableReady}
-                  title={tableReady ? undefined : tableHint}
-                  className={`${divTheme.btnHero} w-full disabled:opacity-50 sm:w-auto`}
-                >
-                  {isProcessing ? (
-                    <>
-                      <Icon name="Loader2" size={18} className="mr-2 animate-spin" />
-                      {statusText || "Обработка…"}
-                    </>
-                  ) : (
-                    <>
-                      <Icon name="Sparkles" size={20} className="mr-2" />
-                      Трактовать с помощью ИИ ({selectedCost} ₽)
-                    </>
-                  )}
-                </Button>
-
-                {!tableReady && !isProcessing && (
-                  <span className="text-sm text-[#e8d9a8]">{tableHint}</span>
-                )}
-              </div>
             </CardContent>
           </Card>
           </>
