@@ -719,7 +719,7 @@ const DialogChat = ({
                   <p className={`mb-2 text-center text-sm ${divTheme.muted}`}>
                     Выберите карту из колоды — она откроется только после выбора
                   </p>
-                  <div className="flex max-h-[150px] flex-wrap justify-center gap-1 overflow-y-auto">
+                  <div className="flex flex-wrap justify-center gap-1">
                     {deck.slice(0, 40).map((_, i) => (
                       <button
                         key={i}
