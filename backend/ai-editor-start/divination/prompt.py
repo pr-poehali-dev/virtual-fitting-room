@@ -256,6 +256,7 @@ def build_divination_prompt(meta: dict) -> str:
 
     period_label = PERIOD_LABELS.get(period, PERIOD_LABELS['now'])
     gender_label = GENDER_LABELS.get(gender, GENDER_LABELS['female'])
+    her_his = 'Его' if gender == 'male' else 'Её'
     sphere_labels = [SPHERE_LABELS.get(s, s) for s in spheres]
     spheres_text = ', '.join(sphere_labels) if sphere_labels else 'общая ситуация'
 
@@ -269,8 +270,8 @@ def build_divination_prompt(meta: dict) -> str:
     parts = [
         ROLE_INTRO,
         '',
-        f'Расшифруй {spread["title"]}. {gender_label.capitalize()}. '
-        f'Период: {period_label}.',
+        f'Расшифруй {spread["title"]} {gender_label}, '
+        f'на период — {period_label}.',
     ]
     if not asks_question:
         parts.append(f'Сферы для анализа: {spheres_text}.')
@@ -279,11 +280,11 @@ def build_divination_prompt(meta: dict) -> str:
         parts.append('')
         if asks_question:
             parts.append(
-                f'Вопрос человека, ради которого сделан расклад: {comment}\n'
+                f'{her_his} вопрос, ради которого сделан расклад: {comment}\n'
                 'Весь разбор веди вокруг этого вопроса и в конце дай прямой ответ на него.'
             )
         else:
-            parts.append(f'Дополнительный вопрос / уточнение от человека: {comment}')
+            parts.append(f'{her_his} дополнительный вопрос / уточнение: {comment}')
 
     parts.append('')
     if deck.get('house_names') and not spread.get('positions'):
