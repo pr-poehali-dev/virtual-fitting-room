@@ -57,7 +57,7 @@ const SpreadSummary = ({
           {isDialog ? "Параметры диалога" : "Параметры расклада"}
         </h2>
 
-        <div className="flex flex-wrap gap-2 sm:justify-end">
+        <div className="flex flex-wrap justify-end gap-2">
           {!hideEdit && (
             <button
               type="button"

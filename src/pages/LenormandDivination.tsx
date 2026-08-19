@@ -1561,7 +1561,7 @@ export default function LenormandDivination() {
                     <div>
                       <div
                         role="radiogroup"
-                        className="grid gap-2.5 sm:grid-cols-3"
+                        className="grid gap-2.5 sm:grid-cols-2"
                       >
                         {MODELS.map((m) => {
                           const price = getDivinationPrice(divSpread, m.value);
@@ -1801,7 +1801,7 @@ export default function LenormandDivination() {
                 <h2 className="font-serif text-2xl text-[#f3ecff]">
                   Параметры расклада
                 </h2>
-                <div className="flex flex-wrap gap-2 sm:justify-end">
+                <div className="flex flex-wrap justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => {
