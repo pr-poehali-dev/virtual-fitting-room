@@ -68,14 +68,14 @@ def build_context_block(ctx: dict) -> str:
     spheres_text = ', '.join(spheres) if spheres else 'общая ситуация'
     comment = (ctx.get('comment') or '').strip()
 
+    her_his = 'Его' if ctx.get('gender') == 'male' else 'Её'
     lines = [
-        'О человеке и запросе (задано в начале, учитывай во всех ответах):',
-        f'- гадание {gender};',
-        f'- интересующий период: {period};',
-        f'- сферы жизни: {spheres_text};',
+        f'Это гадание {gender}, на период — {period}. '
+        f'{her_his} интересуют такие сферы жизни: {spheres_text}. '
+        'Учитывай это во всех ответах.',
     ]
     if comment:
-        lines.append(f'- дополнительное пожелание: {comment}')
+        lines.append(f'{her_his} дополнительное пожелание: {comment}')
     return '\n'.join(lines)
 
 
