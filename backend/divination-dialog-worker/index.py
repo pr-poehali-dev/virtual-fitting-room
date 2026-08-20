@@ -79,13 +79,50 @@ def call_openrouter(model: str, prompt_text: str):
         choice = (data.get('choices') or [{}])[0]
         finish = choice.get('finish_reason') or choice.get('native_finish_reason')
         content = (choice.get('message') or {}).get('content')
-        if not content:
-            return None, f'Пустой ответ (finish_reason={finish})'
-        if finish and str(finish).lower() == 'error':
-            return None, 'Ответ оборван'
+        if not content or (finish and str(finish).lower() == 'error'):
+            # Провайдер ответил 200, но текста нет. Причина лежит рядом с
+            # ответом — печатаем её целиком, иначе разбираться потом не по чему
+            print(
+                f'[openrouter-fail] model={model} finish={finish} '
+                f'native={choice.get("native_finish_reason")} '
+                f'provider={data.get("provider")} '
+                f'err={json.dumps(data.get("error"), ensure_ascii=False)[:400]} '
+                f'choice_err={json.dumps(choice.get("error"), ensure_ascii=False)[:400]} '
+                f'raw={r.text[:600]}'
+            )
+            reason = 'Ответ оборван' if content else f'Пустой ответ (finish_reason={finish})'
+            return None, reason
         return content, None
     except Exception as e:
         return None, f'Разбор ответа: {str(e)[:200]}'
+
+
+def call_openrouter_retrying(model: str, prompt_text: str, attempts: int = 3):
+    """Мгновенный отказ провайдера — обычно разовый сбой на его стороне.
+    Пробуем ещё раз, вместо того чтобы гонять человека нажимать «отправить».
+    Повторяем только пустые ответы: содержательные ошибки повтор не лечит."""
+    last_error = None
+    started = time.time()
+    for i in range(attempts):
+        # Повтор имеет смысл только для мгновенных отказов. Если время уже
+        # потрачено — не рискуем упереться в лимит выполнения функции
+        if i and time.time() - started > 60:
+            print('[openrouter-retry] времени на повтор не осталось')
+            break
+        text, error = call_openrouter(model, prompt_text)
+        if text and not error:
+            if i:
+                print(f'[openrouter-retry] успех с попытки {i + 1}')
+            return text, None
+        last_error = error
+        retryable = error and (
+            'оборван' in error or 'Пустой ответ' in error or error.startswith('Сеть')
+        )
+        if not retryable or i == attempts - 1:
+            break
+        print(f'[openrouter-retry] попытка {i + 1} не удалась ({error}), повтор')
+        time.sleep(1.5 * (i + 1))
+    return None, last_error
 
 
 def refund_step(conn, step_id, dialog_id, cost, user_id):
@@ -185,7 +222,7 @@ def process_step(step_id: str) -> dict:
             )
         conn.commit()
 
-        ai_text, error = call_openrouter(model, prompt_text)
+        ai_text, error = call_openrouter_retrying(model, prompt_text)
 
         if error or not ai_text:
             print(f'[{step_id}] Ошибка: {error}')
