@@ -75,6 +75,7 @@ export default function ProfileHistoryDivination() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [confirmDialogId, setConfirmDialogId] = useState<string | null>(null);
+  const [confirmReadingId, setConfirmReadingId] = useState<string | null>(null);
 
   const token = () => localStorage.getItem("session_token") || "";
 
@@ -129,6 +130,30 @@ export default function ProfileHistoryDivination() {
   };
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const removeReading = async (id: string) => {
+    const res = await fetch(READINGS_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Session-Token": token(),
+      },
+      body: JSON.stringify({ action: "delete", id }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.deleted) {
+      toast.error("Не удалось удалить расклад");
+      return;
+    }
+    setConfirmReadingId(null);
+    toast.success("Расклад удалён");
+    // Список постраничный: перечитываем страницу, чтобы подтянулся
+    // следующий расклад и счётчик на вкладке остался верным
+    const rest = readings.length - 1;
+    const nextPage = rest === 0 && page > 1 ? page - 1 : page;
+    await loadReadings((nextPage - 1) * PAGE_SIZE).catch(() => {});
+    setPage(nextPage);
+  };
 
   const removeDialog = async (id: string) => {
     const res = await fetch(DIALOG_API, {
@@ -224,48 +249,81 @@ export default function ProfileHistoryDivination() {
                         .join(", ");
 
                       return (
-                        <button
-                          key={r.id}
-                          type="button"
-                          onClick={() => navigate(`/profile/reading/${r.id}`)}
-                          className="flex w-full items-start justify-between gap-3 rounded-2xl border p-4 text-left transition hover:bg-muted/50"
-                        >
-                          <span className="min-w-0 flex-1">
-                            <span className="block font-medium">
-                              {spreadTitle(m)}
-                            </span>
-                            <span className="mt-0.5 block text-sm text-muted-foreground">
-                              {formatDate(r.created_at)}
-                              {r.cost ? ` \u00b7 ${r.cost} \u20bd` : ""}
-                              {m.system === "tarot" ? " \u00b7 Таро" : " \u00b7 Ленорман"}
-                            </span>
+                        <div key={r.id} className="rounded-2xl border p-4">
+                          <p className="font-medium">{spreadTitle(m)}</p>
+                          <p className="mt-0.5 text-sm text-muted-foreground">
+                            {formatDate(r.created_at)}
+                            {r.cost ? ` \u00b7 ${r.cost} \u20bd` : ""}
+                            {m.system === "tarot" ? " \u00b7 Таро" : " \u00b7 Ленорман"}
+                          </p>
 
-                            {/* Что спрашивали — главное, по чему узнают расклад */}
-                            {m.comment && (
-                              <span className="mt-2 block text-sm">
-                                <span className="text-muted-foreground">
-                                  {asksQuestion ? "Вопрос: " : "Комментарий: "}
-                                </span>
-                                {m.comment}
+                          {/* Что спрашивали — главное, по чему узнают расклад */}
+                          {m.comment && (
+                            <p className="mt-2 text-sm">
+                              <span className="text-muted-foreground">
+                                {asksQuestion ? "Вопрос: " : "Комментарий: "}
+                              </span>
+                              {m.comment}
+                            </p>
+                          )}
+
+                          <p className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                            {periodLabel && <span>Период: {periodLabel}</span>}
+                            {sphereLabels && <span>Сферы: {sphereLabels}</span>}
+                            {(m.layout || []).filter(Boolean).length > 0 && (
+                              <span>
+                                Карт: {(m.layout || []).filter(Boolean).length}
                               </span>
                             )}
+                          </p>
 
-                            <span className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
-                              {periodLabel && <span>Период: {periodLabel}</span>}
-                              {sphereLabels && <span>Сферы: {sphereLabels}</span>}
-                              {(m.layout || []).filter(Boolean).length > 0 && (
-                                <span>
-                                  Карт: {(m.layout || []).filter(Boolean).length}
-                                </span>
-                              )}
-                            </span>
-                          </span>
-                          <Icon
-                            name="ChevronRight"
-                            size={20}
-                            className="mt-1 shrink-0 text-muted-foreground"
-                          />
-                        </button>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1.5"
+                              onClick={() =>
+                                navigate(`/profile/reading/${r.id}`)
+                              }
+                            >
+                              <Icon name="BookOpen" size={15} />
+                              Читать расклад
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1.5"
+                              onClick={() => setConfirmReadingId(r.id)}
+                            >
+                              <Icon name="Trash2" size={15} />
+                              Удалить
+                            </Button>
+                          </div>
+
+                          {confirmReadingId === r.id && (
+                            <div className="mt-3 rounded-lg border border-destructive/40 bg-destructive/5 p-3">
+                              <p className="mb-2 text-sm">
+                                Удалить этот расклад? Вернуть его будет нельзя.
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => removeReading(r.id)}
+                                >
+                                  Да, удалить
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setConfirmReadingId(null)}
+                                >
+                                  Отмена
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       );
                     })}
 
