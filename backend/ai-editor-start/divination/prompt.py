@@ -154,6 +154,38 @@ def _build_table_block(spread: dict, deck: dict, layout: list) -> str:
     return '\n'.join(lines)
 
 
+def _build_rows_block(spread: dict, deck: dict, layout: list) -> str:
+    """Стол построчно: «Ряд 1 слева направо:» и по строке на карту.
+
+    Номер столбца в каждой строке оставляем: без него модель считает
+    соседей по вертикали арифметикой и путает цепочки.
+    """
+    grid = spread.get('grid') or {}
+    cols = grid.get('cols') or 0
+    rows = grid.get('rows') or 0
+    house_names = deck.get('house_names')
+    if not cols or not rows or not house_names:
+        return ''
+
+    lines = []
+    for r in range(rows):
+        if r == 0:
+            lines.append('Ряд 1 слева направо:')
+        else:
+            lines.append(f'Ряд {r + 1} (под рядом {r}) слева направо:')
+        for c in range(cols):
+            i = r * cols + c
+            card = _clean_card(layout[i] if i < len(layout) else '')
+            if not card:
+                continue
+            house = house_names[i] if i < len(house_names) else ''
+            lines.append(
+                f'Место {i + 1}, столбец {c + 1}, в дом «{house}» '
+                f'выпала карта «{card}».'
+            )
+    return '\n'.join(lines)
+
+
 def _build_figures_block(spread: dict, deck: dict, layout: list, gender: str) -> str:
     """Готовые координаты фигур: модель их не ищет и не может ошибиться."""
     house_names = deck.get('house_names')
@@ -182,22 +214,27 @@ def _build_figures_block(spread: dict, deck: dict, layout: list, gender: str) ->
         return f'место {i + 1}{where}, дом «{house}»'
 
     own, other = ('Женщина', 'Мужчина') if gender == 'female' else ('Мужчина', 'Женщина')
+    # Короткий вид: места фигур уже перечислены в списке карт
+    plain = bool(spread.get('figures_plain'))
     lines = []
     i_own = find(own)
     if i_own is not None:
+        where = '' if plain else f' Она лежит: {describe(i_own)}.'
         lines.append(
-            f'- СИГНИФИКАТОР (сам человек) — карта «{own}». '
-            f'Она лежит: {describe(i_own)}. Весь разбор веди от неё.'
+            f'- СИГНИФИКАТОР (сам человек) — карта «{own}».'
+            f'{where} Весь разбор веди от неё.'
         )
     i_other = find(other)
     if i_other is not None:
+        where = '' if plain else f' Она лежит: {describe(i_other)}.'
         lines.append(
-            f'- ВТОРАЯ ФИГУРА (партнёр) — карта «{other}». '
-            f'Она лежит: {describe(i_other)}.'
+            f'- ВТОРАЯ ФИГУРА (партнёр) — карта «{other}».{where}'
         )
     if not lines:
         return ''
 
+    if plain:
+        return '\n'.join(lines)
     return 'ГДЕ ЛЕЖАТ ФИГУРЫ (посчитано за тебя, бери готовым).\n' + '\n'.join(lines)
 
 
@@ -242,17 +279,20 @@ def build_divination_prompt(meta: dict) -> str:
 
     cards_block = _build_cards_block(spread, deck, layout)
     table_block = _build_table_block(spread, deck, layout)
+    rows_block = _build_rows_block(spread, deck, layout)
 
     # Часть раскладов делают на один конкретный вопрос: сферы жизни
     # у них не спрашивают, а вопрос — главный ориентир разбора
     asks_question = spread_id in ('tarot_celtic10', 'tarot_plan5')
 
-    parts = [
-        ROLE_INTRO,
-        '',
+    intro = (
         f'Расшифруй {spread["title"]} {gender_label}, '
-        f'на период — {period_label}.',
-    ]
+        f'на период — {period_label}.'
+    )
+    if spread.get('intro_extra'):
+        intro = f'{intro} {spread["intro_extra"]}'
+
+    parts = [ROLE_INTRO, '', intro]
     if not asks_question:
         parts.append(f'Сферы для анализа: {spheres_text}.')
 
@@ -267,15 +307,24 @@ def build_divination_prompt(meta: dict) -> str:
             parts.append(f'{her_his} дополнительный вопрос / уточнение: {comment}')
 
     parts.append('')
+    # Часть раскладов сначала показывает форму стола, потом термины
+    geometry_first = bool(spread.get('geometry_first'))
+    if geometry_first:
+        parts.append(spread['geometry'])
+        parts.append('')
     if deck.get('house_names') and not spread.get('positions'):
         parts.append(LENORMAND_GLOSSARY)
         parts.append('')
-    parts.append(spread['geometry'])
+    if not geometry_first:
+        parts.append(spread['geometry'])
+        parts.append('')
 
-    parts.append('')
     # Таблица показывает карты и геометрию сразу: если она есть,
     # список тех же карт не нужен
-    if table_block:
+    if spread.get('cards_format') == 'rows' and rows_block:
+        parts.append('Карты в раскладе:')
+        parts.append(rows_block)
+    elif table_block:
         parts.append('ТАБЛИЦА СТОЛА (так карты лежат перед тобой):')
         parts.append(table_block)
     else:
@@ -321,7 +370,11 @@ def build_divination_prompt(meta: dict) -> str:
         parts.append(spread['length'])
 
     parts.append('')
-    parts.append(COMPLETENESS_RULE)
+    # Свой блок правил уже содержит требование не обрывать мысль
+    if spread.get('extra_rules'):
+        parts.append(spread['extra_rules'])
+    else:
+        parts.append(COMPLETENESS_RULE)
 
     parts.append('')
     parts.append(TONE_RULES)
