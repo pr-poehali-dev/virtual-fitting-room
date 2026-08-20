@@ -376,6 +376,11 @@ def call_openrouter(model, prompt_text, on_partial=None, soft_deadline=None):
         if parsed.get('error'):
             err = parsed['error']
             stream_error = err.get('message') if isinstance(err, dict) else str(err)
+            # Полный текст отказа — иначе потом не разобрать, кто и почему отказал
+            print(
+                f'[openrouter-fail] model={model} provider={parsed.get("provider")} '
+                f'err={json.dumps(err, ensure_ascii=False)[:400]}'
+            )
             break
 
         for choice in parsed.get('choices') or []:
@@ -401,8 +406,39 @@ def call_openrouter(model, prompt_text, on_partial=None, soft_deadline=None):
         return None, f'OpenRouter ошибка: {stream_error[:500]}', False
 
     if not ai_text:
+        print(f'[openrouter-fail] model={model} поток пуст, ни одного знака')
         return None, 'Модель не вернула ответ', False
     return ai_text, None, truncated
+
+
+def call_openrouter_retrying(model, prompt_text, on_partial=None, soft_deadline=None,
+                             attempts=3):
+    """Повторяет запрос, если модель не написала НИ ОДНОГО знака.
+
+    Мгновенный пустой отказ провайдера — обычно разовый сбой на его стороне.
+    Как только пошёл текст, повторов нет: написанное дороже, а второй заход
+    к модели — это второй платный запрос.
+    """
+    started = time.time()
+    last_error = None
+    for i in range(attempts):
+        text, error, truncated = call_openrouter(
+            model, prompt_text, on_partial=on_partial, soft_deadline=soft_deadline
+        )
+        if text or not error:
+            if i:
+                print(f'[openrouter-retry] успех с попытки {i + 1}')
+            return text, error, truncated
+        last_error = error
+        # Текста нет вообще. Повторяем, только если это был мгновенный отказ
+        # и в запасе достаточно времени до предела выполнения функции
+        spent = time.time() - started
+        no_time = soft_deadline and time.time() + 30 > soft_deadline
+        if i == attempts - 1 or spent > 60 or no_time:
+            break
+        print(f'[openrouter-retry] попытка {i + 1} пуста ({error}), повтор')
+        time.sleep(1.5 * (i + 1))
+    return None, last_error, False
 
 
 def sql_escape(val):
@@ -789,7 +825,7 @@ def process_task(task_id):
             ask = prompt if not done_before else build_continue_prompt(prompt, done_before)
             print(f'[{task_id}] Отправляю в OpenRouter (chat), уже написано={len(done_before)}, попытка={resume_count}...')
 
-            new_text, error, truncated = call_openrouter(
+            new_text, error, truncated = call_openrouter_retrying(
                 model,
                 ask,
                 on_partial=lambda txt: save_partial(task_id, done_before + txt),
@@ -821,7 +857,7 @@ def process_task(task_id):
         elif mode == 'file':
             prompt_text = build_file_prompt(filename or 'file.txt', file_content or '', prompt)
             print(f'[{task_id}] Отправляю в OpenRouter (file), prompt_len={len(prompt_text)}...')
-            ai_text, error, _ = call_openrouter(model, prompt_text)
+            ai_text, error, _ = call_openrouter_retrying(model, prompt_text)
             print(f'[{task_id}] OpenRouter ответил: error={error}, len={len(ai_text) if ai_text else 0}')
             if ai_text:
                 result_file_content = parse_single_file_response(ai_text, filename or 'file.txt', file_content or '')
@@ -836,7 +872,7 @@ def process_task(task_id):
             else:
                 prompt_text = build_archive_prompt(text_files, prompt)
                 print(f'[{task_id}] Отправляю в OpenRouter (archive), prompt_len={len(prompt_text)}...')
-                ai_text, error, _ = call_openrouter(model, prompt_text)
+                ai_text, error, _ = call_openrouter_retrying(model, prompt_text)
                 print(f'[{task_id}] OpenRouter ответил: error={error}, len={len(ai_text) if ai_text else 0}')
                 if ai_text:
                     updated_files = parse_ai_response(ai_text, text_files)
