@@ -673,22 +673,53 @@ const DialogChat = ({
           )}
 
           <div className="mb-3">
-            <div className="mb-2 flex items-center justify-between">
-              <span className={`text-sm ${divTheme.muted}`}>
-                Вы можете вытянуть на этот вопрос от 1 до {maxCards} карт.
-                Выбрано: {picked.length}
-              </span>
-              {picked.length > 0 && (
-                <button
-                  type="button"
-                  onClick={resetDraw}
-                  disabled={busy}
-                  className="text-xs text-[#9888b8] underline hover:text-[#c9a84c]"
-                >
-                  Перетянуть
-                </button>
-              )}
+            {/* Шапка стола: главное действие на виду, как в раскладах.
+                На мобильном перестраивается в столбик. */}
+            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <h4 className="font-serif text-lg text-[#f3ecff]">
+                  Стол расклада
+                </h4>
+                <span className="rounded-full bg-white/8 px-2.5 py-0.5 text-xs text-[#c9bfe0]">
+                  {picked.length}/{maxCards}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                {mode === "online" && (
+                  <Button
+                    type="button"
+                    size="lg"
+                    onClick={shuffleDeck}
+                    disabled={busy || !hasQuestion}
+                    className={`${divTheme.btnHero} w-full sm:w-auto disabled:opacity-40`}
+                  >
+                    <Icon name="Shuffle" size={20} className="mr-2" />
+                    Перемешать карты
+                  </Button>
+                )}
+                {picked.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    onClick={resetDraw}
+                    disabled={busy}
+                    className="flex-1 border border-white/25 text-[#e8e0f0] hover:bg-white/8 hover:text-white sm:flex-none"
+                  >
+                    <Icon name="Eraser" size={16} className="mr-1.5" />
+                    Перетянуть
+                  </Button>
+                )}
+              </div>
             </div>
+
+            {/* Подсказка одной строкой под шапкой */}
+            <p className="mb-2 text-sm text-[#9888b8]">
+              {mode === "online" && !hasQuestion
+                ? "Сначала напишите вопрос — потом перемешайте колоду"
+                : mode === "online" && !shuffled
+                  ? "Сосредоточьтесь на вопросе и перемешайте колоду"
+                  : `Вы можете вытянуть на этот вопрос от 1 до ${maxCards} карт. Выбрано: ${picked.length}`}
+            </p>
 
             <div className="flex flex-wrap items-center gap-2">
               {picked.map((c, i) => {
@@ -829,52 +860,30 @@ const DialogChat = ({
           )}
 
           {/* ОНЛАЙН: колода рубашками вверх, карту тянут вслепую */}
-          {picked.length < maxCards && mode === "online" && (
+          {picked.length < maxCards && mode === "online" && shuffled && (
             <div className="mb-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/10">
-              {!shuffled ? (
-                <div className="text-center">
-                  <p className={`mb-2 text-sm ${divTheme.muted}`}>
-                    {hasQuestion
-                      ? "Сосредоточьтесь на вопросе и перемешайте колоду"
-                      : "Сначала напишите вопрос — потом перемешайте колоду"}
-                  </p>
-                  <Button
+              <p className={`mb-2 text-center text-sm ${divTheme.muted}`}>
+                Выберите карту из колоды — она откроется только после выбора
+              </p>
+              <div className="flex flex-wrap justify-center gap-1">
+                {deck.map((_, i) => (
+                  <button
+                    key={i}
                     type="button"
-                    size="lg"
-                    onClick={shuffleDeck}
-                    disabled={busy || !hasQuestion}
-                    className={`${divTheme.btnHero} w-full sm:w-auto disabled:opacity-40`}
+                    onClick={() => drawCardAt(i)}
+                    disabled={busy}
+                    aria-label="Вытянуть карту"
+                    className="h-[86px] w-[56px] overflow-hidden rounded border border-[#c9a84c]/30 transition hover:-translate-y-1 hover:border-[#c9a84c] disabled:opacity-50 sm:h-[112px] sm:w-[72px]"
                   >
-                    <Icon name="Shuffle" size={20} className="mr-2" />
-                    Перемешать карты
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <p className={`mb-2 text-center text-sm ${divTheme.muted}`}>
-                    Выберите карту из колоды — она откроется только после выбора
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-1">
-                    {deck.map((_, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => drawCardAt(i)}
-                        disabled={busy}
-                        aria-label="Вытянуть карту"
-                        className="h-[86px] w-[56px] overflow-hidden rounded border border-[#c9a84c]/30 transition hover:-translate-y-1 hover:border-[#c9a84c] disabled:opacity-50 sm:h-[112px] sm:w-[72px]"
-                      >
-                        <img
-                          src={backImage}
-                          alt=""
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
+                    <img
+                      src={backImage}
+                      alt=""
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
