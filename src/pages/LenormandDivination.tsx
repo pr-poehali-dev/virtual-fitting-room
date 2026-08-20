@@ -311,6 +311,9 @@ export default function LenormandDivination() {
   const loaderRef = useRef<HTMLDivElement>(null);
   // Шапка «Параметры диалога» — к ней возвращаемся из списка бесед
   const dialogTopRef = useRef<HTMLDivElement>(null);
+  // Стол расклада — после перемешивания поднимаем его к верху экрана,
+  // чтобы стол и верхние ряды колоды были видны одновременно
+  const tableRef = useRef<HTMLDivElement>(null);
 
   const FORM_STORAGE_KEY = "lenormand_form_v2";
   // Восстанавливать форму из localStorage можно только после проверки наличия
@@ -520,6 +523,11 @@ export default function LenormandDivination() {
       setActiveHouse(e === -1 ? 0 : e);
     }
     toast.success("Карты перемешаны — выбирайте карту для дома");
+    // Ждём отрисовку колоды под столом: без задержки высота страницы
+    // меняется прямо во время прокрутки и она уезжает не туда
+    setTimeout(() => {
+      tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
   };
 
   // Онлайн-расклад: тянем карту вслепую (берём верхнюю из колоды)
@@ -1886,7 +1894,10 @@ export default function LenormandDivination() {
           </Card>
 
           {/* Стол расклада — ниже на всю ширину */}
-          <Card className="border-0 bg-white/[0.04] ring-1 ring-[#c9a84c]/20">
+          <Card
+            ref={tableRef}
+            className="scroll-mt-20 border-0 bg-white/[0.04] ring-1 ring-[#c9a84c]/20"
+          >
             <CardContent className="p-5">
               {/* Заголовок, главное действие и счётчик — одной строкой.
                   На мобильном перестраивается в столбик. */}

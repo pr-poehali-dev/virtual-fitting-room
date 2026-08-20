@@ -119,6 +119,9 @@ const DialogChat = ({
   const stepRefs = useRef<Record<number, HTMLDivElement | null>>({});
   // Сколько ответов было в прошлый раз — чтобы отличить новый от загрузки истории
   const prevCountRef = useRef(0);
+  // Стол расклада — после перемешивания поднимаем его к верху экрана,
+  // чтобы стол и верхние ряды колоды были видны одновременно
+  const tableRef = useRef<HTMLDivElement>(null);
 
   const api = async (payload: Record<string, unknown>) => {
     const token = localStorage.getItem("session_token");
@@ -227,6 +230,11 @@ const DialogChat = ({
     setDeck(shuffle(pool));
     setShuffled(true);
     toast.success("Карты перемешаны — тяните карту из колоды");
+    // Ждём отрисовку колоды под столом: без задержки высота страницы
+    // меняется прямо во время прокрутки и она уезжает не туда
+    setTimeout(() => {
+      tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
   };
 
   // Реальный расклад: человек сам указывает выпавшую карту
@@ -670,7 +678,7 @@ const DialogChat = ({
             </div>
           )}
 
-          <div className="mb-3">
+          <div ref={tableRef} className="mb-3 scroll-mt-20">
             {/* Шапка стола: главное действие на виду, как в раскладах.
                 На мобильном перестраивается в столбик. */}
             <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
