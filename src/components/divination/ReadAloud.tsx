@@ -62,6 +62,32 @@ const ReadAloud = ({
   // Сколько знаков текущей фразы уже прочитано — чтобы продолжить с этого места
   const charRef = useRef(0);
 
+  // Пока идёт чтение, экран не должен гаснуть: телефон усыпляет вкладку
+  // и голос обрывается. Работает в Chrome на Android и Safari с iOS 16.4;
+  // где механизма нет — просто ничего не происходит.
+  const wakeRef = useRef<{ release: () => Promise<void> } | null>(null);
+
+  const keepAwake = useCallback(async () => {
+    try {
+      const nav = navigator as Navigator & {
+        wakeLock?: { request: (t: "screen") => Promise<any> };
+      };
+      if (!nav.wakeLock || wakeRef.current) return;
+      wakeRef.current = await nav.wakeLock.request("screen");
+    } catch {
+      /* браузер отказал — чтение всё равно продолжается */
+    }
+  }, []);
+
+  const allowSleep = useCallback(() => {
+    try {
+      wakeRef.current?.release();
+    } catch {
+      /* уже снят */
+    }
+    wakeRef.current = null;
+  }, []);
+
   useEffect(() => {
     setSupported(typeof window !== "undefined" && "speechSynthesis" in window);
   }, []);
@@ -72,8 +98,9 @@ const ReadAloud = ({
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
       }
+      allowSleep();
     },
-    [],
+    [allowSleep],
   );
 
   const pickVoice = () => {
@@ -102,6 +129,7 @@ const ReadAloud = ({
     if (i >= chunks.length) {
       setSpeaking(false);
       setPaused(false);
+      allowSleep();
       return;
     }
     idxRef.current = i;
@@ -143,6 +171,7 @@ const ReadAloud = ({
       if (run !== runRef.current) return;
       setSpeaking(false);
       setPaused(false);
+      allowSleep();
     };
     // Chrome иногда остаётся в «поставленном на паузу» состоянии после
     // прошлых команд — тогда новая фраза молчит. Снимаем это принудительно.
@@ -180,6 +209,7 @@ const ReadAloud = ({
     const run = ++runRef.current;
     setSpeaking(true);
     setPaused(false);
+    keepAwake();
     restartAt(0, run);
   };
 
@@ -190,6 +220,7 @@ const ReadAloud = ({
     window.speechSynthesis.cancel();
     setSpeaking(false);
     setPaused(false);
+    allowSleep();
   };
 
   // Свернули вкладку — телефон обрывает речь. Показываем это как паузу,
@@ -199,11 +230,15 @@ const ReadAloud = ({
       if (document.hidden && speaking && !paused) {
         pauseRef.current = true;
         setPaused(true);
+        allowSleep();
+      } else if (!document.hidden && speaking && !paused) {
+        // Вернулись во вкладку: система сняла запрет сна — просим заново
+        keepAwake();
       }
     };
     document.addEventListener("visibilitychange", onHide);
     return () => document.removeEventListener("visibilitychange", onHide);
-  }, [speaking, paused]);
+  }, [speaking, paused, keepAwake, allowSleep]);
 
   /**
    * Пауза и продолжение.
@@ -217,6 +252,7 @@ const ReadAloud = ({
       pauseRef.current = false;
       stoppedRef.current = false;
       setPaused(false);
+      keepAwake();
       // Речь уже идёт (фраза не успела дочитаться) — просто снимаем флаг
       if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
         return;
@@ -226,6 +262,7 @@ const ReadAloud = ({
     } else {
       pauseRef.current = true;
       setPaused(true);
+      allowSleep();
     }
   };
 
