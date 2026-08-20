@@ -163,9 +163,20 @@ def _build_rows_block(spread: dict, deck: dict, layout: list) -> str:
     grid = spread.get('grid') or {}
     cols = grid.get('cols') or 0
     rows = grid.get('rows') or 0
+    tail = grid.get('tail') or 0
     house_names = deck.get('house_names')
     if not cols or not rows or not house_names:
         return ''
+
+    def card_line(i: int, col: int) -> str:
+        card = _clean_card(layout[i] if i < len(layout) else '')
+        if not card:
+            return ''
+        house = house_names[i] if i < len(house_names) else ''
+        return (
+            f'Место {i + 1}, столбец {col}, в дом «{house}» '
+            f'выпала карта «{card}».'
+        )
 
     lines = []
     for r in range(rows):
@@ -174,15 +185,22 @@ def _build_rows_block(spread: dict, deck: dict, layout: list) -> str:
         else:
             lines.append(f'Ряд {r + 1} (под рядом {r}) слева направо:')
         for c in range(cols):
-            i = r * cols + c
-            card = _clean_card(layout[i] if i < len(layout) else '')
-            if not card:
-                continue
-            house = house_names[i] if i < len(house_names) else ''
-            lines.append(
-                f'Место {i + 1}, столбец {c + 1}, в дом «{house}» '
-                f'выпала карта «{card}».'
-            )
+            line = card_line(r * cols + c, c + 1)
+            if line:
+                lines.append(line)
+
+    if tail:
+        # Нижний ряд стоит по центру поля: столбцы считаем от этого сдвига
+        pad = (cols - tail) // 2
+        main = cols * rows
+        lines.append(
+            f'Ряд {rows + 1} (под рядом {rows} по центру) слева направо:'
+        )
+        for k in range(tail):
+            line = card_line(main + k, pad + k + 1)
+            if line:
+                lines.append(line)
+
     return '\n'.join(lines)
 
 
