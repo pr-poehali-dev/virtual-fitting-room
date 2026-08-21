@@ -228,10 +228,15 @@ def action_ask(body, user_id, event):
                     'current': balance,
                 }, event)
 
+            # Номер считаем только по состоявшимся шагам: неудачный шаг
+            # не должен занимать номер, иначе в беседе появляются пропуски.
+            # Шаги в работе учитываем — иначе два вопроса подряд получат
+            # одинаковый номер
             cur.execute(
                 f"""SELECT COALESCE(MAX(step_no), 0)
                     FROM {DB_SCHEMA}.divination_dialog_steps
-                    WHERE dialog_id = %s""",
+                    WHERE dialog_id = %s
+                      AND status IN ('done', 'pending', 'processing')""",
                 (dialog_id,),
             )
             step_no = (cur.fetchone()[0] or 0) + 1
