@@ -31,6 +31,18 @@ PARTIAL_SAVE_SEC = 15
 SOFT_DEADLINE_SEC = 210
 # Сколько раз максимум дописываем один ответ
 MAX_RESUMES = 6
+# Метка сетевого сбоя: связь не дошла до модели, значит запрос бесплатный
+# и его безопасно повторить
+NETWORK_ERROR_MARK = 'Обрыв связи'
+# Сколько раз повторяем сорвавшийся шаг архива, прежде чем признать неудачу
+MAX_STEP_RETRIES = 3
+# Признаки временного сбоя: такой шаг имеет смысл повторить, а не хоронить
+# всю задачу вместе с уже обработанными файлами
+RETRYABLE_MARKS = (
+    NETWORK_ERROR_MARK, 'SSL', 'EOF occurred', 'Max retries exceeded',
+    'Connection', 'Timeout', 'timed out', 'Read timed out',
+    'Модель не вернула ответ', '(429)', '(500)', '(502)', '(503)', '(504)',
+)
 
 TEXT_EXTENSIONS = {
     '.py', '.js', '.jsx', '.ts', '.tsx', '.html', '.css', '.scss', '.less',
@@ -318,23 +330,28 @@ def call_openrouter(model, prompt_text, on_partial=None, soft_deadline=None):
     следующим запуском, а не потерять всё по таймауту облака.
     """
     t0 = time.time()
-    response = requests.post(
-        OPENROUTER_URL,
-        headers={
-            'Authorization': f'Bearer {OPENROUTER_API_KEY}',
-            'Content-Type': 'application/json',
-            'Accept': 'text/event-stream',
-        },
-        json={
-            'model': model,
-            'messages': [{'role': 'user', 'content': prompt_text}],
-            'max_tokens': 100000,
-            'stream': True,
-        },
-        timeout=(30, 570),
-        proxies=get_openrouter_proxies(),
-        stream=True,
-    )
+    try:
+        response = requests.post(
+            OPENROUTER_URL,
+            headers={
+                'Authorization': f'Bearer {OPENROUTER_API_KEY}',
+                'Content-Type': 'application/json',
+                'Accept': 'text/event-stream',
+            },
+            json={
+                'model': model,
+                'messages': [{'role': 'user', 'content': prompt_text}],
+                'max_tokens': 100000,
+                'stream': True,
+            },
+            timeout=(30, 570),
+            proxies=get_openrouter_proxies(),
+            stream=True,
+        )
+    except requests.exceptions.RequestException as e:
+        # Связь оборвалась до ответа — модель ничего не считала и денег не взяла
+        print(f'[openrouter-fail] model={model} связь не установлена: {str(e)[:300]}')
+        return None, f'{NETWORK_ERROR_MARK}: {str(e)[:400]}', False
 
     t_headers = time.time() - t0
     if response.status_code != 200:
@@ -348,8 +365,18 @@ def call_openrouter(model, prompt_text, on_partial=None, soft_deadline=None):
     t_first_chunk = None
     truncated = False
     last_save = time.time()
+    net_broke = []
 
-    for raw_line in response.iter_lines(decode_unicode=True):
+    def safe_lines():
+        """Обрыв связи посреди ответа не должен ронять уже полученный текст."""
+        try:
+            for line in response.iter_lines(decode_unicode=True):
+                yield line
+        except requests.exceptions.RequestException as e:
+            net_broke.append(str(e)[:300])
+            print(f'[openrouter-fail] model={model} связь оборвалась: {str(e)[:300]}')
+
+    for raw_line in safe_lines():
         # Не даём облаку убить функцию на полуслове: сохраняем и выходим сами
         if soft_deadline and time.time() > soft_deadline:
             truncated = True
@@ -405,6 +432,13 @@ def call_openrouter(model, prompt_text, on_partial=None, soft_deadline=None):
             return ai_text, None, True
         return None, f'OpenRouter ошибка: {stream_error[:500]}', False
 
+    if net_broke:
+        # Успели что-то получить — отдаём как незаконченное, допишем следующим
+        # заходом. Пусто — это сетевой сбой, его имеет смысл повторить
+        if ai_text:
+            return ai_text, None, True
+        return None, f'{NETWORK_ERROR_MARK}: {net_broke[0]}', False
+
     if not ai_text:
         print(f'[openrouter-fail] model={model} поток пуст, ни одного знака')
         return None, 'Модель не вернула ответ', False
@@ -415,7 +449,8 @@ def call_openrouter_retrying(model, prompt_text, on_partial=None, soft_deadline=
                              attempts=3):
     """Повторяет запрос, если модель не написала НИ ОДНОГО знака.
 
-    Мгновенный пустой отказ провайдера — обычно разовый сбой на его стороне.
+    Два случая для повтора, и оба бесплатны — платного ответа не было:
+    обрыв связи по дороге и мгновенный пустой отказ провайдера.
     Как только пошёл текст, повторов нет: написанное дороже, а второй заход
     к модели — это второй платный запрос.
     """
@@ -430,14 +465,20 @@ def call_openrouter_retrying(model, prompt_text, on_partial=None, soft_deadline=
                 print(f'[openrouter-retry] успех с попытки {i + 1}')
             return text, error, truncated
         last_error = error
-        # Текста нет вообще. Повторяем, только если это был мгновенный отказ
-        # и в запасе достаточно времени до предела выполнения функции
+        is_network = NETWORK_ERROR_MARK in (error or '')
+
+        # Времени до предела функции не осталось — повторять нечем
+        no_time = soft_deadline and time.time() + 40 > soft_deadline
+        # Пустой отказ повторяем только если он пришёл быстро: долгое молчание
+        # означает, что модель работала, и повтор будет платным впустую.
+        # Обрыв связи повторяем всегда — до модели запрос не дошёл
         spent = time.time() - started
-        no_time = soft_deadline and time.time() + 30 > soft_deadline
-        if i == attempts - 1 or spent > 60 or no_time:
+        too_long = (not is_network) and spent > 60
+
+        if i == attempts - 1 or no_time or too_long:
             break
-        print(f'[openrouter-retry] попытка {i + 1} пуста ({error}), повтор')
-        time.sleep(1.5 * (i + 1))
+        print(f'[openrouter-retry] попытка {i + 1} неудачна ({str(error)[:120]}), повтор')
+        time.sleep(2 * (i + 1) if is_network else 1.5 * (i + 1))
     return None, last_error, False
 
 
@@ -531,7 +572,9 @@ def process_archive_step(task_id, model, prompt, archive_base64):
     # --- Шаг 1: построить план ---
     if plan_files is None:
         print(f'[{task_id}] Шаг: планирование, файлов на входе={len(text_files)}')
-        plan_text, error, _ = call_openrouter(model, build_plan_prompt(text_files, prompt))
+        plan_text, error, _ = call_openrouter_retrying(
+            model, build_plan_prompt(text_files, prompt)
+        )
         if error:
             return True, error
         plan = parse_plan_response(plan_text)
@@ -583,7 +626,7 @@ def process_archive_step(task_id, model, prompt, archive_base64):
         prompt_text = build_step_file_prompt(
             text_files, prompt, path, target.get('what') or '', plan_summary
         )
-        ai_text, error, _ = call_openrouter(model, prompt_text)
+        ai_text, error, _ = call_openrouter_retrying(model, prompt_text)
         if error:
             return True, error
 
@@ -669,6 +712,57 @@ def fail_task(task_id, error):
         conn.close()
 
 
+def is_retryable_error(error):
+    """Временный сбой (сеть, перегрузка провайдера) — шаг можно повторить."""
+    text = str(error or '')
+    return any(mark in text for mark in RETRYABLE_MARKS)
+
+
+def register_step_failure(task_id, error):
+    """Считает неудачи шага. Возвращает True, если попытки ещё остались.
+
+    Уже обработанные файлы сохранены в БД, поэтому повтор продолжит с того же
+    места и оплаченная работа не пропадает.
+    """
+    safe_id = str(task_id).replace("'", "''")
+    now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
+                    SET step_retries = COALESCE(step_retries, 0) + 1,
+                        step_lock = NULL, updated_at = '{now}'
+                    WHERE id = '{safe_id}'
+                    RETURNING step_retries"""
+            )
+            row = cur.fetchone()
+        conn.commit()
+    finally:
+        conn.close()
+    tries = row[0] if row else MAX_STEP_RETRIES
+    if tries < MAX_STEP_RETRIES:
+        print(f'[{task_id}] Шаг сорвался ({tries}/{MAX_STEP_RETRIES}), повторю: {str(error)[:200]}')
+        return True
+    print(f'[{task_id}] Шаг сорвался {tries} раз подряд, задача признана неудачной')
+    return False
+
+
+def reset_step_failures(task_id):
+    """Шаг удался — обнуляем счётчик, чтобы редкие сбои не копились."""
+    safe_id = str(task_id).replace("'", "''")
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""UPDATE {DB_SCHEMA}.ai_editor_tasks SET step_retries = 0
+                    WHERE id = '{safe_id}' AND COALESCE(step_retries, 0) <> 0"""
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def is_archive_task(task_id):
     """True только для незавершённых архивных задач (chat/lenormand сюда не попадают)."""
     safe_id = str(task_id).replace("'", "''")
@@ -720,9 +814,19 @@ def process_archive_task(task_id):
     except Exception as e:
         done, error = True, str(e)[:1000]
 
-    if error:
-        print(f'[{task_id}] Ошибка шага: {error}')
-        fail_task(task_id, error)
+    if not error:
+        reset_step_failures(task_id)
+        return
+
+    print(f'[{task_id}] Ошибка шага: {error}')
+
+    # Временный сбой не должен хоронить всю задачу: уже обработанные файлы
+    # сохранены, повторяем шаг с того же места. Следующий опрос статуса
+    # подхватит задачу — замок снят
+    if is_retryable_error(error) and register_step_failure(task_id, error):
+        return
+
+    fail_task(task_id, error)
 
 
 def build_continue_prompt(original_prompt, done_text):
