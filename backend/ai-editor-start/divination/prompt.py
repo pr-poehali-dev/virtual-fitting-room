@@ -354,8 +354,9 @@ def build_divination_prompt(meta: dict) -> str:
         parts.append('')
         parts.append(figures_block)
 
-    parts.append('')
-    parts.append(spread['chains'])
+    if spread.get('chains'):
+        parts.append('')
+        parts.append(spread['chains'])
 
     # Фокус разбора: «вся картина жизни» — только если выбраны все сферы.
     # Иначе весь расклад читается через выбранные сферы и вопрос.
