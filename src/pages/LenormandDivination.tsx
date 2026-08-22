@@ -129,6 +129,9 @@ const WIZARD_TITLES_DIALOG = WIZARD_TITLES_FULL.slice(0, 5);
 
 type Mode = "online" | "real";
 
+// Лимит комментария к раскладу: длинный список вопросов раздувает разбор
+const COMMENT_MAX = 300;
+
 const shuffleArray = <T,>(arr: T[]): T[] => {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -1714,7 +1717,10 @@ export default function LenormandDivination() {
                     <div className="w-full">
                       <Textarea
                         value={comment}
-                        onChange={(e) => setComment(e.target.value)}
+                        onChange={(e) =>
+                          setComment(e.target.value.slice(0, COMMENT_MAX))
+                        }
+                        maxLength={COMMENT_MAX}
                         placeholder={
                           asksQuestion
                             ? "Например: как сложится новый проект?"
@@ -1723,6 +1729,9 @@ export default function LenormandDivination() {
                         rows={3}
                         className="border-2 border-white/50 bg-transparent text-white placeholder:text-white/60 focus-visible:ring-white/40"
                       />
+                      <div className="mt-1 text-right text-xs text-white/60">
+                        {comment.length} / {COMMENT_MAX}
+                      </div>
                     </div>
                   )}
                   </div>

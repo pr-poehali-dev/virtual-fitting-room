@@ -22,7 +22,7 @@ const DIVINATION_DIALOG =
 
 // Предел длины вопроса: хватает на несколько подвопросов,
 // но не даёт вставить в поле большой текст
-const QUESTION_MAX = 700;
+const QUESTION_MAX = 450;
 
 export interface DialogStep {
   step_no: number;

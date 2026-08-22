@@ -56,13 +56,13 @@ COMPLETENESS_RULE = (
 # поэтому модель их путает. Разводим термины явно и один раз.
 LENORMAND_GLOSSARY = (
     'СЛОВАРЬ (дальше используй только эти слова).\n'
-    '- НОМЕР ДОМА — номер клетки на столе. Идут по порядку от 1 до 36.\n'
-    '- ДОМ — название дома. Каждому номеру дома соответствует название. '
+    '- № ДОМА — номер клетки на столе. Идут по порядку от 1 до 36.\n'
+    '- ДОМ — название дома. Каждому № ДОМА соответствует название. '
     'Они идут по порядку, их порядок всегда одинаковый.\n'
     '- КАРТА — то, что выпало в этом ДОМЕ. Они идут в том порядке, '
     'как их вытянул тот, кому делается расклад.\n'
-    '- НОМЕР КАРТЫ — это номер, соответствующий КАРТЕ. У каждой КАРТЫ '
-    'свой НОМЕР КАРТЫ.\n'
+    '- № КАРТЫ — это номер, соответствующий КАРТЕ. У каждой КАРТЫ '
+    'свой № КАРТЫ.\n'
     '- ДОМА и КАРТЫ называются одинаковыми словами, но это разные вещи. '
     'ДОМА располагаются всегда по порядку, а карты, которые выпадают '
     'в ДОМА, выпадают в перемешанном виде.\n'
@@ -71,7 +71,7 @@ LENORMAND_GLOSSARY = (
     '- КАК ПИСАТЬ В ОТВЕТЕ. Номера нужны тебе, чтобы точно ориентироваться '
     'и не путать дома с картами. В самом тексте разбора пиши просто и живо: '
     '«карта Луна в доме Кольца» — сначала карта, потом дом. Не нагружай '
-    'читателя длинными «КАРТА НОМЕР 32 в ДОМЕ НОМЕР 25»; номер уместен '
+    'читателя длинными «КАРТА №32 в ДОМЕ №25»; номер уместен '
     'изредка, только если без него непонятно, о каком доме речь.'
 )
 
@@ -80,6 +80,16 @@ def _clean_card(value) -> str:
     if isinstance(value, str) and value.strip():
         return value.strip()
     return ''
+
+
+# Коса (10) и Метла (11) — самая частая путаница у моделей.
+# Помечаем их прямо в строке расклада, где бы они ни встретились.
+_MIXUP_PAIRS = {'Коса': 'Метлой', 'Метла': 'Косой'}
+
+
+def _mixup(name: str) -> str:
+    other = _MIXUP_PAIRS.get(name)
+    return f' (не путать с {other})' if other else ''
 
 
 def _card_number(deck: dict, card: str):
@@ -154,10 +164,13 @@ def _build_table_block(spread: dict, deck: dict, layout: list) -> str:
         house = house_names[i] if i < len(house_names) else ''
         num = _card_number(deck, card)
         card_part = (
-            f'выпала КАРТА НОМЕР {num} - КАРТА «{card}»' if num
+            f'выпала КАРТА №{num} «{card}»' if num
             else f'выпала КАРТА «{card}»'
         )
-        return f'ДОМ НОМЕР {i + 1} · дом «{house}» · {card_part}'
+        return (
+            f'ДОМ №{i + 1} · дом «{house}»{_mixup(house)} · '
+            f'{card_part}{_mixup(card)}'
+        )
 
     def fmt_row(cells: list) -> str:
         return '| ' + ' | '.join(c if c else ' ' for c in cells) + ' |'
@@ -198,13 +211,10 @@ def _build_rows_block(spread: dict, deck: dict, layout: list) -> str:
             return ''
         house = house_names[i] if i < len(house_names) else ''
         num = _card_number(deck, card)
-        card_part = (
-            f'КАРТА НОМЕР {num} - КАРТА «{card}»' if num
-            else f'КАРТА «{card}»'
-        )
+        card_part = f'КАРТА №{num} «{card}»' if num else f'КАРТА «{card}»'
         return (
-            f'ДОМ НОМЕР {i + 1}, столбец {col}, в ДОМ «{house}» '
-            f'выпала {card_part}.'
+            f'ДОМ №{i + 1}, столбец {col}, в ДОМ «{house}»{_mixup(house)} '
+            f'выпала {card_part}{_mixup(card)}.'
         )
 
     lines = []
@@ -258,7 +268,7 @@ def _build_figures_block(spread: dict, deck: dict, layout: list, gender: str) ->
                 where = f', ряд {i // cols + 1}, столбец {i % cols + 1}'
             else:
                 where = f', итоговый ряд, {i - main + 1}-я по счёту'
-        return f'ДОМ НОМЕР {i + 1}{where}, дом «{house}»'
+        return f'ДОМ №{i + 1}{where}, дом «{house}»'
 
     own, other = ('Женщина', 'Мужчина') if gender == 'female' else ('Мужчина', 'Женщина')
     # Короткий вид: места фигур уже перечислены в списке карт
@@ -297,8 +307,8 @@ def _build_index_block(spread: dict, deck: dict, layout: list) -> str:
             continue
         house = house_names[i] if i < len(house_names) else ''
         num = _card_number(deck, card)
-        head = f'КАРТА НОМЕР {num} «{card}»' if num else f'КАРТА «{card}»'
-        items.append((card, f'{head} — ДОМ НОМЕР {i + 1}, дом «{house}»'))
+        head = f'КАРТА №{num} «{card}»' if num else f'КАРТА «{card}»'
+        items.append((card, f'{head} — ДОМ №{i + 1}, дом «{house}»'))
     if not items:
         return ''
     items.sort(key=lambda x: x[0])
@@ -420,6 +430,17 @@ def build_divination_prompt(meta: dict) -> str:
         parts.append(spread['length'])
 
     parts.append('')
+    # Расстановка повторяется вплотную к инструкциям: в начале задания
+    # она остаётся далеко позади, и модель начинает вспоминать по памяти
+    if spread.get('cards_format') == 'rows' and rows_block:
+        parts.append(
+            'РАССТАНОВКА ПЕРЕД ГЛАЗАМИ (тот же список, держи его под рукой). '
+            'Это единственный источник правды о раскладе: каждый раз, когда '
+            'называешь дом карты, сверяйся с этим списком, а не с памятью.'
+        )
+        parts.append(rows_block)
+        parts.append('')
+
     # Свой блок правил уже содержит требование не обрывать мысль
     if spread.get('extra_rules'):
         parts.append(spread['extra_rules'])
