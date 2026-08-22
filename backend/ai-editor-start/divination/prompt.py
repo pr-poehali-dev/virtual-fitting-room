@@ -56,14 +56,23 @@ COMPLETENESS_RULE = (
 # поэтому модель их путает. Разводим термины явно и один раз.
 LENORMAND_GLOSSARY = (
     'СЛОВАРЬ (дальше используй только эти слова).\n'
-    '- МЕСТО — номер клетки на столе. Это не номер карты.\n'
-    '- ДОМ — постоянная тема места, она не меняется.\n'
-    '- КАРТА — то, что выпало в этом месте.\n'
-    '- Дома и карты называются одинаковыми словами, но это разные вещи. '
-    'Пиши всегда в форме «карта Луна в доме Кольца»: сначала карта, '
-    'потом дом.\n'
+    '- НОМЕР ДОМА — номер клетки на столе. Идут по порядку от 1 до 36.\n'
+    '- ДОМ — название дома. Каждому номеру дома соответствует название. '
+    'Они идут по порядку, их порядок всегда одинаковый.\n'
+    '- КАРТА — то, что выпало в этом ДОМЕ. Они идут в том порядке, '
+    'как их вытянул тот, кому делается расклад.\n'
+    '- НОМЕР КАРТЫ — это номер, соответствующий КАРТЕ. У каждой КАРТЫ '
+    'свой НОМЕР КАРТЫ.\n'
+    '- ДОМА и КАРТЫ называются одинаковыми словами, но это разные вещи. '
+    'ДОМА располагаются всегда по порядку, а карты, которые выпадают '
+    'в ДОМА, выпадают в перемешанном виде.\n'
     '- СИГНИФИКАТОР — сама карта Женщина (для женщины) или сама карта '
-    'Мужчина (для мужчины), в том месте, где она выпала.'
+    'Мужчина (для мужчины), в том доме, где она выпала.\n'
+    '- КАК ПИСАТЬ В ОТВЕТЕ. Номера нужны тебе, чтобы точно ориентироваться '
+    'и не путать дома с картами. В самом тексте разбора пиши просто и живо: '
+    '«карта Луна в доме Кольца» — сначала карта, потом дом. Не нагружай '
+    'читателя длинными «КАРТА НОМЕР 32 в ДОМЕ НОМЕР 25»; номер уместен '
+    'изредка, только если без него непонятно, о каком доме речь.'
 )
 
 
@@ -71,6 +80,16 @@ def _clean_card(value) -> str:
     if isinstance(value, str) and value.strip():
         return value.strip()
     return ''
+
+
+def _card_number(deck: dict, card: str):
+    """Номер карты по каноническому порядку колоды. Считаем сами:
+    так модель не путает номер карты с номером дома."""
+    cards = deck.get('cards') or []
+    try:
+        return cards.index(card) + 1
+    except ValueError:
+        return None
 
 
 def _build_cards_block(spread: dict, deck: dict, layout: list) -> str:
@@ -96,7 +115,7 @@ def _build_cards_block(spread: dict, deck: dict, layout: list) -> str:
                 # Карты нижней отдельной строки
                 parts.append(
                     f'ИТОГОВАЯ СТРОКА (отдельно под полем), '
-                    f'место {i - main_count + 1} из {tail} —'
+                    f'{i - main_count + 1}-я из {tail} —'
                 )
             elif rows > 1 or cols > 1:
                 row = i // cols + 1
@@ -133,7 +152,12 @@ def _build_table_block(spread: dict, deck: dict, layout: list) -> str:
         if not card:
             return ''
         house = house_names[i] if i < len(house_names) else ''
-        return f'место {i + 1} · дом «{house}» · выпала карта «{card}»'
+        num = _card_number(deck, card)
+        card_part = (
+            f'выпала КАРТА НОМЕР {num} - КАРТА «{card}»' if num
+            else f'выпала КАРТА «{card}»'
+        )
+        return f'ДОМ НОМЕР {i + 1} · дом «{house}» · {card_part}'
 
     def fmt_row(cells: list) -> str:
         return '| ' + ' | '.join(c if c else ' ' for c in cells) + ' |'
@@ -173,9 +197,14 @@ def _build_rows_block(spread: dict, deck: dict, layout: list) -> str:
         if not card:
             return ''
         house = house_names[i] if i < len(house_names) else ''
+        num = _card_number(deck, card)
+        card_part = (
+            f'КАРТА НОМЕР {num} - КАРТА «{card}»' if num
+            else f'КАРТА «{card}»'
+        )
         return (
-            f'Место {i + 1}, столбец {col}, в дом «{house}» '
-            f'выпала карта «{card}».'
+            f'ДОМ НОМЕР {i + 1}, столбец {col}, в ДОМ «{house}» '
+            f'выпала {card_part}.'
         )
 
     lines = []
@@ -228,8 +257,8 @@ def _build_figures_block(spread: dict, deck: dict, layout: list, gender: str) ->
             if i < main:
                 where = f', ряд {i // cols + 1}, столбец {i % cols + 1}'
             else:
-                where = f', итоговый ряд, место {i - main + 1}'
-        return f'место {i + 1}{where}, дом «{house}»'
+                where = f', итоговый ряд, {i - main + 1}-я по счёту'
+        return f'ДОМ НОМЕР {i + 1}{where}, дом «{house}»'
 
     own, other = ('Женщина', 'Мужчина') if gender == 'female' else ('Мужчина', 'Женщина')
     # Короткий вид: места фигур уже перечислены в списке карт
@@ -267,7 +296,9 @@ def _build_index_block(spread: dict, deck: dict, layout: list) -> str:
         if not card:
             continue
         house = house_names[i] if i < len(house_names) else ''
-        items.append((card, f'карта «{card}» — место {i + 1}, дом «{house}»'))
+        num = _card_number(deck, card)
+        head = f'КАРТА НОМЕР {num} «{card}»' if num else f'КАРТА «{card}»'
+        items.append((card, f'{head} — ДОМ НОМЕР {i + 1}, дом «{house}»'))
     if not items:
         return ''
     items.sort(key=lambda x: x[0])
