@@ -9,6 +9,7 @@ import { DataProvider } from "./context/DataContext";
 import { BalanceProvider } from "./context/BalanceContext";
 import { useEffect, lazy, Suspense } from "react";
 import { startRoutePreload } from "@/utils/routePreloader";
+import ChunkErrorBoundary from "@/components/ChunkErrorBoundary";
 
 import Home from "./pages/Home";
 const ColorType = lazy(() => import("./pages/ColorType"));
@@ -128,6 +129,7 @@ const App = () => (
             <MaintenanceBanner />
             <ScrollToTop />
             <PageSeo />
+            <ChunkErrorBoundary fallback={null}>
             <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Home />} />
@@ -204,6 +206,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
+          </ChunkErrorBoundary>
         </BrowserRouter>
       </TooltipProvider>
         </DataProvider>
