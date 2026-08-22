@@ -159,24 +159,61 @@ def build_plan_prompt(files, user_prompt):
 ИНСТРУКЦИИ:
 1. НЕ пиши код файлов на этом шаге. Код будет запрошен отдельно.
 2. Определи, какие файлы нужно изменить, создать или удалить.
-3. Ответь СТРОГО в формате JSON без markdown-обёртки:
+3. Файлы пишутся по одному, отдельными запросами. Поэтому ЗАРАНЕЕ зафиксируй
+   всё общее между файлами, чтобы они состыковались: имена CSS/LESS-классов,
+   имена компонентов, названия пропсов и событий, пути импорта, имена функций
+   и переменных, структуру данных. Это обязательный договор для всех шагов.
+4. Ответь СТРОГО в формате JSON без markdown-обёртки:
 
 {{"summary": "краткое описание что будет сделано",
+  "conventions": ["класс-обёртка: .street-trade-card",
+                  "компонент Foo импортируется как @/components/Foo.vue",
+                  "проп items: Array<{{id: number, title: string}}>"],
   "files": [{{"path": "путь/к/файлу", "action": "edit", "what": "что именно изменить"}}],
   "delete": ["путь/к/файлу"]}}
 
-4. action — одно из: edit (изменить существующий), create (создать новый).
-5. Включай в files ТОЛЬКО файлы, которые реально нужно изменить или создать.
-6. Никакого текста вне JSON.
+5. action — одно из: edit (изменить существующий), create (создать новый).
+6. Включай в files ТОЛЬКО файлы, которые реально нужно изменить или создать.
+7. В conventions перечисли конкретные ИМЕНА, а не общие пожелания. Каждое имя,
+   которое встретится больше чем в одном файле, должно быть здесь.
+8. Никакого текста вне JSON.
 """
 
 
-def build_step_file_prompt(files, user_prompt, target_path, what_to_do, plan_summary):
-    """Шаг 2..N: модель возвращает ОДИН файл целиком. Проект виден для контекста."""
-    file_list = "\n".join(f"- {f}" for f in sorted(files.keys()))
+def build_step_file_prompt(files, user_prompt, target_path, what_to_do, plan_summary,
+                           conventions=None, done_paths=None, pending=None):
+    """Шаг 2..N: модель возвращает ОДИН файл целиком.
+
+    files здесь — проект в АКТУАЛЬНОМ виде: файлы, уже написанные на прошлых
+    шагах, подставлены вместо исходных. Иначе модель не видит собственную
+    разметку и выдумывает имена классов заново.
+    pending — файлы из плана, до которых очередь ещё не дошла: о них нужно
+    знать, чтобы подключать их, а не переписывать их содержимое внутрь себя.
+    """
+    done_paths = set(done_paths or [])
+    pending = pending or []
+
+    lines = []
+    for f in sorted(files.keys()):
+        mark = '  [уже обновлён на прошлом шаге]' if f in done_paths else ''
+        lines.append(f"- {f}{mark}")
+    for item in pending:
+        note = item.get('what') or ''
+        lines.append(
+            f"- {item['path']}  [БУДЕТ СОЗДАН/ИЗМЕНЁН НА СЛЕДУЮЩИХ ШАГАХ"
+            f"{': ' + note if note else ''}]"
+        )
+    file_list = "\n".join(lines)
+
     files_content = ""
     for path, content in sorted(files.items()):
-        files_content += f"\n--- FILE: {path} ---\n{content}\n"
+        state = ' (актуальная версия после правок)' if path in done_paths else ''
+        files_content += f"\n--- FILE: {path}{state} ---\n{content}\n"
+
+    conv_block = ""
+    if conventions:
+        conv_block = "\nОБЯЗАТЕЛЬНЫЕ ОБЩИЕ ИМЕНА (договор между файлами):\n" + \
+            "\n".join(f"- {c}" for c in conventions) + "\n"
 
     return f"""Ты — опытный разработчик. Тебе дан проект и задача от пользователя.
 
@@ -191,7 +228,7 @@ def build_step_file_prompt(files, user_prompt, target_path, what_to_do, plan_sum
 
 ОБЩИЙ ПЛАН:
 {plan_summary}
-
+{conv_block}
 ТЕКУЩИЙ ШАГ:
 Сейчас работай ТОЛЬКО над файлом: {target_path}
 Что нужно сделать в этом файле: {what_to_do}
@@ -204,7 +241,14 @@ def build_step_file_prompt(files, user_prompt, target_path, what_to_do, plan_sum
 ```
 
 2. НЕ выводи другие файлы — они обрабатываются отдельно.
-3. Никаких пояснений до или после блока.
+3. Содержимое файлов выше — АКТУАЛЬНОЕ, с уже внесёнными правками. Опирайся
+   на него: бери имена классов, компонентов, пропсов и пути импорта именно
+   оттуда, ничего не переименовывай и не придумывай заново.
+4. Файлы с пометкой «БУДЕТ СОЗДАН/ИЗМЕНЁН НА СЛЕДУЮЩИХ ШАГАХ» ещё не написаны,
+   но обязательно появятся. Подключай и импортируй их как готовые. НЕ переноси
+   их содержимое в текущий файл и не дублируй их код.
+5. Строго соблюдай общие имена из договора выше.
+6. Никаких пояснений до или после блока.
 """
 
 
@@ -239,8 +283,26 @@ def parse_plan_response(response_text):
         })
 
     deletes = [str(p).strip() for p in (data.get('delete') or []) if str(p).strip()]
+
+    # Общие имена из плана — их получит каждый шаг, чтобы файлы состыковались
+    conventions = []
+    raw_conv = data.get('conventions')
+    if isinstance(raw_conv, str):
+        raw_conv = [raw_conv]
+    for item in raw_conv or []:
+        if isinstance(item, dict):
+            item = '; '.join(f'{k}: {v}' for k, v in item.items())
+        text_item = str(item).strip()
+        if text_item:
+            conventions.append(text_item)
+
+    # Сначала создаваемые файлы, затем изменяемые: тот, кто подключает новый
+    # компонент, должен увидеть его уже написанным, а не догадываться
+    files.sort(key=lambda f: 0 if f['action'] == 'create' else 1)
+
     return {
         'summary': (data.get('summary') or '').strip(),
+        'conventions': conventions,
         'files': files,
         'delete': deletes,
     }
@@ -552,7 +614,8 @@ def process_archive_step(task_id, model, prompt, archive_base64):
     try:
         with conn.cursor() as cur:
             cur.execute(
-                f"""SELECT plan_files, done_files, step_index, plan_summary
+                f"""SELECT plan_files, done_files, step_index, plan_summary,
+                           plan_conventions
                     FROM {DB_SCHEMA}.ai_editor_tasks WHERE id = '{safe_id}'"""
             )
             row = cur.fetchone()
@@ -563,11 +626,14 @@ def process_archive_step(task_id, model, prompt, archive_base64):
     done_files = (row[1] if row and row[1] else {}) or {}
     step_index = (row[2] if row and row[2] is not None else 0)
     plan_summary = (row[3] if row and row[3] else '') or ''
+    conventions = (row[4] if row and row[4] else []) or []
 
     if isinstance(plan_files, str):
         plan_files = json.loads(plan_files)
     if isinstance(done_files, str):
         done_files = json.loads(done_files)
+    if isinstance(conventions, str):
+        conventions = json.loads(conventions)
 
     # --- Шаг 1: построить план ---
     if plan_files is None:
@@ -603,6 +669,7 @@ def process_archive_step(task_id, model, prompt, archive_base64):
                     f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
                         SET plan_files = {sql_escape(json.dumps(payload, ensure_ascii=False))}::jsonb,
                             plan_summary = {sql_escape(plan['summary'])},
+                            plan_conventions = {sql_escape(json.dumps(plan['conventions'], ensure_ascii=False))}::jsonb,
                             done_files = '{{}}'::jsonb,
                             step_index = 0,
                             step_lock = NULL,
@@ -623,14 +690,38 @@ def process_archive_step(task_id, model, prompt, archive_base64):
         path = target.get('path')
         print(f'[{task_id}] Шаг {step_index + 1}/{len(targets)}: файл {path}')
 
+        # Показываем проект в актуальном виде: то, что уже написано на прошлых
+        # шагах, вместо исходных версий. Иначе модель не видит собственную
+        # разметку и придумывает имена классов заново
+        current_files = dict(text_files)
+        current_files.update(done_files)
+        for dead in deletes:
+            current_files.pop(dead, None)
+        # Текущий файл модель пишет сама — исходник ей уже показан в контексте
+        # шага, дублировать не нужно, но и прятать вредно: пусть видит основу
+
+        # Файлы, до которых очередь не дошла: их нужно подключать как готовые,
+        # а не переписывать внутрь текущего файла
+        pending = []
+        for later in targets[step_index + 1:]:
+            later_path = later.get('path')
+            if later_path and later_path != path:
+                pending.append({'path': later_path, 'what': later.get('what') or ''})
+                # Ещё не созданный файл не должен показываться пустым
+                if later.get('action') == 'create':
+                    current_files.pop(later_path, None)
+
         prompt_text = build_step_file_prompt(
-            text_files, prompt, path, target.get('what') or '', plan_summary
+            current_files, prompt, path, target.get('what') or '', plan_summary,
+            conventions=conventions,
+            done_paths=set(done_files.keys()),
+            pending=pending,
         )
         ai_text, error, _ = call_openrouter_retrying(model, prompt_text)
         if error:
             return True, error
 
-        content = parse_single_file_response(ai_text, path, text_files.get(path, ''))
+        content = parse_single_file_response(ai_text, path, current_files.get(path, ''))
         done_files[path] = content
 
         conn = get_db_connection()

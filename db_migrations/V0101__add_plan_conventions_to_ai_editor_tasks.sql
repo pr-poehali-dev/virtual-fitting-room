@@ -1,0 +1,2 @@
+ALTER TABLE t_p29007832_virtual_fitting_room.ai_editor_tasks
+ADD COLUMN IF NOT EXISTS plan_conventions JSONB;
