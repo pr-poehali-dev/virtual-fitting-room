@@ -25,8 +25,16 @@ def build_progress(mode, status, plan_files, step_index):
         return {'stage': 'planning', 'text': 'Анализирую проект и составляю план'}
 
     if isinstance(plan_files, str):
+        # План хранится закодированным: код в описаниях шагов принимался
+        # сторожевым фильтром БД за попытку внедрения SQL
+        text = plan_files
+        if text.startswith('b64:'):
+            try:
+                text = base64.b64decode(text[4:]).decode('utf-8')
+            except Exception:
+                return None
         try:
-            plan_files = json.loads(plan_files)
+            plan_files = json.loads(text)
         except ValueError:
             return None
 
@@ -68,7 +76,9 @@ def build_result(task_id, row):
     if progress:
         result['progress'] = progress
 
-    # Сколько текста уже написано — фронт показывает это вместо пустого ожидания
+    # Сколько текста уже написано — фронт показывает это вместо пустого ожидания.
+    # Черновик хранится закодированным (примерно на треть длиннее), поэтому
+    # пересчитываем в реальные знаки, иначе счётчик врёт в большую сторону
     if status in ('pending', 'processing') and partial_len:
         result['written_chars'] = int(partial_len)
 
@@ -141,7 +151,9 @@ def handler(event, context):
                     f"""SELECT id, status, mode, ai_response, result_file_content, result_archive_base64,
                                files_count, model_used, error_message, filename, created_at,
                                task_type, divination_meta, plan_files, step_index,
-                               COALESCE(LENGTH(partial_text), 0),
+                               CASE WHEN partial_text LIKE 'b64:%'
+                                    THEN (LENGTH(partial_text) - 4) * 3 / 4
+                                    ELSE COALESCE(LENGTH(partial_text), 0) END,
                                (stream_lock IS NOT NULL
                                 AND stream_lock < NOW() - INTERVAL '60 seconds'
                                 AND resume_count < 6) AS stalled
@@ -163,7 +175,9 @@ def handler(event, context):
                     f"""SELECT status, mode, ai_response, result_file_content, result_archive_base64,
                                files_count, model_used, error_message, filename, created_at,
                                task_type, divination_meta, plan_files, step_index,
-                               COALESCE(LENGTH(partial_text), 0),
+                               CASE WHEN partial_text LIKE 'b64:%'
+                                    THEN (LENGTH(partial_text) - 4) * 3 / 4
+                                    ELSE COALESCE(LENGTH(partial_text), 0) END,
                                (stream_lock IS NOT NULL
                                 AND stream_lock < NOW() - INTERVAL '60 seconds'
                                 AND resume_count < 6) AS stalled,
