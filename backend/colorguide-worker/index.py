@@ -392,23 +392,25 @@ def call_gemini(image_url: str, forced_slug: str = None, forced_slug_alt: str = 
     raise last_error if last_error else RuntimeError('Gemini call failed')
 
 
-def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_name: str) -> Dict[str, Any]:
-    """Запрос к Gemini с произвольной JSON-схемой (для картиночных сервисов)."""
+def call_gemini_with_schema(image_url: str, prompt: str, schema: dict, schema_name: str,
+                            reference_url: str = None) -> Dict[str, Any]:
+    """Запрос к Gemini с произвольной JSON-схемой (для картиночных сервисов).
+
+    reference_url — необязательная справочная схема (например, таблица типажей Кибби),
+    она идёт ВТОРЫМ изображением, человек всегда на первом.
+    """
     api_key = os.environ.get('OPENROUTER_API_KEY_NEW') or os.environ.get('OPENROUTER_API_KEY')
     if not api_key:
         raise RuntimeError('OPENROUTER_API_KEY not configured')
 
+    content = [{'type': 'image_url', 'image_url': {'url': image_url}}]
+    if reference_url:
+        content.append({'type': 'image_url', 'image_url': {'url': reference_url}})
+    content.append({'type': 'text', 'text': prompt})
+
     payload = {
         'model': 'google/gemini-2.5-flash',
-        'messages': [
-            {
-                'role': 'user',
-                'content': [
-                    {'type': 'image_url', 'image_url': {'url': image_url}},
-                    {'type': 'text', 'text': prompt}
-                ]
-            }
-        ],
+        'messages': [{'role': 'user', 'content': content}],
         'max_tokens': 6000,
         'temperature': 0.7,
         'response_format': {
@@ -834,6 +836,8 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
 
         required = getattr(service, 'REQUIRED_FIELDS', [])
         has_schema = bool(getattr(service, 'RESPONSE_SCHEMA', None))
+        # Справочная схема сервиса (например, таблица типажей Кибби) — второе изображение для анализа.
+        reference_url = getattr(service, 'REFERENCE_IMAGE_URL', None)
         if getattr(service, 'USE_QWEN', False):
             model_used = 'qwen'
             try:
@@ -848,7 +852,8 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
                     raise
                 print(f'[MODEL-CHECK] service={service_type} fallback -> gemini')
                 analysis = call_gemini_with_schema(
-                    person_url, gemini_prompt, service.RESPONSE_SCHEMA, f'{service_type}_result'
+                    person_url, gemini_prompt, service.RESPONSE_SCHEMA, f'{service_type}_result',
+                    reference_url
                 )
                 model_used = 'gemini-fallback'
                 missing = [f for f in required if not analysis.get(f)]
@@ -859,7 +864,8 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
         else:
             model_used = 'gemini'
             analysis = call_gemini_with_schema(
-                person_url, gemini_prompt, service.RESPONSE_SCHEMA, f'{service_type}_result'
+                person_url, gemini_prompt, service.RESPONSE_SCHEMA, f'{service_type}_result',
+                reference_url
             )
             missing = [f for f in required if not analysis.get(f)]
             status_json = 'bad' if missing else 'ok'
