@@ -5,7 +5,15 @@
 nano-banana-2 рисует 3 образа, раскрывающих типаж.
 """
 
+from datetime import datetime
+
 LOGO_IMAGE_URL = None
+
+
+def _season_years() -> str:
+    """Текущий и следующий год — чтобы промпт не устаревал (например, '2026-2027')."""
+    y = datetime.now().year
+    return f'{y}-{y + 1}'
 
 USE_QWEN = False
 
@@ -53,6 +61,7 @@ Dramatic, Soft Dramatic, Flamboyant Natural, Soft Natural, Dramatic Classic, Sof
 - tips: 5 коротких практических советов по одеванию этого типажа на русском (строки).
 - kibbe_looks: массив РОВНО из 3 объектов {title, description}. Это 3 готовых образа, максимально раскрывающих типаж этого человека. title — короткое название на русском (например, "Повседневный природный", "Деловой мягкий", "Вечерний выход"). description — ДЕТАЛЬНОЕ описание образа в 2-3 предложения: что надето сверху и снизу, верхняя одежда, обувь, сумка, аксессуары и украшения, с конкретными фасонами, тканями и цветами. Образы должны перекрывать разные ситуации: повседневный, деловой или смарт-кэжуал, и обязательно один нарядный для особого случая.
   ОЧЕНЬ ВАЖНО ПРО АКТУАЛЬНОСТЬ: образы должны выглядеть как мода текущего и следующего сезона — актуальные силуэты, посадка, обувь и сумки из новых коллекций. Мысленно сверься со свежими коллекциями и street style этого сезона и одевай человека так, как одел бы его ведущий стилист сегодня.
+  ДЛИНА И ФАСОН — ОБЯЗАТЕЛЬНО КОНКРЕТНО: у каждой вещи указывай, до какой точки на теле она доходит, и называй конкретный фасон. Расплывчатые слова про длину и объём ("удлинённый", "укороченный", "свободный", "средний") сами по себе не годятся — художник трактует их произвольно и рисует крайность. Всегда привязывай длину к ориентиру на теле и добавляй название фасона.
   ВАЖНО ПРО ЦВЕТ: в одном образе не более 3 цветов в пропорции 60-30-10, сочетающихся между собой и подходящих колориту человека с фото.
 
 Опирайся на реальные данные человека с фото и на систему Кибби. Будь точным и честным.'''
@@ -113,6 +122,7 @@ REQUIRED_FIELDS = [
 def build_image_prompt(data: dict, height: int = None) -> str:
     """Промпт для nano-banana-2: ряд из 3 образов в полный рост под типаж."""
     height_line = f'The person height is about {height} cm. ' if height else ''
+    years = _season_years()
     kibbe_type = data.get('kibbe_type', '')
 
     looks = data.get('kibbe_looks') or []
@@ -133,7 +143,7 @@ PERSON — MOST IMPORTANT: take the woman STRICTLY from the provided photo — h
 
 {type_line}Dress her in these THREE outfits, one per cell, in order from left to right, exactly as described. Render every garment, shoes, bag, accessories and JEWELRY described, in realistic detail:
 
-{looks_block}FASHION ERA — VERY IMPORTANT: every garment, shoe, bag and accessory MUST look like it comes from the NEWEST current-season collections, trending RIGHT NOW, with modern silhouettes, proportions, shoe shapes and finish — but still REAL, WEARABLE everyday fashion, NOT extreme runway looks.
+{looks_block}FASHION ERA — VERY IMPORTANT: every garment, shoe, bag and accessory MUST look like it comes from the NEWEST {years} current-season collections, trending RIGHT NOW, with modern silhouettes, proportions, shoe shapes and finish — but still REAL, WEARABLE everyday fashion, NOT extreme runway looks.
 
 Lines and proportions must flatter this exact body type. Photorealistic fashion photography quality, with identical framing, lighting and background across all three cells. NO text, NO captions, NO labels, NO logos, NO watermarks anywhere on the image — only the three outfit photos in one horizontal row.'''
 
