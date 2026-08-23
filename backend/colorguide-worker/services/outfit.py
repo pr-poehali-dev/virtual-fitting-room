@@ -261,12 +261,16 @@ def build_image_prompt(data: dict, height: int = None, gender=None, form_params=
         # Для мужчины вместо косметического крупного плана — наручные часы.
         side_items.append('a close-up of an elegant wristwatch matching the outfit')
     elif makeup_desc and 'не требуется' not in makeup_desc.lower():
-        side_items.append(f'a small makeup/beauty close-up ({makeup_desc})')
+        side_items.append(
+            'a small beauty close-up crop of THE SAME person\'s own face from the center photo '
+            '(identical face, same features and skin tone, rendered just as young, fresh and radiant '
+            f'as in the center — never a different model): {makeup_desc}'
+        )
     side_block = '; '.join(side_items) if side_items else 'jewelry, accessories, the bag, the shoes'
 
     prompt = f'''Create ONE photorealistic fashion editorial image with aspect ratio 3:2 (wide).
 
-PERSON — MOST IMPORTANT: take the {person_word} STRICTLY from the provided photo — {pron_poss} EXACT real face, facial features, face shape, hair colour and texture, skin tone and body proportions must stay 100% intact, including {pron_poss} ethnicity; invent nothing, it must clearly and recognizably be the SAME real person, photorealistic, not illustrated. Show {pron_obj} at {pron_poss} very best: YOUNGER and FRESHER than in the photo, rested and radiant, smooth glowing firm skin, bright open eyes, healthy glow, well-groomed{enhance_extra} — a flattering beauty-editorial rendering of the same person. {height_line}
+PERSON — MOST IMPORTANT: take the {person_word} STRICTLY from the provided photo — {pron_poss} EXACT real face, facial features, face shape, hair colour and texture, skin tone and body proportions must stay 100% intact, including {pron_poss} ethnicity; invent nothing, it must clearly and recognizably be the SAME real person, photorealistic, not illustrated. Show {pron_obj} at {pron_poss} very best: YOUNGER and FRESHER than in the photo, rested and radiant, smooth glowing firm skin, bright open eyes, healthy glow, well-groomed{enhance_extra} — a flattering beauty-editorial rendering of the same person. EVERY face anywhere in the image is this same person. {height_line}
 
 LAYOUT: In the CENTER — a single full-body photo of this {person_word} wearing ONE complete styled outfit, standing facing the camera. The set of items below is SPLIT between the LEFT and RIGHT edges — every item appears EXACTLY ONCE in the whole image, never repeated or mirrored on the other side. It is a clean FLAT LAY of the very same items {pron_subj} is wearing: each one must be EXACTLY the item worn on the person — same colour, same material, same texture, same shape, as fully described in the outfit section below — just shown separately as a product-style still-life cut-out, evenly spaced, not overlapping: {side_block}. Keep each item's stated scale and finish, adding no decoration of your own. Modern lookbook / styling moodboard composition on ONE single continuous seamless background in a soft neutral light-grey/beige tone — the same even tone across the entire image, with no panels, no vertical stripes or seams, no split into differently coloured zones. Natural soft lighting. No text, no captions, no labels, no logos, no color swatches.
 
