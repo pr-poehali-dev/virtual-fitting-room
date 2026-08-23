@@ -843,7 +843,9 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
         if getattr(service, 'USE_QWEN', False):
             model_used = 'qwen'
             try:
-                analysis = call_qwen_json(person_url, gemini_prompt, service.QWEN_MODEL, partner_url)
+                analysis = call_qwen_json(
+                    person_url, gemini_prompt, service.QWEN_MODEL, partner_url or reference_url
+                )
                 missing = [f for f in required if not analysis.get(f)]
                 if missing:
                     raise RuntimeError(f'Qwen вернул неполный JSON, не хватает: {",".join(missing)}')
