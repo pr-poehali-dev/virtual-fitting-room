@@ -14,6 +14,8 @@
 промпт для nano-banana-2 -> картинка 3:2 (в центре персона в образе, по бокам элементы).
 """
 
+from datetime import datetime
+
 QWEN_MODEL = 'qwen/qwen3-vl-235b-a22b-thinking'
 
 USE_QWEN = True
@@ -22,6 +24,12 @@ GEMINI_MODEL = QWEN_MODEL
 LOGO_IMAGE_URL = None
 
 ASPECT_RATIO = '3:2'
+
+
+def _season_years() -> str:
+    """Текущий и следующий год — чтобы промпт не устаревал (например, '2026-2027')."""
+    y = datetime.now().year
+    return f'{y}-{y + 1}'
 
 
 def _is_groom(form_params) -> bool:
@@ -125,6 +133,8 @@ GEMINI_PROMPT = '''Ты — топовый свадебный стилист-и�
 
 ЖЁСТКИЕ ПРАВИЛА (соблюдай строго):
 - Всё — по актуальным свадебным трендам ТЕКУЩЕГО сезона, но носибельно и со вкусом, без карнавальности и без устаревших приёмов 2010-х (пышные юбки-торты с обручами, кринолин, стразы по всему платью, узкие лодочки-шпильки, тесные короткие пиджаки).
+- НЕ ПИШИ КОНКРЕТНЫЕ ГОДЫ в описаниях (никаких "коллекция 2024", "тренд 2023 года"). Пиши "текущий сезон", "новая коллекция этого сезона", "актуально сейчас".
+- НЕ УКАЗЫВАЙ ЧИСЛОВЫЕ РАЗМЕРЫ вещей в сантиметрах и миллиметрах (длина фаты и шлейфа, габариты клатча, диаметр часов, высота каблука и т.п.) — на картинке они всё равно не читаются, а описание засоряют. Описывай словами: длинная/короткая, компактный/вместительный, тонкий/массивный, каблук низкий/средний/высокий.
 - Образ должен быть КОМФОРТНЫМ: свадебный день длится 10-14 часов. Учитывай возможность двигаться, сидеть, танцевать и находиться на улице.
 - ЦВЕТ: не более 3 цветов в образе, гармонично, в пропорции 60-30-10. Свадебная палитра должна согласовываться с цветовой гаммой торжества, если она указана.
 - Каждый элемент — обувь, украшения, аксессуары, фата или бутоньерка — должен сочетаться с нарядом ПО СТИЛЮ, ЦВЕТУ и МАТЕРИАЛУ. Металл украшений согласуй с колоритом и с деталями наряда.
@@ -199,13 +209,21 @@ def build_image_prompt(data: dict, height: int = None, gender=None) -> str:
     во весь рост, по бокам отдельно выложены элементы образа."""
     height_line = f'The person height is about {height} cm. ' if height else ''
     is_male = _is_male_role(gender)
+    years = _season_years()
 
     person_word = 'groom (man)' if is_male else 'bride (woman)'
     pron_poss = 'his' if is_male else 'her'
     pron_obj = 'him' if is_male else 'her'
+    pron_subj = 'he' if is_male else 'she'
     enhance_extra = '' if is_male else ', tasteful long-lasting bridal makeup'
 
     outfit_desc = str(data.get('image_outfit_desc') or data.get('look_summary') or '').strip()
+    hair_desc = _obj_desc(data.get('hairstyle'))
+    hair_line = (
+        f'HAIR — do the bridal styling described here, on {pron_poss} own natural hair '
+        f'(keep the real hair colour and length from the photo): {hair_desc}\n\n'
+        if hair_desc else ''
+    )
     shoes_desc = _obj_desc(data.get('shoes'))
     headpiece_desc = _obj_desc(data.get('headpiece'))
     accessories_desc = _join_descs(data.get('accessories'))
@@ -230,14 +248,14 @@ def build_image_prompt(data: dict, height: int = None, gender=None) -> str:
 
     prompt = f'''Create ONE photorealistic WEDDING fashion editorial image with aspect ratio 3:2 (wide).
 
-LAYOUT: In the CENTER, a single full-body photo of the SAME real person as a {person_word} wearing ONE complete wedding look, standing facing the camera. On the LEFT and RIGHT sides of the image, neatly arrange the separate individual ELEMENTS of this same wedding look as clean product-style still-life cut-outs: {side_block}. The side elements must visually MATCH the look on the person (same colors, same materials, same style). Elegant bridal lookbook / styling moodboard composition on a soft neutral light-grey/ivory seamless background, natural soft lighting. No text, no captions, no labels, no logos, no color swatches.
+PERSON — MOST IMPORTANT: take the person STRICTLY from the provided photo and keep {pron_poss} EXACT real face, facial features, face shape, hair colour and texture, skin tone and body proportions. Use {pron_poss} real appearance from the uploaded photo as the single source of truth — invent nothing, keep {pron_poss} ethnicity and real identity 100% intact, it must clearly and recognizably be the SAME real person, photorealistic, not illustrated. Show {pron_obj} at {pron_poss} very best on the wedding day: YOUNGER and FRESHER than in the photo, rested and radiant, smooth glowing firm skin, bright open eyes, healthy glow, well-groomed{enhance_extra} — a flattering bridal-editorial rendering of the same person. {height_line}
 
-PERSON — MOST IMPORTANT: take the person STRICTLY from the provided photo and keep {pron_poss} EXACT real face, facial features, face shape, hair color and texture, skin tone and body proportions. Use {pron_poss} real appearance from the uploaded photo as the single source of truth — do NOT invent a new face, do NOT change {pron_poss} ethnicity, age or facial features beyond the requested styling. It must clearly and recognizably be the SAME real person, photorealistic, not illustrated. You MAY gently enhance {pron_obj} so {pron_obj} looks {pron_poss} best on the wedding day (clear healthy skin, tidy hair{enhance_extra}) but keep {pron_poss} identity 100% intact. {height_line}
+LAYOUT: In the CENTER — a single full-body photo of this {person_word} wearing ONE complete wedding look, standing facing the camera. Along the LEFT and RIGHT edges — the SAME items that {pron_subj} is wearing, shown separately as clean product-style still-life cut-outs, evenly spaced, not overlapping: {side_block}. Each side item must be IDENTICAL to the one on the person (same colour, material and shape). Elegant bridal lookbook / styling moodboard composition on a soft neutral light-grey/ivory seamless background, natural soft lighting. No text, no captions, no labels, no logos, no color swatches.
 
-THE WEDDING LOOK on the person: {outfit_desc}
+THE WEDDING LOOK on the person — FOLLOW THIS DESCRIPTION LITERALLY, item by item: render every garment exactly with the stated colour, fabric, texture, cut and length. Do not substitute, simplify, recolour or "interpret" anything, do not add items that are not described. The exact shade of white/ivory/champagne (or the suit colour) MUST match the description precisely: {outfit_desc}
 
-STYLE ERA — VERY IMPORTANT: make everything look like CURRENT 2025-2026 bridal fashion, elegant and refined, NOT dated 2010s. AVOID: huge hooped ball-gown skirts, all-over rhinestones, thin stiletto pumps, tight short blazers, costume-like or theatrical looks. The exact shade of white/ivory/champagne (or the suit colour) MUST match the description precisely. Use no more than 3 colours, harmonized 60-30-10.
+{hair_line}STYLE ERA — VERY IMPORTANT: everything must look like the NEWEST {years} bridal collections, elegant and refined, trending RIGHT NOW — never like the 2010s and never like a past season. Fabrics must drape and fall naturally with the ease the description implies — flowing pieces stay flowing, they must never be shrink-wrapped or stretched tight over the body. AVOID: huge hooped ball-gown skirts, all-over rhinestones, thin stiletto pumps, tight short blazers, costume-like or theatrical looks. Hair, makeup and styling must read as modern and current too. Use no more than 3 colours, harmonized 60-30-10.
 
-REQUIREMENTS: one cohesive head-to-toe wedding look, flattering to {pron_poss} body, high-end wedding photography quality. The whole image is a single clean styling board: center person + side elements, nothing else.'''
+REQUIREMENTS: one cohesive head-to-toe wedding look, high-end wedding photography quality. The whole image is a single clean styling board: center person + side elements, nothing else.'''
 
     return prompt

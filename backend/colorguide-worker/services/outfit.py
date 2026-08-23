@@ -17,6 +17,8 @@
 - build_image_prompt собирает раскладку "персона + элементы по бокам".
 """
 
+from datetime import datetime
+
 # Текстовая модель: свежий мультимодальный Qwen с reasoning.
 QWEN_MODEL = 'qwen/qwen3-vl-235b-a22b-thinking'
 
@@ -29,6 +31,12 @@ LOGO_IMAGE_URL = None
 
 # Соотношение сторон итоговой картинки: 3:2 (центр — персона, по бокам элементы образа).
 ASPECT_RATIO = '3:2'
+
+
+def _season_years() -> str:
+    """Текущий и следующий год — чтобы промпт не устаревал (например, '2026-2027')."""
+    y = datetime.now().year
+    return f'{y}-{y + 1}'
 
 
 # Человекочитаемые подписи для параметров формы (используются при сборке промпта).
@@ -92,6 +100,8 @@ GEMINI_PROMPT = '''Ты — топовый персональный стилис
 
 ЖЁСТКИЕ ПРАВИЛА СТИЛЯ (соблюдай строго):
 - Все вещи и обувь — из НОВЫХ коллекций ТЕКУЩЕГО года, по актуальным трендам сезона. Никаких устаревших фасонов 2010-х (скинни, узкие лодочки-шпильки, короткие тесные пиджаки), но и без экстремального подиума — реальная носибельная современная мода.
+- НЕ ПИШИ КОНКРЕТНЫЕ ГОДЫ в описаниях (никаких "коллекция 2024", "тренд 2023 года" и т.п.). Пиши "текущий сезон", "новая коллекция этого сезона", "актуально сейчас".
+- НЕ УКАЗЫВАЙ ЧИСЛОВЫЕ РАЗМЕРЫ вещей в сантиметрах и миллиметрах (длина шарфа, габариты сумки, диаметр часов, высота каблука и т.п.) — по картинке размеры всё равно не читаются, а описание засоряют. Вместо цифр описывай словами: длинный/короткий, компактная/вместительная, тонкий/массивный, каблук низкий/средний/высокий.
 - В одном образе НЕ БОЛЕЕ 3 цветов одежды, в пропорции 60-30-10 (основной 60%, дополнительный 30%, акцентный 10%).
 - Все элементы образа должны сочетаться между собой ПО СТИЛЮ И ПО ЦВЕТУ — единый, гармоничный, законченный лук.
 - ЛОГИКА ЦВЕТА АКСЕССУАРОВ, ОБУВИ И СУМКИ: цвета обуви, сумки, ремня и аксессуаров должны быть ЛОГИЧНЫ и УМЕСТНЫ для самого образа и повода. Для строгих, деловых, классических и тёмных образов сумка, обувь и ремень — в сдержанной, согласованной гамме (чёрный, тёмно-коричневый, графит, тёмно-синий), а НЕ контрастно-светлые и не случайные по цвету. ПРИМЕР НЕДОПУСТИМОГО: белая (светлая) сумка к строгому тёмному мужскому костюму — это грубая ошибка. Светлые, яркие и контрастные аксессуары уместны только в светлых, летних, casual или нарядных образах, где это осознанный акцент. Ремень и обувь по возможности согласуй между собой.
@@ -167,13 +177,21 @@ def build_image_prompt(data: dict, height: int = None, gender=None) -> str:
     по бокам отдельно выложены элементы образа (украшения, аксессуары, обувь и т.п.)."""
     height_line = f'The person height is about {height} cm. ' if height else ''
     is_male = _is_male(gender)
+    years = _season_years()
 
     person_word = 'man' if is_male else 'woman'
     pron_poss = 'his' if is_male else 'her'
     pron_obj = 'him' if is_male else 'her'
+    pron_subj = 'he' if is_male else 'she'
     enhance_extra = '' if is_male else ', light tasteful makeup'
 
     outfit_desc = str(data.get('image_outfit_desc') or data.get('look_summary') or '').strip()
+    hair_desc = _obj_desc(data.get('hairstyle'))
+    hair_line = (
+        f'HAIR — do the styling described here, on {pron_poss} own natural hair '
+        f'(keep the real hair colour and length from the photo): {hair_desc}\n\n'
+        if hair_desc else ''
+    )
     shoes_desc = _obj_desc(data.get('shoes'))
     bag_desc = _obj_desc(data.get('bag'))
     accessories_desc = _join_descs(data.get('accessories'))
@@ -198,14 +216,14 @@ def build_image_prompt(data: dict, height: int = None, gender=None) -> str:
 
     prompt = f'''Create ONE photorealistic fashion editorial image with aspect ratio 3:2 (wide).
 
-LAYOUT: In the CENTER, a single full-body photo of the SAME real {person_word} wearing ONE complete styled outfit, standing facing the camera. On the LEFT and RIGHT sides of the image, neatly arrange the separate individual ELEMENTS of this same outfit as clean product-style still-life cut-outs: {side_block}. The side elements must visually MATCH the outfit on the person (same colors, same style). Modern lookbook / styling moodboard composition on a soft neutral light-grey/beige seamless background, natural soft lighting. No text, no captions, no labels, no logos, no color swatches.
+PERSON — MOST IMPORTANT: take the {person_word} STRICTLY from the provided photo and keep {pron_poss} EXACT real face, facial features, face shape, hair colour and texture, skin tone and body proportions. Use {pron_poss} real appearance from the uploaded photo as the single source of truth — invent nothing, keep {pron_poss} ethnicity and real identity 100% intact, it must clearly and recognizably be the SAME real person, photorealistic, not illustrated. Show {pron_obj} at {pron_poss} very best: YOUNGER and FRESHER than in the photo, rested and radiant, smooth glowing firm skin, bright open eyes, healthy glow, well-groomed{enhance_extra} — a flattering beauty-editorial rendering of the same person. {height_line}
 
-PERSON — MOST IMPORTANT: take the {person_word} STRICTLY from the provided photo and keep {pron_poss} EXACT real face, facial features, face shape, hair color and texture, skin tone and body proportions. Use {pron_poss} real appearance from the uploaded photo as the single source of truth — do NOT invent a new face, do NOT change {pron_poss} ethnicity, age, facial features or hairstyle beyond the requested styling. It must clearly and recognizably be the SAME real person, photorealistic, not illustrated. You MAY gently enhance {pron_obj} so {pron_obj} looks {pron_poss} best (clear healthy skin, tidy hair{enhance_extra}) but keep {pron_poss} identity 100% intact. {height_line}
+LAYOUT: In the CENTER — a single full-body photo of this {person_word} wearing ONE complete styled outfit, standing facing the camera. Along the LEFT and RIGHT edges — the SAME items that {pron_subj} is wearing, shown separately as clean product-style still-life cut-outs, evenly spaced, not overlapping: {side_block}. Each side item must be IDENTICAL to the one on the person (same colour, material and shape). Modern lookbook / styling moodboard composition on a soft neutral light-grey/beige seamless background, natural soft lighting. No text, no captions, no labels, no logos, no color swatches.
 
-THE OUTFIT on the person: {outfit_desc}
+THE OUTFIT on the person — FOLLOW THIS DESCRIPTION LITERALLY, item by item: render every garment exactly with the stated colour, fabric, texture, cut and length. Do not substitute, simplify, recolour or "interpret" anything, do not add items that are not described: {outfit_desc}
 
-FASHION ERA — VERY IMPORTANT: style everything to look like CURRENT 2025-2026 fashion, NOT 2010s. Every garment, shoe, bag and accessory MUST look like it comes from the NEWEST current-season collections, trending right now, but still REAL and WEARABLE. Use no more than 3 colors in the outfit, harmonized in a 60-30-10 proportion. AVOID dated 2010s markers: skinny jeans, very short tight blazers, thin stiletto pumps, bodycon shapes.
+{hair_line}FASHION ERA — VERY IMPORTANT: everything must look like the NEWEST {years} current-season collections, in stores and trending RIGHT NOW — never like the 2010s and never like a past season. Real, wearable fashion, NOT extreme avant-garde runway. Use contemporary silhouettes and proportions: relaxed or softly structured tailoring, soft natural shoulders, high-waisted wide or straight full-length trousers, longline jackets and coats, midi/maxi lengths, modern footwear (loafers, ballet flats, low or block heels, contemporary sandals). Garments must drape and fall naturally with the ease the description implies — loose pieces stay loose, they must never be shrink-wrapped or stretched tight over the body. AVOID dated 2010s markers: skinny jeans, very short tight blazers, thin stiletto pumps, bodycon shapes. Hair, makeup and styling must read as modern and current too. Use no more than 3 colors in the outfit, harmonized in a 60-30-10 proportion.
 
-REQUIREMENTS: one cohesive head-to-toe look, contemporary 2025-2026 style, fit and silhouette flattering to {pron_poss} body, photorealistic fashion photography quality. The whole image is a single clean styling board: center person + side elements, nothing else.'''
+REQUIREMENTS: one cohesive head-to-toe look, high-end fashion photography quality. The whole image is a single clean styling board: center person + side elements, nothing else.'''
 
     return prompt

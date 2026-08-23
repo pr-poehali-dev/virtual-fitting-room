@@ -4,6 +4,8 @@
 данные подставляются в промпт для nano-banana-2 -> одна картинка-инфографика.
 """
 
+from datetime import datetime
+
 # Картинка-образец инфографики (референс лайаута) — пока не используем,
 # чтобы модель не копировала чужие фото с шаблона. Можем вернуть позже.
 # TEMPLATE_IMAGE_URL = 'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/627be02b-4c57-49f8-9df7-337fb254d238.png'
@@ -16,6 +18,12 @@ USE_QWEN = False
 
 # Соотношение сторон итоговой картинки (широкий ряд из 4 образов)
 ASPECT_RATIO = '16:9'
+
+
+def _season_years() -> str:
+    """Текущий и следующий год — чтобы промпт не устаревал (например, '2026-2027')."""
+    y = datetime.now().year
+    return f'{y}-{y + 1}'
 
 # Промпт для Gemini: глубокий профессиональный анализ стиля. Все тексты на русском.
 GEMINI_PROMPT = '''Ты — топовый персональный стилист-имиджмейкер с 15-летним опытом. К тебе пришёл клиент за индивидуальным стилевым разбором. Работай как настоящий профессионал: сначала ВНИМАТЕЛЬНО изучи самого человека на фото, а потом выстрой рекомендации, вытекающие из его природных данных.
@@ -127,6 +135,7 @@ def _names(items):
 def build_image_prompt(data: dict, height: int = None) -> str:
     """Промпт для nano-banana-2: горизонтальный ряд из 4 фотореалистичных образов по описаниям looks."""
     height_line = f'The person height is about {height} cm. ' if height else ''
+    years = _season_years()
 
     looks = data.get('looks') or []
     looks_block = ''
@@ -142,14 +151,14 @@ def build_image_prompt(data: dict, height: int = None) -> str:
 
 CRITICAL COMPOSITION: exactly 4 cells in ONE horizontal row, ONE outfit per cell, ONE single frontal full-body photo per cell. Do NOT make a 2x2 grid, do NOT add a second row, do NOT show two angles or two photos of the same outfit in one cell — strictly 4 photos total, one per look. No gaps, no borders, no text.
 
-PERSON — MOST IMPORTANT: take the woman STRICTLY from the provided photo and keep her EXACT real face, facial features, face shape, hair color and texture, skin tone and body proportions in all four cells. Use her real appearance from the uploaded photo as the single source of truth — do NOT invent a new face, do NOT change her ethnicity, age, facial features or hairstyle. It must clearly and recognizably be the SAME real person in every cell, photorealistic, not illustrated. You MAY only gently enhance her so she looks her best: fresh, rested, healthy and well-groomed (clear glowing skin, tidy hair, light tasteful makeup) — but keep her identity and natural features 100% intact, no beautification that changes who she is. {height_line}Each cell is a separate full-body studio fashion photo on a soft neutral light-grey/beige seamless background, natural soft lighting, modern editorial lookbook style, the woman standing facing the camera.
+PERSON — MOST IMPORTANT: take the woman STRICTLY from the provided photo and keep her EXACT real face, facial features, face shape, hair colour and texture, skin tone and body proportions in all four cells. Use her real appearance from the uploaded photo as the single source of truth — invent nothing, keep her ethnicity and real identity 100% intact, it must clearly and recognizably be the SAME real person in every cell, photorealistic, not illustrated. Show her at her very best: YOUNGER and FRESHER than in the photo, rested and radiant, smooth glowing firm skin, bright open eyes, healthy glow, well-groomed, light tasteful makeup — a flattering beauty-editorial rendering of the same person. Her hair keeps its real colour and length, styled in a modern, well-groomed way that suits each look. {height_line}Each cell is a separate full-body studio fashion photo on a soft neutral light-grey/beige seamless background, natural soft lighting, modern editorial lookbook style, the woman standing facing the camera.
 
-Dress her in these FOUR DIFFERENT complete outfits, one per cell, in order from left to right, exactly as described (modern current-year fashion, flattering cuts for her figure). Render every garment, shoes, bag, accessories and JEWELRY described, in realistic detail:
+Dress her in these FOUR DIFFERENT complete outfits, one per cell, in order from left to right — FOLLOW EACH DESCRIPTION LITERALLY, item by item: render every garment, shoes, bag, accessories and JEWELRY exactly with the stated colour, fabric, texture, cut and length. Do not substitute, simplify, recolour or "interpret" anything, do not add items that are not described:
 
-{looks_block}FASHION ERA — VERY IMPORTANT: style every outfit to look like CURRENT 2025-2026 fashion, NOT 2010s. Every garment, shoe, bag and accessory MUST look like it comes from the NEWEST current-season collections — the newest in-store pieces of THIS season that are trending RIGHT NOW, but still REAL, WEARABLE everyday fashion (NOT extreme avant-garde runway looks). Footwear especially must be the newest current-season models, not classic dated styles. Use contemporary silhouettes and proportions: relaxed/structured tailoring, soft natural shoulders, high-waisted wide or straight full-length trousers, longline jackets and coats, midi/maxi lengths, modern footwear (loafers, ballet flats, low-heel or block-heel shoes, contemporary sandals). AVOID anything that looks like an old or past-season item, and AVOID dated 2010s markers: skinny jeans, very short tight blazers, thin stiletto pumps, overly fitted bodycon shapes. Hair, makeup and styling should also read as modern and current.
+{looks_block}FASHION ERA — VERY IMPORTANT: every outfit must look like the NEWEST {years} current-season collections, in stores and trending RIGHT NOW — never like the 2010s and never like a past season. Real, wearable everyday fashion, NOT extreme avant-garde runway. Use contemporary silhouettes and proportions: relaxed or softly structured tailoring, soft natural shoulders, high-waisted wide or straight full-length trousers, longline jackets and coats, midi/maxi lengths, modern footwear (loafers, ballet flats, low or block heels, contemporary sandals). Garments must drape and fall naturally with the ease the description implies — loose pieces stay loose, they must never be shrink-wrapped or stretched tight over the body. AVOID dated 2010s markers: skinny jeans, very short tight blazers, thin stiletto pumps, bodycon shapes. Hair, makeup and styling must read as modern and current too.
 
 COLOR RULE — IMPORTANT: each outfit must use NO MORE THAN 3 colors, balanced in a 60-30-10 proportion (one dominant color ~60%, a secondary ~30%, an accent ~10%), all harmonized and matching the person's color type.
 
-REQUIREMENTS: four DISTINCT outfits (do not repeat the same look), each shown head-to-toe once, contemporary 2025-2026 style, fit and silhouette flattering to her body. Photorealistic fashion photography quality. NO text, NO captions, NO labels, NO logos, NO color swatches anywhere on the image — only the four outfit photos in one horizontal row.'''
+REQUIREMENTS: four DISTINCT outfits (do not repeat the same look), each shown head-to-toe once. High-end fashion photography quality. Only the four outfit photos in one horizontal row, nothing else.'''
 
     return prompt
