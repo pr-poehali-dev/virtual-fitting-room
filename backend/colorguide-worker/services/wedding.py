@@ -132,7 +132,7 @@ GEMINI_PROMPT = '''Ты — топовый свадебный стилист-и�
 6) ВЫВОД: собери ОДИН цельный образ со всеми деталями.
 
 ЖЁСТКИЕ ПРАВИЛА (соблюдай строго):
-- Всё — по актуальным свадебным трендам ТЕКУЩЕГО сезона, но носибельно и со вкусом, без карнавальности и без устаревших приёмов 2010-х (пышные юбки-торты с обручами, кринолин, стразы по всему платью, узкие лодочки-шпильки, тесные короткие пиджаки).
+- Всё — по актуальным свадебным трендам ТЕКУЩЕГО и следующего сезона, из новых коллекций, что показывают и продают прямо сейчас: носибельно, элегантно и со вкусом, с современными пропорциями, силуэтами и отделкой. Мысленно сверься со свежими свадебными коллекциями этого сезона и подбирай так, как одел бы невесту или жениха ведущий свадебный стилист сегодня.
 - НЕ ПИШИ КОНКРЕТНЫЕ ГОДЫ в описаниях (никаких "коллекция 2024", "тренд 2023 года"). Пиши "текущий сезон", "новая коллекция этого сезона", "актуально сейчас".
 - НЕ УКАЗЫВАЙ ЧИСЛОВЫЕ РАЗМЕРЫ вещей в сантиметрах и миллиметрах (длина фаты и шлейфа, габариты клатча, диаметр часов, высота каблука и т.п.) — на картинке они всё равно не читаются, а описание засоряют. Описывай словами: длинная/короткая, компактный/вместительный, тонкий/массивный, каблук низкий/средний/высокий.
 - В полях с предметами ("outfit", "shoes", "headpiece", "accessories", "jewelry") описывай ТОЛЬКО ВИДИМОЕ ГЛАЗОМ: материал, фактуру, цвет, форму, фасон, длину, посадку. НЕ пиши обоснования и отсылки к другим вещам ("подчёркивает цвет глаз", "сочетается с фатой", "цвет совпадает с обувью", "выгодно смотрится на фигуре") — это не нарисовать. Объяснения давай в "look_summary" и "tips". Каждое описание предмета — 1-2 коротких предложения.
@@ -345,7 +345,7 @@ THE WEDDING LOOK on the person — FOLLOW THIS DESCRIPTION LITERALLY, item by it
 
 All of these — the outfit, shoes, headpiece, accessories and jewelry — must actually be WORN on the person in the center, naturally and completely, not only shown at the edges.
 
-{hair_line}{context_line}STYLE ERA — VERY IMPORTANT: everything must look like the NEWEST {years} bridal collections, elegant and refined, trending RIGHT NOW, with modern proportions and a modern finish — never a dated, 2010s-looking version of the item. Fit each garment exactly as described: fitted stays close to the body, flowing stays flowing. Paired parts (both sleeves, both shoes) are always identical in length and volume — asymmetry ONLY where the description explicitly names it. Hair, makeup and styling must read as modern and current too.
+{hair_line}{context_line}STYLE ERA — VERY IMPORTANT: everything must look like the NEWEST {years} bridal collections, elegant and refined, trending RIGHT NOW, with modern proportions and a modern finish. Fit each garment exactly as described: fitted stays close to the body, flowing stays flowing. Paired parts (both sleeves, both shoes) are always identical in length and volume — asymmetry ONLY where the description explicitly names it. Hair, makeup and styling must read as modern and current too.
 
 The whole image is a single clean styling board: center person + side elements, nothing else.'''
 

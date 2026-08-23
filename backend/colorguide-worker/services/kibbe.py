@@ -52,7 +52,7 @@ Dramatic, Soft Dramatic, Flamboyant Natural, Soft Natural, Dramatic Classic, Sof
 - celebrities: массив из 3-4 строк — известные женщины с таким же типажом по Кибби (для наглядности).
 - tips: 5 коротких практических советов по одеванию этого типажа на русском (строки).
 - kibbe_looks: массив РОВНО из 3 объектов {title, description}. Это 3 готовых образа, максимально раскрывающих типаж этого человека. title — короткое название на русском (например, "Повседневный природный", "Деловой мягкий", "Вечерний выход"). description — ДЕТАЛЬНОЕ описание образа в 2-3 предложения: что надето сверху и снизу, верхняя одежда, обувь, сумка, аксессуары и украшения, с конкретными фасонами, тканями и цветами. Образы должны перекрывать разные ситуации: повседневный, деловой или смарт-кэжуал, и обязательно один нарядный для особого случая.
-  ОЧЕНЬ ВАЖНО ПРО АКТУАЛЬНОСТЬ: образы должны выглядеть как мода 2025-2026 года, НЕ как 2010-е. Актуальные силуэты и посадка (свободный, relaxed, прямой крой, высокая посадка), современная обувь (лоферы, балетки, низкий ход, актуальные босоножки), современные сумки. Избегай примет 2010-х: скинни-джинсы, короткие приталенные пиджаки, узкие лодочки на шпильке.
+  ОЧЕНЬ ВАЖНО ПРО АКТУАЛЬНОСТЬ: образы должны выглядеть как мода текущего и следующего сезона — актуальные силуэты, посадка, обувь и сумки из новых коллекций. Мысленно сверься со свежими коллекциями и street style этого сезона и одевай человека так, как одел бы его ведущий стилист сегодня.
   ВАЖНО ПРО ЦВЕТ: в одном образе не более 3 цветов в пропорции 60-30-10, сочетающихся между собой и подходящих колориту человека с фото.
 
 Опирайся на реальные данные человека с фото и на систему Кибби. Будь точным и честным.'''
@@ -133,7 +133,7 @@ PERSON — MOST IMPORTANT: take the woman STRICTLY from the provided photo and k
 
 {type_line}Dress her in these THREE DIFFERENT complete outfits, one per cell, in order from left to right, exactly as described. Render every garment, shoes, bag, accessories and JEWELRY described, in realistic detail:
 
-{looks_block}FASHION ERA — VERY IMPORTANT: style every outfit to look like CURRENT 2025-2026 fashion, NOT 2010s. Every garment, shoe, bag and accessory MUST look like it comes from the NEWEST current-season collections, but still REAL, WEARABLE everyday fashion (NOT extreme runway looks). Use contemporary silhouettes: relaxed or structured tailoring, soft natural shoulders, high-waisted wide or straight full-length trousers, longline jackets and coats, midi and maxi lengths, modern footwear (loafers, ballet flats, low-heel or block-heel shoes, contemporary sandals). AVOID dated 2010s markers: skinny jeans, very short tight blazers, thin stiletto pumps, overly fitted bodycon shapes.
+{looks_block}FASHION ERA — VERY IMPORTANT: every garment, shoe, bag and accessory MUST look like it comes from the NEWEST current-season collections, trending RIGHT NOW, with modern silhouettes, proportions, shoe shapes and finish — but still REAL, WEARABLE everyday fashion, NOT extreme runway looks.
 
 Each outfit is shown head-to-toe once, with lines and proportions that flatter this exact body type. Photorealistic fashion photography quality. Identical framing, lighting and background across all three cells. NO text, NO captions, NO labels, NO logos, NO watermarks anywhere on the image — only the three outfit photos in one horizontal row.'''
 

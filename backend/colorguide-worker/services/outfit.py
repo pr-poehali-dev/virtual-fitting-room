@@ -99,7 +99,7 @@ GEMINI_PROMPT = '''Ты — топовый персональный стилис
 4) ВЫВОД: собери ОДИН цельный образ — одежда (верх, низ или платье, верхняя одежда по сезону), обувь, сумка, аксессуары, украшения, макияж, причёска.
 
 ЖЁСТКИЕ ПРАВИЛА СТИЛЯ (соблюдай строго):
-- Все вещи и обувь — из НОВЫХ коллекций ТЕКУЩЕГО года, по актуальным трендам сезона. Никаких устаревших фасонов 2010-х (скинни, узкие лодочки-шпильки, короткие тесные пиджаки), но и без экстремального подиума — реальная носибельная современная мода.
+- Все вещи и обувь — из НОВЫХ коллекций ТЕКУЩЕГО года, по актуальным трендам сезона: реальная носибельная современная мода, без экстремального подиума. Мысленно сверься со свежими коллекциями и street style этого сезона и одевай человека так, как одел бы его ведущий стилист сегодня.
 - НЕ ПИШИ КОНКРЕТНЫЕ ГОДЫ в описаниях (никаких "коллекция 2024", "тренд 2023 года" и т.п.). Пиши "текущий сезон", "новая коллекция этого сезона", "актуально сейчас".
 - НЕ УКАЗЫВАЙ ЧИСЛОВЫЕ РАЗМЕРЫ вещей в сантиметрах и миллиметрах (длина шарфа, габариты сумки, диаметр часов, высота каблука и т.п.) — по картинке размеры всё равно не читаются, а описание засоряют. Вместо цифр описывай словами: длинный/короткий, компактная/вместительная, тонкий/массивный, каблук низкий/средний/высокий.
 - В полях "clothing", "shoes", "bag", "accessories", "jewelry" описывай ТОЛЬКО ВИДИМОЕ ГЛАЗОМ: материал, фактуру, цвет, форму, фасон, длину, посадку. НЕ пиши обоснования и отсылки к другим вещам ("подчёркивает цвет глаз", "акцентирует линию лица", "цвет совпадает с обувью", "гармонирует с образом", "выгодно смотрится на фигуре") — это не нарисовать. Все объяснения, почему вещь идёт человеку, давай в "look_summary", "body_analysis" и "tips". Каждое описание предмета — 1-2 коротких предложения.
@@ -274,7 +274,7 @@ THE OUTFIT on the person — FOLLOW THIS DESCRIPTION LITERALLY, item by item: re
 
 All of these — clothing, shoes, bag, accessories and jewelry — must actually be WORN on the person in the center, naturally and completely, not only shown at the edges.
 
-{hair_line}{context_line}FASHION ERA — VERY IMPORTANT: everything must look like the NEWEST {years} current-season collections, in stores and trending RIGHT NOW, with modern proportions, modern shoe shapes and heel heights and a modern finish — never a dated, 2010s-looking version of the item. Real, wearable fashion, NOT extreme avant-garde runway. Fit each garment exactly as described: fitted stays close to the body, loose stays loose. Paired parts (both sleeves, both trouser legs, both shoes) are always identical in length and volume — asymmetry ONLY where the description explicitly names it. Hair, makeup and styling must read as modern and current too.
+{hair_line}{context_line}FASHION ERA — VERY IMPORTANT: everything must look like the NEWEST {years} current-season collections, in stores and trending RIGHT NOW, with modern proportions, modern shoe shapes and heel heights and a modern finish. Real, wearable fashion, NOT extreme avant-garde runway. Fit each garment exactly as described: fitted stays close to the body, loose stays loose. Paired parts (both sleeves, both trouser legs, both shoes) are always identical in length and volume — asymmetry ONLY where the description explicitly names it. Hair, makeup and styling must read as modern and current too.
 
 The whole image is a single clean styling board: center person + side elements, nothing else.'''
 
