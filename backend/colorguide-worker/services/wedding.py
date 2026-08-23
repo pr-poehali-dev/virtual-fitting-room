@@ -200,6 +200,26 @@ def _obj_desc(obj):
     return str(obj or '')
 
 
+_PARTNER_WORDS = ('жених', 'невест', 'партнёр', 'партнер', 'супруг', 'пара ', 'в паре')
+
+
+def _strip_partner(text: str) -> str:
+    """Убирает из описания для художника отсылки к образу партнёра — их не нарисовать."""
+    if not text:
+        return ''
+    out_sentences = []
+    for sentence in str(text).split('.'):
+        if not sentence.strip():
+            continue
+        parts = [p for p in sentence.split(',')
+                 if not any(w in p.lower() for w in _PARTNER_WORDS)]
+        cleaned = ','.join(parts).strip(' ,')
+        if cleaned:
+            out_sentences.append(cleaned)
+    result = '. '.join(out_sentences).strip()
+    return f'{result}.' if result else ''
+
+
 def _is_male_role(gender) -> bool:
     g = str(gender or '').strip().lower()
     return g.startswith('жених') or g in ('мужской', 'муж', 'male', 'm', 'мужчина', 'man', 'groom')
@@ -241,31 +261,20 @@ def build_image_prompt(data: dict, height: int = None, gender=None, form_params=
     pron_subj = 'he' if is_male else 'she'
     enhance_extra = '' if is_male else ', tasteful long-lasting bridal makeup'
 
-    hair_desc = _obj_desc(data.get('hairstyle'))
+    hair_desc = _strip_partner(_obj_desc(data.get('hairstyle')))
     hair_line = (
         f'HAIR — do the bridal styling described here, on {pron_poss} own natural hair '
         f'(keep the real hair colour and length from the photo): {hair_desc}\n\n'
         if hair_desc else ''
     )
-    shoes_desc = _obj_desc(data.get('shoes'))
-    headpiece_desc = _obj_desc(data.get('headpiece'))
-    accessories_desc = _join_descs(data.get('accessories'))
-    jewelry_desc = _join_descs(data.get('jewelry'))
-    makeup_desc = _obj_desc(data.get('makeup'))
+    shoes_desc = _strip_partner(_obj_desc(data.get('shoes')))
+    headpiece_desc = _strip_partner(_obj_desc(data.get('headpiece')))
+    accessories_desc = _strip_partner(_join_descs(data.get('accessories')))
+    jewelry_desc = _strip_partner(_join_descs(data.get('jewelry')))
+    makeup_desc = _strip_partner(_obj_desc(data.get('makeup')))
 
-    outfit_parts = []
-    wear_desc = _join_descs(data.get('outfit'))
-    if wear_desc:
-        outfit_parts.append(f'НАРЯД: {wear_desc}')
-    if shoes_desc:
-        outfit_parts.append(f'ОБУВЬ: {shoes_desc}')
-    if headpiece_desc:
-        outfit_parts.append(f'ГОЛОВНОЙ УБОР: {headpiece_desc}')
-    if accessories_desc:
-        outfit_parts.append(f'АКСЕССУАРЫ: {accessories_desc}')
-    if jewelry_desc:
-        outfit_parts.append(f'УКРАШЕНИЯ: {jewelry_desc}')
-    outfit_desc = '. '.join(outfit_parts) if outfit_parts else str(data.get('look_summary') or '').strip()
+    wear_desc = _strip_partner(_join_descs(data.get('outfit')))
+    outfit_desc = f'НАРЯД: {wear_desc}' if wear_desc else str(data.get('look_summary') or '').strip()
 
     side_items = []
     if jewelry_desc:
@@ -290,6 +299,8 @@ PERSON — MOST IMPORTANT: take the person STRICTLY from the provided photo and 
 LAYOUT: In the CENTER — a single full-body photo of this {person_word} wearing ONE complete wedding look, standing facing the camera. Along the LEFT and RIGHT edges — the very same items {pron_subj} is wearing, each IDENTICAL to the one on the person, shown separately as clean product-style still-life cut-outs, evenly spaced, not overlapping: {side_block}. Elegant bridal lookbook / styling moodboard composition on a soft neutral light-grey/ivory seamless background, natural soft lighting. No text, no captions, no labels, no logos, no color swatches.
 
 THE WEDDING LOOK on the person — FOLLOW THIS DESCRIPTION LITERALLY, item by item: render every garment exactly with the stated colour, fabric, texture, cut and length. Do not substitute, simplify, recolour or "interpret" anything, do not add items that are not described. The exact shade of white/ivory/champagne (or the suit colour) MUST match the description precisely: {outfit_desc}
+
+{pron_subj.capitalize()} is ALSO wearing, on the body, exactly the same shoes, veil / headpiece, accessories and jewelry that are listed above in the LAYOUT section — same colours, materials and shapes, worn naturally as part of the look.
 
 {hair_line}{context_line}STYLE ERA — VERY IMPORTANT: everything must look like the NEWEST {years} bridal collections, elegant and refined, trending RIGHT NOW — never like the 2010s and never like a past season. Keep the exact garment types, cuts and lengths from the description above — do not swap them for other items; make them look like the current-year version of that item, with modern proportions and a modern finish, never a dated one. Fit each garment exactly as described: fitted stays close to the body, flowing stays flowing. Paired parts (both sleeves, both shoes) are always identical in length and volume — asymmetry ONLY where the description explicitly names it. Hair, makeup and styling must read as modern and current too. Use no more than 3 colours, harmonized 60-30-10.
 

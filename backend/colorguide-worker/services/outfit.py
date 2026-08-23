@@ -218,19 +218,8 @@ def build_image_prompt(data: dict, height: int = None, gender=None, form_params=
     jewelry_desc = _join_descs(data.get('jewelry'))
     makeup_desc = _obj_desc(data.get('makeup'))
 
-    outfit_parts = []
     clothing_desc = _join_descs(data.get('clothing'))
-    if clothing_desc:
-        outfit_parts.append(f'ОДЕЖДА: {clothing_desc}')
-    if shoes_desc:
-        outfit_parts.append(f'ОБУВЬ: {shoes_desc}')
-    if bag_desc:
-        outfit_parts.append(f'СУМКА: {bag_desc}')
-    if accessories_desc:
-        outfit_parts.append(f'АКСЕССУАРЫ: {accessories_desc}')
-    if jewelry_desc:
-        outfit_parts.append(f'УКРАШЕНИЯ: {jewelry_desc}')
-    outfit_desc = '. '.join(outfit_parts) if outfit_parts else str(data.get('look_summary') or '').strip()
+    outfit_desc = f'ОДЕЖДА: {clothing_desc}' if clothing_desc else str(data.get('look_summary') or '').strip()
 
     side_items = []
     if jewelry_desc:
@@ -255,6 +244,8 @@ PERSON — MOST IMPORTANT: take the {person_word} STRICTLY from the provided pho
 LAYOUT: In the CENTER — a single full-body photo of this {person_word} wearing ONE complete styled outfit, standing facing the camera. Along the LEFT and RIGHT edges — the very same items {pron_subj} is wearing, each IDENTICAL to the one on the person, shown separately as clean product-style still-life cut-outs, evenly spaced, not overlapping: {side_block}. Modern lookbook / styling moodboard composition on a soft neutral light-grey/beige seamless background, natural soft lighting. No text, no captions, no labels, no logos, no color swatches.
 
 THE OUTFIT on the person — FOLLOW THIS DESCRIPTION LITERALLY, item by item: render every garment exactly with the stated colour, fabric, texture, cut and length. Do not substitute, simplify, recolour or "interpret" anything, do not add items that are not described: {outfit_desc}
+
+{pron_subj.capitalize()} is ALSO wearing, on the body, exactly the same shoes, bag, accessories and jewelry that are listed above in the LAYOUT section — same colours, materials and shapes, worn naturally as part of the look.
 
 {hair_line}{context_line}FASHION ERA — VERY IMPORTANT: everything must look like the NEWEST {years} current-season collections, in stores and trending RIGHT NOW — never like the 2010s and never like a past season. Real, wearable fashion, NOT extreme avant-garde runway. Keep the exact garment types, cuts and lengths from the description above — do not swap them for other items; make them look like the current-year version of that item, with modern proportions, modern shoe shapes and heel heights, and a modern finish, never a dated one. Fit each garment exactly as described: fitted stays close to the body, loose stays loose. Paired parts (both sleeves, both trouser legs, both shoes) are always identical in length and volume — asymmetry ONLY where the description explicitly names it. Hair, makeup and styling must read as modern and current too. Use no more than 3 colors in the outfit, harmonized in a 60-30-10 proportion.
 
