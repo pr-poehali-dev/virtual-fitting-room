@@ -103,6 +103,7 @@ GEMINI_PROMPT = '''Ты — топовый персональный стилис
 - НЕ ПИШИ КОНКРЕТНЫЕ ГОДЫ в описаниях (никаких "коллекция 2024", "тренд 2023 года" и т.п.). Пиши "текущий сезон", "новая коллекция этого сезона", "актуально сейчас".
 - НЕ УКАЗЫВАЙ ЧИСЛОВЫЕ РАЗМЕРЫ вещей в сантиметрах и миллиметрах (длина шарфа, габариты сумки, диаметр часов, высота каблука и т.п.) — по картинке размеры всё равно не читаются, а описание засоряют. Вместо цифр описывай словами: длинный/короткий, компактная/вместительная, тонкий/массивный, каблук низкий/средний/высокий.
 - В полях "clothing", "shoes", "bag", "accessories", "jewelry" описывай ТОЛЬКО ВИДИМОЕ ГЛАЗОМ: материал, фактуру, цвет, форму, фасон, длину, посадку. НЕ пиши обоснования и отсылки к другим вещам ("подчёркивает цвет глаз", "акцентирует линию лица", "цвет совпадает с обувью", "гармонирует с образом", "выгодно смотрится на фигуре") — это не нарисовать. Все объяснения, почему вещь идёт человеку, давай в "look_summary", "body_analysis" и "tips". Каждое описание предмета — 1-2 коротких предложения.
+- СЕЗОН И ПОГОДА — ОБЯЗАТЕЛЬНО: ткань, плотность, длина рукава и слоёв должны соответствовать указанному сезону и погоде. Для ЛЕТА и жары — только лёгкие дышащие ткани (лён, хлопок, вискоза, тонкий шёлк, тонкий трикотаж), без шерсти, кашемира, плотного трикотажа, плотной верхней одежды и лишней многослойности. Для ХОЛОДА — наоборот, тёплые плотные ткани и уместный верх. Если сезон не указан — собирай образ для умеренной погоды.
 - В одном образе НЕ БОЛЕЕ 3 цветов одежды, в пропорции 60-30-10 (основной 60%, дополнительный 30%, акцентный 10%).
 - Все элементы образа должны сочетаться между собой ПО СТИЛЮ И ПО ЦВЕТУ — единый, гармоничный, законченный лук.
 - ЛОГИКА ЦВЕТА АКСЕССУАРОВ, ОБУВИ И СУМКИ: цвета обуви, сумки, ремня и аксессуаров должны быть ЛОГИЧНЫ и УМЕСТНЫ для самого образа и повода. Для строгих, деловых, классических и тёмных образов сумка, обувь и ремень — в сдержанной, согласованной гамме (чёрный, тёмно-коричневый, графит, тёмно-синий), а НЕ контрастно-светлые и не случайные по цвету. ПРИМЕР НЕДОПУСТИМОГО: белая (светлая) сумка к строгому тёмному мужскому костюму — это грубая ошибка. Светлые, яркие и контрастные аксессуары уместны только в светлых, летних, casual или нарядных образах, где это осознанный акцент. Ремень и обувь по возможности согласуй между собой.
@@ -173,10 +174,30 @@ def _is_male(gender) -> bool:
     return g in ('мужской', 'муж', 'male', 'm', 'мужчина', 'man')
 
 
-def build_image_prompt(data: dict, height: int = None, gender=None) -> str:
+def build_context_line(form_params: dict) -> str:
+    """Строка контекста для рисующей модели: сезон/погода и повод из анкеты."""
+    if not isinstance(form_params, dict):
+        return ''
+    bits = []
+    season = str(form_params.get('season') or '').strip()
+    occasion = str(form_params.get('occasion') or '').strip()
+    if season:
+        bits.append(f'season / weather: {season}')
+    if occasion:
+        bits.append(f'occasion: {occasion}')
+    if not bits:
+        return ''
+    return (
+        'CONTEXT — the look is worn for ' + '; '.join(bits) +
+        '. Fabrics, layering and coverage must suit this weather and this occasion.\n\n'
+    )
+
+
+def build_image_prompt(data: dict, height: int = None, gender=None, form_params=None) -> str:
     """Промпт для nano-banana-2: картинка 3:2 — в центре персона в образе во весь рост,
     по бокам отдельно выложены элементы образа (украшения, аксессуары, обувь и т.п.)."""
     height_line = f'The person height is about {height} cm. ' if height else ''
+    context_line = build_context_line(form_params)
     is_male = _is_male(gender)
     years = _season_years()
 
@@ -223,7 +244,7 @@ LAYOUT: In the CENTER — a single full-body photo of this {person_word} wearing
 
 THE OUTFIT on the person — FOLLOW THIS DESCRIPTION LITERALLY, item by item: render every garment exactly with the stated colour, fabric, texture, cut and length. Do not substitute, simplify, recolour or "interpret" anything, do not add items that are not described: {outfit_desc}
 
-{hair_line}FASHION ERA — VERY IMPORTANT: everything must look like the NEWEST {years} current-season collections, in stores and trending RIGHT NOW — never like the 2010s and never like a past season. Real, wearable fashion, NOT extreme avant-garde runway. Use contemporary silhouettes and proportions: relaxed or softly structured tailoring, soft natural shoulders, high-waisted wide or straight full-length trousers, longline jackets and coats, midi/maxi lengths, modern footwear (loafers, ballet flats, low or block heels, contemporary sandals). Fit each garment exactly as described: fitted stays close to the body, loose stays loose. AVOID dated 2010s markers: skinny jeans, very short tight blazers, thin stiletto pumps, bodycon shapes. Hair, makeup and styling must read as modern and current too. Use no more than 3 colors in the outfit, harmonized in a 60-30-10 proportion.
+{hair_line}{context_line}FASHION ERA — VERY IMPORTANT: everything must look like the NEWEST {years} current-season collections, in stores and trending RIGHT NOW — never like the 2010s and never like a past season. Real, wearable fashion, NOT extreme avant-garde runway. Keep the exact garment types, cuts and lengths from the description above — do not swap them for other items; make them look like the current-year version of that item, with modern proportions, modern shoe shapes and heel heights, and a modern finish, never a dated one. Fit each garment exactly as described: fitted stays close to the body, loose stays loose. Paired parts (both sleeves, both trouser legs, both shoes) are always identical in length and volume — asymmetry ONLY where the description explicitly names it. Hair, makeup and styling must read as modern and current too. Use no more than 3 colors in the outfit, harmonized in a 60-30-10 proportion.
 
 REQUIREMENTS: one cohesive head-to-toe look. The whole image is a single clean styling board: center person + side elements, nothing else.'''
 

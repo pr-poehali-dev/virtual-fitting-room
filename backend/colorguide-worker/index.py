@@ -879,7 +879,10 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
         gender = form_params.get('gender') if form_params else None
         try:
             import inspect
-            if 'gender' in inspect.signature(service.build_image_prompt).parameters:
+            sig_params = inspect.signature(service.build_image_prompt).parameters
+            if 'form_params' in sig_params:
+                image_prompt = service.build_image_prompt(analysis, height, gender, form_params)
+            elif 'gender' in sig_params:
                 image_prompt = service.build_image_prompt(analysis, height, gender)
             else:
                 image_prompt = service.build_image_prompt(analysis, height)

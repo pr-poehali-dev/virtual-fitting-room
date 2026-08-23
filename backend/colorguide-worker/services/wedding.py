@@ -136,6 +136,7 @@ GEMINI_PROMPT = '''Ты — топовый свадебный стилист-и�
 - НЕ ПИШИ КОНКРЕТНЫЕ ГОДЫ в описаниях (никаких "коллекция 2024", "тренд 2023 года"). Пиши "текущий сезон", "новая коллекция этого сезона", "актуально сейчас".
 - НЕ УКАЗЫВАЙ ЧИСЛОВЫЕ РАЗМЕРЫ вещей в сантиметрах и миллиметрах (длина фаты и шлейфа, габариты клатча, диаметр часов, высота каблука и т.п.) — на картинке они всё равно не читаются, а описание засоряют. Описывай словами: длинная/короткая, компактный/вместительный, тонкий/массивный, каблук низкий/средний/высокий.
 - В полях с предметами ("outfit", "shoes", "headpiece", "accessories", "jewelry") описывай ТОЛЬКО ВИДИМОЕ ГЛАЗОМ: материал, фактуру, цвет, форму, фасон, длину, посадку. НЕ пиши обоснования и отсылки к другим вещам ("подчёркивает цвет глаз", "сочетается с фатой", "цвет совпадает с обувью", "выгодно смотрится на фигуре") — это не нарисовать. Объяснения давай в "look_summary" и "tips". Каждое описание предмета — 1-2 коротких предложения.
+- СЕЗОН И ПОГОДА — ОБЯЗАТЕЛЬНО: ткань, плотность и слои должны соответствовать сезону, месяцу и месту. Для ЛЕТА и жары — только лёгкие дышащие ткани, без плотной шерсти, бархата, тяжёлого атласа и лишней многослойности. Для ХОЛОДА — тёплые ткани, рукав и уместная накидка.
 - Образ должен быть КОМФОРТНЫМ: свадебный день длится 10-14 часов. Учитывай возможность двигаться, сидеть, танцевать и находиться на улице.
 - ЦВЕТ: не более 3 цветов в образе, гармонично, в пропорции 60-30-10. Свадебная палитра должна согласовываться с цветовой гаммой торжества, если она указана.
 - Каждый элемент — обувь, украшения, аксессуары, фата или бутоньерка — должен сочетаться с нарядом ПО СТИЛЮ, ЦВЕТУ и МАТЕРИАЛУ. Металл украшений согласуй с колоритом и с деталями наряда.
@@ -205,10 +206,33 @@ def _is_male_role(gender) -> bool:
     return g.startswith('жених') or g in ('мужской', 'муж', 'male', 'm', 'мужчина', 'man', 'groom')
 
 
-def build_image_prompt(data: dict, height: int = None, gender=None) -> str:
+def build_context_line(form_params: dict) -> str:
+    """Строка контекста для рисующей модели: сезон, место и время суток свадьбы."""
+    if not isinstance(form_params, dict):
+        return ''
+    bits = []
+    season = str(form_params.get('season') or '').strip()
+    venue = str(form_params.get('venue') or '').strip()
+    day_time = str(form_params.get('day_time') or '').strip()
+    if season:
+        bits.append(f'season / weather: {season}')
+    if venue:
+        bits.append(f'venue: {venue}')
+    if day_time:
+        bits.append(f'time of day: {day_time}')
+    if not bits:
+        return ''
+    return (
+        'CONTEXT — the wedding look is worn for ' + '; '.join(bits) +
+        '. Fabrics, layering and coverage must suit this weather and this setting.\n\n'
+    )
+
+
+def build_image_prompt(data: dict, height: int = None, gender=None, form_params=None) -> str:
     """Промпт для nano-banana-2: картинка 3:2 — в центре персона в свадебном образе
     во весь рост, по бокам отдельно выложены элементы образа."""
     height_line = f'The person height is about {height} cm. ' if height else ''
+    context_line = build_context_line(form_params)
     is_male = _is_male_role(gender)
     years = _season_years()
 
@@ -255,7 +279,7 @@ LAYOUT: In the CENTER — a single full-body photo of this {person_word} wearing
 
 THE WEDDING LOOK on the person — FOLLOW THIS DESCRIPTION LITERALLY, item by item: render every garment exactly with the stated colour, fabric, texture, cut and length. Do not substitute, simplify, recolour or "interpret" anything, do not add items that are not described. The exact shade of white/ivory/champagne (or the suit colour) MUST match the description precisely: {outfit_desc}
 
-{hair_line}STYLE ERA — VERY IMPORTANT: everything must look like the NEWEST {years} bridal collections, elegant and refined, trending RIGHT NOW — never like the 2010s and never like a past season. Fit each garment exactly as described: fitted stays close to the body, flowing stays flowing. AVOID: huge hooped ball-gown skirts, all-over rhinestones, thin stiletto pumps, tight short blazers, costume-like or theatrical looks. Hair, makeup and styling must read as modern and current too. Use no more than 3 colours, harmonized 60-30-10.
+{hair_line}{context_line}STYLE ERA — VERY IMPORTANT: everything must look like the NEWEST {years} bridal collections, elegant and refined, trending RIGHT NOW — never like the 2010s and never like a past season. Keep the exact garment types, cuts and lengths from the description above — do not swap them for other items; make them look like the current-year version of that item, with modern proportions and a modern finish, never a dated one. Fit each garment exactly as described: fitted stays close to the body, flowing stays flowing. Paired parts (both sleeves, both shoes) are always identical in length and volume — asymmetry ONLY where the description explicitly names it. Hair, makeup and styling must read as modern and current too. Use no more than 3 colours, harmonized 60-30-10.
 
 REQUIREMENTS: one cohesive head-to-toe wedding look. The whole image is a single clean styling board: center person + side elements, nothing else.'''
 
