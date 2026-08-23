@@ -168,6 +168,18 @@ def _obj_desc(obj):
     return str(obj or '')
 
 
+def _short_name(obj) -> str:
+    """Только название предмета — для блока выкладки, без повтора полного описания."""
+    if isinstance(obj, dict):
+        return str(obj.get('name', '')).strip() or str(obj.get('description', '')).strip()[:60]
+    return str(obj or '').strip()
+
+
+def _short_names(items) -> str:
+    out = [_short_name(it) for it in (items or [])]
+    return ', '.join([n for n in out if n])
+
+
 def _is_male(gender) -> bool:
     g = str(gender or '').strip().lower()
     return g in ('мужской', 'муж', 'male', 'm', 'мужчина', 'man')
@@ -218,18 +230,33 @@ def build_image_prompt(data: dict, height: int = None, gender=None, form_params=
     jewelry_desc = _join_descs(data.get('jewelry'))
     makeup_desc = _obj_desc(data.get('makeup'))
 
+    outfit_parts = []
     clothing_desc = _join_descs(data.get('clothing'))
-    outfit_desc = f'ОДЕЖДА: {clothing_desc}' if clothing_desc else str(data.get('look_summary') or '').strip()
+    if clothing_desc:
+        outfit_parts.append(f'ОДЕЖДА: {clothing_desc}')
+    if shoes_desc:
+        outfit_parts.append(f'ОБУВЬ: {shoes_desc}')
+    if bag_desc:
+        outfit_parts.append(f'СУМКА: {bag_desc}')
+    if accessories_desc:
+        outfit_parts.append(f'АКСЕССУАРЫ: {accessories_desc}')
+    if jewelry_desc:
+        outfit_parts.append(f'УКРАШЕНИЯ: {jewelry_desc}')
+    outfit_desc = '. '.join(outfit_parts) if outfit_parts else str(data.get('look_summary') or '').strip()
 
     side_items = []
-    if jewelry_desc:
-        side_items.append(f'jewelry ({jewelry_desc})')
-    if accessories_desc:
-        side_items.append(f'accessories ({accessories_desc})')
-    if bag_desc:
-        side_items.append(f'the bag ({bag_desc})')
-    if shoes_desc:
-        side_items.append(f'the shoes ({shoes_desc})')
+    jewelry_names = _short_names(data.get('jewelry'))
+    accessories_names = _short_names(data.get('accessories'))
+    bag_name = _short_name(data.get('bag'))
+    shoes_name = _short_name(data.get('shoes'))
+    if jewelry_names:
+        side_items.append(f'jewelry ({jewelry_names})')
+    if accessories_names:
+        side_items.append(f'accessories ({accessories_names})')
+    if bag_name:
+        side_items.append(f'the bag ({bag_name})')
+    if shoes_name:
+        side_items.append(f'the shoes ({shoes_name})')
     if is_male:
         # Для мужчины вместо косметического крупного плана — наручные часы.
         side_items.append('a close-up of an elegant wristwatch matching the outfit')
@@ -241,11 +268,11 @@ def build_image_prompt(data: dict, height: int = None, gender=None, form_params=
 
 PERSON — MOST IMPORTANT: take the {person_word} STRICTLY from the provided photo and keep {pron_poss} EXACT real face, facial features, face shape, hair colour and texture, skin tone and body proportions. Use {pron_poss} real appearance from the uploaded photo as the single source of truth — invent nothing, keep {pron_poss} ethnicity and real identity 100% intact, it must clearly and recognizably be the SAME real person, photorealistic, not illustrated. Show {pron_obj} at {pron_poss} very best: YOUNGER and FRESHER than in the photo, rested and radiant, smooth glowing firm skin, bright open eyes, healthy glow, well-groomed{enhance_extra} — a flattering beauty-editorial rendering of the same person. {height_line}
 
-LAYOUT: In the CENTER — a single full-body photo of this {person_word} wearing ONE complete styled outfit, standing facing the camera. Along the LEFT and RIGHT edges — the very same items {pron_subj} is wearing, each IDENTICAL to the one on the person, shown separately as clean product-style still-life cut-outs, evenly spaced, not overlapping: {side_block}. Modern lookbook / styling moodboard composition on a soft neutral light-grey/beige seamless background, natural soft lighting. No text, no captions, no labels, no logos, no color swatches.
+LAYOUT: In the CENTER — a single full-body photo of this {person_word} wearing ONE complete styled outfit, standing facing the camera. Along the LEFT and RIGHT edges — a clean FLAT LAY of the very same items {pron_subj} is wearing: each one must be EXACTLY the item worn on the person — same colour, same material, same texture, same shape, as fully described in the outfit section below — just shown separately as a product-style still-life cut-out, evenly spaced, not overlapping: {side_block}. Modern lookbook / styling moodboard composition on a soft neutral light-grey/beige seamless background, natural soft lighting. No text, no captions, no labels, no logos, no color swatches.
 
 THE OUTFIT on the person — FOLLOW THIS DESCRIPTION LITERALLY, item by item: render every garment exactly with the stated colour, fabric, texture, cut and length. Do not substitute, simplify, recolour or "interpret" anything, do not add items that are not described: {outfit_desc}
 
-{pron_subj.capitalize()} is ALSO wearing, on the body, exactly the same shoes, bag, accessories and jewelry that are listed above in the LAYOUT section — same colours, materials and shapes, worn naturally as part of the look.
+All of these — clothing, shoes, bag, accessories and jewelry — must actually be WORN on the person in the center, naturally and completely, not only shown at the edges.
 
 {hair_line}{context_line}FASHION ERA — VERY IMPORTANT: everything must look like the NEWEST {years} current-season collections, in stores and trending RIGHT NOW — never like the 2010s and never like a past season. Real, wearable fashion, NOT extreme avant-garde runway. Keep the exact garment types, cuts and lengths from the description above — do not swap them for other items; make them look like the current-year version of that item, with modern proportions, modern shoe shapes and heel heights, and a modern finish, never a dated one. Fit each garment exactly as described: fitted stays close to the body, loose stays loose. Paired parts (both sleeves, both trouser legs, both shoes) are always identical in length and volume — asymmetry ONLY where the description explicitly names it. Hair, makeup and styling must read as modern and current too. Use no more than 3 colors in the outfit, harmonized in a 60-30-10 proportion.
 
