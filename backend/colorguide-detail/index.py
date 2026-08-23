@@ -14,8 +14,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
     def get_cors_origin(event):
         origin = event.get('headers', {}).get('origin') or event.get('headers', {}).get('Origin', '')
-        allowed = ['https://fitting-room.ru', 'https://preview--virtual-fitting-room.poehali.dev']
-        return origin if origin in allowed else 'https://fitting-room.ru'
+        allowed = ['https://fitting-room.ru']
+        if origin in allowed or origin.endswith('.poehali.dev'):
+            return origin
+        return 'https://fitting-room.ru'
 
     method = event.get('httpMethod', 'GET')
     if method == 'OPTIONS':

@@ -32,7 +32,9 @@ ALLOWED_ORIGINS = [
 def get_cors_origin(event):
     headers = event.get('headers', {}) or {}
     origin = headers.get('origin') or headers.get('Origin', '')
-    return origin if origin in ALLOWED_ORIGINS else 'https://fitting-room.ru'
+    if origin in ALLOWED_ORIGINS or origin.endswith('.poehali.dev'):
+        return origin
+    return 'https://fitting-room.ru'
 
 
 def make_cors_headers(event):
