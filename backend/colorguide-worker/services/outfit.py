@@ -129,8 +129,7 @@ GEMINI_PROMPT = '''Ты — топовый персональный стилис
   "jewelry": [ {"name":"украшение","description":"ОБЯЗАТЕЛЬНО материал (металл и его оттенок: жёлтое/белое золото, серебро, сталь; для женщин при необходимости — камень), форма, фактура"} ],  // 2-3 украшения
   "makeup": {"description":"макияж под образ и колорит — тон, акценты, помада/тени/румяна"},
   "hairstyle": {"description":"причёска под образ, длину и тип волос клиента"},
-  "tips": ["короткий практический совет стилиста"],  // ровно 5 советов
-  "image_outfit_desc": "ОДНО подробное предложение на РУССКОМ, описывающее весь образ целиком (одежда сверху донизу + обувь), как он выглядит надетым на человеке — для художника, который нарисует образ. Для КАЖДОЙ вещи ОБЯЗАТЕЛЬНО укажи материал/ткань и её фактуру (например, мягкая шерсть, гладкий шёлк, плотный деним, матовая замша, зернистая кожа), а также цвет и фасон — чтобы художник точно передал материалы на картинке"
+  "tips": ["короткий практический совет стилиста"]  // ровно 5 советов
 }
 
 Будь точным и конкретным. Для каждой вещи, обуви, сумки, аксессуаров и украшений ОБЯЗАТЕЛЬНО указывай материал/ткань и её фактуру — это важно для точной отрисовки. Описывай так, чтобы по тексту можно было точно нарисовать актуальный образ этого года на человеке.'''
@@ -207,7 +206,6 @@ def build_image_prompt(data: dict, height: int = None, gender=None, form_params=
     pron_subj = 'he' if is_male else 'she'
     enhance_extra = '' if is_male else ', light tasteful makeup'
 
-    outfit_desc = str(data.get('image_outfit_desc') or data.get('look_summary') or '').strip()
     hair_desc = _obj_desc(data.get('hairstyle'))
     hair_line = (
         f'HAIR — do the styling described here, on {pron_poss} own natural hair '
@@ -219,6 +217,20 @@ def build_image_prompt(data: dict, height: int = None, gender=None, form_params=
     accessories_desc = _join_descs(data.get('accessories'))
     jewelry_desc = _join_descs(data.get('jewelry'))
     makeup_desc = _obj_desc(data.get('makeup'))
+
+    outfit_parts = []
+    clothing_desc = _join_descs(data.get('clothing'))
+    if clothing_desc:
+        outfit_parts.append(f'ОДЕЖДА: {clothing_desc}')
+    if shoes_desc:
+        outfit_parts.append(f'ОБУВЬ: {shoes_desc}')
+    if bag_desc:
+        outfit_parts.append(f'СУМКА: {bag_desc}')
+    if accessories_desc:
+        outfit_parts.append(f'АКСЕССУАРЫ: {accessories_desc}')
+    if jewelry_desc:
+        outfit_parts.append(f'УКРАШЕНИЯ: {jewelry_desc}')
+    outfit_desc = '. '.join(outfit_parts) if outfit_parts else str(data.get('look_summary') or '').strip()
 
     side_items = []
     if jewelry_desc:
