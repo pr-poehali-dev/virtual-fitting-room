@@ -127,9 +127,7 @@ def build_image_prompt(data: dict, height: int = None) -> str:
 
     type_line = f'All three outfits follow the Kibbe body type "{kibbe_type}" — keep their lines, proportions and scale consistent with that type. ' if kibbe_type else ''
 
-    prompt = f'''Create ONE wide photorealistic image: a single horizontal ROW of EXACTLY 3 cells side by side (1 row x 3 columns), showing THREE full-body fashion looks of the SAME real woman.
-
-CRITICAL COMPOSITION: exactly 3 cells in ONE horizontal row, ONE outfit per cell, ONE single frontal full-body photo per cell. Do NOT make a grid, do NOT add a second row, do NOT show two angles or two photos of the same outfit in one cell — strictly 3 photos total, one per look. No gaps, no borders, no text.
+    prompt = f'''Create ONE wide photorealistic image: a single horizontal ROW of EXACTLY 3 cells side by side (1 row x 3 columns), showing THREE different full-body fashion looks of the SAME real woman — ONE outfit per cell, ONE frontal full-body photo per cell, 3 photos in total. Not a grid, no second row, no two angles of the same outfit. No gaps, no borders, no text.
 
 PERSON — MOST IMPORTANT: take the woman STRICTLY from the provided photo and keep her EXACT real face, facial features, face shape, hair color and texture, skin tone and REAL BODY PROPORTIONS in all three cells. Her bone structure, shoulder width, waist, hips and overall body scale must match the uploaded photo exactly — do NOT slim her down, do NOT lengthen her legs, do NOT invent a different body. Do NOT invent a new face, do NOT change her ethnicity, age or hairstyle. It must clearly and recognizably be the SAME real person in every cell, photorealistic, not illustrated. You MAY only gently enhance her so she looks her best: fresh, rested, healthy and well-groomed (clear skin, tidy hair, light tasteful makeup) — but keep her identity and natural body 100% intact. {height_line}Each cell is a separate full-body studio fashion photo on a soft neutral light-grey seamless background, natural soft lighting, modern editorial lookbook style, the woman standing facing the camera, shown head to toe including shoes.
 
@@ -137,8 +135,6 @@ PERSON — MOST IMPORTANT: take the woman STRICTLY from the provided photo and k
 
 {looks_block}FASHION ERA — VERY IMPORTANT: style every outfit to look like CURRENT 2025-2026 fashion, NOT 2010s. Every garment, shoe, bag and accessory MUST look like it comes from the NEWEST current-season collections, but still REAL, WEARABLE everyday fashion (NOT extreme runway looks). Use contemporary silhouettes: relaxed or structured tailoring, soft natural shoulders, high-waisted wide or straight full-length trousers, longline jackets and coats, midi and maxi lengths, modern footwear (loafers, ballet flats, low-heel or block-heel shoes, contemporary sandals). AVOID dated 2010s markers: skinny jeans, very short tight blazers, thin stiletto pumps, overly fitted bodycon shapes.
 
-COLOR RULE — IMPORTANT: each outfit must use NO MORE THAN 3 colors, balanced in a 60-30-10 proportion (one dominant color ~60%, a secondary ~30%, an accent ~10%), all harmonized and matching the person's coloring.
-
-REQUIREMENTS: three DISTINCT outfits (do not repeat the same look), each shown head-to-toe once, contemporary 2025-2026 style, with lines and proportions that flatter this exact body type. Photorealistic fashion photography quality. Identical framing, lighting and background across all three cells. NO text, NO captions, NO labels, NO logos, NO watermarks anywhere on the image — only the three outfit photos in one horizontal row.'''
+Each outfit is shown head-to-toe once, with lines and proportions that flatter this exact body type. Photorealistic fashion photography quality. Identical framing, lighting and background across all three cells. NO text, NO captions, NO labels, NO logos, NO watermarks anywhere on the image — only the three outfit photos in one horizontal row.'''
 
     return prompt
