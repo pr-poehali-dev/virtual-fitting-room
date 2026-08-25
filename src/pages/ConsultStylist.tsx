@@ -19,6 +19,7 @@ import ConsultPhotoUpload from "@/components/consult/ConsultPhotoUpload";
 import ConsultReport, { ConsultResult } from "@/components/consult/ConsultReport";
 import ConsultImageBlock, {
   ConsultPhoto,
+  PhotoRole,
 } from "@/components/consult/ConsultImageBlock";
 
 const MAX_REFERENCES = 3;
@@ -77,19 +78,30 @@ export default function ConsultStylist() {
   const resultRefs = (resultParams?.reference_urls as string[]) || [];
   const usage = Array.isArray(result?.photo_usage) ? result.photo_usage : [];
 
+  // Роль фото предлагает нейросеть; если не указала — своё фото это внешность,
+  // референс — вещь.
+  const normalizeRole = (raw: unknown, fallback: PhotoRole): PhotoRole => {
+    const value = String(raw || "").toLowerCase();
+    if (value === "person" || value === "item" || value === "both") return value;
+    return fallback;
+  };
+
   const photos: ConsultPhoto[] = [];
   if (resultPerson) {
     photos.push({
       url: resultPerson,
       label: "Ваше фото",
       why: usage[0]?.why,
+      role: normalizeRole(usage[0]?.role, "person"),
     });
   }
   resultRefs.forEach((url, i) => {
+    const usageItem = usage[photos.length];
     photos.push({
       url,
       label: `Референс ${i + 1}`,
-      why: usage[photos.length]?.why,
+      why: usageItem?.why,
+      role: normalizeRole(usageItem?.role, "item"),
     });
   });
 

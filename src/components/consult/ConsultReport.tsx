@@ -16,6 +16,8 @@ export interface ConsultItem {
 
 export interface ConsultPhotoUsage {
   label?: string;
+  /** Что берём с фото: person | item | both */
+  role?: string;
   why?: string;
 }
 

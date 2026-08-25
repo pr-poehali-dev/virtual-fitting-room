@@ -20,6 +20,9 @@ const FREEGEN_WORKER_API = 'https://functions.poehali.dev/8b34e115-88be-4740-887
 const CONSULT_DETAIL_API = 'https://functions.poehali.dev/90841acf-1a1a-4158-a8b6-8ddd65204126';
 const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
 
+/** Что берём с фото при генерации картинки */
+export type PhotoRole = 'person' | 'item' | 'both';
+
 export interface ConsultPhoto {
   /** Ссылка на изображение */
   url: string;
@@ -27,6 +30,42 @@ export interface ConsultPhoto {
   label: string;
   /** Пояснение модели, зачем это фото в генерации */
   why?: string;
+  /** Роль, которую предложила модель */
+  role?: PhotoRole;
+}
+
+const ROLE_OPTIONS: { value: PhotoRole; label: string }[] = [
+  { value: 'person', label: 'Внешность' },
+  { value: 'item', label: 'Вещь' },
+  { value: 'both', label: 'И внешность, и вещь' },
+];
+
+/**
+ * Приписка к промпту: рисующая модель не понимает, зачем ей приложили фото,
+ * пока это не сказано словами. Нумерацию считаем по отмеченным фото,
+ * поэтому текст пересобирается при каждом изменении галочек.
+ */
+function buildPhotoInstruction(
+  photos: ConsultPhoto[],
+  selected: string[],
+  roles: Record<string, PhotoRole>,
+): string {
+  const used = photos.filter((p) => selected.includes(p.url));
+  if (used.length === 0) return '';
+
+  const lines = used.map((photo, i) => {
+    const position = used.length === 1 ? 'На приложенном фото' : `На фото ${i + 1}`;
+    const role = roles[photo.url] || photo.role || 'item';
+    if (role === 'person') {
+      return `${position} — человек: точно сохрани его лицо, черты, телосложение, цвет и длину волос. Одежду с этого фото не переноси.`;
+    }
+    if (role === 'both') {
+      return `${position} — человек в своей одежде: точно сохрани его лицо, черты, телосложение, цвет и длину волос, а надетую на нём вещь повтори точь-в-точь — крой, цвет, ткань, все детали.`;
+    }
+    return `${position} — вещь: повтори её точь-в-точь, включая крой, цвет, ткань, фурнитуру и все детали. Не заменяй её похожей.`;
+  });
+
+  return `\n\nВАЖНО ПРО ПРИЛОЖЕННЫЕ ФОТО:\n${lines.join('\n')}`;
 }
 
 interface Props {
@@ -47,6 +86,9 @@ export default function ConsultImageBlock({ taskId, initialPrompt, photos }: Pro
   const { refreshBalance } = useBalance();
   const [prompt, setPrompt] = useState(initialPrompt);
   const [selected, setSelected] = useState<string[]>(photos.map((p) => p.url));
+  const [roles, setRoles] = useState<Record<string, PhotoRole>>(() =>
+    Object.fromEntries(photos.map((p) => [p.url, p.role || 'item'])),
+  );
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusText, setStatusText] = useState('');
   const [resultUrl, setResultUrl] = useState<string | null>(null);
@@ -54,7 +96,10 @@ export default function ConsultImageBlock({ taskId, initialPrompt, photos }: Pro
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => setPrompt(initialPrompt), [initialPrompt]);
-  useEffect(() => setSelected(photos.map((p) => p.url)), [photos]);
+  useEffect(() => {
+    setSelected(photos.map((p) => p.url));
+    setRoles(Object.fromEntries(photos.map((p) => [p.url, p.role || 'item'])));
+  }, [photos]);
   useEffect(() => {
     return () => {
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
@@ -219,7 +264,7 @@ export default function ConsultImageBlock({ taskId, initialPrompt, photos }: Pro
           ...(token ? { 'X-Session-Token': token } : {}),
         },
         body: JSON.stringify({
-          prompt: trimmed,
+          prompt: trimmed + buildPhotoInstruction(photos, selected, roles),
           references: selected,
           aspect_ratio: '1:1',
         }),
@@ -271,33 +316,66 @@ export default function ConsultImageBlock({ taskId, initialPrompt, photos }: Pro
               словами, снимите галочку.
             </p>
             <div className="space-y-2">
-              {photos.map((photo) => (
-                <label
-                  key={photo.url}
-                  className="flex items-start gap-3 rounded-lg border p-2 cursor-pointer hover:bg-muted/50"
-                >
-                  <Checkbox
-                    checked={selected.includes(photo.url)}
-                    onCheckedChange={() => toggle(photo.url)}
-                    disabled={isGenerating}
-                    className="mt-3"
-                  />
-                  <img
-                    src={photo.url}
-                    alt={photo.label}
-                    className="w-14 h-14 rounded object-cover border shrink-0"
-                  />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium">{photo.label}</span>
-                    {photo.why && (
-                      <span className="block text-xs text-muted-foreground">
-                        {photo.why}
-                      </span>
+              {photos.map((photo) => {
+                const isOn = selected.includes(photo.url);
+                const role = roles[photo.url] || 'item';
+                return (
+                  <div key={photo.url} className="rounded-lg border p-2">
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        checked={isOn}
+                        onCheckedChange={() => toggle(photo.url)}
+                        disabled={isGenerating}
+                        className="mt-3"
+                      />
+                      <img
+                        src={photo.url}
+                        alt={photo.label}
+                        className="w-14 h-14 rounded object-cover border shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{photo.label}</p>
+                        {photo.why && (
+                          <p className="text-xs text-muted-foreground">{photo.why}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {isOn && (
+                      <div className="mt-2 pl-8">
+                        <p className="text-xs text-muted-foreground mb-1">
+                          Что взять с этого фото
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {ROLE_OPTIONS.map((opt) => (
+                            <Button
+                              key={opt.value}
+                              type="button"
+                              size="sm"
+                              variant={role === opt.value ? 'default' : 'outline'}
+                              disabled={isGenerating}
+                              className="h-7 text-xs"
+                              onClick={() =>
+                                setRoles((prev) => ({
+                                  ...prev,
+                                  [photo.url]: opt.value,
+                                }))
+                              }
+                            >
+                              {opt.label}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
                     )}
-                  </span>
-                </label>
-              ))}
+                  </div>
+                );
+              })}
             </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Нейросеть уже выбрала, что брать с каждого фото — поправьте, если она
+              ошиблась. Эти указания добавляются к промпту автоматически.
+            </p>
           </div>
         )}
 
