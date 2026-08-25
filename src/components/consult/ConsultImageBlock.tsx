@@ -96,10 +96,16 @@ export default function ConsultImageBlock({ taskId, initialPrompt, photos }: Pro
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => setPrompt(initialPrompt), [initialPrompt]);
+
+  // Список фото пересобирается при каждой перерисовке страницы (например, после
+  // обновления баланса). Сбрасываем выбор только когда набор фото реально другой,
+  // иначе настройки пользователя терялись бы у него на глазах.
+  const photosKey = photos.map((p) => p.url).join('|');
   useEffect(() => {
     setSelected(photos.map((p) => p.url));
     setRoles(Object.fromEntries(photos.map((p) => [p.url, p.role || 'item'])));
-  }, [photos]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photosKey]);
   useEffect(() => {
     return () => {
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
