@@ -17,7 +17,6 @@ import {
 const FREEGEN_START_API = 'https://functions.poehali.dev/093c98ba-e711-4c78-b328-a7494005df42';
 const FREEGEN_STATUS_API = 'https://functions.poehali.dev/f706d708-5f17-4c11-864c-d13bf91cebce';
 const FREEGEN_WORKER_API = 'https://functions.poehali.dev/8b34e115-88be-4740-887a-36c388980955';
-const CONSULT_DETAIL_API = 'https://functions.poehali.dev/90841acf-1a1a-4158-a8b6-8ddd65204126';
 const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
 
 /** Что берём с фото при генерации картинки */
@@ -119,23 +118,6 @@ export default function ConsultImageBlock({ taskId, initialPrompt, photos }: Pro
     }
   };
 
-  const attachToConsult = async (url: string) => {
-    if (!taskId) return;
-    try {
-      const token = localStorage.getItem('session_token');
-      await fetch(CONSULT_DETAIL_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'X-Session-Token': token } : {}),
-        },
-        body: JSON.stringify({ task_id: taskId, cdn_url: url }),
-      });
-    } catch {
-      // Не критично: картинка уже сохранена в истории генераций.
-    }
-  };
-
   const pollStatus = (id: string) => {
     let attempts = 0;
     const maxAttempts = 120;
@@ -164,7 +146,6 @@ export default function ConsultImageBlock({ taskId, initialPrompt, photos }: Pro
           refreshBalance();
           toast.success('Изображение готово');
           fetch(`${FREEGEN_WORKER_API}?task_id=${id}`).catch(() => {});
-          attachToConsult(url);
         } else if (data.status === 'failed') {
           stopPolling();
           setIsGenerating(false);
@@ -273,6 +254,7 @@ export default function ConsultImageBlock({ taskId, initialPrompt, photos }: Pro
           prompt: trimmed + buildPhotoInstruction(photos, selected, roles),
           references: selected,
           aspect_ratio: '1:1',
+          consult_task_id: taskId,
         }),
       });
       if (!res.ok) {

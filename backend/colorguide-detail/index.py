@@ -25,7 +25,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': get_cors_origin(event),
-                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-Session-Token',
                 'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Max-Age': '86400'
@@ -45,14 +45,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     params = event.get('queryStringParameters') or {}
     task_id = params.get('task_id')
 
-    body_data = {}
-    if method == 'POST':
-        try:
-            body_data = json.loads(event.get('body') or '{}')
-        except Exception:
-            body_data = {}
-        task_id = body_data.get('task_id') or task_id
-
     if not task_id:
         return {
             'statusCode': 400,
@@ -66,42 +58,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         dsn += '&options=-c%20search_path%3Dt_p29007832_virtual_fitting_room'
     else:
         dsn += '?options=-c%20search_path%3Dt_p29007832_virtual_fitting_room'
-
-    # POST — прикрепить готовую картинку к консультации (после отдельной генерации).
-    if method == 'POST':
-        image_url = str(body_data.get('cdn_url') or '').strip()
-        allowed_prefixes = ('https://storage.yandexcloud.net/', 'https://cdn.poehali.dev/')
-        if not image_url.startswith(allowed_prefixes):
-            return {
-                'statusCode': 400,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
-                'isBase64Encoded': False,
-                'body': json.dumps({'error': 'cdn_url is invalid'})
-            }
-        try:
-            conn = psycopg2.connect(dsn)
-            cursor = conn.cursor()
-            cursor.execute(
-                "UPDATE color_guide_tasks SET cdn_url = %s WHERE id = %s AND user_id = %s AND service_type = 'consult'",
-                (image_url, task_id, str(user_id))
-            )
-            updated = cursor.rowcount
-            conn.commit()
-            cursor.close()
-            conn.close()
-            return {
-                'statusCode': 200 if updated else 404,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
-                'isBase64Encoded': False,
-                'body': json.dumps({'saved': bool(updated)})
-            }
-        except Exception as e:
-            return {
-                'statusCode': 500,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
-                'isBase64Encoded': False,
-                'body': json.dumps({'error': f'Database error: {str(e)}'})
-            }
 
     try:
         conn = psycopg2.connect(dsn)

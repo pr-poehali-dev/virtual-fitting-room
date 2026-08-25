@@ -109,7 +109,12 @@ export default function ProfileHistoryColorGuide() {
     e.stopPropagation();
     if (!user) return;
 
-    if (!confirm("Удалить этот гид по цвету? Изображение также будет удалено из хранилища.")) {
+    const isConsult =
+      tasks.find((t) => t.id === id)?.service_type === "consult";
+    const message = isConsult
+      ? "Удалить эту консультацию? Созданные по ней изображения останутся в истории генераций и в лукбуках, если вы их туда добавляли."
+      : "Удалить этот гид по цвету? Изображение также будет удалено из хранилища.";
+    if (!confirm(message)) {
       return;
     }
 

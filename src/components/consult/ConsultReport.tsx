@@ -32,6 +32,8 @@ export interface ConsultResult {
   photo_usage?: ConsultPhotoUsage[];
   source_image?: string | null;
   reference_images?: string[];
+  /** Все картинки, сгенерированные по этой консультации */
+  generated_images?: string[];
 }
 
 interface Props {

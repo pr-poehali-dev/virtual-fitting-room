@@ -46,9 +46,19 @@ def delete_from_s3_if_orphaned(photo_url: str, user_id: str, cursor, schema: str
         (user_id, photo_url)
     )
     lookbooks_count = cursor.fetchone()[0]
-    
+
+    # Проверяем наличие в карточках консультаций: картинка там приходит из общей
+    # генерации и может одновременно лежать в истории генераций и в лукбуке.
+    cursor.execute(
+        f"""SELECT COUNT(*) FROM {schema}.color_guide_tasks
+            WHERE user_id = %s AND service_type = 'consult'
+              AND (cdn_url = %s OR result_json::jsonb->'generated_images' @> to_jsonb(%s::text))""",
+        (user_id, photo_url, photo_url)
+    )
+    consult_count = cursor.fetchone()[0]
+
     # Если фото нигде не используется - удаляем из S3
-    if history_count == 0 and freegen_count == 0 and lookbooks_count == 0:
+    if history_count == 0 and freegen_count == 0 and lookbooks_count == 0 and consult_count == 0:
         try:
             s3_key = photo_url.replace(s3_url_prefix, '')
             
@@ -424,11 +434,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     params.append(value)
 
                 # Проверяем владельца: задачу может удалить только её владелец
-                select_query = f'SELECT cdn_url, user_id FROM {full_table} WHERE {" AND ".join(where_parts)}'
+                select_query = f'SELECT cdn_url, user_id, service_type, result_json FROM {full_table} WHERE {" AND ".join(where_parts)}'
                 cursor.execute(select_query, params)
                 row = cursor.fetchone()
                 if row:
-                    cdn_url_val, owner_id = row[0], row[1]
+                    cdn_url_val, owner_id, svc_type, res_json = row[0], row[1], row[2], row[3]
                     if str(owner_id) != str(user_id):
                         return {
                             'statusCode': 403,
@@ -436,8 +446,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             'isBase64Encoded': False,
                             'body': json.dumps({'error': 'Forbidden'})
                         }
-                    if cdn_url_val:
-                        photos_to_force_delete.append(cdn_url_val)
+                    if svc_type == 'consult':
+                        # Консультация: картинки приходят из общей генерации и живут
+                        # также в истории генераций и, возможно, в лукбуках —
+                        # удаляем только те, что больше нигде не используются.
+                        consult_photos = []
+                        if cdn_url_val:
+                            consult_photos.append(cdn_url_val)
+                        try:
+                            parsed = res_json if isinstance(res_json, dict) else json.loads(res_json or '{}')
+                            for img in (parsed.get('generated_images') or []):
+                                if img and img not in consult_photos:
+                                    consult_photos.append(img)
+                        except Exception:
+                            pass
+                        photos_to_check.extend(consult_photos)
+                    else:
+                        if cdn_url_val:
+                            photos_to_force_delete.append(cdn_url_val)
                     # Исходное загруженное фото лежит в другой папке (images/colorguide/{user_id}/{task_id}.*)
                     # расширение заранее неизвестно — удаляем по префиксу
                     task_id_val = where.get('id')

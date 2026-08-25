@@ -180,6 +180,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     references = body_data.get('references') or []
     aspect_ratio = body_data.get('aspect_ratio') or '1:1'
 
+    # Генерация запущена со страницы консультации: воркер сам прикрепит
+    # готовую картинку к её карточке, без участия браузера.
+    consult_task_id = str(body_data.get('consult_task_id') or '').strip() or None
+    if consult_task_id:
+        try:
+            uuid.UUID(consult_task_id)
+        except (ValueError, AttributeError, TypeError):
+            consult_task_id = None
+
     if not prompt:
         return {
             'statusCode': 400,
@@ -254,8 +263,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print(f'[FREEGEN-START-{request_id}] New task {task_id} for user {user_id} (refs: {len(references)}, ar: {aspect_ratio})')
 
         cursor.execute('''
-            INSERT INTO freegen_tasks (id, user_id, status, prompt, "references", aspect_ratio, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO freegen_tasks (id, user_id, status, prompt, "references", aspect_ratio, created_at, consult_task_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         ''', (
             task_id,
             user_id,
@@ -263,7 +272,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             prompt,
             json.dumps(references),
             aspect_ratio,
-            datetime.utcnow()
+            datetime.utcnow(),
+            consult_task_id
         ))
 
         conn.commit()

@@ -56,13 +56,13 @@ export default function ColorGuideDetail() {
     null,
   );
 
-  const handleDownload = async () => {
-    if (!imageUrl) return;
-    const filename = `style-analysis-${Date.now()}.png`;
+  const downloadImage = async (src: string, prefix = "style-analysis") => {
+    if (!src) return;
+    const filename = `${prefix}-${Date.now()}.png`;
     const IMAGE_PROXY_API = "https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90";
     try {
       let blob: Blob;
-      const needsProxy = !imageUrl.includes("cdn.poehali.dev");
+      const needsProxy = !src.includes("cdn.poehali.dev");
 
       if (needsProxy) {
         const sessionToken = localStorage.getItem("session_token");
@@ -73,14 +73,14 @@ export default function ColorGuideDetail() {
             ...(sessionToken ? { "X-Session-Token": sessionToken } : {}),
           },
           credentials: "include",
-          body: JSON.stringify({ image_url: imageUrl }),
+          body: JSON.stringify({ image_url: src }),
         });
         if (!proxyResponse.ok) throw new Error("Failed to proxy image for download");
         const proxyData = await proxyResponse.json();
         const response = await fetch(proxyData.data_url);
         blob = await response.blob();
       } else {
-        const response = await fetch(imageUrl);
+        const response = await fetch(src);
         blob = await response.blob();
       }
 
@@ -98,6 +98,8 @@ export default function ColorGuideDetail() {
       toast.error("Ошибка скачивания");
     }
   };
+
+  const handleDownload = () => downloadImage(imageUrl || "");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -191,6 +193,18 @@ export default function ColorGuideDetail() {
     };
   }, [user, id]);
 
+  // Картинок у консультации может быть несколько: копятся списком в самом отчёте,
+  // а cdn_url хранит последнюю — она же превью в истории.
+  const consultImages: string[] = (() => {
+    if (serviceType !== "consult") return [];
+    const list = Array.isArray(textResult?.generated_images)
+      ? (textResult.generated_images as string[])
+      : [];
+    const all = [...list];
+    if (imageUrl && !all.includes(imageUrl)) all.push(imageUrl);
+    return all.filter(Boolean);
+  })();
+
   return (
     <Layout>
       <section className="py-10">
@@ -253,19 +267,38 @@ export default function ColorGuideDetail() {
                 question={(textParams?.question as string) || ""}
                 onReset={() => navigate("/consult-stylist")}
               />
-              {imageUrl && (
+              {consultImages.length > 0 && (
                 <Card>
                   <CardContent className="p-4 md:p-6 space-y-4">
-                    <img
-                      src={imageUrl}
-                      alt="Изображение по консультации"
-                      className="w-full rounded-lg"
-                    />
-                    <div className="flex justify-center">
-                      <Button size="lg" onClick={handleDownload}>
-                        <Icon name="Download" className="mr-2" size={18} />
-                        Скачать
-                      </Button>
+                    <h3 className="font-semibold">
+                      {consultImages.length > 1
+                        ? `Созданные изображения (${consultImages.length})`
+                        : "Созданное изображение"}
+                    </h3>
+                    <div
+                      className={
+                        consultImages.length > 1
+                          ? "grid sm:grid-cols-2 gap-4"
+                          : "space-y-4"
+                      }
+                    >
+                      {consultImages.map((src, i) => (
+                        <div key={src} className="space-y-2">
+                          <img
+                            src={src}
+                            alt={`Изображение по консультации ${i + 1}`}
+                            className="w-full rounded-lg border"
+                          />
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => downloadImage(src)}
+                          >
+                            <Icon name="Download" className="mr-2" size={16} />
+                            Скачать
+                          </Button>
+                        </div>
+                      ))}
                     </div>
                   </CardContent>
                 </Card>

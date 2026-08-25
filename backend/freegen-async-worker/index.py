@@ -307,6 +307,39 @@ def save_to_history(conn, user_id: str, cdn_url: str, prompt: str, references_js
         return None
 
 
+def attach_to_consult(conn, consult_task_id: str, user_id: str, cdn_url: str) -> None:
+    '''Прикрепить готовую картинку к карточке консультации ИИ-стилиста.
+
+    Все картинки консультации копятся списком в result_json.generated_images,
+    последняя дублируется в cdn_url — её показывает превью в истории.
+    '''
+    try:
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE t_p29007832_virtual_fitting_room.color_guide_tasks
+            SET cdn_url = %s,
+                result_json = jsonb_set(
+                    COALESCE(result_json::jsonb, '{}'::jsonb),
+                    '{generated_images}',
+                    COALESCE(result_json::jsonb->'generated_images', '[]'::jsonb) || to_jsonb(%s::text),
+                    true
+                )::text,
+                updated_at = %s
+            WHERE id = %s AND user_id = %s AND service_type = 'consult'
+              AND NOT COALESCE(result_json::jsonb->'generated_images', '[]'::jsonb) @> to_jsonb(%s::text)
+        ''', (cdn_url, cdn_url, datetime.utcnow(), consult_task_id, user_id, cdn_url))
+        updated = cursor.rowcount
+        conn.commit()
+        cursor.close()
+        print(f'[Consult] Attached image to consult {consult_task_id}: {bool(updated)}')
+    except Exception as e:
+        print(f'[Consult] Attach error: {e}')
+        try:
+            cursor.close()
+        except Exception:
+            pass
+
+
 def save_user_model(conn, user_id: str, cdn_url: str, prompt: str, model_params: Any, task_id: str) -> None:
     '''Сохранить сгенерированную модель в user_models (идемпотентно по task_id).'''
     try:
@@ -399,7 +432,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT id, prompt, "references", aspect_ratio, fal_request_id, fal_response_url, user_id, status, saved_to_history, task_type, model_params
+            SELECT id, prompt, "references", aspect_ratio, fal_request_id, fal_response_url, user_id, status, saved_to_history, task_type, model_params, consult_task_id
             FROM t_p29007832_virtual_fitting_room.freegen_tasks
             WHERE id = %s
         ''', (task_id,))
@@ -415,7 +448,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Task not found'}),
             }
 
-        task_id, prompt, references_json, aspect_ratio, fal_request_id, fal_response_url, user_id, task_status, saved_to_history, task_type, model_params = row
+        task_id, prompt, references_json, aspect_ratio, fal_request_id, fal_response_url, user_id, task_status, saved_to_history, task_type, model_params, consult_task_id = row
         references = json.loads(references_json) if references_json else []
         is_model_task = task_type == 'model'
 
@@ -535,6 +568,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 save_to_history(conn, user_id, cdn_url, prompt or '', references_json, aspect_ratio or '1:1', task_id)
                                 if is_model_task:
                                     save_user_model(conn, user_id, cdn_url, prompt or '', model_params, task_id)
+                                if consult_task_id:
+                                    attach_to_consult(conn, str(consult_task_id), user_id, cdn_url)
 
                             cursor.execute('''
                                 UPDATE t_p29007832_virtual_fitting_room.freegen_tasks
