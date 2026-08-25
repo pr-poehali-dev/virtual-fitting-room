@@ -222,6 +222,17 @@ export default function FreeGeneration() {
               </span>
             </p>
           </div>
+          <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p className="flex items-start gap-2 text-sm text-gray-700">
+              <Icon name="Lightbulb" size={18} className="mt-0.5 shrink-0 text-amber-600" />
+              <span>
+                <span className="font-semibold">Начинайте запрос с того, что нужно нарисовать</span> — например
+                «Создай изображение…», «Нарисуй…», «Сделай коллаж…». Запросы, которые начинаются как вопрос
+                («Подскажи…», «Посоветуй…», «Как стилист…»), модель принимает за просьбу ответить текстом
+                и отклоняет. Пожелания к образу дописывайте следом, обычными словами.
+              </span>
+            </p>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
