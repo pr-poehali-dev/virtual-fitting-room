@@ -319,14 +319,14 @@ def attach_to_consult(conn, consult_task_id: str, user_id: str, cdn_url: str) ->
             UPDATE t_p29007832_virtual_fitting_room.color_guide_tasks
             SET cdn_url = %s,
                 result_json = jsonb_set(
-                    COALESCE(result_json::jsonb, '{}'::jsonb),
+                    COALESCE(result_json, '{}'::jsonb),
                     '{generated_images}',
-                    COALESCE(result_json::jsonb->'generated_images', '[]'::jsonb) || to_jsonb(%s::text),
+                    COALESCE(result_json->'generated_images', '[]'::jsonb) || to_jsonb(%s::text),
                     true
-                )::text,
+                ),
                 updated_at = %s
             WHERE id = %s AND user_id = %s AND service_type = 'consult'
-              AND NOT COALESCE(result_json::jsonb->'generated_images', '[]'::jsonb) @> to_jsonb(%s::text)
+              AND NOT COALESCE(result_json->'generated_images', '[]'::jsonb) @> to_jsonb(%s::text)
         ''', (cdn_url, cdn_url, datetime.utcnow(), consult_task_id, user_id, cdn_url))
         updated = cursor.rowcount
         conn.commit()

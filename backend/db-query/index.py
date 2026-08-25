@@ -52,7 +52,7 @@ def delete_from_s3_if_orphaned(photo_url: str, user_id: str, cursor, schema: str
     cursor.execute(
         f"""SELECT COUNT(*) FROM {schema}.color_guide_tasks
             WHERE user_id = %s AND service_type = 'consult'
-              AND (cdn_url = %s OR result_json::jsonb->'generated_images' @> to_jsonb(%s::text))""",
+              AND (cdn_url = %s OR result_json->'generated_images' @> to_jsonb(%s::text))""",
         (user_id, photo_url, photo_url)
     )
     consult_count = cursor.fetchone()[0]
