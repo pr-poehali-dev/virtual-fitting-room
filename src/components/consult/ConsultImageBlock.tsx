@@ -18,6 +18,7 @@ const FREEGEN_START_API = 'https://functions.poehali.dev/093c98ba-e711-4c78-b328
 const FREEGEN_STATUS_API = 'https://functions.poehali.dev/f706d708-5f17-4c11-864c-d13bf91cebce';
 const FREEGEN_WORKER_API = 'https://functions.poehali.dev/8b34e115-88be-4740-887a-36c388980955';
 const CONSULT_DETAIL_API = 'https://functions.poehali.dev/90841acf-1a1a-4158-a8b6-8ddd65204126';
+const IMAGE_PROXY_API = 'https://functions.poehali.dev/7f105c4b-f9e7-4df3-9f64-3d35895b8e90';
 
 export interface ConsultPhoto {
   /** Ссылка на изображение */
@@ -138,6 +139,48 @@ export default function ConsultImageBlock({ taskId, initialPrompt, photos }: Pro
         console.error('[Consult] poll error:', e);
       }
     }, 2000);
+  };
+
+  const handleDownload = async () => {
+    if (!resultUrl) return;
+    const filename = `consult-${Date.now()}.png`;
+    try {
+      let blob: Blob;
+      const needsProxy = !resultUrl.includes('cdn.poehali.dev');
+
+      if (needsProxy) {
+        const sessionToken = localStorage.getItem('session_token');
+        const proxyResponse = await fetch(IMAGE_PROXY_API, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(sessionToken ? { 'X-Session-Token': sessionToken } : {}),
+          },
+          credentials: 'include',
+          body: JSON.stringify({ image_url: resultUrl }),
+        });
+        if (!proxyResponse.ok) throw new Error('Не удалось получить файл');
+        const proxyData = await proxyResponse.json();
+        const response = await fetch(proxyData.data_url);
+        blob = await response.blob();
+      } else {
+        const response = await fetch(resultUrl);
+        blob = await response.blob();
+      }
+
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      toast.success('Фото скачано');
+    } catch (e) {
+      console.error('[Consult] download error:', e);
+      toast.error('Не удалось скачать изображение');
+    }
   };
 
   const toggle = (url: string) => {
@@ -285,11 +328,9 @@ export default function ConsultImageBlock({ taskId, initialPrompt, photos }: Pro
               alt="Результат генерации"
               className="w-full rounded-lg border"
             />
-            <Button asChild variant="outline" className="w-full">
-              <a href={resultUrl} target="_blank" rel="noreferrer" download>
-                <Icon name="Download" size={16} className="mr-2" />
-                Скачать
-              </a>
+            <Button variant="outline" className="w-full" onClick={handleDownload}>
+              <Icon name="Download" size={16} className="mr-2" />
+              Скачать
             </Button>
           </div>
         )}
