@@ -218,6 +218,22 @@ export default function ConsultStylist() {
                           />
                         </div>
                       )}
+
+                      {wantPrompt && (
+                        <p className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-gray-700">
+                          <Icon
+                            name="Wallet"
+                            size={16}
+                            className="mt-0.5 shrink-0 text-amber-600"
+                          />
+                          <span>
+                            Ответ стоит {CONSULT_COST} ₽, картинка — ещё{" "}
+                            {GENERATION_COST} ₽. Если планируете и то, и другое,
+                            держите на счету от {CONSULT_COST + GENERATION_COST} ₽ —
+                            иначе после ответа картинку не получится запустить.
+                          </span>
+                        </p>
+                      )}
                     </div>
 
                     <Button
@@ -287,6 +303,10 @@ export default function ConsultStylist() {
               {
                 question: "Обязательно ли генерировать картинку?",
                 answer: `Нет. Ответ и промпт вы получаете за ${CONSULT_COST} ₽ и можете этим ограничиться. Картинка рисуется только по кнопке и стоит ${GENERATION_COST} ₽.`,
+              },
+              {
+                question: "Сколько денег держать на счету?",
+                answer: `Если нужен только ответ — достаточно ${CONSULT_COST} ₽. Если хотите и ответ, и картинку, держите на счету от ${CONSULT_COST + GENERATION_COST} ₽: иначе ответ вы получите, а запустить генерацию не выйдет, пока не пополните баланс. Сам ответ при этом никуда не денется — он сохраняется в личном кабинете.`,
               },
               {
                 question: "Где сохраняются ответы?",
