@@ -122,6 +122,16 @@ const Home = () => {
       path: "/perfume-selection",
     },
     {
+      id: "consult-stylist",
+      title: "Консультация ИИ-стилиста",
+      description:
+        "Задайте вопрос своими словами и приложите фото: нейросеть разберёт задачу, даст конкретные рекомендации и по желанию составит промпт, чтобы тут же нарисовать картинку",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/70aa9d7f-d67f-4621-81e4-cfb68ac222ff.jpg",
+      icon: "MessageCircleQuestion",
+      path: "/consult-stylist",
+    },
+    {
       id: "kibbe-test",
       title: "Определение типажа по Кибби",
       description:

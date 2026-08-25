@@ -66,6 +66,11 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/consult-stylist" className="hover:text-white transition-colors">
+                  Консультация ИИ-стилиста
+                </Link>
+              </li>
+              <li>
                 <Link to="/kibbe-test" className="hover:text-white transition-colors">
                   Типаж по Кибби
                 </Link>

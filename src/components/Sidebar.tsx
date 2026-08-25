@@ -69,6 +69,12 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       label: "Подбор ароматов",
     },
     {
+      id: "consult-stylist",
+      path: "/consult-stylist",
+      icon: "MessageCircleQuestion",
+      label: "Консультация ИИ-стилиста",
+    },
+    {
       id: "kibbe-test",
       path: "/kibbe-test",
       icon: "Ruler",
