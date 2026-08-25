@@ -57,7 +57,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     # Фильтр по типам услуг: services=glasses,kibbe,outfit (пусто = показать все)
     allowed_services = {'colorguide', 'style', 'outfit', 'glasses', 'makeup', 'hairstyle', 'kibbe',
-                        'gift', 'perfume', 'wedding'}
+                        'gift', 'perfume', 'wedding', 'consult'}
     services_raw = params.get('services') or ''
     selected_services = [s.strip() for s in services_raw.split(',') if s.strip() in allowed_services]
 
@@ -121,6 +121,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'gift': 'Подбор подарка',
             'perfume': 'Подбор аромата',
             'wedding': 'Свадебный образ',
+            'consult': 'Консультация ИИ-стилиста',
         }
 
         tasks = []

@@ -522,23 +522,27 @@ def _extract_json_object(text: str) -> Dict[str, Any]:
     raise ValueError('No JSON object found in model response')
 
 
-def call_qwen_json(image_url: str, prompt: str, model: str, extra_image_url: str = None) -> Dict[str, Any]:
+def call_qwen_json(image_url: str, prompt: str, model: str, extra_image_url: str = None,
+                   extra_image_urls: list = None) -> Dict[str, Any]:
     """Запрос к мультимодальному Qwen (thinking) через OpenRouter.
     Без strict json_schema: модель отдаёт reasoning + JSON, парсим объект из ответа.
     extra_image_url — второе фото (образ партнёра) только для анализа.
+    extra_image_urls — список дополнительных изображений (референсы консультации).
     3 попытки с retry."""
     api_key = os.environ.get('OPENROUTER_API_KEY_NEW') or os.environ.get('OPENROUTER_API_KEY')
     if not api_key:
         raise RuntimeError('OPENROUTER_API_KEY not configured')
 
     # Текстовые сервисы (подарки, ароматы) идут без фото — тогда шлём только текст.
+    content = []
     if image_url:
-        content = [{'type': 'image_url', 'image_url': {'url': image_url}}]
-        if extra_image_url:
-            content.append({'type': 'image_url', 'image_url': {'url': extra_image_url}})
-        content.append({'type': 'text', 'text': prompt})
-    else:
-        content = [{'type': 'text', 'text': prompt}]
+        content.append({'type': 'image_url', 'image_url': {'url': image_url}})
+    if extra_image_url:
+        content.append({'type': 'image_url', 'image_url': {'url': extra_image_url}})
+    for url in (extra_image_urls or []):
+        if url:
+            content.append({'type': 'image_url', 'image_url': {'url': url}})
+    content.append({'type': 'text', 'text': prompt})
 
     payload = {
         'model': model,
@@ -778,6 +782,9 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
 
     # Сегмент: S3 загрузка фото клиента + анализ + fal.ai (долгая часть, без коннекта к БД)
     text_only = registry.is_text_only(service_type)
+    # Консультация: фото необязательны, картинка сразу не рисуется.
+    no_image_gen = registry.is_no_image_gen(service_type)
+    photos_optional = registry.are_photos_optional(service_type)
     # Готовый разбор: если он уже есть, а картинка не удалась — сохраним текст и вернём деньги.
     analysis = None
 
@@ -785,6 +792,12 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
         if text_only:
             person_url = None
             print('[COLORGUIDE-WORKER] Text-only service: фото не требуется')
+        elif photos_optional and not person_image:
+            person_url = None
+            print('[COLORGUIDE-WORKER] Фото автора не приложено — работаем по тексту')
+        elif photos_optional and str(person_image).startswith('http'):
+            person_url = str(person_image)
+            print(f'[COLORGUIDE-WORKER] Фото автора по ссылке: {person_url}')
         else:
             person_url = upload_to_s3(person_image, task_id, str(user_id))
             print(f'[COLORGUIDE-WORKER] Person uploaded to {person_url}')
@@ -804,6 +817,18 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
                 print(f'[COLORGUIDE-WORKER] Partner photo skipped: {p_err}')
                 partner_url = None
 
+        # Референсы консультации — готовые ссылки на наше хранилище (загружены заранее).
+        reference_urls = []
+        if getattr(service, 'MULTI_PHOTO', False) and form_params:
+            raw_refs = form_params.get('reference_urls')
+            if isinstance(raw_refs, list):
+                max_refs = getattr(service, 'MAX_REFERENCES', 3)
+                for ref in raw_refs[:max_refs]:
+                    ref_str = str(ref or '').strip()
+                    if ref_str.startswith(('https://storage.yandexcloud.net/', 'https://cdn.poehali.dev/')):
+                        reference_urls.append(ref_str)
+            print(f'[COLORGUIDE-WORKER] Референсов консультации: {len(reference_urls)}')
+
         print('[COLORGUIDE-WORKER] STEP analysis start')
         gemini_prompt = service.GEMINI_PROMPT
         if height:
@@ -820,6 +845,16 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
             params_block = service.build_params_block(form_params)
             if params_block:
                 gemini_prompt += '\n\n' + params_block
+
+        # Консультация: пояснение про роли фото и сам вопрос пользователя.
+        if hasattr(service, 'build_photo_block'):
+            photo_block = service.build_photo_block(bool(person_url), len(reference_urls))
+            if photo_block:
+                gemini_prompt += '\n\n' + photo_block
+        if hasattr(service, 'build_request_block'):
+            request_block = service.build_request_block(form_params or {})
+            if request_block:
+                gemini_prompt += '\n\n' + request_block
 
         # Пояснение про второе фото (образ партнёра) — только для анализа.
         if partner_url:
@@ -844,7 +879,8 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
             model_used = 'qwen'
             try:
                 analysis = call_qwen_json(
-                    person_url, gemini_prompt, service.QWEN_MODEL, partner_url or reference_url
+                    person_url, gemini_prompt, service.QWEN_MODEL, partner_url or reference_url,
+                    reference_urls
                 )
                 missing = [f for f in required if not analysis.get(f)]
                 if missing:
@@ -880,9 +916,11 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
 
         analysis['source_image'] = person_url
 
-        if text_only:
+        if text_only or no_image_gen:
             cdn_url = None
-            print('[COLORGUIDE-WORKER] Text-only service: картинка не генерируется')
+            if reference_urls:
+                analysis['reference_images'] = reference_urls
+            print('[COLORGUIDE-WORKER] Картинка не генерируется на этом шаге')
             _save_text_only_result(task_id, analysis)
             return
 

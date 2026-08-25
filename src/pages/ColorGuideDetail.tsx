@@ -26,6 +26,7 @@ import WeddingReport, {
   WeddingResult,
   WeddingFormParams,
 } from "@/components/WeddingReport";
+import ConsultReport, { ConsultResult } from "@/components/consult/ConsultReport";
 
 const COLORGUIDE_DETAIL_API = "https://functions.poehali.dev/90841acf-1a1a-4158-a8b6-8ddd65204126";
 
@@ -132,8 +133,9 @@ export default function ColorGuideDetail() {
         setColortypeHistoryId(data.colortype_history_id || null);
 
         if (svc !== "colorguide") {
-          // Подарки и ароматы — текстовые отчёты, картинки у них нет.
-          const isTextOnly = svc === "gift" || svc === "perfume";
+          // Подарки, ароматы и консультации — текстовые отчёты, картинка необязательна.
+          const isTextOnly =
+            svc === "gift" || svc === "perfume" || svc === "consult";
           // Картинки может не быть: разбор готов, деньги возвращены — показываем текст.
           if (
             data.status !== "completed" ||
@@ -244,6 +246,31 @@ export default function ColorGuideDetail() {
               formParams={textParams as unknown as PerfumeFormParams}
               onReset={() => navigate("/perfume-selection")}
             />
+          ) : serviceType === "consult" && textResult ? (
+            <div className="space-y-6">
+              <ConsultReport
+                data={textResult as unknown as ConsultResult}
+                question={(textParams?.question as string) || ""}
+                onReset={() => navigate("/consult-stylist")}
+              />
+              {imageUrl && (
+                <Card>
+                  <CardContent className="p-4 md:p-6 space-y-4">
+                    <img
+                      src={imageUrl}
+                      alt="Изображение по консультации"
+                      className="w-full rounded-lg"
+                    />
+                    <div className="flex justify-center">
+                      <Button size="lg" onClick={handleDownload}>
+                        <Icon name="Download" className="mr-2" size={18} />
+                        Скачать
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           ) : BEAUTY_REPORTS[serviceType] && styleResult ? (
             <BeautyAnalysisReport
               result={styleResult as Record<string, unknown>}

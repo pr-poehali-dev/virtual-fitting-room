@@ -12,11 +12,14 @@ import ServiceTypeFilter from "@/components/history/ServiceTypeFilter";
 const COLORGUIDE_HISTORY_API = "https://functions.poehali.dev/d894b5d6-acf1-4b38-ae86-4c3c1ad3397f";
 const DB_QUERY_API = "https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9";
 
-// Подарки и ароматы — текстовые подборки без картинки, показываем заглушку сервиса.
+// Подарки, ароматы и консультации — текстовые отчёты, картинки может не быть:
+// показываем заглушку сервиса.
 const SERVICE_PLACEHOLDERS: Record<string, string> = {
   gift: "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/397a0fb0-ac62-44a2-acbd-588dc53419d9.jpg",
   perfume:
     "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/15bd8187-7c0a-4015-abd8-3602df61386b.jpg",
+  consult:
+    "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/54840f7d-8c0c-4428-8a0d-3ef709daabd6.jpg",
 };
 
 interface GuideTask {

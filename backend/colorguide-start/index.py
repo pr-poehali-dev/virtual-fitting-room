@@ -14,9 +14,11 @@ ALLOWED_SLUGS = [
     'vibrant-spring', 'vivid-autumn', 'vivid-summer', 'vivid-winter'
 ]
 
-ALLOWED_SERVICE_TYPES = ['colorguide', 'style', 'outfit', 'glasses', 'makeup', 'hairstyle', 'kibbe', 'gift', 'perfume', 'wedding']
+ALLOWED_SERVICE_TYPES = ['colorguide', 'style', 'outfit', 'glasses', 'makeup', 'hairstyle', 'kibbe', 'gift', 'perfume', 'wedding', 'consult']
 # Сервисы, работающие только по анкете — фото не требуется.
 TEXT_ONLY_SERVICE_TYPES = {'gift', 'perfume'}
+# Сервисы, где фото можно приложить, но можно и не прикладывать.
+OPTIONAL_PHOTO_SERVICES = {'consult'}
 # Сервисы, принимающие второе фото (образ партнёра) — только для анализа.
 PARTNER_IMAGE_SERVICES = {'wedding'}
 SERVICE_LABELS = {
@@ -30,6 +32,7 @@ SERVICE_LABELS = {
     'gift': 'Подбор подарка',
     'perfume': 'Подбор аромата',
     'wedding': 'Свадебный образ',
+    'consult': 'Консультация ИИ-стилиста',
 }
 # Стоимость по типу сервиса. 'outfit' — премиальный, легко поднять цену здесь.
 SERVICE_COSTS = {
@@ -43,6 +46,7 @@ SERVICE_COSTS = {
     'gift': 50,
     'perfume': 50,
     'wedding': 50,
+    'consult': 10,
 }
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -145,8 +149,28 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     text_only = service_type in TEXT_ONLY_SERVICE_TYPES
     if text_only:
         person_image = None
+    photo_optional = service_type in OPTIONAL_PHOTO_SERVICES
 
-    if not person_image and not text_only:
+    # Консультация: вопрос обязателен, фото — нет.
+    if service_type == 'consult':
+        consult_params = form_params or {}
+        # Фото автора приходит готовой ссылкой на наше хранилище (загружено заранее).
+        consult_photo = str(consult_params.get('person_photo') or '').strip()
+        if consult_photo.startswith(('https://storage.yandexcloud.net/', 'https://cdn.poehali.dev/')):
+            person_image = consult_photo
+        else:
+            person_image = None
+
+        question = str(consult_params.get('question') or '').strip()
+        if not question:
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
+                'isBase64Encoded': False,
+                'body': json.dumps({'error': 'Напишите вопрос'})
+            }
+
+    if not person_image and not text_only and not photo_optional:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},

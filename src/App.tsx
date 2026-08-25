@@ -56,6 +56,7 @@ const StyleAnalysis = lazy(() => import("./pages/StyleAnalysis"));
 const OutfitSelection = lazy(() => import("./pages/OutfitSelection"));
 const GiftSelection = lazy(() => import("./pages/GiftSelection"));
 const PerfumeSelection = lazy(() => import("./pages/PerfumeSelection"));
+const ConsultStylist = lazy(() => import("./pages/ConsultStylist"));
 const WeddingSelection = lazy(() => import("./pages/WeddingSelection"));
 const KibbeTest = lazy(() => import("./pages/KibbeTest"));
 const KibbeResultDetail = lazy(() => import("./pages/KibbeResultDetail"));
@@ -142,6 +143,7 @@ const App = () => (
             <Route path="/outfit-selection" element={<OutfitSelection />} />
             <Route path="/gift-selection" element={<GiftSelection />} />
             <Route path="/perfume-selection" element={<PerfumeSelection />} />
+            <Route path="/consult-stylist" element={<ConsultStylist />} />
             <Route path="/wedding-selection" element={<WeddingSelection />} />
             <Route path="/kibbe-test" element={<KibbeTest />} />
             <Route path="/kibbe-result/:id" element={<KibbeResultDetail />} />

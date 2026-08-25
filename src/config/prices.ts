@@ -6,6 +6,7 @@ export const OUTFIT_SELECTION_COST = 50;
 export const GIFT_SELECTION_COST = 50;
 export const PERFUME_SELECTION_COST = 50;
 export const WEDDING_SELECTION_COST = 50;
+export const CONSULT_COST = 10;
 export const LENORMAND_COST = 50;
 export const MIN_TOPUP = 50;
 

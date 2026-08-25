@@ -18,7 +18,7 @@ const TIMEOUT_DURATION = 300000;
  * Работает по той же схеме, что подбор образов, но без фото и картинки.
  */
 export function useTextSelectionTask<TResult>(
-  serviceType: "gift" | "perfume",
+  serviceType: "gift" | "perfume" | "consult",
   cost: number,
   successMessage: string,
 ) {
@@ -33,6 +33,7 @@ export function useTextSelectionTask<TResult>(
     string,
     unknown
   > | null>(null);
+  const [taskId, setTaskId] = useState<string | null>(null);
 
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -101,6 +102,7 @@ export function useTextSelectionTask<TResult>(
       setStatusText("Запуск подбора...");
       setResult(null);
       setResultParams(null);
+      setTaskId(null);
 
       try {
         const token = localStorage.getItem("session_token");
@@ -129,6 +131,7 @@ export function useTextSelectionTask<TResult>(
         }
 
         setStatusText("Обработка начата...");
+        setTaskId(data.task_id);
         pollingRef.current = setInterval(() => poll(data.task_id), POLLING_INTERVAL);
         timeoutRef.current = setTimeout(() => {
           stopTimers();
@@ -153,7 +156,8 @@ export function useTextSelectionTask<TResult>(
   const reset = useCallback(() => {
     setResult(null);
     setResultParams(null);
+    setTaskId(null);
   }, []);
 
-  return { isAnalyzing, statusText, result, resultParams, start, reset };
+  return { isAnalyzing, statusText, result, resultParams, taskId, start, reset };
 }
