@@ -52,14 +52,24 @@ const Home = () => {
 
   const services = [
     {
-      id: "virtual-fitting",
-      title: "Виртуальная примерочная",
+      id: "kibbe-test",
+      title: "Определение типажа по Кибби",
       description:
-        "Примерьте одежду онлайн с помощью ИИ — загрузите своё фото и посмотрите, как на вас сидит выбранная вещь",
+        "Бесплатный тест: ответьте на вопросы о фигуре и узнайте свой типаж из 10 по системе Дэвида Кибби",
       image:
-        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/AFOzmM93nFTwxvTxlbpUm.png",
-      icon: "Shirt",
-      path: "/virtualfitting",
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/093af219-f0e0-48f3-a4ad-c0702c19d22a.jpg",
+      icon: "Ruler",
+      path: "/kibbe-test",
+    },
+    {
+      id: "archetype-test",
+      title: "Определение архетипа по Юнгу",
+      description:
+        "Бесплатный тест: ответьте на 36 вопросов и узнайте свой ведущий архетип из 12 по системе Карла Юнга",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/d16fa4cd-bace-430f-81dc-1652d9dc85ce.png",
+      icon: "Brain",
+      path: "/archetype-test",
     },
     {
       id: "color-type",
@@ -92,6 +102,46 @@ const Home = () => {
       path: "/outfit-selection",
     },
     {
+      id: "virtual-fitting",
+      title: "Виртуальная примерочная",
+      description:
+        "Примерьте одежду онлайн с помощью ИИ — загрузите своё фото и посмотрите, как на вас сидит выбранная вещь",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/AFOzmM93nFTwxvTxlbpUm.png",
+      icon: "Shirt",
+      path: "/virtualfitting",
+    },
+    {
+      id: "consult-stylist",
+      title: "Консультация ИИ-стилиста",
+      description:
+        "Задайте вопрос своими словами и приложите фото: нейросеть разберёт задачу, даст конкретные рекомендации и по желанию составит промпт (задание на генерацию картинки), чтобы тут же нарисовать её",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/70aa9d7f-d67f-4621-81e4-cfb68ac222ff.jpg",
+      icon: "MessageCircleQuestion",
+      path: "/consult-stylist",
+    },
+    {
+      id: "free-generation",
+      title: "Генерация изображений",
+      description:
+        "Создавайте уникальные изображения по текстовому описанию — превращайте идеи в готовые картинки за секунды",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/1a386bbe-2098-4e52-ae9c-6ea2394ad03a.jpg",
+      icon: "Sparkles",
+      path: "/freegeneration",
+    },
+    {
+      id: "perfume-selection",
+      title: "Подбор ароматов",
+      description:
+        "Пять конкретных ароматов под вас: любимые ноты, повод, сезон и стойкость — с разбором пирамиды нот и советами по нанесению",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/90f752ca-05c1-4c77-9628-58a5b1bdd630.jpg",
+      icon: "SprayCan",
+      path: "/perfume-selection",
+    },
+    {
       id: "wedding-selection",
       title: "Свадебный образ",
       description:
@@ -110,56 +160,6 @@ const Home = () => {
         "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/79d4240f-ad68-4269-9998-4f484e0658b2.jpg",
       icon: "Gift",
       path: "/gift-selection",
-    },
-    {
-      id: "perfume-selection",
-      title: "Подбор ароматов",
-      description:
-        "Пять конкретных ароматов под вас: любимые ноты, повод, сезон и стойкость — с разбором пирамиды нот и советами по нанесению",
-      image:
-        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/90f752ca-05c1-4c77-9628-58a5b1bdd630.jpg",
-      icon: "SprayCan",
-      path: "/perfume-selection",
-    },
-    {
-      id: "consult-stylist",
-      title: "Консультация ИИ-стилиста",
-      description:
-        "Задайте вопрос своими словами и приложите фото: нейросеть разберёт задачу, даст конкретные рекомендации и по желанию составит промпт (задание на генерацию картинки), чтобы тут же нарисовать её",
-      image:
-        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/70aa9d7f-d67f-4621-81e4-cfb68ac222ff.jpg",
-      icon: "MessageCircleQuestion",
-      path: "/consult-stylist",
-    },
-    {
-      id: "kibbe-test",
-      title: "Определение типажа по Кибби",
-      description:
-        "Бесплатный тест: ответьте на вопросы о фигуре и узнайте свой типаж из 10 по системе Дэвида Кибби",
-      image:
-        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/093af219-f0e0-48f3-a4ad-c0702c19d22a.jpg",
-      icon: "Ruler",
-      path: "/kibbe-test",
-    },
-    {
-      id: "archetype-test",
-      title: "Определение архетипа по Юнгу",
-      description:
-        "Бесплатный тест: ответьте на 36 вопросов и узнайте свой ведущий архетип из 12 по системе Карла Юнга",
-      image:
-        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/d16fa4cd-bace-430f-81dc-1652d9dc85ce.png",
-      icon: "Brain",
-      path: "/archetype-test",
-    },
-    {
-      id: "free-generation",
-      title: "Генерация изображений",
-      description:
-        "Создавайте уникальные изображения по текстовому описанию — превращайте идеи в готовые картинки за секунды",
-      image:
-        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/1a386bbe-2098-4e52-ae9c-6ea2394ad03a.jpg",
-      icon: "Sparkles",
-      path: "/freegeneration",
     },
     {
       id: "divination",

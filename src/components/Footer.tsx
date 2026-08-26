@@ -26,13 +26,13 @@ const Footer = () => {
             <h3 className="text-white font-semibold mb-4">Сервисы</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/virtualfitting" className="hover:text-white transition-colors">
-                  Онлайн примерочная
+                <Link to="/kibbe-test" className="hover:text-white transition-colors">
+                  Типаж по Кибби
                 </Link>
               </li>
               <li>
-                <Link to="/freegeneration" className="hover:text-white transition-colors">
-                  Генерация изображений
+                <Link to="/archetype-test" className="hover:text-white transition-colors">
+                  Архетип по Юнгу
                 </Link>
               </li>
               <li>
@@ -51,18 +51,8 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/wedding-selection" className="hover:text-white transition-colors">
-                  Свадебный образ
-                </Link>
-              </li>
-              <li>
-                <Link to="/gift-selection" className="hover:text-white transition-colors">
-                  Подбор подарков
-                </Link>
-              </li>
-              <li>
-                <Link to="/perfume-selection" className="hover:text-white transition-colors">
-                  Подбор ароматов
+                <Link to="/virtualfitting" className="hover:text-white transition-colors">
+                  Виртуальная примерочная
                 </Link>
               </li>
               <li>
@@ -71,13 +61,23 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/kibbe-test" className="hover:text-white transition-colors">
-                  Типаж по Кибби
+                <Link to="/freegeneration" className="hover:text-white transition-colors">
+                  Генерация изображений
                 </Link>
               </li>
               <li>
-                <Link to="/archetype-test" className="hover:text-white transition-colors">
-                  Архетип по Юнгу
+                <Link to="/perfume-selection" className="hover:text-white transition-colors">
+                  Подбор ароматов
+                </Link>
+              </li>
+              <li>
+                <Link to="/wedding-selection" className="hover:text-white transition-colors">
+                  Свадебный образ
+                </Link>
+              </li>
+              <li>
+                <Link to="/gift-selection" className="hover:text-white transition-colors">
+                  Подбор подарков
                 </Link>
               </li>
               <li>
