@@ -331,9 +331,10 @@ const Home = () => {
                         <span>Тестовый режим • точность ~70%</span>
                       </div>
                     )}
-                    {/* Тесты без списания — отмечаем сразу на картинке */}
+                    {/* Тесты без списания — метка внизу справа, чтобы не
+                        перекрывать людей и одежду на обложке */}
                     {service.free && (
-                      <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-emerald-500/95 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lg">
+                      <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-emerald-500/95 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lg">
                         <Icon name="Gift" size={14} />
                         <span>Бесплатно</span>
                       </div>
