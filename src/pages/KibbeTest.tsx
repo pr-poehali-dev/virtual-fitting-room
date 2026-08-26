@@ -254,6 +254,14 @@ export default function KibbeTest() {
               Ответьте честно, ориентируясь на естественное состояние тела. В конце вы узнаете
               свой типаж из 10 по системе Дэвида Кибби.
             </p>
+            {/* Система Кибби описывает только женские типажи — предупреждаем до начала */}
+            <p className="mx-auto mt-4 flex max-w-xl items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-left text-sm text-gray-700">
+              <Icon name="Info" size={18} className="mt-0.5 shrink-0 text-amber-600" />
+              <span>
+                Тест только для женщин: система Дэвида Кибби описывает
+                женские типажи, для мужчин она не подходит.
+              </span>
+            </p>
           </div>
 
           {step === 'intro' && (

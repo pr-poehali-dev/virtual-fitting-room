@@ -61,6 +61,7 @@ const Home = () => {
       icon: "Ruler",
       path: "/kibbe-test",
       free: true,
+      audience: "Для женщин",
     },
     {
       id: "archetype-test",
@@ -333,10 +334,20 @@ const Home = () => {
                     )}
                     {/* Тесты без списания — метка внизу справа, чтобы не
                         перекрывать людей и одежду на обложке */}
-                    {service.free && (
-                      <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-emerald-500/95 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lg">
-                        <Icon name="Gift" size={14} />
-                        <span>Бесплатно</span>
+                    {(service.free || service.audience) && (
+                      <div className="absolute bottom-3 right-3 flex flex-wrap items-center justify-end gap-1.5">
+                        {service.free && (
+                          <span className="flex items-center gap-1.5 bg-emerald-500/95 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lg">
+                            <Icon name="Gift" size={14} />
+                            Бесплатно
+                          </span>
+                        )}
+                        {service.audience && (
+                          <span className="flex items-center gap-1.5 bg-gray-900/85 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lg">
+                            <Icon name="User" size={14} />
+                            {service.audience}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
