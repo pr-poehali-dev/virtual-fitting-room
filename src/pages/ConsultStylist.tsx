@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
 import LockedFormOverlay from "@/components/LockedFormOverlay";
@@ -138,7 +138,18 @@ export default function ConsultStylist() {
                           Здесь можно спросить о стиле, одежде и внешности —
                           нейросеть ответит как персональный стилист. Тема
                           вопроса может быть и любой другой: сервис одинаково
-                          работает с вопросами не про моду.
+                          работает с вопросами не про моду. А ещё можно попросить
+                          нейросеть составить промпт для любого изображения:
+                          опишите своими словами, что хотите увидеть, и
+                          попросите подготовить промпт — по нему вы создадите
+                          картинку в{" "}
+                          <Link
+                            to="/freegeneration"
+                            className="font-medium text-purple-700 underline underline-offset-2"
+                          >
+                            свободной генерации
+                          </Link>
+                          .
                         </span>
                       </p>
                     </div>
