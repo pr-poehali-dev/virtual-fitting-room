@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
@@ -216,9 +217,17 @@ export default function FreeGeneration() {
             <p className="flex items-start gap-2 text-sm text-gray-700">
               <Icon name="Wand2" size={18} className="mt-0.5 shrink-0 text-purple-600" />
               <span>
-                Это самый универсальный сервис — здесь всё зависит от вашей фантазии и промта
-                (описания того, что вы хотите получить на изображении). Можно создавать инфографику
+                Это самый универсальный сервис — здесь всё зависит от вашей фантазии и промпта
+                (задания на генерацию картинки). Можно создавать инфографику
                 и любые изображения: от фотореалистичных до иллюстративных.
+                Не знаете, как описать задумку? Расскажите своими словами в{" "}
+                <Link
+                  to="/consult-stylist"
+                  className="font-medium text-purple-700 underline underline-offset-2"
+                >
+                  консультации ИИ-стилиста
+                </Link>{" "}
+                и попросите составить промпт — готовое задание перенесёте сюда.
               </span>
             </p>
           </div>
@@ -241,7 +250,9 @@ export default function FreeGeneration() {
             <Card>
               <CardContent className="pt-6 space-y-4">
                 <div>
-                  <Label htmlFor="freegen-prompt" className="mb-2 block">Промпт</Label>
+                  <Label htmlFor="freegen-prompt" className="mb-2 block">
+                    Промпт (задание на генерацию картинки)
+                  </Label>
                   <Textarea
                     id="freegen-prompt"
                     ref={promptRef}

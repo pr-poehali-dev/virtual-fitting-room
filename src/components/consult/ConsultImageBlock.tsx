@@ -283,7 +283,7 @@ export default function ConsultImageBlock({ taskId, initialPrompt, photos }: Pro
             Сгенерировать картинку
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Стоимость — {GENERATION_COST} ₽. Промпт можно отредактировать перед запуском.
+            Стоимость — {GENERATION_COST} ₽. Промпт (задание на генерацию картинки) можно отредактировать перед запуском.
           </p>
         </div>
 

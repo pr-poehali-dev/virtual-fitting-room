@@ -162,7 +162,7 @@ export default function ConsultReport({ data, question, onReset }: Props) {
             <div className="flex items-center justify-between gap-3 mb-2">
               <h3 className="font-semibold flex items-center gap-2">
                 <Icon name="Wand2" size={18} className="text-purple-600" />
-                Промпт для генерации
+                Промпт (задание на генерацию картинки)
               </h3>
               <Button type="button" variant="outline" size="sm" onClick={copyPrompt}>
                 <Icon name="Copy" size={14} className="mr-1.5" />
