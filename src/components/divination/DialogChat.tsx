@@ -602,6 +602,51 @@ const DialogChat = ({
           <p className={`mt-1 text-sm ${divTheme.muted}`}>
             Начните новый диалог, чтобы продолжить
           </p>
+          {/* Форма вопроса тут скрыта, поэтому даём отдельную кнопку закрытия:
+              иначе беседу нечем убрать из незавершённых. */}
+          <p className="mx-auto mt-3 max-w-md text-sm text-[#e8d9a8]">
+            Закройте беседу, чтобы убрать её отсюда — она останется в личном
+            кабинете, в разделе{" "}
+            <a
+              href="/profile/history-divination"
+              className="font-medium text-[#c9a84c] underline underline-offset-2"
+            >
+              «Мои гадания»
+            </a>
+            .
+          </p>
+          <div className="mt-3 flex flex-wrap justify-center gap-2">
+            <Button
+              size="sm"
+              onClick={() => setConfirmClose(true)}
+              className={divTheme.btnPrimary}
+            >
+              <Icon name="CheckCircle2" size={15} className="mr-1.5" />
+              Закрыть беседу
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => dialogId && shareDialogText(dialogId)}
+              className={divTheme.btnGhost}
+            >
+              <Icon
+                name={isMobileDevice() ? "Share2" : "Copy"}
+                size={15}
+                className="mr-1.5"
+              />
+              {isMobileDevice() ? "Поделиться" : "Скопировать"}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={downloadThis}
+              className={divTheme.btnGhost}
+            >
+              <Icon name="Download" size={15} className="mr-1.5" />
+              Скачать
+            </Button>
+          </div>
         </div>
       ) : (
         <div className={`${divTheme.panel} p-4 sm:p-5`}>
