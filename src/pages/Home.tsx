@@ -60,6 +60,7 @@ const Home = () => {
         "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/093af219-f0e0-48f3-a4ad-c0702c19d22a.jpg",
       icon: "Ruler",
       path: "/kibbe-test",
+      free: true,
     },
     {
       id: "archetype-test",
@@ -70,6 +71,7 @@ const Home = () => {
         "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/d16fa4cd-bace-430f-81dc-1652d9dc85ce.png",
       icon: "Brain",
       path: "/archetype-test",
+      free: true,
     },
     {
       id: "color-type",
@@ -327,6 +329,13 @@ const Home = () => {
                       <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-amber-500/95 backdrop-blur-sm text-white text-xs font-medium px-2.5 py-1.5 rounded-lg shadow-lg">
                         <Icon name="TriangleAlert" size={14} />
                         <span>Тестовый режим • точность ~70%</span>
+                      </div>
+                    )}
+                    {/* Тесты без списания — отмечаем сразу на картинке */}
+                    {service.free && (
+                      <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-emerald-500/95 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lg">
+                        <Icon name="Gift" size={14} />
+                        <span>Бесплатно</span>
                       </div>
                     )}
                   </div>
