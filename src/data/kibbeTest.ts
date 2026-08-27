@@ -43,6 +43,31 @@ export const SILHOUETTE_IMAGE_CURVED =
 
 export const HEIGHT_THRESHOLD = 168;
 
+/** Рост, ниже которого возможна комбинация «Изгиб + Миниатюрная» (5'5") */
+export const PETITE_CURVE_THRESHOLD = 165;
+
+/**
+ * Доступен ли вариант ответа при таком росте.
+ * По книге Дэвида Кибби: «Вертикаль + Баланс» и «Вертикаль + Миниатюрная»
+ * бывают только ниже 168 см, «Изгиб + Миниатюрная» — только ниже 165 см.
+ * Остальные комбинации возможны при любом росте.
+ */
+export function isLetterAllowed(
+  dominance: 'Вертикаль' | 'Изогнутая',
+  letter: KibbeLetter,
+  heightCm: number,
+): boolean {
+  if (!heightCm) return true;
+  if (dominance === 'Вертикаль') {
+    // Г — Баланс, Д — Миниатюрная
+    if (letter === 'Г' || letter === 'Д') return heightCm < HEIGHT_THRESHOLD;
+    return true;
+  }
+  // Изогнутая: Д — Миниатюрная
+  if (letter === 'Д') return heightCm < PETITE_CURVE_THRESHOLD;
+  return true;
+}
+
 
 export const VERTICAL_QUESTIONS: KibbeQuestion[] = [
   {
@@ -549,11 +574,16 @@ export function getBranchTailQuestions(dominance: 'Вертикаль' | 'Изо
 export interface KibbeCalcResult {
   winningLetter: KibbeLetter;
   typeKey: string;
+  /** Ответы разделились поровну — результат спорный */
+  isClose?: boolean;
+  /** Второй близкий типаж, если была ничья */
+  runnerUpTypeKey?: string;
 }
 
 export function calculateKibbeResult(
   dominance: 'Вертикаль' | 'Изогнутая',
   answers: Record<string, KibbeLetter>,
+  heightCm = 0,
 ): KibbeCalcResult {
   const questions = getQuestions(dominance);
   const counts: Record<KibbeLetter, number> = { 'А': 0, 'Б': 0, 'В': 0, 'Г': 0, 'Д': 0 };
@@ -563,21 +593,24 @@ export function calculateKibbeResult(
     if (ans) counts[ans] += 1;
   }
 
-  const letters: KibbeLetter[] = ['А', 'Б', 'В', 'Г', 'Д'];
-  let maxCount = 0;
+  const allLetters: KibbeLetter[] = ['А', 'Б', 'В', 'Г', 'Д'];
+  // Комбинации, невозможные при таком росте, в подсчёте не участвуют
+  const letters = allLetters.filter((l) => isLetterAllowed(dominance, l, heightCm));
+
+  let maxCount = -1;
   for (const l of letters) {
     if (counts[l] > maxCount) maxCount = counts[l];
   }
   const topLetters = letters.filter((l) => counts[l] === maxCount);
 
+  const clothQuestionId = dominance === 'Вертикаль' ? '2V' : '2I';
+  const weightQuestionId = dominance === 'Вертикаль' ? '5V' : '5I';
+  const clothAnswer = answers[clothQuestionId];
+  const weightAnswer = answers[weightQuestionId];
+
+  // Ничья: главный аргумент — рисунок ткани, затем ответ про вес тела
   let winningLetter: KibbeLetter = topLetters[0];
-
   if (topLetters.length > 1) {
-    const clothQuestionId = dominance === 'Вертикаль' ? '2V' : '2I';
-    const weightQuestionId = dominance === 'Вертикаль' ? '5V' : '5I';
-    const clothAnswer = answers[clothQuestionId];
-    const weightAnswer = answers[weightQuestionId];
-
     if (clothAnswer && topLetters.includes(clothAnswer)) {
       winningLetter = clothAnswer;
     } else if (weightAnswer && topLetters.includes(weightAnswer)) {
@@ -586,5 +619,14 @@ export function calculateKibbeResult(
   }
 
   const map = dominance === 'Вертикаль' ? VERTICAL_RESULTS : CURVED_RESULTS;
-  return { winningLetter, typeKey: map[winningLetter] };
+
+  // Близкий типаж: вторая буква с тем же числом ответов, если ничья была
+  const runnerUp = topLetters.find((l) => l !== winningLetter);
+
+  return {
+    winningLetter,
+    typeKey: map[winningLetter],
+    isClose: topLetters.length > 1,
+    runnerUpTypeKey: runnerUp ? map[runnerUp] : undefined,
+  };
 }

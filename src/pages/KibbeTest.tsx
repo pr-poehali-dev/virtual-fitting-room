@@ -20,6 +20,8 @@ import {
   COMBINED_FIRST_QUESTION,
   KIBBE_TYPES,
   HEIGHT_THRESHOLD,
+  PETITE_CURVE_THRESHOLD,
+  isLetterAllowed,
 } from '@/data/kibbeTest';
 
 const DB_QUERY_API = 'https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-884439f64df9';
@@ -41,6 +43,8 @@ export default function KibbeTest() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, KibbeLetter>>({});
   const [resultTypeKey, setResultTypeKey] = useState<string | null>(null);
+  // Второй типаж с тем же числом ответов — показываем как близкий вариант
+  const [closeTypeKey, setCloseTypeKey] = useState<string | null>(null);
   const [resultLetter, setResultLetter] = useState<KibbeLetter | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -133,6 +137,7 @@ export default function KibbeTest() {
     }
     setAnswers({});
     setCurrentIndex(0);
+    setCloseTypeKey(null);
 
     if (h >= HEIGHT_THRESHOLD) {
       // Высокий рост — однозначно Вертикаль, обычная ветка
@@ -177,9 +182,15 @@ export default function KibbeTest() {
 
   const finishTest = async (finalAnswers: Record<string, KibbeLetter>) => {
     const dom = dominance || 'Вертикаль';
-    const { winningLetter, typeKey } = calculateKibbeResult(dom, finalAnswers);
+    const heightCm = parseInt(height, 10) || 0;
+    const { winningLetter, typeKey, isClose, runnerUpTypeKey } = calculateKibbeResult(
+      dom,
+      finalAnswers,
+      heightCm,
+    );
     setResultLetter(winningLetter);
     setResultTypeKey(typeKey);
+    setCloseTypeKey(isClose && runnerUpTypeKey ? runnerUpTypeKey : null);
     setStep('result');
     await saveResult(winningLetter, typeKey, finalAnswers);
   };
@@ -356,22 +367,16 @@ export default function KibbeTest() {
                     const selected =
                       !isCombined && answers[questions[currentIndex].id] === opt.letter;
                     const heightCm = parseInt(height, 10) || 0;
-                    // При высоком росте (>=168, ветка «Вертикаль» без комбинированного вопроса)
-                    // в «Тесте с тканью» доступны только первые 3 силуэта (А, Б, В)
-                    const isTallVerticalSilhouette =
-                      !useCombined &&
-                      dominance === 'Вертикаль' &&
-                      questions[currentIndex].id === '2V';
-                    const disabledByTallVertical = isTallVerticalSilhouette && optIndex > 2;
-                    // По книге «Изгиб + Миниатюрная» бывает только ниже 165 см,
-                    // поэтому силуэт J при большем росте недоступен
-                    const disabledByTallCurved =
-                      isCombined &&
-                      heightCm >= 165 &&
-                      opt.dominance === 'Изогнутая' &&
-                      opt.branchLetter === 'Д';
-                    const isDisabled =
-                      !!opt.disabled || disabledByTallVertical || disabledByTallCurved;
+                    // Комбинации, невозможные при таком росте, недоступны во всех вопросах:
+                    // «Вертикаль + Баланс/Миниатюрная» — только ниже 168 см,
+                    // «Изгиб + Миниатюрная» — только ниже 165 см
+                    const optDominance = isCombined
+                      ? opt.dominance
+                      : dominance || 'Вертикаль';
+                    const optLetter = isCombined ? opt.branchLetter || opt.letter : opt.letter;
+                    const disabledByHeight =
+                      !!optDominance && !isLetterAllowed(optDominance, optLetter, heightCm);
+                    const isDisabled = !!opt.disabled || disabledByHeight;
                     return (
                       <button
                         key={optIndex}
@@ -397,16 +402,21 @@ export default function KibbeTest() {
                 {(() => {
                   const heightCm = parseInt(height, 10) || 0;
                   const q = questions[currentIndex];
-                  const tallVerticalHint = !useCombined && dominance === 'Вертикаль' && q.id === '2V';
-                  const tallCurvedHint = !!q.combined && heightCm >= 165;
-                  if (!tallVerticalHint && !tallCurvedHint) return null;
+                  // Подсказку показываем там, где часть вариантов закрыта ростом
+                  const verticalHint =
+                    heightCm >= HEIGHT_THRESHOLD &&
+                    (q.combined || dominance === 'Вертикаль');
+                  const curvedHint =
+                    heightCm >= PETITE_CURVE_THRESHOLD &&
+                    (q.combined || dominance === 'Изогнутая');
+                  if (!verticalHint && !curvedHint) return null;
                   return (
                     <p className="flex items-start gap-2 rounded-lg bg-purple-50 px-3 py-2 text-sm text-muted-foreground">
                       <Icon name="Info" size={16} className="mt-0.5 shrink-0 text-purple-600" />
                       <span>
-                        {tallVerticalHint
-                          ? `Силуэты «Баланс» и «Миниатюрная» бывают только при росте ниже ${HEIGHT_THRESHOLD} см — так устроена система Кибби.`
-                          : 'Силуэт «Изгиб + Миниатюрная» бывает только при росте ниже 165 см.'}
+                        {verticalHint
+                          ? `Варианты «Баланс» и «Миниатюрная» бывают только при росте ниже ${HEIGHT_THRESHOLD} см — так устроена система Кибби.`
+                          : `Вариант «Миниатюрная» при изгибе бывает только при росте ниже ${PETITE_CURVE_THRESHOLD} см.`}
                       </span>
                     </p>
                   );
@@ -494,6 +504,27 @@ export default function KibbeTest() {
                 <p className="text-sm text-muted-foreground">
                   Примеры: {KIBBE_TYPES[resultTypeKey].celebrities.join(', ')}
                 </p>
+
+                {closeTypeKey && KIBBE_TYPES[closeTypeKey] && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-left">
+                    <p className="mb-2 flex items-center gap-2 font-medium">
+                      <Icon name="Info" size={18} className="shrink-0 text-amber-600" />
+                      Ваши ответы разделились поровну
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      Вам одинаково подошли два типажа. Мы выбрали основной по ответу на вопрос
+                      с тканью — он в системе Кибби главный. Загляните и во второй: возможно,
+                      вы узнаете себя именно там.
+                    </p>
+                    <Link
+                      to={`/kibbe-types/${closeTypeKey.replace(/_/g, '-')}`}
+                      className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-purple-700 hover:underline"
+                    >
+                      Второй вариант: {KIBBE_TYPES[closeTypeKey].name}
+                      <Icon name="ChevronRight" size={16} />
+                    </Link>
+                  </div>
+                )}
 
                 {isSaving && (
                   <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
