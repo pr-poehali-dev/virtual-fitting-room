@@ -7,6 +7,7 @@ import {
   GUIDE_LINES,
   GUIDE_COMBOS,
   GUIDE_NOTES,
+  GUIDE_PHOTO_STEPS,
   typeSlug,
 } from '@/data/kibbeGuide';
 
@@ -50,7 +51,30 @@ export default function KibbeGuide() {
       <Card>
         <CardContent className="space-y-8 p-5 md:p-8">
           <section>
-            <StepTitle number={1}>Измерьте рост</StepTitle>
+            <StepTitle number={1}>Сделайте фото и нарисуйте линию ткани</StepTitle>
+            <ol className="mb-4 space-y-2">
+              {GUIDE_PHOTO_STEPS.map((text, i) => (
+                <li key={i} className="flex gap-3 text-muted-foreground">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-purple-100 text-xs font-semibold text-purple-700">
+                    {i + 1}
+                  </span>
+                  <span>{text}</span>
+                </li>
+              ))}
+            </ol>
+            <p className="rounded-lg bg-purple-50 p-3 text-sm text-muted-foreground">
+              Это не контур вашего тела. Смотрите только на то, где тело выталкивает
+              воображаемую ткань, а где не выталкивает. Правильный ответ даёт только
+              нарисованная линия, а не оценка своей фигуры на глаз.
+            </p>
+          </section>
+
+          <section>
+            <StepTitle number={2}>Определите доминанту</StepTitle>
+            <p className="mb-4 text-muted-foreground">
+              Если линия идёт относительно прямо вниз — ваша доминанта вертикальная. Если ткань
+              выдвинута вперёд грудью и бёдрами — доминанта изгиб.
+            </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-xl border p-4">
                 <img
@@ -59,9 +83,10 @@ export default function KibbeGuide() {
                   loading="lazy"
                   className="mx-auto mb-3 max-h-48 rounded-lg"
                 />
-                <p className="font-medium">168 см и выше</p>
+                <p className="font-medium">Вертикаль (Vertical)</p>
                 <p className="text-sm text-muted-foreground">
-                  Доминанта вертикальная (Vertical)
+                  При росте 168 см и выше — автоматически, исключений нет. Возможна и при любом
+                  росте ниже.
                 </p>
               </div>
               <div className="rounded-xl border p-4">
@@ -71,18 +96,21 @@ export default function KibbeGuide() {
                   loading="lazy"
                   className="mx-auto mb-3 max-h-48 rounded-lg"
                 />
-                <p className="font-medium">Ниже 168 см</p>
-                <p className="text-sm text-muted-foreground">Доминанта изогнутая (Curve)</p>
+                <p className="font-medium">Изгиб (Curve)</p>
+                <p className="text-sm text-muted-foreground">
+                  Только при росте ниже 168 см — и то не автоматически: вертикаль при таком
+                  росте тоже возможна.
+                </p>
               </div>
             </div>
           </section>
 
           <section>
-            <StepTitle number={2}>Определите дополнительную линию</StepTitle>
+            <StepTitle number={3}>Определите дополнительную линию</StepTitle>
             <p className="mb-4 text-muted-foreground">
-              Это основа вашего типажа. Сделайте фото в облегающей одежде — купальник или
-              леггинсы, встаньте прямо, руки вдоль тела. Представьте, как тяжёлая ткань падает
-              от ваших плеч; на рисунке она показана красными линиями.
+              Доминанту вы уже знаете — осталась вторая половина вашей линии, именно она делает
+              её уникальной. На схемах из книги красным обведена доминанта, синим —
+              дополнительная линия и та область тела, где она проявляется.
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               {GUIDE_LINES.map((line) => (
@@ -97,13 +125,18 @@ export default function KibbeGuide() {
                 </div>
               ))}
             </div>
-            <div className="mt-4">
+            <div className="mt-4 space-y-4">
+              <ZoomImage
+                src={GUIDE_IMAGES.verticalLines}
+                alt="Вертикаль плюс дополнительные линии"
+              />
+              <ZoomImage src={GUIDE_IMAGES.curveLines} alt="Изгиб плюс дополнительные линии" />
               <ZoomImage src={GUIDE_IMAGES.lines} alt="Линии силуэта по системе Кибби" />
             </div>
           </section>
 
           <section>
-            <StepTitle number={3}>Найдите свою комбинацию</StepTitle>
+            <StepTitle number={4}>Найдите свою комбинацию</StepTitle>
             <p className="mb-4 text-muted-foreground">
               Доминанта + дополнительная линия = ваш типаж. Нажмите на строку, чтобы прочитать
               подробную статью.

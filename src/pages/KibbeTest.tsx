@@ -289,8 +289,8 @@ export default function KibbeTest() {
                     placeholder="Например, 165"
                   />
                   <p className="text-sm text-muted-foreground mt-2">
-                    Рост помогает определить вашу доминанту. При росте 168 см и выше — это Вертикаль.
-                    При меньшем росте доминанту уточним по первому вопросу.
+                    При росте 168 см и выше доминанта автоматически Вертикаль. При меньшем росте
+                    возможна и Вертикаль, и Изгиб — уточним по первому вопросу.
                   </p>
                 </div>
                 <Button
@@ -363,11 +363,11 @@ export default function KibbeTest() {
                       dominance === 'Вертикаль' &&
                       questions[currentIndex].id === '2V';
                     const disabledByTallVertical = isTallVerticalSilhouette && optIndex > 2;
-                    // В комбинированном вопросе при росте от 166 см силуэт J (миниатюрная
-                    // изогнутая) недоступен
+                    // По книге «Изгиб + Миниатюрная» бывает только ниже 165 см,
+                    // поэтому силуэт J при большем росте недоступен
                     const disabledByTallCurved =
                       isCombined &&
-                      heightCm >= 166 &&
+                      heightCm >= 165 &&
                       opt.dominance === 'Изогнутая' &&
                       opt.branchLetter === 'Д';
                     const isDisabled =
@@ -398,14 +398,15 @@ export default function KibbeTest() {
                   const heightCm = parseInt(height, 10) || 0;
                   const q = questions[currentIndex];
                   const tallVerticalHint = !useCombined && dominance === 'Вертикаль' && q.id === '2V';
-                  const tallCurvedHint = !!q.combined && heightCm >= 166;
+                  const tallCurvedHint = !!q.combined && heightCm >= 165;
                   if (!tallVerticalHint && !tallCurvedHint) return null;
                   return (
                     <p className="flex items-start gap-2 rounded-lg bg-purple-50 px-3 py-2 text-sm text-muted-foreground">
                       <Icon name="Info" size={16} className="mt-0.5 shrink-0 text-purple-600" />
                       <span>
-                        Некоторые силуэты недоступны: при вашем росте они подходят только для более
-                        низких фигур.
+                        {tallVerticalHint
+                          ? `Силуэты «Баланс» и «Миниатюрная» бывают только при росте ниже ${HEIGHT_THRESHOLD} см — так устроена система Кибби.`
+                          : 'Силуэт «Изгиб + Миниатюрная» бывает только при росте ниже 165 см.'}
                       </span>
                     </p>
                   );
