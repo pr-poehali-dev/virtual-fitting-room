@@ -43,10 +43,6 @@ export const SILHOUETTE_IMAGE_CURVED =
 
 export const HEIGHT_THRESHOLD = 168;
 
-// Схемы «доминанта + дополнительная» из книги Дэвида Кибби.
-// Красный контур — доминанта, синий — дополнительная линия.
-export const LINES_IMAGE_VERTICAL = '/kibbe/vertical-lines.jpg';
-export const LINES_IMAGE_CURVED = '/kibbe/curve-lines.jpg';
 
 export const VERTICAL_QUESTIONS: KibbeQuestion[] = [
   {

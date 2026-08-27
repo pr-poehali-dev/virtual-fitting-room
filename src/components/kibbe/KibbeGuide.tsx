@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { KIBBE_TYPES, SILHOUETTE_IMAGE_VERTICAL, SILHOUETTE_IMAGE_CURVED } from '@/data/kibbeTest';
 import {
   GUIDE_IMAGES,
@@ -11,16 +13,29 @@ import {
   typeSlug,
 } from '@/data/kibbeGuide';
 
-/** Картинка, которая открывается в полном размере в новой вкладке */
+/** Картинка, которая открывается крупно в модальном окне */
 function ZoomImage({ src, alt }: { src: string; alt: string }) {
+  const [open, setOpen] = useState(false);
   return (
-    <a href={src} target="_blank" rel="noreferrer" className="group relative block">
-      <img src={src} alt={alt} loading="lazy" className="w-full rounded-xl border" />
-      <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-black/60 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-        <Icon name="Maximize2" size={12} />
-        Открыть крупно
-      </span>
-    </a>
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="group relative block w-full cursor-zoom-in"
+      >
+        <img src={src} alt={alt} loading="lazy" className="w-full rounded-xl border" />
+        <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-black/60 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+          <Icon name="Maximize2" size={12} />
+          Открыть крупно
+        </span>
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-[95vw] p-2 sm:max-w-5xl">
+          <DialogTitle className="sr-only">{alt}</DialogTitle>
+          <img src={src} alt={alt} className="max-h-[85vh] w-full rounded-lg object-contain" />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -109,8 +124,8 @@ export default function KibbeGuide() {
             <StepTitle number={3}>Определите дополнительную линию</StepTitle>
             <p className="mb-4 text-muted-foreground">
               Доминанту вы уже знаете — осталась вторая половина вашей линии, именно она делает
-              её уникальной. На схемах из книги красным обведена доминанта, синим —
-              дополнительная линия и та область тела, где она проявляется.
+              её уникальной. Красными линиями на схеме показано, как ложится воображаемая ткань
+              и где именно проявляется дополнительная линия.
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               {GUIDE_LINES.map((line) => (
@@ -125,12 +140,7 @@ export default function KibbeGuide() {
                 </div>
               ))}
             </div>
-            <div className="mt-4 space-y-4">
-              <ZoomImage
-                src={GUIDE_IMAGES.verticalLines}
-                alt="Вертикаль плюс дополнительные линии"
-              />
-              <ZoomImage src={GUIDE_IMAGES.curveLines} alt="Изгиб плюс дополнительные линии" />
+            <div className="mt-4">
               <ZoomImage src={GUIDE_IMAGES.lines} alt="Линии силуэта по системе Кибби" />
             </div>
           </section>

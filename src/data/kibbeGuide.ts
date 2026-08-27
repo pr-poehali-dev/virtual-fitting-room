@@ -6,9 +6,6 @@ export const GUIDE_IMAGES = {
   // Силуэты с красными линиями ткани — к шагу 3
   lines:
     'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/1ecac995-f0ad-4726-8013-e4fa99840478.jpg',
-  // Схемы из книги: доминанта (красный контур) + дополнительная линия (синий)
-  verticalLines: '/kibbe/vertical-lines.jpg',
-  curveLines: '/kibbe/curve-lines.jpg',
   // 10 типажей внешности — к шагу 4
   types: '/kibbe/types.webp',
   // 10 идеальных платьев по типам фигур — в конце инструкции
