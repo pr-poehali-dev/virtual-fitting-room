@@ -9,12 +9,10 @@ export const GUIDE_IMAGES = {
   // Схемы из книги: доминанта (красный контур) + дополнительная линия (синий)
   verticalLines: '/kibbe/vertical-lines.jpg',
   curveLines: '/kibbe/curve-lines.jpg',
-  // 10 типажей внешности — к шагу 3
-  types:
-    'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/35fdfd78-5f83-4c7b-bac0-16577093e0e7.jpg',
+  // 10 типажей внешности — к шагу 4
+  types: '/kibbe/types.webp',
   // 10 идеальных платьев по типам фигур — в конце инструкции
-  dresses:
-    'https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/eb477fb3-c8c8-45a8-92e5-264cbecbfa4c.jpg',
+  dresses: '/kibbe/dresses.webp',
 };
 
 /** Шаг 1: как сделать фото для разбора */
