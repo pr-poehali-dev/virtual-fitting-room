@@ -2,6 +2,9 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { getPageSeo } from "@/config/seo";
 
+/** Основной адрес сайта — от него строятся канонические ссылки */
+const SITE_URL = "https://fitting-room.ru";
+
 const setMeta = (selector: string, value: string) => {
   const tag = document.head.querySelector<HTMLMetaElement>(selector);
   if (tag) tag.setAttribute("content", value);
@@ -31,6 +34,20 @@ const PageSeo = () => {
       document.head.appendChild(robots);
     }
     robots.setAttribute("content", noindex ? "noindex, follow" : "index, follow");
+
+    // Канонический адрес: без меток из рекламы и без слэша в конце,
+    // чтобы поисковики не считали такие ссылки разными страницами
+    const path = pathname !== "/" ? pathname.replace(/\/+$/, "") : "";
+    let canonical = document.head.querySelector<HTMLLinkElement>(
+      'link[rel="canonical"]',
+    );
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute("href", `${SITE_URL}${path}`);
+    setMeta('meta[property="og:url"]', `${SITE_URL}${path}`);
   }, [pathname]);
 
   return null;
