@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { useData } from '@/context/DataContext';
+import { Link } from 'react-router-dom';
+import KibbeGuide from '@/components/kibbe/KibbeGuide';
 import {
   KibbeLetter,
   KibbeQuestion,
@@ -72,8 +74,8 @@ export default function KibbeTest() {
     return (
       <Layout>
         <section className="py-20">
-          <div className="container max-w-md mx-auto px-4">
-            <Card>
+          <div className="container max-w-3xl mx-auto px-4">
+            <Card className="mx-auto max-w-md">
               <CardContent className="p-8 text-center">
                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-purple-100">
                   <Icon name="Lock" size={32} className="text-purple-600" />
@@ -110,6 +112,9 @@ export default function KibbeTest() {
                 />
               </CardContent>
             </Card>
+
+            {/* Инструкцию и статьи показываем и гостям — читать можно без входа */}
+            <KibbeGuide />
           </div>
         </section>
       </Layout>
@@ -511,6 +516,20 @@ export default function KibbeTest() {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Инструкция и статьи — до и во время теста. После получения
+              результата вместо неё короткая ссылка, чтобы не отвлекать. */}
+          {step === 'result' ? (
+            <Link
+              to="/kibbe-types"
+              className="mt-8 flex items-center justify-center gap-2 rounded-xl border p-4 text-center transition-colors hover:border-purple-300 hover:bg-purple-50"
+            >
+              <Icon name="LayoutGrid" size={18} className="text-purple-600" />
+              <span>Хотите сравнить с другими типажами? Все 10 описаний</span>
+            </Link>
+          ) : (
+            <KibbeGuide />
           )}
         </div>
       </section>
