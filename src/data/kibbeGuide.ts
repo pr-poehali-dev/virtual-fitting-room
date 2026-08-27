@@ -93,6 +93,11 @@ export const GUIDE_NOTES: string[] = [
   'Вертикаль не может быть дополнительной линией.',
 ];
 
+/** Готовый образ для типажа — обложка карточки в каталоге */
+export function typeLookImage(typeKey: string): string {
+  return `/kibbe/looks/${typeKey}.webp`;
+}
+
 /** Адрес статьи типажа: ключ dramatic_classic → /kibbe-types/dramatic-classic */
 export function typeSlug(typeKey: string): string {
   return typeKey.replace(/_/g, '-');
