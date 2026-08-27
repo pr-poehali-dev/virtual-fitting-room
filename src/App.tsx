@@ -61,6 +61,7 @@ const WeddingSelection = lazy(() => import("./pages/WeddingSelection"));
 const KibbeTest = lazy(() => import("./pages/KibbeTest"));
 const KibbeResultDetail = lazy(() => import("./pages/KibbeResultDetail"));
 const KibbeTypes = lazy(() => import("./pages/KibbeTypes"));
+const KibbeGuidePage = lazy(() => import("./pages/KibbeGuidePage"));
 const KibbeTypeDetail = lazy(() => import("./pages/KibbeTypeDetail"));
 const ProfileHistoryKibbe = lazy(() => import("./pages/ProfileHistoryKibbe"));
 const AdminKibbe = lazy(() => import("./pages/AdminKibbe"));
@@ -149,6 +150,7 @@ const App = () => (
             <Route path="/wedding-selection" element={<WeddingSelection />} />
             <Route path="/kibbe-test" element={<KibbeTest />} />
             <Route path="/kibbe-result/:id" element={<KibbeResultDetail />} />
+            <Route path="/kibbe-guide" element={<KibbeGuidePage />} />
             <Route path="/kibbe-types" element={<KibbeTypes />} />
             <Route path="/kibbe-types/:slug" element={<KibbeTypeDetail />} />
             <Route path="/archetype-test" element={<ArchetypeTest />} />

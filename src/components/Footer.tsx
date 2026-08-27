@@ -31,6 +31,16 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/kibbe-types" className="hover:text-white transition-colors">
+                  10 типажей по Кибби
+                </Link>
+              </li>
+              <li>
+                <Link to="/kibbe-guide" className="hover:text-white transition-colors">
+                  Как определить типаж самому
+                </Link>
+              </li>
+              <li>
                 <Link to="/archetype-test" className="hover:text-white transition-colors">
                   Архетип по Юнгу
                 </Link>

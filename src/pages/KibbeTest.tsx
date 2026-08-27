@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { useData } from '@/context/DataContext';
 import { Link } from 'react-router-dom';
-import KibbeGuide from '@/components/kibbe/KibbeGuide';
+import KibbeGuideLink from '@/components/kibbe/KibbeGuideLink';
 import {
   KibbeLetter,
   KibbeQuestion,
@@ -113,8 +113,8 @@ export default function KibbeTest() {
               </CardContent>
             </Card>
 
-            {/* Инструкцию и статьи показываем и гостям — читать можно без входа */}
-            <KibbeGuide />
+            {/* Инструкция и статьи доступны и гостям — читать можно без входа */}
+            <KibbeGuideLink />
           </div>
         </section>
       </Layout>
@@ -519,8 +519,8 @@ export default function KibbeTest() {
             </Card>
           )}
 
-          {/* Инструкция и статьи — до и во время теста. После получения
-              результата вместо неё короткая ссылка, чтобы не отвлекать. */}
+          {/* Ссылки на инструкцию и каталог. После результата остаётся только
+              каталог типажей, чтобы не отвлекать от готового ответа. */}
           {step === 'result' ? (
             <Link
               to="/kibbe-types"
@@ -530,7 +530,7 @@ export default function KibbeTest() {
               <span>Хотите сравнить с другими типажами? Все 10 описаний</span>
             </Link>
           ) : (
-            <KibbeGuide />
+            <KibbeGuideLink />
           )}
         </div>
       </section>

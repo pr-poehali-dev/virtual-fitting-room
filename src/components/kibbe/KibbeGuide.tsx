@@ -50,13 +50,18 @@ function StepTitle({ number, children }: { number: number; children: React.React
   );
 }
 
-export default function KibbeGuide() {
+/**
+ * Инструкция по самостоятельному определению типажа.
+ * asPage — режим отдельной страницы: заголовок становится главным (h1) и без отступа сверху.
+ */
+export default function KibbeGuide({ asPage = false }: { asPage?: boolean }) {
+  const Heading = asPage ? 'h1' : 'h2';
   return (
-    <div className="mt-12 space-y-6">
+    <div className={asPage ? 'space-y-6' : 'mt-12 space-y-6'}>
       <div className="text-center">
-        <h2 className="text-2xl font-bold md:text-3xl">
+        <Heading className="text-2xl font-bold md:text-3xl">
           Как определить свой типаж самостоятельно
-        </h2>
+        </Heading>
         <p className="mx-auto mt-2 max-w-2xl text-muted-foreground">
           Материал по новой книге Дэвида Кибби. Такой информации пока почти нет в открытом
           доступе — мы собрали её в удобную шпаргалку, чтобы вы могли разобраться сами.

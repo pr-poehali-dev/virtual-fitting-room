@@ -56,9 +56,15 @@
   </url>
   <url>
     <loc>https://fitting-room.ru/kibbe-test</loc>
-    <lastmod>2026-08-18</lastmod>
+    <lastmod>2026-08-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://fitting-room.ru/kibbe-guide</loc>
+    <lastmod>2026-08-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://fitting-room.ru/kibbe-types</loc>

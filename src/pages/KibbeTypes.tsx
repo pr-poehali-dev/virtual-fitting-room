@@ -10,13 +10,22 @@ export default function KibbeTypes() {
     <Layout>
       <section className="py-12 md:py-20">
         <div className="container mx-auto max-w-5xl px-4">
-          <Link
-            to="/kibbe-test"
-            className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-purple-700"
-          >
-            <Icon name="ChevronLeft" size={16} />
-            Вернуться к тесту
-          </Link>
+          <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+            <Link
+              to="/kibbe-test"
+              className="inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-purple-700"
+            >
+              <Icon name="ChevronLeft" size={16} />
+              Вернуться к тесту
+            </Link>
+            <Link
+              to="/kibbe-guide"
+              className="inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-purple-700"
+            >
+              <Icon name="BookOpen" size={16} />
+              Как определить типаж самостоятельно
+            </Link>
+          </div>
 
           <div className="mb-8 text-center">
             <h1 className="mb-2 text-3xl font-bold md:text-4xl">
