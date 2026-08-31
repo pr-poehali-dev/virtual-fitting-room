@@ -1,30 +1,9 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "@/components/ui/icon";
-import func2url from "../../../backend/func2url.json";
-
-interface Promotion {
-  code: string;
-  title: string;
-  bonus_amount: number;
-  trigger_type: string;
-  min_amount: number;
-}
+import { useTopupPromotions } from "@/hooks/useTopupPromotions";
 
 export default function TopupBonusHint() {
-  const [promotions, setPromotions] = useState<Promotion[]>([]);
-
-  useEffect(() => {
-    fetch(`${func2url["bonus-api"]}?action=promotions`)
-      .then((res) => res.json())
-      .then((data) => setPromotions(data.promotions || []))
-      .catch(() => setPromotions([]));
-  }, []);
-
-  // Берём только акции за пополнение — регистрация тут не к месту
-  const topups = promotions
-    .filter((p) => p.trigger_type === "topup" && p.bonus_amount > 0)
-    .sort((a, b) => a.min_amount - b.min_amount);
+  const { topups } = useTopupPromotions();
 
   if (topups.length === 0) return null;
 

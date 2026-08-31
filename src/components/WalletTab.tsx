@@ -8,6 +8,7 @@ import { useBalance } from "@/context/BalanceContext";
 import { useSearchParams, Link } from "react-router-dom";
 import { GENERATION_COST, MIN_TOPUP } from "@/config/prices";
 import TopupBonusHint from "@/components/wallet/TopupBonusHint";
+import { useTopupPromotions } from "@/hooks/useTopupPromotions";
 
 const USER_BALANCE_API =
   "https://functions.poehali.dev/68409278-10ab-4733-b48d-b1b4360620a1";
@@ -48,6 +49,7 @@ export default function WalletTab() {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
+  const { bonusFor } = useTopupPromotions();
   const [currentPage, setCurrentPage] = useState(1);
   // История длинная — по умолчанию свёрнута
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -287,21 +289,35 @@ export default function WalletTab() {
               Выберите сумму для пополнения баланса
             </p>
             <div className="space-y-3">
-              {[MIN_TOPUP, 150, 300, 500, 1500, 3000].map((amount) => (
-                <Button
-                  key={amount}
-                  className="w-full justify-between"
-                  variant="outline"
-                  size="lg"
-                  onClick={() => handleTopUp(amount)}
-                  disabled={isCreatingPayment}
-                >
-                  <span>{amount.toLocaleString("ru-RU")} ₽</span>
-                  <span className="text-sm text-muted-foreground">
-                    {Math.floor(amount / GENERATION_COST)} образ{Math.floor(amount / GENERATION_COST) === 1 ? "" : Math.floor(amount / GENERATION_COST) < 5 ? "а" : "ов"}
-                  </span>
-                </Button>
-              ))}
+              {[MIN_TOPUP, 150, 300, 500, 1500, 3000].map((amount) => {
+                const bonus = bonusFor(amount);
+                return (
+                  <Button
+                    key={amount}
+                    className={`w-full justify-between ${
+                      bonus > 0
+                        ? "border-purple-400/60 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10"
+                        : ""
+                    }`}
+                    variant="outline"
+                    size="lg"
+                    onClick={() => handleTopUp(amount)}
+                    disabled={isCreatingPayment}
+                  >
+                    <span className="flex items-center gap-2">
+                      {amount.toLocaleString("ru-RU")} ₽
+                      {bonus > 0 && (
+                        <span className="flex items-center gap-1 rounded-md bg-gradient-to-r from-purple-500 to-pink-500 px-1.5 py-0.5 text-[11px] font-semibold text-white">
+                          <Icon name="Gift" size={11} />+{bonus.toFixed(0)} ₽
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {Math.floor(amount / GENERATION_COST)} образ{Math.floor(amount / GENERATION_COST) === 1 ? "" : Math.floor(amount / GENERATION_COST) < 5 ? "а" : "ов"}
+                    </span>
+                  </Button>
+                );
+              })}
             </div>
 
             <TopupBonusHint />
