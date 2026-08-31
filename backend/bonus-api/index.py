@@ -16,6 +16,7 @@ from bonus_core import (
     get_db_connection,
     grant_bonus,
     money,
+    resolve_user_id,
     revoke_bonus,
     sync_spending,
 )
@@ -312,15 +313,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             user_id = body.get('user_id') or params.get('user_id')
             if not user_id:
                 return reply(400, {'error': 'Нужен пользователь'})
+            user_id = resolve_user_id(cur, user_id)
+            if not user_id:
+                return reply(404, {'error': 'Пользователь не найден'})
             data = user_bonus_detail(cur, user_id)
             conn.commit()
             return reply(200, data)
 
         if action == 'grant' and method == 'POST':
-            user_id = body.get('user_id')
             amount = money(body.get('amount'))
-            if not user_id or amount <= 0:
+            if not body.get('user_id') or amount <= 0:
                 return reply(400, {'error': 'Нужен пользователь и сумма больше нуля'})
+            user_id = resolve_user_id(cur, body.get('user_id'))
+            if not user_id:
+                return reply(404, {'error': 'Пользователь не найден'})
             grant_bonus(
                 cur, user_id, amount,
                 body.get('reason') or 'Начисление администратором',
@@ -332,10 +338,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return reply(200, {'success': True, **data})
 
         if action == 'revoke' and method == 'POST':
-            user_id = body.get('user_id')
             amount = money(body.get('amount'))
-            if not user_id or amount <= 0:
+            if not body.get('user_id') or amount <= 0:
                 return reply(400, {'error': 'Нужен пользователь и сумма больше нуля'})
+            user_id = resolve_user_id(cur, body.get('user_id'))
+            if not user_id:
+                return reply(404, {'error': 'Пользователь не найден'})
             taken = revoke_bonus(cur, user_id, amount,
                                  body.get('reason') or 'Списание бонусов администратором')
             data = get_bonus_summary(cur, user_id)

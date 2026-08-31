@@ -185,19 +185,37 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Хранится необратимый хэш — сам адрес восстановить нельзя.
         try:
             import hashlib
-            cursor.execute('SELECT email FROM users WHERE id = %s', (user_id,))
+            cursor.execute('SELECT email, vk_id FROM users WHERE id = %s', (user_id,))
             email_row = cursor.fetchone()
-            raw_email = (email_row[0] if isinstance(email_row, (list, tuple))
-                         else (email_row or {}).get('email')) if email_row else None
-            if raw_email:
-                salt = os.environ.get('JWT_SECRET_KEY', 'bonus-guard')
+            if email_row:
+                is_seq = isinstance(email_row, (list, tuple))
+                raw_email = email_row[0] if is_seq else (email_row or {}).get('email')
+                raw_vk_id = email_row[1] if is_seq else (email_row or {}).get('vk_id')
+            else:
+                raw_email, raw_vk_id = None, None
+
+            salt = os.environ.get('JWT_SECRET_KEY', 'bonus-guard')
+
+            # Техническую почту ВК не запоминаем: она сама производная от vk_id
+            if raw_email and not raw_email.strip().lower().endswith('@vk.local'):
                 fingerprint = hashlib.sha256(
                     f'{salt}:{raw_email.strip().lower()}'.encode('utf-8')
                 ).hexdigest()
                 cursor.execute(
-                    """INSERT INTO bonus_registration_guard (email_hash)
-                       VALUES (%s) ON CONFLICT (email_hash) DO NOTHING""",
+                    """INSERT INTO bonus_registration_guard (email_hash, source)
+                       VALUES (%s, 'email') ON CONFLICT (email_hash) DO NOTHING""",
                     (fingerprint,)
+                )
+
+            # Для входа через ВК ключ надёжнее почты — он не меняется
+            if raw_vk_id:
+                vk_mark = hashlib.sha256(
+                    f'{salt}:vk:{str(raw_vk_id).strip().lower()}'.encode('utf-8')
+                ).hexdigest()
+                cursor.execute(
+                    """INSERT INTO bonus_registration_guard (email_hash, source)
+                       VALUES (%s, 'vk') ON CONFLICT (email_hash) DO NOTHING""",
+                    (vk_mark,)
                 )
         except Exception as guard_error:
             print(f'[DELETE-ACCOUNT] Bonus guard skipped: {guard_error}')

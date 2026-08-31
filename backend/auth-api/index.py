@@ -96,8 +96,8 @@ def grant_registration_bonus(cursor, email: str, user_id: str) -> None:
         (user_id, bonus_amount, before, after, f"Бонусные рубли: {promo['title']}"),
     )
     cursor.execute(
-        """INSERT INTO bonus_registration_guard (email_hash)
-           VALUES (%s) ON CONFLICT (email_hash) DO NOTHING""",
+        """INSERT INTO bonus_registration_guard (email_hash, source)
+           VALUES (%s, 'email') ON CONFLICT (email_hash) DO NOTHING""",
         (fingerprint,),
     )
     print(f'[REGISTER] Bonus {bonus_amount} granted to {user_id}')

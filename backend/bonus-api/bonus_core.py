@@ -7,6 +7,7 @@
 
 import hashlib
 import os
+import uuid
 from datetime import datetime, timedelta
 
 import psycopg2
@@ -184,6 +185,31 @@ def get_bonus_summary(cur, user_id, refresh=True):
         'own_balance': money(balance - bonus_left),
         'next_expiry': next_expiry.isoformat() if next_expiry else None,
     }
+
+
+def resolve_user_id(cur, value):
+    """Принимает ID или почту и возвращает ID пользователя.
+
+    В админке поле одно на оба варианта, а в базе ключ — только UUID.
+    """
+    raw = (str(value) if value is not None else '').strip()
+    if not raw:
+        return None
+
+    try:
+        uuid.UUID(raw)
+        return raw
+    except (ValueError, AttributeError, TypeError):
+        pass
+
+    cur.execute(
+        f'SELECT id FROM {SCHEMA}.users WHERE LOWER(email) = LOWER(%s) LIMIT 1',
+        (raw,),
+    )
+    row = cur.fetchone()
+    if not row:
+        return None
+    return str(row['id'] if isinstance(row, dict) else row[0])
 
 
 def grant_bonus(cur, user_id, amount, reason, promotion=None,

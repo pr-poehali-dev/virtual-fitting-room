@@ -10,6 +10,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import bcrypt
 
+from registration_bonus import grant_vk_registration_bonus
+
 
 def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')
@@ -182,6 +184,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             )
             user = cursor.fetchone()
             conn.commit()
+
+            # Бонус за регистрацию. Отдельно и после создания аккаунта:
+            # любой сбой здесь не должен мешать человеку войти
+            try:
+                grant_vk_registration_bonus(cursor, str(user['id']), vk_id, new_email)
+                conn.commit()
+                cursor.execute(
+                    "SELECT id, email, name, created_at, email_verified, balance, unlimited_access, avatar_url FROM users WHERE id = %s",
+                    (str(user['id']),)
+                )
+                user = cursor.fetchone() or user
+            except Exception as bonus_error:
+                conn.rollback()
+                print(f'[VK-AUTH] Bonus skipped: {bonus_error}')
 
         session_token = secrets.token_urlsafe(32)
         expires_at = datetime.now() + timedelta(days=7)
