@@ -50,10 +50,11 @@ export default function HeaderBalance({ variant = 'default' }: HeaderBalanceProp
         </div>
         {bonus > 0 && (
           <span
-            className={`flex items-center gap-1 text-[11px] whitespace-nowrap ${isLight ? 'text-purple-300/80' : 'text-primary'}`}
+            className={`flex items-center gap-0.5 text-[9px] lg:text-[11px] whitespace-nowrap ${isLight ? 'text-purple-300/80' : 'text-primary'}`}
           >
             в т.ч. {bonus.toFixed(0)} ₽
-            <Icon name="Gift" size={11} />
+            <Icon name="Gift" size={9} className="lg:hidden" />
+            <Icon name="Gift" size={11} className="hidden lg:inline" />
           </span>
         )}
       </div>

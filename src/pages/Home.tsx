@@ -305,7 +305,7 @@ const Home = () => {
               <h1 className="text-4xl lg:text-4xl font-bold text-white mb-4">
                 Ваш идеальный стиль с технологиями ИИ
               </h1>
-              <p className="text-gray-300 text-lg mb-3">
+              <p className="text-gray-300 text-base lg:text-lg leading-snug lg:leading-relaxed mb-3">
                 Виртуальная примерка одежды, цветотип, типаж по Кибби и архетип,
                 стилевой анализ внешности, подбор образов, ароматов и подарков.
                 Создавайте образы, капсулы и лукбуки.
