@@ -47,9 +47,17 @@ export default function HeaderBalance({ variant = 'default' }: HeaderBalanceProp
         <div className="flex items-center gap-1">
           <span className={`text-sm hidden lg:inline ${labelClass}`}>Баланс</span>
           <span className={`text-sm font-medium ${valueClass}`}>{balanceInfo.balance.toFixed(0)} ₽</span>
+          {bonus > 0 && (
+            <span
+              className={`lg:hidden flex items-center gap-0.5 text-[10px] font-medium whitespace-nowrap ${isLight ? 'text-purple-300' : 'text-primary'}`}
+            >
+              <Icon name="Gift" size={11} />
+              {bonus.toFixed(0)}
+            </span>
+          )}
         </div>
         {bonus > 0 && (
-          <span className={`text-[11px] ${isLight ? 'text-purple-300/80' : 'text-primary'}`}>
+          <span className={`text-[11px] whitespace-nowrap hidden lg:inline ${isLight ? 'text-purple-300/80' : 'text-primary'}`}>
             в т.ч. {bonus.toFixed(0)} ₽ бонусных
           </span>
         )}
