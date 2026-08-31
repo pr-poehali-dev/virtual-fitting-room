@@ -131,6 +131,11 @@ const Footer = () => {
                   Контакты
                 </Link>
               </li>
+              <li>
+                <Link to="/promotions" className="hover:text-white transition-colors">
+                  Акции и бонусы
+                </Link>
+              </li>
             </ul>
           </div>
 

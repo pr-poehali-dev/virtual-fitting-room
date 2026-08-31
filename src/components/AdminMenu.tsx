@@ -18,6 +18,7 @@ const AdminMenu = () => {
     { path: '/vf-console/archetype', icon: 'Brain', label: 'Тесты на архетип' },
     { path: '/vf-console/divination', icon: 'Sparkle', label: 'Гадания' },
     { path: '/vf-console/knowledge', icon: 'BookText', label: 'База знаний' },
+    { path: '/vf-console/bonuses', icon: 'Gift', label: 'Бонусы и акции' },
     { path: '/vf-console/cleanup', icon: 'HardDrive', label: 'Очистка БД' },
   ];
 

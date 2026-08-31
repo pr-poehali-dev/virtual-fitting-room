@@ -1,0 +1,35 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Публичный список акций",
+      "method": "GET",
+      "path": "/?action=promotions",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Админские акции без токена запрещены",
+      "method": "GET",
+      "path": "/?action=admin_promotions",
+      "expectedStatus": 403
+    },
+    {
+      "name": "Начисление без токена запрещено",
+      "method": "POST",
+      "path": "/?action=grant",
+      "body": {"user_id": "00000000-0000-0000-0000-000000000000", "amount": 10},
+      "expectedStatus": 403
+    },
+    {
+      "name": "Свой баланс без авторизации запрещён",
+      "method": "GET",
+      "path": "/?action=my_bonuses",
+      "expectedStatus": 401
+    }
+  ]
+}

@@ -24,6 +24,84 @@ def get_db_connection():
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
+
+def email_fingerprint(email: str) -> str:
+    """Необратимый отпечаток почты: сам адрес не хранится и не восстановим."""
+    salt = os.environ.get('JWT_SECRET_KEY', 'bonus-guard')
+    normalized = (email or '').strip().lower()
+    if not normalized:
+        return ''
+    return hashlib.sha256(f'{salt}:{normalized}'.encode('utf-8')).hexdigest()
+
+
+def grant_registration_bonus(cursor, email: str, user_id: str) -> None:
+    """Начисляет бонус за регистрацию, если акция включена.
+
+    Повторно на ту же почту бонус не выдаётся: при удалении аккаунта
+    остаётся отпечаток, по нему и сверяемся.
+    """
+    fingerprint = email_fingerprint(email)
+    if not fingerprint:
+        return
+
+    cursor.execute(
+        'SELECT 1 FROM bonus_registration_guard WHERE email_hash = %s',
+        (fingerprint,),
+    )
+    if cursor.fetchone():
+        print('[REGISTER] Bonus already granted for this email earlier')
+        return
+
+    cursor.execute(
+        """SELECT id, code, title, bonus_amount, expires_days
+             FROM bonus_promotions
+            WHERE is_active = true AND trigger_type = 'registration'
+              AND bonus_amount > 0
+              AND (starts_at IS NULL OR starts_at <= NOW())
+              AND (ends_at IS NULL OR ends_at >= NOW())
+            ORDER BY sort_order ASC
+            LIMIT 1"""
+    )
+    promo = cursor.fetchone()
+    if not promo:
+        return
+
+    bonus_amount = round(float(promo['bonus_amount']), 2)
+    if bonus_amount <= 0:
+        return
+
+    cursor.execute('SELECT balance FROM users WHERE id = %s', (user_id,))
+    row = cursor.fetchone()
+    before = round(float(row['balance']), 2) if row else 0.0
+    after = round(before + bonus_amount, 2)
+
+    cursor.execute(
+        'UPDATE users SET balance = balance + %s WHERE id = %s',
+        (bonus_amount, user_id),
+    )
+    cursor.execute(
+        """INSERT INTO bonus_grants
+           (user_id, promotion_id, promotion_code, reason, amount, expires_at, created_by)
+           VALUES (%s, %s, %s, %s, %s,
+                   CASE WHEN %s::int IS NULL THEN NULL
+                        ELSE NOW() + (%s::int || ' days')::interval END,
+                   'system')""",
+        (user_id, promo['id'], promo['code'], promo['title'], bonus_amount,
+         promo['expires_days'], promo['expires_days']),
+    )
+    cursor.execute(
+        """INSERT INTO balance_transactions
+           (user_id, type, amount, balance_before, balance_after, description)
+           VALUES (%s, 'deposit', %s, %s, %s, %s)""",
+        (user_id, bonus_amount, before, after, f"Бонусные рубли: {promo['title']}"),
+    )
+    cursor.execute(
+        """INSERT INTO bonus_registration_guard (email_hash)
+           VALUES (%s) ON CONFLICT (email_hash) DO NOTHING""",
+        (fingerprint,),
+    )
+    print(f'[REGISTER] Bonus {bonus_amount} granted to {user_id}')
+
 def generate_session_token() -> str:
     return secrets.token_urlsafe(32)
 
@@ -329,7 +407,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             user = cursor.fetchone()
             user_id = user['id']
-            
+
+            # Бонус за регистрацию. Отдельно и после создания аккаунта:
+            # любой сбой здесь не мешает человеку зарегистрироваться
+            try:
+                grant_registration_bonus(cursor, email, user_id)
+            except Exception as bonus_error:
+                print(f'[REGISTER] Bonus skipped: {bonus_error}')
+
             verification_token = secrets.token_urlsafe(32)
             expires_at = datetime.now() + timedelta(hours=24)
             

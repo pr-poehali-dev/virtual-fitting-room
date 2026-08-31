@@ -180,6 +180,28 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             (user_id,)
         )
 
+        # Оставляем отпечаток почты: бонус за регистрацию выдаётся один раз,
+        # повторная регистрация тем же адресом его уже не получит.
+        # Хранится необратимый хэш — сам адрес восстановить нельзя.
+        try:
+            import hashlib
+            cursor.execute('SELECT email FROM users WHERE id = %s', (user_id,))
+            email_row = cursor.fetchone()
+            raw_email = (email_row[0] if isinstance(email_row, (list, tuple))
+                         else (email_row or {}).get('email')) if email_row else None
+            if raw_email:
+                salt = os.environ.get('JWT_SECRET_KEY', 'bonus-guard')
+                fingerprint = hashlib.sha256(
+                    f'{salt}:{raw_email.strip().lower()}'.encode('utf-8')
+                ).hexdigest()
+                cursor.execute(
+                    """INSERT INTO bonus_registration_guard (email_hash)
+                       VALUES (%s) ON CONFLICT (email_hash) DO NOTHING""",
+                    (fingerprint,)
+                )
+        except Exception as guard_error:
+            print(f'[DELETE-ACCOUNT] Bonus guard skipped: {guard_error}')
+
         # Таблицы с FK на users удаляем динамически, КРОМЕ balance_transactions —
         # её сохраняем для финансовой отчётности.
         preserve_tables = {'balance_transactions'}

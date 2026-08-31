@@ -17,6 +17,9 @@ const BALANCE_HISTORY_API =
 
 interface BalanceInfo {
   balance: number;
+  bonus_balance?: number;
+  own_balance?: number;
+  bonus_expires_at?: string | null;
   free_tries_remaining: number;
   paid_tries_available: number;
   unlimited_access: boolean;
@@ -176,6 +179,40 @@ export default function WalletTab() {
                   {balanceInfo?.balance.toFixed(2)} ₽
                 </p>
               </div>
+
+              {(balanceInfo?.bonus_balance ?? 0) > 0 && (
+                <div className="rounded-lg bg-primary/5 border border-primary/20 px-4 py-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm flex items-center gap-2">
+                      <Icon name="Gift" size={16} className="text-primary" />
+                      Бонусные рубли
+                    </span>
+                    <span className="font-medium text-primary">
+                      {balanceInfo?.bonus_balance?.toFixed(2)} ₽
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      Свои средства
+                    </span>
+                    <span className="text-sm">
+                      {balanceInfo?.own_balance?.toFixed(2)} ₽
+                    </span>
+                  </div>
+                  {balanceInfo?.bonus_expires_at && (
+                    <p className="text-xs text-muted-foreground pt-1">
+                      Ближайшее сгорание:{" "}
+                      {new Date(
+                        balanceInfo.bonus_expires_at,
+                      ).toLocaleDateString("ru-RU", {
+                        day: "numeric",
+                        month: "long",
+                      })}
+                      . Бонусы тратятся первыми.
+                    </p>
+                  )}
+                </div>
+              )}
 
               {balanceInfo?.unlimited_access ? (
                 <div className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-3 rounded-lg">

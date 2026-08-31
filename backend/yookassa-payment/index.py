@@ -9,6 +9,64 @@ import base64
 
 YOOKASSA_API = 'https://api.yookassa.ru/v3'
 MIN_TOPUP = 50
+SCHEMA = 't_p29007832_virtual_fitting_room'
+
+
+def grant_topup_bonus(cur, conn, user_id: str, amount: float) -> None:
+    """Начисляет бонусные рубли за пополнение, если акция включена.
+
+    Подбирается самая щедрая подходящая акция. Если ни одна не включена
+    или сумма меньше порога — просто ничего не происходит.
+    """
+    cur.execute(
+        f"""SELECT id, code, title, bonus_amount, expires_days
+              FROM {SCHEMA}.bonus_promotions
+             WHERE is_active = true AND trigger_type = 'topup'
+               AND bonus_amount > 0 AND min_amount <= %s
+               AND (starts_at IS NULL OR starts_at <= NOW())
+               AND (ends_at IS NULL OR ends_at >= NOW())
+             ORDER BY min_amount DESC
+             LIMIT 1""",
+        (amount,),
+    )
+    promo = cur.fetchone()
+    if not promo:
+        return
+
+    promo_id, promo_code, promo_title, bonus_amount, expires_days = promo
+    bonus_amount = round(float(bonus_amount), 2)
+    if bonus_amount <= 0:
+        return
+
+    cur.execute(f'SELECT balance FROM {SCHEMA}.users WHERE id = %s', (user_id,))
+    row = cur.fetchone()
+    if not row:
+        return
+    before = round(float(row[0]), 2)
+    after = round(before + bonus_amount, 2)
+
+    cur.execute(
+        f'UPDATE {SCHEMA}.users SET balance = balance + %s WHERE id = %s',
+        (bonus_amount, user_id),
+    )
+    cur.execute(
+        f"""INSERT INTO {SCHEMA}.bonus_grants
+            (user_id, promotion_id, promotion_code, reason, amount, expires_at, created_by)
+            VALUES (%s, %s, %s, %s, %s,
+                    CASE WHEN %s::int IS NULL THEN NULL
+                         ELSE NOW() + (%s::int || ' days')::interval END,
+                    'system')""",
+        (user_id, promo_id, promo_code, promo_title, bonus_amount,
+         expires_days, expires_days),
+    )
+    cur.execute(
+        f"""INSERT INTO {SCHEMA}.balance_transactions
+            (user_id, type, amount, balance_before, balance_after, description)
+            VALUES (%s, 'deposit', %s, %s, %s, %s)""",
+        (user_id, bonus_amount, before, after, f'Бонусные рубли: {promo_title}'),
+    )
+    conn.commit()
+    print(f'[WEBHOOK] Bonus {bonus_amount} granted to {user_id} by {promo_code}')
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     print(f"[DEBUG] Received event: {json.dumps(event)}")
@@ -273,6 +331,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         
                         conn.commit()
                         print(f"[WEBHOOK] Successfully updated balance for user {user_id}")
+
+                        # Бонус за пополнение. Отдельно и после зачисления денег:
+                        # любой сбой здесь не мешает основному платежу
+                        try:
+                            grant_topup_bonus(cur, conn, user_id, float(amount))
+                        except Exception as bonus_error:
+                            conn.rollback()
+                            print(f"[WEBHOOK] Bonus skipped: {bonus_error}")
                     else:
                         print(f"[WEBHOOK] Transaction not found or not pending: {transaction}")
             

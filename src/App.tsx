@@ -81,6 +81,8 @@ const LenormandDivination = lazy(() => import("./pages/LenormandDivination"));
 const Knowledge = lazy(() => import("./pages/Knowledge"));
 const KnowledgePost = lazy(() => import("./pages/KnowledgePost"));
 const AdminKnowledge = lazy(() => import("./pages/AdminKnowledge"));
+const AdminBonuses = lazy(() => import("./pages/AdminBonuses"));
+const Promotions = lazy(() => import("./pages/Promotions"));
 import ScrollToTop from "./components/ScrollToTop";
 import PageSeo from "./components/PageSeo";
 import MaintenanceBanner from "./components/MaintenanceBanner";
@@ -195,6 +197,7 @@ const App = () => (
             <Route path="/vf-console/archetype" element={<AdminArchetype />} />
             <Route path="/vf-console/divination" element={<AdminDivination />} />
             <Route path="/vf-console/knowledge" element={<AdminKnowledge />} />
+            <Route path="/vf-console/bonuses" element={<AdminBonuses />} />
             <Route path="/vf-console/cleanup" element={<AdminCleanup />} />
             
             <Route path="/login" element={<Login />} />
@@ -208,6 +211,7 @@ const App = () => (
             <Route path="/payment" element={<Payment />} />
             <Route path="/offer" element={<Offer />} />
             <Route path="/contacts" element={<Contacts />} />
+            <Route path="/promotions" element={<Promotions />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/personal-data" element={<PersonalData />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

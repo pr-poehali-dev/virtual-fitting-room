@@ -13,7 +13,94 @@ from session_utils import validate_session
 GENERATION_COST = 50
 COLORTYPE_COST = 50
 MIN_TOPUP = 50
+SCHEMA = 't_p29007832_virtual_fitting_room'
 # redeploy v2
+
+
+def get_bonus_part(cur, conn, user_id: str, balance: float):
+    """Какая часть баланса — бонусные рубли, и когда ближайшее сгорание.
+
+    Заодно гасит просроченные бонусы. Списывается только неизрасходованный
+    остаток и не больше текущего баланса — собственные деньги не задеваются.
+    """
+    # 1. Гасим то, у чего вышел срок
+    cur.execute(
+        f"""SELECT id, amount - spent - burned AS left_sum
+              FROM {SCHEMA}.bonus_grants
+             WHERE user_id = %s AND status = 'active'
+               AND expires_at IS NOT NULL AND expires_at <= NOW()
+             ORDER BY expires_at ASC""",
+        (user_id,),
+    )
+    due = cur.fetchall() or []
+    current = float(balance)
+    for grant_id, left_sum in due:
+        take = max(0.0, min(round(float(left_sum or 0), 2), current))
+        if take > 0:
+            cur.execute(
+                f'UPDATE {SCHEMA}.users SET balance = GREATEST(balance - %s, 0) WHERE id = %s',
+                (take, user_id),
+            )
+            cur.execute(
+                f"""INSERT INTO {SCHEMA}.balance_transactions
+                    (user_id, type, amount, balance_before, balance_after, description)
+                    VALUES (%s, 'charge', %s, %s, %s, 'Сгорание бонусных рублей')""",
+                (user_id, -take, current, round(current - take, 2)),
+            )
+            current = round(current - take, 2)
+        cur.execute(
+            f"""UPDATE {SCHEMA}.bonus_grants
+                   SET status = 'expired', burned = burned + %s,
+                       updated_at = CURRENT_TIMESTAMP
+                 WHERE id = %s""",
+            (take, grant_id),
+        )
+
+    # 2. Разносим траты по партиям: бонусные тратятся первыми
+    cur.execute(
+        f"""SELECT COALESCE(SUM(-amount), 0)
+              FROM {SCHEMA}.balance_transactions
+             WHERE user_id = %s AND type = 'charge' AND amount < 0
+               AND description <> 'Сгорание бонусных рублей'""",
+        (user_id,),
+    )
+    spent_row = cur.fetchone()
+    remaining = round(float(spent_row[0] or 0), 2)
+
+    cur.execute(
+        f"""SELECT id, amount, spent, burned
+              FROM {SCHEMA}.bonus_grants
+             WHERE user_id = %s AND status IN ('active', 'expired')
+             ORDER BY (expires_at IS NULL), expires_at ASC, created_at ASC""",
+        (user_id,),
+    )
+    for grant_id, amount, spent, burned in cur.fetchall() or []:
+        capacity = round(float(amount) - float(burned), 2)
+        take = max(0.0, min(capacity, remaining))
+        remaining = round(max(0.0, remaining - take), 2)
+        if abs(take - float(spent)) > 0.001:
+            cur.execute(
+                f'UPDATE {SCHEMA}.bonus_grants SET spent = %s WHERE id = %s',
+                (take, grant_id),
+            )
+
+    # 3. Считаем остаток
+    cur.execute(
+        f"""SELECT COALESCE(SUM(amount - spent - burned), 0),
+                   MIN(expires_at) FILTER (
+                       WHERE expires_at IS NOT NULL AND amount - spent - burned > 0
+                   )
+              FROM {SCHEMA}.bonus_grants
+             WHERE user_id = %s AND status = 'active'""",
+        (user_id,),
+    )
+    row = cur.fetchone()
+    conn.commit()
+
+    bonus_left = max(0.0, round(float(row[0] or 0), 2))
+    bonus_left = min(bonus_left, current)
+    expiry = row[1].isoformat() if row[1] else None
+    return bonus_left, expiry
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     def get_cors_origin(event: Dict[str, Any]) -> str:
@@ -67,12 +154,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             balance, free_tries_used, unlimited_access = result
             free_tries_remaining = 0
             paid_tries_available = int(balance / GENERATION_COST) if balance >= GENERATION_COST else 0
-            
+
+            # Какая часть баланса — бонусные рубли. Сбой в подсчёте
+            # не должен мешать показать обычный баланс
+            bonus_balance = 0.0
+            bonus_expiry = None
+            try:
+                bonus_balance, bonus_expiry = get_bonus_part(cur, conn, user_id, float(balance))
+            except Exception as bonus_error:
+                conn.rollback()
+                print(f'[USER-BALANCE] Bonus part skipped: {bonus_error}')
+
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': get_cors_origin(event), 'Access-Control-Allow-Credentials': 'true'},
                 'body': json.dumps({
                     'balance': float(balance),
+                    'bonus_balance': bonus_balance,
+                    'own_balance': round(float(balance) - bonus_balance, 2),
+                    'bonus_expires_at': bonus_expiry,
                     'free_tries_remaining': free_tries_remaining,
                     'paid_tries_available': paid_tries_available,
                     'unlimited_access': unlimited_access,
