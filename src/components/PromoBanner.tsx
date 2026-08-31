@@ -35,27 +35,31 @@ export default function PromoBanner() {
   return (
     <Link
       to="/promotions"
-      className="group block mb-8 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 p-[1.5px] transition-transform hover:scale-[1.01]"
+      className="group relative block mb-8 overflow-hidden rounded-2xl bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 px-5 py-4 shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/40 sm:px-6"
     >
-      <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-gray-900 px-5 py-4 sm:px-6">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-pink-600">
+      {/* Мягкие блики, чтобы плашка выглядела празднично */}
+      <span className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/20 blur-2xl" />
+      <span className="pointer-events-none absolute -bottom-12 left-1/3 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
+
+      <div className="relative flex flex-wrap items-center gap-x-4 gap-y-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/25 backdrop-blur-sm">
           <Icon name="Gift" size={22} className="text-white" />
         </div>
 
-        <div className="min-w-[200px] flex-1">
-          <p className="font-semibold text-white">
+        <div className="min-w-[180px] flex-1">
+          <p className="font-semibold text-white leading-snug">
             {hasRegistration && registrationBonus
               ? `Дарим ${registrationBonus.bonus_amount.toFixed(0)} бонусных рублей за регистрацию`
               : `Бонусы до ${maxBonus.toFixed(0)} ₽ за пополнение счёта`}
           </p>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-white/85 leading-snug">
             {hasRegistration
               ? `И до ${maxBonus.toFixed(0)} ₽ бонусами при пополнении счёта`
               : "Бонусные рубли тратятся на любые услуги сайта"}
           </p>
         </div>
 
-        <span className="flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors group-hover:bg-white/20">
+        <span className="flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-purple-700 shadow-sm transition-colors group-hover:bg-purple-50">
           Смотреть акции
           <Icon
             name="ArrowRight"
