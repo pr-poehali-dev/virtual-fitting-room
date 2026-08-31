@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,8 +15,17 @@ export interface BonusUser {
   next_expiry: string | null;
 }
 
+export interface FoundUser {
+  id: string;
+  email: string;
+  name: string;
+  balance: number;
+  bonus_balance: number;
+}
+
 interface Props {
   users: BonusUser[];
+  onFindUsers: (query: string) => Promise<FoundUser[]>;
   search: string;
   onSearch: (value: string) => void;
   onGrant: (userId: string, amount: number, reason: string, days: number) => void;
@@ -27,6 +36,7 @@ interface Props {
 
 export default function ManualBonusPanel({
   users,
+  onFindUsers,
   search,
   onSearch,
   onGrant,
@@ -39,6 +49,53 @@ export default function ManualBonusPanel({
   const [reason, setReason] = useState("Начисление администратором");
   const [days, setDays] = useState(30);
   const [confirmClear, setConfirmClear] = useState(false);
+
+  const [query, setQuery] = useState("");
+  const [found, setFound] = useState<FoundUser[]>([]);
+  const [picked, setPicked] = useState<FoundUser | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  // Запрос уходит не на каждую букву, а через паузу после набора
+  useEffect(() => {
+    if (picked || query.trim().length < 3) {
+      setFound([]);
+      setIsSearching(false);
+      return;
+    }
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        setFound(await onFindUsers(query));
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [query, picked, onFindUsers]);
+
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) {
+        setFound([]);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  const pickUser = (u: FoundUser) => {
+    setPicked(u);
+    setTargetId(u.id);
+    setQuery(u.email);
+    setFound([]);
+  };
+
+  const resetPick = () => {
+    setPicked(null);
+    setTargetId("");
+    setQuery("");
+  };
 
   const fmtDate = (value: string | null) =>
     value
@@ -59,13 +116,74 @@ export default function ManualBonusPanel({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <Label>Почта или ID пользователя</Label>
-              <Input
-                value={targetId}
-                onChange={(e) => setTargetId(e.target.value.trim())}
-                placeholder="Выберите из списка ниже или вставьте ID"
-              />
+            <div className="relative" ref={boxRef}>
+              <Label>Кому начислить</Label>
+              {picked ? (
+                <div className="flex items-center justify-between gap-2 h-10 px-3 rounded-md border bg-muted/40">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">
+                      {picked.name || "Без имени"}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {picked.email}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={resetPick}
+                    className="shrink-0 text-muted-foreground hover:text-foreground"
+                    title="Выбрать другого"
+                  >
+                    <Icon name="X" size={16} />
+                  </button>
+                </div>
+              ) : (
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Введите почту или имя — от 3 букв"
+                />
+              )}
+
+              {!picked && query.trim().length > 0 && query.trim().length < 3 && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Введите ещё {3 - query.trim().length} симв.
+                </p>
+              )}
+
+              {!picked && found.length > 0 && (
+                <div className="absolute z-20 mt-1 w-full max-h-64 overflow-y-auto rounded-md border bg-background shadow-lg">
+                  {found.map((u) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => pickUser(u)}
+                      className="w-full text-left px-3 py-2 hover:bg-muted transition-colors border-b last:border-0"
+                    >
+                      <div className="text-sm font-medium">
+                        {u.name || "Без имени"}
+                      </div>
+                      <div className="text-xs text-muted-foreground flex items-center justify-between gap-2">
+                        <span className="truncate">{u.email}</span>
+                        <span className="shrink-0">
+                          {u.balance.toFixed(0)} ₽
+                          {u.bonus_balance > 0 &&
+                            ` · бонусных ${u.bonus_balance.toFixed(0)}`}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {!picked &&
+                !isSearching &&
+                query.trim().length >= 3 &&
+                found.length === 0 && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Никого не нашли
+                  </p>
+                )}
             </div>
             <div>
               <Label>Сумма, ₽</Label>
@@ -174,7 +292,15 @@ export default function ManualBonusPanel({
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => setTargetId(u.id)}
+                          onClick={() =>
+                            pickUser({
+                              id: u.id,
+                              email: u.email,
+                              name: u.name,
+                              balance: u.balance,
+                              bonus_balance: u.bonus_balance,
+                            })
+                          }
                         >
                           Выбрать
                         </Button>

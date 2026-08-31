@@ -73,6 +73,20 @@ export default function AdminBonuses() {
     [adminToken, navigate, search],
   );
 
+  const findUsers = useCallback(
+    async (query: string) => {
+      if (query.trim().length < 3) return [];
+      const res = await fetch(
+        `${BONUS_API}?action=search_users&search=${encodeURIComponent(query.trim())}`,
+        { headers: { "X-Admin-Token": adminToken } },
+      );
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.users || [];
+    },
+    [adminToken],
+  );
+
   const loadAll = useCallback(async () => {
     try {
       const [promoData, userData, statsData] = await Promise.all([
@@ -370,6 +384,7 @@ export default function AdminBonuses() {
               <TabsContent value="manual">
                 <ManualBonusPanel
                   users={users}
+                  onFindUsers={findUsers}
                   search={search}
                   onSearch={setSearch}
                   onGrant={grantBonus}

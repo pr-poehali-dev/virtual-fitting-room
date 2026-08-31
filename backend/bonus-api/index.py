@@ -234,6 +234,43 @@ def admin_users_with_bonus(cur, search='', limit=50):
     return result
 
 
+def search_any_user(cur, search='', limit=10):
+    """Поиск по всем пользователям — для подсказки в поле начисления.
+
+    Отличие от списка выше: сюда попадают и те, у кого бонусов ещё нет.
+    """
+    query = (search or '').strip()
+    if len(query) < 3:
+        return []
+
+    like = f'%{query}%'
+    cur.execute(
+        f"""SELECT u.id, u.email, u.name, u.balance,
+                   COALESCE(SUM(CASE WHEN g.status = 'active'
+                                      AND g.amount - g.spent - g.burned > 0
+                                     THEN g.amount - g.spent - g.burned END), 0) AS bonus_left
+              FROM {SCHEMA}.users u
+              LEFT JOIN {SCHEMA}.bonus_grants g ON g.user_id = u.id
+             WHERE u.email ILIKE %s OR u.name ILIKE %s
+             GROUP BY u.id, u.email, u.name, u.balance
+             ORDER BY u.created_at DESC
+             LIMIT %s""",
+        (like, like, int(limit)),
+    )
+    found = []
+    for r in cur.fetchall() or []:
+        balance = money(r['balance'])
+        bonus = min(max(0.0, money(r['bonus_left'])), balance)
+        found.append({
+            'id': str(r['id']),
+            'email': r['email'],
+            'name': r['name'],
+            'balance': balance,
+            'bonus_balance': bonus,
+        })
+    return found
+
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """Бонусные рубли: акции, начисления, списания, сгорание."""
     method = event.get('httpMethod', 'GET')
@@ -307,6 +344,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return reply(200, {
                 'users': admin_users_with_bonus(cur, params.get('search', ''),
                                                 params.get('limit', 50))
+            })
+
+        if action == 'search_users' and method == 'GET':
+            return reply(200, {
+                'users': search_any_user(cur, params.get('search', ''), 10)
             })
 
         if action == 'user_detail':
