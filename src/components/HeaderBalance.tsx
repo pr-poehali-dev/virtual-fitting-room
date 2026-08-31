@@ -52,7 +52,7 @@ export default function HeaderBalance({ variant = 'default' }: HeaderBalanceProp
           <span
             className={`flex items-center gap-1 text-[11px] whitespace-nowrap ${isLight ? 'text-purple-300/80' : 'text-primary'}`}
           >
-            из них {bonus.toFixed(0)} ₽
+            в т.ч. {bonus.toFixed(0)} ₽
             <Icon name="Gift" size={11} />
           </span>
         )}
