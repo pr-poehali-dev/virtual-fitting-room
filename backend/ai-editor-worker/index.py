@@ -36,6 +36,9 @@ MAX_RESUMES = 6
 NETWORK_ERROR_MARK = 'Обрыв связи'
 # Сколько раз повторяем сорвавшийся шаг архива, прежде чем признать неудачу
 MAX_STEP_RETRIES = 3
+# Для перегрузки лимита провайдера попыток больше: работа модели не потрачена,
+# нужно лишь дождаться, пока рассосётся очередь запросов
+MAX_INFLIGHT_STEP_RETRIES = 8
 # Признаки временного сбоя: такой шаг имеет смысл повторить, а не хоронить
 # всю задачу вместе с уже обработанными файлами
 RETRYABLE_MARKS = (
@@ -47,6 +50,21 @@ RETRYABLE_MARKS = (
     'validation failed', 'SQL injection',
     'server closed the connection', 'connection already closed',
 )
+# Признаки, по которым код 402 означает временную перегрузку лимита
+# одновременных запросов, а НЕ нехватку денег на счету провайдера.
+# Деньги за такой запрос не списываются — модель к работе не приступала.
+IN_FLIGHT_MARKS = (
+    'in_flight_budget_exhausted',
+    'openrouter_in_flight_budget',
+    'in-flight requests',
+)
+# Сколько ждём, если провайдер не назвал своё время в Retry-After
+DEFAULT_RETRY_AFTER_SEC = 20
+# Дольше этого не ждём внутри одного запуска: остаток задачи сохранён,
+# продолжим следующим заходом
+MAX_INLINE_WAIT_SEC = 45
+# Пауза между шагами, чтобы запросы не накладывались друг на друга
+STEP_GAP_SEC = 1.0
 
 TEXT_EXTENSIONS = {
     '.py', '.js', '.jsx', '.ts', '.tsx', '.html', '.css', '.scss', '.less',
@@ -532,19 +550,30 @@ def call_openrouter_retrying(model, prompt_text, on_partial=None, soft_deadline=
             return text, error, truncated
         last_error = error
         is_network = NETWORK_ERROR_MARK in (error or '')
+        # Лимит одновременных запросов: модель не работала, запрос бесплатный.
+        # Ждём столько, сколько просит провайдер, иначе повтор снова упрётся
+        in_flight = is_in_flight_limit(error)
+        pause = retry_after_sec(error) if in_flight else (
+            2 * (i + 1) if is_network else 1.5 * (i + 1)
+        )
 
         # Времени до предела функции не осталось — повторять нечем
-        no_time = soft_deadline and time.time() + 40 > soft_deadline
+        need = pause + 40
+        no_time = soft_deadline and time.time() + need > soft_deadline
         # Пустой отказ повторяем только если он пришёл быстро: долгое молчание
         # означает, что модель работала, и повтор будет платным впустую.
-        # Обрыв связи повторяем всегда — до модели запрос не дошёл
+        # Обрыв связи и лимит повторяем всегда — до модели запрос не дошёл
         spent = time.time() - started
-        too_long = (not is_network) and spent > 60
+        too_long = (not is_network) and (not in_flight) and spent > 60
+        # Долгую паузу внутри одного запуска не выдерживаем: шаг вернётся
+        # в очередь и продолжится следующим заходом с того же файла
+        too_slow = in_flight and pause > MAX_INLINE_WAIT_SEC
 
-        if i == attempts - 1 or no_time or too_long:
+        if i == attempts - 1 or no_time or too_long or too_slow:
             break
-        print(f'[openrouter-retry] попытка {i + 1} неудачна ({str(error)[:120]}), повтор')
-        time.sleep(2 * (i + 1) if is_network else 1.5 * (i + 1))
+        print(f'[openrouter-retry] попытка {i + 1} неудачна ({str(error)[:120]}), '
+              f'повтор через {pause:.0f}с')
+        time.sleep(pause)
     return None, last_error, False
 
 
@@ -768,6 +797,11 @@ def process_archive_step(task_id, model, prompt, archive_base64):
             done_paths=set(done_files.keys()),
             pending=pending,
         )
+        # Небольшая пауза между файлами: запросы соседних шагов не накладываются
+        # друг на друга и не упираются в лимит одновременных обращений
+        if step_index:
+            time.sleep(STEP_GAP_SEC)
+
         ai_text, error, _ = call_openrouter_retrying(model, prompt_text)
         if error:
             return True, error
@@ -864,9 +898,32 @@ def fail_task(task_id, error):
         conn.close()
 
 
+def is_in_flight_limit(error):
+    """Код 402 из-за лимита одновременных запросов, а не нехватки средств.
+
+    Провайдер отвергает запрос ДО обращения к модели, поэтому денег он не
+    стоит: достаточно подождать и повторить. Обычную нехватку средств на
+    счету сюда не относим — её повторять бессмысленно.
+    """
+    text = str(error or '')
+    if '402' not in text:
+        return False
+    return any(mark in text for mark in IN_FLIGHT_MARKS)
+
+
+def retry_after_sec(error):
+    """Сколько провайдер просит подождать (заголовок Retry-After)."""
+    match = re.search(r'"Retry-After"\s*:\s*"?(\d+)', str(error or ''))
+    if not match:
+        return DEFAULT_RETRY_AFTER_SEC
+    return max(1, min(int(match.group(1)), 300))
+
+
 def is_retryable_error(error):
     """Временный сбой (сеть, перегрузка провайдера) — шаг можно повторить."""
     text = str(error or '')
+    if is_in_flight_limit(text):
+        return True
     return any(mark in text for mark in RETRYABLE_MARKS)
 
 
@@ -892,9 +949,12 @@ def register_step_failure(task_id, error):
         conn.commit()
     finally:
         conn.close()
-    tries = row[0] if row else MAX_STEP_RETRIES
-    if tries < MAX_STEP_RETRIES:
-        print(f'[{task_id}] Шаг сорвался ({tries}/{MAX_STEP_RETRIES}), повторю: {str(error)[:200]}')
+    # Перегрузка лимита провайдера — не вина задачи: даём больше попыток,
+    # иначе несколько наложившихся запросов хоронят готовую работу
+    limit = MAX_INFLIGHT_STEP_RETRIES if is_in_flight_limit(error) else MAX_STEP_RETRIES
+    tries = row[0] if row else limit
+    if tries < limit:
+        print(f'[{task_id}] Шаг сорвался ({tries}/{limit}), повторю: {str(error)[:200]}')
         return True
     print(f'[{task_id}] Шаг сорвался {tries} раз подряд, задача признана неудачной')
     return False
