@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useBalance } from "@/context/BalanceContext";
 import { useSearchParams, Link } from "react-router-dom";
 import { GENERATION_COST, MIN_TOPUP } from "@/config/prices";
+import TopupBonusHint from "@/components/wallet/TopupBonusHint";
 
 const USER_BALANCE_API =
   "https://functions.poehali.dev/68409278-10ab-4733-b48d-b1b4360620a1";
@@ -302,6 +303,9 @@ export default function WalletTab() {
                 </Button>
               ))}
             </div>
+
+            <TopupBonusHint />
+
             {isCreatingPayment && (
               <div className="flex items-center justify-center mt-4">
                 <Icon name="Loader2" className="animate-spin mr-2" size={16} />
