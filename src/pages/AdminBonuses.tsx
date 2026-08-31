@@ -174,9 +174,7 @@ export default function AdminBonuses() {
     setIsBusy(true);
     try {
       const data = await call("clear_all", "POST", { confirm: "CLEAR" });
-      toast.success(
-        `Обнулено ${data.cleared} ₽ у ${data.users} пользователей`,
-      );
+      toast.success(`Обнулено ${data.cleared} ₽ у ${data.users} пользователей`);
       loadAll();
     } catch (e) {
       toast.error((e as Error).message);
@@ -212,159 +210,177 @@ export default function AdminBonuses() {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
-        <AdminMenu />
+        <div className="flex flex-col lg:flex-row gap-8">
+          <AdminMenu />
 
-        <div className="flex flex-wrap items-center justify-between gap-4 mt-6 mb-6">
-          <h1 className="text-2xl font-semibold flex items-center gap-2">
-            <Icon name="Gift" size={26} />
-            Бонусные рубли
-          </h1>
-          <Button variant="outline" onClick={runExpiry} disabled={isBusy}>
-            <Icon name="Flame" size={16} className="mr-2" />
-            Проверить сгорание
-          </Button>
-        </div>
-
-        {stats && (
-          <div className="grid gap-4 md:grid-cols-4 mb-8">
-            {[
-              { label: "Начислено всего", value: stats.granted, icon: "Plus" },
-              { label: "Сейчас на счетах", value: stats.active, icon: "Wallet" },
-              { label: "Потрачено", value: stats.spent, icon: "ShoppingBag" },
-              { label: "Сгорело", value: stats.burned, icon: "Flame" },
-            ].map((card) => (
-              <Card key={card.label}>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                    <Icon name={card.icon} size={16} />
-                    {card.label}
-                  </div>
-                  <p className="text-2xl font-light">
-                    {card.value.toFixed(2)} ₽
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        <Tabs defaultValue="promotions">
-          <TabsList className="mb-6">
-            <TabsTrigger value="promotions">Акции</TabsTrigger>
-            <TabsTrigger value="manual">Ручное управление</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="promotions" className="space-y-5">
-            {editing ? (
-              <PromotionEditor
-                value={editing}
-                onChange={setEditing}
-                onSave={savePromotion}
-                onCancel={() => setEditing(null)}
-                isSaving={isBusy}
-              />
-            ) : (
-              <Button onClick={() => setEditing({ ...emptyPromotion })}>
-                <Icon name="Plus" size={16} className="mr-2" />
-                Новая акция
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <h1 className="text-2xl font-semibold flex items-center gap-2">
+                <Icon name="Gift" size={26} />
+                Бонусные рубли
+              </h1>
+              <Button variant="outline" onClick={runExpiry} disabled={isBusy}>
+                <Icon name="Flame" size={16} className="mr-2" />
+                Проверить сгорание
               </Button>
-            )}
+            </div>
 
-            {isLoading ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Icon
-                  name="Loader2"
-                  size={28}
-                  className="animate-spin mx-auto mb-2"
-                />
-                Загружаем
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {promotions.map((promo) => (
-                  <Card key={promo.id}>
+            {stats && (
+              <div className="grid gap-4 md:grid-cols-4 mb-8">
+                {[
+                  {
+                    label: "Начислено всего",
+                    value: stats.granted,
+                    icon: "Plus",
+                  },
+                  {
+                    label: "Сейчас на счетах",
+                    value: stats.active,
+                    icon: "Wallet",
+                  },
+                  {
+                    label: "Потрачено",
+                    value: stats.spent,
+                    icon: "ShoppingBag",
+                  },
+                  { label: "Сгорело", value: stats.burned, icon: "Flame" },
+                ].map((card) => (
+                  <Card key={card.label}>
                     <CardContent className="pt-6">
-                      <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div className="flex-1 min-w-[240px]">
-                          <div className="flex items-center gap-3 mb-1">
-                            <h3 className="font-semibold">{promo.title}</h3>
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-muted">
-                              {triggerLabel[promo.trigger_type] || "Своё"}
-                            </span>
-                            {!promo.show_on_site && (
-                              <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                                скрыта на сайте
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {promo.description || "Без описания"}
-                          </p>
-                          <div className="flex flex-wrap gap-4 text-sm">
-                            <span className="font-medium text-primary">
-                              +{promo.bonus_amount} ₽
-                            </span>
-                            {promo.trigger_type === "topup" && (
-                              <span>от {promo.min_amount} ₽</span>
-                            )}
-                            <span className="text-muted-foreground">
-                              {promo.expires_days
-                                ? `сгорают через ${promo.expires_days} дн.`
-                                : "не сгорают"}
-                            </span>
-                            {(promo.granted_count ?? 0) > 0 && (
-                              <span className="text-muted-foreground">
-                                выдано {promo.granted_total} ₽ (
-                                {promo.granted_count} раз)
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <Switch
-                            checked={promo.is_active}
-                            onCheckedChange={(on) => togglePromotion(promo, on)}
-                          />
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setEditing(promo)}
-                          >
-                            <Icon name="Pencil" size={16} />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => removePromotion(promo)}
-                          >
-                            <Icon
-                              name="Trash2"
-                              size={16}
-                              className="text-destructive"
-                            />
-                          </Button>
-                        </div>
+                      <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                        <Icon name={card.icon} size={16} />
+                        {card.label}
                       </div>
+                      <p className="text-2xl font-light">
+                        {card.value.toFixed(2)} ₽
+                      </p>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             )}
-          </TabsContent>
 
-          <TabsContent value="manual">
-            <ManualBonusPanel
-              users={users}
-              search={search}
-              onSearch={setSearch}
-              onGrant={grantBonus}
-              onRevoke={revokeBonus}
-              onClearAll={clearAll}
-              isBusy={isBusy}
-            />
-          </TabsContent>
-        </Tabs>
+            <Tabs defaultValue="promotions">
+              <TabsList className="mb-6">
+                <TabsTrigger value="promotions">Акции</TabsTrigger>
+                <TabsTrigger value="manual">Ручное управление</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="promotions" className="space-y-5">
+                {editing ? (
+                  <PromotionEditor
+                    value={editing}
+                    onChange={setEditing}
+                    onSave={savePromotion}
+                    onCancel={() => setEditing(null)}
+                    isSaving={isBusy}
+                  />
+                ) : (
+                  <Button onClick={() => setEditing({ ...emptyPromotion })}>
+                    <Icon name="Plus" size={16} className="mr-2" />
+                    Новая акция
+                  </Button>
+                )}
+
+                {isLoading ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Icon
+                      name="Loader2"
+                      size={28}
+                      className="animate-spin mx-auto mb-2"
+                    />
+                    Загружаем
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {promotions.map((promo) => (
+                      <Card key={promo.id}>
+                        <CardContent className="pt-6">
+                          <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div className="flex-1 min-w-[240px]">
+                              <div className="flex items-center gap-3 mb-1">
+                                <h3 className="font-semibold">{promo.title}</h3>
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-muted">
+                                  {triggerLabel[promo.trigger_type] || "Своё"}
+                                </span>
+                                {!promo.show_on_site && (
+                                  <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                    скрыта на сайте
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-2">
+                                {promo.description || "Без описания"}
+                              </p>
+                              <div className="flex flex-wrap gap-4 text-sm">
+                                <span className="font-medium text-primary">
+                                  +{promo.bonus_amount} ₽
+                                </span>
+                                {promo.trigger_type === "topup" && (
+                                  <span>от {promo.min_amount} ₽</span>
+                                )}
+                                <span className="text-muted-foreground">
+                                  {promo.expires_days
+                                    ? `сгорают через ${promo.expires_days} дн.`
+                                    : "не сгорают"}
+                                </span>
+                                {(promo.granted_count ?? 0) > 0 && (
+                                  <span className="text-muted-foreground">
+                                    выдано {promo.granted_total} ₽ (
+                                    {promo.granted_count} раз)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <Switch
+                                checked={promo.is_active}
+                                onCheckedChange={(on) =>
+                                  togglePromotion(promo, on)
+                                }
+                              />
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setEditing(promo)}
+                              >
+                                <Icon name="Pencil" size={16} />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => removePromotion(promo)}
+                              >
+                                <Icon
+                                  name="Trash2"
+                                  size={16}
+                                  className="text-destructive"
+                                />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="manual">
+                <ManualBonusPanel
+                  users={users}
+                  search={search}
+                  onSearch={setSearch}
+                  onGrant={grantBonus}
+                  onRevoke={revokeBonus}
+                  onClearAll={clearAll}
+                  isBusy={isBusy}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </div>
     </Layout>
   );
