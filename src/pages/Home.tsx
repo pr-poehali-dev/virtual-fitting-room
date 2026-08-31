@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import Footer from "@/components/Footer";
 import CookieBanner from "@/components/CookieBanner";
 import HeaderBalance from "@/components/HeaderBalance";
+import PromoBanner from "@/components/PromoBanner";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const Home = () => {
@@ -310,6 +311,8 @@ const Home = () => {
                 Создавайте образы, капсулы и лукбуки.
               </p>
             </div>
+
+            <PromoBanner />
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 lg:gap-6">
               {services.map((service) => (
