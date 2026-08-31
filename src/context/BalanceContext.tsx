@@ -5,6 +5,9 @@ const USER_BALANCE_API = 'https://functions.poehali.dev/68409278-10ab-4733-b48d-
 
 interface BalanceInfo {
   balance: number;
+  bonus_balance?: number;
+  own_balance?: number;
+  bonus_expires_at?: string | null;
   free_tries_remaining: number;
   paid_tries_available: number;
   unlimited_access: boolean;

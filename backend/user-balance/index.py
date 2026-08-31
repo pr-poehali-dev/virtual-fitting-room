@@ -56,32 +56,55 @@ def get_bonus_part(cur, conn, user_id: str, balance: float):
             (take, grant_id),
         )
 
-    # 2. Разносим траты по партиям: бонусные тратятся первыми
+    # 2. Разносим траты по партиям: бонусные тратятся первыми.
+    # Учитываются только списания, сделанные ПОСЛЕ начисления бонуса —
+    # прошлые траты человека к подарку отношения не имеют
     cur.execute(
-        f"""SELECT COALESCE(SUM(-amount), 0)
+        f"""SELECT -amount, created_at
               FROM {SCHEMA}.balance_transactions
              WHERE user_id = %s AND type = 'charge' AND amount < 0
-               AND description <> 'Сгорание бонусных рублей'""",
+               AND description <> 'Сгорание бонусных рублей'
+             ORDER BY created_at ASC""",
         (user_id,),
     )
-    spent_row = cur.fetchone()
-    remaining = round(float(spent_row[0] or 0), 2)
+    charges = [(round(float(a or 0), 2), d) for a, d in (cur.fetchall() or [])]
 
     cur.execute(
-        f"""SELECT id, amount, spent, burned
+        f"""SELECT id, amount, spent, burned, created_at
               FROM {SCHEMA}.bonus_grants
              WHERE user_id = %s AND status IN ('active', 'expired')
              ORDER BY (expires_at IS NULL), expires_at ASC, created_at ASC""",
         (user_id,),
     )
-    for grant_id, amount, spent, burned in cur.fetchall() or []:
-        capacity = round(float(amount) - float(burned), 2)
-        take = max(0.0, min(capacity, remaining))
-        remaining = round(max(0.0, remaining - take), 2)
-        if abs(take - float(spent)) > 0.001:
+    grants = [
+        {
+            'id': gid,
+            'capacity': round(float(amount) - float(burned), 2),
+            'spent_saved': float(spent),
+            'created_at': created,
+            'used': 0.0,
+        }
+        for gid, amount, spent, burned, created in (cur.fetchall() or [])
+    ]
+
+    # Каждую трату гасим из бонусов, которые уже были начислены на тот момент
+    for charge_sum, charge_date in charges:
+        left = charge_sum
+        for grant in grants:
+            if left <= 0:
+                break
+            if grant['created_at'] and charge_date and charge_date < grant['created_at']:
+                continue
+            free = round(grant['capacity'] - grant['used'], 2)
+            take = max(0.0, min(free, left))
+            grant['used'] = round(grant['used'] + take, 2)
+            left = round(left - take, 2)
+
+    for grant in grants:
+        if abs(grant['used'] - grant['spent_saved']) > 0.001:
             cur.execute(
                 f'UPDATE {SCHEMA}.bonus_grants SET spent = %s WHERE id = %s',
-                (take, grant_id),
+                (grant['used'], grant['id']),
             )
 
     # 3. Считаем остаток

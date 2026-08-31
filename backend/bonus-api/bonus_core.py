@@ -102,13 +102,14 @@ def sync_spending(cur, user_id):
     сколько человек потратил. Разница и есть израсходованный бонус.
     """
     cur.execute(
-        f"""SELECT COALESCE(SUM(-amount), 0) AS spent
+        f"""SELECT -amount AS sum_spent, created_at
               FROM {SCHEMA}.balance_transactions
              WHERE user_id = %s AND type = 'charge' AND amount < 0
-               AND description <> 'Сгорание бонусных рублей'""",
+               AND description <> 'Сгорание бонусных рублей'
+             ORDER BY created_at ASC""",
         (user_id,),
     )
-    total_spent = money((cur.fetchone() or {}).get('spent'))
+    charges = [(money(r['sum_spent']), r['created_at']) for r in (cur.fetchall() or [])]
 
     cur.execute(
         f"""SELECT id, amount, spent, burned, expires_at, created_at
@@ -117,19 +118,37 @@ def sync_spending(cur, user_id):
              ORDER BY (expires_at IS NULL), expires_at ASC, created_at ASC""",
         (user_id,),
     )
-    grants = cur.fetchall() or []
+    grants = [
+        {
+            'id': r['id'],
+            'capacity': money(r['amount']) - money(r['burned']),
+            'spent_saved': money(r['spent']),
+            'created_at': r['created_at'],
+            'used': 0.0,
+        }
+        for r in (cur.fetchall() or [])
+    ]
 
-    remaining = total_spent
+    # Трата гасится только из бонусов, начисленных ДО неё
+    for charge_sum, charge_date in charges:
+        left = charge_sum
+        for grant in grants:
+            if left <= 0:
+                break
+            if grant['created_at'] and charge_date and charge_date < grant['created_at']:
+                continue
+            free = money(grant['capacity'] - grant['used'])
+            take = max(0.0, min(free, left))
+            grant['used'] = money(grant['used'] + take)
+            left = money(left - take)
+
     for grant in grants:
-        capacity = money(grant['amount']) - money(grant['burned'])
-        take = max(0.0, min(capacity, remaining))
-        remaining = max(0.0, remaining - take)
-        if abs(take - money(grant['spent'])) > 0.001:
+        if abs(grant['used'] - grant['spent_saved']) > 0.001:
             cur.execute(
                 f"""UPDATE {SCHEMA}.bonus_grants
                        SET spent = %s, updated_at = CURRENT_TIMESTAMP
                      WHERE id = %s""",
-                (take, grant['id']),
+                (grant['used'], grant['id']),
             )
 
 

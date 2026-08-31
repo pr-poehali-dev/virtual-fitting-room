@@ -29,16 +29,30 @@ export default function HeaderBalance({ variant = 'default' }: HeaderBalanceProp
     );
   }
 
+  const bonus = balanceInfo.bonus_balance ?? 0;
+
   return (
     <Link
       to="/profile/wallet"
       className="flex items-center gap-1.5 rounded-lg px-1 transition-opacity hover:opacity-80"
+      title={
+        bonus > 0
+          ? `Из них ${bonus.toFixed(0)} ₽ бонусных`
+          : undefined
+      }
     >
       <Icon name="Wallet" size={20} className={`hidden lg:inline ${iconClass}`} />
       <Icon name="Wallet" size={18} className={`lg:hidden ${iconClass}`} />
-      <div className="flex items-center gap-1">
-        <span className={`text-sm hidden lg:inline ${labelClass}`}>Баланс</span>
-        <span className={`text-sm font-medium ${valueClass}`}>{balanceInfo.balance.toFixed(0)} ₽</span>
+      <div className="flex flex-col leading-tight">
+        <div className="flex items-center gap-1">
+          <span className={`text-sm hidden lg:inline ${labelClass}`}>Баланс</span>
+          <span className={`text-sm font-medium ${valueClass}`}>{balanceInfo.balance.toFixed(0)} ₽</span>
+        </div>
+        {bonus > 0 && (
+          <span className={`text-[11px] ${isLight ? 'text-purple-300/80' : 'text-primary'}`}>
+            в т.ч. {bonus.toFixed(0)} ₽ бонусных
+          </span>
+        )}
       </div>
     </Link>
   );

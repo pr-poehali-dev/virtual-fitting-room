@@ -72,7 +72,7 @@ const Promotions = () => {
               <p className="text-gray-600 mb-6">
                 Загляните позже — мы регулярно запускаем новые предложения.
               </p>
-              <Link to="/profile?tab=wallet">
+              <Link to="/profile/wallet">
                 <Button variant="outline">Перейти в кошелёк</Button>
               </Link>
             </div>
@@ -151,17 +151,88 @@ const Promotions = () => {
             </div>
           )}
 
-          {promotions.length > 0 && (
-            <div className="mt-10 bg-purple-50 rounded-2xl p-6 text-center">
-              <p className="text-gray-700 mb-4">
-                Бонусные рубли видно в кошельке отдельной строкой — вместе с
-                датой сгорания.
-              </p>
-              <Link to="/profile?tab=wallet">
+          <div className="mt-10 bg-white rounded-2xl shadow-lg p-6 md:p-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Icon name="FileText" size={22} className="text-purple-600" />
+              Правила начисления и использования бонусов
+            </h2>
+            <ul className="space-y-3 text-sm text-gray-700">
+              <li className="flex gap-3">
+                <Icon
+                  name="Check"
+                  size={18}
+                  className="text-green-600 shrink-0 mt-0.5"
+                />
+                <span>
+                  Бонусные рубли зачисляются на счёт и тратятся на любые услуги
+                  сайта наравне с обычными деньгами.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <Icon
+                  name="Check"
+                  size={18}
+                  className="text-green-600 shrink-0 mt-0.5"
+                />
+                <span>
+                  При оплате услуги бонусные рубли списываются в первую очередь,
+                  и только затем собственные средства.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <Icon
+                  name="Clock"
+                  size={18}
+                  className="text-amber-600 shrink-0 mt-0.5"
+                />
+                <span>
+                  У бонусов может быть срок действия. Неиспользованные бонусные
+                  рубли сгорают в указанную дату — она видна в кошельке.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <Icon
+                  name="TriangleAlert"
+                  size={18}
+                  className="text-red-500 shrink-0 mt-0.5"
+                />
+                <span>
+                  <strong>Бонусные рубли не выводятся и не возвращаются на
+                  карту.</strong> Если вы начали тратить средства со счёта,
+                  возврат на карту по этой сумме не производится: бонусная часть
+                  списывается первой и денежному возмещению не подлежит.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <Icon
+                  name="UserCheck"
+                  size={18}
+                  className="text-purple-600 shrink-0 mt-0.5"
+                />
+                <span>
+                  Бонус за регистрацию начисляется один раз. При повторной
+                  регистрации на тот же адрес электронной почты он не выдаётся.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <Icon
+                  name="Settings"
+                  size={18}
+                  className="text-gray-500 shrink-0 mt-0.5"
+                />
+                <span>
+                  Администрация вправе изменять условия акций, а также
+                  начислять и отменять бонусы при выявлении злоупотреблений.
+                </span>
+              </li>
+            </ul>
+
+            <div className="mt-6 pt-6 border-t text-center">
+              <Link to="/profile/wallet">
                 <Button>Открыть кошелёк</Button>
               </Link>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </Layout>

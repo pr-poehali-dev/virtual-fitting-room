@@ -5,7 +5,7 @@ import Icon from "@/components/ui/icon";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useBalance } from "@/context/BalanceContext";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { GENERATION_COST, MIN_TOPUP } from "@/config/prices";
 
 const USER_BALANCE_API =
@@ -178,10 +178,16 @@ export default function WalletTab() {
                 <p className="text-4xl font-light">
                   {balanceInfo?.balance.toFixed(2)} ₽
                 </p>
+                {(balanceInfo?.bonus_balance ?? 0) > 0 && (
+                  <p className="text-sm text-primary mt-1">
+                    в том числе {balanceInfo?.bonus_balance?.toFixed(2)} ₽
+                    бонусных
+                  </p>
+                )}
               </div>
 
               {(balanceInfo?.bonus_balance ?? 0) > 0 && (
-                <div className="rounded-lg bg-primary/5 border border-primary/20 px-4 py-3 space-y-1">
+                <div className="rounded-lg bg-primary/5 border border-primary/20 px-4 py-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm flex items-center gap-2">
                       <Icon name="Gift" size={16} className="text-primary" />
@@ -199,18 +205,43 @@ export default function WalletTab() {
                       {balanceInfo?.own_balance?.toFixed(2)} ₽
                     </span>
                   </div>
-                  {balanceInfo?.bonus_expires_at && (
-                    <p className="text-xs text-muted-foreground pt-1">
-                      Ближайшее сгорание:{" "}
-                      {new Date(
-                        balanceInfo.bonus_expires_at,
-                      ).toLocaleDateString("ru-RU", {
-                        day: "numeric",
-                        month: "long",
-                      })}
-                      . Бонусы тратятся первыми.
+
+                  {balanceInfo?.bonus_expires_at ? (
+                    <div className="flex items-start gap-2 pt-2 border-t border-primary/15">
+                      <Icon
+                        name="Clock"
+                        size={15}
+                        className="text-amber-600 mt-0.5 shrink-0"
+                      />
+                      <div className="text-xs">
+                        <p className="font-medium text-amber-700">
+                          Сгорают{" "}
+                          {new Date(
+                            balanceInfo.bonus_expires_at,
+                          ).toLocaleDateString("ru-RU", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </p>
+                        <p className="text-muted-foreground mt-0.5">
+                          Бонусы списываются первыми, поэтому обычно успевают
+                          потратиться.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground pt-2 border-t border-primary/15">
+                      Не сгорают. Списываются первыми.
                     </p>
                   )}
+
+                  <p className="text-xs text-muted-foreground">
+                    Бонусные рубли не возвращаются на карту.{" "}
+                    <Link to="/promotions" className="underline">
+                      Условия акций
+                    </Link>
+                  </p>
                 </div>
               )}
 
