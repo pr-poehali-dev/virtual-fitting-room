@@ -198,7 +198,16 @@ def action_ask(body, user_id, event):
                 return resp(403, {'error': 'Чужой диалог'}, event)
             if status != 'active':
                 return resp(400, {'error': 'Диалог уже закрыт'}, event)
-            if steps_count >= pricing.DIALOG_MAX_STEPS:
+            # Лимит считаем по реально полученным ответам, а не по номеру
+            # последнего шага: сорванная попытка не должна съедать вопрос
+            cur.execute(
+                f"""SELECT COUNT(*) FROM {DB_SCHEMA}.divination_dialog_steps
+                    WHERE dialog_id = %s
+                      AND status IN ('done', 'pending', 'processing')""",
+                (dialog_id,),
+            )
+            used_steps = cur.fetchone()[0] or 0
+            if used_steps >= pricing.DIALOG_MAX_STEPS:
                 return resp(400, {
                     'error': f'Достигнут предел в {pricing.DIALOG_MAX_STEPS} вопросов. '
                              f'Начните новый диалог.'
@@ -230,13 +239,11 @@ def action_ask(body, user_id, event):
                     'current': balance,
                 }, event)
 
-            # Номер считаем только по состоявшимся шагам: неудачный шаг
-            # не должен занимать номер, иначе в беседе появляются пропуски.
-            # Шаги в работе учитываем — иначе два вопроса подряд получат
-            # одинаковый номер
+            # Считаем количество состоявшихся шагов, а не наибольший номер:
+            # после сорванной попытки её номер освобождается и достаётся
+            # следующему вопросу, поэтому в беседе не появляются пропуски
             cur.execute(
-                f"""SELECT COALESCE(MAX(step_no), 0)
-                    FROM {DB_SCHEMA}.divination_dialog_steps
+                f"""SELECT COUNT(*) FROM {DB_SCHEMA}.divination_dialog_steps
                     WHERE dialog_id = %s
                       AND status IN ('done', 'pending', 'processing')""",
                 (dialog_id,),

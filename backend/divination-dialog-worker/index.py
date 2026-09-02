@@ -268,11 +268,18 @@ def process_step(step_id: str) -> dict:
                     WHERE id = %s""",
                 (answer, summary, step_id),
             )
+            # Счётчик — это число состоявшихся шагов, а не номер последнего:
+            # иначе сорванные попытки навсегда съедали бы лимит вопросов
             cur.execute(
-                f"""UPDATE {DB_SCHEMA}.divination_dialogs
-                    SET steps_count = %s, total_spent = total_spent + %s, updated_at = NOW()
-                    WHERE id = %s""",
-                (step_no, cost, dialog_id),
+                f"""UPDATE {DB_SCHEMA}.divination_dialogs d
+                    SET steps_count = (
+                            SELECT COUNT(*) FROM {DB_SCHEMA}.divination_dialog_steps
+                             WHERE dialog_id = d.id AND status = 'done'
+                        ),
+                        total_spent = total_spent + %s,
+                        updated_at = NOW()
+                    WHERE d.id = %s""",
+                (cost, dialog_id),
             )
         conn.commit()
         return {'status': 'done', 'step_no': step_no}
