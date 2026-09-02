@@ -60,7 +60,9 @@ def call_openrouter(model: str, prompt_text: str):
                 'max_tokens': 3000,
                 'temperature': 0.8,
             },
-            timeout=110,
+            # (соединение, ответ). Сеть либо отвечает сразу, либо не ответит
+            # вовсе — ждать её две минуты значит съесть время на возврат денег
+            timeout=(15, 110),
             proxies=get_openrouter_proxies(),
         )
     except Exception as e:
@@ -158,6 +160,36 @@ def refund_step(conn, step_id, dialog_id, cost, user_id):
     conn.commit()
 
 
+def fail_step(conn, step_id, dialog_id, cost, user_id, error):
+    """Помечает шаг неудачным и возвращает деньги.
+
+    Долгий сбой сети рвёт и соединение с базой, поэтому если старое
+    соединение мертво — берём новое. Иначе шаг навсегда завис бы
+    в обработке, а деньги не вернулись бы человеку.
+    """
+    print(f'[{step_id}] Ошибка: {error}')
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT 1')
+    except Exception:
+        print(f'[{step_id}] соединение с базой потеряно, переподключаюсь')
+        try:
+            conn.close()
+        except Exception:
+            pass
+        conn = get_db()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""UPDATE {DB_SCHEMA}.divination_dialog_steps
+                SET status = 'failed', updated_at = NOW() WHERE id = %s""",
+            (step_id,),
+        )
+    conn.commit()
+    refund_step(conn, step_id, dialog_id, cost, user_id)
+    return conn
+
+
 def process_step(step_id: str) -> dict:
     conn = get_db()
     try:
@@ -225,15 +257,7 @@ def process_step(step_id: str) -> dict:
         ai_text, error = call_openrouter_retrying(model, prompt_text)
 
         if error or not ai_text:
-            print(f'[{step_id}] Ошибка: {error}')
-            with conn.cursor() as cur:
-                cur.execute(
-                    f"""UPDATE {DB_SCHEMA}.divination_dialog_steps
-                        SET status = 'failed', updated_at = NOW() WHERE id = %s""",
-                    (step_id,),
-                )
-            conn.commit()
-            refund_step(conn, step_id, dialog_id, cost, user_id)
+            conn = fail_step(conn, step_id, dialog_id, cost, user_id, error)
             return {'status': 'failed', 'error': error}
 
         answer, summary = split_answer_and_summary(ai_text)

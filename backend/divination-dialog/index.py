@@ -282,6 +282,63 @@ def action_ask(body, user_id, event):
     }, event)
 
 
+STUCK_MINUTES = 5
+
+
+def rescue_stuck_step(cur, step_id):
+    """Закрывает шаг, зависший в обработке дольше пяти минут.
+
+    Воркер мог оборваться так, что не успел записать неудачу сам
+    (сбой сети рвёт и соединение с базой). Тогда шаг висит вечно,
+    а списанные деньги не возвращаются. Здесь подстраховываемся:
+    помечаем неудачным и возвращаем оплату — один раз.
+    """
+    cur.execute(
+        f"""SELECT s.dialog_id, s.cost, s.refunded, d.user_id
+            FROM {DB_SCHEMA}.divination_dialog_steps s
+            JOIN {DB_SCHEMA}.divination_dialogs d ON d.id = s.dialog_id
+            WHERE s.id = %s
+              AND s.status IN ('pending', 'processing')
+              AND s.updated_at < NOW() - INTERVAL '{STUCK_MINUTES} minutes'""",
+        (step_id,),
+    )
+    row = cur.fetchone()
+    if not row:
+        return None
+
+    dialog_id, cost, refunded, owner = row
+    cur.execute(
+        f"""UPDATE {DB_SCHEMA}.divination_dialog_steps
+            SET status = 'failed', updated_at = NOW() WHERE id = %s""",
+        (step_id,),
+    )
+
+    amount = float(cost or 0)
+    if amount > 0 and not refunded:
+        cur.execute('SELECT balance FROM users WHERE id = %s', (owner,))
+        bal = cur.fetchone()
+        before = float(bal[0]) if bal else 0
+        cur.execute(
+            'UPDATE users SET balance = balance + %s WHERE id = %s',
+            (amount, owner),
+        )
+        cur.execute(
+            f"""INSERT INTO {DB_SCHEMA}.balance_transactions
+                (user_id, type, amount, balance_before, balance_after, description)
+                VALUES (%s, 'refund', %s, %s, %s, %s)""",
+            (owner, amount, before, before + amount,
+             'Возврат: диалог-гадание (ответ не пришёл)'),
+        )
+        cur.execute(
+            f"""UPDATE {DB_SCHEMA}.divination_dialog_steps
+                SET refunded = true WHERE id = %s""",
+            (step_id,),
+        )
+        print(f'[rescue] шаг {step_id} завис, вернули {amount} руб.')
+
+    return 'failed'
+
+
 def action_step_status(body, user_id, event):
     """Готов ли ответ на шаг диалога."""
     step_id = (body.get('step_id') or '').strip()
@@ -306,6 +363,12 @@ def action_step_status(body, user_id, event):
             status, answer, step_no, question, cards, owner = row
             if str(owner) != str(user_id):
                 return resp(403, {'error': 'Чужой диалог'}, event)
+
+            # Страховка: если воркера оборвали жёстко, он не успел записать
+            # неудачу. Такой шаг висел бы вечно, а деньги не вернулись бы
+            if status in ('pending', 'processing'):
+                status = rescue_stuck_step(cur, step_id) or status
+        conn.commit()
     finally:
         conn.close()
 
