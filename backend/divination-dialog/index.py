@@ -198,6 +198,12 @@ def action_ask(body, user_id, event):
                 return resp(403, {'error': 'Чужой диалог'}, event)
             if status != 'active':
                 return resp(400, {'error': 'Диалог уже закрыт'}, event)
+
+            # Шаги, зависшие в обработке, закрываем до подсчёта номера:
+            # иначе брошенная попытка вечно занимает место в нумерации
+            for (stuck_id,) in fetch_stuck_steps(cur, dialog_id):
+                rescue_stuck_step(cur, stuck_id)
+
             # Лимит считаем по реально полученным ответам, а не по номеру
             # последнего шага: сорванная попытка не должна съедать вопрос
             cur.execute(
@@ -290,6 +296,18 @@ def action_ask(body, user_id, event):
 
 
 STUCK_MINUTES = 5
+
+
+def fetch_stuck_steps(cur, dialog_id):
+    """Находит шаги диалога, брошенные в обработке дольше положенного."""
+    cur.execute(
+        f"""SELECT id FROM {DB_SCHEMA}.divination_dialog_steps
+            WHERE dialog_id = %s
+              AND status IN ('pending', 'processing')
+              AND updated_at < NOW() - INTERVAL '{STUCK_MINUTES} minutes'""",
+        (dialog_id,),
+    )
+    return cur.fetchall()
 
 
 def rescue_stuck_step(cur, step_id):
