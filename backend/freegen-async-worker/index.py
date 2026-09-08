@@ -625,7 +625,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # --- STUCK RECOVERY: добить зависшие processing-задачи других пользователей
         try:
             cursor.execute('''
-                SELECT id, fal_response_url, user_id, prompt, "references", aspect_ratio, saved_to_history, created_at, task_type, model_params
+                SELECT id, fal_response_url, user_id, prompt, "references", aspect_ratio, saved_to_history, created_at, task_type, model_params, consult_task_id
                 FROM t_p29007832_virtual_fitting_room.freegen_tasks
                 WHERE status = 'processing'
                   AND fal_response_url IS NOT NULL
@@ -638,7 +638,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             print(f'[Freegen] Found {len(stuck_rows)} stuck tasks')
 
             for stuck in stuck_rows:
-                s_id, s_response_url, s_user_id, s_prompt, s_refs_json, s_aspect, s_saved, s_created, s_task_type, s_model_params = stuck
+                s_id, s_response_url, s_user_id, s_prompt, s_refs_json, s_aspect, s_saved, s_created, s_task_type, s_model_params, s_consult_task_id = stuck
                 try:
                     s_refs = json.loads(s_refs_json) if s_refs_json else []
                     s_age = (datetime.utcnow() - s_created).total_seconds() if s_created else 0
@@ -668,6 +668,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                     save_to_history(conn, s_user_id, s_cdn_url, s_prompt or '', s_refs_json, s_aspect or '1:1', s_id)
                                     if s_task_type == 'model':
                                         save_user_model(conn, s_user_id, s_cdn_url, s_prompt or '', s_model_params, s_id)
+                                    # Картинка заказана из консультации — возвращаем её
+                                    # в тот же вопрос, иначе связь с ним потеряется
+                                    if s_consult_task_id:
+                                        attach_to_consult(conn, str(s_consult_task_id), s_user_id, s_cdn_url)
 
                                 cursor.execute('''
                                     UPDATE t_p29007832_virtual_fitting_room.freegen_tasks
