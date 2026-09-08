@@ -713,7 +713,7 @@ def _fal_get(url: str) -> dict:
     raise last_error if last_error else RuntimeError('fal.ai GET failed')
 
 
-def fal_poll_result(status_url: str, response_url: str, max_wait_seconds: int = 180) -> str:
+def fal_poll_result(status_url: str, response_url: str, max_wait_seconds: int = 90) -> str:
     """Опрашивать status_url до COMPLETED, затем забрать картинку с response_url."""
     deadline = time.time() + max_wait_seconds
     while time.time() < deadline:
@@ -962,6 +962,12 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
                     last_no_media_err = gen_err
                     print(f'[COLORGUIDE-WORKER] image gen no_media (attempt 1), retrying once: {gen_err}')
                     continue
+                # Картинка ещё не готова: задание у fal живёт своей жизнью,
+                # результат заберёт проверка статуса. Задачу не закрываем,
+                # иначе готовая картинка потеряется, а деньги спишутся зря.
+                if 'timeout' in str(gen_err).lower():
+                    print(f'[COLORGUIDE-WORKER] Task {task_id} still generating, will be picked up later')
+                    return
                 raise
     except urllib.error.HTTPError as e:
         err_body = e.read().decode('utf-8', errors='replace')[:600] if hasattr(e, 'read') else ''

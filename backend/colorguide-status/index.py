@@ -1,13 +1,89 @@
 import json
 import os
+import urllib.request
+import urllib.error
+import boto3
 import psycopg2
 from typing import Dict, Any
 
 STALE_TASK_SECONDS = 720
+# Столько ждём, прежде чем сами пойдём забирать результат у fal:
+# за это время воркер обычно успевает справиться сам.
+PICKUP_AFTER_SECONDS = 60
 STALE_ERROR_MESSAGE = (
     'Генерация прервалась из-за сбоя связи и не была завершена. '
     'Деньги возвращены на баланс, если они списывались. Попробуйте ещё раз.'
 )
+
+
+def _fal_get(url: str) -> dict:
+    """Спрашивает fal о готовности. 202/400 — «ещё не готово», это не ошибка."""
+    fal_api_key = os.environ.get('FAL_API_KEY')
+    if not fal_api_key:
+        return {}
+    headers = {'Authorization': f'Key {fal_api_key}', 'Content-Type': 'application/json'}
+    req = urllib.request.Request(url, headers=headers, method='GET')
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            return json.loads(response.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        if e.code in (202, 400, 429):
+            return {}
+        raise
+
+
+def _upload_result_to_s3(image_url: str, task_id: str, user_id: str) -> str:
+    """Переносит готовую картинку из fal в наше хранилище."""
+    req = urllib.request.Request(image_url, method='GET')
+    with urllib.request.urlopen(req, timeout=45) as response:
+        image_bytes = response.read()
+
+    s3_bucket = os.environ.get('S3_BUCKET_NAME', 'fitting-room-images')
+    s3 = boto3.client(
+        's3',
+        endpoint_url='https://storage.yandexcloud.net',
+        aws_access_key_id=os.environ.get('S3_ACCESS_KEY'),
+        aws_secret_access_key=os.environ.get('S3_SECRET_KEY'),
+    )
+    s3_key = f'images/styleanalysis/{user_id}/{task_id}.png'
+    s3.put_object(Bucket=s3_bucket, Key=s3_key, Body=image_bytes, ContentType='image/png')
+    return f'https://storage.yandexcloud.net/{s3_bucket}/{s3_key}'
+
+
+def _pickup_ready_result(conn, cursor, task_id: str, row):
+    """Забирает результат напрямую у fal, если воркер оборвался на полпути.
+
+    Картинка у fal живёт независимо от нашей функции: раз задание отправлено,
+    результат можно забрать позже. Так генерация не пропадает из-за сбоя связи.
+    Возвращает обновлённую строку задачи либо прежнюю, если результата ещё нет.
+    """
+    user_id, response_url, refunded = row[8], row[11], row[10]
+    try:
+        data = _fal_get(response_url)
+        images = data.get('images') or []
+        image_url = images[0].get('url') if images else None
+        if not image_url:
+            return row
+
+        cdn = _upload_result_to_s3(image_url, task_id, str(user_id))
+        note = None
+        if refunded:
+            note = ('Результат пришёл с задержкой после сбоя связи. '
+                    'Деньги за эту генерацию были возвращены на баланс.')
+        cursor.execute('''
+            UPDATE color_guide_tasks
+            SET status = 'completed', cdn_url = %s, person_image = NULL,
+                partner_image = NULL, recovery_done = TRUE,
+                error_message = %s, updated_at = NOW()
+            WHERE id = %s
+        ''', (cdn, note, task_id))
+        conn.commit()
+        print(f'[COLORGUIDE-STATUS] Task {task_id} picked up from fal')
+        return ('completed', row[1], row[2], cdn, note) + tuple(row[5:])
+    except Exception as e:
+        conn.rollback()
+        print(f'[COLORGUIDE-STATUS] Pickup for {task_id} skipped: {e}')
+        return row
 
 
 def _fail_stale_task(conn, cursor, task_id: str, row):
@@ -89,10 +165,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor()
         cursor.execute('''
             SELECT status, colortype_slug, result_json, cdn_url, error_message, service_type, form_params,
-                   EXTRACT(EPOCH FROM (NOW() - created_at)), user_id, cost, refunded
+                   EXTRACT(EPOCH FROM (NOW() - created_at)), user_id, cost, refunded, fal_response_url
             FROM color_guide_tasks WHERE id = %s
         ''', (task_id,))
         row = cursor.fetchone()
+
+        # Задание в fal уже отправлено, а воркер оборвался — забираем результат сами
+        if (row and row[0] in ('pending', 'processing') and row[11]
+                and (row[7] or 0) > PICKUP_AFTER_SECONDS):
+            row = _pickup_ready_result(conn, cursor, task_id, row)
 
         if row and row[0] in ('pending', 'processing') and (row[7] or 0) > STALE_TASK_SECONDS:
             row = _fail_stale_task(conn, cursor, task_id, row)
@@ -110,8 +191,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         status, colortype_slug, result_json, cdn_url, error_message, service_type, form_params = row[:7]
 
+        # Задача давно висит в работе — будим воркер, он подхватит оборвавшиеся
+        wake_stuck = status == 'processing' and (row[7] or 0) > 180
         # Единая очередь: если задача всё ещё ждёт — будим воркер (он сам решит, стартовать или ждать слот)
-        if status == 'pending':
+        if status == 'pending' or wake_stuck:
             try:
                 import urllib.request
                 worker_url = f'https://functions.poehali.dev/12f108e3-fe83-4618-9e8b-48411bb69390?task_id={task_id}'

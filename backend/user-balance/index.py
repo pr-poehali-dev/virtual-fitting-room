@@ -16,6 +16,64 @@ MIN_TOPUP = 50
 SCHEMA = 't_p29007832_virtual_fitting_room'
 # redeploy v2
 
+# Через сколько зависшая генерация считается несостоявшейся и деньги возвращаются
+STUCK_TASK_SECONDS = 720
+STUCK_REFUND_NOTE = (
+    'Генерация прервалась из-за сбоя связи и не была завершена. '
+    'Деньги возвращены на баланс. Попробуйте ещё раз.'
+)
+
+
+def refund_stuck_tasks(cur, conn, user_id: str) -> None:
+    """Возвращает деньги за генерации, зависшие из-за сбоя связи.
+
+    Раньше возврат случался, только пока человек оставался на странице
+    и сайт продолжал спрашивать результат. Ушёл раньше — деньги висели.
+    Теперь проверяем при любом обращении за балансом. Флаг refunded
+    защищает от повторного возврата.
+    """
+    try:
+        cur.execute(f'''
+            SELECT id, cost FROM {SCHEMA}.color_guide_tasks
+            WHERE user_id = %s
+              AND status IN ('pending', 'processing')
+              AND cost > 0
+              AND COALESCE(refunded, FALSE) = FALSE
+              AND created_at < NOW() - INTERVAL '{STUCK_TASK_SECONDS} seconds'
+            LIMIT 10
+        ''', (user_id,))
+        stuck = cur.fetchall()
+        if not stuck:
+            return
+
+        for task_id, cost in stuck:
+            cur.execute(f'SELECT balance FROM {SCHEMA}.users WHERE id = %s', (user_id,))
+            row = cur.fetchone()
+            if not row:
+                continue
+            before = float(row[0])
+            after = before + float(cost)
+            cur.execute(
+                f'UPDATE {SCHEMA}.users SET balance = balance + %s WHERE id = %s',
+                (cost, user_id),
+            )
+            cur.execute(f'''
+                INSERT INTO {SCHEMA}.balance_transactions
+                (user_id, type, amount, balance_before, balance_after, description)
+                VALUES (%s, 'refund', %s, %s, %s, %s)
+            ''', (user_id, cost, before, after, 'Возврат: генерация прервалась'))
+            cur.execute(f'''
+                UPDATE {SCHEMA}.color_guide_tasks
+                SET refunded = TRUE, status = 'failed',
+                    error_message = %s, updated_at = NOW()
+                WHERE id = %s
+            ''', (STUCK_REFUND_NOTE, task_id))
+            print(f'[USER-BALANCE] Refunded {cost} for stuck task {task_id}')
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f'[USER-BALANCE] Stuck refund skipped: {e}')
+
 
 def get_bonus_part(cur, conn, user_id: str, balance: float):
     """Какая часть баланса — бонусные рубли, и когда ближайшее сгорание.
@@ -160,6 +218,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     try:
         if method == 'GET':
+            # Зависшие генерации закрываем до чтения баланса,
+            # чтобы возвращённые деньги сразу попали в ответ
+            refund_stuck_tasks(cur, conn, user_id)
+
             cur.execute('''
                 SELECT balance, free_tries_used, unlimited_access 
                 FROM t_p29007832_virtual_fitting_room.users 

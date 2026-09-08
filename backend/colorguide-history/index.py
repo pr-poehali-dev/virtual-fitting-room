@@ -5,6 +5,63 @@ from psycopg2.extras import RealDictCursor
 from typing import Dict, Any
 from session_utils import validate_session
 
+# Через сколько зависшая генерация считается несостоявшейся и деньги возвращаются
+STUCK_TASK_SECONDS = 720
+STUCK_REFUND_NOTE = (
+    'Генерация прервалась из-за сбоя связи и не была завершена. '
+    'Деньги возвращены на баланс. Попробуйте ещё раз.'
+)
+
+
+def refund_stuck_tasks(cursor, conn, user_id: str) -> None:
+    """Возвращает деньги за генерации, зависшие из-за сбоя связи.
+
+    Проверяем при открытии истории — туда человек заходит после сбоя.
+    Флаг refunded защищает от повторного возврата.
+    """
+    try:
+        cursor.execute(f'''
+            SELECT id, cost FROM color_guide_tasks
+            WHERE user_id = %s
+              AND status IN ('pending', 'processing')
+              AND cost > 0
+              AND COALESCE(refunded, FALSE) = FALSE
+              AND created_at < NOW() - INTERVAL '{STUCK_TASK_SECONDS} seconds'
+            LIMIT 10
+        ''', (user_id,))
+        stuck = cursor.fetchall()
+        if not stuck:
+            return
+
+        for task in stuck:
+            task_id, cost = task['id'], task['cost']
+            cursor.execute('SELECT balance FROM users WHERE id = %s', (user_id,))
+            row = cursor.fetchone()
+            if not row:
+                continue
+            before = float(row['balance'])
+            after = before + float(cost)
+            cursor.execute(
+                'UPDATE users SET balance = balance + %s WHERE id = %s',
+                (cost, user_id),
+            )
+            cursor.execute('''
+                INSERT INTO balance_transactions
+                (user_id, type, amount, balance_before, balance_after, description)
+                VALUES (%s, 'refund', %s, %s, %s, %s)
+            ''', (user_id, cost, before, after, 'Возврат: генерация прервалась'))
+            cursor.execute('''
+                UPDATE color_guide_tasks
+                SET refunded = TRUE, status = 'failed',
+                    error_message = %s, updated_at = NOW()
+                WHERE id = %s
+            ''', (STUCK_REFUND_NOTE, task_id))
+            print(f'[COLORGUIDE-HISTORY] Refunded {cost} for stuck task {task_id}')
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f'[COLORGUIDE-HISTORY] Stuck refund skipped: {e}')
+
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -70,6 +127,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     try:
         conn = psycopg2.connect(dsn)
         cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Зависшие из-за сбоя связи генерации закрываем и возвращаем деньги
+        refund_stuck_tasks(cursor, conn, user_id)
 
         # Пустой service_type у старых записей считаем гидом по цвету
         service_expr = "COALESCE(NULLIF(service_type, ''), 'colorguide')"
