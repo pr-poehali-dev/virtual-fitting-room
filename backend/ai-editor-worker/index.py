@@ -836,6 +836,14 @@ def process_archive_step(task_id, model, prompt, archive_base64):
             return True, f'{NETWORK_ERROR_MARK}: файл {path} не уложился во время'
 
         content = parse_single_file_response(ai_text, path, current_files.get(path, ''))
+        # ВРЕМЕННО: разбираемся, почему работа модели не доходит до результата.
+        # Пишем, в каком виде пришёл ответ и удалось ли достать из него файл.
+        # Будет убрано сразу после выяснения причины.
+        was_parsed = content != current_files.get(path, '')
+        print(
+            f'[разбор] файл={path} ответ_знаков={len(ai_text or "")} '
+            f'распознан={was_parsed} начало_ответа={(ai_text or "")[:300]!r}'
+        )
         done_files[path] = content
 
         conn = get_db_connection()
@@ -1064,6 +1072,21 @@ def process_archive_task(task_id):
     # Временный сбой не должен хоронить всю задачу: уже обработанные файлы
     # сохранены, повторяем шаг с того же места. Следующий опрос статуса
     # подхватит задачу — замок снят
+    # ВРЕМЕННО: сохраняем причину срыва, чтобы она была видна снаружи,
+    # а не терялась вместе с функцией. Будет убрано после выяснения.
+    try:
+        conn_e = get_db_connection()
+        with conn_e.cursor() as cur:
+            cur.execute(
+                f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
+                    SET error_message = {sql_escape(safe_error_text(error))}
+                    WHERE id = '{safe_id}'"""
+            )
+        conn_e.commit()
+        conn_e.close()
+    except Exception as log_err:
+        print(f'[{task_id}] не удалось записать причину: {log_err}')
+
     if is_retryable_error(error) and register_step_failure(task_id, error):
         return
 
