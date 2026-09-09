@@ -1326,49 +1326,6 @@ def handler(event, context):
     params = event.get('queryStringParameters') or {}
     task_id = params.get('task_id', '')
 
-    # ВРЕМЕННО: прогон настоящего шага задачи с замером каждого участка.
-    # Показывает, где именно обрывается работа. Будет убрано сразу после.
-    if params.get('selftest') == 'step' and task_id:
-        t0 = time.time()
-        marks = []
-        try:
-            conn = get_db_connection()
-            with conn.cursor() as cur:
-                cur.execute(
-                    f"""SELECT model, prompt, archive_base64
-                        FROM {DB_SCHEMA}.ai_editor_tasks
-                        WHERE id = '{str(task_id).replace("'", "''")}'"""
-                )
-                row = cur.fetchone()
-            conn.close()
-            marks.append(('чтение задачи', round(time.time() - t0, 1)))
-            if not row:
-                return {'statusCode': 200, 'headers': cors_headers,
-                        'body': json.dumps({'err': 'задача не найдена'})}
-            model, prompt, archive_base64 = row
-
-            t1 = time.time()
-            zip_bytes = base64.b64decode(archive_base64)
-            marks.append(('распаковка', round(time.time() - t1, 1)))
-
-            t2 = time.time()
-            text_files = extract_text_files(zip_bytes)
-            marks.append(('разбор файлов', round(time.time() - t2, 1)))
-
-            t3 = time.time()
-            plan_prompt = build_plan_prompt(text_files, prompt)
-            marks.append(('сборка запроса', round(time.time() - t3, 1)))
-
-            return {'statusCode': 200, 'headers': cors_headers, 'body': json.dumps({
-                'marks': marks, 'files': len(text_files),
-                'prompt_chars': len(plan_prompt), 'model': model,
-                'total_sec': round(time.time() - t0, 1),
-            }, ensure_ascii=False)}
-        except Exception as e:
-            return {'statusCode': 200, 'headers': cors_headers, 'body': json.dumps({
-                'marks': marks, 'err': f'{type(e).__name__}: {str(e)[:300]}',
-                'total_sec': round(time.time() - t0, 1)}, ensure_ascii=False)}
-
     if not task_id:
         return {'statusCode': 400, 'headers': cors_headers, 'body': json.dumps({'error': 'task_id required'})}
 
