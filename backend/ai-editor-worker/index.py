@@ -29,6 +29,14 @@ PARTIAL_SAVE_SEC = 15
 # Через сколько секунд работы аккуратно прерваться и дописать следующим заходом.
 # Заметно меньше таймаута облачной функции, чтобы успеть сохранить.
 SOFT_DEADLINE_SEC = 210
+# То же для шага архива. Шаг нельзя продолжить с середины: оборвался —
+# работа файла потеряна целиком. Поэтому прерываемся раньше, чтобы успеть
+# записать ошибку и повторить шаг, а не умереть молча вместе с функцией.
+ARCHIVE_STEP_DEADLINE_SEC = 150
+# Потолок объёма ответа. Сто тысяч — это на целую книгу: модель тянет поток
+# дольше, чем нужно, и не укладывается во время. План и один файл заведомо короче
+PLAN_MAX_TOKENS = 8000
+FILE_MAX_TOKENS = 32000
 # Сколько раз максимум дописываем один ответ
 MAX_RESUMES = 6
 # Метка сетевого сбоя: связь не дошла до модели, значит запрос бесплатный
@@ -400,7 +408,8 @@ def build_result_zip(original_zip_bytes, updated_text_files, deleted_paths=None)
     return result_buffer.getvalue()
 
 
-def call_openrouter(model, prompt_text, on_partial=None, soft_deadline=None):
+def call_openrouter(model, prompt_text, on_partial=None, soft_deadline=None,
+                    max_tokens=100000):
     """Запрашивает модель в потоковом режиме.
 
     Ответ приходит частями, поэтому соединение не простаивает и шлюз не рвёт его
@@ -425,10 +434,12 @@ def call_openrouter(model, prompt_text, on_partial=None, soft_deadline=None):
             json={
                 'model': model,
                 'messages': [{'role': 'user', 'content': prompt_text}],
-                'max_tokens': 100000,
+                'max_tokens': max_tokens,
                 'stream': True,
             },
-            timeout=(30, 570),
+            # Ждать ответа дольше, чем живёт сама функция, бессмысленно:
+            # облако убьёт её раньше, чем истечёт этот таймаут
+            timeout=(30, 240),
             proxies=get_openrouter_proxies(),
             stream=True,
         )
@@ -530,7 +541,7 @@ def call_openrouter(model, prompt_text, on_partial=None, soft_deadline=None):
 
 
 def call_openrouter_retrying(model, prompt_text, on_partial=None, soft_deadline=None,
-                             attempts=3):
+                             attempts=3, max_tokens=100000):
     """Повторяет запрос, если модель не написала НИ ОДНОГО знака.
 
     Два случая для повтора, и оба бесплатны — платного ответа не было:
@@ -542,7 +553,8 @@ def call_openrouter_retrying(model, prompt_text, on_partial=None, soft_deadline=
     last_error = None
     for i in range(attempts):
         text, error, truncated = call_openrouter(
-            model, prompt_text, on_partial=on_partial, soft_deadline=soft_deadline
+            model, prompt_text, on_partial=on_partial, soft_deadline=soft_deadline,
+            max_tokens=max_tokens,
         )
         if text or not error:
             if i:
@@ -680,7 +692,10 @@ def refund_lenormand(task_id):
         conn.close()
 
 
-STEP_LOCK_TIMEOUT_SEC = 300
+# Столько ждём, прежде чем считать шаг брошенным и начать заново.
+# Живой шаг сам укладывается в ARCHIVE_STEP_DEADLINE_SEC, так что этого
+# запаса хватает, чтобы не перебить работающий воркер.
+STEP_LOCK_TIMEOUT_SEC = 180
 
 
 def process_archive_step(task_id, model, prompt, archive_base64):
@@ -690,6 +705,9 @@ def process_archive_step(task_id, model, prompt, archive_base64):
     Каждый вызов короткий, поэтому не упирается в лимит соединения.
     """
     safe_id = str(task_id).replace("'", "''")
+    # Момент, после которого шаг обязан прерваться сам: иначе облако убьёт
+    # функцию посреди работы и о неудаче никто не узнает
+    step_deadline = time.time() + ARCHIVE_STEP_DEADLINE_SEC
 
     zip_bytes = base64.b64decode(archive_base64)
     text_files = extract_text_files(zip_bytes)
@@ -718,11 +736,15 @@ def process_archive_step(task_id, model, prompt, archive_base64):
     # --- Шаг 1: построить план ---
     if plan_files is None:
         print(f'[{task_id}] Шаг: планирование, файлов на входе={len(text_files)}')
-        plan_text, error, _ = call_openrouter_retrying(
-            model, build_plan_prompt(text_files, prompt)
+        plan_text, error, truncated = call_openrouter_retrying(
+            model, build_plan_prompt(text_files, prompt),
+            soft_deadline=step_deadline, max_tokens=PLAN_MAX_TOKENS,
         )
         if error:
             return True, error
+        # Недописанный план бесполезен — просим повторить, а не гадаем по обрывку
+        if truncated:
+            return True, f'{NETWORK_ERROR_MARK}: планирование не уложилось во время'
         plan = parse_plan_response(plan_text)
         if not plan:
             return True, 'Модель вернула некорректный план'
@@ -802,9 +824,16 @@ def process_archive_step(task_id, model, prompt, archive_base64):
         if step_index:
             time.sleep(STEP_GAP_SEC)
 
-        ai_text, error, _ = call_openrouter_retrying(model, prompt_text)
+        ai_text, error, truncated = call_openrouter_retrying(
+            model, prompt_text, soft_deadline=step_deadline,
+            max_tokens=FILE_MAX_TOKENS,
+        )
         if error:
             return True, error
+        # Обрезанный файл сохранять нельзя — он сломает проект.
+        # Помечаем как временный сбой: шаг повторится с того же места
+        if truncated:
+            return True, f'{NETWORK_ERROR_MARK}: файл {path} не уложился во время'
 
         content = parse_single_file_response(ai_text, path, current_files.get(path, ''))
         done_files[path] = content
