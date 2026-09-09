@@ -16,7 +16,22 @@ def get_db_connection():
     return conn
 
 
-def build_progress(mode, status, plan_files, step_index):
+def unpack_done_paths(done_files):
+    """Имена файлов, уже написанных моделью. Нужны, чтобы человек видел
+    сделанное по ходу работы, а не ждал молча до самого конца."""
+    if not done_files:
+        return []
+    if isinstance(done_files, str):
+        try:
+            done_files = json.loads(done_files)
+        except ValueError:
+            return []
+    if not isinstance(done_files, dict):
+        return []
+    return sorted(done_files.keys())
+
+
+def build_progress(mode, status, plan_files, step_index, done_files=None):
     """Человекопонятный прогресс пошаговой архивной задачи."""
     if mode != 'archive' or status not in ('pending', 'processing'):
         return None
@@ -41,6 +56,7 @@ def build_progress(mode, status, plan_files, step_index):
     targets = (plan_files or {}).get('targets') or []
     total = len(targets)
     idx = step_index or 0
+    done_paths = unpack_done_paths(done_files)
 
     if total and idx < total:
         current = targets[idx].get('path') or ''
@@ -49,16 +65,19 @@ def build_progress(mode, status, plan_files, step_index):
             'current': idx + 1,
             'total': total,
             'file': current,
+            'done_files': done_paths,
             'text': f'Файл {idx + 1} из {total}: {current}',
         }
 
-    return {'stage': 'packing', 'total': total, 'text': 'Собираю архив'}
+    return {'stage': 'packing', 'total': total,
+            'done_files': done_paths, 'text': 'Собираю архив'}
 
 
 def build_result(task_id, row):
     (status, mode, ai_response, result_file_content, result_archive_base64,
      files_count, model_used, error_message, filename, created_at,
-     task_type, divination_meta, plan_files, step_index, partial_len) = row
+     task_type, divination_meta, plan_files, step_index, partial_len,
+     done_files) = row
 
     result = {
         'task_id': str(task_id),
@@ -72,7 +91,7 @@ def build_result(task_id, row):
     if divination_meta is not None:
         result['divination_meta'] = divination_meta
 
-    progress = build_progress(mode, status, plan_files, step_index)
+    progress = build_progress(mode, status, plan_files, step_index, done_files)
     if progress:
         result['progress'] = progress
 
@@ -154,6 +173,7 @@ def handler(event, context):
                                CASE WHEN partial_text LIKE 'b64:%'
                                     THEN (LENGTH(partial_text) - 4) * 3 / 4
                                     ELSE COALESCE(LENGTH(partial_text), 0) END,
+                               done_files,
                                (stream_lock IS NOT NULL
                                 AND stream_lock < NOW() - INTERVAL '60 seconds'
                                 AND resume_count < 6) AS stalled
@@ -178,6 +198,7 @@ def handler(event, context):
                                CASE WHEN partial_text LIKE 'b64:%'
                                     THEN (LENGTH(partial_text) - 4) * 3 / 4
                                     ELSE COALESCE(LENGTH(partial_text), 0) END,
+                               done_files,
                                (stream_lock IS NOT NULL
                                 AND stream_lock < NOW() - INTERVAL '60 seconds'
                                 AND resume_count < 6) AS stalled,

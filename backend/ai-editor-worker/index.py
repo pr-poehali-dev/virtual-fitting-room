@@ -37,6 +37,9 @@ ARCHIVE_STEP_DEADLINE_SEC = 150
 # дольше, чем нужно, и не укладывается во время. План и один файл заведомо короче
 PLAN_MAX_TOKENS = 8000
 FILE_MAX_TOKENS = 32000
+# С какого размера файл считаем крупным и просим точечные правки вместо
+# полного текста. Ниже порога всё работает как раньше — не трогаем
+BIG_FILE_CHARS = 12000
 # Сколько раз максимум дописываем один ответ
 MAX_RESUMES = 6
 # Метка сетевого сбоя: связь не дошла до модели, значит запрос бесплатный
@@ -245,6 +248,16 @@ def build_step_file_prompt(files, user_prompt, target_path, what_to_do, plan_sum
         conv_block = "\nОБЯЗАТЕЛЬНЫЕ ОБЩИЕ ИМЕНА (договор между файлами):\n" + \
             "\n".join(f"- {c}" for c in conventions) + "\n"
 
+    # Крупный файл целиком модель пишет минуты — соединение столько не живёт,
+    # и работа обрывается на середине. Просим только изменяемые куски:
+    # ответ короткий, шаг успевает завершиться
+    target_content = files.get(target_path, '')
+    if len(target_content) >= BIG_FILE_CHARS:
+        return build_patch_prompt(
+            file_list, files_content, user_prompt, plan_summary, conv_block,
+            target_path, what_to_do,
+        )
+
     return f"""Ты — опытный разработчик. Тебе дан проект и задача от пользователя.
 
 ФАЙЛЫ ПРОЕКТА:
@@ -280,6 +293,86 @@ def build_step_file_prompt(files, user_prompt, target_path, what_to_do, plan_sum
 5. Строго соблюдай общие имена из договора выше.
 6. Никаких пояснений до или после блока.
 """
+
+
+def build_patch_prompt(file_list, files_content, user_prompt, plan_summary,
+                       conv_block, target_path, what_to_do):
+    """Запрос на точечные правки: модель присылает только изменяемые куски.
+
+    Полное переписывание крупного файла не укладывается во время до обрыва
+    связи, а короткий список замен проходит за секунды.
+    """
+    return f"""Ты — опытный разработчик. Тебе дан проект и задача от пользователя.
+
+ФАЙЛЫ ПРОЕКТА:
+{file_list}
+
+СОДЕРЖИМОЕ ФАЙЛОВ:
+{files_content}
+
+ЗАДАЧА ПОЛЬЗОВАТЕЛЯ:
+{user_prompt}
+
+ОБЩИЙ ПЛАН:
+{plan_summary}
+{conv_block}
+ТЕКУЩИЙ ШАГ:
+Работай ТОЛЬКО над файлом: {target_path}
+Что нужно сделать в этом файле: {what_to_do}
+
+Файл большой, поэтому НЕ переписывай его целиком.
+Выведи ТОЛЬКО изменяемые участки — каждый отдельным блоком:
+
+```patch
+<<<<<<< НАЙТИ
+здесь точный фрагмент из текущего файла, как есть
+=======
+здесь этот же фрагмент после твоей правки
+>>>>>>> КОНЕЦ
+```
+
+ПРАВИЛА (нарушение сделает правку неприменимой):
+1. Фрагмент в части «НАЙТИ» должен совпадать с файлом ЗНАК В ЗНАК: те же
+   отступы, кавычки, переносы строк. Ничего не сокращай и не переписывай.
+2. Фрагмент должен встречаться в файле РОВНО ОДИН РАЗ. Если строка не
+   уникальна — возьми её вместе с 2-3 соседними строками.
+3. Блоков может быть несколько — по одному на каждое место правки.
+4. Чтобы добавить новое, включи в «НАЙТИ» соседний существующий кусок,
+   а в правую часть — его же вместе с добавленным.
+5. Чтобы удалить кусок, оставь правую часть пустой.
+6. Никаких пояснений до или после блоков.
+"""
+
+
+def apply_patches(original_text, response_text):
+    """Вносит точечные правки в файл. Возвращает (текст, сколько применено).
+
+    Правка ложится, только если её исходный фрагмент найден в файле ровно
+    один раз. Не нашли или нашли несколько — пропускаем: лучше не тронуть
+    файл вовсе, чем испортить его в неверном месте.
+    """
+    if not response_text:
+        return original_text, 0
+
+    blocks = re.findall(
+        r'<{3,}\s*НАЙТИ\s*\n(.*?)\n={3,}\s*\n(.*?)\n>{3,}',
+        response_text, re.DOTALL,
+    )
+    if not blocks:
+        return original_text, 0
+
+    text = original_text
+    applied = 0
+    for old, new in blocks:
+        if not old.strip():
+            continue
+        count = text.count(old)
+        if count != 1:
+            print(f'[правка] фрагмент найден {count} раз — пропускаю')
+            continue
+        text = text.replace(old, new, 1)
+        applied += 1
+    return text, applied
 
 
 def parse_plan_response(response_text):
@@ -835,15 +928,22 @@ def process_archive_step(task_id, model, prompt, archive_base64):
         if truncated:
             return True, f'{NETWORK_ERROR_MARK}: файл {path} не уложился во время'
 
-        content = parse_single_file_response(ai_text, path, current_files.get(path, ''))
-        # ВРЕМЕННО: разбираемся, почему работа модели не доходит до результата.
-        # Пишем, в каком виде пришёл ответ и удалось ли достать из него файл.
-        # Будет убрано сразу после выяснения причины.
-        was_parsed = content != current_files.get(path, '')
-        print(
-            f'[разбор] файл={path} ответ_знаков={len(ai_text or "")} '
-            f'распознан={was_parsed} начало_ответа={(ai_text or "")[:300]!r}'
-        )
+        original = current_files.get(path, '')
+        # Крупный файл правится точечно: вносим присланные замены в исходник.
+        # Если ни одна не легла — откатываемся к обычному разбору, чтобы
+        # не потерять работу, когда модель всё же прислала файл целиком
+        if len(original) >= BIG_FILE_CHARS:
+            patched, applied = apply_patches(original, ai_text)
+            if applied:
+                print(f'[{task_id}] Файл {path}: внесено правок {applied}')
+                content = patched
+            else:
+                content = parse_single_file_response(ai_text, path, original)
+                if content == original:
+                    return True, (f'{NETWORK_ERROR_MARK}: правки для {path} '
+                                  f'не удалось применить')
+        else:
+            content = parse_single_file_response(ai_text, path, original)
         done_files[path] = content
 
         conn = get_db_connection()
@@ -1072,8 +1172,8 @@ def process_archive_task(task_id):
     # Временный сбой не должен хоронить всю задачу: уже обработанные файлы
     # сохранены, повторяем шаг с того же места. Следующий опрос статуса
     # подхватит задачу — замок снят
-    # ВРЕМЕННО: сохраняем причину срыва, чтобы она была видна снаружи,
-    # а не терялась вместе с функцией. Будет убрано после выяснения.
+    # Сохраняем причину срыва: иначе она теряется вместе с функцией,
+    # и снаружи задача выглядит просто «зависшей» без объяснений
     try:
         conn_e = get_db_connection()
         with conn_e.cursor() as cur:

@@ -223,7 +223,11 @@ export default function AiEditor() {
         const data = await res.json();
 
         if (data.progress?.text) {
-          setStatusText(`${data.progress.text} · ${elapsed} сек`);
+          // Показываем, сколько файлов уже готово: работа не пропадает,
+          // даже если следующий шаг сорвётся
+          const doneCount = data.progress.done_files?.length || 0;
+          const donePart = doneCount ? ` · готово файлов: ${doneCount}` : "";
+          setStatusText(`${data.progress.text} · ${elapsed} сек${donePart}`);
         }
 
         if (data.status === "completed") {
@@ -275,7 +279,16 @@ export default function AiEditor() {
             created_at: new Date().toISOString().replace("Z", ""),
           });
 
-          toast.error(data.error || "Ошибка обработки");
+          // Часть файлов могла быть готова до срыва — говорим об этом,
+          // чтобы человек знал: работа не пропала, можно продолжить
+          const savedCount = data.progress?.done_files?.length || 0;
+          if (savedCount) {
+            toast.error(
+              `${data.error || "Ошибка обработки"} · Успело сохраниться файлов: ${savedCount}`,
+            );
+          } else {
+            toast.error(data.error || "Ошибка обработки");
+          }
         }
 
         if (elapsed > 600) {
