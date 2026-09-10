@@ -40,6 +40,14 @@ PARTIAL_SAVE_SEC = 5
 # Меньше наблюдаемого обрыва (31-34 с), чтобы успеть завершиться по-хорошему
 SOFT_DEADLINE_SEC = 25
 
+
+class ContinueLater(Exception):
+    """Не ошибка, а штатная остановка: время захода вышло.
+
+    Написанное сохранено, задача остаётся в работе и дописывается следующим
+    заходом. Деньги не возвращаем и человеку ничего не показываем.
+    """
+
 ALLOWED_SLUGS = [
     'bright-spring', 'bright-winter', 'dusty-summer', 'fiery-autumn',
     'gentle-autumn', 'gentle-spring', 'soft-summer', 'soft-winter',
@@ -568,12 +576,18 @@ def call_qwen_json(image_url: str, prompt: str, model: str, extra_image_url: str
 
     last_error = None
     for attempt in range(3):
+        # Время захода вышло — повторять нечем: новая попытка упрётся в тот же
+        # предел и вернёт пустоту. Ответ дописывается следующим заходом
+        if soft_deadline and time.time() > soft_deadline:
+            raise ContinueLater('время захода вышло, продолжим следующим')
         try:
             text = _stream_openrouter(
                 payload, api_key, on_partial=on_partial, soft_deadline=soft_deadline
             )
             # Начало могло прийти прошлым заходом — разбираем ответ целиком
             return _extract_json_object((prefix or '') + text)
+        except ContinueLater:
+            raise
         except Exception as e:
             print(f'[COLORGUIDE-WORKER] Qwen поток (попытка {attempt + 1}): {e}')
             last_error = e
@@ -628,11 +642,13 @@ def _stream_openrouter(payload: dict, api_key: str, on_partial=None,
     stream_error = None
     t_first = None
     last_save = time.time()
+    ran_out = False
     for raw_line in response.iter_lines(decode_unicode=True):
         # Успеваем выйти сами и сохранить написанное: облако убьёт функцию
         # без предупреждения, и всё накопленное пропадёт
         if soft_deadline and time.time() > soft_deadline:
             print('[COLORGUIDE-WORKER] Подхожу к пределу, сохраняю написанное')
+            ran_out = True
             break
         if on_partial and chunks and time.time() - last_save >= PARTIAL_SAVE_SEC:
             on_partial(''.join(chunks))
@@ -667,6 +683,12 @@ def _stream_openrouter(payload: dict, api_key: str, on_partial=None,
     )
     if stream_error and not text:
         raise RuntimeError(f'OpenRouter: {str(stream_error)[:400]}')
+    # Время вышло, ответ оборван на середине — это не ошибка. Накопленное
+    # сохранено, дописываем следующим заходом
+    if ran_out:
+        if on_partial and chunks:
+            on_partial(''.join(chunks))
+        raise ContinueLater(f'ответ оборван на {len(text)} знаках, продолжим')
     if not text:
         raise RuntimeError('Пустой ответ модели')
     return text
@@ -1110,6 +1132,13 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
                     print(f'[COLORGUIDE-WORKER] Task {task_id} still generating, will be picked up later')
                     return
                 raise
+    except ContinueLater as e:
+        # Штатная остановка: время захода вышло, написанное сохранено.
+        # Задачу оставляем в работе — следующий заход допишет ответ.
+        # Ошибку человеку не показываем и деньги не трогаем
+        print(f'[COLORGUIDE-WORKER] {task_id}: {e} — продолжим следующим заходом')
+        _release_worker_lock(task_id)
+        return
     except urllib.error.HTTPError as e:
         err_body = e.read().decode('utf-8', errors='replace')[:600] if hasattr(e, 'read') else ''
         print(f'[COLORGUIDE-WORKER] ERROR (image service) HTTP {e.code}: {err_body}')
@@ -1147,6 +1176,26 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (save image result): {e}')
         mark_failed_and_refund(task_id, 'Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте позже.', 'ошибка обработки')
+
+
+def _release_worker_lock(task_id: str):
+    """Снимает замок при штатном выходе: заход честно закончился, ждать его
+    больше незачем — следующий может продолжить немедленно."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'UPDATE color_guide_tasks SET worker_started_at = NULL, updated_at = %s '
+                'WHERE id = %s',
+                (datetime.utcnow(), task_id)
+            )
+            conn.commit()
+        finally:
+            cursor.close()
+            conn.close()
+    except Exception as e:
+        print(f'[COLORGUIDE-WORKER] Замок не снят: {e}')
 
 
 def _save_partial_answer(task_id: str, text: str):
