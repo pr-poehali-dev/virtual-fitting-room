@@ -523,7 +523,7 @@ def _extract_json_object(text: str) -> Dict[str, Any]:
 
 
 def call_qwen_json(image_url: str, prompt: str, model: str, extra_image_url: str = None,
-                   extra_image_urls: list = None) -> Dict[str, Any]:
+                   extra_image_urls: list = None, temperature: float = 0.6) -> Dict[str, Any]:
     """Запрос к мультимодальному Qwen (thinking) через OpenRouter.
     Без strict json_schema: модель отдаёт reasoning + JSON, парсим объект из ответа.
     extra_image_url — второе фото (образ партнёра) только для анализа.
@@ -548,7 +548,7 @@ def call_qwen_json(image_url: str, prompt: str, model: str, extra_image_url: str
         'model': model,
         'messages': [{'role': 'user', 'content': content}],
         'max_tokens': 12000,
-        'temperature': 0.6,
+        'temperature': temperature,
     }
 
     last_error = None
@@ -844,7 +844,13 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
         if form_params and hasattr(service, 'build_params_block'):
             params_block = service.build_params_block(form_params)
             if params_block:
-                gemini_prompt += '\n\n' + params_block
+                # PARAMS_FIRST: анкета идёт ПЕРЕД общими правилами. В хвосте
+                # промпта она проигрывала строгим правилам, и образы выходили
+                # усреднёнными. Остальные сервисы работают как раньше
+                if getattr(service, 'PARAMS_FIRST', False):
+                    gemini_prompt = params_block + '\n\n' + gemini_prompt
+                else:
+                    gemini_prompt += '\n\n' + params_block
 
         # Консультация: пояснение про роли фото и сам вопрос пользователя.
         if hasattr(service, 'build_photo_block'):
@@ -880,7 +886,8 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
             try:
                 analysis = call_qwen_json(
                     person_url, gemini_prompt, service.QWEN_MODEL, partner_url or reference_url,
-                    reference_urls
+                    reference_urls,
+                    temperature=getattr(service, 'TEMPERATURE', 0.6)
                 )
                 missing = [f for f in required if not analysis.get(f)]
                 if missing:

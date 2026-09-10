@@ -20,6 +20,7 @@ export interface OutfitResult {
   identity?: string;
   look_title?: string;
   look_summary?: string;
+  personal_fit?: string;
   color_analysis?: string;
   body_analysis?: string;
   palette?: PaletteItem[];
@@ -245,6 +246,17 @@ export default function OutfitReport({ imageUrl, data, formParams, onReset, onEd
                     {data.look_summary}
                   </p>
                 )}
+              </div>
+            )}
+
+            {data.personal_fit && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
+                <SectionTitle icon="UserCheck">
+                  Почему этот образ — ваш
+                </SectionTitle>
+                <p className="text-sm text-muted-foreground">
+                  {data.personal_fit}
+                </p>
               </div>
             )}
 
