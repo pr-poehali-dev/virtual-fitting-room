@@ -10,6 +10,9 @@ STALE_TASK_SECONDS = 720
 # Столько ждём, прежде чем сами пойдём забирать результат у fal:
 # за это время воркер обычно успевает справиться сам.
 PICKUP_AFTER_SECONDS = 60
+# Через сколько молчания считаем заход воркера умершим и будим заново.
+# Больше замка воркера (120 с), иначе побудка упрётся в замок вхолостую
+WORKER_DEAD_SECONDS = 150
 STALE_ERROR_MESSAGE = (
     'Генерация прервалась из-за сбоя связи и не была завершена. '
     'Деньги возвращены на баланс, если они списывались. Попробуйте ещё раз.'
@@ -165,7 +168,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor()
         cursor.execute('''
             SELECT status, colortype_slug, result_json, cdn_url, error_message, service_type, form_params,
-                   EXTRACT(EPOCH FROM (NOW() - created_at)), user_id, cost, refunded, fal_response_url
+                   EXTRACT(EPOCH FROM (NOW() - created_at)), user_id, cost, refunded, fal_response_url,
+                   EXTRACT(EPOCH FROM (NOW() - COALESCE(worker_started_at, created_at)))
             FROM color_guide_tasks WHERE id = %s
         ''', (task_id,))
         row = cursor.fetchone()
@@ -191,9 +195,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         status, colortype_slug, result_json, cdn_url, error_message, service_type, form_params = row[:7]
 
-        # Задача давно висит в работе — будим воркер, он подхватит оборвавшиеся
-        wake_stuck = status == 'processing' and (row[7] or 0) > 180
-        # Единая очередь: если задача всё ещё ждёт — будим воркер (он сам решит, стартовать или ждать слот)
+        # Воркер уже запущен при создании задачи. Будить его на каждом опросе
+        # нельзя: заходы накладывались друг на друга, забивали друг друга и
+        # каждый слал свой платный запрос к модели — задача не доходила до
+        # отрисовки. Будим только в двух случаях:
+        #  - задача ждёт слот в общей очереди (сама она не стартует);
+        #  - заход воркера действительно умер (давно не подавал признаков жизни).
+        worker_silence = row[12] or 0
+        wake_stuck = status == 'processing' and worker_silence > WORKER_DEAD_SECONDS
         if status == 'pending' or wake_stuck:
             try:
                 import urllib.request
