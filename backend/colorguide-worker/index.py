@@ -559,33 +559,91 @@ def call_qwen_json(image_url: str, prompt: str, model: str, extra_image_url: str
 
     last_error = None
     for attempt in range(3):
-        req = urllib.request.Request(
-            'https://openrouter.ai/api/v1/chat/completions',
-            data=json.dumps(payload).encode('utf-8'),
-            headers={
-                'Authorization': f'Bearer {api_key}',
-                'Content-Type': 'application/json',
-                'HTTP-Referer': 'https://fitting-room.ru',
-                'X-Title': 'Outfit Selection'
-            },
-            method='POST'
-        )
         try:
-            with _open_openrouter(req, timeout=180) as response:
-                result = json.loads(response.read().decode('utf-8'))
-            content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
-            return _extract_json_object(content)
-        except urllib.error.HTTPError as e:
-            err_body = e.read().decode('utf-8', errors='replace')[:500]
-            print(f'[COLORGUIDE-WORKER] Qwen HTTP {e.code} (attempt {attempt + 1}): {err_body}')
-            last_error = RuntimeError(f'Qwen error {e.code}: {err_body}')
+            text = _stream_openrouter(payload, api_key)
+            return _extract_json_object(text)
         except Exception as e:
-            print(f'[COLORGUIDE-WORKER] Qwen error (attempt {attempt + 1}): {e}')
+            print(f'[COLORGUIDE-WORKER] Qwen поток (попытка {attempt + 1}): {e}')
             last_error = e
         if attempt < 2:
             time.sleep(3)
 
     raise last_error if last_error else RuntimeError('Qwen request failed')
+
+
+def _stream_openrouter(payload: dict, api_key: str) -> str:
+    """Забирает ответ модели по частям.
+
+    Думающая модель молчит десятки секунд, пока размышляет. Обычный запрос при
+    этом простаивает без единого байта, и шлюз рвёт соединение по бездействию —
+    задача не доходила до отрисовки. В потоковом режиме ответ идёт кусками,
+    соединение живо, обрывать нечего. Так уже работают большие расклады.
+    """
+    import requests
+
+    stream_payload = dict(payload)
+    stream_payload['stream'] = True
+    proxy_url = (os.environ.get('OPENROUTER_PROXY_URL') or '').strip()
+    proxies = {'http': proxy_url, 'https': proxy_url} if proxy_url else None
+
+    t0 = time.time()
+    response = requests.post(
+        'https://openrouter.ai/api/v1/chat/completions',
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json',
+            'Accept': 'text/event-stream',
+            'HTTP-Referer': 'https://fitting-room.ru',
+            'X-Title': 'Outfit Selection',
+        },
+        json=stream_payload,
+        timeout=(30, 240),
+        proxies=proxies,
+        stream=True,
+    )
+    if response.status_code != 200:
+        raise RuntimeError(f'OpenRouter {response.status_code}: {response.text[:400]}')
+
+    # Без явной кодировки поток читается как latin-1 и кириллица ломается
+    response.encoding = 'utf-8'
+
+    chunks = []
+    stream_error = None
+    t_first = None
+    for raw_line in response.iter_lines(decode_unicode=True):
+        if not raw_line or raw_line.startswith(':'):
+            continue
+        if not raw_line.startswith('data: '):
+            continue
+        body = raw_line[6:].strip()
+        if body == '[DONE]':
+            break
+        try:
+            parsed = json.loads(body)
+        except ValueError:
+            continue
+        if parsed.get('error'):
+            err = parsed['error']
+            stream_error = err.get('message') if isinstance(err, dict) else str(err)
+            break
+        for choice in parsed.get('choices') or []:
+            piece = (choice.get('delta') or {}).get('content')
+            if piece:
+                if t_first is None:
+                    t_first = time.time() - t0
+                chunks.append(piece)
+
+    text = ''.join(chunks)
+    print(
+        f'[timing] outfit model={payload.get("model")} '
+        f'first_chunk={None if t_first is None else round(t_first, 1)}s '
+        f'total={time.time() - t0:.1f}s out_chars={len(text)}'
+    )
+    if stream_error and not text:
+        raise RuntimeError(f'OpenRouter: {str(stream_error)[:400]}')
+    if not text:
+        raise RuntimeError('Пустой ответ модели')
+    return text
 
 
 def fal_submit(prompt: str, image_urls: list, aspect_ratio: str):

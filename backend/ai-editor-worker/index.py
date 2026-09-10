@@ -37,6 +37,10 @@ ARCHIVE_STEP_DEADLINE_SEC = 150
 # дольше, чем нужно, и не укладывается во время. План и один файл заведомо короче
 PLAN_MAX_TOKENS = 8000
 FILE_MAX_TOKENS = 32000
+# Потолок разбора для раскладов. Сто тысяч не ограничивали ничего: модель
+# писала по 45-49 тыс. знаков вместо положенных 26 тыс., добирая объём
+# пересказом уже сказанного, и не укладывалась в отведённое время
+CHAT_MAX_TOKENS = 20000
 # С какого размера файл считаем крупным и просим точечные правки вместо
 # полного текста. Ниже порога всё работает как раньше — не трогаем
 BIG_FILE_CHARS = 12000
@@ -1338,6 +1342,7 @@ def process_task(task_id):
                 ask,
                 on_partial=lambda txt: save_partial(task_id, done_before + txt),
                 soft_deadline=task_started + SOFT_DEADLINE_SEC,
+                max_tokens=CHAT_MAX_TOKENS,
             )
             print(f'[{task_id}] OpenRouter ответил: error={error}, len={len(new_text) if new_text else 0}, truncated={truncated}')
 
