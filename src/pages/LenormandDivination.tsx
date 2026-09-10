@@ -598,11 +598,18 @@ export default function LenormandDivination() {
     setSpheres(["all"]);
     setComment("");
     setModel(MODELS[0].value);
-    resetTable();
     setWizardStep(0);
     setWizardDone(false);
     setDivSystem("lenormand");
     setDivSpread("lenormand_big9x4");
+    // Стол чистим ПОСЛЕ смены расклада: раньше он готовился под прежний
+    // расклад и оставался с чужим числом мест — форма выглядела незавершённой
+    const freshSpread = getSpread("lenormand_big9x4");
+    const freshDeck = getDeck("lenormand" as DeckId);
+    setLayout(EMPTY_LAYOUT(freshSpread ? freshSpread.size : spreadSize));
+    setActiveHouse(0);
+    setDeck(shuffleArray(freshDeck ? freshDeck.cards : deckCards));
+    setShuffled(false);
     setTouchAck(false);
     setResult(null);
     setResultLayout([]);
