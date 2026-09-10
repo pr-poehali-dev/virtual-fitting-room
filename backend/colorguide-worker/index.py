@@ -27,11 +27,12 @@ def _open_openrouter(req, timeout):
     return urllib.request.urlopen(req, timeout=timeout)
 
 
-# Сколько считаем заход воркера живым. Опрос статуса будит воркер каждые
-# несколько секунд; без этого замка заходы накладывались и каждый слал свой
-# платный запрос к модели. Больше времени жизни функции — чтобы не отсечь
-# честный повторный запуск после реального обрыва
-WORKER_LOCK_SEC = 120
+# Сколько считаем заход воркера живым после последней отметки. Воркер
+# отмечается на каждом крупном шаге, поэтому молчание дольше этого срока
+# означает смерть, а не работу. Самый долгий отрезок без отметок — ожидание
+# ответа модели (до 67 с по логам), поэтому ниже 90 опускать нельзя:
+# разбудим живого, и два захода пойдут к модели одновременно
+WORKER_LOCK_SEC = 90
 
 ALLOWED_SLUGS = [
     'bright-spring', 'bright-winter', 'dusty-summer', 'fiery-autumn',
@@ -904,6 +905,7 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
             model_used = 'saved'
 
         print('[COLORGUIDE-WORKER] STEP analysis start')
+        _heartbeat(task_id, 'фото загружено, идём к модели')
         gemini_prompt = service.GEMINI_PROMPT
         if height:
             gemini_prompt = (
@@ -1026,6 +1028,7 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
         except (TypeError, ValueError):
             image_prompt = service.build_image_prompt(analysis, height)
         print(f'[COLORGUIDE-WORKER] STEP fal submit, prompt len={len(image_prompt)}')
+        _heartbeat(task_id, 'разбор готов, отправляю на отрисовку')
         image_inputs = [person_url]
         logo_url = getattr(service, 'LOGO_IMAGE_URL', None)
         if logo_url:
@@ -1097,6 +1100,32 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
         mark_failed_and_refund(task_id, 'Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте позже.', 'ошибка обработки')
 
 
+def _heartbeat(task_id: str, stage: str):
+    """Отмечает, что заход воркера жив и дошёл до очередного шага.
+
+    Без отметок живой воркер молчит всё время работы и снаружи неотличим от
+    умершего: приходится ждать дольше, чем нужно. С отметками молчание
+    означает настоящую смерть, и подхват срабатывает быстро.
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'UPDATE color_guide_tasks SET worker_started_at = %s, updated_at = %s '
+                'WHERE id = %s',
+                (datetime.utcnow(), datetime.utcnow(), task_id)
+            )
+            conn.commit()
+            print(f'[COLORGUIDE-WORKER] {task_id}: жив, шаг «{stage}»')
+        finally:
+            cursor.close()
+            conn.close()
+    except Exception as e:
+        # Отметка не критична: работа продолжается в любом случае
+        print(f'[COLORGUIDE-WORKER] Отметка не поставлена: {e}')
+
+
 def _load_analysis_draft(task_id: str):
     """Достаёт разбор, сохранённый прошлым заходом. None — если его нет."""
     try:
@@ -1134,9 +1163,10 @@ def _save_analysis_draft(task_id: str, analysis: dict):
         cursor = conn.cursor()
         try:
             cursor.execute(
-                'UPDATE color_guide_tasks SET result_json = %s, updated_at = %s '
-                'WHERE id = %s AND result_json IS NULL',
-                (json.dumps(analysis, ensure_ascii=False), datetime.utcnow(), task_id)
+                'UPDATE color_guide_tasks SET result_json = %s, updated_at = %s, '
+                'worker_started_at = %s WHERE id = %s AND result_json IS NULL',
+                (json.dumps(analysis, ensure_ascii=False), datetime.utcnow(),
+                 datetime.utcnow(), task_id)
             )
             conn.commit()
             print(f'[COLORGUIDE-WORKER] Разбор задачи {task_id} сохранён')
