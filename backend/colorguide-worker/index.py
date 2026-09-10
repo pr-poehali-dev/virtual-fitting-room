@@ -27,12 +27,18 @@ def _open_openrouter(req, timeout):
     return urllib.request.urlopen(req, timeout=timeout)
 
 
-# Сколько считаем заход воркера живым после последней отметки. Воркер
-# отмечается на каждом крупном шаге, поэтому молчание дольше этого срока
-# означает смерть, а не работу. Самый долгий отрезок без отметок — ожидание
-# ответа модели (до 67 с по логам), поэтому ниже 90 опускать нельзя:
-# разбудим живого, и два захода пойдут к модели одновременно
-WORKER_LOCK_SEC = 90
+# Сколько считаем заход воркера живым после последней отметки. Пока модель
+# пишет, куски сохраняются каждые PARTIAL_SAVE_SEC и обновляют отметку,
+# поэтому молчание дольше этого срока означает смерть, а не работу
+WORKER_LOCK_SEC = 30
+
+# Как часто складываем в базу то, что успела написать модель. Облако гасит
+# функцию через 30-35 с, поэтому сохраняем часто — иначе потеряем написанное
+PARTIAL_SAVE_SEC = 5
+
+# Через сколько секунд заход выходит сам, аккуратно сохранив накопленное.
+# Меньше наблюдаемого обрыва (31-34 с), чтобы успеть завершиться по-хорошему
+SOFT_DEADLINE_SEC = 25
 
 ALLOWED_SLUGS = [
     'bright-spring', 'bright-winter', 'dusty-summer', 'fiery-autumn',
@@ -530,7 +536,9 @@ def _extract_json_object(text: str) -> Dict[str, Any]:
 
 
 def call_qwen_json(image_url: str, prompt: str, model: str, extra_image_url: str = None,
-                   extra_image_urls: list = None, temperature: float = 0.6) -> Dict[str, Any]:
+                   extra_image_urls: list = None, temperature: float = 0.6,
+                   on_partial=None, soft_deadline: float = None,
+                   prefix: str = '') -> Dict[str, Any]:
     """Запрос к мультимодальному Qwen (thinking) через OpenRouter.
     Без strict json_schema: модель отдаёт reasoning + JSON, парсим объект из ответа.
     extra_image_url — второе фото (образ партнёра) только для анализа.
@@ -561,8 +569,11 @@ def call_qwen_json(image_url: str, prompt: str, model: str, extra_image_url: str
     last_error = None
     for attempt in range(3):
         try:
-            text = _stream_openrouter(payload, api_key)
-            return _extract_json_object(text)
+            text = _stream_openrouter(
+                payload, api_key, on_partial=on_partial, soft_deadline=soft_deadline
+            )
+            # Начало могло прийти прошлым заходом — разбираем ответ целиком
+            return _extract_json_object((prefix or '') + text)
         except Exception as e:
             print(f'[COLORGUIDE-WORKER] Qwen поток (попытка {attempt + 1}): {e}')
             last_error = e
@@ -572,13 +583,18 @@ def call_qwen_json(image_url: str, prompt: str, model: str, extra_image_url: str
     raise last_error if last_error else RuntimeError('Qwen request failed')
 
 
-def _stream_openrouter(payload: dict, api_key: str) -> str:
+def _stream_openrouter(payload: dict, api_key: str, on_partial=None,
+                       soft_deadline: float = None) -> str:
     """Забирает ответ модели по частям.
 
     Думающая модель молчит десятки секунд, пока размышляет. Обычный запрос при
-    этом простаивает без единого байта, и шлюз рвёт соединение по бездействию —
-    задача не доходила до отрисовки. В потоковом режиме ответ идёт кусками,
-    соединение живо, обрывать нечего. Так уже работают большие расклады.
+    этом простаивает без единого байта, и шлюз рвёт соединение по бездействию.
+    В потоковом режиме ответ идёт кусками, соединение живо.
+
+    on_partial — сюда отдаём накопленный текст: облако гасит функцию через
+    30-35 секунд, и без сохранения по ходу написанное пропадает вместе с ней.
+    soft_deadline — момент, после которого выходим сами, аккуратно вернув
+    накопленное, вместо того чтобы быть убитыми на полуслове.
     """
     import requests
 
@@ -611,7 +627,16 @@ def _stream_openrouter(payload: dict, api_key: str) -> str:
     chunks = []
     stream_error = None
     t_first = None
+    last_save = time.time()
     for raw_line in response.iter_lines(decode_unicode=True):
+        # Успеваем выйти сами и сохранить написанное: облако убьёт функцию
+        # без предупреждения, и всё накопленное пропадёт
+        if soft_deadline and time.time() > soft_deadline:
+            print('[COLORGUIDE-WORKER] Подхожу к пределу, сохраняю написанное')
+            break
+        if on_partial and chunks and time.time() - last_save >= PARTIAL_SAVE_SEC:
+            on_partial(''.join(chunks))
+            last_save = time.time()
         if not raw_line or raw_line.startswith(':'):
             continue
         if not raw_line.startswith('data: '):
@@ -852,6 +877,8 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
     photos_optional = registry.are_photos_optional(service_type)
     # Готовый разбор: если он уже есть, а картинка не удалась — сохраним текст и вернём деньги.
     analysis = None
+    # От этого момента считаем, когда пора выйти самим, сохранив написанное
+    step_started = time.time()
 
     try:
         if text_only:
@@ -906,6 +933,11 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
 
         print('[COLORGUIDE-WORKER] STEP analysis start')
         _heartbeat(task_id, 'фото загружено, идём к модели')
+        # Прошлый заход мог не успеть дописать: продолжаем с его места,
+        # а не начинаем с нуля с новой оплатой
+        done_before = _load_partial_answer(task_id) if not analysis else ''
+        if done_before:
+            print(f'[COLORGUIDE-WORKER] Продолжаю с {len(done_before)} знаков')
         gemini_prompt = service.GEMINI_PROMPT
         if height:
             gemini_prompt = (
@@ -953,6 +985,19 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
                 'ПЕРВОГО фото. Итоги согласования пары опиши в поле "partner_harmony".'
             )
 
+        # Продолжение оборванного ответа: показываем модели её же начало
+        # и просим дописать хвост, ничего не повторяя
+        if done_before:
+            gemini_prompt += (
+                '\n\nВАЖНО — ЭТО ПРОДОЛЖЕНИЕ. Ты уже начала отвечать, но ответ '
+                'оборвался. Ниже — НАЧАЛО твоего ответа. Продолжи его РОВНО с '
+                'того места, где он обрывается: не здоровайся, не начинай '
+                'заново, не повторяй уже написанное и не извиняйся. Выведи '
+                'ТОЛЬКО продолжение — так, чтобы вместе с началом получился '
+                'один целый корректный JSON.\n\n'
+                '--- НАЧАЛО ТВОЕГО ОТВЕТА ---\n' + done_before
+            )
+
         required = getattr(service, 'REQUIRED_FIELDS', [])
         has_schema = bool(getattr(service, 'RESPONSE_SCHEMA', None))
         # Справочная схема сервиса (например, таблица типажей Кибби) — второе изображение для анализа.
@@ -966,7 +1011,11 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
                 analysis = call_qwen_json(
                     person_url, gemini_prompt, service.QWEN_MODEL, partner_url or reference_url,
                     reference_urls,
-                    temperature=getattr(service, 'TEMPERATURE', 0.6)
+                    temperature=getattr(service, 'TEMPERATURE', 0.6),
+                    on_partial=lambda txt: _save_partial_answer(
+                        task_id, done_before + txt),
+                    soft_deadline=step_started + SOFT_DEADLINE_SEC,
+                    prefix=done_before,
                 )
                 missing = [f for f in required if not analysis.get(f)]
                 if missing:
@@ -1100,6 +1149,51 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
         mark_failed_and_refund(task_id, 'Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте позже.', 'ошибка обработки')
 
 
+def _save_partial_answer(task_id: str, text: str):
+    """Складывает в базу то, что модель успела написать.
+
+    Облако гасит функцию через 30-35 секунд без предупреждения. Без этой
+    копилки написанное пропадает, и следующий заход платит за модель заново.
+    """
+    if not text:
+        return
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'UPDATE color_guide_tasks SET partial_answer = %s, updated_at = %s, '
+                'worker_started_at = %s WHERE id = %s',
+                (text, datetime.utcnow(), datetime.utcnow(), task_id)
+            )
+            conn.commit()
+            print(f'[COLORGUIDE-WORKER] {task_id}: сохранено {len(text)} знаков')
+        finally:
+            cursor.close()
+            conn.close()
+    except Exception as e:
+        print(f'[COLORGUIDE-WORKER] Кусок не сохранён: {e}')
+
+
+def _load_partial_answer(task_id: str) -> str:
+    """Достаёт незаконченный ответ прошлого захода."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'SELECT partial_answer FROM color_guide_tasks WHERE id = %s', (task_id,)
+            )
+            row = cursor.fetchone()
+        finally:
+            cursor.close()
+            conn.close()
+        return (row[0] or '') if row else ''
+    except Exception as e:
+        print(f'[COLORGUIDE-WORKER] Копилка не прочитана: {e}')
+        return ''
+
+
 def _heartbeat(task_id: str, stage: str):
     """Отмечает, что заход воркера жив и дошёл до очередного шага.
 
@@ -1163,8 +1257,9 @@ def _save_analysis_draft(task_id: str, analysis: dict):
         cursor = conn.cursor()
         try:
             cursor.execute(
-                'UPDATE color_guide_tasks SET result_json = %s, updated_at = %s, '
-                'worker_started_at = %s WHERE id = %s AND result_json IS NULL',
+                'UPDATE color_guide_tasks SET result_json = %s, partial_answer = NULL, '
+                'updated_at = %s, worker_started_at = %s '
+                'WHERE id = %s AND result_json IS NULL',
                 (json.dumps(analysis, ensure_ascii=False), datetime.utcnow(),
                  datetime.utcnow(), task_id)
             )
