@@ -18,7 +18,11 @@ def _season_years() -> str:
     y = datetime.now().year
     return f'{y}-{y + 1}'
 
-QWEN_MODEL = 'qwen/qwen3-vl-235b-a22b-thinking'
+# ВРЕМЕННО: думающий Qwen отключён. Он молча размышляет 26-42 секунды перед
+# первым словом, а облако гасит функцию через 31 — заход не доживает до ответа.
+# Запрос в поддержку платформы отправлен. Как поднимут лимит — вернуть строку:
+# QWEN_MODEL = 'qwen/qwen3-vl-235b-a22b-thinking'
+QWEN_MODEL = 'google/gemini-2.5-flash'
 USE_QWEN = True
 GEMINI_MODEL = QWEN_MODEL
 
