@@ -19,10 +19,14 @@
 
 from datetime import datetime
 
-# Текстовая модель: свежий мультимодальный Qwen с reasoning.
-QWEN_MODEL = 'qwen/qwen3-vl-235b-a22b-thinking'
+# ВРЕМЕННО: думающий Qwen отключён. Он молча размышляет 26-42 секунды перед
+# первым словом, а облако гасит функцию через 31 — заход не доживал до ответа
+# ни разу. Запрос в поддержку платформы отправлен (таймаут стоит 600 с,
+# фактически функция живёт 31 с). Как поднимут лимит — вернуть строку ниже:
+# QWEN_MODEL = 'qwen/qwen3-vl-235b-a22b-thinking'
+QWEN_MODEL = 'google/gemini-2.5-flash'
 
-# Флаг для worker: использовать Qwen (без strict json_schema, с парсингом JSON из ответа).
+# Флаг для worker: модель зовётся без strict json_schema, JSON парсится из ответа.
 USE_QWEN = True
 GEMINI_MODEL = QWEN_MODEL  # имя поля сохранено для совместимости вызова в worker
 
