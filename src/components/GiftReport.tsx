@@ -17,6 +17,7 @@ export interface GiftItem {
 export interface GiftResult {
   recipient_summary?: string;
   strategy?: string;
+  personal_fit?: string;
   gifts?: GiftItem[];
   presentation?: string;
   avoid?: string[];
@@ -158,6 +159,17 @@ export default function GiftReport({
               <div>
                 <SectionTitle icon="Compass">Логика подбора</SectionTitle>
                 <p className="text-sm text-muted-foreground">{data.strategy}</p>
+              </div>
+            )}
+
+            {data.personal_fit && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
+                <SectionTitle icon="UserCheck">
+                  Почему эти подарки — для него
+                </SectionTitle>
+                <p className="text-sm text-muted-foreground">
+                  {data.personal_fit}
+                </p>
               </div>
             )}
 

@@ -21,6 +21,7 @@ export interface WeddingResult {
   look_title?: string;
   look_summary?: string;
   style_direction?: string;
+  personal_fit?: string;
   color_analysis?: string;
   body_analysis?: string;
   palette?: PaletteItem[];
@@ -305,6 +306,17 @@ export default function WeddingReport({
                 </SectionTitle>
                 <p className="text-sm text-muted-foreground">
                   {data.style_direction}
+                </p>
+              </div>
+            )}
+
+            {data.personal_fit && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <SectionTitle icon="UserCheck">
+                  Почему этот образ — ваш
+                </SectionTitle>
+                <p className="text-sm text-muted-foreground">
+                  {data.personal_fit}
                 </p>
               </div>
             )}

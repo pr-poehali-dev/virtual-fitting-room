@@ -24,6 +24,7 @@ export interface PerfumeItem {
 export interface PerfumeResult {
   profile_summary?: string;
   family_analysis?: string;
+  personal_fit?: string;
   perfumes?: PerfumeItem[];
   layering?: string;
   application?: string;
@@ -187,6 +188,17 @@ export default function PerfumeReport({
                 </SectionTitle>
                 <p className="text-sm text-muted-foreground">
                   {data.family_analysis}
+                </p>
+              </div>
+            )}
+
+            {data.personal_fit && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
+                <SectionTitle icon="UserCheck">
+                  Почему эти ароматы — ваши
+                </SectionTitle>
+                <p className="text-sm text-muted-foreground">
+                  {data.personal_fit}
                 </p>
               </div>
             )}

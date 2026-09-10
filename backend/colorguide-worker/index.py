@@ -893,6 +893,16 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
                         reference_urls.append(ref_str)
             print(f'[COLORGUIDE-WORKER] Референсов консультации: {len(reference_urls)}')
 
+        # Разбор мог остаться от прошлого захода, оборванного облаком до
+        # отрисовки. Он уже оплачен — берём готовое и идём сразу к картинке,
+        # вместо того чтобы платить за модель второй раз
+        saved = _load_analysis_draft(task_id)
+        if saved:
+            print(f'[COLORGUIDE-WORKER] Беру готовый разбор задачи {task_id}, '
+                  'модель не тревожим')
+            analysis = saved
+            model_used = 'saved'
+
         print('[COLORGUIDE-WORKER] STEP analysis start')
         gemini_prompt = service.GEMINI_PROMPT
         if height:
@@ -945,7 +955,10 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
         has_schema = bool(getattr(service, 'RESPONSE_SCHEMA', None))
         # Справочная схема сервиса (например, таблица типажей Кибби) — второе изображение для анализа.
         reference_url = getattr(service, 'REFERENCE_IMAGE_URL', None)
-        if getattr(service, 'USE_QWEN', False):
+        if analysis:
+            # Разбор взят из базы — к модели не обращаемся
+            pass
+        elif getattr(service, 'USE_QWEN', False):
             model_used = 'qwen'
             try:
                 analysis = call_qwen_json(
@@ -986,6 +999,11 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
         print(f'[COLORGUIDE-WORKER] STEP analysis done via {model_used}, keys: {list(analysis.keys())}')
 
         analysis['source_image'] = person_url
+
+        # Разбор получен и оплачен — кладём в базу немедленно. Раньше он жил
+        # только в памяти функции: облако гасило её до отрисовки, и работа
+        # пропадала вместе с деньгами, а следующий заход начинал всё заново
+        _save_analysis_draft(task_id, analysis)
 
         if text_only or no_image_gen:
             cdn_url = None
@@ -1077,6 +1095,57 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
     except Exception as e:
         print(f'[COLORGUIDE-WORKER] ERROR (save image result): {e}')
         mark_failed_and_refund(task_id, 'Ошибка сервиса. Деньги вернутся на баланс автоматически сразу или чуть позже администратором. Попробуйте позже.', 'ошибка обработки')
+
+
+def _load_analysis_draft(task_id: str):
+    """Достаёт разбор, сохранённый прошлым заходом. None — если его нет."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'SELECT result_json FROM color_guide_tasks WHERE id = %s', (task_id,)
+            )
+            row = cursor.fetchone()
+        finally:
+            cursor.close()
+            conn.close()
+        if not row or not row[0]:
+            return None
+        data = row[0]
+        if isinstance(data, str):
+            data = json.loads(data)
+        return data if isinstance(data, dict) and data else None
+    except Exception as e:
+        # Не нашли — не беда: разбор будет получен заново
+        print(f'[COLORGUIDE-WORKER] Разбор не прочитан: {e}')
+        return None
+
+
+def _save_analysis_draft(task_id: str, analysis: dict):
+    """Кладёт готовый разбор в базу, не завершая задачу.
+
+    Разбор уже оплачен, а до картинки ещё далеко: если облако погасит функцию
+    на полпути, следующий заход возьмёт разбор отсюда и пойдёт сразу к
+    отрисовке, вместо того чтобы заново платить за модель.
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'UPDATE color_guide_tasks SET result_json = %s, updated_at = %s '
+                'WHERE id = %s AND result_json IS NULL',
+                (json.dumps(analysis, ensure_ascii=False), datetime.utcnow(), task_id)
+            )
+            conn.commit()
+            print(f'[COLORGUIDE-WORKER] Разбор задачи {task_id} сохранён')
+        finally:
+            cursor.close()
+            conn.close()
+    except Exception as e:
+        # Не роняем задачу: разбор есть в памяти, работа продолжится
+        print(f'[COLORGUIDE-WORKER] Не удалось сохранить разбор: {e}')
 
 
 def _save_text_only_result(task_id: str, analysis: dict):
