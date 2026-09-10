@@ -27,6 +27,12 @@ def _open_openrouter(req, timeout):
     return urllib.request.urlopen(req, timeout=timeout)
 
 
+# Сколько считаем заход воркера живым. Опрос статуса будит воркер каждые
+# несколько секунд; без этого замка заходы накладывались и каждый слал свой
+# платный запрос к модели. Больше времени жизни функции — чтобы не отсечь
+# честный повторный запуск после реального обрыва
+WORKER_LOCK_SEC = 120
+
 ALLOWED_SLUGS = [
     'bright-spring', 'bright-winter', 'dusty-summer', 'fiery-autumn',
     'gentle-autumn', 'gentle-spring', 'soft-summer', 'soft-winter',
@@ -1234,17 +1240,28 @@ def process_task(task_id: str):
         cursor = conn.cursor()
         try:
             cursor.execute(
-                'SELECT user_id, person_image, status, cost, refunded, service_type, height, form_params, forced_colortype_slug, forced_colortype_slug_alt, partner_image FROM color_guide_tasks WHERE id = %s',
+                'SELECT user_id, person_image, status, cost, refunded, service_type, height, form_params, forced_colortype_slug, forced_colortype_slug_alt, partner_image, worker_started_at FROM color_guide_tasks WHERE id = %s',
                 (task_id,)
             )
             row = cursor.fetchone()
             if not row:
                 print(f'[COLORGUIDE-WORKER] Task {task_id} not found')
                 return
-            user_id, person_image, status, cost, refunded, service_type, height, form_params, forced_colortype_slug, forced_colortype_slug_alt, partner_image = row
+            (user_id, person_image, status, cost, refunded, service_type, height, form_params,
+             forced_colortype_slug, forced_colortype_slug_alt, partner_image, worker_started_at) = row
             if status not in ('pending', 'processing'):
                 print(f'[COLORGUIDE-WORKER] Task {task_id} already in status {status}')
                 return
+
+            # Замок: заход уже идёт. Без него опрос статуса будил воркер снова
+            # и снова, заходы накладывались, и каждый слал новый платный запрос
+            # к модели. Через WORKER_LOCK_SEC считаем прошлый заход умершим
+            if worker_started_at:
+                lock_age = (datetime.utcnow() - worker_started_at).total_seconds()
+                if lock_age < WORKER_LOCK_SEC:
+                    print(f'[COLORGUIDE-WORKER] Task {task_id}: заход уже идёт '
+                          f'({int(lock_age)} с назад), пропускаю')
+                    return
 
             # Единая очередь: если глобально уже обрабатывается задача — ждём
             if status == 'pending':
@@ -1255,8 +1272,9 @@ def process_task(task_id: str):
                     return
 
             cursor.execute(
-                "UPDATE color_guide_tasks SET status = 'processing', updated_at = %s WHERE id = %s",
-                (datetime.utcnow(), task_id)
+                "UPDATE color_guide_tasks SET status = 'processing', updated_at = %s, "
+                "worker_started_at = %s WHERE id = %s",
+                (datetime.utcnow(), datetime.utcnow(), task_id)
             )
             conn.commit()
         finally:
