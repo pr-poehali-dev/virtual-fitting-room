@@ -223,7 +223,8 @@ def build_plan_prompt(files, user_prompt):
 
 
 def build_step_file_prompt(files, user_prompt, target_path, what_to_do, plan_summary,
-                           conventions=None, done_paths=None, pending=None):
+                           conventions=None, done_paths=None, pending=None,
+                           force_full_file=False):
     """Шаг 2..N: модель возвращает ОДИН файл целиком.
 
     files здесь — проект в АКТУАЛЬНОМ виде: файлы, уже написанные на прошлых
@@ -261,7 +262,7 @@ def build_step_file_prompt(files, user_prompt, target_path, what_to_do, plan_sum
     # и работа обрывается на середине. Просим только изменяемые куски:
     # ответ короткий, шаг успевает завершиться
     target_content = files.get(target_path, '')
-    if len(target_content) >= BIG_FILE_CHARS:
+    if len(target_content) >= BIG_FILE_CHARS and not force_full_file:
         return build_patch_prompt(
             file_list, files_content, user_prompt, plan_summary, conv_block,
             target_path, what_to_do,
@@ -350,6 +351,18 @@ def build_patch_prompt(file_list, files_content, user_prompt, plan_summary,
    а в правую часть — его же вместе с добавленным.
 5. Чтобы удалить кусок, оставь правую часть пустой.
 6. Никаких пояснений до или после блоков.
+7. ЦЕЛОСТНОСТЬ КОДА — САМОЕ ВАЖНОЕ. Правка не должна разрывать структуру:
+   бери куски по границам смысловых блоков целиком. Если меняешь что-то
+   внутри класса, функции или метода — фрагмент должен либо полностью
+   помещаться внутри него, либо включать его целиком от объявления до
+   закрывающей скобки. СТРОГО ЗАПРЕЩЕНО начинать фрагмент в середине
+   одного блока и заканчивать в середине другого: так пропадают объявления
+   и файл перестаёт работать.
+8. ПРОВЕРЬ ПЕРЕД ОТВЕТОМ: в каждой паре «НАЙТИ»/«ЗАМЕНИТЬ» число открытых
+   и закрытых скобок должно совпадать между левой и правой частью. Если не
+   совпадает — расширь фрагмент до целого блока и перепроверь заново.
+9. Не удаляй и не переименовывай объявления классов, функций и методов,
+   если задача этого прямо не требует.
 """
 
 
@@ -392,6 +405,43 @@ SERVICE_LINE_RE = re.compile(
     r'^[ \t]*(?:```[a-zA-Z]*|<{3,}\s*НАЙТИ.*|={3,}|>{3,}.*)[ \t]*$',
     re.MULTILINE,
 )
+
+
+def check_file_integrity(original, patched):
+    """Сверяет правленый файл с исходником. Возвращает описание поломки или None.
+
+    Точечная правка может заменить кусок так, что структура кода разорвётся:
+    закрывающая скобка осталась, а объявление блока пропало. Внешне файл
+    выглядит целым, а в браузере — пустая страница. Проверяем не смысл,
+    а целостность, поэтому работает на любом языке.
+    """
+    if not original or not patched:
+        return None
+
+    # 1. Баланс скобок не должен ухудшиться
+    for opener, closer, name in (('{', '}', 'фигурных'), ('(', ')', 'круглых')):
+        was = original.count(opener) - original.count(closer)
+        now = patched.count(opener) - patched.count(closer)
+        if now != was:
+            return f'нарушен баланс {name} скобок (было {was}, стало {now})'
+
+    # 2. Объявления блоков не должны молча исчезать: если в исходнике был
+    # class/function/def, он обязан остаться (переименование — не пропажа)
+    decl_re = re.compile(
+        r'^[ \t]*(?:export\s+)?(?:async\s+)?(?:class|function|def)\s+\w+',
+        re.MULTILINE,
+    )
+    was_decls = len(decl_re.findall(original))
+    now_decls = len(decl_re.findall(patched))
+    if now_decls < was_decls:
+        return (f'пропали объявления блоков: было {was_decls}, '
+                f'стало {now_decls}')
+
+    # 3. Файл не должен внезапно похудеть больше чем вдвое
+    if len(patched) < len(original) * 0.5:
+        return (f'файл усох с {len(original)} до {len(patched)} знаков')
+
+    return None
 
 
 def strip_service_marks(text):
@@ -858,6 +908,29 @@ def touch_step_lock(task_id):
         print(f'[{task_id}] Замок шага не продлён: {e}')
 
 
+def mark_force_full_file(task_id):
+    """Просит следующий заход работать с файлом целиком.
+
+    Точечные правки быстрее, но могут разорвать структуру кода. Если такое
+    случилось — переключаемся на проверенный путь: модель присылает файл
+    полностью, и рвать нечего.
+    """
+    safe_id = str(task_id).replace("'", "''")
+    try:
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
+                        SET force_full_file = true WHERE id = '{safe_id}'"""
+                )
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f'[{task_id}] Переключение на полный файл не записано: {e}')
+
+
 def save_step_partial(task_id, text):
     """Складывает недописанный ответ шага и продлевает замок.
 
@@ -947,7 +1020,7 @@ def process_archive_step(task_id, model, prompt, archive_base64):
         with conn.cursor() as cur:
             cur.execute(
                 f"""SELECT plan_files, done_files, step_index, plan_summary,
-                           plan_conventions
+                           plan_conventions, COALESCE(force_full_file, false)
                     FROM {DB_SCHEMA}.ai_editor_tasks WHERE id = '{safe_id}'"""
             )
             row = cur.fetchone()
@@ -959,7 +1032,11 @@ def process_archive_step(task_id, model, prompt, archive_base64):
     step_index = (row[2] if row and row[2] is not None else 0)
     plan_summary = unpack_text(row[3] if row else '') or ''
     conventions = unpack_json(row[4] if row else None, []) or []
+    # Прошлый заход испортил файл точечными правками — просим целиком
+    force_full_file = bool(row[5]) if row and len(row) > 5 else False
     done_files = unpack_done_files(done_files)
+    if force_full_file:
+        print(f'[{task_id}] Точечные правки отключены, прошу файл целиком')
 
     # --- Шаг 1: построить план ---
     if plan_files is None:
@@ -1051,6 +1128,7 @@ def process_archive_step(task_id, model, prompt, archive_base64):
             conventions=conventions,
             done_paths=set(done_files.keys()),
             pending=pending,
+            force_full_file=force_full_file,
         )
         # Небольшая пауза между файлами: запросы соседних шагов не накладываются
         # друг на друга и не упираются в лимит одновременных обращений
@@ -1099,9 +1177,20 @@ def process_archive_step(task_id, model, prompt, archive_base64):
         # Крупный файл правится точечно: вносим присланные замены в исходник.
         # Если ни одна не легла — откатываемся к обычному разбору, чтобы
         # не потерять работу, когда модель всё же прислала файл целиком
-        if len(original) >= BIG_FILE_CHARS:
+        if len(original) >= BIG_FILE_CHARS and not force_full_file:
             patched, applied = apply_patches(original, ai_text)
             if applied:
+                # Правка могла разорвать структуру: закрывающая скобка на
+                # месте, а объявление блока пропало. Внешне файл целый,
+                # в браузере — пустая страница. Сверяем с исходником
+                broken = check_file_integrity(original, patched)
+                if broken:
+                    print(f'[{task_id}] Файл {path}: правки испортили файл '
+                          f'({broken}) — повторю шаг целиком')
+                    clear_step_partial(task_id)
+                    mark_force_full_file(task_id)
+                    return True, (f'{NETWORK_ERROR_MARK}: правки для {path} '
+                                  f'испортили файл ({broken}), повторяю')
                 print(f'[{task_id}] Файл {path}: внесено правок {applied}')
                 content = patched
             else:
@@ -1123,6 +1212,18 @@ def process_archive_step(task_id, model, prompt, archive_base64):
             clear_step_partial(task_id)
             return True, (f'{NETWORK_ERROR_MARK}: в {path} попала служебная '
                           f'разметка, повторяю шаг')
+
+        # Целостность проверяем и для файла, присланного целиком: модель
+        # могла оборвать его на середине или потерять часть кода.
+        # Если файл пришёл целиком после запасного хода — доверяем модели:
+        # иначе законное удаление функции зациклило бы задачу
+        broken = None if force_full_file else check_file_integrity(original, content)
+        if broken:
+            print(f'[{task_id}] Файл {path} вернулся повреждённым ({broken}) '
+                  f'— шаг повторю')
+            clear_step_partial(task_id)
+            return True, (f'{NETWORK_ERROR_MARK}: {path} повреждён ({broken}), '
+                          f'повторяю шаг')
         done_files[path] = content
 
         conn = get_db_connection()
@@ -1135,6 +1236,7 @@ def process_archive_step(task_id, model, prompt, archive_base64):
                             step_lock = NULL,
                             step_partial = NULL,
                             step_retries = 0,
+                            force_full_file = false,
                             updated_at = '{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}'
                         WHERE id = '{safe_id}'"""
                 )
