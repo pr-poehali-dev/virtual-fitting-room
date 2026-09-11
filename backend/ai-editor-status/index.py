@@ -9,6 +9,11 @@ from session_utils import validate_session
 
 DB_SCHEMA = 't_p29007832_virtual_fitting_room'
 
+# Столько же, сколько в воркере: через этот срок шаг считается брошенным.
+# Раньше воркер будили на каждом опросе — заходы мешали друг другу и
+# перезапускали один и тот же шаг по кругу с новой оплатой
+STEP_LOCK_TIMEOUT_SEC = 180
+
 
 def get_db_connection():
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
@@ -176,7 +181,9 @@ def handler(event, context):
                                done_files,
                                (stream_lock IS NOT NULL
                                 AND stream_lock < NOW() - INTERVAL '60 seconds'
-                                AND resume_count < 6) AS stalled
+                                AND resume_count < 6) AS stalled,
+                               (step_lock IS NULL
+                                OR step_lock < NOW() - INTERVAL '{STEP_LOCK_TIMEOUT_SEC} seconds') AS step_free
                         FROM {DB_SCHEMA}.ai_editor_tasks
                         WHERE status IN ('completed', 'failed', 'processing')
                           AND user_id = '{safe_uid}'
@@ -202,6 +209,8 @@ def handler(event, context):
                                (stream_lock IS NOT NULL
                                 AND stream_lock < NOW() - INTERVAL '60 seconds'
                                 AND resume_count < 6) AS stalled,
+                               (step_lock IS NULL
+                                OR step_lock < NOW() - INTERVAL '{STEP_LOCK_TIMEOUT_SEC} seconds') AS step_free,
                                user_id
                         FROM {DB_SCHEMA}.ai_editor_tasks WHERE id = '{safe_id}'"""
                 )
@@ -224,12 +233,17 @@ def handler(event, context):
     finally:
         conn.close()
 
-    stalled = bool(data_row[-1])
-    result = build_result(found_id, data_row[:-1])
+    step_free = bool(data_row[-1])
+    stalled = bool(data_row[-2])
+    result = build_result(found_id, data_row[:-2])
 
-    # Архивные задачи выполняются по шагам: каждый опрос статуса продвигает
-    # следующий шаг. Вызов fire-and-forget, ответ не ждём.
-    if data_row[0] in ('pending', 'processing') and data_row[1] == 'archive':
+    # Архивные задачи идут по шагам. Будить воркер на КАЖДОМ опросе нельзя:
+    # заходы накладывались друг на друга, забивали работающий шаг, и каждый
+    # слал свой платный запрос к модели — задача крутилась на месте часами.
+    # Будим, только когда шаг реально свободен: никто не взял его в работу
+    # или прошлый заход оборвался и замок протух.
+    if (data_row[0] in ('pending', 'processing') and data_row[1] == 'archive'
+            and step_free):
         trigger_next_step(found_id)
 
     # Длинный ответ мог оборваться вместе с функцией. Если воркер давно не

@@ -796,6 +796,32 @@ def refund_lenormand(task_id):
 STEP_LOCK_TIMEOUT_SEC = 180
 
 
+def touch_step_lock(task_id):
+    """Продлевает замок работающего шага.
+
+    Шаг может писать файл минуту и дольше. Без этой отметки он молчит всё
+    это время, замок протухает, и соседний заход берёт тот же файл заново —
+    оба платят за модель, а задача стоит на месте.
+    """
+    safe_id = str(task_id).replace("'", "''")
+    now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    try:
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
+                        SET step_lock = '{now}', updated_at = '{now}'
+                        WHERE id = '{safe_id}'"""
+                )
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception as e:
+        # Не критично: шаг продолжит работу, просто замок обновится позже
+        print(f'[{task_id}] Замок шага не продлён: {e}')
+
+
 def process_archive_step(task_id, model, prompt, archive_base64):
     """Обрабатывает ОДИН шаг архивной задачи и возвращает (done, error).
 
@@ -837,6 +863,9 @@ def process_archive_step(task_id, model, prompt, archive_base64):
         plan_text, error, truncated = call_openrouter_retrying(
             model, build_plan_prompt(text_files, prompt),
             soft_deadline=step_deadline, max_tokens=PLAN_MAX_TOKENS,
+            # Планирование на большом архиве идёт долго — подаём признаки
+            # жизни, чтобы замок не протух и соседний заход не влез
+            on_partial=lambda _txt: touch_step_lock(task_id),
         )
         if error:
             return True, error
@@ -925,6 +954,10 @@ def process_archive_step(task_id, model, prompt, archive_base64):
         ai_text, error, truncated = call_openrouter_retrying(
             model, prompt_text, soft_deadline=step_deadline,
             max_tokens=FILE_MAX_TOKENS,
+            # Пока модель пишет, обновляем замок: иначе живой шаг молчит
+            # до конца работы, замок протухает, и соседний заход начинает
+            # тот же файл заново — с новой оплатой
+            on_partial=lambda _txt: touch_step_lock(task_id),
         )
         if error:
             return True, error
