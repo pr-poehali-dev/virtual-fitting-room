@@ -373,6 +373,8 @@ def apply_patches(original_text, response_text):
     text = original_text
     applied = 0
     for old, new in blocks:
+        old = strip_service_marks(old)
+        new = strip_service_marks(new)
         if not old.strip():
             continue
         count = text.count(old)
@@ -382,6 +384,27 @@ def apply_patches(original_text, response_text):
         text = text.replace(old, new, 1)
         applied += 1
     return text, applied
+
+
+# Служебная разметка ответа модели: в файл она попасть не должна.
+# Из-за неё браузер спотыкался и страница открывалась пустой
+SERVICE_LINE_RE = re.compile(
+    r'^[ \t]*(?:```[a-zA-Z]*|<{3,}\s*НАЙТИ.*|={3,}|>{3,}.*)[ \t]*$',
+    re.MULTILINE,
+)
+
+
+def strip_service_marks(text):
+    """Убирает строки служебной разметки, если они просочились в код.
+
+    При склейке оборванного ответа обёртка второй части оставалась в тексте
+    и уезжала прямо в файл — код переставал читаться.
+    """
+    if not text:
+        return text
+    cleaned = SERVICE_LINE_RE.sub('', text)
+    # Убираем пустые строки, оставшиеся на месте удалённой разметки
+    return re.sub(r'\n{3,}', '\n\n', cleaned)
 
 
 def parse_plan_response(response_text):
@@ -1043,7 +1066,10 @@ def process_archive_step(task_id, model, prompt, archive_base64):
                 '\n\nВАЖНО — ЭТО ПРОДОЛЖЕНИЕ. Ты уже начал отвечать, но ответ '
                 'оборвался. Ниже — НАЧАЛО твоего ответа. Продолжи его РОВНО с '
                 'того места, где он обрывается: не начинай заново, не повторяй '
-                'уже написанное, не извиняйся. Выведи ТОЛЬКО продолжение.\n\n'
+                'уже написанное, не извиняйся. Выведи ТОЛЬКО продолжение. '
+                'НЕ открывай заново markdown-обёртку ```patch и не повторяй '
+                'заголовки блоков, которые уже есть в начале: просто допиши '
+                'текст с места обрыва, символ в символ.\n\n'
                 '--- НАЧАЛО ТВОЕГО ОТВЕТА ---\n' + done_before
             )
 
@@ -1085,6 +1111,18 @@ def process_archive_step(task_id, model, prompt, archive_base64):
                                   f'не удалось применить')
         else:
             content = parse_single_file_response(ai_text, path, original)
+
+        # Последняя проверка: в готовый файл не должна попасть служебная
+        # разметка ответа модели. Один раз она просочилась — браузер
+        # спотыкался и страница открывалась пустой. Лучше повторить шаг,
+        # чем отдать человеку сломанный файл
+        leftovers = SERVICE_LINE_RE.findall(content)
+        if leftovers:
+            print(f'[{task_id}] В {path} осталась служебная разметка '
+                  f'({len(leftovers)} шт.) — шаг повторю')
+            clear_step_partial(task_id)
+            return True, (f'{NETWORK_ERROR_MARK}: в {path} попала служебная '
+                          f'разметка, повторяю шаг')
         done_files[path] = content
 
         conn = get_db_connection()
