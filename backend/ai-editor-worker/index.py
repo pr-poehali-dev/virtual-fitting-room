@@ -42,9 +42,13 @@ FILE_MAX_TOKENS = 32000
 # на 33 тыс. знаков подходил вплотную к таймауту. 13000 ≈ 26 тыс. знаков —
 # чуть выше просимых 25 тыс., чтобы текст не обрывался на полуслове
 CHAT_MAX_TOKENS = 13000
-# С какого размера файл считаем крупным и просим точечные правки вместо
-# полного текста. Ниже порога всё работает как раньше — не трогаем
-BIG_FILE_CHARS = 12000
+# С какого размера файл просим править точечно (только изменяемые куски)
+# вместо полного текста. Дело не в размере файла, а во времени ответа:
+# чтобы выдать файл целиком, модель должна сперва обдумать всю переделку —
+# и молчит дольше, чем живёт заход. Короткий ответ она начинает почти сразу.
+# 12000 было слишком высоко: файл на 9 тыс. знаков со сложной задачей
+# не укладывался ни разу из трёх
+BIG_FILE_CHARS = 4000
 # Сколько раз максимум дописываем один ответ
 MAX_RESUMES = 6
 # Метка сетевого сбоя: связь не дошла до модели, значит запрос бесплатный
@@ -822,6 +826,69 @@ def touch_step_lock(task_id):
         print(f'[{task_id}] Замок шага не продлён: {e}')
 
 
+def save_step_partial(task_id, text):
+    """Складывает недописанный ответ шага и продлевает замок.
+
+    Без этого обрыв посреди ответа стирает всю работу модели, и шаг
+    начинается с нуля — с новой оплатой.
+    """
+    safe_id = str(task_id).replace("'", "''")
+    now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    try:
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
+                        SET step_partial = {sql_escape(pack_text(text))},
+                            step_lock = '{now}', updated_at = '{now}'
+                        WHERE id = '{safe_id}'"""
+                )
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f'[{task_id}] Кусок шага не сохранён: {e}')
+
+
+def load_step_partial(task_id):
+    """Читает недописанный ответ прошлого захода."""
+    safe_id = str(task_id).replace("'", "''")
+    try:
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""SELECT step_partial FROM {DB_SCHEMA}.ai_editor_tasks
+                        WHERE id = '{safe_id}'"""
+                )
+                row = cur.fetchone()
+        finally:
+            conn.close()
+        return unpack_text(row[0]) if row and row[0] else ''
+    except Exception as e:
+        print(f'[{task_id}] Копилка шага не прочитана: {e}')
+        return ''
+
+
+def clear_step_partial(task_id):
+    """Шаг закончен — копилка больше не нужна."""
+    safe_id = str(task_id).replace("'", "''")
+    try:
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""UPDATE {DB_SCHEMA}.ai_editor_tasks SET step_partial = NULL
+                        WHERE id = '{safe_id}' AND step_partial IS NOT NULL"""
+                )
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f'[{task_id}] Копилка шага не очищена: {e}')
+
+
 def process_archive_step(task_id, model, prompt, archive_base64):
     """Обрабатывает ОДИН шаг архивной задачи и возвращает (done, error).
 
@@ -902,6 +969,8 @@ def process_archive_step(task_id, model, prompt, archive_base64):
                             done_files = '{{}}'::jsonb,
                             step_index = 0,
                             step_lock = NULL,
+                            step_partial = NULL,
+                            step_retries = 0,
                             updated_at = '{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}'
                         WHERE id = '{safe_id}'"""
                 )
@@ -951,19 +1020,38 @@ def process_archive_step(task_id, model, prompt, archive_base64):
         if step_index:
             time.sleep(STEP_GAP_SEC)
 
-        ai_text, error, truncated = call_openrouter_retrying(
+        # Прошлый заход мог начать ответ и оборваться — продолжаем с его места,
+        # а не платим за всю работу заново
+        done_before = load_step_partial(task_id)
+        if done_before:
+            print(f'[{task_id}] Продолжаю ответ с {len(done_before)} знаков')
+            prompt_text += (
+                '\n\nВАЖНО — ЭТО ПРОДОЛЖЕНИЕ. Ты уже начал отвечать, но ответ '
+                'оборвался. Ниже — НАЧАЛО твоего ответа. Продолжи его РОВНО с '
+                'того места, где он обрывается: не начинай заново, не повторяй '
+                'уже написанное, не извиняйся. Выведи ТОЛЬКО продолжение.\n\n'
+                '--- НАЧАЛО ТВОЕГО ОТВЕТА ---\n' + done_before
+            )
+
+        new_text, error, truncated = call_openrouter_retrying(
             model, prompt_text, soft_deadline=step_deadline,
             max_tokens=FILE_MAX_TOKENS,
-            # Пока модель пишет, обновляем замок: иначе живой шаг молчит
-            # до конца работы, замок протухает, и соседний заход начинает
-            # тот же файл заново — с новой оплатой
-            on_partial=lambda _txt: touch_step_lock(task_id),
+            # Копим написанное и заодно продлеваем замок: иначе живой шаг
+            # молчит до конца работы, замок протухает, и соседний заход
+            # начинает тот же файл заново — с новой оплатой
+            on_partial=lambda txt: save_step_partial(task_id, done_before + txt),
         )
+        ai_text = (done_before + new_text) if new_text else done_before
+
+        # Связь оборвалась, но начало уже написано — не теряем его
+        if error and done_before:
+            save_step_partial(task_id, ai_text)
+            return True, f'{NETWORK_ERROR_MARK}: ответ по {path} оборван, продолжу'
         if error:
             return True, error
-        # Обрезанный файл сохранять нельзя — он сломает проект.
-        # Помечаем как временный сбой: шаг повторится с того же места
+        # Ответ не дописан — сохраняем и продолжим следующим заходом
         if truncated:
+            save_step_partial(task_id, ai_text)
             return True, f'{NETWORK_ERROR_MARK}: файл {path} не уложился во время'
 
         original = current_files.get(path, '')
@@ -992,6 +1080,8 @@ def process_archive_step(task_id, model, prompt, archive_base64):
                         SET done_files = {sql_escape(json.dumps(pack_done_files(done_files), ensure_ascii=False))}::jsonb,
                             step_index = {step_index + 1},
                             step_lock = NULL,
+                            step_partial = NULL,
+                            step_retries = 0,
                             updated_at = '{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}'
                         WHERE id = '{safe_id}'"""
                 )
@@ -1105,6 +1195,8 @@ def is_retryable_error(error):
 def register_step_failure(task_id, error):
     """Считает неудачи шага. Возвращает True, если попытки ещё остались.
 
+    Сама попытка уже посчитана при взятии шага в работу — здесь только
+    снимаем замок, чтобы повтор начался сразу, и читаем текущий счёт.
     Уже обработанные файлы сохранены в БД, поэтому повтор продолжит с того же
     места и оплаченная работа не пропадает.
     """
@@ -1115,8 +1207,7 @@ def register_step_failure(task_id, error):
         with conn.cursor() as cur:
             cur.execute(
                 f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
-                    SET step_retries = COALESCE(step_retries, 0) + 1,
-                        step_lock = NULL, updated_at = '{now}'
+                    SET step_lock = NULL, updated_at = '{now}'
                     WHERE id = '{safe_id}'
                     RETURNING step_retries"""
             )
@@ -1178,17 +1269,36 @@ def process_archive_task(task_id):
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
+            # Попытку засчитываем СРАЗУ при взятии шага. Если функция умрёт
+            # молча (её убивают извне, до записи ошибки), счётчик всё равно
+            # вырос — иначе задача крутится по кругу бесконечно
             cur.execute(
                 f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
-                    SET status = 'processing', step_lock = '{now}', updated_at = '{now}'
+                    SET status = 'processing', step_lock = '{now}', updated_at = '{now}',
+                        step_retries = COALESCE(step_retries, 0) + 1
                     WHERE id = '{safe_id}'
                       AND status IN ('pending', 'processing')
+                      AND COALESCE(step_retries, 0) < {MAX_INFLIGHT_STEP_RETRIES}
                       AND (step_lock IS NULL
                            OR step_lock < NOW() - INTERVAL '{STEP_LOCK_TIMEOUT_SEC} seconds')
                     RETURNING model, prompt, archive_base64"""
             )
             row = cur.fetchone()
             if not row:
+                # Либо шаг занят другим заходом, либо попытки исчерпаны.
+                # Во втором случае честно завершаем задачу, а не молчим
+                cur.execute(
+                    f"""SELECT status, COALESCE(step_retries, 0)
+                        FROM {DB_SCHEMA}.ai_editor_tasks WHERE id = '{safe_id}'"""
+                )
+                check = cur.fetchone()
+                conn.commit()
+                if (check and check[0] in ('pending', 'processing')
+                        and check[1] >= MAX_INFLIGHT_STEP_RETRIES):
+                    print(f'[{task_id}] Попытки шага исчерпаны ({check[1]})')
+                    fail_task(task_id, 'Шаг не удалось выполнить: модель не '
+                                       'успевает ответить. Попробуйте разбить '
+                                       'задачу на части или упростить.')
                 return
         conn.commit()
     finally:
