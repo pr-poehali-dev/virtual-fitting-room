@@ -687,7 +687,15 @@ def call_openrouter_retrying(model, prompt_text, on_partial=None, soft_deadline=
             break
         print(f'[openrouter-retry] попытка {i + 1} неудачна ({str(error)[:120]}), '
               f'повтор через {pause:.0f}с')
-        time.sleep(pause)
+        # Ждём с отметками: во время паузы модель молчит, и без них замок
+        # шага протухнет — соседний заход влезет и начнёт тот же файл заново
+        waited = 0.0
+        while waited < pause:
+            chunk = min(PARTIAL_SAVE_SEC, pause - waited)
+            time.sleep(chunk)
+            waited += chunk
+            if on_partial:
+                on_partial(None)
     return None, last_error, False
 
 
@@ -832,7 +840,12 @@ def save_step_partial(task_id, text):
 
     Без этого обрыв посреди ответа стирает всю работу модели, и шаг
     начинается с нуля — с новой оплатой.
+    text=None — просто отметка «жив» без записи текста: так мы держим
+    замок во время пауз между попытками, когда модель ничего не пишет.
     """
+    if text is None:
+        touch_step_lock(task_id)
+        return
     safe_id = str(task_id).replace("'", "''")
     now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
     try:
@@ -1040,7 +1053,8 @@ def process_archive_step(task_id, model, prompt, archive_base64):
             # Копим написанное и заодно продлеваем замок: иначе живой шаг
             # молчит до конца работы, замок протухает, и соседний заход
             # начинает тот же файл заново — с новой оплатой
-            on_partial=lambda txt: save_step_partial(task_id, done_before + txt),
+            on_partial=lambda txt: save_step_partial(
+                task_id, None if txt is None else done_before + txt),
         )
         ai_text = (done_before + new_text) if new_text else done_before
 
@@ -1485,7 +1499,8 @@ def process_task(task_id):
             new_text, error, truncated = call_openrouter_retrying(
                 model,
                 ask,
-                on_partial=lambda txt: save_partial(task_id, done_before + txt),
+                on_partial=lambda txt: save_partial(
+                    task_id, done_before if txt is None else done_before + txt),
                 soft_deadline=task_started + SOFT_DEADLINE_SEC,
                 max_tokens=CHAT_MAX_TOKENS,
             )
