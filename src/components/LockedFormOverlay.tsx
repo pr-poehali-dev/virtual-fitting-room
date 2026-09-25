@@ -1,10 +1,11 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useBalance } from "@/context/BalanceContext";
 import { Button } from "@/components/ui/button";
 import Icon from "@/components/ui/icon";
 import VkAuthButton from "@/components/VkAuthButton";
+import func2url from "../../backend/func2url.json";
 
 interface LockedFormOverlayProps {
   cost: number;
@@ -24,6 +25,23 @@ const LockedFormOverlay = ({
   const currentPath = location.pathname + location.search;
 
   const isAuthLocked = !authLoading && !user;
+
+  // Бонус за регистрацию: человек, зашедший не с главной, о нём не знает.
+  // Размер берём из базы, как в плашке на главной — чтобы не разъезжались
+  const [signupBonus, setSignupBonus] = useState<number | null>(null);
+  useEffect(() => {
+    if (!isAuthLocked) return;
+    fetch(`${func2url["bonus-api"]}?action=promotions`)
+      .then((res) => res.json())
+      .then((data) => {
+        const reg = (data.promotions || []).find(
+          (p: { trigger_type: string; bonus_amount: number }) =>
+            p.trigger_type === "registration",
+        );
+        setSignupBonus(reg ? reg.bonus_amount : null);
+      })
+      .catch(() => setSignupBonus(null));
+  }, [isAuthLocked]);
 
   const hasUnlimited = balanceInfo?.unlimited_access === true;
   const currentBalance = balanceInfo?.balance ?? 0;
@@ -51,11 +69,31 @@ const LockedFormOverlay = ({
               <h3 className="mb-1 text-lg font-semibold text-gray-900">
                 Войдите, чтобы продолжить
               </h3>
-              <p className="mb-4 text-sm text-gray-600">
+              <p className="mb-3 text-sm text-gray-600">
                 Для генерации изображений необходимо зарегистрироваться, если
                 еще не регистрировали аккаунт, войти в аккаунт и пополнить
                 баланс минимум на {cost} рублей.
               </p>
+
+              {/* Про бонус знают только те, кто заходил с главной — напоминаем здесь */}
+              {signupBonus ? (
+                <div className="mb-4 flex items-start gap-2 rounded-xl border border-purple-200 bg-purple-50 p-3 text-left">
+                  <Icon
+                    name="Gift"
+                    size={18}
+                    className="mt-0.5 shrink-0 text-purple-600"
+                  />
+                  <p className="text-sm text-gray-700">
+                    <span className="font-semibold text-purple-700">
+                      Дарим {signupBonus.toFixed(0)} ₽ за регистрацию
+                    </span>{" "}
+                    — бонусные рубли зачислим сразу, потратить их можно в течение
+                    30 дней на любые услуги сайта.
+                  </p>
+                </div>
+              ) : (
+                <div className="mb-4" />
+              )}
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Button
                   onClick={() => navigate("/login")}
