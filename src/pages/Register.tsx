@@ -218,9 +218,15 @@ export default function Register() {
               <span className="text-xs text-muted-foreground">или</span>
               <div className="h-px flex-1 bg-border" />
             </div>
-            <VkAuthButton className="flex justify-center" />
+            {/* Вход через VK создаёт аккаунт — согласия нужны так же,
+                как при обычной регистрации */}
+            <VkAuthButton
+              className="flex justify-center"
+              requireConsent
+              consentGiven={acceptedPrivacy && acceptedPersonalData}
+            />
             <p className="mt-2 text-center text-xs text-muted-foreground">
-              Входя через ВКонтакте, вы соглашаетесь с{' '}
+              Вход через ВКонтакте тоже доступен после согласия с{' '}
               <Link to="/privacy" target="_blank" className="text-purple-600 hover:underline">
                 Политикой конфиденциальности
               </Link>{' '}

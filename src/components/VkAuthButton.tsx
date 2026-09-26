@@ -13,9 +13,19 @@ import {
 interface VkAuthButtonProps {
   className?: string;
   redirectTo?: string;
+  /** Требовать согласия перед входом: вход через VK создаёт аккаунт,
+   *  значит согласия нужны так же, как при обычной регистрации */
+  requireConsent?: boolean;
+  /** Отмечены ли согласия */
+  consentGiven?: boolean;
 }
 
-const VkAuthButton = ({ className = '', redirectTo = '/profile' }: VkAuthButtonProps) => {
+const VkAuthButton = ({
+  className = '',
+  redirectTo = '/profile',
+  requireConsent = false,
+  consentGiven = true,
+}: VkAuthButtonProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { vkLogin } = useAuth();
   const navigate = useNavigate();
@@ -93,7 +103,27 @@ const VkAuthButton = ({ className = '', redirectTo = '/profile' }: VkAuthButtonP
     );
   }
 
-  return <div ref={containerRef} className={className} />;
+  // Виджет VK — сторонний, отключить его кнопку нельзя. Накрываем прозрачным
+  // слоем: клик перехватывается и человек видит, чего не хватает
+  const blocked = requireConsent && !consentGiven;
+
+  return (
+    <div className="relative">
+      <div
+        ref={containerRef}
+        className={`${className} ${blocked ? 'opacity-50' : ''}`}
+      />
+      {blocked && (
+        <div
+          className="absolute inset-0 z-10 cursor-not-allowed"
+          onClick={() =>
+            toast.error('Отметьте согласия, чтобы продолжить')
+          }
+          role="presentation"
+        />
+      )}
+    </div>
+  );
 };
 
 export default VkAuthButton;

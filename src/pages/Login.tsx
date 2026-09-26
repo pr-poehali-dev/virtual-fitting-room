@@ -19,6 +19,9 @@ export default function Login() {
   const [showResendButton, setShowResendButton] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [captchaValid, setCaptchaValid] = useState(false);
+  // Через VK человек может не войти, а ЗАРЕГИСТРИРОВАТЬСЯ: если аккаунта нет,
+  // он создаётся. Значит согласия нужны и здесь, на странице входа
+  const [vkConsent, setVkConsent] = useState(false);
   const { login, user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -148,7 +151,32 @@ export default function Login() {
               <span className="text-xs text-muted-foreground">или</span>
               <div className="h-px flex-1 bg-border" />
             </div>
-            <VkAuthButton className="flex justify-center" />
+            {/* Один объединённый чекбокс: при входе лишние клики раздражают,
+                а юридически достаточно одного явного действия */}
+            <div className="mb-3 flex items-start space-x-2">
+              <input
+                type="checkbox"
+                id="vkConsent"
+                checked={vkConsent}
+                onChange={(e) => setVkConsent(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+              />
+              <label htmlFor="vkConsent" className="text-sm text-gray-600">
+                Я принимаю{' '}
+                <Link to="/privacy" target="_blank" className="text-purple-600 hover:underline">
+                  Политику конфиденциальности
+                </Link>{' '}
+                и даю согласие на{' '}
+                <Link to="/personal-data" target="_blank" className="text-purple-600 hover:underline">
+                  обработку персональных данных
+                </Link>
+              </label>
+            </div>
+            <VkAuthButton
+              className="flex justify-center"
+              requireConsent
+              consentGiven={vkConsent}
+            />
             <div className="mt-4 text-center text-sm text-muted-foreground">
               Нет аккаунта?{' '}
               <Link to="/register" className="text-primary hover:underline">
