@@ -47,6 +47,8 @@ export default function KibbeTest() {
   const [closeTypeKey, setCloseTypeKey] = useState<string | null>(null);
   const [resultLetter, setResultLetter] = useState<KibbeLetter | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  // Согласия для входа через VK: он создаёт аккаунт, если человека ещё нет
+  const [vkConsent, setVkConsent] = useState(false);
 
   // Список вопросов текущего прохождения.
   // - Рост >= 168: обычная вертикальная ветка (9 вопросов).
@@ -110,9 +112,32 @@ export default function KibbeTest() {
                   <span className="text-xs text-muted-foreground">или</span>
                   <div className="h-px flex-1 bg-border" />
                 </div>
+                {/* Вход через VK создаёт аккаунт, если его ещё нет —
+                    значит согласия нужны так же, как при регистрации */}
+                <div className="mb-3 flex items-start space-x-2 text-left">
+                  <input
+                    type="checkbox"
+                    id="kibbeVkConsent"
+                    checked={vkConsent}
+                    onChange={(e) => setVkConsent(e.target.checked)}
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  />
+                  <label htmlFor="kibbeVkConsent" className="text-sm text-gray-600">
+                    Я принимаю{' '}
+                    <Link to="/privacy" target="_blank" className="text-purple-600 hover:underline">
+                      Политику конфиденциальности
+                    </Link>{' '}
+                    и даю согласие на{' '}
+                    <Link to="/personal-data" target="_blank" className="text-purple-600 hover:underline">
+                      обработку персональных данных
+                    </Link>
+                  </label>
+                </div>
                 <VkAuthButton
                   className="flex justify-center"
                   redirectTo={currentPath}
+                  requireConsent
+                  consentGiven={vkConsent}
                 />
               </CardContent>
             </Card>
