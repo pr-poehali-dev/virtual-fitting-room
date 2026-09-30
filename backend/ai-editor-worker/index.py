@@ -59,6 +59,8 @@ MAX_STEP_RETRIES = 3
 # Для перегрузки лимита провайдера попыток больше: работа модели не потрачена,
 # нужно лишь дождаться, пока рассосётся очередь запросов
 MAX_INFLIGHT_STEP_RETRIES = 8
+# Потолок недописанного ответа по одному файлу: дальше дописывать бессмысленно
+MAX_STEP_PARTIAL_CHARS = 300000
 # Признаки временного сбоя: такой шаг имеет смысл повторить, а не хоронить
 # всю задачу вместе с уже обработанными файлами
 RETRYABLE_MARKS = (
@@ -931,7 +933,7 @@ def mark_force_full_file(task_id):
         print(f'[{task_id}] Переключение на полный файл не записано: {e}')
 
 
-def save_step_partial(task_id, text):
+def save_step_partial(task_id, text, progressed=False):
     """Складывает недописанный ответ шага и продлевает замок.
 
     Без этого обрыв посреди ответа стирает всю работу модели, и шаг
@@ -944,6 +946,10 @@ def save_step_partial(task_id, text):
         return
     safe_id = str(task_id).replace("'", "''")
     now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    # Модель дописала новый текст — значит заход не пустой. Обрыв такого
+    # захода не считаем неудачей: иначе большой файл, который честно пишется
+    # кусками, хоронится по счётчику попыток посреди работы
+    reset_retries = ', step_retries = 0' if progressed else ''
     try:
         conn = get_db_connection()
         try:
@@ -951,7 +957,7 @@ def save_step_partial(task_id, text):
                 cur.execute(
                     f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
                         SET step_partial = {sql_escape(pack_text(text))},
-                            step_lock = '{now}', updated_at = '{now}'
+                            step_lock = '{now}', updated_at = '{now}'{reset_retries}
                         WHERE id = '{safe_id}'"""
                 )
             conn.commit()
@@ -1138,6 +1144,13 @@ def process_archive_step(task_id, model, prompt, archive_base64):
         # Прошлый заход мог начать ответ и оборваться — продолжаем с его места,
         # а не платим за всю работу заново
         done_before = load_step_partial(task_id)
+        # Предохранитель: раз счётчик попыток теперь сбрасывается от любого
+        # прироста текста, бесконечное дописывание надо остановить явно —
+        # иначе задача тратит деньги без конца
+        if len(done_before) > MAX_STEP_PARTIAL_CHARS:
+            clear_step_partial(task_id)
+            return True, (f'Файл {path} разросся больше {MAX_STEP_PARTIAL_CHARS} '
+                          f'знаков и не был дописан. Разбейте задачу на части')
         if done_before:
             print(f'[{task_id}] Продолжаю ответ с {len(done_before)} знаков')
             prompt_text += (
@@ -1158,7 +1171,8 @@ def process_archive_step(task_id, model, prompt, archive_base64):
             # молчит до конца работы, замок протухает, и соседний заход
             # начинает тот же файл заново — с новой оплатой
             on_partial=lambda txt: save_step_partial(
-                task_id, None if txt is None else done_before + txt),
+                task_id, None if txt is None else done_before + txt,
+                progressed=bool(txt)),
         )
         ai_text = (done_before + new_text) if new_text else done_before
 
