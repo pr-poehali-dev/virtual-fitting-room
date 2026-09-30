@@ -200,11 +200,20 @@ export default function AiEditor() {
     }
   }, []);
 
+  // Задача, которую надо подхватить после обновления страницы. Опрос
+  // объявлен ниже, поэтому запускаем его отдельным эффектом
+  const [resumeTask, setResumeTask] = useState<TaskInfo | null>(null);
+
   useEffect(() => {
     setIsLoadingTask(true);
     fetchTaskStatus().then((task) => {
       if (task) {
         setLastTask(task);
+        // Незаконченная задача: без опроса сервер следующий шаг не сделает,
+        // и после обновления страницы работа вставала на месте
+        if (task.status === "processing" || task.status === "pending") {
+          setResumeTask(task);
+        }
       }
       setIsLoadingTask(false);
     });
@@ -212,6 +221,11 @@ export default function AiEditor() {
 
   const pollStatus = useCallback((taskId: string, currentFile: File | null, currentMode: Mode) => {
     let elapsed = 0;
+    // Сдаёмся не по общему времени, а по отсутствию движения. Большой архив
+    // честно идёт дольше 10 минут: жёсткий предел обрывал работающую задачу,
+    // ведь следующий шаг сервер делает только в ответ на наш опрос
+    let lastProgressAt = 0;
+    let lastProgressMark = "";
     const interval = setInterval(async () => {
       elapsed += 3;
       setStatusText(`Обрабатываю... ${elapsed} сек`);
@@ -221,6 +235,19 @@ export default function AiEditor() {
           headers: authHeaders(),
         });
         const data = await res.json();
+
+        // Признак движения: сменился файл, выросло число готовых файлов
+        // или прибавился написанный текст
+        const mark = [
+          data.progress?.current ?? "",
+          data.progress?.done_files?.length ?? "",
+          data.written_chars ?? "",
+          data.status ?? "",
+        ].join("|");
+        if (mark !== lastProgressMark) {
+          lastProgressMark = mark;
+          lastProgressAt = elapsed;
+        }
 
         if (data.progress?.text) {
           // Показываем, сколько файлов уже готово: работа не пропадает,
@@ -291,12 +318,14 @@ export default function AiEditor() {
           }
         }
 
-        if (elapsed > 600) {
+        // 10 минут без единого признака движения — значит задача правда
+        // застряла. Пока файлы пишутся, ждём сколько нужно
+        if (elapsed - lastProgressAt > 600) {
           clearInterval(interval);
           pollingRef.current = null;
           setIsProcessing(false);
           setStatusText("");
-          toast.error("Превышено время ожидания (10 мин)");
+          toast.error("Задача не продвигается 10 минут. Обновите страницу, чтобы продолжить");
         }
       } catch {
         // сетевая ошибка polling — продолжаем пробовать
@@ -304,6 +333,23 @@ export default function AiEditor() {
     }, 3000);
     pollingRef.current = interval;
   }, []);
+
+  // Уходим со страницы — опрос гасим, иначе он крутится в фоне без толку
+  useEffect(() => stopPolling, [stopPolling]);
+
+  // Подхватываем незаконченную задачу после обновления страницы
+  useEffect(() => {
+    if (!resumeTask || pollingRef.current) return;
+    setIsProcessing(true);
+    setStatusText("Продолжаю задачу...");
+    // Файла в памяти после перезагрузки нет — берём имя из самой задачи,
+    // чтобы готовый архив скачался с правильным названием
+    const namedFile = resumeTask.filename
+      ? new File([], resumeTask.filename)
+      : null;
+    pollStatus(resumeTask.task_id, namedFile, resumeTask.mode);
+    setResumeTask(null);
+  }, [resumeTask, pollStatus]);
 
   if (isLoading) return null;
   if (!user || user.email !== ALLOWED_EMAIL) {
