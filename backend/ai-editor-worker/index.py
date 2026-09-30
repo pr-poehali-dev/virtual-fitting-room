@@ -9,7 +9,7 @@ import re
 import time
 import requests
 import psycopg2
-from datetime import datetime
+from datetime import datetime, timedelta
 
 OPENROUTER_API_KEY = (os.environ.get("OPENROUTER_API_KEY_NEW") or os.environ.get("OPENROUTER_API_KEY_OLD") or "").strip()
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -61,6 +61,8 @@ MAX_STEP_RETRIES = 3
 MAX_INFLIGHT_STEP_RETRIES = 8
 # Потолок недописанного ответа по одному файлу: дальше дописывать бессмысленно
 MAX_STEP_PARTIAL_CHARS = 300000
+# Сколько ждать после отказа провайдера по балансу (он сам просит 120 сек)
+IN_FLIGHT_WAIT_SEC = 120
 # Признаки временного сбоя: такой шаг имеет смысл повторить, а не хоронить
 # всю задачу вместе с уже обработанными файлами
 RETRYABLE_MARKS = (
@@ -1370,13 +1372,23 @@ def register_step_failure(task_id, error):
     места и оплаченная работа не пропадает.
     """
     safe_id = str(task_id).replace("'", "''")
-    now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    now_dt = datetime.utcnow()
+    now = now_dt.strftime('%Y-%m-%d %H:%M:%S')
+    # Отказ по балансу провайдер просит переждать (Retry-After). Раньше замок
+    # снимался сразу, и все попытки сгорали за полминуты. Теперь держим замок
+    # так, чтобы он освободился ровно через IN_FLIGHT_WAIT_SEC
+    if is_in_flight_limit(error):
+        hold_until = now_dt + timedelta(
+            seconds=max(IN_FLIGHT_WAIT_SEC - STEP_LOCK_TIMEOUT_SEC, 0))
+        lock_value = f"'{hold_until.strftime('%Y-%m-%d %H:%M:%S')}'"
+    else:
+        lock_value = 'NULL'
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
             cur.execute(
                 f"""UPDATE {DB_SCHEMA}.ai_editor_tasks
-                    SET step_lock = NULL, updated_at = '{now}'
+                    SET step_lock = {lock_value}, updated_at = '{now}'
                     WHERE id = '{safe_id}'
                     RETURNING step_retries"""
             )
