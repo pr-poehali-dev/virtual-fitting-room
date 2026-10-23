@@ -22,6 +22,8 @@ import PerfumeReport, {
   PerfumeResult,
   PerfumeFormParams,
 } from "@/components/PerfumeReport";
+import TravelReport, { TravelResult } from "@/components/travel/TravelReport";
+import { TravelFormParams } from "@/lib/travelOptions";
 import WeddingReport, {
   WeddingResult,
   WeddingFormParams,
@@ -158,7 +160,7 @@ export default function ColorGuideDetail() {
             if (data.result) setOutfitResult(data.result as OutfitResult);
             if (data.form_params)
               setOutfitParams(data.form_params as OutfitFormParams);
-          } else if (svc === "wedding") {
+          } else if (svc === "wedding" || svc === "travel") {
             if (data.result)
               setTextResult(data.result as Record<string, unknown>);
             if (data.form_params)
@@ -248,6 +250,20 @@ export default function ColorGuideDetail() {
               note={resultNote}
               onReset={() => navigate("/wedding-selection")}
             />
+          ) : serviceType === "travel" && (textResult || imageUrl) ? (
+            <div className="space-y-4">
+              {resultNote && (
+                <Card className="bg-amber-500/10 border-amber-500/40">
+                  <CardContent className="p-4 text-sm">{resultNote}</CardContent>
+                </Card>
+              )}
+              <TravelReport
+                imageUrl={imageUrl}
+                data={textResult as unknown as TravelResult}
+                formParams={textParams as unknown as TravelFormParams}
+                onReset={() => navigate("/travel-selection")}
+              />
+            </div>
           ) : serviceType === "gift" && textResult ? (
             <GiftReport
               data={textResult as unknown as GiftResult}

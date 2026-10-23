@@ -81,6 +81,12 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       label: "Свадебный образ",
     },
     {
+      id: "travel-selection",
+      path: "/travel-selection",
+      icon: "Luggage",
+      label: "Капсула в путешествие",
+    },
+    {
       id: "gift-selection",
       path: "/gift-selection",
       icon: "Gift",

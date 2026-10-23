@@ -48,6 +48,11 @@ export const PAGE_SEO: Record<string, PageSeo> = {
     description:
       "Подбор свадебного образа по фото: платье, причёска, украшения и палитра, которые подойдут именно вам",
   },
+  "/travel-selection": {
+    title: "Капсула в путешествие: что взять в поездку — StyleSelect",
+    description:
+      "Список вещей в поездку, образ в дорогу и 3 готовых образа с учётом климата, маршрута, цветотипа и типажа",
+  },
   "/gift-selection": {
     title: "Подбор подарков онлайн — StyleSelect",
     description:

@@ -155,6 +155,16 @@ const Home = () => {
       path: "/wedding-selection",
     },
     {
+      id: "travel-selection",
+      title: "Капсула в путешествие",
+      description:
+        "Что взять в поездку, что надеть в дорогу и 3 готовых образа — с учётом климата, перелёта, ваших планов, цветотипа и типажа. С картинкой образов",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/527cd0ff-635c-4b4a-8a22-ab48678900e2.jpg",
+      icon: "Luggage",
+      path: "/travel-selection",
+    },
+    {
       id: "gift-selection",
       title: "Подбор подарков",
       description:

@@ -14,7 +14,7 @@ ALLOWED_SLUGS = [
     'vibrant-spring', 'vivid-autumn', 'vivid-summer', 'vivid-winter'
 ]
 
-ALLOWED_SERVICE_TYPES = ['colorguide', 'style', 'outfit', 'glasses', 'makeup', 'hairstyle', 'kibbe', 'gift', 'perfume', 'wedding', 'consult']
+ALLOWED_SERVICE_TYPES = ['colorguide', 'style', 'outfit', 'glasses', 'makeup', 'hairstyle', 'kibbe', 'gift', 'perfume', 'wedding', 'consult', 'travel']
 # Сервисы, работающие только по анкете — фото не требуется.
 TEXT_ONLY_SERVICE_TYPES = {'gift', 'perfume'}
 # Сервисы, где фото можно приложить, но можно и не прикладывать.
@@ -33,6 +33,7 @@ SERVICE_LABELS = {
     'perfume': 'Подбор аромата',
     'wedding': 'Свадебный образ',
     'consult': 'Консультация ИИ-стилиста',
+    'travel': 'Капсула в путешествие',
 }
 # Стоимость по типу сервиса. 'outfit' — премиальный, легко поднять цену здесь.
 SERVICE_COSTS = {
@@ -47,6 +48,7 @@ SERVICE_COSTS = {
     'perfume': 50,
     'wedding': 50,
     'consult': 10,
+    'travel': 50,
 }
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
