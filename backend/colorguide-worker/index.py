@@ -712,13 +712,18 @@ def fal_submit(prompt: str, image_urls: list, aspect_ratio: str):
         'resolution': '1K',
         'output_format': 'png',
     }
+    # Без фото (раскладка украшений) — рисуем с нуля по тексту
+    endpoint = 'https://queue.fal.run/fal-ai/nano-banana-2/edit'
+    if not image_urls:
+        payload.pop('image_urls')
+        endpoint = 'https://queue.fal.run/fal-ai/nano-banana-2'
     # 429 'All paths are at capacity' — мощностей нет прямо сейчас, в очередь fal такой
     # запрос не ставит. Повторяем сами с нарастающей паузой: обычно освобождается за секунды.
     capacity_delays = [3, 6, 12]
     result = None
     for attempt in range(len(capacity_delays) + 1):
         req = urllib.request.Request(
-            'https://queue.fal.run/fal-ai/nano-banana-2/edit',
+            endpoint,
             data=json.dumps(payload).encode('utf-8'),
             headers={'Authorization': f'Key {fal_api_key}', 'Content-Type': 'application/json'},
             method='POST'
@@ -1103,7 +1108,7 @@ def process_image_service(task_id: str, service_type: str, person_image: str, us
             image_prompt = service.build_image_prompt(analysis, height)
         print(f'[COLORGUIDE-WORKER] STEP fal submit, prompt len={len(image_prompt)}')
         _heartbeat(task_id, 'разбор готов, отправляю на отрисовку')
-        image_inputs = [person_url]
+        image_inputs = [] if getattr(service, 'IMAGE_WITHOUT_PERSON', False) else [person_url]
         logo_url = getattr(service, 'LOGO_IMAGE_URL', None)
         if logo_url:
             image_inputs.append(logo_url)

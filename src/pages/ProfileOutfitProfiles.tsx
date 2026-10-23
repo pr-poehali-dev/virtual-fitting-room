@@ -40,6 +40,14 @@ const SERVICES = [
     path: "/travel-selection",
   },
   {
+    key: "jewelry",
+    label: "Украшения",
+    title: "Мои анкеты для украшений",
+    hint: "Сохранённые анкеты для быстрого заполнения формы подбора украшений",
+    action: "Подобрать украшения",
+    path: "/jewelry-selection",
+  },
+  {
     key: "gift",
     label: "Подарки",
     title: "Мои анкеты для подарков",
@@ -76,6 +84,8 @@ function summarize(fp: OutfitFormParams): string {
   if (destination) parts.push(destination);
   const tripSeason = str(p.trip_season);
   if (tripSeason) parts.push(tripSeason);
+  const metal = str(p.metal);
+  if (metal) parts.push(metal);
   const venue = str(p.venue);
   if (venue) parts.push(venue);
 

@@ -197,3 +197,62 @@ export interface TravelFormParams {
   style_age?: string | number;
   comment?: string;
 }
+
+export const JEWELRY_OCCASIONS = [
+  "Повседневный",
+  "Деловой",
+  "Вечерний",
+  "Свидание",
+  "Праздник / торжество",
+  "Отпуск",
+];
+
+export const METALS = [
+  "Жёлтое золото",
+  "Белое золото",
+  "Розовое золото",
+  "Серебро",
+  "Сталь",
+  "Без разницы",
+];
+
+export const STONES = [
+  "Натуральные камни",
+  "Жемчуг",
+  "Любые вставки",
+  "Без камней",
+];
+
+export const JEWELRY_TYPES = [
+  "Серьги",
+  "Колье / цепочки",
+  "Кольца",
+  "Браслеты",
+  "Часы",
+  "Броши",
+];
+
+export const EARS = ["Да", "Нет — только клипсы и каффы"];
+
+export const BUDGETS = ["Бижутерия", "Средний", "Ювелирные украшения"];
+
+export interface JewelryFormParams {
+  occasions?: string[];
+  metal?: string;
+  stones?: string[];
+  jewelry_types?: string[];
+  ears_pierced?: string;
+  budget?: string;
+  jewelry_dislikes?: string;
+  gender?: string;
+  kibbe?: string;
+  archetypes?: string[];
+  colortypes?: string[];
+  hair_color?: string;
+  eye_color?: string;
+  tags?: string[];
+  favorite_colors?: string[];
+  disliked_colors?: string[];
+  style_age?: string | number;
+  comment?: string;
+}

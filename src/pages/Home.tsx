@@ -165,6 +165,16 @@ const Home = () => {
       path: "/travel-selection",
     },
     {
+      id: "jewelry-selection",
+      title: "Подбор украшений",
+      description:
+        "Какие металлы, камни, формы и размер украшений идут именно вам — по типажу, цветотипу и архетипу. 3 набора под разные поводы с картинкой",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/0f74d157-479b-4588-82cf-e2739c3ae8bb.jpg",
+      icon: "Gem",
+      path: "/jewelry-selection",
+    },
+    {
       id: "gift-selection",
       title: "Подбор подарков",
       description:

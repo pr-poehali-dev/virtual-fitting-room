@@ -75,16 +75,20 @@ type ListKey =
 interface Props {
   value: PersonState;
   onChange: (next: PersonState) => void;
+  compact?: boolean;
 }
 
-const PersonFields = ({ value, onChange }: Props) => {
+const PersonFields = ({ value, onChange, compact = false }: Props) => {
   const set = <K extends keyof PersonState>(key: K, v: PersonState[K]) =>
     onChange({ ...value, [key]: v });
 
   const toggle = (key: ListKey, item: string, max?: number) => {
     const list = value[key];
     if (list.includes(item)) {
-      set(key, list.filter((x) => x !== item));
+      set(
+        key,
+        list.filter((x) => x !== item),
+      );
       return;
     }
     if (max && list.length >= max) {
@@ -97,11 +101,12 @@ const PersonFields = ({ value, onChange }: Props) => {
   return (
     <div className="space-y-6">
       <p className="font-semibold flex items-center gap-2 text-lg">
-        <Icon name="UserRound" size={20} className="text-primary" />
-        О себе
+        <Icon name="UserRound" size={20} className="text-primary" />О себе
       </p>
 
-      <div className="grid md:grid-cols-3 gap-4">
+      <div
+        className={`grid gap-4 ${compact ? "md:grid-cols-2" : "md:grid-cols-3"}`}
+      >
         <SelectField
           label="Пол"
           value={value.gender}
@@ -110,17 +115,19 @@ const PersonFields = ({ value, onChange }: Props) => {
           placeholder="Выберите пол"
           required
         />
-        <div>
-          <p className="font-medium mb-2">Рост, см</p>
-          <Input
-            type="number"
-            min={100}
-            max={250}
-            placeholder="Например, 168"
-            value={value.height}
-            onChange={(e) => set("height", e.target.value)}
-          />
-        </div>
+        {!compact && (
+          <div>
+            <p className="font-medium mb-2">Рост, см</p>
+            <Input
+              type="number"
+              min={100}
+              max={250}
+              placeholder="Например, 168"
+              value={value.height}
+              onChange={(e) => set("height", e.target.value)}
+            />
+          </div>
+        )}
         <SelectField
           label="Типаж по Кибби"
           value={value.kibbe}
@@ -144,13 +151,17 @@ const PersonFields = ({ value, onChange }: Props) => {
         onToggle={(v) => toggle("colortypes", v, MAX_COLORTYPES)}
       />
 
-      <div className="grid md:grid-cols-3 gap-4">
-        <SelectField
-          label="Длина волос"
-          value={value.hairLength}
-          onChange={(v) => set("hairLength", v)}
-          options={HAIR_LENGTHS}
-        />
+      <div
+        className={`grid gap-4 ${compact ? "md:grid-cols-2" : "md:grid-cols-3"}`}
+      >
+        {!compact && (
+          <SelectField
+            label="Длина волос"
+            value={value.hairLength}
+            onChange={(v) => set("hairLength", v)}
+            options={HAIR_LENGTHS}
+          />
+        )}
         <div>
           <p className="font-medium mb-2">Цвет волос</p>
           <Input
@@ -189,34 +200,38 @@ const PersonFields = ({ value, onChange }: Props) => {
           selected={value.dislikedColors}
           onToggle={(v) => toggle("dislikedColors", v)}
         />
-        <ChipGroup
-          title="Ткани, которые нравятся"
-          options={FABRICS}
-          selected={value.favoriteFabrics}
-          onToggle={(v) => toggle("favoriteFabrics", v)}
-        />
-        <ChipGroup
-          title="Ткани, которые не нравятся"
-          options={FABRICS}
-          selected={value.dislikedFabrics}
-          onToggle={(v) => toggle("dislikedFabrics", v)}
-        />
-        <ChipGroup
-          title="Орнаменты, которые нравятся"
-          options={PATTERNS}
-          selected={value.favoritePatterns}
-          onToggle={(v) => toggle("favoritePatterns", v)}
-        />
-        <ChipGroup
-          title="Орнаменты, которые не нравятся"
-          options={PATTERNS}
-          selected={value.dislikedPatterns}
-          onToggle={(v) => toggle("dislikedPatterns", v)}
-        />
+        {!compact && (
+          <>
+            <ChipGroup
+              title="Ткани, которые нравятся"
+              options={FABRICS}
+              selected={value.favoriteFabrics}
+              onToggle={(v) => toggle("favoriteFabrics", v)}
+            />
+            <ChipGroup
+              title="Ткани, которые не нравятся"
+              options={FABRICS}
+              selected={value.dislikedFabrics}
+              onToggle={(v) => toggle("dislikedFabrics", v)}
+            />
+            <ChipGroup
+              title="Орнаменты, которые нравятся"
+              options={PATTERNS}
+              selected={value.favoritePatterns}
+              onToggle={(v) => toggle("favoritePatterns", v)}
+            />
+            <ChipGroup
+              title="Орнаменты, которые не нравятся"
+              options={PATTERNS}
+              selected={value.dislikedPatterns}
+              onToggle={(v) => toggle("dislikedPatterns", v)}
+            />
+          </>
+        )}
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        {value.gender === "Женский" && (
+        {!compact && value.gender === "Женский" && (
           <SelectField
             label="Длина юбок"
             value={value.skirtLength}

@@ -23,6 +23,7 @@ from services import perfume
 from services import wedding
 from services import consult
 from services import travel
+from services import jewelry
 
 # service_type -> модуль сервиса
 IMAGE_SERVICES = {
@@ -37,6 +38,7 @@ IMAGE_SERVICES = {
     'wedding': wedding,
     'consult': consult,
     'travel': travel,
+    'jewelry': jewelry,
 }
 
 

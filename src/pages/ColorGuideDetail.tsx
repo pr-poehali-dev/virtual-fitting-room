@@ -23,7 +23,8 @@ import PerfumeReport, {
   PerfumeFormParams,
 } from "@/components/PerfumeReport";
 import TravelReport, { TravelResult } from "@/components/travel/TravelReport";
-import { TravelFormParams } from "@/lib/travelOptions";
+import { TravelFormParams, JewelryFormParams } from "@/lib/travelOptions";
+import JewelryReport, { JewelryResult } from "@/components/jewelry/JewelryReport";
 import WeddingReport, {
   WeddingResult,
   WeddingFormParams,
@@ -160,7 +161,7 @@ export default function ColorGuideDetail() {
             if (data.result) setOutfitResult(data.result as OutfitResult);
             if (data.form_params)
               setOutfitParams(data.form_params as OutfitFormParams);
-          } else if (svc === "wedding" || svc === "travel") {
+          } else if (svc === "wedding" || svc === "travel" || svc === "jewelry") {
             if (data.result)
               setTextResult(data.result as Record<string, unknown>);
             if (data.form_params)
@@ -262,6 +263,20 @@ export default function ColorGuideDetail() {
                 data={textResult as unknown as TravelResult}
                 formParams={textParams as unknown as TravelFormParams}
                 onReset={() => navigate("/travel-selection")}
+              />
+            </div>
+          ) : serviceType === "jewelry" && (textResult || imageUrl) ? (
+            <div className="space-y-4">
+              {resultNote && (
+                <Card className="bg-amber-500/10 border-amber-500/40">
+                  <CardContent className="p-4 text-sm">{resultNote}</CardContent>
+                </Card>
+              )}
+              <JewelryReport
+                imageUrl={imageUrl}
+                data={textResult as unknown as JewelryResult}
+                formParams={textParams as unknown as JewelryFormParams}
+                onReset={() => navigate("/jewelry-selection")}
               />
             </div>
           ) : serviceType === "gift" && textResult ? (

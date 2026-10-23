@@ -87,6 +87,12 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       label: "Капсула в путешествие",
     },
     {
+      id: "jewelry-selection",
+      path: "/jewelry-selection",
+      icon: "Gem",
+      label: "Подбор украшений",
+    },
+    {
       id: "gift-selection",
       path: "/gift-selection",
       icon: "Gift",

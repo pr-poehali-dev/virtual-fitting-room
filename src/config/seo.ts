@@ -53,6 +53,11 @@ export const PAGE_SEO: Record<string, PageSeo> = {
     description:
       "Список вещей в поездку, образ в дорогу и 3 готовых образа с учётом климата, маршрута, цветотипа и типажа",
   },
+  "/jewelry-selection": {
+    title: "Подбор украшений по типажу и цветотипу онлайн — StyleSelect",
+    description:
+      "Какие металлы, камни, формы и размер украшений вам идут — и 3 готовых набора под разные поводы по вашему фото",
+  },
   "/gift-selection": {
     title: "Подбор подарков онлайн — StyleSelect",
     description:
