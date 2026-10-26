@@ -10,6 +10,7 @@ from services.wellness_common import (  # noqa: F401
     PARAMS_FIRST, TEMPERATURE, COMMON_RULES, make_params_block,
     build_photo_block, build_image_prompt,
 )
+from services.spa_days import build_days_block
 
 SPA_FIELDS = [
     ('Тип кожи лица', 'skin_type'),
@@ -28,7 +29,7 @@ SPA_FIELDS = [
 def build_params_block(form_params: dict) -> str:
     block = make_params_block(form_params, SPA_FIELDS, 'УХОД')
     return block + ('\n\nПРОГРАММА НА НЕДЕЛЮ: в поле "schedule" дай РОВНО 7 элементов — '
-                    'по одному на каждый день ("День 1"…"День 7").')
+                    'по одному на каждый день недели ("Понедельник"…"Воскресенье").\n\n') + build_days_block()
 
 
 GEMINI_PROMPT = '''Ты — опытный косметолог-эстетист и SPA-терапевт. Составь клиенту персональную программу ухода за лицом, телом и волосами по его анкете.
@@ -49,7 +50,7 @@ GEMINI_PROMPT = '''Ты — опытный косметолог-эстетист
   "morning": [ {"step":"шаг","product":"тип средства / компонент","note":"очень коротко"} ],  // 3-5 шагов утреннего ухода
   "evening": [ {"step":"шаг","product":"тип средства / компонент","note":"очень коротко"} ],  // 3-5 шагов вечернего ухода
   "schedule": [
-    {"period":"День 1","focus":"фокус","rituals":[ {"name":"ритуал/процедура","how":"коротко как делать и сколько времени"} ]}  // 1-3 ритуала
+    {"period":"Понедельник","focus":"фокус","rituals":[ {"name":"ритуал/процедура","how":"коротко как делать и сколько времени"} ]}  // 1-3 ритуала
   ],
   "home_recipes": [ {"name":"название","ingredients":"что нужно","how":"как сделать и нанести"} ],  // 2-4 рецепта
   "salon": [ "процедура в салоне — зачем и как часто" ],  // 0-3 пункта, если уместно
