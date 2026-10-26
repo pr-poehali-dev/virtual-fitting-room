@@ -93,6 +93,24 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       label: "Подбор украшений",
     },
     {
+      id: "sport-plan",
+      path: "/sport-plan",
+      icon: "Dumbbell",
+      label: "Спорт и фитнес",
+    },
+    {
+      id: "spa-plan",
+      path: "/spa-plan",
+      icon: "Flower2",
+      label: "SPA-уход",
+    },
+    {
+      id: "nutrition-plan",
+      path: "/nutrition-plan",
+      icon: "Salad",
+      label: "План питания",
+    },
+    {
       id: "gift-selection",
       path: "/gift-selection",
       icon: "Gift",

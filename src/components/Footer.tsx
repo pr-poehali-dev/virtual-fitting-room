@@ -96,6 +96,21 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/sport-plan" className="hover:text-white transition-colors">
+                  Спорт и фитнес
+                </Link>
+              </li>
+              <li>
+                <Link to="/spa-plan" className="hover:text-white transition-colors">
+                  SPA-уход
+                </Link>
+              </li>
+              <li>
+                <Link to="/nutrition-plan" className="hover:text-white transition-colors">
+                  План питания
+                </Link>
+              </li>
+              <li>
                 <Link to="/gift-selection" className="hover:text-white transition-colors">
                   Подбор подарков
                 </Link>

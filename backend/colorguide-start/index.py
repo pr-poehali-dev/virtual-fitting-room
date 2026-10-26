@@ -14,11 +14,11 @@ ALLOWED_SLUGS = [
     'vibrant-spring', 'vivid-autumn', 'vivid-summer', 'vivid-winter'
 ]
 
-ALLOWED_SERVICE_TYPES = ['colorguide', 'style', 'outfit', 'glasses', 'makeup', 'hairstyle', 'kibbe', 'gift', 'perfume', 'wedding', 'consult', 'travel', 'jewelry']
+ALLOWED_SERVICE_TYPES = ['colorguide', 'style', 'outfit', 'glasses', 'makeup', 'hairstyle', 'kibbe', 'gift', 'perfume', 'wedding', 'consult', 'travel', 'jewelry', 'sport', 'spa', 'nutrition']
 # Сервисы, работающие только по анкете — фото не требуется.
 TEXT_ONLY_SERVICE_TYPES = {'gift', 'perfume'}
 # Сервисы, где фото можно приложить, но можно и не прикладывать.
-OPTIONAL_PHOTO_SERVICES = {'consult'}
+OPTIONAL_PHOTO_SERVICES = {'consult', 'sport', 'spa', 'nutrition'}
 # Сервисы, принимающие второе фото (образ партнёра) — только для анализа.
 PARTNER_IMAGE_SERVICES = {'wedding'}
 SERVICE_LABELS = {
@@ -35,6 +35,9 @@ SERVICE_LABELS = {
     'consult': 'Консультация ИИ-стилиста',
     'travel': 'Капсула в путешествие',
     'jewelry': 'Подбор украшений',
+    'sport': 'Спорт и фитнес',
+    'spa': 'SPA-уход',
+    'nutrition': 'План питания',
 }
 # Стоимость по типу сервиса. 'outfit' — премиальный, легко поднять цену здесь.
 SERVICE_COSTS = {
@@ -51,7 +54,12 @@ SERVICE_COSTS = {
     'consult': 10,
     'travel': 50,
     'jewelry': 50,
+    'sport': 50,
+    'spa': 50,
+    'nutrition': 50,
 }
+# SPA-уход на месяц стоит дороже недельного
+SPA_MONTH_COST = 100
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -256,6 +264,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 print(f'[COLORGUIDE-START-{request_id}] skip_charge requested but no paid colortype found — charging normally')
 
         cost = 0 if (unlimited_access or free_followup) else SERVICE_COSTS.get(service_type, COLORGUIDE_COST)
+        if cost and service_type == 'spa' and 'месяц' in str((form_params or {}).get('period') or '').lower():
+            cost = SPA_MONTH_COST
 
         if not unlimited_access and not free_followup:
             if balance < cost:

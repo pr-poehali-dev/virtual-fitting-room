@@ -48,6 +48,30 @@ const SERVICES = [
     path: "/jewelry-selection",
   },
   {
+    key: "sport",
+    label: "Спорт",
+    title: "Мои анкеты для спорта",
+    hint: "Выберите анкету на странице «Спорт и фитнес», чтобы получить план на следующую неделю",
+    action: "Составить план",
+    path: "/sport-plan",
+  },
+  {
+    key: "spa",
+    label: "SPA",
+    title: "Мои анкеты для SPA-ухода",
+    hint: "Выберите анкету на странице «SPA-уход», чтобы получить новую программу",
+    action: "Составить программу",
+    path: "/spa-plan",
+  },
+  {
+    key: "nutrition",
+    label: "Питание",
+    title: "Мои анкеты для питания",
+    hint: "Выберите анкету на странице «План питания», чтобы получить меню на следующую неделю",
+    action: "Составить меню",
+    path: "/nutrition-plan",
+  },
+  {
     key: "gift",
     label: "Подарки",
     title: "Мои анкеты для подарков",
@@ -84,6 +108,10 @@ function summarize(fp: OutfitFormParams): string {
   if (destination) parts.push(destination);
   const tripSeason = str(p.trip_season);
   if (tripSeason) parts.push(tripSeason);
+  const city = str(p.city);
+  if (city) parts.push(city);
+  const weekNum = str(p.week_number);
+  if (weekNum) parts.push(`неделя ${weekNum}`);
   const metal = str(p.metal);
   if (metal) parts.push(metal);
   const venue = str(p.venue);

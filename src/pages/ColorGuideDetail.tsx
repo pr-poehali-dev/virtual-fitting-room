@@ -25,12 +25,16 @@ import PerfumeReport, {
 import TravelReport, { TravelResult } from "@/components/travel/TravelReport";
 import { TravelFormParams, JewelryFormParams } from "@/lib/travelOptions";
 import JewelryReport, { JewelryResult } from "@/components/jewelry/JewelryReport";
+import WellnessReport, { WellnessService } from "@/components/wellness/WellnessReport";
+import { SPORT_FIELDS, SPA_FIELDS, NUTRITION_FIELDS } from "@/lib/wellnessOptions";
+
 import WeddingReport, {
   WeddingResult,
   WeddingFormParams,
 } from "@/components/WeddingReport";
 import ConsultReport, { ConsultResult } from "@/components/consult/ConsultReport";
 
+const WELLNESS_FIELDS = { sport: SPORT_FIELDS, spa: SPA_FIELDS, nutrition: NUTRITION_FIELDS };
 const COLORGUIDE_DETAIL_API = "https://functions.poehali.dev/90841acf-1a1a-4158-a8b6-8ddd65204126";
 
 export default function ColorGuideDetail() {
@@ -140,7 +144,12 @@ export default function ColorGuideDetail() {
         if (svc !== "colorguide") {
           // Подарки, ароматы и консультации — текстовые отчёты, картинка необязательна.
           const isTextOnly =
-            svc === "gift" || svc === "perfume" || svc === "consult";
+            svc === "gift" ||
+            svc === "perfume" ||
+            svc === "consult" ||
+            svc === "sport" ||
+            svc === "spa" ||
+            svc === "nutrition";
           // Картинки может не быть: разбор готов, деньги возвращены — показываем текст.
           if (
             data.status !== "completed" ||
@@ -279,6 +288,17 @@ export default function ColorGuideDetail() {
                 onReset={() => navigate("/jewelry-selection")}
               />
             </div>
+          ) : (serviceType === "sport" ||
+              serviceType === "spa" ||
+              serviceType === "nutrition") &&
+            textResult ? (
+            <WellnessReport
+              service={serviceType as WellnessService}
+              data={textResult}
+              formParams={textParams}
+              fields={WELLNESS_FIELDS[serviceType as WellnessService]}
+              onReset={() => navigate(`/${serviceType}-plan`)}
+            />
           ) : serviceType === "gift" && textResult ? (
             <GiftReport
               data={textResult as unknown as GiftResult}

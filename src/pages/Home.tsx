@@ -175,6 +175,36 @@ const Home = () => {
       path: "/jewelry-selection",
     },
     {
+      id: "sport-plan",
+      title: "Спорт и фитнес",
+      description:
+        "Тренировки и прогулки на неделю под вашу фигуру, подготовку, свободное время и климат — с заменой для каждого занятия. Новый план каждую неделю",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/f3638bc6-635a-4755-be86-b8ff68dbbc25.jpg",
+      icon: "Dumbbell",
+      path: "/sport-plan",
+    },
+    {
+      id: "spa-plan",
+      title: "SPA-уход",
+      description:
+        "Программа ухода за лицом, телом и волосами на неделю или месяц — с учётом кожи, климата, сезона и бюджета, с домашними рецептами",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/0ed090e7-e8c0-43d4-9707-f4e2cc02f52e.jpg",
+      icon: "Flower2",
+      path: "/spa-plan",
+    },
+    {
+      id: "nutrition-plan",
+      title: "План питания",
+      description:
+        "Меню на неделю и список покупок — только из продуктов, доступных в вашем городе и сезоне, с заменами для редких",
+      image:
+        "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/2b09c257-6534-4b3c-b023-e2d789625fc7.jpg",
+      icon: "Salad",
+      path: "/nutrition-plan",
+    },
+    {
       id: "gift-selection",
       title: "Подбор подарков",
       description:

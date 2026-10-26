@@ -15,6 +15,9 @@ const DB_QUERY_API = "https://functions.poehali.dev/59a0379b-a4b5-4cec-b2d2-8844
 // Подарки, ароматы и консультации — текстовые отчёты, картинки может не быть:
 // показываем заглушку сервиса.
 const SERVICE_PLACEHOLDERS: Record<string, string> = {
+  sport: "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/f3638bc6-635a-4755-be86-b8ff68dbbc25.jpg",
+  spa: "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/0ed090e7-e8c0-43d4-9707-f4e2cc02f52e.jpg",
+  nutrition: "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/files/2b09c257-6534-4b3c-b023-e2d789625fc7.jpg",
   gift: "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/397a0fb0-ac62-44a2-acbd-588dc53419d9.jpg",
   perfume:
     "https://cdn.poehali.dev/projects/ae951cd8-f121-4577-8ee7-ada3d70ee89c/bucket/15bd8187-7c0a-4015-abd8-3602df61386b.jpg",
