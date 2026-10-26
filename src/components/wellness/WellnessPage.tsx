@@ -301,6 +301,17 @@ export default function WellnessPage({ config }: { config: WellnessConfig }) {
           <div className="text-center mb-12 animate-fade-in">
             <h1 className="text-5xl md:text-6xl font-light mb-4">{config.title}</h1>
             <p className="text-muted-foreground text-lg">{config.subtitle}</p>
+            <p className="mt-4 text-xs text-muted-foreground/70 italic">
+              Дополнительно при составлении по дням недели использованы материалы системы «7 ангелов» —{" "}
+              <a
+                href="https://asiabiopharm.com/7angels/vvodnaya-statya/"
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="underline underline-offset-2 hover:text-foreground transition-colors"
+              >
+                asiabiopharm.com
+              </a>
+            </p>
           </div>
 
           {!result && !isAnalyzing && (
