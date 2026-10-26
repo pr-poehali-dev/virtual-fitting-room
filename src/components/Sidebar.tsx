@@ -47,7 +47,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
     {
       id: "outfit-selection",
       path: "/outfit-selection",
-      icon: "Gem",
+      icon: "Crown",
       label: "Подбор образов",
     },
     {

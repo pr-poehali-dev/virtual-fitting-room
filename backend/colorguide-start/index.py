@@ -58,8 +58,6 @@ SERVICE_COSTS = {
     'spa': 50,
     'nutrition': 50,
 }
-# SPA-уход на месяц стоит дороже недельного
-SPA_MONTH_COST = 100
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -264,8 +262,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 print(f'[COLORGUIDE-START-{request_id}] skip_charge requested but no paid colortype found — charging normally')
 
         cost = 0 if (unlimited_access or free_followup) else SERVICE_COSTS.get(service_type, COLORGUIDE_COST)
-        if cost and service_type == 'spa' and 'месяц' in str((form_params or {}).get('period') or '').lower():
-            cost = SPA_MONTH_COST
 
         if not unlimited_access and not free_followup:
             if balance < cost:

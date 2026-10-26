@@ -1,9 +1,7 @@
 import {
   KIBBE_TYPES,
   ARCHETYPES,
-  COLORTYPES,
   MAX_ARCHETYPES,
-  MAX_COLORTYPES,
 } from "@/lib/travelOptions";
 
 export type FieldType = "select" | "chips" | "text" | "textarea" | "number";
@@ -52,7 +50,6 @@ export const PERSON_FIELDS: FieldDef[] = [
   { key: "season", label: "Текущий сезон", type: "select", options: ["Зима", "Весна", "Лето", "Осень"] },
   { key: "kibbe", label: "Типаж по Кибби", type: "select", options: KIBBE_TYPES },
   { key: "archetypes", label: "Архетип(ы) по Юнгу", type: "chips", options: ARCHETYPES, max: MAX_ARCHETYPES, hint: "до 4", wide: true },
-  { key: "colortypes", label: "Цветотип", type: "chips", options: COLORTYPES, max: MAX_COLORTYPES, hint: "до 2", wide: true },
   {
     key: "health",
     label: "Ограничения по здоровью",
@@ -123,7 +120,6 @@ export const SPORT_FIELDS: FieldDef[] = [
 ];
 
 export const SPA_FIELDS: FieldDef[] = [
-  { key: "period", label: "Период", type: "select", options: ["Неделя", "Месяц"], required: true },
   {
     key: "skin_type",
     label: "Тип кожи лица",

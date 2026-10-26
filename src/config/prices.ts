@@ -10,7 +10,6 @@ export const TRAVEL_SELECTION_COST = 50;
 export const JEWELRY_SELECTION_COST = 50;
 export const SPORT_PLAN_COST = 50;
 export const SPA_WEEK_COST = 50;
-export const SPA_MONTH_COST = 100;
 export const NUTRITION_PLAN_COST = 50;
 export const CONSULT_COST = 10;
 export const LENORMAND_COST = 50;
